@@ -4,8 +4,6 @@
 CODE_DIRS ?= doc examples examples_flask pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
-CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*"
-CODESPELL_IGNORE ?= "ignore_words.txt"
 
 # doctest modules must be off screen to avoid plotting everything
 doctest-modules: export PYVISTA_OFF_SCREEN = True
@@ -17,7 +15,7 @@ format: isort stylize
 
 codespell:
 	@echo "Running codespell"
-	@codespell $(CODE_DIRS) $(CODE_FILES) -S $(CODESPELL_SKIP) -I $(CODESPELL_IGNORE)
+	@codespell $(CODE_DIRS) $(CODE_FILES)
 
 pydocstyle:
 	@echo "Running pydocstyle"
