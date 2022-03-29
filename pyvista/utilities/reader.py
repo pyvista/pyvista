@@ -983,25 +983,25 @@ class Plot3DMetaReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
-class CGNSReader(BaseReader):
+class CGNSReader(BaseReader, PointCellDataSelection):
     """CGNS Reader for .cgns files.
 
     Creates a multi-block dataset and reads unstructured grids and structured
     meshes from binary files stored in CGNS file format, with data stored at
     the nodes, cells or faces.
 
-    For more details, see `vtkCGNSReader
+    By default, all point and cell arrays are loaded. This varies from VTK's
+    defaults. For more details, see `vtkCGNSReader
     <https://vtk.org/doc/nightly/html/classvtkCGNSReader.html>`_
 
     Examples
     --------
-    Load a CGNS file. Enable loading all cell arrays.
+    Load a CGNS file.  All arrays are loaded by default.
 
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_cgns_multi(load=False)
     >>> reader = pyvista.get_reader(filename)
-    >>> reader.enable_all_cell_arrays()
     >>> ds = reader.read()
     >>> ds[0][0].cell_data
     pyvista DataSetAttributes
@@ -1021,6 +1021,12 @@ class CGNSReader(BaseReader):
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
+
+    def __init__(self, filename):
+        """Initialize CGNSReader with filename."""
+        super().__init__(filename)
+        self.enable_all_point_arrays()
+        self.enable_all_cell_arrays()
 
     @property
     def distribute_blocks(self) -> bool:
@@ -1056,18 +1062,16 @@ class CGNSReader(BaseReader):
     def enable_all_bases(self):
         """Enable reading all bases.
 
-        By default only the 0th base is read.
+       By default only the 0th base is read.
 
         Examples
         --------
         Read all bases
-
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pyvista.get_reader(filename)
         >>> reader.enable_all_bases()
-
         """
         self._reader.EnableAllBases()
 
@@ -1079,87 +1083,13 @@ class CGNSReader(BaseReader):
         Examples
         --------
         Disable reading all bases.
-
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pyvista.get_reader(filename)
         >>> reader.disable_all_bases()
-
         """
         self._reader.DisableAllBases()
-
-    def enable_all_point_arrays(self):
-        """Enable reading all point arrays.
-
-        By default none are loaded.
-
-        Examples
-        --------
-        Read all point arrays.
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
-        >>> reader.enable_all_point_arrays()
-
-        """
-        self._reader.EnableAllPointArrays()
-
-    def disable_all_point_arrays(self):
-        """Disable reading all point arrays.
-
-        This is the default behavior.
-
-        Examples
-        --------
-        Disable reading all point arrays.
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
-        >>> reader.disable_all_point_arrays()
-
-        """
-        self._reader.DisableAllPointArrays()
-
-    def enable_all_cell_arrays(self):
-        """Enable reading all cell arrays.
-
-        By default none are loaded.
-
-        Examples
-        --------
-        Read all cell arrays.
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
-        >>> reader.enable_all_cell_arrays()
-
-        """
-        self._reader.EnableAllCellArrays()
-
-    def disable_all_cell_arrays(self):
-        """Disable reading all cell arrays.
-
-        This is the default behavior.
-
-        Examples
-        --------
-        Disable reading all cell arrays.
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
-        >>> reader.disable_all_cell_arrays()
-
-        """
-        self._reader.DisableAllCellArrays()
 
 
 class BinaryMarchingCubesReader(BaseReader):

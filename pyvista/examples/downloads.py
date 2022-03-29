@@ -3631,13 +3631,13 @@ def download_cgns_structured(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista
     >>> dataset = examples.download_cgns_structured()
-    >>> dataset[0].plot(scalars='Density', off_screen=False)
+    >>> dataset[0].plot(scalars='Density')
 
     """
     filename, _ = _download_file('cgns/sqnz_s.adf.cgns')
     if not load:
         return filename
-    return pyvista.read(filename)
+    return pyvista.get_reader(filename).read()
 
 
 def download_cgns_multi(load=True):  # pragma: no cover
@@ -3677,6 +3677,4 @@ def download_cgns_multi(load=True):  # pragma: no cover
     filename, _ = _download_file('cgns/multi.cgns')
     if not load:
         return filename
-    reader = pyvista.CGNSReader(filename)
-    reader.enable_all_cell_arrays()
-    return reader.read()
+    return pyvista.get_reader(filename).read()

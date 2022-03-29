@@ -572,15 +572,6 @@ else:  # pragma: no cover
 
             raise VTKVersionError('vtkHDFReader requires VTK v9 or newer')
 
-    class vtkCGNSReader:  # type: ignore
-        """Empty placeholder for VTK9 compatibility."""
-
-        def __init__(self):  # pragma: no cover
-            """Raise version error on init."""
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError('vtkCGNSReader requires vtk>=9.1.0')
-
 
 # lazy import as this was added in 9.1.0
 def lazy_vtkCameraOrientationWidget():
