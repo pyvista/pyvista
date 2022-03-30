@@ -4115,7 +4115,7 @@ class DataSetFilters:
 
         # extracts only in float32
         if subgrid.n_points:
-            if self.points.dtype is not np.dtype('float32'):
+            if self.points.dtype != np.dtype('float32'):
                 ind = subgrid.point_data['vtkOriginalPointIds']
                 subgrid.points = self.points[ind]
 
