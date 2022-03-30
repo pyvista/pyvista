@@ -1100,7 +1100,18 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         list[int]
 
         """
-        return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
+        return [self.reader.GetBaseArrayName(i) for i in range(self.number_base_arrays)]
+
+    @property
+    def number_base_arrays(self) -> int:
+        """Return the number of base arrays.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfBaseArrays()
 
     def enable_all_bases(self):
         """Enable reading all bases.
@@ -1161,7 +1172,18 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         list[str]
 
         """
-        return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
+        return [self.reader.GetFamilyArrayName(i) for i in range(self.number_family_arrays)]
+
+    @property
+    def number_family_arrays(self) -> int:
+        """Return the number of face arrays.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfFamilyArrays()
 
     def enable_all_families(self):
         """Enable reading all families.
@@ -1235,8 +1257,8 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pyvista.get_reader(filename)
-        >>> reader.3d_vector = True
-        >>> reader.3d_vector
+        >>> reader.vector_3d = True
+        >>> reader.vector_3d
         True
 
         """

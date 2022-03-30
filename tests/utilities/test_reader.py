@@ -500,6 +500,7 @@ def test_read_cgns():
     reader.disable_all_families()
     reader.disable_all_cell_arrays()
     reader.disable_all_point_arrays()
+    reader.load_boundary_patch = False
     empty_block = reader.read()
     assert len(empty_block) == 0
 
@@ -533,8 +534,8 @@ def test_read_cgns():
     # actual boundary surfaces
     assert len(block[0][0][1]) == 3
 
-    assert reader.base_array_names == []
-    assert reader.base_array_status('') is False
+    assert reader.base_array_names == ['SQNZ']
+    assert reader.base_array_status('SQNZ') is True
 
-    assert reader.family_array_names == []
-    assert reader.family_array_status('') is False
+    assert reader.family_array_names == ['inflow', 'outflow', 'sym', 'wall']
+    assert reader.family_array_status('inflow') is True
