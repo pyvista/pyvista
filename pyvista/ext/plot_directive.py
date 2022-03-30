@@ -278,7 +278,7 @@ Exception occurred rendering plot.
 
 # the context of the plot for all directives specified with the
 # :context: option
-plot_context = dict()
+plot_context = {}
 
 
 class ImageFile:

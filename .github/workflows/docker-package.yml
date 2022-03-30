@@ -2,7 +2,8 @@ name: Build and Publish Docker Image
 on:
   workflow_dispatch:
   push:
-    tags: "*"
+    tags:
+      - "*"
     branches:
       - main
   pull_request:
