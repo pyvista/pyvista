@@ -1017,6 +1017,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     >>> from pyvista import examples
     >>> filename = examples.download_cgns_multi(load=False)
     >>> reader = pyvista.get_reader(filename)
+    >>> reader.load_boundary_patch = False
     >>> ds = reader.read()
     >>> ds[0][0].cell_data
     pyvista DataSetAttributes
