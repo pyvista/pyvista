@@ -35,8 +35,11 @@ jobs:
       if: startsWith(github.event.pull_request.head.ref, 'feat')
       with:
         labels: enhancement
-
     - uses: actions-ecosystem/action-add-labels@v1
       if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch')
       with:
         labels: bug
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.event.pull_request.head.ref, 'release')
+      with:
+        labels: release

@@ -1154,7 +1154,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self) -> List[str]:
+    def family_array_names(self):
         """Return the list of all family array names.
 
         Returns

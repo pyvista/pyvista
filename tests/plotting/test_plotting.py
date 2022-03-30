@@ -45,6 +45,8 @@ except:  # noqa: E722
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
+skip_9_1_0 = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
+
 # Reset image cache with new images
 glb_reset_image_cache = False
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
@@ -2064,7 +2066,7 @@ def test_collision_plot():
 
 
 @skip_mac
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
+@skip_9_1_0
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
@@ -2130,7 +2132,7 @@ def test_chart_plot():
     pl.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
+@skip_9_1_0
 def test_chart_matplotlib_plot():
     """Test integration with matplotlib"""
     rng = np.random.default_rng(1)
@@ -2215,3 +2217,19 @@ def test_orbit_on_path(sphere):
     pl.add_mesh(sphere, show_edges=True)
     pl.orbit_on_path(step=0.01, progress_bar=True)
     pl.close()
+
+
+@skip_9_1_0
+def test_pointset_plot(pointset):
+    pointset.plot()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_9_1_0
+def test_pointset_plot_as_points(pointset):
+    pl = pyvista.Plotter()
+    pl.add_points(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
+    pl.show(before_close_callback=verify_cache_image)

@@ -143,6 +143,7 @@ if VTK9:
         vtkPlaneCollection,
         vtkPlanes,
         vtkPointLocator,
+        vtkPointSet,
         vtkPolyData,
         vtkPolyLine,
         vtkPolyPlane,
@@ -341,6 +342,7 @@ if VTK9:
     )
     from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
         vtkButtonWidget,

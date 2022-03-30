@@ -230,6 +230,12 @@ def test_translate_deprecation(grid):
         grid.translate((0.0, 0.0, 0.0))
 
 
+def test_set_points():
+    dataset = pyvista.UnstructuredGrid()
+    points = np.random.random((10, 3))
+    dataset.points = pyvista.vtk_points(points)
+
+
 def test_translate_should_fail_bad_points_or_transform(grid):
     points = np.random.random((10, 2))
     bad_points = np.random.random((10, 2))
@@ -1361,3 +1367,18 @@ def test_active_normals(sphere):
 
     mesh = sphere.compute_normals(point_normals=False)
     assert mesh.active_normals.shape[0] == mesh.n_cells
+
+
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
+@pytest.mark.parametrize('deep', [False, True])
+def test_cast_to_pointset(sphere, deep):
+    pointset = sphere.cast_to_pointset(deep=deep)
+    assert isinstance(pointset, pyvista.PointSet)
+
+    pointset.points[:] = 0
+    if deep:
+        assert not np.allclose(sphere.points, pointset.points)
+    else:
+        assert np.allclose(sphere.points, pointset.points)
