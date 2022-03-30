@@ -262,13 +262,18 @@ Run all code examples in the docstrings with:
 
    python -m pytest -v --doctest-modules pyvista
 
-Build the documentation with:
+Build the documentation on Linux or Mac OS with:
 
 .. code:: bash
 
    make -C doc html
 
-The finished documentation can be found in the ``doc/_build/html``
+Build the documentation on Windows with:
+
+   cd doc
+   python -msphinx -M html . _build
+
+The generated documentation can be found in the ``doc/_build/html``
 directory.
 
 Style Checking
