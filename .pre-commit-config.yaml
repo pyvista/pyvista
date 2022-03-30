@@ -46,3 +46,17 @@ repos:
       "toml==0.10.2",
       "typing-extensions==4.1.1",
     ]
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0
+  hooks:
+  - id: check-merge-conflict
+  - id: debug-statements
+  - id: no-commit-to-branch
+    args: [--branch, main]
+
+# this validates our github workflow files
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.14.0
+  hooks:
+    - id: check-github-workflows
