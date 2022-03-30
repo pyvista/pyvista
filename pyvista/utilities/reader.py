@@ -120,7 +120,7 @@ class BaseReader:
     def __init__(self, filename):
         """Initialize Reader by setting filename."""
         self._reader = self._class_reader()
-        if not os.path.isfile(filename):
+        if not os.path.isfile(filename) or os.path.isdir(filename):
             raise FileNotFoundError(f'{filename} does not exist.')
         self.filename = filename
         self._set_filename(filename)
@@ -1403,10 +1403,6 @@ class PVDReader(BaseReader, TimeReader):
         """If dataset information is unavailable, parse file."""
         if self.datasets is None:
             self._parse_file()
-
-    def _update(self):  # pragma: no cover
-        """Unused in PVDReader."""
-        pass
 
     def _parse_file(self):
         """Parse PVD file."""
