@@ -738,5 +738,6 @@ def test_convert_array():
     arr2 = pyvista.utilities.convert_array(arr, array_type=np.dtype('O'))
 
     # https://github.com/pyvista/pyvista/issues/2370
-    arr3 = pyvista.utilities.convert_array(pickle.loads(pickle.dumps(np.arange(4).astype('O'))),
-                                           array_type=np.dtype('O'))
+    arr3 = pyvista.utilities.convert_array(
+        pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
+    )
