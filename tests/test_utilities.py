@@ -1,6 +1,7 @@
 """ test pyvista.utilities """
 import os
 import pathlib
+import pickle
 import shutil
 import unittest.mock as mock
 import warnings
@@ -730,3 +731,12 @@ def test_color():
     # Check sRGB conversion
     assert pyvista.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
     assert pyvista.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
+
+
+def test_convert_array():
+    arr = np.arange(4).astype('O')
+    arr2 = pyvista.utilities.convert_array(arr, array_type=np.dtype('O'))
+
+    # https://github.com/pyvista/pyvista/issues/2370
+    arr3 = pyvista.utilities.convert_array(pickle.loads(pickle.dumps(np.arange(4).astype('O'))),
+                                           array_type=np.dtype('O'))
