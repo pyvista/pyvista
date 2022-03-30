@@ -736,8 +736,10 @@ def test_color():
 def test_convert_array():
     arr = np.arange(4).astype('O')
     arr2 = pyvista.utilities.convert_array(arr, array_type=np.dtype('O'))
+    assert arr2.GetNumberOfValues() == 4
 
     # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pyvista.utilities.convert_array(
         pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
     )
+    assert arr3.GetNumberOfValues() == 4
