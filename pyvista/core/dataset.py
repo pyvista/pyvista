@@ -615,7 +615,7 @@ class DataSet(DataSetFilters, DataObject):
                 mesh.Modified()
         return texture
 
-    def set_active_scalars(self, name: str, preference='cell'):
+    def set_active_scalars(self, name: Optional[str], preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -656,7 +656,7 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
-    def set_active_vectors(self, name: str, preference='point'):
+    def set_active_vectors(self, name: Optional[str], preference='point'):
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -691,7 +691,7 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
-    def set_active_tensors(self, name: str, preference='point'):
+    def set_active_tensors(self, name: Optional[str], preference='point'):
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
