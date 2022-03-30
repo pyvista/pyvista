@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import os
-from typing import Any
+from typing import Any, List
 from xml.etree import ElementTree
 
 import pyvista
@@ -1039,7 +1039,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
 
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         """Initialize CGNSReader with filename."""
         super().__init__(filename)
         self.enable_all_point_arrays()
@@ -1073,10 +1073,10 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self._reader.GetDistributeBlocks())
 
     @distribute_blocks.setter
-    def distribute_blocks(self, value):
+    def distribute_blocks(self, value: str):
         self._reader.SetDistributeBlocks(value)
 
-    def base_array_status(self, name):
+    def base_array_status(self, name: str) -> bool:
         """Get status of base array with name.
 
         Parameters
@@ -1154,7 +1154,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self):
+    def family_array_names(self) -> List[str]:
         """Return the list of all family array names.
 
         Returns
