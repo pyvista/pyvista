@@ -6,7 +6,7 @@ on:
       cache:
         description: 'Use build cache'
         required: false
-        default: true
+        default: "true"
   # No cache enabled for `schedule` and `push`
   schedule:
     - cron: '0 0 1 * *'  # once a month on main
