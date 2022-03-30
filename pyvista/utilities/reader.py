@@ -120,8 +120,6 @@ class BaseReader:
     def __init__(self, filename):
         """Initialize Reader by setting filename."""
         self._reader = self._class_reader()
-        if not os.path.isfile(filename) or os.path.isdir(filename):
-            raise FileNotFoundError(f'{filename} does not exist.')
         self.filename = filename
         self._set_filename(filename)
         self._progress_bar = False
@@ -158,7 +156,7 @@ class BaseReader:
             An instance of the Reader object.
 
         """
-        if self._reader is None:
+        if self._reader is None:  # pragma: no cover
             raise NotImplementedError
         return self._reader
 
@@ -1007,9 +1005,9 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     meshes from binary files stored in CGNS file format, with data stored at
     the nodes, cells or faces.
 
-    By default, all point and cell arrays are loaded. This varies from VTK's
-    defaults. For more details, see `vtkCGNSReader
-    <https://vtk.org/doc/nightly/html/classvtkCGNSReader.html>`_
+    By default, all point and cell arrays are loaded as well as the boundary
+    patch. This varies from VTK's defaults. For more details, see
+    `vtkCGNSReader <https://vtk.org/doc/nightly/html/classvtkCGNSReader.html>`_
 
     Examples
     --------
@@ -1044,6 +1042,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         super().__init__(filename)
         self.enable_all_point_arrays()
         self.enable_all_cell_arrays()
+        self.load_boundary_patch = True
 
     @property
     def distribute_blocks(self) -> bool:
@@ -1241,7 +1240,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         True
 
         """
-        return self._reader.GetUseUnsteadyPattern()
+        return self._reader.GetUse3DVector()
 
     @vector_3d.setter
     def vector_3d(self, enabled: bool):
@@ -1251,7 +1250,9 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     def load_boundary_patch(self) -> bool:
         """Return or set loading boundary patches.
 
-        Default is ``False``.
+        Notes
+        -----
+        VTK default is ``False``, but PyVista uses ``True``.
 
         Examples
         --------
