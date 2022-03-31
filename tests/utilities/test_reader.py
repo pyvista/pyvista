@@ -529,10 +529,7 @@ def test_read_cgns():
     assert len(block[0]) == 12
 
     # actual block
-    assert len(block[0][0][0].cell_data) == 3
-
-    # actual boundary surfaces
-    assert len(block[0][0][1]) == 3
+    assert len(block[0][0].cell_data) == 3
 
     assert reader.base_array_names == ['SQNZ']
     assert reader.base_array_status('SQNZ') is True
