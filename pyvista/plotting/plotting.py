@@ -485,11 +485,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             if mapper is None:
                                 continue
                             dataset = mapper.GetInputAsDataSet()
-                            if isinstance(dataset, pyvista.UnstructuredGrid):
+                            if not isinstance(dataset, pyvista.PolyData):
                                 warnings.warn(
-                                    "UnstructuredGrid is not supported by gLTF. Convert to "
-                                    "a PolyData with extract_surface and add that to the "
-                                    "plotter instead"
+                                    f"{type(dataset).__name__} is not supported by gLTF. "
+                                    "Convert to a PolyData with extract_surface and add "
+                                    "that to the plotter instead."
                                 )
                             if 'Normals' in dataset.point_data:
                                 # By default VTK uses the 'Normals' point data for normals
