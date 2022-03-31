@@ -384,6 +384,7 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
+    from vtkmodules.vtkImagingFourier import vtkImageFFT, vtkImageRFFT
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,
@@ -439,10 +440,6 @@ if VTK9:
         vtkSmartVolumeMapper,
     )
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
-    from vtkmodules.vtkImagingFourier import (
-        vtkImageFFT,
-        vtkImageRFFT,
-    )
 
     # lazy import for some of the less used readers
     def lazy_vtkGL2PSExporter():
