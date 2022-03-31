@@ -182,7 +182,7 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
     pl.add_mesh(sphere, smooth_shading=True)
     pl.add_mesh(airplane)
     pl.add_mesh(hexbeam)  # to check warning
-    with pytest.warns(UserWarning, match='UnstructuredGrid is not supported by gLTF'):
+    with pytest.warns(UserWarning, match='Plotter contains non-PolyData datasets'):
         pl.export_gltf(filename)
 
     pl_import = pyvista.Plotter()

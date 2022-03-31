@@ -435,6 +435,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Saves the point array ``'Normals'`` as ``'NORMAL'`` in
             the outputted scene.
 
+        Notes
+        -----
+        The VTK exporter only supports :class:`pyvista.PolyData` datasets. If
+        the plotter contains any non-PolyData datasets, these will be converted
+        in the plotter, leading to a copy of the data internally.
+
         Examples
         --------
         Output a simple point cloud represented as balls.
@@ -487,10 +493,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             dataset = mapper.GetInputAsDataSet()
                             if not isinstance(dataset, pyvista.PolyData):
                                 warnings.warn(
-                                    f"{type(dataset).__name__} is not supported by gLTF. "
-                                    "Convert to a PolyData with extract_surface and add "
-                                    "that to the plotter instead."
+                                    'Plotter contains non-PolyData datasets. These have been '
+                                    'overwritten with PolyData surfaces and are internally '
+                                    'copies of the original datasets.'
                                 )
+
+                                try:
+                                    dataset = dataset.extract_surface()
+                                    mapper.SetInputData(dataset)
+                                except:  # pragma: no cover
+                                    warnings.warn(
+                                        'During gLTF export, failed to convert some '
+                                        'datasets to PolyData. Exported scene will not have '
+                                        'all datasets.'
+                                    )
+
                             if 'Normals' in dataset.point_data:
                                 # By default VTK uses the 'Normals' point data for normals
                                 # but gLTF uses NORMAL.
