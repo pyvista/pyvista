@@ -39,9 +39,7 @@ class PickingHelper:
         style='wireframe',
         line_width=5,
         color='pink',
-        tolerance=0.025,
         font_size=18,
-        start=False,
         left_clicking=False,
         **kwargs,
     ):
@@ -57,6 +55,10 @@ class PickingHelper:
             Show the selection interactively. Best when combined with
             ``left_clicking``.
 
+        show_message : bool or str, optional
+            Show the message about how to use the mesh picking tool. If this
+            is a string, that will be the message shown.
+
         style : str, optional
             Visualization style of the selection.  Defaults to
             ``'wireframe'``. One of the following:
@@ -70,10 +72,6 @@ class PickingHelper:
 
         color : color_like, optional
             The color of the selected mesh when shown.
-
-        show_message : bool or str, optional
-            Show the message about how to use the mesh picking tool. If this
-            is a string, that will be the message shown.
 
         font_size : int, optional
             Sets the font size of the message.
@@ -109,6 +107,8 @@ class PickingHelper:
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_mesh_picking(left_clicking=True)
+
+        See :ref:`mesh_picking_example` for a full example using this method.
 
         """
 
