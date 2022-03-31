@@ -25,8 +25,13 @@ def test_widget_box():
     p.add_box_widget(callback=func, pass_widget=True)
     p.close()
 
+    # clip box with and without crinkle
     p = pyvista.Plotter()
     p.add_mesh_clip_box(mesh)
+    p.close()
+
+    p = pyvista.Plotter()
+    p.add_mesh_clip_box(mesh, crinkle=True)
     p.close()
 
     p = pyvista.Plotter()
@@ -74,6 +79,10 @@ def test_widget_plane():
 
     p = pyvista.Plotter()
     p.add_mesh_clip_plane(mesh)
+    p.close()
+
+    p = pyvista.Plotter()
+    p.add_mesh_clip_plane(mesh, crinkle=True)
     p.close()
 
     p = pyvista.Plotter()

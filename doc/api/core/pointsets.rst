@@ -51,11 +51,24 @@ data:
    demos.plot_datasets('StructuredGrid')
 
 
+The :class:`pyvista.PointSet` (as of ``vtk==9.1.0``) is a concrete class for
+storing a set of points.
+
+.. jupyter-execute::
+   :hide-code:
+
+   import numpy as np
+   import pyvista
+   rng = np.random.default_rng(0)
+   points = rng.random((10, 3))
+   pset = pyvista.PointSet(points)
+   pset.plot(color='red')
+
 
 **Class Descriptions**
 
 The following table describes PyVista's point set classes.  These
-classes inherit all methods from their corresponding VTK
+classes inherit all methods from their corresponding VTK `vtkPointSet`_,
 `vtkPolyData`_, `vtkUnstructuredGrid`_, `vtkStructuredGrid`_, and
 `vtkExplicitStructuredGrid`_ superclasses.
 
@@ -63,11 +76,13 @@ classes inherit all methods from their corresponding VTK
    :toctree: _autosummary
    :template: custom-class-template.rst
 
+   pyvista.PointSet
    pyvista.PolyData
    pyvista.UnstructuredGrid
    pyvista.StructuredGrid
    pyvista.ExplicitStructuredGrid
 
+.. _vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
 .. _vtkPolyData: https://www.vtk.org/doc/nightly/html/classvtkPolyData.html
 .. _vtkUnstructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
 .. _vtkStructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html

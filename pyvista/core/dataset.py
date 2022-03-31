@@ -8,7 +8,7 @@ import warnings
 
 if sys.version_info >= (3, 8):
     from typing import Literal
-else:
+else:  # pragma: no cover
     from typing_extensions import Literal
 
 import numpy as np
@@ -394,7 +394,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: Union[VectorArray, NumericArray]):
+    def points(self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -403,6 +403,13 @@ class DataSet(DataSetFilters, DataObject):
                 pdata.Modified()
                 self.Modified()
                 return
+        # directly set the data if vtk object
+        if isinstance(points, _vtk.vtkPoints):
+            self.SetPoints(points)
+            if pdata is not None:
+                pdata.Modified()
+            self.Modified()
+            return
         # otherwise, wrap and use the array
         points = _coerce_pointslike_arg(points)
         vtk_points = pyvista.vtk_points(points, False)
@@ -447,7 +454,7 @@ class DataSet(DataSetFilters, DataObject):
             raise ValueError('Active vectors are not vectors.')
 
         scale_name = f'{vectors_name} Magnitude'
-        scale = np.linalg.norm(self.active_vectors, axis=1)
+        scale = np.linalg.norm(self.active_vectors, axis=1)  # type: ignore
         self.point_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
@@ -2042,6 +2049,37 @@ class DataSet(DataSetFilters, DataObject):
         alg.AddInputData(self)
         alg.Update()
         return _get_output(alg)
+
+    def cast_to_pointset(self, deep: bool = False) -> 'pyvista.PointSet':
+        """Get a new representation of this object as a :class:`pyvista.PointSet`.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            When ``True`` makes a full copy of the object.  When ``False``,
+            performs a shallow copy where the points and data arrays are
+            references to the original object.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Dataset cast into a :class:`pyvista.PointSet`.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pointset = mesh.cast_to_pointset()
+        >>> type(pointset)
+        <class 'pyvista.core.pointset.PointSet'>
+
+        """
+        pset = pyvista.PointSet()
+        pset.SetPoints(self.GetPoints())
+        pset.GetPointData().ShallowCopy(self.GetPointData())
+        if deep:
+            return pset.copy(deep=True)
+        return pset
 
     def find_closest_point(self, point: Iterable[float], n=1) -> int:
         """Find index of closest point in this mesh to the given point.

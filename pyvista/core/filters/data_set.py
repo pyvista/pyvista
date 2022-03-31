@@ -27,9 +27,19 @@ class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
     def _clip_with_function(
-        self, function, invert=True, value=0.0, return_clipped=False, progress_bar=False
+        self,
+        function,
+        invert=True,
+        value=0.0,
+        return_clipped=False,
+        progress_bar=False,
+        crinkle=False,
     ):
         """Clip using an implicit function (internal helper)."""
+        if crinkle:
+            # Add Cell IDs
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+
         if isinstance(self, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
@@ -48,9 +58,14 @@ class DataSetFilters:
         if return_clipped:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
+            if crinkle:
+                a = self.extract_cells(np.unique(a.cell_data['cell_ids']))
+                b = self.extract_cells(np.unique(b.cell_data['cell_ids']))
             return a, b
-        else:
-            return _get_output(alg)
+        clipped = _get_output(alg)
+        if crinkle:
+            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+        return clipped
 
     def clip(
         self,
@@ -61,6 +76,7 @@ class DataSetFilters:
         inplace=False,
         return_clipped=False,
         progress_bar=False,
+        crinkle=False,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
@@ -93,6 +109,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -137,6 +159,7 @@ class DataSetFilters:
             value=value,
             return_clipped=return_clipped,
             progress_bar=progress_bar,
+            crinkle=crinkle,
         )
         if inplace:
             if return_clipped:
@@ -148,7 +171,13 @@ class DataSetFilters:
         return result
 
     def clip_box(
-        self, bounds=None, invert=True, factor=0.35, progress_bar=False, merge_points=True
+        self,
+        bounds=None,
+        invert=True,
+        factor=0.35,
+        progress_bar=False,
+        merge_points=True,
+        crinkle=False,
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -179,6 +208,12 @@ class DataSetFilters:
         merge_points : bool, optional
             If ``True`` (default), coinciding points of independently
             defined mesh elements will be merged.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -230,6 +265,8 @@ class DataSetFilters:
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
+        if crinkle:
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -242,7 +279,10 @@ class DataSetFilters:
             port = 1
             alg.GenerateClippedOutputOn()
         _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
-        return _get_output(alg, oport=port)
+        clipped = _get_output(alg, oport=port)
+        if crinkle:
+            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+        return clipped
 
     def compute_implicit_distance(self, surface, inplace=False):
         """Compute the implicit distance from the points to a surface.
@@ -393,7 +433,13 @@ class DataSetFilters:
         return result0
 
     def clip_surface(
-        self, surface, invert=True, value=0.0, compute_distance=False, progress_bar=False
+        self,
+        surface,
+        invert=True,
+        value=0.0,
+        compute_distance=False,
+        progress_bar=False,
+        crinkle=False,
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
@@ -423,6 +469,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -454,7 +506,12 @@ class DataSetFilters:
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(
-            self, function, invert=invert, value=value, progress_bar=progress_bar
+            self,
+            function,
+            invert=invert,
+            value=value,
+            progress_bar=progress_bar,
+            crinkle=crinkle,
         )
         return result
 
@@ -4698,7 +4755,7 @@ class DataSetFilters:
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
         _update_alg(alg, progress_bar, 'Shrinking Mesh')
-        output = pyvista.wrap(alg.GetOutput())
+        output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
         return output

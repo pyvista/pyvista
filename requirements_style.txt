@@ -1,8 +1,0 @@
-codespell==2.1.0
-flake8-isort==4.1.1
-flake8==4.0.1
-isort==5.10.1
-pydocstyle==6.1.1
-flake8-quotes==3.3.1
-black==22.1.0
-flake8-black==0.3.2
