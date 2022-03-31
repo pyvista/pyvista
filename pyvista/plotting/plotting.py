@@ -216,7 +216,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # optional function to be called prior to closing
         self.__before_close_callback = None
         self._store_image = False
-        self._picked_mesh = None
         self.mesh = None
         if title is None:
             title = self._theme.title

@@ -11,11 +11,22 @@ from pyvista import _vtk
 from pyvista.utilities import try_callback
 
 
+def _launch_pick_event(interactor, event):
+    """Create a Pick event based on coordinate or left-click."""
+    click_x, click_y = interactor.GetEventPosition()
+    click_z = 0
+
+    picker = interactor.GetPicker()
+    renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
+    picker.Pick(click_x, click_y, click_z, renderer)
+
+
 class PickingHelper:
     """An internal class to hold picking related features."""
 
     picked_cells = None
-    picked_point = None
+    _picked_point = None
+    _picked_mesh = None
     picked_path = None
     picked_geodesic = None
     picked_horizon = None
@@ -95,7 +106,7 @@ class PickingHelper:
 
         Examples
         --------
-        Add a mesh and a cube to a plot and enable cell picking. Enable
+        Add a sphere and a cube to a plot and enable mesh picking. Enable
         ``left_clicking`` to immediately start picking on the left click and
         disable showing the box. You can still press the ``p`` key to select
         meshes.
@@ -173,15 +184,6 @@ class PickingHelper:
                     show_message += "\nor click to select a dataset under the mouse pointer."
 
             self.add_text(str(show_message), font_size=font_size, name='_mesh_picking_message')
-
-        def _launch_pick_event(interactor, event):
-            """Create a Pick event based on coordinate or left-click."""
-            click_x, click_y = interactor.GetEventPosition()
-            click_z = 0
-
-            picker = interactor.GetPicker()
-            renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
-            picker.Pick(click_x, click_y, click_z, renderer)
 
         if left_clicking:
             self.iren.interactor.AddObserver(
@@ -373,12 +375,14 @@ class PickingHelper:
 
                 for node in range(selection.GetNumberOfNodes()):
                     selection_node = selection.GetNode(node)
-                    if selection_node is None:
+                    if selection_node is None:  # pragma: no cover
                         # No selection
                         continue
                     cids = pyvista.convert_array(selection_node.GetSelectionList())
                     actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
-                    if actor.GetProperty().GetRepresentation() != 2:  # surface
+
+                    # if not a surface
+                    if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         logging.warning(
                             "Display representations other than `surface` will result in incorrect results."
                         )
@@ -440,6 +444,146 @@ class PickingHelper:
         """
         return self._picked_mesh
 
+    @property
+    def picked_point(self):
+        """Return the picked point.
+
+        This returns the picked point after selecting a point.
+
+        Returns
+        -------
+        numpy.ndarray or None
+            Picked point if available.
+
+        """
+        return self._picked_point
+
+    def enable_surface_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color='pink',
+        show_point=True,
+        point_size=10,
+        tolerance=0.025,
+        pickable_window=False,
+        left_clicking=False,
+        **kwargs,
+    ):
+        """Enable picking of a mesh.
+
+        Parameters
+        ----------
+        callback : function, optional
+            When input, calls this function after a selection is made. The
+            ``mesh`` is input as the first parameter to this function.
+
+        show_message : bool or str, optional
+            Show the message about how to use the mesh picking tool. If this
+            is a string, that will be the message shown.
+
+        font_size : int, optional
+            Sets the font size of the message.
+
+        color : color_like, optional
+            The color of the selected mesh when shown.
+
+        show_point : bool, optional
+            Show the selection interactively. Default ``True``.
+
+        point_size : int, optional
+            Size of picked points if ``show_point`` is
+            ``True``. Default 10.
+
+        tolerance : float, optional
+            Specify tolerance for performing pick operation. Tolerance
+            is specified as fraction of rendering window
+            size. Rendering window size is measured across diagonal.
+
+        pickable_window : bool, optional
+            When ``True``, points in the 3D window are pickable. Default to ``False``.
+
+        left_clicking : bool, optional
+            When ``True``, meshes can be picked by clicking the left
+            mousebutton.  Default to ``False``.
+
+            .. note::
+               If enabled, left-clicking will **not** display the bounding box
+               around the picked mesh.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked path is interactively displayed.
+
+        Returns
+        -------
+        vtk.vtkPropPicker
+            Property picker.
+
+        Examples
+        --------
+        Add a cube to a plot and enable cell picking. Enable ``left_clicking``
+        to immediately start picking on the left click and disable showing the
+        box. You can still press the ``p`` key to select meshes.
+
+        >>> import pyvista as pv
+        >>> cube = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(cube)
+        >>> _ = pl.enable_surface_picking(left_clicking=True)
+
+        See :ref:`surface_picking_example` for a full example using this method.
+
+        """
+
+        def _end_pick_event(picker, event):
+
+            picked_point_id = picker.GetPointId()
+            if not pickable_window and picked_point_id < 0:
+                self._picked_point = None
+                return
+
+            self._picked_point = np.array(picker.GetPickPosition())
+            self._picked_mesh = picker.GetDataSet()
+            if show_point:
+                self.add_mesh(
+                    self.picked_point,
+                    color=color,
+                    point_size=point_size,
+                    name='_picked_point',
+                    pickable=False,
+                    reset_camera=False,
+                    **kwargs,
+                )
+            if callable(callback):
+                try_callback(callback, self.picked_point)
+
+        picker = _vtk.vtkCellPicker()
+        picker.SetTolerance(tolerance)
+        self.picker = picker
+        picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
+
+        self.enable_trackball_style()
+        self.iren.set_picker(picker)
+
+        if left_clicking:
+            self.iren.interactor.AddObserver(
+                "LeftButtonPressEvent",
+                partial(try_callback, _launch_pick_event),
+            )
+
+        # add on-screen message about point-selection
+        if show_message:
+            if show_message is True:
+                show_message = "\nPress P to pick a point on the surface under the mouse pointer."
+                if left_clicking:
+                    show_message += "\nor click to select a point under the mouse pointer."
+
+            self.add_text(str(show_message), font_size=font_size, name='_surf_picking_message')
+
+        return picker
+
     def enable_point_picking(
         self,
         callback=None,
@@ -500,12 +644,12 @@ class PickingHelper:
             size. Rendering window size is measured across diagonal.
 
         pickable_window : bool, optional
-            When ``True``, points in the 3D window are pickable. Default to ``True``.
+            When ``True``, points in the 3D window are pickable. Default to ``False``.
 
         left_clicking : bool, optional
             When ``True``, points can be picked by clicking the left mousebutton.
             Default to ``False``. Note, if enabled, left-clicking will **not**
-            display the bounding box around the picked point.
+            display the bounding box around the picked mesh.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
@@ -525,22 +669,13 @@ class PickingHelper:
 
         """
 
-        def _launch_pick_event(interactor, event):
-            """Create a Pick event based on coordinate or left-click."""
-            click_x, click_y = interactor.GetEventPosition()
-            click_z = 0
-
-            picker = interactor.GetPicker()
-            renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
-            picker.Pick(click_x, click_y, click_z, renderer)
-
         def _end_pick_event(picker, event):
 
             picked_point_id = picker.GetPointId()
             if (not pickable_window) and (picked_point_id < 0):
                 return None
 
-            self.picked_point = np.array(picker.GetPickPosition())
+            self._picked_point = np.array(picker.GetPickPosition())
             self._picked_mesh = picker.GetDataSet()
             self.picked_point_id = picked_point_id
             if show_point:

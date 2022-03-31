@@ -388,6 +388,7 @@ if VTK9:
         vtkActor,
         vtkActor2D,
         vtkCamera,
+        vtkCellPicker,
         vtkColorTransferFunction,
         vtkCoordinate,
         vtkDataSetMapper,
