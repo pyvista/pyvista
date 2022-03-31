@@ -388,6 +388,7 @@ if VTK9:
         vtkActor,
         vtkActor2D,
         vtkCamera,
+        vtkCellPicker,
         vtkColorTransferFunction,
         vtkCoordinate,
         vtkDataSetMapper,
@@ -401,6 +402,7 @@ if VTK9:
         vtkPolyDataMapper2D,
         vtkPropAssembly,
         vtkProperty,
+        vtkPropPicker,
         vtkRenderedAreaPicker,
         vtkRenderer,
         vtkRenderWindow,
@@ -485,6 +487,12 @@ if VTK9:
 
         return vtkHDFReader()
 
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        from vtkmodules.vtkIOCGNSReader import vtkCGNSReader
+
+        return vtkCGNSReader()
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
@@ -526,6 +534,10 @@ else:  # pragma: no cover
     def lazy_vtkPlot3DMetaReader():
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
+
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
 
     class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""

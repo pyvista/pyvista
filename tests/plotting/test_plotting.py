@@ -175,13 +175,15 @@ def test_import_gltf():
 
 
 @skip_not_vtk9
-def test_export_gltf(tmpdir, sphere, airplane):
+def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.gltf'))
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
     pl.add_mesh(airplane)
-    pl.export_gltf(filename)
+    pl.add_mesh(hexbeam)  # to check warning
+    with pytest.warns(UserWarning, match='Plotter contains non-PolyData datasets'):
+        pl.export_gltf(filename)
 
     pl_import = pyvista.Plotter()
     pl_import.import_gltf(filename)
