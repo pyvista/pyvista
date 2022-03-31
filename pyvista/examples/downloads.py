@@ -1473,6 +1473,33 @@ def download_frog(load=True):  # pragma: no cover
     return _download_and_read('froggy/frog.mhd', load=load)
 
 
+def download_chest(load=True):  # pragma: no cover
+    """Download chest dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_chest()
+    >>> dataset.plot(cpos="xy")
+
+    See :ref:`volume_rendering_example` for an example using
+    this dataset.
+
+    """
+    return _download_and_read('MetaIO/ChestCT-SHORT.mha', load=load)
+
+
 def download_prostate(load=True):  # pragma: no cover
     """Download prostate dataset.
 

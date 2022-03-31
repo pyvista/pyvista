@@ -34,6 +34,7 @@ READERS = {
     '.img': _vtk.vtkDICOMImageReader,
     '.jpeg': _vtk.vtkJPEGReader,
     '.jpg': _vtk.vtkJPEGReader,
+    '.mha': _vtk.vtkMetaImageReader,
     '.mhd': _vtk.vtkMetaImageReader,
     '.nrrd': _vtk.vtkNrrdReader,
     '.nhdr': _vtk.vtkNrrdReader,
@@ -285,6 +286,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     * ``'.img'``
     * ``'.jpeg'``
     * ``'.jpg'``
+    * ``'.mha'``
     * ``'.mhd'``
     * ``'.nrrd'``
     * ``'.nhdr'``
