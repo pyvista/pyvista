@@ -229,6 +229,10 @@ if TEST_DOWNLOADS:
         data = examples.download_frog()
         assert data.n_cells
 
+    def test_download_chest():
+        data = examples.download_chest()
+        assert data.n_cells
+
     def test_download_prostate():
         data = examples.download_prostate()
         assert data.n_cells
