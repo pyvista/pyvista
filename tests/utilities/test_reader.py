@@ -483,3 +483,56 @@ def test_read_hdf():
     assert can.n_points == 6724
     assert 'VEL' in can.point_data
     assert can.n_cells == 4800
+
+
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
+def test_read_cgns():
+    filename = examples.download_cgns_structured(load=False)
+    reader = pyvista.get_reader(filename)
+    assert "CGNS" in str(reader)
+    reader.show_progress()
+    assert reader._progress_bar is True
+
+    assert reader.distribute_blocks in [True, False]  # don't insist on a VTK default
+    reader.distribute_blocks = True
+    assert reader.distribute_blocks
+    reader.disable_all_bases()
+    reader.disable_all_families()
+    reader.disable_all_cell_arrays()
+    reader.disable_all_point_arrays()
+    reader.load_boundary_patch = False
+    empty_block = reader.read()
+    assert len(empty_block) == 0
+
+    reader.enable_all_bases()
+    reader.enable_all_families()
+    reader.enable_all_cell_arrays()
+    reader.enable_all_point_arrays()
+
+    # check can modify unsteady_pattern
+    orig = reader.unsteady_pattern
+    reader.unsteady_pattern = not orig
+    assert reader.unsteady_pattern is not orig
+
+    # check can modify vector_3d
+    orig = reader.vector_3d
+    reader.vector_3d = not orig
+    assert reader.vector_3d is not orig
+
+    # check can boundary_patch accessible
+    assert reader.load_boundary_patch in [True, False]
+
+    reader.hide_progress()
+    assert reader._progress_bar is False
+
+    block = reader.read()
+    assert len(block[0]) == 12
+
+    # actual block
+    assert len(block[0][0].cell_data) == 3
+
+    assert reader.base_array_names == ['SQNZ']
+    assert reader.base_array_status('SQNZ') is True
+
+    assert reader.family_array_names == ['inflow', 'outflow', 'sym', 'wall']
+    assert reader.family_array_status('inflow') is True
