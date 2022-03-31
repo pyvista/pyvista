@@ -401,6 +401,7 @@ if VTK9:
         vtkPolyDataMapper2D,
         vtkPropAssembly,
         vtkProperty,
+        vtkPropPicker,
         vtkRenderedAreaPicker,
         vtkRenderer,
         vtkRenderWindow,
