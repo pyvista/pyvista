@@ -27,9 +27,19 @@ class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
     def _clip_with_function(
-        self, function, invert=True, value=0.0, return_clipped=False, progress_bar=False
+        self,
+        function,
+        invert=True,
+        value=0.0,
+        return_clipped=False,
+        progress_bar=False,
+        crinkle=False,
     ):
         """Clip using an implicit function (internal helper)."""
+        if crinkle:
+            # Add Cell IDs
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+
         if isinstance(self, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
@@ -48,9 +58,14 @@ class DataSetFilters:
         if return_clipped:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
+            if crinkle:
+                a = self.extract_cells(np.unique(a.cell_data['cell_ids']))
+                b = self.extract_cells(np.unique(b.cell_data['cell_ids']))
             return a, b
-        else:
-            return _get_output(alg)
+        clipped = _get_output(alg)
+        if crinkle:
+            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+        return clipped
 
     def clip(
         self,
@@ -61,6 +76,7 @@ class DataSetFilters:
         inplace=False,
         return_clipped=False,
         progress_bar=False,
+        crinkle=False,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
@@ -93,6 +109,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -137,6 +159,7 @@ class DataSetFilters:
             value=value,
             return_clipped=return_clipped,
             progress_bar=progress_bar,
+            crinkle=crinkle,
         )
         if inplace:
             if return_clipped:
@@ -148,7 +171,13 @@ class DataSetFilters:
         return result
 
     def clip_box(
-        self, bounds=None, invert=True, factor=0.35, progress_bar=False, merge_points=True
+        self,
+        bounds=None,
+        invert=True,
+        factor=0.35,
+        progress_bar=False,
+        merge_points=True,
+        crinkle=False,
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -179,6 +208,12 @@ class DataSetFilters:
         merge_points : bool, optional
             If ``True`` (default), coinciding points of independently
             defined mesh elements will be merged.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -230,6 +265,8 @@ class DataSetFilters:
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
+        if crinkle:
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -242,7 +279,10 @@ class DataSetFilters:
             port = 1
             alg.GenerateClippedOutputOn()
         _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
-        return _get_output(alg, oport=port)
+        clipped = _get_output(alg, oport=port)
+        if crinkle:
+            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+        return clipped
 
     def compute_implicit_distance(self, surface, inplace=False):
         """Compute the implicit distance from the points to a surface.
@@ -393,7 +433,13 @@ class DataSetFilters:
         return result0
 
     def clip_surface(
-        self, surface, invert=True, value=0.0, compute_distance=False, progress_bar=False
+        self,
+        surface,
+        invert=True,
+        value=0.0,
+        compute_distance=False,
+        progress_bar=False,
+        crinkle=False,
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
@@ -423,6 +469,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -454,7 +506,12 @@ class DataSetFilters:
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(
-            self, function, invert=invert, value=value, progress_bar=progress_bar
+            self,
+            function,
+            invert=invert,
+            value=value,
+            progress_bar=progress_bar,
+            crinkle=crinkle,
         )
         return result
 
@@ -813,6 +870,8 @@ class DataSetFilters:
         preference='cell',
         all_scalars=False,
         progress_bar=False,
+        component_mode="all",
+        component=0,
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -858,6 +917,17 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        component_mode : {'selected', 'all', 'any'}
+            The method to satisfy the criteria for the threshold of
+            multicomponent scalars.  'selected' (default)
+            uses only the ``component``.  'all' requires all
+            components to meet criteria.  'any' is when
+            any component satisfies the criteria.
+
+        component : int
+            When using ``component_mode='selected'``, this sets
+            which component to threshold on.  Default is ``0``.
 
         Returns
         -------
@@ -969,6 +1039,24 @@ class DataSetFilters:
                 alg.ThresholdByLower(value)
             else:
                 alg.ThresholdByUpper(value)
+        if component_mode == "component":
+            alg.SetComponentModeToUseSelected()
+            dim = arr.shape[1]
+            if not isinstance(component, (int, np.integer)):
+                raise TypeError("component must be int")
+            if component > (dim - 1) or component < 0:
+                raise ValueError(
+                    f"scalars has {dim} components: supplied component {component} not in range"
+                )
+            alg.SetSelectedComponent(component)
+        elif component_mode == "all":
+            alg.SetComponentModeToUseAll()
+        elif component_mode == "any":
+            alg.SetComponentModeToUseAny()
+        else:
+            raise ValueError(
+                f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+            )
         # Run the threshold
         _update_alg(alg, progress_bar, 'Thresholding')
         return _get_output(alg)
@@ -3539,6 +3627,56 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
+    def sample_over_multiple_lines(self, points, tolerance=None, progress_bar=False):
+        """Sample a dataset onto a multiple lines.
+
+        Parameters
+        ----------
+        points : np.ndarray or list
+            List of points defining multiple lines.
+
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line object with sampled data from dataset.
+
+        Examples
+        --------
+        Sample over a plane that is interpolating a point cloud.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> np.random.seed(12)
+        >>> point_cloud = np.random.random((5, 3))
+        >>> point_cloud[:, 2] = 0
+        >>> point_cloud -= point_cloud.mean(0)
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['values'] = np.random.random(5)
+        >>> plane = pyvista.Plane()
+        >>> plane.clear_data()
+        >>> plane = plane.interpolate(pdata, sharpness=3.5)
+        >>> sample = plane.sample_over_multiple_lines([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
+        >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
+        >>> pl.show()
+
+        """
+        # Make a multiple lines and sample the dataset
+        multiple_lines = pyvista.MultipleLines(points=points)
+        sampled_multiple_lines = multiple_lines.sample(
+            self, tolerance=tolerance, progress_bar=progress_bar
+        )
+        return sampled_multiple_lines
+
     def sample_over_circular_arc(
         self, pointa, pointb, center, resolution=None, tolerance=None, progress_bar=False
     ):
@@ -3977,7 +4115,7 @@ class DataSetFilters:
 
         # extracts only in float32
         if subgrid.n_points:
-            if self.points.dtype is not np.dtype('float32'):
+            if self.points.dtype != np.dtype('float32'):
                 ind = subgrid.point_data['vtkOriginalPointIds']
                 subgrid.points = self.points[ind]
 
@@ -4617,7 +4755,7 @@ class DataSetFilters:
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
         _update_alg(alg, progress_bar, 'Shrinking Mesh')
-        output = pyvista.wrap(alg.GetOutput())
+        output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
         return output

@@ -1473,6 +1473,33 @@ def download_frog(load=True):  # pragma: no cover
     return _download_and_read('froggy/frog.mhd', load=load)
 
 
+def download_chest(load=True):  # pragma: no cover
+    """Download chest dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_chest()
+    >>> dataset.plot(cpos="xy")
+
+    See :ref:`volume_rendering_example` for an example using
+    this dataset.
+
+    """
+    return _download_and_read('MetaIO/ChestCT-SHORT.mha', load=load)
+
+
 def download_prostate(load=True):  # pragma: no cover
     """Download prostate dataset.
 
@@ -3563,3 +3590,119 @@ def download_lucy(load=True):  # pragma: no cover
 
     """
     return _download_and_read('lucy.ply', load=load)
+
+
+def download_can(partial=False):  # pragma: no cover
+    """Download the can dataset mesh.
+
+    Original downloaded from Testing/Data/FileSeriesat from paraview.org. Used
+    for testing hdf files.
+
+    Parameters
+    ----------
+    partial : bool, optional
+        Load part of the dataset. Defaults to to ``False`` and
+        filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData
+        The example ParaView can DataSet.
+
+    Examples
+    --------
+    Plot the can dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_can()
+    >>> dataset.plot(scalars='VEL', smooth_shading=True)
+
+    """
+    can_0 = _download_and_read('hdf/can_0.hdf')
+    if partial:
+        return can_0
+
+    return pyvista.merge(
+        [
+            can_0,
+            _download_and_read('hdf/can_1.hdf'),
+            _download_and_read('hdf/can_2.hdf'),
+        ]
+    )
+
+
+def download_cgns_structured(load=True):  # pragma: no cover
+    """Download the structured CGNS dataset mesh.
+
+    Originally downloaded from `CFD General Notation System Example Files
+    <https://cgns.github.io/CGNSFiles.html>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        Structured, 12 block, 3-D constricting channel, with example use of
+        Family_t for BCs (ADF type). If ``load`` is ``False``, then the path of the
+        example CGNS file is returned.
+
+    Examples
+    --------
+    Plot the example CGNS dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_cgns_structured()
+    >>> dataset[0].plot(scalars='Density')
+
+    """
+    filename, _ = _download_file('cgns/sqnz_s.adf.cgns')
+    if not load:
+        return filename
+    return pyvista.get_reader(filename).read()
+
+
+def download_cgns_multi(load=True):  # pragma: no cover
+    """Download a multielement airfoil with a cell centered solution.
+
+    Originally downloaded from `CFD General Notation System Example Files
+    <https://cgns.github.io/CGNSFiles.html>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        Structured, 4 blocks, 2D (2 planes in third dimension) multielement
+        airfoil, with cell centered solution. If ``load`` is ``False``, then the path of the
+        example CGNS file is returned.
+
+    Examples
+    --------
+    Plot the airfoil dataset. Merge the multi-block and then plot the airfoil's
+    ``"ViscosityEddy"``. Convert the cell data to point data as in this
+    dataset, the solution is stored within the cells.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_cgns_multi()
+    >>> ugrid = dataset.combine()
+    >>> ugrid = ugrid = ugrid.cell_data_to_point_data()
+    >>> ugrid.plot(
+    ...     cmap='bwr', scalars='ViscosityEddy', zoom=4, cpos='xz', show_scalar_bar=False,
+    ... )
+
+    """
+    filename, _ = _download_file('cgns/multi.cgns')
+    if not load:
+        return filename
+    return pyvista.get_reader(filename).read()

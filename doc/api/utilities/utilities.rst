@@ -80,7 +80,6 @@ Miscellaneous
    :toctree: _autosummary
 
    color_like
-   parse_color
    start_xvfb
 
 VTK Version Information

@@ -34,8 +34,10 @@ if 'PYVISTA_PLOT_THEME' in os.environ:
 ID_TYPE = _get_vtk_id_type()
 
 # determine if using at least vtk 5.0.0
-if vtk_version_info.major < 5:
-    raise RuntimeError('VTK version must be 5.0 or greater.')
+if vtk_version_info.major < 5:  # pragma: no cover
+    from pyvista.core.errors import VTKVersionError
+
+    raise VTKVersionError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)

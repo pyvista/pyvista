@@ -9,43 +9,23 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
 
-      - name: Install style requirements
-        run: |
-          pip install -r requirements_style.txt --disable-pip-version-check
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      - name: Code Linting and Spelling Check
-        run: |
-          make stylecheck
-
-  staticcheck:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Install style requirements
-        run: |
-          pip install -r requirements_static.txt --disable-pip-version-check
-
-      - name: Static code check
-        run: |
-          make mypy
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 
   docstringcheck:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.9

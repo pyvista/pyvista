@@ -1281,13 +1281,13 @@ class DefaultTheme(_ThemeConfig):
         * ``'ipyvtklink'`` : Render remotely and stream the
           resulting VTK images back to the client.  Supports all VTK
           methods, but suffers from lag due to remote rendering.
-          Requires that a virtual framebuffer be setup when displaying
+          Requires that a virtual framebuffer be set up when displaying
           on a headless server.  Must have ``ipyvtklink`` installed.
 
         * ``'panel'`` : Convert the VTK render window to a vtkjs
           object and then visualize that within jupyterlab. Supports
           most VTK objects.  Requires that a virtual framebuffer be
-          setup when displaying on a headless server.  Must have
+          set up when displaying on a headless server.  Must have
           ``panel`` installed.
 
         * ``'ipygany'`` : Convert all the meshes into ``ipygany``
@@ -1304,7 +1304,7 @@ class DefaultTheme(_ThemeConfig):
 
         * ``'static'`` : Display a single static image within the
           JupyterLab environment.  Still requires that a virtual
-          framebuffer be setup when displaying on a headless server,
+          framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
         * ``'none'`` : Do not display any plots within jupyterlab,

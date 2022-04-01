@@ -355,7 +355,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
         Examples
         --------
-        Setup a brush with a texture.
+        Set up a brush with a texture.
 
         >>> import pyvista
         >>> from pyvista import examples
@@ -388,7 +388,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
         Examples
         --------
-        Setup a brush with a texture.
+        Set up a brush with a texture.
 
         >>> import pyvista
         >>> from pyvista import examples

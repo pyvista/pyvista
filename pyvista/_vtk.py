@@ -12,6 +12,7 @@ the entire library.
 # Checking for VTK9 here even though 8.2 contains vtkmodules.  There
 # are enough idiosyncrasies to VTK 8.2, and supporting it would lead
 # to obscure code.
+
 try:
     from vtkmodules.vtkCommonCore import vtkVersion
 
@@ -142,6 +143,7 @@ if VTK9:
         vtkPlaneCollection,
         vtkPlanes,
         vtkPointLocator,
+        vtkPointSet,
         vtkPolyData,
         vtkPolyLine,
         vtkPolyPlane,
@@ -340,6 +342,7 @@ if VTK9:
     )
     from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
         vtkButtonWidget,
@@ -385,6 +388,7 @@ if VTK9:
         vtkActor,
         vtkActor2D,
         vtkCamera,
+        vtkCellPicker,
         vtkColorTransferFunction,
         vtkCoordinate,
         vtkDataSetMapper,
@@ -398,6 +402,7 @@ if VTK9:
         vtkPolyDataMapper2D,
         vtkPropAssembly,
         vtkProperty,
+        vtkPropPicker,
         vtkRenderedAreaPicker,
         vtkRenderer,
         vtkRenderWindow,
@@ -472,6 +477,18 @@ if VTK9:
 
         return vtkSegYReader()
 
+    def lazy_vtkHDFReader():
+        """Lazy import of the vtkHDFReader."""
+        from vtkmodules.vtkIOHDF import vtkHDFReader
+
+        return vtkHDFReader()
+
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        from vtkmodules.vtkIOCGNSReader import vtkCGNSReader
+
+        return vtkCGNSReader()
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
@@ -514,6 +531,10 @@ else:  # pragma: no cover
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
 
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
+
     class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
@@ -550,6 +571,15 @@ else:  # pragma: no cover
 
             raise VTKVersionError('Charts requires VTK v9 or newer')
 
+    class vtkHDFReader:  # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkHDFReader requires VTK v9 or newer')
+
 
 # lazy import as this was added in 9.1.0
 def lazy_vtkCameraOrientationWidget():
@@ -557,5 +587,7 @@ def lazy_vtkCameraOrientationWidget():
     try:
         from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
     except ImportError:  # pragma: no cover
-        raise ImportError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+        from pyvista.core.errors import VTKVersionError
+
+        raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
     return vtkCameraOrientationWidget()

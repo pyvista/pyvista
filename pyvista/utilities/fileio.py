@@ -34,6 +34,7 @@ READERS = {
     '.img': _vtk.vtkDICOMImageReader,
     '.jpeg': _vtk.vtkJPEGReader,
     '.jpg': _vtk.vtkJPEGReader,
+    '.mha': _vtk.vtkMetaImageReader,
     '.mhd': _vtk.vtkMetaImageReader,
     '.nrrd': _vtk.vtkNrrdReader,
     '.nhdr': _vtk.vtkNrrdReader,
@@ -79,6 +80,19 @@ if VTK_MAJOR >= 8 and VTK_MINOR >= 2:
         pass
 
 
+if VTK_MAJOR >= 9 and VTK_MINOR >= 0:
+    try:
+        READERS['.hdf'] = _vtk.lazy_vtkHDFReader
+    except AttributeError:  # pragma: no cover
+        pass
+
+if VTK_MAJOR >= 9 and VTK_MINOR >= 1:
+    try:
+        READERS['.cgns'] = _vtk.lazy_vtkCGNSReader
+    except AttributeError:  # pragma: no cover
+        pass
+
+
 def _get_ext_force(filename, force_ext=None):
     if force_ext:
         return str(force_ext).lower()
@@ -113,7 +127,7 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
-def standard_reader_routine(reader, filename, attrs=None):
+def standard_reader_routine(reader, filename, attrs=None, progress_bar=False):
     """Use a given reader in the common VTK reading pipeline routine.
 
     The reader must come from the ``READERS`` mapping.
@@ -132,7 +146,12 @@ def standard_reader_routine(reader, filename, attrs=None):
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
+    progress_bar : bool, optional
+        Optionally show a progress bar.
+
     """
+    from pyvista.core.filters import _update_alg  # avoid circular import
+
     observer = pyvista.utilities.errors.Observer()
     observer.observe(reader)
 
@@ -154,8 +173,18 @@ def standard_reader_routine(reader, filename, attrs=None):
             attr(*args)
         else:
             attr()
+
     # Perform the read
-    reader.Update()
+    if filename:
+        msg = f"Reading {os.path.basename(filename)}"
+    else:
+        msg = "Reading file"
+
+    _update_alg(
+        reader,
+        progress_bar=progress_bar,
+        message=msg,
+    )
 
     # Check reader for errors
     if observer.has_event_occurred():
@@ -169,7 +198,7 @@ def standard_reader_routine(reader, filename, attrs=None):
     return data
 
 
-def read_legacy(filename):
+def read_legacy(filename, progress_bar=False):
     """Use VTK's legacy reader to read a file.
 
     This uses ``vtk.vtkDataSetReader`` to read the data.
@@ -178,6 +207,9 @@ def read_legacy(filename):
     ----------
     filename : str
         The string path to the file to read.
+
+    progress_bar : bool, optional
+        Optionally show a progress bar. Default ``False``.
 
     Returns
     -------
@@ -212,13 +244,13 @@ def read_legacy(filename):
     reader.ReadAllTensorsOn()
 
     # Perform the read
-    output = standard_reader_routine(reader, None)
+    output = standard_reader_routine(reader, None, progress_bar=progress_bar)
     if output is None:
-        raise RuntimeError('No output when using VTKs legacy reader')
+        raise RuntimeError('No output when using VTKs legacy reader.')
     return output
 
 
-def read(filename, attrs=None, force_ext=None, file_format=None):
+def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=False):
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
@@ -254,6 +286,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     * ``'.img'``
     * ``'.jpeg'``
     * ``'.jpg'``
+    * ``'.mha'``
     * ``'.mhd'``
     * ``'.nrrd'``
     * ``'.nhdr'``
@@ -309,6 +342,10 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     file_format : str, optional
         Format of file to read with meshio.
 
+    progress_bar : bool, optional
+        Optionally show a progress bar. Default ``False``. Ignored when using
+        ``meshio``.
+
     Returns
     -------
     pyvista.DataSet
@@ -356,17 +393,17 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     # From the extension, decide which reader to use
     if attrs is not None:
         reader = get_vtk_reader(filename, force_ext=ext)
-        return standard_reader_routine(reader, filename, attrs=attrs)
+        return standard_reader_routine(reader, filename, attrs=attrs, progress_bar=progress_bar)
     elif ext in ['.e', '.exo']:
         return read_exodus(filename)
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
-        return read_legacy(filename)
+        return read_legacy(filename, progress_bar=progress_bar)
     else:
         # Attempt find a reader in the readers mapping
         try:
             reader = get_vtk_reader(filename, force_ext=ext)
-            return standard_reader_routine(reader, filename)
+            return standard_reader_routine(reader, filename, progress_bar=progress_bar)
         except KeyError:
             # Don't fall back to meshio if using `force_ext`, which is really
             # just intended to be used with the native PyVista readers
@@ -389,7 +426,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     raise IOError("This file was not able to be automatically read by pyvista.")
 
 
-def read_texture(filename, attrs=None):
+def read_texture(filename, attrs=None, progress_bar=False):
     """Load a texture from an image file.
 
     Parameters
@@ -402,6 +439,9 @@ def read_texture(filename, attrs=None):
         dictionary are the attribute/method names and values are the
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
+
+    progress_bar : bool, optional
+        Optionally show a progress bar.
 
     Returns
     -------
@@ -426,7 +466,7 @@ def read_texture(filename, attrs=None):
     try:
         # initialize the reader using the extension to find it
         reader = get_vtk_reader(filename)
-        image = standard_reader_routine(reader, filename, attrs=attrs)
+        image = standard_reader_routine(reader, filename, attrs=attrs, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError("Problem reading the image with VTK.")
         return pyvista.Texture(image)
@@ -527,7 +567,7 @@ def read_exodus(
     return pyvista.wrap(reader.GetOutput())
 
 
-def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
+def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress_bar=False):
     """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
 
     Parameters
@@ -549,6 +589,9 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
         dictionary are the attribute/method names and values are the
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
+
+    progress_bar : bool, optional
+        Optionally show a progress bar.
 
     Returns
     -------
@@ -585,7 +628,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
     attrs = {} if not attrs else attrs
     attrs['SetAutoDetectFormat'] = auto_detect
 
-    return standard_reader_routine(reader, filename=None, attrs=attrs)
+    return standard_reader_routine(reader, filename=None, attrs=attrs, progress_bar=progress_bar)
 
 
 def from_meshio(mesh):

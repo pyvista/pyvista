@@ -105,4 +105,4 @@ Finally, check that your render window is using NVIDIA by running
     GL_ARB_bindless_texture
 
 If you get ``display id not set``, then your environment is likely not
-setup correctly.
+set up correctly.

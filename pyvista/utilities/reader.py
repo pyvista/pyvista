@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import os
-from typing import Any
+from typing import Any, List
 from xml.etree import ElementTree
 
 import pyvista
@@ -18,6 +18,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | File Extension | Class                                       |
     +================+=============================================+
+    | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
+    +----------------+---------------------------------------------+
     | ``.case``      | :class:`pyvista.EnSightReader`              |
     +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
@@ -94,7 +96,7 @@ def get_reader(filename):
     try:
         Reader = CLASS_READERS[ext]
     except KeyError:
-        raise ValueError(f"{ext} not supported")
+        raise ValueError(f"`pyvista.get_reader` does not support a file with the {ext} extension")
 
     return Reader(filename)
 
@@ -120,10 +122,29 @@ class BaseReader:
         self._reader = self._class_reader()
         self.filename = filename
         self._set_filename(filename)
+        self._progress_bar = False
+        self._progress_msg = None
 
     def __repr__(self):
         """Representation of a Reader object."""
         return f"{self.__class__.__name__}('{self.filename}')"
+
+    def show_progress(self, msg=None):
+        """Show a progress bar.
+
+        Parameters
+        ----------
+        msg : str, optional
+            Progress bar message. Defaults to "Reading <file base name>"
+        """
+        self._progress_bar = True
+        if msg is None:
+            msg = f"Reading {os.path.basename(self.filename)}"
+        self._progress_msg = msg
+
+    def hide_progress(self):
+        """Hide the progress bar."""
+        self._progress_bar = False
 
     @property
     def reader(self):
@@ -131,10 +152,11 @@ class BaseReader:
 
         Returns
         -------
-        A vtk Reader object
+        pyvista.BaseReader
+            An instance of the Reader object.
 
         """
-        if self._reader is None:
+        if self._reader is None:  # pragma: no cover
             raise NotImplementedError
         return self._reader
 
@@ -154,14 +176,12 @@ class BaseReader:
         pyvista.DataSet
             PyVista Dataset.
         """
-        self._update()
+        from pyvista.core.filters import _update_alg  # avoid circular import
+
+        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         data._post_file_load_processing()
         return data
-
-    def _update(self):
-        """Update reader."""
-        self.reader.Update()
 
     def _update_information(self):
         self.reader.UpdateInformation()
@@ -211,7 +231,7 @@ class PointCellDataSelection:
 
         Returns
         -------
-        list[int]
+        list[str]
 
         """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
@@ -335,9 +355,7 @@ class PointCellDataSelection:
             Whether reading the cell array is enabled.
 
         """
-        if self.reader.GetCellArrayStatus(name):
-            return True
-        return False
+        return bool(self.reader.GetCellArrayStatus(name))
 
     def enable_all_cell_arrays(self):
         """Enable all cell arrays."""
@@ -980,6 +998,305 @@ class Plot3DMetaReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
+class CGNSReader(BaseReader, PointCellDataSelection):
+    """CGNS Reader for .cgns files.
+
+    Creates a multi-block dataset and reads unstructured grids and structured
+    meshes from binary files stored in CGNS file format, with data stored at
+    the nodes, cells or faces.
+
+    By default, all point and cell arrays are loaded as well as the boundary
+    patch. This varies from VTK's defaults. For more details, see
+    `vtkCGNSReader <https://vtk.org/doc/nightly/html/classvtkCGNSReader.html>`_
+
+    Examples
+    --------
+    Load a CGNS file.  All arrays are loaded by default.
+
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_cgns_multi(load=False)
+    >>> reader = pyvista.get_reader(filename)
+    >>> reader.load_boundary_patch = False
+    >>> ds = reader.read()
+    >>> ds[0][0].cell_data
+    pyvista DataSetAttributes
+    Association     : CELL
+    Active Scalars  : None
+    Active Vectors  : Momentum
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays :
+        Density                 float64  (2928,)
+        Momentum                float64  (2928, 3)            VECTORS
+        EnergyStagnationDensity float64  (2928,)
+        ViscosityEddy           float64  (2928,)
+        TurbulentDistance       float64  (2928,)
+        TurbulentSANuTilde      float64  (2928,)
+
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
+
+    def __init__(self, filename: str):
+        """Initialize CGNSReader with filename."""
+        super().__init__(filename)
+        self.enable_all_point_arrays()
+        self.enable_all_cell_arrays()
+        self.load_boundary_patch = True
+
+    @property
+    def distribute_blocks(self) -> bool:
+        """Distribute each block in each zone across ranks.
+
+        To make the reader disregard the piece request and read all blocks in the
+        zone, set this to ``False``. The default is ``True``.
+
+        Returns
+        -------
+        bool
+            If ``True``, distribute each block in each zone across ranks.
+
+        Examples
+        --------
+        Disable distributing blocks.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.distribute_blocks = False
+        >>> reader.distribute_blocks
+        False
+
+        """
+        return bool(self._reader.GetDistributeBlocks())
+
+    @distribute_blocks.setter
+    def distribute_blocks(self, value: str):
+        self._reader.SetDistributeBlocks(value)
+
+    def base_array_status(self, name: str) -> bool:
+        """Get status of base array with name.
+
+        Parameters
+        ----------
+        name : str
+            Base array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the base array is enabled.
+
+        """
+        return bool(self.reader.GetBaseArrayStatus(name))
+
+    @property
+    def base_array_names(self):
+        """Return the list of all base array names.
+
+        Returns
+        -------
+        list[int]
+
+        """
+        return [self.reader.GetBaseArrayName(i) for i in range(self.number_base_arrays)]
+
+    @property
+    def number_base_arrays(self) -> int:
+        """Return the number of base arrays.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfBaseArrays()
+
+    def enable_all_bases(self):
+        """Enable reading all bases.
+
+        By default only the 0th base is read.
+
+        Examples
+        --------
+        Read all bases.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.enable_all_bases()
+        """
+        self._reader.EnableAllBases()
+
+    def disable_all_bases(self):
+        """Disable reading all bases.
+
+        By default only the 0th base is read.
+
+        Examples
+        --------
+        Disable reading all bases.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.disable_all_bases()
+        """
+        self._reader.DisableAllBases()
+
+    def family_array_status(self, name) -> bool:
+        """Get status of family array with name.
+
+        Parameters
+        ----------
+        name : str
+            Family array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the family array is enabled.
+
+        """
+        return bool(self.reader.GetFamilyArrayStatus(name))
+
+    @property
+    def family_array_names(self) -> List[str]:
+        """Return the list of all family array names.
+
+        Returns
+        -------
+        list[str]
+
+        """
+        return [self.reader.GetFamilyArrayName(i) for i in range(self.number_family_arrays)]
+
+    @property
+    def number_family_arrays(self) -> int:
+        """Return the number of face arrays.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfFamilyArrays()
+
+    def enable_all_families(self):
+        """Enable reading all families.
+
+        By default only the 0th family is read.
+
+        Examples
+        --------
+        Read all bases.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.enable_all_families()
+        """
+        self._reader.EnableAllFamilies()
+
+    def disable_all_families(self):
+        """Disable reading all families.
+
+        Examples
+        --------
+        Disable reading all bases.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.disable_all_families()
+        """
+        self._reader.DisableAllFamilies()
+
+    @property
+    def unsteady_pattern(self) -> bool:
+        """Return or set using an unsteady pattern.
+
+        When set to ``True`` (default is ``False``), the reader will try to
+        determine to determine FlowSolution_t nodes to read with a pattern
+        matching This can be useful for unsteady solutions when
+        FlowSolutionPointers are not reliable.
+
+        Examples
+        --------
+        Set reading the unsteady pattern to ``True``.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.unsteady_pattern = True
+        >>> reader.unsteady_pattern
+        True
+
+        """
+        return self._reader.GetUseUnsteadyPattern()
+
+    @unsteady_pattern.setter
+    def unsteady_pattern(self, enabled: bool):
+        self._reader.SetUseUnsteadyPattern(bool(enabled))
+
+    @property
+    def vector_3d(self) -> bool:
+        """Return or set adding an empty dimension to vectors in case of 2D solutions.
+
+        Examples
+        --------
+        Set adding an empty physical dimension to vectors to ``True``.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.vector_3d = True
+        >>> reader.vector_3d
+        True
+
+        """
+        return self._reader.GetUse3DVector()
+
+    @vector_3d.setter
+    def vector_3d(self, enabled: bool):
+        self._reader.SetUse3DVector(bool(enabled))
+
+    @property
+    def load_boundary_patch(self) -> bool:
+        """Return or set loading boundary patches.
+
+        Notes
+        -----
+        VTK default is ``False``, but PyVista uses ``True``.
+
+        Examples
+        --------
+        Enable loading boundary patches .
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cgns_multi(load=False)
+        >>> reader = pyvista.get_reader(filename)
+        >>> reader.load_boundary_patch = True
+        >>> reader.load_boundary_patch
+        True
+
+        """
+        return self._reader.GetLoadBndPatch()
+
+    @load_boundary_patch.setter
+    def load_boundary_patch(self, enabled: bool):
+        self._reader.SetLoadBndPatch(bool(enabled))
+
+
 class BinaryMarchingCubesReader(BaseReader):
     """BinaryMarchingCubes Reader for .tri files.
 
@@ -1048,7 +1365,7 @@ class PVDReader(BaseReader, TimeReader):
         """Return the PVDReader.
 
         .. note::
-            This Reader does not have an uderlying vtk Reader.
+            This Reader does not have an underlying vtk Reader.
 
         """
         return self
@@ -1111,10 +1428,6 @@ class PVDReader(BaseReader, TimeReader):
         if self.datasets is None:
             self._parse_file()
 
-    def _update(self):  # pragma: no cover
-        """Unused in PVDReader."""
-        pass
-
     def _parse_file(self):
         """Parse PVD file."""
         if self.filename is None:
@@ -1167,6 +1480,7 @@ class PVDReader(BaseReader, TimeReader):
 
 CLASS_READERS = {
     # Standard dataset readers:
+    '.cgns': CGNSReader,
     '.vti': XMLImageDataReader,
     '.pvti': XMLPImageDataReader,
     '.vtr': XMLRectilinearGridReader,

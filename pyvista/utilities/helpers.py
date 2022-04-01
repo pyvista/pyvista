@@ -156,7 +156,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     if arr is None:
         return
     if isinstance(arr, np.ndarray):
-        if arr.dtype is np.dtype('O'):
+        if arr.dtype == np.dtype('O'):
             arr = arr.astype('|S')
         arr = np.ascontiguousarray(arr)
         if arr.dtype.type in (np.str_, np.bytes_):
