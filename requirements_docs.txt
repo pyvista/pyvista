@@ -15,7 +15,7 @@ mypy==0.942
 numpydoc==1.2.1
 osmnx==1.1.2
 panel==0.12.7
-param==1.12.0  # due to panel bug
+param==1.12.1  # due to panel bug
 pydata-sphinx-theme==0.8.1
 pypandoc==1.7.4
 pytest-sphinx==0.4.0
