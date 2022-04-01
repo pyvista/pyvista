@@ -23,6 +23,7 @@ Reader Classes
    :toctree: _autosummary
    :template: custom-class-template.rst
 
+    
     XMLImageDataReader
     XMLPImageDataReader
     XMLRectilinearGridReader
@@ -32,6 +33,7 @@ Reader Classes
     XMLPolyDataReader
     XMLStructuredGridReader
     XMLMultiBlockDataReader
+    CGNSReader
     PVDReader
     EnSightReader
     OpenFOAMReader
