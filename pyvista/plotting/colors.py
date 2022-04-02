@@ -875,6 +875,16 @@ class Color:
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
 
+    def __getitem__(self, item):
+        """Support indexing for backward compatibility."""
+        if item < 0 or item > 3:
+            raise IndexError("Colors have only 4 channels.")
+        return self.float_rgba[item]
+
+    def __iter__(self):
+        """Support iterable for backward compatibility."""
+        return iter(self.float_rgba)
+
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
         kwargs = f"hex={self.hex_rgba!r}"
