@@ -466,12 +466,7 @@ created the following will occur:
 7.  When the branch is deemed as stable for public release, the PR will
     be merged to main and the ``main`` branch will be tagged with a
     ``MAJOR.MINOR.0`` release. The release branch will not be deleted.
-    Tag the release with:
-
-    .. code:: bash
-
-       git tag MAJOR.MINOR.0
-       git push origin --tags
+    Tag the release with the same way with :ref:`_patch_release_steps`.
 
 8.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
@@ -494,6 +489,8 @@ created the following will occur:
 11. Announce the new release in the PyVista Slack workspace and
     celebrate!
 
+.. _patch_release_steps:
+
 Patch Release Steps
 ^^^^^^^^^^^^^^^^^^^
 
@@ -511,8 +508,8 @@ should not wait until a minor release. The steps for a patch release
 
 3. When approved, merge with the release branch, but not ``main`` as
    there is no reason to increment the version of the ``main`` branch.
-   Then create a tag from the release branch with the applicable version
-   number (see above for the correct steps).
+   Then tag is created from version number in ``__version__.py``
+   (see above for the correct steps).
 
 4. If deemed necessary, create a release notes page. Also, open the PR
    from conda and follow the directions in step 10 in the minor release

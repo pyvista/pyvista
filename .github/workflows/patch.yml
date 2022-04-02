@@ -1,0 +1,19 @@
+name: patch
+on:
+ pull_request:
+   branches:
+     - release/**
+   types:
+     - closed
+jobs:
+ main:
+   runs-on: ubuntu-latest
+   if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'patch/')
+   steps:
+     - uses: actions/checkout@v2
+     - run: git fetch origin ${{ github.event.pull_request.head.ref }}
+     - run: git checkout ${{ github.event.pull_request.head.ref }}
+     - run: git pull origin main
+     - run: git tag `python -c "import pyvista as pv; print(pv.__version__)"`
+     - run: git push origin `python -c "import pyvista as pv; print(pv.__version__)"`
+
