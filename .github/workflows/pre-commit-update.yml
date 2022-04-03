@@ -30,4 +30,7 @@ jobs:
           branch: ci/update-pre-commit-hooks
           title: Update pre-commit hooks
           commit-message: "update pre-commit hooks"
+          labels: |
+            dependencies
+            maintenance
           body: Update versions of pre-commit hooks to latest version.
