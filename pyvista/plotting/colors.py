@@ -452,12 +452,14 @@ class Color:
     """
 
     # Supported names for each color channel.
-    CHANNEL_NAMES = [
-        {'red', 'r'},  # 0
-        {'green', 'g'},  # 1
-        {'blue', 'b'},  # 2
-        {'alpha', 'a', 'opacity'},  # 3
-    ]
+    CHANNEL_NAMES = tuple(
+        [
+            {'red', 'r'},  # 0
+            {'green', 'g'},  # 1
+            {'blue', 'b'},  # 2
+            {'alpha', 'a', 'opacity'},  # 3
+        ]
+    )
 
     def __init__(
         self,
@@ -884,12 +886,15 @@ class Color:
 
     def __getitem__(self, item):
         """Support indexing the float RGBA representation for backward compatibility."""
-        for i, cnames in enumerate(self.CHANNEL_NAMES):
-            if item in cnames:
-                item = i
-        if item < 0 or item > 3:
-            raise IndexError("Colors have only 4 channels.")
-        return self.float_rgba[item]
+        if isinstance(item, (str, int, np.integer)):
+            for i, cnames in enumerate(self.CHANNEL_NAMES):
+                if item in cnames:
+                    item = i
+            if item < 0 or item > 3:
+                raise IndexError("Colors have only 4 channels.")
+            return self.float_rgba[item]
+        else:
+            raise TypeError("Invalid index specified, only strings and integers are supported.")
 
     def __iter__(self):
         """Support iteration over the float RGBA representation for backward compatibility."""
