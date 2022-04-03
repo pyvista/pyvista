@@ -1,4 +1,5 @@
 """ test pyvista.utilities """
+import itertools
 import os
 import pathlib
 import pickle
@@ -679,6 +680,7 @@ def test_color():
         (0, 0),
         "#hh0000",
         "invalid_name",
+        {"invalid_name": 100},
     )
     invalid_opacities = (275, -50, 2.4, -1.2, "#zz")
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
@@ -703,6 +705,10 @@ def test_color():
     # Check hex
     for h_prefix in h_prefixes:
         assert pyvista.Color(h_prefix + h) == i_rgba
+    # Check dict
+    for channels in itertools.product(*pyvista.Color.CHANNEL_NAMES):
+        dct = dict(zip(channels, i_rgba))
+        assert pyvista.Color(dct) == i_rgba
     # Check opacity
     for opacity in (i_opacity, f_opacity, h_opacity):
         # No opacity in color provided => use opacity
@@ -731,6 +737,12 @@ def test_color():
     # Check sRGB conversion
     assert pyvista.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
     assert pyvista.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
+    # Check iteration and indexing
+    c = pyvista.Color(i_rgba)
+    assert all(ci == fi for ci, fi in zip(c, f_rgba))
+    for i, cnames in enumerate(pyvista.Color.CHANNEL_NAMES):
+        assert c[i] == f_rgba[i]
+        assert all(c[i] == c[cname] for cname in cnames)
 
 
 def test_convert_array():
