@@ -22,6 +22,7 @@ from .xvfb import start_xvfb
 from .reader import (
     get_reader,
     BaseReader,
+    CGNSReader,
     PointCellDataSelection,
     XMLImageDataReader,
     XMLPImageDataReader,
