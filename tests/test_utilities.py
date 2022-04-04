@@ -743,6 +743,12 @@ def test_color():
     for i, cnames in enumerate(pyvista.Color.CHANNEL_NAMES):
         assert c[i] == f_rgba[i]
         assert all(c[i] == c[cname] for cname in cnames)
+    with pytest.raises(TypeError):
+        c[None]  # Invalid index type
+    with pytest.raises(ValueError):
+        c["invalid_name"]  # Invalid string index
+    with pytest.raises(IndexError):
+        c[4]  # Invalid integer index
 
 
 def test_convert_array():
