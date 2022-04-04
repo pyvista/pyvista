@@ -489,6 +489,7 @@ def test_read_hdf():
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.CGNSReader)
     assert "CGNS" in str(reader)
     reader.show_progress()
     assert reader._progress_bar is True
