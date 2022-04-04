@@ -884,7 +884,7 @@ class Color:
 
     def __getitem__(self, item):
         """Support indexing the float RGBA representation for backward compatibility."""
-        if not isinstance(item, (str, int, np.integer)):
+        if not isinstance(item, (str, slice, int, np.integer)):
             raise TypeError("Invalid index specified, only strings and integers are supported.")
         if isinstance(item, str):
             for i, cnames in enumerate(self.CHANNEL_NAMES):
@@ -893,8 +893,6 @@ class Color:
                     break
             else:
                 raise ValueError(f"Invalid string index {item!r}.")
-        if not 0 <= item < 4:
-            raise IndexError("Colors have only 4 channels.")
         return self.float_rgba[item]
 
     def __iter__(self):
