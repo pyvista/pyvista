@@ -127,9 +127,9 @@ Overview of Features
 * Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
 .. _ipyvtklink: https://github.com/Kitware/ipyvtklink
-.. _Widgets: https://docs.pyvista.org/plotting/widgets.html
-.. _Filters: https://docs.pyvista.org/core/filters.html
-.. _Plotting: https://docs.pyvista.org/plotting/index.html
+.. _Widgets: https://docs.pyvista.org/api/plotting/index.html#widget-api
+.. _Filters: https://docs.pyvista.org/api/core/filters.html
+.. _Plotting: https://docs.pyvista.org/api/plotting/index.html
 .. _meshio: https://github.com/nschloe/meshio
 
 
