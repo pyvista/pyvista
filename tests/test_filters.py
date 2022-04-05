@@ -1689,6 +1689,27 @@ def test_image_dilate_erode_erosion():
     )
 
 
+def test_image_dilate_erode_cell_data_specified():
+    point_data = np.zeros((10, 10, 10))
+    cell_data = np.zeros((9, 9, 9))
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    with pytest.raises(ValueError):
+        volume_smoothed = volume.image_dilate_erode(scalars='cell_data')
+
+
+def test_image_dilate_erode_cell_data_active():
+    point_data = np.zeros((10, 10, 10))
+    cell_data = np.zeros((9, 9, 9))
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    volume.set_active_scalars('cell_data')
+    with pytest.raises(ValueError):
+        volume_smoothed = volume.image_dilate_erode()
+
+
 def test_image_threshold_output_type():
     threshold = 10  # 'random' value
     volume = examples.load_uniform()
