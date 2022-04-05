@@ -16,7 +16,9 @@ class UniformGridFilters(DataSetFilters):
     def gaussian_smooth(
         self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False
     ):
-        """Smooth the data with a Gaussian kernel. Only supported for point data.
+        """Smooth the data with a Gaussian kernel.
+
+        Only supported for point data.
 
         Parameters
         ----------
@@ -65,9 +67,11 @@ class UniformGridFilters(DataSetFilters):
     def median_smooth(
         self, kernel_size=(3, 3, 3), scalars=None, preference='points', progress_bar=False
     ):
-        """Smooth data using a median filter. Warning: applying this filter to
-        cell data will send the output to a new point array with the same name,
-        overwriting any existing point data array with the same name.
+        """Smooth data using a median filter.
+
+        Warning: applying this filter to cell data will send the output to a
+        new point array with the same name, overwriting any existing point data
+        array with the same name.
 
         Parameters
         ----------
@@ -172,10 +176,11 @@ class UniformGridFilters(DataSetFilters):
         erode_value=0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        preference='points',
         progress_bar=False,
     ):
         """Dilates one value and erodes another.
+
+        Only supported for point data.
 
         ``image_dilate_erode`` will dilate one value and erode another. It uses
         an elliptical footprint, and only erodes/dilates on the boundary of the
@@ -238,8 +243,12 @@ class UniformGridFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         if scalars is None:
             field, scalars = self.active_scalars_info
+            if field.value == 1:
+                raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference=preference)
+            field = self.get_array_association(scalars, preference='point')
+            if field.value == 1:
+                raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -267,6 +276,10 @@ class UniformGridFilters(DataSetFilters):
 
         If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
         If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
+
+        Warning: applying this filter to cell data will send the output to a
+        new point array with the same name, overwriting any existing point data
+        array with the same name.
 
         Parameters
         ----------
