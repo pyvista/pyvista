@@ -202,11 +202,6 @@ class UniformGridFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        preference : str, optional
-            When scalars are specified, this is the preferred array
-            type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``.
-
         progress_bar : bool, optional
             Display a progress bar to indicate progress. Default ``False``.
 
