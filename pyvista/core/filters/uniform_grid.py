@@ -65,7 +65,9 @@ class UniformGridFilters(DataSetFilters):
     def median_smooth(
         self, kernel_size=(3, 3, 3), scalars=None, preference='points', progress_bar=False
     ):
-        """Smooth data using a median filter.
+        """Smooth data using a median filter. Warning: applying this filter to
+        cell data will send the output to a new point array with the same name,
+        overwriting any existing point data array with the same name.
 
         Parameters
         ----------
