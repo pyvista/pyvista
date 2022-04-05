@@ -1458,3 +1458,54 @@ def cubemap(path='', prefix='', ext='.jpg'):
         texture.SetInputDataObject(i, flip.GetOutput())
 
     return texture
+
+
+def set_default_active_vectors(mesh) -> None:
+    """Set a default vectors on mesh, if not already set.
+
+    If an active vector already exists, no changes are made.
+
+    If an active vectors does not exist, it checks for possibly cell
+    or point arrays with shape ``(n, 3)``.  If only one exists, then
+    it is set as the active vectors.  If none or more than one exists,
+    then a ValueError is raised.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to get the array from.
+
+    Raises
+    ------
+    ValueError
+        If zero or more than one vector-like arrays exist.
+
+    """
+    if mesh.active_vectors_name is not None:
+        return
+
+    point_data = mesh.point_data
+    cell_data = mesh.cell_data
+
+    possible_vectors_point = [
+        name for name, value in point_data.items() if value.ndim != 2 or value.shape[1] == 3
+    ]
+    possible_vectors_cell = [
+        name for name, value in cell_data.items() if value.ndim != 2 or value.shape[1] == 3
+    ]
+
+    possible_vectors = possible_vectors_point + possible_vectors_cell
+    n_possible_vectors = len(possible_vectors_point) + len(possible_vectors_cell)
+
+    if n_possible_vectors == 1:
+        if len(possible_vectors_point) == 1:
+            mesh.set_active_vectors(possible_vectors_point[0], preference='point')
+        else:
+            mesh.set_active_vectors(possible_vectors_cell[0], preference='cell')
+    elif n_possible_vectors < 1:
+        raise ValueError("No vector-like data available.")
+    elif n_possible_vectors > 1:
+        raise ValueError(
+            f"Multiple vector-like data available: {possible_vectors}.\n"
+            "Set one as active using DataSet.set_active_vectors(name)"
+        )
