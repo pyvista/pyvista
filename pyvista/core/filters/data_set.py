@@ -3202,6 +3202,9 @@ class DataSetFilters:
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
+        elif vectors is None:
+            pyvista.set_default_active_vectors(self)
+
         if max_time is None:
             max_velocity = self.get_data_range()[-1]
             max_time = 4.0 * self.GetLength() / max_velocity
