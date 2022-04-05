@@ -14,9 +14,9 @@ class UniformGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
     def gaussian_smooth(
-        self, radius_factor=1.5, std_dev=2.0, scalars=None, preference='points', progress_bar=False
+        self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False
     ):
-        """Smooth the data with a Gaussian kernel.
+        """Smooth the data with a Gaussian kernel. Only supported for point data.
 
         Parameters
         ----------
@@ -28,11 +28,6 @@ class UniformGridFilters(DataSetFilters):
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
-
-        preference : str, optional
-            When scalars is specified, this is the preferred array
-            type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -47,8 +42,12 @@ class UniformGridFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         if scalars is None:
             field, scalars = self.active_scalars_info
+            if field.value == 1:
+                raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference=preference)
+            field = self.get_array_association(scalars, preference='point')
+            if field.value == 1:
+                raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
