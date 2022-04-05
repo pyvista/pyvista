@@ -13,9 +13,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 class UniformGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(
-        self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False
-    ):
+    def gaussian_smooth(self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False):
         """Smooth the data with a Gaussian kernel.
 
         Only supported for point data.
