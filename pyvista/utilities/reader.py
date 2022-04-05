@@ -1223,7 +1223,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         """Return or set using an unsteady pattern.
 
         When set to ``True`` (default is ``False``), the reader will try to
-        determine to determine FlowSolution_t nodes to read with a pattern
+        determine FlowSolution_t nodes to read with a pattern
         matching This can be useful for unsteady solutions when
         FlowSolutionPointers are not reliable.
 
