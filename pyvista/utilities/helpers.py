@@ -1488,10 +1488,10 @@ def set_default_active_vectors(mesh) -> None:
     cell_data = mesh.cell_data
 
     possible_vectors_point = [
-        name for name, value in point_data.items() if value.ndim != 2 or value.shape[1] == 3
+        name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
     ]
     possible_vectors_cell = [
-        name for name, value in cell_data.items() if value.ndim != 2 or value.shape[1] == 3
+        name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
     ]
 
     possible_vectors = possible_vectors_point + possible_vectors_cell
