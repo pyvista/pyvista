@@ -227,7 +227,6 @@ To do this, create a ``build_wheels.sh`` with the following contents in the
     # cleanup wheel
     rm -rf wheelhouse
     auditwheel repair dist/*.whl
-    cp wheelhouse/vtk*.whl /io/wheels
 
 This script can then be called with:
 
@@ -238,8 +237,7 @@ This script can then be called with:
            --rm -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 \
            /io/build_wheels.sh $PYTHON_VERSION
 
-You should end up with a ``vtk-*.whl`` in the same directory as
-``build_wheels.sh``.
+You should end up with a ``build/wheelhouse/vtk-*.whl``.
 
 .. note::
    To build the EGL version of the wheel, follow the directions in the
