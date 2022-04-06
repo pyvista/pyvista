@@ -1991,6 +1991,8 @@ class DataSetFilters:
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
+        elif isinstance(orient, bool) and orient:
+            pyvista.set_default_active_vectors(self)
 
         if scale and orient:
             if (
