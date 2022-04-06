@@ -2002,6 +2002,7 @@ class DataSetFilters:
                 warnings.warn(
                     f"{err}\nIt is unclear which one to use. orient will be set to False."
                 )
+                orient = False
 
         if scale and orient:
             if (
