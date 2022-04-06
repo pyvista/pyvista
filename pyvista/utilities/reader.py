@@ -1016,7 +1016,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_cgns_multi(load=False)
-    >>> reader = pyvista.get_reader(filename)
+    >>> reader = pyvista.CGNSReader(filename)
     >>> reader.load_boundary_patch = False
     >>> ds = reader.read()
     >>> ds[0][0].cell_data
@@ -1064,7 +1064,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.distribute_blocks = False
         >>> reader.distribute_blocks
         False
@@ -1126,7 +1126,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.enable_all_bases()
         """
         self._reader.EnableAllBases()
@@ -1143,7 +1143,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.disable_all_bases()
         """
         self._reader.DisableAllBases()
@@ -1198,7 +1198,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.enable_all_families()
         """
         self._reader.EnableAllFamilies()
@@ -1213,7 +1213,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.disable_all_families()
         """
         self._reader.DisableAllFamilies()
@@ -1223,7 +1223,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         """Return or set using an unsteady pattern.
 
         When set to ``True`` (default is ``False``), the reader will try to
-        determine to determine FlowSolution_t nodes to read with a pattern
+        determine FlowSolution_t nodes to read with a pattern
         matching This can be useful for unsteady solutions when
         FlowSolutionPointers are not reliable.
 
@@ -1234,7 +1234,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.unsteady_pattern = True
         >>> reader.unsteady_pattern
         True
@@ -1257,7 +1257,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.vector_3d = True
         >>> reader.vector_3d
         True
@@ -1284,7 +1284,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
-        >>> reader = pyvista.get_reader(filename)
+        >>> reader = pyvista.CGNSReader(filename)
         >>> reader.load_boundary_patch = True
         >>> reader.load_boundary_patch
         True
