@@ -1070,10 +1070,10 @@ class Renderer(_vtk.vtkRenderer):
         bounds : list or tuple, optional
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
-            
+
         bounds_range : list or tuple, optional
             Bounds that can be used to separate the physical bounds of the mesh
-            and the values of the bounds shown on the axes. In the form 
+            and the values of the bounds shown on the axes. In the form
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
@@ -1272,7 +1272,7 @@ class Renderer(_vtk.vtkRenderer):
         else:
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
-        
+
         # update the values of range of each axis
         if isinstance(bounds_range, (list, tuple)):
             if len(bounds_range) == 6:
@@ -1280,7 +1280,9 @@ class Renderer(_vtk.vtkRenderer):
                 cube_axes_actor.SetYAxisRange(bounds_range[2], bounds_range[3])
                 cube_axes_actor.SetZAxisRange(bounds_range[4], bounds_range[5])
             else:
-                raise ValueError('bounds_range must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple')
+                raise ValueError(
+                    'bounds_range must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple'
+                )
 
         # show or hide axes
         cube_axes_actor.SetXAxisVisibility(show_xaxis)
