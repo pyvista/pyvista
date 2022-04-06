@@ -224,3 +224,11 @@ def test_set_default_active_vectors():
     with pytest.raises(ValueError):
         pyvista.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
+    mesh.clear_data()
+
+    # Raises if multiple vector-like data in cell and point
+    mesh["vec_data1"] = np.ones((mesh.n_points, 3))
+    mesh["vec_data2"] = np.ones((mesh.n_cells, 3))
+    with pytest.raises(ValueError):
+        pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name is None
