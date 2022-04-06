@@ -2299,6 +2299,7 @@ class DataSetFilters:
 
         """
         if vectors is None:
+            pyvista.set_default_active_vectors(self)
             field, vectors = self.active_vectors_info
         arr = get_array(self, vectors, preference='point')
         field = get_array_association(self, vectors, preference='point')
