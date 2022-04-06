@@ -451,6 +451,14 @@ class Color:
 
     """
 
+    # Supported names for each color channel.
+    CHANNEL_NAMES = (
+        {'red', 'r'},  # 0
+        {'green', 'g'},  # 1
+        {'blue', 'b'},  # 2
+        {'alpha', 'a', 'opacity'},  # 3
+    )
+
     def __init__(
         self,
         color: Optional[color_like] = None,
@@ -588,11 +596,10 @@ class Color:
     def _from_dict(self, dct):
         """Construct color from an RGB(A) dictionary."""
         # Get any of the keys associated with each color channel (or None).
-        r = next((dct[key] for key in {'r', 'red'} if key in dct), None)
-        g = next((dct[key] for key in {'g', 'green'} if key in dct), None)
-        b = next((dct[key] for key in {'b', 'blue'} if key in dct), None)
-        a = next((dct[key] for key in {'a', 'alpha', 'opacity'} if key in dct), None)
-        self._from_rgba([r, g, b, a])
+        rgba = [
+            next((dct[key] for key in cnames if key in dct), None) for cnames in self.CHANNEL_NAMES
+        ]
+        self._from_rgba(rgba)
 
     def _from_hex(self, h):
         """Construct color from a hex string."""
@@ -874,6 +881,23 @@ class Color:
     def __hash__(self):  # pragma: no cover
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
+
+    def __getitem__(self, item):
+        """Support indexing the float RGBA representation for backward compatibility."""
+        if not isinstance(item, (str, slice, int, np.integer)):
+            raise TypeError("Invalid index specified, only strings and integers are supported.")
+        if isinstance(item, str):
+            for i, cnames in enumerate(self.CHANNEL_NAMES):
+                if item in cnames:
+                    item = i
+                    break
+            else:
+                raise ValueError(f"Invalid string index {item!r}.")
+        return self.float_rgba[item]
+
+    def __iter__(self):
+        """Support iteration over the float RGBA representation for backward compatibility."""
+        return iter(self.float_rgba)
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""

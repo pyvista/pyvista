@@ -32,6 +32,7 @@ Reader Classes
     XMLPolyDataReader
     XMLStructuredGridReader
     XMLMultiBlockDataReader
+    CGNSReader
     PVDReader
     EnSightReader
     OpenFOAMReader
