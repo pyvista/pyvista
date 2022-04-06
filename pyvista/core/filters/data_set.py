@@ -3401,6 +3401,8 @@ class DataSetFilters:
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
+        elif vectors is None:
+            pyvista.set_default_active_vectors(self)
 
         loop_angle = loop_angle * np.pi / 180
 
