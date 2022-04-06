@@ -9,6 +9,7 @@ import pyvista
 from pyvista import FieldAssociation, _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
+from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.utilities import (
     NORMALS,
     abstract_class,
@@ -1992,7 +1993,15 @@ class DataSetFilters:
             dataset.active_vectors_name = orient
             orient = True
         elif isinstance(orient, bool) and orient:
-            pyvista.set_default_active_vectors(self)
+            try:
+                pyvista.set_default_active_vectors(self)
+            except MissingDataError:
+                warnings.warn("No vector-like data to use for orient. orient will be set to False.")
+                orient = False
+            except AmbiguousDataError as err:
+                warnings.warn(
+                    f"{err}\nIt is unclear which one to use. orient will be set to False."
+                )
 
         if scale and orient:
             if (

@@ -16,6 +16,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.errors import AmbiguousDataError, MissingDataError
 
 from . import transformations
 from .fileio import from_meshio
@@ -1475,10 +1476,12 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     mesh : pyvista.DataSet
         Dataset to set default active vectors.
 
-    Raises
+     Raises
     ------
-    ValueError
-        If zero or more than one vector-like arrays exist.
+    MissingDataError
+        If no vector-like arrays exist.
+    AmbiguousDataError
+        If more than one vector-like arrays exist.
 
     """
     if mesh.active_vectors_name is not None:
@@ -1503,9 +1506,9 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
         else:
             mesh.set_active_vectors(possible_vectors_cell[0], preference='cell')
     elif n_possible_vectors < 1:
-        raise ValueError("No vector-like data available.")
+        raise MissingDataError("No vector-like data available.")
     elif n_possible_vectors > 1:
-        raise ValueError(
+        raise AmbiguousDataError(
             f"Multiple vector-like data available: {possible_vectors}.\n"
             "Set one as active using DataSet.set_active_vectors(name)"
         )
