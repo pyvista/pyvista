@@ -1460,7 +1460,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
     return texture
 
 
-def set_default_active_vectors(mesh) -> None:
+def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     """Set a default vectors on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
@@ -1473,7 +1473,7 @@ def set_default_active_vectors(mesh) -> None:
     Parameters
     ----------
     mesh : pyvista.DataSet
-        Dataset to get the array from.
+        Dataset to set default active vectors.
 
     Raises
     ------
