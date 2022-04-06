@@ -1280,7 +1280,7 @@ class Renderer(_vtk.vtkRenderer):
                 cube_axes_actor.SetYAxisRange(bounds_range[2], bounds_range[3])
                 cube_axes_actor.SetZAxisRange(bounds_range[4], bounds_range[5])
             else:
-                raise ValueError("bounds_range must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple")
+                raise ValueError('bounds_range must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple')
 
         # show or hide axes
         cube_axes_actor.SetXAxisVisibility(show_xaxis)
