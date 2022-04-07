@@ -39,7 +39,7 @@ grid.plot()
 grid.plot_curvature(clim=[-1, 1])
 
 ###############################################################################
-# Generating a structured grid is a one liner in this module, and the points
+# Generating a structured grid is a one-liner in this module, and the points
 # from the resulting surface can be accessed as a NumPy array:
 
 grid.points

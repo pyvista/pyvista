@@ -497,7 +497,7 @@ class ScalarBars:
             if vertical is True or vertical is None:
                 rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
             else:
-                # y position determined emperically
+                # y position determined empirically
                 y = -position_y / 2 - height - scalar_bar.GetPosition()[1]
                 rep.GetPositionCoordinate().SetValue(width, y)
                 rep.GetPosition2Coordinate().SetValue(height, width)
