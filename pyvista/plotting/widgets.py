@@ -1231,7 +1231,7 @@ class WidgetHelper:
 
         continuous : bool, optional
             If this is enabled (default is ``False``), use the continuous
-            interval ``[minimum cell scalar, maxmimum cell scalar]``
+            interval ``[minimum cell scalar, maximum cell scalar]``
             to intersect the threshold bound, rather than the set of
             discrete scalar values from the vertices.
 

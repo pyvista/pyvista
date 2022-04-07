@@ -660,7 +660,7 @@ class Light(vtkLight):
         degrees then there is no angular dependence.
 
         If the light's cone angle is increased to 90 degrees or above,
-        its actor (if previousy shown) is automatically hidden.
+        its actor (if previously shown) is automatically hidden.
 
         Examples
         --------

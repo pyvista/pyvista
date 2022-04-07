@@ -5069,7 +5069,7 @@ class Plotter(BasePlotter):
                 )
                 auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
-        #       as if a user presed the close button, then it destroys the
+        #       as if a user pressed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
         #       kernel if code here tries to access that renderer.
         #       See issues #135 and #186 for insight before editing the
