@@ -1476,7 +1476,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     mesh : pyvista.DataSet
         Dataset to set default active vectors.
 
-     Raises
+    Raises
     ------
     MissingDataError
         If no vector-like arrays exist.
