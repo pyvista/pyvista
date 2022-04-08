@@ -1480,6 +1480,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     ------
     MissingDataError
         If no vector-like arrays exist.
+
     AmbiguousDataError
         If more than one vector-like arrays exist.
 
@@ -1498,13 +1499,14 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     ]
 
     possible_vectors = possible_vectors_point + possible_vectors_cell
-    n_possible_vectors = len(possible_vectors_point) + len(possible_vectors_cell)
+    n_possible_vectors = len(possible_vectors)
 
     if n_possible_vectors == 1:
         if len(possible_vectors_point) == 1:
-            mesh.set_active_vectors(possible_vectors_point[0], preference='point')
+            preference = 'point'
         else:
-            mesh.set_active_vectors(possible_vectors_cell[0], preference='cell')
+            preference = 'cell'
+        mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
         raise MissingDataError("No vector-like data available.")
     elif n_possible_vectors > 1:
