@@ -1510,6 +1510,8 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
         raise MissingDataError("No vector-like data available.")
     elif n_possible_vectors > 1:
         raise AmbiguousDataError(
-            f"Multiple vector-like data available: {possible_vectors}.\n"
-            "Set one as active using DataSet.set_active_vectors(name)"
+            "Multiple vector-like data available\n"
+            f"cell data: {possible_vectors_cell}.\n"
+            f"point data: {possible_vectors_point}.\n"
+            "Set one as active using DataSet.set_active_vectors(name, preference=type)"
         )
