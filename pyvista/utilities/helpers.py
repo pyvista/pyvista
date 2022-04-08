@@ -1462,14 +1462,13 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
 
 def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
-    """Set a default vectors on mesh, if not already set.
+    """Set a default vectors array on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
 
     If an active vectors does not exist, it checks for possibly cell
     or point arrays with shape ``(n, 3)``.  If only one exists, then
-    it is set as the active vectors.  If none or more than one exists,
-    then a ValueError is raised.
+    it is set as the active vectors.  Otherwise, an error is raised.
 
     Parameters
     ----------
