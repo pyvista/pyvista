@@ -1276,7 +1276,7 @@ class Renderer(_vtk.vtkRenderer):
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
 
-        # update the values of range of each axis
+        # update the range values of each axis
         if isinstance(axes_range, (collections.abc.Sequence, np.ndarray)):
             if len(axes_range) == 6:
                 cube_axes_actor.SetXAxisRange(axes_range[0], axes_range[1])
