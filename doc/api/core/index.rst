@@ -49,3 +49,4 @@ PyVista has the following mesh types:
    camera
    lights
    helpers
+   misc
