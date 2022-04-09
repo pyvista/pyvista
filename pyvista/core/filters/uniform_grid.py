@@ -229,8 +229,6 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Dilates one value and erodes another.
 
-        Only supported for point data.
-
         ``image_dilate_erode`` will dilate one value and erode another. It uses
         an elliptical footprint, and only erodes/dilates on the boundary of the
         two values. The filter is restricted to the X, Y, and Z axes for now.
@@ -260,6 +258,12 @@ class UniformGridFilters(DataSetFilters):
         -------
         pyvista.UniformGrid
             Dataset that has been dilated/eroded on the boundary of the specified scalars.
+
+        Notes
+        -----
+        This filter only supports point data. Consider converting any cell
+        data to point data using the :func:`DataSet.cell_data_to_point_data`
+        filter to convert ny cell data to point data.
 
         Examples
         --------
