@@ -1032,7 +1032,7 @@ class Renderer(_vtk.vtkRenderer):
         self,
         mesh=None,
         bounds=None,
-        bounds_range=None,
+        axes_range=None,
         show_xaxis=True,
         show_yaxis=True,
         show_zaxis=True,
@@ -1071,7 +1071,7 @@ class Renderer(_vtk.vtkRenderer):
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
 
-        bounds_range : list or tuple, optional
+        axes_range : list, tuple, or np.ndarray, optional
             Bounds that can be used to separate the physical bounds of the mesh
             and the values of the bounds shown on the axes. In the form
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
@@ -1255,6 +1255,9 @@ class Renderer(_vtk.vtkRenderer):
         # set bounds
         if bounds is None:
             bounds = np.array(mesh.GetBounds())
+        else:
+            bounds = np.array(bounds, dtype=np.float_)
+
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
                 cushion = (
@@ -1274,14 +1277,14 @@ class Renderer(_vtk.vtkRenderer):
         cube_axes_actor.SetBounds(bounds)
 
         # update the values of range of each axis
-        if isinstance(bounds_range, (list, tuple)):
-            if len(bounds_range) == 6:
-                cube_axes_actor.SetXAxisRange(bounds_range[0], bounds_range[1])
-                cube_axes_actor.SetYAxisRange(bounds_range[2], bounds_range[3])
-                cube_axes_actor.SetZAxisRange(bounds_range[4], bounds_range[5])
+        if isinstance(axes_range, (collections.abc.Sequence, np.ndarray)):
+            if len(axes_range) == 6:
+                cube_axes_actor.SetXAxisRange(axes_range[0], axes_range[1])
+                cube_axes_actor.SetYAxisRange(axes_range[2], axes_range[3])
+                cube_axes_actor.SetZAxisRange(axes_range[4], axes_range[5])
             else:
                 raise ValueError(
-                    'bounds_range must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple'
+                    'axes_range must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple'
                 )
 
         # show or hide axes
