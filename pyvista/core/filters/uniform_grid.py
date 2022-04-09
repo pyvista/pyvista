@@ -16,8 +16,6 @@ class UniformGridFilters(DataSetFilters):
     def gaussian_smooth(self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False):
         """Smooth the data with a Gaussian kernel.
 
-        Only supported for point data.
-
         Parameters
         ----------
         radius_factor : float or iterable, optional
@@ -36,6 +34,31 @@ class UniformGridFilters(DataSetFilters):
         -------
         pyvista.UniformGrid
             Uniform grid with smoothed scalars.
+
+        Notes
+        -----
+        This filter only supports point data. Consider converting any cell
+        data to point data using the :func:`DataSet.cell_data_to_point_data`
+        filter to convert ny cell data to point data.
+
+        Examples
+        --------
+        First, create sample data to smooth. Here, we use
+        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        to create meaningful data.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid.plot(show_scalar_bar=False)
+
+        Next, smooth the sample data.
+
+        >>> smoothed = grid.gaussian_smooth()
+        >>> smoothed.plot(show_scalar_bar=False)
+
+        See :ref:`gaussian_smoothing_example` for a full example using this filter.
 
         """
         alg = _vtk.vtkImageGaussianSmooth()
@@ -67,9 +90,14 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Smooth data using a median filter.
 
-        Warning: applying this filter to cell data will send the output to a
-        new point array with the same name, overwriting any existing point data
-        array with the same name.
+        The Median filter that replaces each pixel with the median value from a
+        rectangular neighborhood around that pixel. Neighborhoods can be no
+        more than 3 dimensional. Setting one axis of the neighborhood
+        kernelSize to 1 changes the filter into a 2D median.
+
+        See `vtkImageMedian3D
+        <https://vtk.org/doc/nightly/html/classvtkImageMedian3D.html#details>`_
+        for more details.
 
         Parameters
         ----------
@@ -94,6 +122,29 @@ class UniformGridFilters(DataSetFilters):
         -------
         pyvista.UniformGrid
             Uniform grid with smoothed scalars.
+
+        Warnings
+        --------
+        Applying this filter to cell data will send the output to a new point
+        array with the same name, overwriting any existing point data array
+        with the same name.
+
+        Examples
+        --------
+        First, create sample data to smooth. Here, we use
+        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        to create meaningful data.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid.plot(show_scalar_bar=False)
+
+        Next, smooth the sample data.
+
+        >>> smoothed = grid.median_smooth(kernel_size=(10, 10, 10))
+        >>> smoothed.plot(show_scalar_bar=False)
 
         """
         alg = _vtk.vtkImageMedian3D()
