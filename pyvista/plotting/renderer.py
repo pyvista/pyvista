@@ -1032,7 +1032,7 @@ class Renderer(_vtk.vtkRenderer):
         self,
         mesh=None,
         bounds=None,
-        axes_range=None,
+        axes_ranges=None,
         show_xaxis=True,
         show_yaxis=True,
         show_zaxis=True,
@@ -1071,7 +1071,7 @@ class Renderer(_vtk.vtkRenderer):
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
 
-        axes_range : list, tuple, or np.ndarray, optional
+        axes_ranges : list, tuple, or np.ndarray, optional
             Bounds that can be used to separate the physical bounds of the mesh
             and the values of the bounds shown on the axes. In the form
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
@@ -1277,15 +1277,18 @@ class Renderer(_vtk.vtkRenderer):
         cube_axes_actor.SetBounds(bounds)
 
         # update the range values of each axis
-        if isinstance(axes_range, (collections.abc.Sequence, np.ndarray)):
-            if len(axes_range) == 6:
-                cube_axes_actor.SetXAxisRange(axes_range[0], axes_range[1])
-                cube_axes_actor.SetYAxisRange(axes_range[2], axes_range[3])
-                cube_axes_actor.SetZAxisRange(axes_range[4], axes_range[5])
+        if axes_ranges is None:
+            axes_ranges = bounds
+        elif isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
+            if len(axes_ranges) == 6:
+                cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
+                cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
+                cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
             else:
                 raise ValueError(
-                    'axes_range must be passed as an [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple'
+                    'axes_ranges must be passed as an [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple'
                 )
+        self.axes_ranges = axes_ranges
 
         # show or hide axes
         cube_axes_actor.SetXAxisVisibility(show_xaxis)
