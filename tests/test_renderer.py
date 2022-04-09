@@ -1,7 +1,7 @@
 import pytest
 
 import pyvista
-from pyvista import _vtk
+import vtk
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
