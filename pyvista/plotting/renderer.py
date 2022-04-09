@@ -1256,7 +1256,7 @@ class Renderer(_vtk.vtkRenderer):
         if bounds is None:
             bounds = np.array(mesh.bounds)
         else:
-            bounds = np.array(bounds, dtype=np.float_)
+            bounds = np.asanyarray(bounds, dtype=np.float_)
 
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
