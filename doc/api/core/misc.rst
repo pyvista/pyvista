@@ -1,7 +1,7 @@
 Miscellaneous
 =============
 
-This micellaneous methods are used to support imaging or data sampling.
+These miscellaneous methods are used to support imaging or data sampling.
 
 .. autosummary::
    :toctree: _autosummary
