@@ -2719,7 +2719,7 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
     """Download the room surface mesh.
 
     This mesh is for demonstrating the difference that depth peeling can
-    provide whenn rendering translucent geometries.
+    provide when rendering translucent geometries.
 
     This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
 

@@ -9,7 +9,7 @@ plotting routines to perform tasks like:
 * Creating animations as GIFs or movie files
 * Showing the edges and nodes of different mesh types
 * Use sophisticated lighting techniques like smooth shading or Eye Dome Lighting
-* Glyph a vector or scalar field on a mesh (place/orient a mesh on anther mesh's nodes and scale/orient based on data values)
+* Glyph a vector or scalar field on a mesh (place/orient a mesh on another mesh's nodes and scale/orient based on data values)
 * Label points in 3D space along side your meshes
 * Creating side-by-side comparisons
 * Making a dataset transparent or using a scalar value to map opacity

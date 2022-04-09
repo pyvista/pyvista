@@ -2483,7 +2483,7 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         tuple(float)
-            The limits of the cell in the X, Y and Z directions respectivelly.
+            The limits of the cell in the X, Y and Z directions respectively.
 
         Examples
         --------
