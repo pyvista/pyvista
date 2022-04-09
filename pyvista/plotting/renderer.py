@@ -1254,7 +1254,7 @@ class Renderer(_vtk.vtkRenderer):
 
         # set bounds
         if bounds is None:
-            bounds = np.array(mesh.GetBounds())
+            bounds = np.array(mesh.bounds)
         else:
             bounds = np.array(bounds, dtype=np.float_)
 
