@@ -39,7 +39,7 @@ class UniformGridFilters(DataSetFilters):
         -----
         This filter only supports point data. Consider converting any cell
         data to point data using the :func:`DataSet.cell_data_to_point_data`
-        filter to convert ny cell data to point data.
+        filter to convert any cell data to point data.
 
         Examples
         --------
