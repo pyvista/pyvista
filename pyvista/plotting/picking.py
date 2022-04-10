@@ -30,6 +30,8 @@ class PickingHelper:
     picked_path = None
     picked_geodesic = None
     picked_horizon = None
+    _picking_left_clicking_observer = None
+    _picking_text = None
 
     def get_pick_position(self):
         """Get the pick position or area.
@@ -183,7 +185,9 @@ class PickingHelper:
                 if left_clicking:
                     show_message += "\nor click to select a dataset under the mouse pointer."
 
-            self.add_text(str(show_message), font_size=font_size, name='_mesh_picking_message')
+            self._picking_text = self.add_text(
+                str(show_message), font_size=font_size, name='_mesh_picking_message'
+            )
 
         if left_clicking:
             self.iren.interactor.AddObserver(
@@ -191,12 +195,11 @@ class PickingHelper:
                 partial(try_callback, _launch_pick_event),
             )
 
-        picker = _vtk.vtkPropPicker()
-        picker.AddObserver(_vtk.vtkCommand.EndPickEvent, end_pick_call_back)
+        self.picker = _vtk.vtkPropPicker()
+        self.picker.AddObserver(_vtk.vtkCommand.EndPickEvent, end_pick_call_back)
         self.enable_trackball_style()
-        self.iren.set_picker(picker)
-
-        return picker
+        self.iren.set_picker(self.picker)
+        return self.picker
 
     def enable_cell_picking(
         self,
@@ -423,7 +426,9 @@ class PickingHelper:
                 show_message = "Press R to toggle selection tool"
                 if not through:
                     show_message += "\nPress P to pick a single cell under the mouse"
-            self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
+            self._picking_text = self.add_text(
+                str(show_message), font_size=font_size, name='_cell_picking_message'
+            )
 
         if start:
             self.iren._style_class.StartSelect()
@@ -471,7 +476,7 @@ class PickingHelper:
         left_clicking=False,
         **kwargs,
     ):
-        """Enable picking of a mesh.
+        """Enable picking of a point on the surface of a mesh.
 
         Parameters
         ----------
@@ -520,6 +525,11 @@ class PickingHelper:
         -------
         vtk.vtkPropPicker
             Property picker.
+
+        Notes
+        -----
+        Picked point can be accessed from :attr:`picked_point
+        <PickingHelper.picked_point>` attribute.
 
         Examples
         --------
@@ -580,7 +590,9 @@ class PickingHelper:
                 if left_clicking:
                     show_message += "\nor click to select a point under the mouse pointer."
 
-            self.add_text(str(show_message), font_size=font_size, name='_surf_picking_message')
+            self._picking_text = self.add_text(
+                str(show_message), font_size=font_size, name='_surf_picking_message'
+            )
 
         return picker
 
@@ -703,7 +715,7 @@ class PickingHelper:
         self.iren.set_picker(point_picker)
 
         if left_clicking:
-            self.iren.interactor.AddObserver(
+            self._picking_left_clicking_observer = self.iren.add_observer(
                 "LeftButtonPressEvent",
                 partial(try_callback, _launch_pick_event),
             )
@@ -714,7 +726,9 @@ class PickingHelper:
                 show_message = "Left-click or press P to pick under the mouse"
             elif show_message is True:
                 show_message = "Press P to pick under the mouse"
-            self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
+            self._picking_text = self.add_text(
+                str(show_message), font_size=font_size, name='_point_picking_message'
+            )
 
     def enable_path_picking(
         self,
@@ -1121,3 +1135,30 @@ class PickingHelper:
                 try_callback(callback, click_point)
 
         self.track_click_position(callback=_the_callback, side="right")
+
+    def disable_picking(self):
+        """Disable any active picking.
+
+        Examples
+        --------
+        Enable and then disable picking.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(center=(1, 0, 0))
+        >>> cube = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(cube)
+        >>> _ = pl.enable_mesh_picking(left_clicking=True)
+        >>> pl.disable_picking()
+
+        """
+        self.picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
+
+        # remove left clicking observer if available
+        self.iren.remove_observer(self._picking_left_clicking_observer)
+        self._picking_left_clicking_observer = None
+
+        # remove any picking text
+        self.remove_actor(self._picking_text)
+        self._picking_text = None
