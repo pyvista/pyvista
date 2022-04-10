@@ -190,7 +190,7 @@ class PickingHelper:
             )
 
         if left_clicking:
-            self.iren.interactor.AddObserver(
+            self._picking_left_clicking_observer = self.iren.interactor.AddObserver(
                 "LeftButtonPressEvent",
                 partial(try_callback, _launch_pick_event),
             )
@@ -578,7 +578,7 @@ class PickingHelper:
         self.iren.set_picker(picker)
 
         if left_clicking:
-            self.iren.interactor.AddObserver(
+            self._picking_left_clicking_observer = self.iren.interactor.AddObserver(
                 "LeftButtonPressEvent",
                 partial(try_callback, _launch_pick_event),
             )
