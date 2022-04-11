@@ -45,9 +45,9 @@ jobs:
         labels: release
     - uses: peter-evans/create-or-update-comment@v2
       if: |
-        not contains(github.event.pull_request.labels.*.name, 'enhancement') &&
-        not contains(github.event.pull_request.labels.*.name, 'documentation') &&
-        not contains(github.event.pull_request.labels.*.name, 'maintenance')
+        !(contains(github.event.pull_request.labels.*.name, 'enhancement')) &&
+        !(contains(github.event.pull_request.labels.*.name, 'documentation')) &&
+        !(contains(github.event.pull_request.labels.*.name, 'maintenance'))
       with:
         issue-number: ${{ github.event.pull_request.number }}
         body: |
