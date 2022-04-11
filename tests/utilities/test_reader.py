@@ -17,7 +17,6 @@ def test_get_reader_fail():
         pyvista.get_reader("not_a_supported_file.no_data")
 
 
-
 def test_xmlimagedatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vti")
     mesh = pyvista.UniformGrid()
@@ -236,9 +235,13 @@ def test_ensightreader_timepoints():
 
 
 def test_dcmreader():
-    pancreas = examples.download_pancreas()
+    filename = examples.download_dicom_stack(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.DICOMReader)
+    assert reader.filename == filename
 
-    assert all([pancreas.n_points, pancreas.n_cells])
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
 
 
 def test_plyreader():
