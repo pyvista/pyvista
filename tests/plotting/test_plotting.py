@@ -198,14 +198,14 @@ def test_import_vrml():
     pl = pyvista.Plotter()
 
     with pytest.raises(FileNotFoundError):
-        pl.import_gltf('not a file')
+        pl.import_vrml('not a file')
 
     pl.import_vrml(filename)
     pl.show(before_close_callback=verify_cache_image)
 
 
 def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.gltf'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.vrml'))
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
