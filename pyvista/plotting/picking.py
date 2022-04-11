@@ -32,6 +32,7 @@ class PickingHelper:
     picked_horizon = None
     _picking_left_clicking_observer = None
     _picking_text = None
+    _picker = None
 
     def get_pick_position(self):
         """Get the pick position or area.
@@ -195,11 +196,11 @@ class PickingHelper:
                 partial(try_callback, _launch_pick_event),
             )
 
-        self.picker = _vtk.vtkPropPicker()
-        self.picker.AddObserver(_vtk.vtkCommand.EndPickEvent, end_pick_call_back)
+        self._picker = _vtk.vtkPropPicker()
+        self._picker.AddObserver(_vtk.vtkCommand.EndPickEvent, end_pick_call_back)
         self.enable_trackball_style()
-        self.iren.set_picker(self.picker)
-        return self.picker
+        self.iren.set_picker(self._picker)
+        return self._picker
 
     def enable_cell_picking(
         self,
@@ -406,19 +407,19 @@ class PickingHelper:
                 self_().picked_cells = picked
             return end_pick_helper(picker, event_id)
 
-        area_picker = _vtk.vtkRenderedAreaPicker()
+        self._picker = _vtk.vtkRenderedAreaPicker()
         if through:
-            area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, through_pick_call_back)
+            self._picker.AddObserver(_vtk.vtkCommand.EndPickEvent, through_pick_call_back)
         else:
             # NOTE: there can be issues with non-triangulated meshes
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
             #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
-            area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
+            self._picker.AddObserver(_vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
-        self.iren.set_picker(area_picker)
+        self.iren.set_picker(self._picker)
 
         # Now add text about cell-selection
         if show_message:
@@ -571,7 +572,7 @@ class PickingHelper:
 
         picker = _vtk.vtkCellPicker()
         picker.SetTolerance(tolerance)
-        self.picker = picker
+        self._picker = picker
         picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
 
         self.enable_trackball_style()
@@ -708,7 +709,7 @@ class PickingHelper:
 
         point_picker = _vtk.vtkPointPicker()
         point_picker.SetTolerance(tolerance)
-        self.picker = point_picker
+        self._picker = point_picker
         point_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
 
         self.enable_trackball_style()
@@ -1153,12 +1154,16 @@ class PickingHelper:
         >>> pl.disable_picking()
 
         """
-        self.picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
+        if self._picker is not None:
+            self._picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
 
         # remove left clicking observer if available
-        self.iren.remove_observer(self._picking_left_clicking_observer)
+        if hasattr(self, 'iren'):
+            if self.iren is not None:
+                self.iren.remove_observer(self._picking_left_clicking_observer)
         self._picking_left_clicking_observer = None
 
         # remove any picking text
-        self.remove_actor(self._picking_text)
+        if hasattr(self, 'renderers'):
+            self.remove_actor(self._picking_text)
         self._picking_text = None
