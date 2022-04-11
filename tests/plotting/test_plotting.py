@@ -193,6 +193,28 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_gltf(filename)
 
 
+def test_import_vrml():
+    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.vrml')
+    pl = pyvista.Plotter()
+
+    with pytest.raises(FileNotFoundError):
+        pl.import_gltf('not a file')
+
+    pl.import_vrml(filename)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.gltf'))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+    pl.add_mesh(airplane)
+    pl.add_mesh(hexbeam)  # to check warning
+    with pytest.warns(UserWarning, match='Plotter contains non-PolyData datasets'):
+        pl.export_vrml(filename)
+
+
 @skip_not_vtk9
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
