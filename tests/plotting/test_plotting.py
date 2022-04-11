@@ -194,13 +194,13 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
 
 
 def test_import_vrml():
-    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.vrml')
     pl = pyvista.Plotter()
 
     with pytest.raises(FileNotFoundError):
         pl.import_vrml('not a file')
 
-    pl.import_vrml(filename)
+    data = examples.vrml.download_teapot()
+    pl.import_vrml(data)
     pl.show(before_close_callback=verify_cache_image)
 
 

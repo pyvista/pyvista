@@ -361,6 +361,39 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if set_camera:
             self.camera_position = 'xy'
 
+    def import_vrml(self, filename):
+        """Import a VRML file into the plotter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the VRML file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sextant_file = examples.vrml.download_sextant()
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_vrml` for a full example using this method.
+
+        """
+
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
+        importer = vtkVRMLImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
     def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
