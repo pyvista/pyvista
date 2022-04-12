@@ -1,9 +1,9 @@
 """Fine-grained control of reading data files."""
-import functools
-import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+import functools
+import os
+from typing import Any, List
 from xml.etree import ElementTree
 
 import pyvista
@@ -19,9 +19,11 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | File Extension | Class                                       |
     +================+=============================================+
+    | ``.case``      | :class:`pyvista.EnSightReader`              |
+    +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
-    | ``.case``      | :class:`pyvista.EnSightReader`              |
+    | ``.dcm``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
@@ -1487,7 +1489,7 @@ class DICOMReader(BaseReader):
     Examples
     --------
     >>> import pyvista as pv
-    >>> filename = examples.download_pancreas(load=False)
+    >>> filename = examples.download_dicom_stack(load=False)
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -1511,8 +1513,9 @@ class DICOMReader(BaseReader):
 
 CLASS_READERS = {
     # Standard dataset readers:
-    '.cgns': CGNSReader,
     '.case': EnSightReader,
+    '.cgns': CGNSReader,
+    '.dcm': DICOMReader,
     '.facet': FacetReader,
     '.foam': OpenFOAMReader,
     '.g': BYUReader,

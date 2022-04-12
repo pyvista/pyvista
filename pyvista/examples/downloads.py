@@ -3760,7 +3760,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
     # Until `pyvista/vtk-data` PR #5 added
     retriever = partial(
         _repo_file_request,
-        os.path.expanduser(r'~\Code\external\vtk-data'),
+        os.path.join(os.environ['USERPROFILE'], r'Code\external\vtk-data'),
         'DICOM_Stack',
     )
     folder, _ = _retrieve_file(retriever, 'DICOM_Stack')
