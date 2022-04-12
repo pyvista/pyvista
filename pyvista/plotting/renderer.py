@@ -1282,7 +1282,7 @@ class Renderer(_vtk.vtkRenderer):
         elif isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
             axes_ranges = np.asanyarray(axes_ranges)
             if not np.issubdtype(axes_ranges.dtype, np.number):
-                raise TypeError(f'input axes_ranges must be a numeric sequence.')
+                raise TypeError('input axes_ranges must be a numeric sequence.')
 
             if axes_ranges.shape == (6,):
                 cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
