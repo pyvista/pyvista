@@ -1256,7 +1256,7 @@ class Renderer(_vtk.vtkRenderer):
         if bounds is None:
             bounds = np.array(mesh.bounds)
         else:
-            bounds = np.asanyarray(bounds, dtype=np.float64)
+            bounds = np.asanyarray(bounds, dtype=float)
 
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
@@ -1276,11 +1276,15 @@ class Renderer(_vtk.vtkRenderer):
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
 
-        # update the range values of each axis
+        # set axes ranges
         if axes_ranges is None:
             axes_ranges = bounds
         elif isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
-            if len(axes_ranges) == 6:
+            axes_ranges = np.asanyarray(axes_ranges)
+            if not np.issubdtype(axes_ranges.dtype, np.number):
+                raise TypeError(f'input axes_ranges must be a numeric sequence.')
+
+            if axes_ranges.shape == (6,):
                 cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
                 cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
                 cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
@@ -1288,6 +1292,9 @@ class Renderer(_vtk.vtkRenderer):
                 raise ValueError(
                     'axes_ranges must be passed as an [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple'
                 )
+        else:
+            raise TypeError('input axes_ranges must be a numeric sequence')
+
         self.axes_ranges = axes_ranges
 
         # show or hide axes

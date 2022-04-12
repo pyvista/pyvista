@@ -8,13 +8,14 @@ from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 def test_show_bounds():
     plotter = pyvista.Plotter()
+    plotter.axes_ranges
     bounds = (0.0, 1.0, 0.0, 1.0, 0.0, 1.0)  # Renderer bounds
     axes_ranges = (0.0, 5.0, 0.0, 5.0, 0.0, 5.0)  # Axes bounds
     plotter.show_bounds(bounds=bounds, axes_ranges=axes_ranges)
     cube_axes_actor = plotter.renderer.cube_axes_actor  # Pull the actor
     assert isinstance(cube_axes_actor, vtk.vtkCubeAxesActor)  # Check type
     assert cube_axes_actor.GetBounds() == bounds  # Check the bounds
-    assert plotter.axes_ranges == axes_ranges  # Check the axes ranges
+    assert all(plotter.axes_ranges == axes_ranges)  # Check the axes ranges
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
