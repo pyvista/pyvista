@@ -9,6 +9,7 @@ import pyvista
 from pyvista import FieldAssociation, _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
+from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.utilities import (
     NORMALS,
     abstract_class,
@@ -1991,6 +1992,17 @@ class DataSetFilters:
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
+        elif isinstance(orient, bool) and orient:
+            try:
+                pyvista.set_default_active_vectors(self)
+            except MissingDataError:
+                warnings.warn("No vector-like data to use for orient. orient will be set to False.")
+                orient = False
+            except AmbiguousDataError as err:
+                warnings.warn(
+                    f"{err}\nIt is unclear which one to use. orient will be set to False."
+                )
+                orient = False
 
         if scale and orient:
             if (
@@ -2288,6 +2300,7 @@ class DataSetFilters:
 
         """
         if vectors is None:
+            pyvista.set_default_active_vectors(self)
             field, vectors = self.active_vectors_info
         arr = get_array(self, vectors, preference='point')
         field = get_array_association(self, vectors, preference='point')
@@ -3202,6 +3215,9 @@ class DataSetFilters:
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
+        elif vectors is None:
+            pyvista.set_default_active_vectors(self)
+
         if max_time is None:
             max_velocity = self.get_data_range()[-1]
             max_time = 4.0 * self.GetLength() / max_velocity
@@ -3386,6 +3402,8 @@ class DataSetFilters:
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
+        elif vectors is None:
+            pyvista.set_default_active_vectors(self)
 
         loop_angle = loop_angle * np.pi / 180
 
