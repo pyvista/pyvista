@@ -1,7 +1,6 @@
 """Fine-grained control of reading data files."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import functools
 import os
 from typing import Any, List
 from xml.etree import ElementTree
