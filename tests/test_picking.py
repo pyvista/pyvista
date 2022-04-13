@@ -126,14 +126,10 @@ def test_enable_surface_picking(sphere, left_clicking):
 
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_disable_picking(sphere, left_clicking):
-    picked = []
-
-    def callback(point):
-        picked.append(point)
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
-    pl.enable_surface_picking(callback=callback, left_clicking=left_clicking)
+    pl.enable_surface_picking(left_clicking=left_clicking)
     pl.disable_picking()
     pl.show(auto_close=False)
 
