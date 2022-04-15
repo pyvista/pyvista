@@ -2237,12 +2237,10 @@ def test_pointset_plot_as_points(pointset):
     pl.show(before_close_callback=verify_cache_image)
 
 
-def test_add_mesh_does_not_deepcopy(sphere):
-    sphere.cell_data['ones'] = np.ones((sphere.n_cells,))
-    ones = sphere.cell_data['ones']
-
+def test_add_mesh_does_not_deepcopy():
+    mesh = examples.load_random_hills()
+    elevation = mesh.point_data['Elevation']
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, scalars='ones')
+    pl.add_mesh(mesh, scalars='Elevation')
     pl.close()
-
-    assert np.shares_memory(ones, sphere.cell_data['ones'])
+    assert np.shares_memory(elevation, mesh.point_data['Elevation'])
