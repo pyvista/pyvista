@@ -631,7 +631,15 @@ def test_glyph(datasets, sphere):
         geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True
     )
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
-    assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+
+    with pytest.warns(Warning):  # tries to orient but no orientation vector available
+        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+
+    sphere_sans_arrays["vec1"] = np.ones((sphere_sans_arrays.n_points, 3))
+    sphere_sans_arrays["vec2"] = np.ones((sphere_sans_arrays.n_points, 3))
+    with pytest.warns(Warning):  # tries to orient but multiple orientation vectors are possible
+        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+
     with pytest.raises(TypeError):
         # wrong type for the glyph
         sphere.glyph(geom=pyvista.StructuredGrid())

@@ -3193,6 +3193,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
+        self.disable_picking()
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         if getattr(self, 'mesh', None) is not None:
