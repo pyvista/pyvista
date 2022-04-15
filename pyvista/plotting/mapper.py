@@ -252,11 +252,11 @@ def make_mapper(mapper_class):
 
             # Scalars interpolation approach
             if use_points:
-                mesh.point_data.set_array(scalars, title, True)
+                mesh.point_data.set_array(scalars, title, deep_copy=False)
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUsePointData()
             elif use_cells:
-                mesh.cell_data.set_array(scalars, title, True)
+                mesh.cell_data.set_array(scalars, title, deep_copy=False)
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUseCellData()
             else:
