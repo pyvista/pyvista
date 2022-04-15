@@ -2235,3 +2235,14 @@ def test_pointset_plot_as_points(pointset):
     pl = pyvista.Plotter()
     pl.add_points(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_add_mesh_does_not_deepcopy(sphere):
+    sphere.cell_data['ones'] = np.ones((sphere.n_cells,))
+    ones = sphere.cell_data['ones']
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='ones')
+    pl.close()
+
+    assert np.shares_memory(ones, sphere.cell_data['ones'])
