@@ -381,5 +381,10 @@ if TEST_DOWNLOADS:
         data = examples.download_pine_roots()
         assert data.n_points
 
+    def test_download_dicom_stack():
+        data = examples.download_dicom_stack()
+        assert isinstance(data, pyvista.UniformGrid)
+        assert all([data.n_points, data.n_cells])
+
 
 # End of download tests

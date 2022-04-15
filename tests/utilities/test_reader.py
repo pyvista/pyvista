@@ -238,19 +238,31 @@ def test_dcmreader():
     folder = examples.download_dicom_stack(load=False)
     reader = pyvista.DICOMReader(folder)  # ``get_reader`` doesn't support folders
     assert isinstance(reader, pyvista.DICOMReader)
-    assert reader.filename == folder  # TODO: Add folder support to ``BaseReader``?
+    assert reader.foldername == folder
 
     mesh = reader.read()
     assert isinstance(mesh, pyvista.UniformGrid)
     assert all([mesh.n_points, mesh.n_cells])
 
-    # Test reading single file
+    # Test reading single file (*.dcm)
     import os
 
     filename = os.path.join(folder, "1-1.dcm")
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.DICOMReader)
     assert reader.filename == filename
+
+    mesh = reader.read()
+    assert isinstance(mesh, pyvista.UniformGrid)
+    assert all([mesh.n_points, mesh.n_cells])
+
+    # Test for errors
+    with pytest.raises(NotImplementedError):
+        reader = pyvista.DICOMReader('dummy/')
+
+    with pytest.warns(UserWarning):
+        path = os.path.join(pyvista.EXAMPLES_PATH, "EnSight")
+        reader = pyvista.DICOMReader(path)
 
 
 def test_plyreader():

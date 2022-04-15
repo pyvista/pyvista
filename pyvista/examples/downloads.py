@@ -88,6 +88,7 @@ def _retrieve_file(retriever, filename):
         the path to the file to use.
     filename : str
         The name of the file.
+
     """
     _check_examples_path()
     # First check if file has already been downloaded
@@ -3730,7 +3731,6 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
 
     References
     ==========
-
         Data Citation
         -------------
 
@@ -3756,10 +3756,10 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
     Examples
     ========
     >>> from pyvista import examples
-    >>> dataset = examples.download_dicom_stack()
-    >>>
+    >>> dicom = examples.download_dicom_stack()
+    >>> dicom.plot()
     """
-    saved_folder, _ = _download_file(filename='DICOM_Stack')
-    if not load:
-        return saved_folder
-    return pyvista.DICOMReader(saved_folder).read()
+    return _download_and_read(
+        os.path.join('DICOM_Stack', 'data.zip'),
+        load=load,
+    )
