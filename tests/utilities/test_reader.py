@@ -238,7 +238,7 @@ def test_dcmreader():
     directory = examples.download_dicom_stack(load=False)
     reader = pyvista.DICOMReader(directory)  # ``get_reader`` doesn't support directories
     assert isinstance(reader, pyvista.DICOMReader)
-    assert reader.directory == directory
+    assert reader._directory == directory
 
     mesh = reader.read()
     assert isinstance(mesh, pyvista.UniformGrid)

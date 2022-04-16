@@ -121,25 +121,38 @@ class BaseReader:
 
     _class_reader: Any = None
 
-    def __init__(self, filename):
-        """Initialize Reader by setting filename."""
+    def __init__(self, path):
+        """Initialize Reader by setting path."""
         self._reader = self._class_reader()
-        self.filename = filename
-        self._set_filename(filename)
+        self._filename = None
         self._progress_bar = False
         self._progress_msg = None
+        self._directory = None
+        self._set_filename_or_directory(path)
 
     def __repr__(self):
         """Representation of a Reader object."""
-        return f"{self.__class__.__name__}('{self.filename}')"
+        if self._filename is not None:
+            return f"{self.__class__.__name__}('{self.filename}')"
+        else:
+            return f"{self.__class__.__name__}('{self.directory}')"
 
     def show_progress(self, msg=None):
-        """Show a progress bar.
+        """Show a progress bar when loading the file.
 
         Parameters
         ----------
         msg : str, optional
-            Progress bar message. Defaults to "Reading <file base name>"
+            Progress bar message. Defaults to ``"Reading <file base name>"``.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.show_progress()
+
         """
         self._progress_bar = True
         if msg is None:
@@ -147,7 +160,17 @@ class BaseReader:
         self._progress_msg = msg
 
     def hide_progress(self):
-        """Hide the progress bar."""
+        """Hide the progress bar when loading the file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.hide_progress()
+
+        """
         self._progress_bar = False
 
     @property
@@ -164,10 +187,26 @@ class BaseReader:
             raise NotImplementedError
         return self._reader
 
+    def _set_filename_or_directory(self, path):
+        """Set filename or directory and update reader."""
+        if os.path.isdir(path):
+            self._set_directory(path)
+        elif os.path.isfile(path):
+            self._set_filename(path)
+        else:
+            raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
+
+    def _set_directory(self, directory):
+        """Set directory and update reader."""
+        self._directory = directory
+        self.reader.SetDirectoryName(directory)
+        self._update_information()
+
     def _set_filename(self, filename):
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
+        self._filename = filename
         self.reader.SetFileName(filename)
         self._update_information()
 
@@ -188,6 +227,16 @@ class BaseReader:
 
     def _update_information(self):
         self.reader.UpdateInformation()
+
+    @property
+    def filename(self) -> str:
+        """Path of the file being read."""
+        return self._filename
+
+    @property
+    def directory(self) -> str:
+        """Path of the directory being read."""
+        return self._directory
 
 
 class PointCellDataSelection:
@@ -593,7 +642,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
-        self.filename = filename
+        self._filename = filename
         self.reader.SetCaseFileName(filename)
         self._update_information()
 
@@ -1356,7 +1405,6 @@ class PVDReader(BaseReader, TimeReader):
     def __init__(self, filename):
         """Initialize PVD file reader."""
         self._reader = None
-        self.filename = filename
         self._directory = None
         self._datasets = []
         self._active_datasets = []
@@ -1410,8 +1458,8 @@ class PVDReader(BaseReader, TimeReader):
 
     def _set_filename(self, filename):
         """Set filename and update reader."""
-        self.filename = filename
-        self._directory = os.path.dirname(filename)
+        self._filename = filename
+        self._directory = os.path.join(os.path.dirname(filename))
         self._datasets = None
         self._active_datasets = None
         self._update_information()
@@ -1516,17 +1564,11 @@ class DICOMReader(BaseReader):
 
     def __init__(self, path: str):
         """Initialize reader from DICOM file (*.dcm) or folder of DICOM files."""
-        self._reader = self._class_reader()
-        self._progress_bar = False
-        self._progress_msg = None
-        self.directory = None
+        super().__init__(path)
 
         if os.path.isfile(path):
-            self.filename = path
             self._set_filename(path)
         elif os.path.isdir(path):
-            self.directory = path
-
             if not os.listdir(path):
                 raise FileNotFoundError(f"No DICOM (*.dcm) files found in directory\n\n{path}")
 
@@ -1541,13 +1583,8 @@ class DICOMReader(BaseReader):
             raise FileNotFoundError(
                 f"{self.__class__.__name__} only accepts a single DICOM file"
                 f" (*.dcm) or a directory containing DICOM files. Path '{path}' is invalid"
-                " or does not exist:\n\n"
+                " or does not exist."
             )
-
-    def _set_directory(self, directory):
-        """Set directory and update reader."""
-        self.reader.SetDirectoryName(directory)
-        self._update_information()
 
 
 CLASS_READERS = {
