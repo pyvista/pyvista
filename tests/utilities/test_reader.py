@@ -234,11 +234,11 @@ def test_ensightreader_timepoints():
 
 
 def test_dcmreader():
-    # Test reading folder (image stack)
-    folder = examples.download_dicom_stack(load=False)
-    reader = pyvista.DICOMReader(folder)  # ``get_reader`` doesn't support folders
+    # Test reading directory (image stack)
+    directory = examples.download_dicom_stack(load=False)
+    reader = pyvista.DICOMReader(directory)  # ``get_reader`` doesn't support directories
     assert isinstance(reader, pyvista.DICOMReader)
-    assert reader.foldername == folder
+    assert reader.directory == directory
 
     mesh = reader.read()
     assert isinstance(mesh, pyvista.UniformGrid)
@@ -247,7 +247,7 @@ def test_dcmreader():
     # Test reading single file (*.dcm)
     import os
 
-    filename = os.path.join(folder, "1-1.dcm")
+    filename = os.path.join(directory, "1-1.dcm")
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.DICOMReader)
     assert reader.filename == filename
@@ -257,7 +257,7 @@ def test_dcmreader():
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test for errors
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(FileNotFoundError):
         reader = pyvista.DICOMReader('dummy/')
 
     with pytest.warns(UserWarning):

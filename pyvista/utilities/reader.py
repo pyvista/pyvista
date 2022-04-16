@@ -1484,27 +1484,32 @@ class PVDReader(BaseReader, TimeReader):
 
 
 class DICOMReader(BaseReader):
-    """DICOM Reader for reading ``*.dcm`` files.
+    """DICOM Reader for reading ``dcm`` files.
 
-    This reader reads single files and folders (DICOM stacks).
+    This reader reads a single file or a path containing a several ``dcm``
+    files (DICOM stack).
 
     Parameters
     ----------
-    path (str):
-        Path to the single DICOM (``*.dcm``) file to be opened or the folder
+    path : str
+        Path to the single DICOM (``dcm``) file to be opened or the directory
         containing a stack of DICOM files.
 
     Raises
     ------
-        NotImplementedError:
-            If ``path`` is not a DICOM file (*.dcm) or a folder containing DICOM files.
+    FileNotFoundError
+        If ``path`` is not a DICOM file (``dcm``) or a directory containing
+        DICOM files.
 
     Examples
     --------
-    >>> import pyvista as pv
+    >>> import pyvista
     >>> from pyvista import examples
-    >>> volume = examples.download_dicom_stack()
-    >>> volume.plot()
+    >>> path = examples.download_dicom_stack(load=False)
+    >>> reader = pyvista.DICOMReader(path)
+    >>> dataset = reader.read()
+    >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
+
     """
 
     _class_reader = _vtk.vtkDICOMImageReader
@@ -1514,34 +1519,34 @@ class DICOMReader(BaseReader):
         self._reader = self._class_reader()
         self._progress_bar = False
         self._progress_msg = None
+        self.directory = None
 
         if os.path.isfile(path):
             self.filename = path
             self._set_filename(path)
         elif os.path.isdir(path):
-            self.foldername = path
+            self.directory = path
 
             if not os.listdir(path):
-                raise FileNotFoundError("No DICOM (*.dcm) files found in folder\n\n" f"{path}")
+                raise FileNotFoundError(f"No DICOM (*.dcm) files found in directory\n\n{path}")
 
             file_types = set(pathlib.Path(file_).suffix for file_ in os.listdir(path))
             file_types.discard('')
 
             if file_types != {".dcm"}:
-                warnings.warn("Non-DICOM (*.dcm) files were found in folder:\n\n" f"{path}")
+                warnings.warn(f"Non-DICOM (*.dcm) files were found in directory:\n\n{path}")
 
-            self._set_foldername(path)
+            self._set_directory(path)
         else:
-            raise NotImplementedError(
+            raise FileNotFoundError(
                 f"{self.__class__.__name__} only accepts a single DICOM file"
-                " (*.dcm) or a folder containing DICOM files. Path is invalid"
+                f" (*.dcm) or a directory containing DICOM files. Path '{path}' is invalid"
                 " or does not exist:\n\n"
-                f"{path}"
             )
 
-    def _set_foldername(self, foldername):
-        """Set foldername and update reader."""
-        self.reader.SetDirectoryName(foldername)
+    def _set_directory(self, directory):
+        """Set directory and update reader."""
+        self.reader.SetDirectoryName(directory)
         self._update_information()
 
 

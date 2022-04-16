@@ -1517,7 +1517,7 @@ def test_plot_compare_four():
     data_a = mesh.contour()
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
-    data_d = mesh.glyph(scale=False)
+    data_d = mesh.glyph(scale=False, orient=False)
     pyvista.plot_compare_four(
         data_a,
         data_b,
