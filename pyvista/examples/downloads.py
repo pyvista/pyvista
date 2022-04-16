@@ -3757,7 +3757,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
     >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
 
     """
-    path = _download_file('DICOM_Stack/data.zip')[0]
+    path, _ = _download_file('DICOM_Stack/data.zip')
     if load:
         reader = pyvista.DICOMReader(path)
         return reader.read()
