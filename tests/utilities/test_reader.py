@@ -1,3 +1,4 @@
+import os
 import platform
 
 import numpy as np
@@ -238,15 +239,13 @@ def test_dcmreader():
     directory = examples.download_dicom_stack(load=False)
     reader = pyvista.DICOMReader(directory)  # ``get_reader`` doesn't support directories
     assert isinstance(reader, pyvista.DICOMReader)
-    assert reader._directory == directory
+    assert reader.directory == directory
 
     mesh = reader.read()
     assert isinstance(mesh, pyvista.UniformGrid)
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test reading single file (*.dcm)
-    import os
-
     filename = os.path.join(directory, "1-1.dcm")
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.DICOMReader)
