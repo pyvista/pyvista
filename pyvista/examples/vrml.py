@@ -2,9 +2,7 @@
 
 from .downloads import _retrieve_file
 
-VRML_SAMPLES_ROOT_URL = (
-    "https://raw.githubusercontent.com/lorensen/VTKExamples/master"
-)
+VRML_SAMPLES_ROOT_URL = "https://raw.githubusercontent.com/lorensen/VTKExamples/master"
 
 
 def _download_file(end_url):
