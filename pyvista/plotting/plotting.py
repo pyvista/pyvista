@@ -381,7 +381,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_vrml` for a full example using this method.
 
         """
-
         filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
             raise FileNotFoundError(f'Unable to locate {filename}')
