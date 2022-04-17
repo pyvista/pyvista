@@ -1131,6 +1131,7 @@ class DataSetFilters:
 
         """
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             _, tscalars = self.active_scalars_info
         else:
             tscalars = scalars
