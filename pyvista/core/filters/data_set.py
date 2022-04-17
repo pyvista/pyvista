@@ -983,6 +983,7 @@ class DataSetFilters:
 
         # set the scalars to threshold on
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
