@@ -1,5 +1,7 @@
 """VRML examples."""
 
+from .downloads import _retrieve_file
+
 VRML_SAMPLES_ROOT_URL = (
     "https://raw.githubusercontent.com/lorensen/VTKExamples/master"
 )
