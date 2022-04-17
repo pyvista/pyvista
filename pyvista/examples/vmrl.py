@@ -1,5 +1,6 @@
 """VRML examples."""
 
+
 def download_teapot():
     """Download the a 2-manifold solid version of the famous teapot example.
 
@@ -20,4 +21,6 @@ def download_teapot():
     >>> pl.show()
 
     """
-    return "https://raw.githubusercontent.com/lorensen/VTKExamples/master/src/Testing/Data/teapot.wrl"
+    return (
+        "https://raw.githubusercontent.com/lorensen/VTKExamples/master/src/Testing/Data/teapot.wrl"
+    )
