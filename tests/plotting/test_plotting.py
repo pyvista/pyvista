@@ -205,7 +205,7 @@ def test_import_vrml():
 
 
 def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.vrml'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.wrl'))
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)

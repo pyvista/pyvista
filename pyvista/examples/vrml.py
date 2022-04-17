@@ -26,10 +26,10 @@ def download_teapot():
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_teapot()
-    >>> pl = pyvista.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
+    >>> vrml_file = examples.vrml.download_teapot() # doctest:+SKIP
+    >>> pl = pyvista.Plotter() # doctest:+SKIP
+    >>> pl.import_vrml(vrml_file) # doctest:+SKIP
+    >>> pl.show() # doctest:+SKIP
 
     """
     return _download_file("src/Testing/Data/teapot.wrl")
