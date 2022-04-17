@@ -1558,6 +1558,7 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = get_array_association(self, scalars, preference=preference)
