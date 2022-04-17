@@ -2230,6 +2230,7 @@ class DataSetFilters:
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         _ = get_array(self, scalars, preference='point', err=True)
 
