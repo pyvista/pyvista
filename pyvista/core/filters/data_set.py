@@ -412,7 +412,9 @@ class DataSetFilters:
 
         alg.SetInputDataObject(self)
         alg.SetValue(value)
-        if scalars is not None:
+        if scalars is None:
+            pyvista.set_default_active_scalars(self)
+        else:
             self.set_active_scalars(scalars)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
