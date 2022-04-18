@@ -1,7 +1,7 @@
 # ### Merge dependabot PRs ###
 # This workflow follows the example from
 # https://github.com/ridedott/merge-me-action and works by default only for PRs
-# created dependabot and will merge them when all checks pass
+# created by dependabot and will merge them when all checks pass
 
 name: Merge me!
 
@@ -11,11 +11,14 @@ on:
       - completed
     workflows:
       - 'Continuous Integration'
-
+permissions:
+  pull-requests: write
+  contents: write
 jobs:
   merge-me:
     name: Merge me!
     runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - name: Merge me!
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
