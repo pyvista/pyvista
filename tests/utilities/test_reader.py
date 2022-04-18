@@ -259,10 +259,6 @@ def test_dcmreader():
     with pytest.raises(FileNotFoundError):
         reader = pyvista.DICOMReader('dummy/')
 
-    with pytest.warns(UserWarning):
-        path = os.path.join(pyvista.EXAMPLES_PATH, "EnSight")
-        reader = pyvista.DICOMReader(path)
-
 
 def test_plyreader():
     filename = examples.spherefile
