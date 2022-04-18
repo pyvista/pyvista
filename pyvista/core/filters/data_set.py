@@ -4065,6 +4065,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
