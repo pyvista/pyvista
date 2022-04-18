@@ -395,9 +395,9 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
         Wrapping this is necessary for us to show an informative error
         message when the VTK version is too old, causing PointSet to be
-        an abstract class. Since we inherit ``vtk.vtkPointSet``'s __new__
-        method, we would otherwise see a generic error about the class
-        being abstract.
+        an abstract class. Since we inherit the ``__new__()`` method of
+        ``vtk.vtkPointSet``, we would otherwise see a generic error about
+        the class being abstract.
 
         """
         if pyvista.vtk_version_info < (9, 1, 0):
