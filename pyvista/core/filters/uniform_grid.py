@@ -382,6 +382,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
