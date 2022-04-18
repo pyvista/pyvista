@@ -64,6 +64,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
