@@ -18,6 +18,12 @@ def test_get_reader_fail():
         pyvista.get_reader("not_a_supported_file.no_data")
 
 
+def test_reader_invalid_file():
+    # cannot use the BaseReader
+    with pytest.raises(FileNotFoundError, match='does not exist'):
+        pyvista.DICOMReader('dummy/')
+
+
 def test_xmlimagedatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vti")
     mesh = pyvista.UniformGrid()
@@ -255,14 +261,6 @@ def test_dcmreader(tmpdir):
     mesh = reader.read()
     assert isinstance(mesh, pyvista.UniformGrid)
     assert all([mesh.n_points, mesh.n_cells])
-
-    # Test for errors
-    with pytest.raises(FileNotFoundError, match='does not exist'):
-        reader = pyvista.DICOMReader('dummy/')
-
-    tmp_path = str(tmpdir)
-    with pytest.raises(FileNotFoundError, match='files found in directory'):
-        reader = pyvista.DICOMReader(tmp_path)
 
 
 def test_plyreader():

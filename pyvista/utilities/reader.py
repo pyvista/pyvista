@@ -2,13 +2,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import os
-import pathlib
 from typing import Any, List
 from xml.etree import ElementTree
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import get_ext, wrap
+from pyvista.utilities import abstract_class, get_ext, wrap
 
 
 def get_reader(filename):
@@ -104,6 +103,7 @@ def get_reader(filename):
     return Reader(filename)
 
 
+@abstract_class
 class BaseReader:
     """The Base Reader class.
 
@@ -1542,14 +1542,10 @@ class DICOMReader(BaseReader):
         Path to the single DICOM (``.dcm``) file to be opened or the directory
         containing a stack of DICOM files.
 
-    Raises
-    ------
-    FileNotFoundError
-        If ``path`` is not a DICOM file (``.dcm``) or a directory containing
-        DICOM files.
-
     Examples
     --------
+    Read a DICOM stack.
+
     >>> import pyvista
     >>> from pyvista import examples
     >>> path = examples.download_dicom_stack(load=False)
@@ -1560,27 +1556,6 @@ class DICOMReader(BaseReader):
     """
 
     _class_reader = _vtk.vtkDICOMImageReader
-
-    def __init__(self, path: str):
-        """Initialize reader from DICOM file (*.dcm) or folder of DICOM files."""
-        super().__init__(path)
-
-        if os.path.isfile(path):
-            self._set_filename(path)
-        elif os.path.isdir(path):
-            if not os.listdir(path):
-                raise FileNotFoundError(f"No DICOM (*.dcm) files found in directory\n\n{path}")
-
-            file_types = set(pathlib.Path(file_).suffix for file_ in os.listdir(path))
-            file_types.discard('')
-
-            self._set_directory(path)
-        else:
-            raise FileNotFoundError(
-                f"{self.__class__.__name__} only accepts a single DICOM file"
-                f" (*.dcm) or a directory containing DICOM files. Path '{path}' is invalid"
-                " or does not exist."
-            )
 
 
 CLASS_READERS = {
