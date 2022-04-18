@@ -3413,6 +3413,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         **kwargs : dict, optional
             See the documentation for ``imageio.get_writer`` for additional kwargs.
 
+        Notes
+        -----
+        Consider using `pygifsicle
+        <https://github.com/LucaCappelletti94/pygifsicle>`_ to reduce the final
+        size of the gif. See `Optimizing a GIF using pygifsicle
+        <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_
+
         Examples
         --------
         Open a gif file, setting the framerate to 8 frames per second and
