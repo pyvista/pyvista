@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import os
 import pathlib
 from typing import Any, List
-import warnings
 from xml.etree import ElementTree
 
 import pyvista
@@ -1532,21 +1531,21 @@ class PVDReader(BaseReader, TimeReader):
 
 
 class DICOMReader(BaseReader):
-    """DICOM Reader for reading ``dcm`` files.
+    """DICOM Reader for reading ``.dcm`` files.
 
-    This reader reads a single file or a path containing a several ``dcm``
+    This reader reads a single file or a path containing a several ``.dcm``
     files (DICOM stack).
 
     Parameters
     ----------
     path : str
-        Path to the single DICOM (``dcm``) file to be opened or the directory
+        Path to the single DICOM (``.dcm``) file to be opened or the directory
         containing a stack of DICOM files.
 
     Raises
     ------
     FileNotFoundError
-        If ``path`` is not a DICOM file (``dcm``) or a directory containing
+        If ``path`` is not a DICOM file (``.dcm``) or a directory containing
         DICOM files.
 
     Examples
@@ -1574,9 +1573,6 @@ class DICOMReader(BaseReader):
 
             file_types = set(pathlib.Path(file_).suffix for file_ in os.listdir(path))
             file_types.discard('')
-
-            if file_types != {".dcm"}:
-                warnings.warn(f"Non-DICOM (*.dcm) files were found in directory:\n\n{path}")
 
             self._set_directory(path)
         else:
