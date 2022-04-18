@@ -406,27 +406,27 @@ def test_openfoamreader_read_data_time_value():
 
     reader.set_active_time_value(0.0)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0., 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0.0, 0.0, 1e-10)
 
     reader.set_active_time_value(0.5)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(1.0)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(1.5)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(2.0)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(2.5)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
 def test_openfoamreader_read_data_time_point():
@@ -434,27 +434,27 @@ def test_openfoamreader_read_data_time_point():
 
     reader.set_active_time_point(0)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0., 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0.0, 0.0, 1e-10)
 
     reader.set_active_time_point(1)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(2)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(3)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(4)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(5)
     data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0., 1e-10)
+    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
 def test_openfoam_cell_to_point_default():
