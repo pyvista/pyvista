@@ -234,10 +234,11 @@ def test_ensightreader_timepoints():
     assert reader.active_time_value == 1.0
 
 
-def test_dcmreader():
+def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
     reader = pyvista.DICOMReader(directory)  # ``get_reader`` doesn't support directories
+    assert directory in str(reader)
     assert isinstance(reader, pyvista.DICOMReader)
     assert reader.directory == directory
 
@@ -256,8 +257,12 @@ def test_dcmreader():
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test for errors
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError, match='does not exist'):
         reader = pyvista.DICOMReader('dummy/')
+
+    tmp_path = str(tmpdir)
+    with pytest.raises(FileNotFoundError, match='files found in directory'):
+        reader = pyvista.DICOMReader(tmp_path)
 
 
 def test_plyreader():
