@@ -11,6 +11,7 @@ import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
+from pyvista.errors import MissingDataError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -1570,7 +1571,7 @@ def test_compute_derivatives():
         derv = mesh.compute_derivative(object)
 
     mesh.point_data.clear()
-    with pytest.raises(TypeError):
+    with pytest.raises(MissingDataError):
         derv = mesh.compute_derivative()
 
 
