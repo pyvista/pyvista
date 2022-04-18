@@ -17,8 +17,8 @@ jobs:
     name: Merge me!
     runs-on: ubuntu-latest
     steps:
+      - name: Merge me!
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        name: Merge me!
         uses: ridedott/merge-me-action@v2
         with:
           # PAT from pyvista-ci-bot using public repo read/write
