@@ -519,7 +519,6 @@ def convert_plotter(pl):
         )
 
     if len(pl.renderers) == 1:
-        # return HBox(children=(convert_renderer(pl.renderers[0]),))
         return convert_renderer(pl.renderers[0])
 
     # otherwise, determine if we can use a grid layout
