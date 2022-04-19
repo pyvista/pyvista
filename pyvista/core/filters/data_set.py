@@ -1984,6 +1984,15 @@ class DataSetFilters:
         if isinstance(scale, str):
             dataset.set_active_scalars(scale, 'cell')
             scale = True
+        elif isinstance(scale, bool) and scale:
+            try:
+                pyvista.set_default_active_scalars(self)
+            except MissingDataError:
+                warnings.warn("No data to use for scale. scale will be set to False.")
+                scale = False
+            except AmbiguousDataError as err:
+                warnings.warn(f"{err}\nIt is unclear which one to use. scale will be set to False.")
+                scale = False
 
         if scale:
             if dataset.active_scalars is not None:
