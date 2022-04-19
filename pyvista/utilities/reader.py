@@ -212,6 +212,7 @@ class BaseReader:
 
     def _set_directory(self, directory):
         """Set directory and update reader."""
+        self._filename = None
         self.__directory = directory
         self.reader.SetDirectoryName(directory)
         self._update_information()
@@ -220,6 +221,7 @@ class BaseReader:
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
+        self.__directory = None
         self._filename = filename
         self.reader.SetFileName(filename)
         self._update_information()
