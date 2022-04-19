@@ -652,10 +652,10 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             raise ValueError(
                 f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
             )
-        self.reader.SetTimeValue(time_value)
+        self.reader.UpdateTimeStep(time_value)
 
     def set_active_time_point(self, time_point):  # noqa: D102
-        self.reader.SetTimeValue(self.time_point_value(time_point))
+        self.reader.UpdateTimeStep(self.time_point_value(time_point))
 
     @property
     def cell_to_point_creation(self):
