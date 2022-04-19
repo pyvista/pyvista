@@ -1,4 +1,5 @@
 """This is a helper module to generate tables that can be included in the documentation."""
+import io
 import os
 import textwrap
 
@@ -36,15 +37,31 @@ class DocTable:
     def generate(cls):
         """Generate this table."""
         assert cls.path is not None, "Subclasses should specify a path."
-        if os.path.exists(cls.path):
-            os.remove(cls.path)
         data = cls.fetch_data()
-        with open(cls.path, "w", encoding="utf-8") as f:
-            f.write(cls.get_header(data))
+
+        with io.StringIO() as fnew:
+            fnew.write(cls.get_header(data))
             for i, row_data in enumerate(data):
                 row = cls.get_row(i, row_data)
                 if row is not None:
-                    f.write(row)
+                    fnew.write(row)
+
+            # if file exists, verify that we have no new content
+            fnew.seek(0)
+            new_txt = fnew.read()
+
+        # determine if existing file needs to be rewritten
+        if os.path.exists(cls.path):
+            with open(cls.path) as fold:
+                orig_txt = fold.read()
+            if orig_txt == new_txt:
+                new_txt = ''
+
+        # write if there is any text to write. This avoids resetting the documentation cache
+        if new_txt:
+            with open(cls.path, 'w') as fout:
+                fout.write(new_txt)
+
         pv.close_all()
 
     @classmethod
@@ -117,7 +134,9 @@ class LineStyleTable(DocTable):
         p.add_chart(chart)
         _, img = p.show(screenshot=True, return_cpos=True)
         # Crop the image and save it
-        p._save_image(img[18:25, 22:85, :], img_path, False)
+        # determine if it's necessary to save the image
+        if pv.compare_images(img[18:25, 22:85, :], img_path):
+            p._save_image(img[18:25, 22:85, :], img_path, False)
 
 
 class MarkerStyleTable(DocTable):
@@ -174,9 +193,9 @@ class MarkerStyleTable(DocTable):
         chart.hide_axes()
         p.add_chart(chart)
         _, img = p.show(screenshot=True, return_cpos=True)
-        # Crop the image and save it
-        # p._save_image(img[18:25, 50:57, :], path, False)  # window_size=[100,50] and marker_size=3
-        p._save_image(img[40:53, 47:60, :], img_path, False)
+        # Crop the image and save it if it is changed
+        if pv.compare_images(img[40:53, 47:60, :], img_path):
+            p._save_image(img[40:53, 47:60, :], img_path, False)
 
 
 class ColorSchemeTable(DocTable):
@@ -244,7 +263,8 @@ class ColorSchemeTable(DocTable):
         p.add_chart(chart)
         _, img = p.show(screenshot=True, return_cpos=True)
         # Crop the image and save it
-        p._save_image(img[34:78, 22:225, :], img_path, False)
+        if pv.compare_images(img[34:78, 22:225, :], img_path):
+            p._save_image(img[34:78, 22:225, :], img_path, False)
         return n_colors
 
 

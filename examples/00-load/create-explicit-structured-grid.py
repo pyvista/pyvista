@@ -41,4 +41,4 @@ if pv._vtk.VTK9:
     dims = np.asarray((ni, nj, nk)) + 1
     grid = pv.ExplicitStructuredGrid(dims, corners)
     grid = grid.compute_connectivity()
-    grid.plot(show_edges=True)
+    grid.plot(show_edges=True, notebook=True)
