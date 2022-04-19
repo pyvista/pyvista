@@ -451,7 +451,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pyvista.Sphere(radius=0.02)
-        >>> pc = pdata.glyph(scale=False, geom=sphere)
+        >>> pc = pdata.glyph(scale=False, geom=sphere, orient=False)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
         ...                 show_scalar_bar=False)
@@ -3383,7 +3383,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(self, filename):
+    def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
         """Open a gif file.
 
         Parameters
@@ -3391,13 +3391,45 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Filename of the gif to open.  Filename must end in ``"gif"``.
 
+        loop : int, optional
+            The number of iterations. Default 0 (meaning loop indefinitely).
+
+        fps : float, optional
+            The number of frames per second. If duration is not given, the
+            duration for each frame is set to 1/fps. Default 10.
+
+        palettesize : int, optional
+            The number of colors to quantize the image to. Is rounded to the
+            nearest power of two. Must be between 2 and 256. Default 256.
+
+        subrectangles : bool, optional
+            If ``True``, will try and optimize the GIF by storing only the rectangular
+            parts of each frame that change with respect to the previous. Default
+            ``False``.
+
+            .. note::
+               Setting this to ``True`` may help reduce jitter in colorbars.
+
+        **kwargs : dict, optional
+            See the documentation for ``imageio.get_writer`` for additional kwargs.
+
+        Notes
+        -----
+        Consider using `pygifsicle
+        <https://github.com/LucaCappelletti94/pygifsicle>`_ to reduce the final
+        size of the gif. See `Optimizing a GIF using pygifsicle
+        <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_
+
         Examples
         --------
-        Open a gif file.
+        Open a gif file, setting the framerate to 8 frames per second and
+        reducing the colorspace to 64.
 
         >>> import pyvista
-        >>> pl = pyvista.Plotter
-        >>> pl.open_gif('movie.gif')  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()
+        >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
+
+        See :ref:`gif_movie_example` for a full example using this method.
 
         """
         from imageio import get_writer
@@ -3407,7 +3439,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
-        self.mwriter = get_writer(filename, mode='I')
+        self.mwriter = get_writer(
+            filename,
+            mode='I',
+            loop=loop,
+            fps=fps,
+            palettesize=palettesize,
+            subrectangles=subrectangles,
+            **kwargs,
+        )
 
     def write_frame(self):
         """Write a single frame to the movie file.

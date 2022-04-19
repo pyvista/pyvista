@@ -160,9 +160,9 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.local/share/pyvista/examples
-          key: Examples-${{ hashFiles('*') }}
+          key: Examples-Data-${{ hashFiles('*') }}
           restore-keys: |
-            Examples-
+            Examples-Data-
 
       - name: Build wheel and install pyvista
         run: |
@@ -262,9 +262,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: Examples-${{ hashFiles('*') }}
+          key: Examples-Data-${{ hashFiles('*') }}
           restore-keys: |
-            Examples-
+            Examples-Data-
 
       - name: Install test dependencies
         run: pip install -r requirements_test.txt
