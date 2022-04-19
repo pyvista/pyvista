@@ -199,7 +199,6 @@ class BaseReader:
         """
         if self._filename is not None:
             return self._filename
-        # if self.__directory is not None:
         return self.__directory
 
     @path.setter
