@@ -451,7 +451,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pyvista.Sphere(radius=0.02)
-        >>> pc = pdata.glyph(scale=False, geom=sphere)
+        >>> pc = pdata.glyph(scale=False, geom=sphere, orient=False)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
         ...                 show_scalar_bar=False)

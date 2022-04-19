@@ -47,4 +47,5 @@ from .reader import (
     XMLPolyDataReader,
     XMLStructuredGridReader,
     XMLMultiBlockDataReader,
+    DICOMReader,
 )

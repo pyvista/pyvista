@@ -38,9 +38,9 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.local/share/pyvista/examples
-          key: Examples-${{ hashFiles('*') }}
+          key: Examples-Data-${{ hashFiles('*') }}
           restore-keys: |
-            Examples-
+            Examples-Data-
 
       - name: Install PyVista
         run: |
