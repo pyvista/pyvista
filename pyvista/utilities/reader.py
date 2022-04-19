@@ -114,7 +114,7 @@ class BaseReader:
 
     Parameters
     ----------
-    filename : str
+    path : str
         Path of the file to read.
     """
 
@@ -126,15 +126,12 @@ class BaseReader:
         self._filename = None
         self._progress_bar = False
         self._progress_msg = None
-        self._directory = None
-        self._set_filename_or_directory(path)
+        self.__directory = None
+        self.path = path
 
     def __repr__(self):
         """Representation of a Reader object."""
-        if self._filename is not None:
-            return f"{self.__class__.__name__}('{self.filename}')"
-        else:
-            return f"{self.__class__.__name__}('{self.directory}')"
+        return f"{self.__class__.__name__}('{self.path}')"
 
     def show_progress(self, msg=None):
         """Show a progress bar when loading the file.
@@ -155,7 +152,7 @@ class BaseReader:
         """
         self._progress_bar = True
         if msg is None:
-            msg = f"Reading {os.path.basename(self.filename)}"
+            msg = f"Reading {os.path.basename(self.path)}"
         self._progress_msg = msg
 
     def hide_progress(self):
@@ -186,8 +183,27 @@ class BaseReader:
             raise NotImplementedError
         return self._reader
 
-    def _set_filename_or_directory(self, path):
-        """Set filename or directory and update reader."""
+    @property
+    def path(self) -> str:
+        """Return or set the filename or directory of the reader.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_human(load=False)
+        >>> reader = pyvista.XMLPolyDataReader(filename)
+        >>> reader.path  # doctest:+SKIP
+        '/home/user/.local/share/pyvista/examples/Human.vtp'
+
+        """
+        if self._filename is not None:
+            return self._filename
+        # if self.__directory is not None:
+        return self.__directory
+
+    @path.setter
+    def path(self, path: str):
         if os.path.isdir(path):
             self._set_directory(path)
         elif os.path.isfile(path):
@@ -197,7 +213,7 @@ class BaseReader:
 
     def _set_directory(self, directory):
         """Set directory and update reader."""
-        self._directory = directory
+        self.__directory = directory
         self.reader.SetDirectoryName(directory)
         self._update_information()
 
@@ -226,16 +242,6 @@ class BaseReader:
 
     def _update_information(self):
         self.reader.UpdateInformation()
-
-    @property
-    def filename(self) -> str:
-        """Path of the file being read."""
-        return self._filename
-
-    @property
-    def directory(self) -> str:
-        """Path of the directory being read."""
-        return self._directory
 
 
 class PointCellDataSelection:
@@ -673,14 +679,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
-    def __init__(self, filename):
+    def __init__(self, path):
         """Initialize OpenFOAMReader.
 
         By default, pyvista enables all patch arrays.  This is a deviation
         from the vtk default.
 
         """
-        super().__init__(filename)
+        super().__init__(path)
         self.enable_all_patch_arrays()
 
     @property
@@ -968,9 +974,9 @@ class VTKDataSetReader(BaseReader):
 
     Notes
     -----
-    This reader calls `ReadAllScalarsOn`, `ReadAllColorScalarsOn`,
-    `ReadAllNormalsOn`, `ReadAllTCoordsOn`, `ReadAllVectorsOn`,
-    and `ReadAllFieldsOn` on the underlying `vtkDataSetReader`.
+    This reader calls ``ReadAllScalarsOn``, ``ReadAllColorScalarsOn``,
+    ``ReadAllNormalsOn``, ``ReadAllTCoordsOn``, ``ReadAllVectorsOn``,
+    and ``ReadAllFieldsOn`` on the underlying ``vtkDataSetReader``.
 
     Examples
     --------
@@ -988,9 +994,9 @@ class VTKDataSetReader(BaseReader):
 
     _class_reader = _vtk.vtkDataSetReader
 
-    def __init__(self, filename):
+    def __init__(self, path):
         """Initialize VTKDataSetReader with filename."""
-        super().__init__(filename)
+        super().__init__(path)
         # Provide consistency with defaults in pyvista.read
         self.reader.ReadAllScalarsOn()
         self.reader.ReadAllColorScalarsOn()
@@ -1375,7 +1381,7 @@ class PVDDataSet:
 
     time: float
     part: int
-    filename: str
+    path: str
     group: str
 
 
@@ -1404,7 +1410,7 @@ class PVDReader(BaseReader, TimeReader):
     def __init__(self, filename):
         """Initialize PVD file reader."""
         self._reader = None
-        self._directory = None
+        self.__directory = None
         self._datasets = []
         self._active_datasets = []
         self._active_readers = []
@@ -1458,7 +1464,7 @@ class PVDReader(BaseReader, TimeReader):
     def _set_filename(self, filename):
         """Set filename and update reader."""
         self._filename = filename
-        self._directory = os.path.join(os.path.dirname(filename))
+        self.__directory = os.path.join(os.path.dirname(filename))
         self._datasets = None
         self._active_datasets = None
         self._update_information()
@@ -1482,9 +1488,9 @@ class PVDReader(BaseReader, TimeReader):
 
     def _parse_file(self):
         """Parse PVD file."""
-        if self.filename is None:
+        if self.path is None:
             raise ValueError("Filename must be set")
-        tree = ElementTree.parse(self.filename)
+        tree = ElementTree.parse(self.path)
         root = tree.getroot()
         dataset_elements = root[0].findall("DataSet")
         datasets = []
@@ -1522,7 +1528,7 @@ class PVDReader(BaseReader, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         self._active_datasets = [dataset for dataset in self.datasets if dataset.time == time_value]
         self._active_readers = [
-            get_reader(os.path.join(self._directory, dataset.filename))
+            get_reader(os.path.join(self.__directory, dataset.path))
             for dataset in self.active_datasets
         ]
 

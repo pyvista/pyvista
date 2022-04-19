@@ -30,7 +30,7 @@ def test_xmlimagedatareader(tmpdir):
     mesh.save(tmpfile.strpath)
 
     reader = pyvista.get_reader(tmpfile.strpath)
-    assert reader.filename == tmpfile.strpath
+    assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.UniformGrid)
     assert new_mesh.n_points == mesh.n_points
@@ -43,7 +43,7 @@ def test_xmlrectilineargridreader(tmpdir):
     mesh.save(tmpfile.strpath)
 
     reader = pyvista.get_reader(tmpfile.strpath)
-    assert reader.filename == tmpfile.strpath
+    assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.RectilinearGrid)
     assert new_mesh.n_points == mesh.n_points
@@ -56,7 +56,7 @@ def test_xmlunstructuredgridreader(tmpdir):
     mesh.save(tmpfile.strpath)
 
     reader = pyvista.get_reader(tmpfile.strpath)
-    assert reader.filename == tmpfile.strpath
+    assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.UnstructuredGrid)
     assert new_mesh.n_points == mesh.n_points
@@ -69,7 +69,7 @@ def test_xmlpolydatareader(tmpdir):
     mesh.save(tmpfile.strpath)
 
     reader = pyvista.get_reader(tmpfile.strpath)
-    assert reader.filename == tmpfile.strpath
+    assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.PolyData)
     assert new_mesh.n_points == mesh.n_points
@@ -82,7 +82,7 @@ def test_xmlstructuredgridreader(tmpdir):
     mesh.save(tmpfile.strpath)
 
     reader = pyvista.get_reader(tmpfile.strpath)
-    assert reader.filename == tmpfile.strpath
+    assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.StructuredGrid)
     assert new_mesh.n_points == mesh.n_points
@@ -95,7 +95,7 @@ def test_xmlmultiblockreader(tmpdir):
     mesh.save(tmpfile.strpath)
 
     reader = pyvista.get_reader(tmpfile.strpath)
-    assert reader.filename == tmpfile.strpath
+    assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.MultiBlock)
     assert new_mesh.n_blocks == mesh.n_blocks
@@ -155,7 +155,7 @@ def test_ensightreader_arrays():
     filename = examples.download_backward_facing_step(load=False)
 
     reader = pyvista.get_reader(filename)
-    assert reader.filename == filename
+    assert reader.path == filename
     assert reader.number_cell_arrays == 9
     assert reader.number_point_arrays == 0
 
@@ -218,7 +218,7 @@ def test_ensightreader_timepoints():
     filename = examples.download_naca(load=False)
 
     reader = pyvista.get_reader(filename)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     assert reader.number_time_points == 2
     assert reader.time_values == [1.0, 3.0]
@@ -246,7 +246,7 @@ def test_dcmreader(tmpdir):
     reader = pyvista.DICOMReader(directory)  # ``get_reader`` doesn't support directories
     assert directory in str(reader)
     assert isinstance(reader, pyvista.DICOMReader)
-    assert reader.directory == directory
+    assert reader.path == directory
 
     mesh = reader.read()
     assert isinstance(mesh, pyvista.UniformGrid)
@@ -256,7 +256,7 @@ def test_dcmreader(tmpdir):
     filename = os.path.join(directory, "1-1.dcm")
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.DICOMReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert isinstance(mesh, pyvista.UniformGrid)
@@ -267,7 +267,7 @@ def test_plyreader():
     filename = examples.spherefile
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.PLYReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
@@ -277,7 +277,7 @@ def test_objreader():
     filename = examples.download_doorman(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.OBJReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
@@ -287,7 +287,7 @@ def test_stlreader():
     filename = examples.download_gears(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.STLReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
@@ -297,7 +297,7 @@ def test_vtkreader():
     filename = examples.hexbeamfile
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.VTKDataSetReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
@@ -307,7 +307,7 @@ def test_byureader():
     filename = examples.download_teapot(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.BYUReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
@@ -317,7 +317,7 @@ def test_facetreader():
     filename = examples.download_clown(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.FacetReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
@@ -330,7 +330,7 @@ def test_plot3dmetareader():
     _download_file('multi-bin.f')
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.Plot3DMetaReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     for m in mesh:
@@ -341,7 +341,7 @@ def test_binarymarchingcubesreader():
     filename = examples.download_pine_roots(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.BinaryMarchingCubesReader)
-    assert reader.filename == filename
+    assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
@@ -352,7 +352,7 @@ def test_pvdreader():
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.PVDReader)
     assert reader.reader == reader  # PVDReader refers to itself
-    assert reader.filename == filename
+    assert reader.path == filename
 
     assert reader.number_time_points == 15
     assert reader.time_point_value(1) == 1.0
@@ -364,7 +364,7 @@ def test_pvdreader():
     assert len(active_datasets) == 1
     active_dataset0 = active_datasets[0]
     assert active_dataset0.time == 0.0
-    assert active_dataset0.filename == "wavy/wavy00.vts"
+    assert active_dataset0.path == "wavy/wavy00.vts"
     assert active_dataset0.group == ""
     assert active_dataset0.part == 0
 
