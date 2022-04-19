@@ -3361,12 +3361,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             range is ``0 - 10``.  Higher quality leads to a larger file.
 
         **kwargs : dict, optional
-            See the documentation for ``imageio.get_writer`` for additional kwargs.
+            See the documentation for :func:`imageio.get_writer` for additional kwargs.
 
         Notes
         -----
-        See the documentation for `imageio.get_writer
-        <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.get_writer>`_
+        See the documentation for :func:`imageio.get_writer`.
 
         Examples
         --------
@@ -3411,14 +3410,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                Setting this to ``True`` may help reduce jitter in colorbars.
 
         **kwargs : dict, optional
-            See the documentation for ``imageio.get_writer`` for additional kwargs.
+            See the documentation for :func:`imageio.get_writer` for additional kwargs.
 
         Notes
         -----
         Consider using `pygifsicle
         <https://github.com/LucaCappelletti94/pygifsicle>`_ to reduce the final
         size of the gif. See `Optimizing a GIF using pygifsicle
-        <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_
+        <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_.
 
         Examples
         --------
