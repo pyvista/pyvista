@@ -4786,7 +4786,6 @@ class Plotter(BasePlotter):
         self._html_cache = None
         log.debug('Plotter init stop')
 
-
     def show(
         self,
         title=None,
@@ -5031,7 +5030,8 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-            self._html_cache = self._repr_html_()
+            if self.notebook:
+                self._html_cache = self._repr_html_()
 
         # if we've made it here and we're building the gallery and notebook is
         # enabled, return the html string representation of the plotter
