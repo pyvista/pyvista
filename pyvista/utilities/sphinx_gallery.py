@@ -41,6 +41,9 @@ class Scraper:
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting._ALL_PLOTTERS
         for _, plotter in figures.items():
+            # ignore this plotter notebook is enabled
+            if plotter.notebook:
+                continue
             fname = next(image_path_iterator)
             if hasattr(plotter, '_gif_filename'):
                 # move gif to fname

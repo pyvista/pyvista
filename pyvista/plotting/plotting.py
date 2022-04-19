@@ -366,7 +366,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : filename or file-like object
             Path to export the html file to.
 
         Notes
@@ -4690,7 +4690,6 @@ class Plotter(BasePlotter):
             lighting=lighting,
             theme=theme,
         )
-
         log.debug('Plotter init start')
 
         # check if a plotting backend is enabled
@@ -4783,7 +4782,10 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        self._html_cache = None
         log.debug('Plotter init stop')
+
 
     def show(
         self,
@@ -5003,7 +5005,7 @@ class Plotter(BasePlotter):
                 'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
             )
 
-        if self.notebook:
+        if self.notebook and not pyvista.BUILDING_GALLERY:
             from ..jupyter.notebook import handle_plotter
 
             if jupyter_backend is None:
@@ -5029,6 +5031,12 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
+            self._html_cache = self._repr_html_()
+
+        # if we've made it here and we're building the gallery and notebook is
+        # enabled, return the html string representation of the plotter
+        if self.notebook and pyvista.BUILDING_GALLERY:
+            return self
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:
@@ -5204,6 +5212,25 @@ class Plotter(BasePlotter):
         prop.SetColor(Color(color).float_rgb)
 
         return actor
+
+    def _repr_html_(self):
+        """Output representation as HTML."""
+        # this is used only for the gallery
+        if self._html_cache is not None and pyvista.BUILDING_GALLERY:
+            return self._html_cache
+
+        with io.StringIO() as fid:
+            self.export_html(fid)
+            fid.seek(0)
+            for line in fid:
+                # remove this line or else widgets will be double displayed
+                if '<script src="https://unpkg.com/@jupyter-widgets' in line:
+                    fid.seek(fid.tell() - len(line))
+                    fid.write((len(line)) * ' ')
+                    fid.seek(0)
+                    break
+
+            return fid.read()
 
 
 # Tracks created plotters.  At the end of the file as we need to
