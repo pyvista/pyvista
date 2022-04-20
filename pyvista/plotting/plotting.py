@@ -3351,7 +3351,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         filename : str
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See ``imagio.get_writer``.
+            but other filetypes may be supported.  See :func:`imageio.get_writer()
+            <imageio.v2.get_writer>`.
 
         framerate : int, optional
             Frames per second.
@@ -3361,11 +3362,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             range is ``0 - 10``.  Higher quality leads to a larger file.
 
         **kwargs : dict, optional
-            See the documentation for :func:`imageio.get_writer` for additional kwargs.
+            See the documentation for :func:`imageio.get_writer()
+            <imageio.v2.get_writer>` for additional kwargs.
 
         Notes
         -----
-        See the documentation for :func:`imageio.get_writer`.
+        See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`.
 
         Examples
         --------
@@ -3410,7 +3412,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                Setting this to ``True`` may help reduce jitter in colorbars.
 
         **kwargs : dict, optional
-            See the documentation for :func:`imageio.get_writer` for additional kwargs.
+            See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`
+            for additional kwargs.
 
         Notes
         -----
