@@ -34,6 +34,10 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
+    | ``.jpg``       | :class:`pyvista.JPEGReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.jpeg``      | :class:`pyvista.JPEGReader`                 |
+    +----------------+---------------------------------------------+
     | ``.obj``       | :class:`pyvista.OBJReader`                  |
     +----------------+---------------------------------------------+
     | ``.p3d``       | :class:`pyvista.Plot3DMetaReader`           |
@@ -1607,6 +1611,25 @@ class DEMReader(BaseReader):
     _class_reader = _vtk.vtkDEMReader
 
 
+class JPEGReader(BaseReader):
+    """JPEG Reader for .jpeg and .jpg files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_mars_jpg()
+    >>> filename.split("/")[-1]  # omit the path
+    'mars.jpg'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkJPEGReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1617,6 +1640,8 @@ CLASS_READERS = {
     '.facet': FacetReader,
     '.foam': OpenFOAMReader,
     '.g': BYUReader,
+    '.jpg': JPEGReader,
+    '.jpeg': JPEGReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
     '.ply': PLYReader,
