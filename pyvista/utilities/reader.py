@@ -52,6 +52,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.ply``       | :class:`pyvista.PLYReader`                  |
     +----------------+---------------------------------------------+
+    | ``.png``       | :class:`pyvista.PNGReader`                  |
+    +----------------+---------------------------------------------+
     | ``.pvd``       | :class:`pyvista.PVDReader`                  |
     +----------------+---------------------------------------------+
     | ``.pvti``      | :class:`pyvista.XMLPImageDataReader`        |
@@ -1676,6 +1678,25 @@ class NRRDReader(BaseReader):
     _class_reader = _vtk.vtkNrrdReader
 
 
+class PNGReader(BaseReader):
+    """PNGReader for .png files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_vtk_logo(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'blvtk.png'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkPNGReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1695,6 +1716,7 @@ CLASS_READERS = {
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
     '.ply': PLYReader,
+    '.png': PNGReader,
     '.pvd': PVDReader,
     '.pvti': XMLPImageDataReader,
     '.pvtk': VTKPDataSetReader,
