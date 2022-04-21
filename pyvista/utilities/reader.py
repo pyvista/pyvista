@@ -26,6 +26,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
+    | ``.dem``       | :class:`pyvista.DEMReader`                |
+    +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
     | ``.foam``      | :class:`pyvista.OpenFOAMReader`             |
@@ -1586,12 +1588,32 @@ class BMPReader(BaseReader):
     _class_reader = _vtk.vtkBMPReader
 
 
+class DEMReader(BaseReader):
+    """DEM Reader for .dem files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_st_helens(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'SainteHelens.dem'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkDEMReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
     '.dcm': DICOMReader,
+    '.dem': DEMReader,
     '.facet': FacetReader,
     '.foam': OpenFOAMReader,
     '.g': BYUReader,
