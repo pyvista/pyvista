@@ -399,6 +399,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # convert and write to file
         embed_minimal_html(filename, None, title=self.title, state=state)
+        # embed_minimal_html(filename, widget, title=self.title)
 
     def to_pythreejs(self):
         """Convert this plotting scene to a pythreejs renderer.

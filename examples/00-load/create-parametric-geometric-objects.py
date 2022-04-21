@@ -19,7 +19,7 @@ import pyvista as pv
 # +++++++++++
 
 supertoroid = pv.ParametricSuperToroid(n1=0.5)
-supertoroid.plot(color="tan", smooth_shading=True)
+supertoroid.plot(smooth_shading=True, notebook=True, anti_aliasing=True)
 
 ###############################################################################
 # Parametric Ellipsoid
@@ -27,7 +27,7 @@ supertoroid.plot(color="tan", smooth_shading=True)
 
 # Ellipsoid with a long x axis
 ellipsoid = pv.ParametricEllipsoid(10, 5, 5)
-ellipsoid.plot(color="tan")
+ellipsoid.plot(notebook=True)
 
 
 ###############################################################################
@@ -44,7 +44,7 @@ cpos = [
 
 # half ellipsoid
 part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=pi / 2)
-part_ellipsoid.plot(color="tan", smooth_shading=True, cpos=cpos)
+part_ellipsoid.plot(notebook=True, smooth_shading=True, cpos=cpos)
 
 
 ###############################################################################
@@ -52,7 +52,7 @@ part_ellipsoid.plot(color="tan", smooth_shading=True, cpos=cpos)
 # ++++++++++++
 
 pseudosphere = pv.ParametricPseudosphere()
-pseudosphere.plot(color="tan", smooth_shading=True)
+pseudosphere.plot(notebook=True, smooth_shading=True)
 
 ###############################################################################
 # Bohemian Dome

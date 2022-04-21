@@ -9,7 +9,7 @@ try:
 except ImportError:  # pragma: no cover
     raise ImportError('Please install pythreejs to use this feature')
 
-from ipywidgets import GridspecLayout
+from ipywidgets import Box, GridspecLayout, Layout
 
 import pyvista as pv
 
@@ -492,6 +492,7 @@ def convert_renderer(pv_renderer):
         scene=scene,
         alpha=True,
         clearOpacity=0,
+        auto_resize=True,
         controls=[orbit_controls],
         width=width,
         height=height,
@@ -502,11 +503,6 @@ def convert_renderer(pv_renderer):
         bdr_color = pv_renderer.border_color.hex_rgb
         renderer.layout.border = f'solid {pv_renderer.border_width}px {bdr_color}'
 
-    # for now, we can't dynamically size the render windows.  If
-    # unset, the renderer widget will attempt to resize and the
-    # threejs renderer will not resize.
-    # renderer.layout.width = f'{width}px'
-    # renderer.layout.height = f'{height}px'
     return renderer
 
 
@@ -519,7 +515,16 @@ def convert_plotter(pl):
         )
 
     if len(pl.renderers) == 1:
-        return convert_renderer(pl.renderers[0])
+        renderer = convert_renderer(pl.renderers[0])
+
+        # create a box widget to allow proper resize
+        box_layout = Layout(
+            flex_flow='column',
+            # align_items='stretch',  # default
+            width='100%',
+        )
+
+        return Box(children=(renderer,), layout=box_layout)
 
     # otherwise, determine if we can use a grid layout
     if len(pl.shape) == 2:
@@ -535,11 +540,6 @@ def convert_plotter(pl):
                 if i == 0:
                     width += pv_ren.width + pv_ren.border_width * 2
                 grid[i, j] = convert_renderer(pv_ren)
-
-        # this is important to ignore when building the gallery
-        if not pv.BUILDING_GALLERY:
-            grid.layout.width = f'{width}px'
-            grid.layout.height = f'{height+4}px'
 
         return grid
 

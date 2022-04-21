@@ -14,6 +14,8 @@ import numpy as np
 
 import pyvista as pv
 
+###############################################################################
+
 ni, nj, nk = 4, 5, 6
 si, sj, sk = 20, 10, 1
 
@@ -41,4 +43,4 @@ if pv._vtk.VTK9:
     dims = np.asarray((ni, nj, nk)) + 1
     grid = pv.ExplicitStructuredGrid(dims, corners)
     grid = grid.compute_connectivity()
-    grid.plot(show_edges=True, notebook=True)
+    grid.plot(show_edges=True)
