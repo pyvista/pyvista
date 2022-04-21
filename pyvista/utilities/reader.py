@@ -38,6 +38,10 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.jpeg``      | :class:`pyvista.JPEGReader`                 |
     +----------------+---------------------------------------------+
+    | ``.mha``       | :class:`pyvista.MetaImageReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.mhd``       | :class:`pyvista.MetaImageReader`                  |
+    +----------------+---------------------------------------------+
     | ``.obj``       | :class:`pyvista.OBJReader`                  |
     +----------------+---------------------------------------------+
     | ``.p3d``       | :class:`pyvista.Plot3DMetaReader`           |
@@ -1630,6 +1634,25 @@ class JPEGReader(BaseReader):
     _class_reader = _vtk.vtkJPEGReader
 
 
+class MetaImageReader(BaseReader):
+    """Meta Image Reader for .mha and .mhd files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_chest(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'ChestCT-SHORT.mha'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkMetaImageReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1642,6 +1665,8 @@ CLASS_READERS = {
     '.g': BYUReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,
+    '.mha': MetaImageReader,
+    '.mhd': MetaImageReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
     '.ply': PLYReader,
