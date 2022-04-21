@@ -42,6 +42,10 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
     +----------------+---------------------------------------------+
+    | ``.nhdr``      | :class:`pyvista.NRRDReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.nrrd``      | :class:`pyvista.NRRDReader`                 |
+    +----------------+---------------------------------------------+
     | ``.obj``       | :class:`pyvista.OBJReader`                  |
     +----------------+---------------------------------------------+
     | ``.p3d``       | :class:`pyvista.Plot3DMetaReader`           |
@@ -1653,6 +1657,25 @@ class MetaImageReader(BaseReader):
     _class_reader = _vtk.vtkMetaImageReader
 
 
+class NRRDReader(BaseReader):
+    """NRRDReader for .nrrd and .nhdr files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_beach(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'beach.nrrd'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkNrrdReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1667,6 +1690,8 @@ CLASS_READERS = {
     '.jpeg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.nhdr': NRRDReader,
+    '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
     '.ply': PLYReader,
