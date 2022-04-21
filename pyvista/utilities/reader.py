@@ -18,6 +18,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | File Extension | Class                                       |
     +================+=============================================+
+    | ``.bmp``       | :class:`pyvista.BMPReader`                  |
+    +----------------+---------------------------------------------+
     | ``.case``      | :class:`pyvista.EnSightReader`              |
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
@@ -1565,8 +1567,28 @@ class DICOMReader(BaseReader):
     _class_reader = _vtk.vtkDICOMImageReader
 
 
+class BMPReader(BaseReader):
+    """BMP Reader for .bmp files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_masonry_texture(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'masonry.bmp'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkBMPReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
+    '.bmp': BMPReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
     '.dcm': DICOMReader,
