@@ -1925,21 +1925,7 @@ class DataSetFilters:
 
         """
         dataset = self
-        # Clean the points before glyphing
-        if tolerance is not None:
-            small = pyvista.PolyData(dataset.points, faces=dataset.faces)
-            small.point_data.update(dataset.point_data)
-            small.cell_data.update(dataset.cell_data)
-            dataset = small.clean(
-                point_merging=True,
-                merge_tol=tolerance,
-                lines_to_points=False,
-                polys_to_lines=False,
-                strips_to_polys=False,
-                inplace=False,
-                absolute=absolute,
-                progress_bar=progress_bar,
-            )
+
         # Make glyphing geometry if necessary
         if geom is None:
             arrow = _vtk.vtkArrowSource()
@@ -2010,9 +1996,7 @@ class DataSetFilters:
                 dataset.active_vectors_info.association == FieldAssociation.CELL
                 and dataset.active_scalars_info.association == FieldAssociation.CELL
             ):
-                active_vectors_name = dataset.active_vectors_name
                 source_data = dataset.cell_centers()
-                source_data.set_active_vectors(active_vectors_name, 'point')
             elif (
                 dataset.active_vectors_info.association == FieldAssociation.POINT
                 and dataset.active_scalars_info.association == FieldAssociation.POINT
@@ -2024,6 +2008,24 @@ class DataSetFilters:
                 )
         else:
             source_data = dataset
+
+        # Clean the points before glyphing
+        if tolerance is not None:
+            source_data = source_data.clean(
+                point_merging=True,
+                merge_tol=tolerance,
+                lines_to_points=False,
+                polys_to_lines=False,
+                strips_to_polys=False,
+                inplace=False,
+                absolute=absolute,
+                progress_bar=progress_bar,
+            )
+
+        # Ensure that the desired active vectors are still active after point merging, etc.
+        active_vectors_name = dataset.active_vectors_name
+        source_data.set_active_vectors(active_vectors_name, 'point')
+
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
