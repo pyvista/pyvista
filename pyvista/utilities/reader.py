@@ -34,6 +34,10 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
+    | ``.glb``       | :class:`pyvista.GLTFReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.gltf``      | :class:`pyvista.GLTFReader`                 |
+    +----------------+---------------------------------------------+
     | ``.hdf``       | :class:`pyvista.HDFReader`                  |
     +----------------+---------------------------------------------+
     | ``.inp``       | :class:`pyvista.AVSucdReader`               |
@@ -1833,6 +1837,12 @@ class HDFReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkHDFReader)
 
 
+class GLTFReader(BaseReader):
+    """GLTFeader for .gltf and .glb files."""
+
+    _class_reader = _vtk.vtkGLTFReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1843,6 +1853,8 @@ CLASS_READERS = {
     '.facet': FacetReader,
     '.foam': OpenFOAMReader,
     '.g': BYUReader,
+    '.glb': GLTFReader,
+    '.gltf': GLTFReader,
     '.inp': AVSucdReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,
