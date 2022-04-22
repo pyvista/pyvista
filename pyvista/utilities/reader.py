@@ -70,6 +70,10 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.stl``       | :class:`pyvista.STLReader`                  |
     +----------------+---------------------------------------------+
+    | ``.tif``       | :class:`pyvista.TIFFReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.tiff``      | :class:`pyvista.TIFFReader`                 |
+    +----------------+---------------------------------------------+
     | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
     +----------------+---------------------------------------------+
     | ``.vti``       | :class:`pyvista.XMLImageDataReader`         |
@@ -1739,6 +1743,25 @@ class SLCReader(BaseReader):
     _class_reader = _vtk.vtkSLCReader
 
 
+class TIFFReader(BaseReader):
+    """TIFFReader for .tif and .tiff files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_crater_imagery(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'BJ34_GeoTifv1-04_crater_clip.tif'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkTIFFReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1767,6 +1790,8 @@ CLASS_READERS = {
     '.pvtu': XMLPUnstructuredGridReader,
     '.slc': SLCReader,
     '.stl': STLReader,
+    '.tif': TIFFReader,
+    '.tiff': TIFFReader,
     '.tri': BinaryMarchingCubesReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
