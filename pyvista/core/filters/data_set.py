@@ -2011,7 +2011,9 @@ class DataSetFilters:
 
         # Clean the points before glyphing
         if tolerance is not None:
-            source_data = source_data.clean(
+            small = pyvista.PolyData(source_data.points)
+            small.point_data.update(source_data.point_data)
+            source_data = small.clean(
                 point_merging=True,
                 merge_tol=tolerance,
                 lines_to_points=False,
