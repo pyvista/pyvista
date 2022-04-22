@@ -82,6 +82,10 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.res``       | :class:`pyvista.MFIXReader`                 |
     +----------------+---------------------------------------------+
+    | ``.segy``      | :class:`pyvista.SegYReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.sgy``       | :class:`pyvista.SegYReader`                 |
+    +----------------+---------------------------------------------+
     | ``.slc``       | :class:`pyvista.SLCReader`                  |
     +----------------+---------------------------------------------+
     | ``.stl``       | :class:`pyvista.STLReader`                  |
@@ -1859,6 +1863,12 @@ class MFIXReader(BaseReader):
     _class_reader = _vtk.vtkMFIXReader
 
 
+class SegYReader(BaseReader):
+    """SegYReader for .sgy and segy files."""
+
+    _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1893,6 +1903,8 @@ CLASS_READERS = {
     '.pvtr': XMLPRectilinearGridReader,
     '.pvtu': XMLPUnstructuredGridReader,
     '.res': MFIXReader,
+    '.segy': SegYReader,
+    '.sgy': SegYReader,
     '.slc': SLCReader,
     '.stl': STLReader,
     '.tif': TIFFReader,
