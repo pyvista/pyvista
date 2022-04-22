@@ -58,6 +58,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.pnm``       | :class:`pyvista.PNMReader`                  |
     +----------------+---------------------------------------------+
+    | ``.pts``       | :class:`pyvista.PTSReader`                  |
+    +----------------+---------------------------------------------+
     | ``.pvd``       | :class:`pyvista.PVDReader`                  |
     +----------------+---------------------------------------------+
     | ``.pvti``      | :class:`pyvista.XMLPImageDataReader`        |
@@ -1783,6 +1785,12 @@ class HDRReader(BaseReader):
     _class_reader = _vtk.vtkHDRReader
 
 
+class PTSReader(BaseReader):
+    """PTSReader for .pts files."""
+
+    _class_reader = _vtk.vtkPTSReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1805,6 +1813,7 @@ CLASS_READERS = {
     '.ply': PLYReader,
     '.png': PNGReader,
     '.pnm': PNMReader,
+    '.pts': PTSReader,
     '.pvd': PVDReader,
     '.pvti': XMLPImageDataReader,
     '.pvtk': VTKPDataSetReader,
