@@ -34,6 +34,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
+    | ``.hdf``       | :class:`pyvista.HDFReader`                  |
+    +----------------+---------------------------------------------+
     | ``.inp``       | :class:`pyvista.AVSucdReader`               |
     +----------------+---------------------------------------------+
     | ``.jpg``       | :class:`pyvista.JPEGReader`                 |
@@ -1812,6 +1814,25 @@ class AVSucdReader(BaseReader):
     _class_reader = _vtk.vtkAVSucdReader
 
 
+class HDFReader(BaseReader):
+    """HDFReader for .hdf files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_can(partial=True, load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'can_0.hdf'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkHDFReader)
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1825,6 +1846,7 @@ CLASS_READERS = {
     '.inp': AVSucdReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,
+    '.hdf': HDFReader,
     '.hdr': HDRReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,

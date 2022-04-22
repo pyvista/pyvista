@@ -3636,10 +3636,10 @@ def download_lucy(load=True):  # pragma: no cover
     return _download_and_read('lucy.ply', load=load)
 
 
-def download_can(partial=False):  # pragma: no cover
+def download_can(partial=False, load=True):  # pragma: no cover
     """Download the can dataset mesh.
 
-    Original downloaded from Testing/Data/FileSeriesat from paraview.org. Used
+    Original downloaded from Testing/Data/FileSeries at from paraview.org. Used
     for testing hdf files.
 
     Parameters
@@ -3663,17 +3663,19 @@ def download_can(partial=False):  # pragma: no cover
     >>> dataset.plot(scalars='VEL', smooth_shading=True)
 
     """
-    can_0 = _download_and_read('hdf/can_0.hdf')
+    can_0 = _download_and_read('hdf/can_0.hdf', load=load)
     if partial:
         return can_0
 
-    return pyvista.merge(
-        [
-            can_0,
-            _download_and_read('hdf/can_1.hdf'),
-            _download_and_read('hdf/can_2.hdf'),
-        ]
-    )
+    cans = [
+        can_0,
+        _download_and_read('hdf/can_1.hdf', load=load),
+        _download_and_read('hdf/can_2.hdf', load=load),
+    ]
+
+    if load:
+        return pyvista.merge(cans)
+    return cans
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
