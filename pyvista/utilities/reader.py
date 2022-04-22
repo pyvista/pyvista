@@ -38,6 +38,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.jpeg``      | :class:`pyvista.JPEGReader`                 |
     +----------------+---------------------------------------------+
+    | ``.hdr``       | :class:`pyvista.HDRReader`                  |
+    +----------------+---------------------------------------------+
     | ``.mha``       | :class:`pyvista.MetaImageReader`            |
     +----------------+---------------------------------------------+
     | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
@@ -1762,6 +1764,25 @@ class TIFFReader(BaseReader):
     _class_reader = _vtk.vtkTIFFReader
 
 
+class HDRReader(BaseReader):
+    """HDRReader for .hdr files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_parched_canal_4k(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'parched_canal_4k.hdr'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkHDRReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1774,6 +1795,7 @@ CLASS_READERS = {
     '.g': BYUReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,
+    '.hdr': HDRReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
     '.nhdr': NRRDReader,

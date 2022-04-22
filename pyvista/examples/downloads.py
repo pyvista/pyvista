@@ -3804,3 +3804,27 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
         reader = pyvista.DICOMReader(path)
         return reader.read()
     return path
+
+
+def download_parched_canal_4k(load=True):  # pragma: no cover
+    """Download parched canal 4k dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.Texture or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_parched_canal_4k()
+    >>> dataset.plot(cpos="xy")
+
+    """
+    return _download_and_read("parched_canal_4k.hdr", texture=True, load=load)
