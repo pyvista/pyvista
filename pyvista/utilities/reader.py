@@ -54,6 +54,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.png``       | :class:`pyvista.PNGReader`                  |
     +----------------+---------------------------------------------+
+    | ``.pnm``       | :class:`pyvista.PNMReader`                  |
+    +----------------+---------------------------------------------+
     | ``.pvd``       | :class:`pyvista.PVDReader`                  |
     +----------------+---------------------------------------------+
     | ``.pvti``      | :class:`pyvista.XMLPImageDataReader`        |
@@ -1687,7 +1689,7 @@ class PNGReader(BaseReader):
     >>> from pyvista import examples
     >>> filename = examples.download_vtk_logo(load=False)
     >>> filename.split("/")[-1]  # omit the path
-    'blvtk.png'
+    'vtk.png'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -1695,6 +1697,25 @@ class PNGReader(BaseReader):
     """
 
     _class_reader = _vtk.vtkPNGReader
+
+
+class PNMReader(BaseReader):
+    """PNMReader for .pnm files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_gourds_pnm(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'Gourds.pnm'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkPNMReader
 
 
 CLASS_READERS = {
@@ -1717,6 +1738,7 @@ CLASS_READERS = {
     '.p3d': Plot3DMetaReader,
     '.ply': PLYReader,
     '.png': PNGReader,
+    '.pnm': PNMReader,
     '.pvd': PVDReader,
     '.pvti': XMLPImageDataReader,
     '.pvtk': VTKPDataSetReader,

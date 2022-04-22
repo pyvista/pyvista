@@ -1315,6 +1315,30 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
     return _download_and_read('Gourds2.jpg', texture=True, load=load)
 
 
+def download_gourds_pnm(load=True):  # pragma: no cover
+    """Download gourds dataset from pnm file.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gourds_pnm()
+    >>> dataset.plot(rgba=True, cpos="xy")
+
+    """
+    return _download_and_read('Gourds.pnm', load=load)
+
+
 def download_unstructured_grid(load=True):  # pragma: no cover
     """Download unstructured grid dataset.
 
