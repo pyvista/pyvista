@@ -66,6 +66,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.pvtu``      | :class:`pyvista.XMLPUnstructuredGridReader` |
     +----------------+---------------------------------------------+
+    | ``.slc``       | :class:`pyvista.SLCReader`                  |
+    +----------------+---------------------------------------------+
     | ``.stl``       | :class:`pyvista.STLReader`                  |
     +----------------+---------------------------------------------+
     | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
@@ -1718,6 +1720,25 @@ class PNMReader(BaseReader):
     _class_reader = _vtk.vtkPNMReader
 
 
+class SLCReader(BaseReader):
+    """SLCReader for .slc files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_knee_full(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'vw_knee.slc'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkSLCReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1744,6 +1765,7 @@ CLASS_READERS = {
     '.pvtk': VTKPDataSetReader,
     '.pvtr': XMLPRectilinearGridReader,
     '.pvtu': XMLPUnstructuredGridReader,
+    '.slc': SLCReader,
     '.stl': STLReader,
     '.tri': BinaryMarchingCubesReader,
     '.vti': XMLImageDataReader,
