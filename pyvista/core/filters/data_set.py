@@ -1927,8 +1927,9 @@ class DataSetFilters:
         dataset = self
         # Clean the points before glyphing
         if tolerance is not None:
-            small = pyvista.PolyData(dataset.points)
+            small = pyvista.PolyData(dataset.points, faces=dataset.faces)
             small.point_data.update(dataset.point_data)
+            small.cell_data.update(dataset.cell_data)
             dataset = small.clean(
                 point_merging=True,
                 merge_tol=tolerance,
@@ -2009,7 +2010,9 @@ class DataSetFilters:
                 dataset.active_vectors_info.association == FieldAssociation.CELL
                 and dataset.active_scalars_info.association == FieldAssociation.CELL
             ):
+                active_vectors_name = dataset.active_vectors_name
                 source_data = dataset.cell_centers()
+                source_data.set_active_vectors(active_vectors_name, 'point')
             elif (
                 dataset.active_vectors_info.association == FieldAssociation.POINT
                 and dataset.active_scalars_info.association == FieldAssociation.POINT
