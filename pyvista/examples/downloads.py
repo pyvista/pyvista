@@ -3828,3 +3828,27 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
 
     """
     return _download_and_read("parched_canal_4k.hdr", texture=True, load=load)
+
+
+def download_cells_nd(load=True):  # pragma: no cover
+    """Download dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cells_nd()
+    >>> dataset.plot(cpos="xy")
+
+    """
+    return _download_and_read("cellsnd.ascii.inp", load=load)

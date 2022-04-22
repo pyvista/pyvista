@@ -34,6 +34,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
+    | ``.inp``       | :class:`pyvista.AVSucdReader`               |
+    +----------------+---------------------------------------------+
     | ``.jpg``       | :class:`pyvista.JPEGReader`                 |
     +----------------+---------------------------------------------+
     | ``.jpeg``      | :class:`pyvista.JPEGReader`                 |
@@ -1791,6 +1793,25 @@ class PTSReader(BaseReader):
     _class_reader = _vtk.vtkPTSReader
 
 
+class AVSucdReader(BaseReader):
+    """AVSucdReader for .inp files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_cells_nd(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'cellsnd.ascii.inp'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(cpos="xy")
+
+    """
+
+    _class_reader = _vtk.vtkAVSucdReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1801,6 +1822,7 @@ CLASS_READERS = {
     '.facet': FacetReader,
     '.foam': OpenFOAMReader,
     '.g': BYUReader,
+    '.inp': AVSucdReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,
     '.hdr': HDRReader,
