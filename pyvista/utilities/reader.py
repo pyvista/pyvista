@@ -80,6 +80,8 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.pvtu``      | :class:`pyvista.XMLPUnstructuredGridReader` |
     +----------------+---------------------------------------------+
+    | ``.res``       | :class:`pyvista.MFIXReader`                 |
+    +----------------+---------------------------------------------+
     | ``.slc``       | :class:`pyvista.SLCReader`                  |
     +----------------+---------------------------------------------+
     | ``.stl``       | :class:`pyvista.STLReader`                  |
@@ -1851,6 +1853,12 @@ class FluentReader(BaseReader):
     _class_reader = _vtk.vtkFLUENTReader
 
 
+class MFIXReader(BaseReader):
+    """MFIXReader for .res files."""
+
+    _class_reader = _vtk.vtkMFIXReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -1884,6 +1892,7 @@ CLASS_READERS = {
     '.pvtk': VTKPDataSetReader,
     '.pvtr': XMLPRectilinearGridReader,
     '.pvtu': XMLPUnstructuredGridReader,
+    '.res': MFIXReader,
     '.slc': SLCReader,
     '.stl': STLReader,
     '.tif': TIFFReader,
