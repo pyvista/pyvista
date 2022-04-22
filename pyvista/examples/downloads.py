@@ -3645,13 +3645,15 @@ def download_can(partial=False, load=True):  # pragma: no cover
     Parameters
     ----------
     partial : bool, optional
-        Load part of the dataset. Defaults to to ``False`` and
-        filename will be returned.
+        Load part of the dataset. Defaults to ``False``.
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData
-        The example ParaView can DataSet.
+    pyvista.PolyData, str, or List[str]
+        The example ParaView can DataSet or file path(s).
 
     Examples
     --------
