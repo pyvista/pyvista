@@ -20,6 +20,8 @@ def get_reader(filename):
     +================+=============================================+
     | ``.bmp``       | :class:`pyvista.BMPReader`                  |
     +----------------+---------------------------------------------+
+    | ``.cas``       | :class:`pyvista.FluentReader`               |
+    +----------------+---------------------------------------------+
     | ``.case``      | :class:`pyvista.EnSightReader`              |
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
@@ -1843,9 +1845,16 @@ class GLTFReader(BaseReader):
     _class_reader = _vtk.vtkGLTFReader
 
 
+class FluentReader(BaseReader):
+    """FluentReader for .cas files."""
+
+    _class_reader = _vtk.vtkFLUENTReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
+    '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
     '.dcm': DICOMReader,
