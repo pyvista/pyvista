@@ -21,6 +21,7 @@ from . import transformations
 from .xvfb import start_xvfb
 from .reader import (
     get_reader,
+    AVSucdReader,
     BaseReader,
     BinaryMarchingCubesReader,
     BMPReader,

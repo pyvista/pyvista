@@ -723,3 +723,13 @@ def test_hdr_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_avsucd_reader():
+    filename = examples.download_cells_nd(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.AVSucdReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
