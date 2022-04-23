@@ -1977,11 +1977,10 @@ class DataSetFilters:
             alg.SetScaleModeToDataScalingOff()
 
         if isinstance(orient, str):
-            prefer = (
-                'cell'
-                if dataset.active_scalars_info.association == FieldAssociation.CELL
-                else 'point'
-            )
+            if scale and dataset.active_scalars_info.association == FieldAssociation.CELL:
+                prefer = 'cell'
+            else:
+                prefer = 'point'
             dataset.set_active_vectors(orient, prefer)
             orient = True
 
@@ -2001,22 +2000,19 @@ class DataSetFilters:
 
         if scale and orient:
             if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
-                raise ValueError(
-                    "Both ``scale`` and ``orient`` must use " "point data or cell data."
-                )
+                raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
 
         source_data = dataset
-        if (
-            dataset.active_scalars_info.association == FieldAssociation.CELL
-            or dataset.active_vectors_info.association == FieldAssociation.CELL
+        if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
+            orient and dataset.active_vectors_info.association == FieldAssociation.CELL
         ):
             source_data = dataset.cell_centers()
             set_active_scalars_vectors = True
 
         # Clean the points before glyphing
         if tolerance is not None:
-            small = pyvista.PolyData(dataset.points)
-            small.point_data.update(dataset.point_data)
+            small = pyvista.PolyData(source_data.points)
+            small.point_data.update(source_data.point_data)
             source_data = small.clean(
                 point_merging=True,
                 merge_tol=tolerance,
@@ -2033,9 +2029,9 @@ class DataSetFilters:
         # again
         if set_active_scalars_vectors:
             if scale:
-                source_data.set_active_scalars(dataset.active_scalars_name, 'point')
+                source_data.set_active_scalars(dataset.active_scalars_name, 'point', err=True)
             if orient:
-                source_data.set_active_vectors(dataset.active_vectors_name, 'point')
+                source_data.set_active_vectors(dataset.active_vectors_name, 'point', err=True)
 
         if rng is not None:
             alg.SetRange(rng)
