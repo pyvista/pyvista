@@ -2,6 +2,7 @@ import itertools
 import os
 import platform
 import sys
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -663,6 +664,86 @@ def test_glyph_cell_point_data(sphere):
         sphere.glyph(orient='vectors_cell', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
+
+
+class InterrogateVtkGlyph3D:
+    def __init__(self, alg: pyvista._vtk.vtkGlyph3D):
+        self.alg = alg
+
+    @property
+    def input_data_object(self):
+        return pyvista.wrap(self.alg.GetInputDataObject(0, 0))
+
+    @property
+    def input_active_scalars_info(self):
+        return self.input_data_object.active_scalars_info
+
+    @property
+    def input_active_vectors_info(self):
+        return self.input_data_object.active_vectors_info
+
+    @property
+    def scaling(self):
+        return self.alg.GetScaling()
+
+    @property
+    def scale_mode(self):
+        return self.alg.GetScaleModeAsString()
+
+    @property
+    def scale_factor(self):
+        return self.alg.GetScaleFactor()
+
+    @property
+    def clamping(self):
+        return self.alg.GetClamping()
+
+    @property
+    def vector_mode(self):
+        return self.alg.GetVectorModeAsString()
+
+
+def return_alg_if_vtkGlyph3D(algorithm):
+    if isinstance(algorithm, pyvista._vtk.vtkGlyph3D):
+        return InterrogateVtkGlyph3D(algorithm)
+    else:
+        return pyvista.core.filters._get_output(algorithm)
+
+
+@patch('pyvista.core.filters.data_set._get_output', new=return_alg_if_vtkGlyph3D)
+def test_glyph_settings(sphere):
+    sphere['vectors_cell'] = np.ones([sphere.n_cells, 3])
+    sphere['vectors_points'] = np.ones([sphere.n_points, 3])
+    sphere['arr_cell'] = np.ones(sphere.n_cells)
+    sphere['arr_points'] = np.ones(sphere.n_points)
+
+    # cell orient with cell scale
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_cell', orient='vectors_cell')
+    assert alg.input_active_scalars_info.name == 'arr_cell'
+    assert alg.input_active_vectors_info.name == 'vectors_cell'
+    assert alg.scale_mode == 'ScaleByScalar'
+
+    # point orient with point scale
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_points', orient='vectors_points')
+    assert alg.input_active_scalars_info.name == 'arr_points'
+    assert alg.input_active_vectors_info.name == 'vectors_points'
+    assert alg.scale_mode == 'ScaleByScalar'
+
+    # cell orient with no scale
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale=False, orient='vectors_cell')
+    assert alg.input_active_vectors_info.name == 'vectors_cell'
+    assert alg.scale_mode == 'DataScalingOff'
+
+    # point orient with no scale
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale=False, orient='vectors_points')
+    assert alg.input_active_vectors_info.name == 'vectors_points'
+    assert alg.scale_mode == 'DataScalingOff'
+
+    # point orient with point scale + factor
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_points', orient='vectors_points', factor=5)
+    assert alg.input_active_scalars_info.name == 'arr_points'
+    assert alg.input_active_vectors_info.name == 'vectors_points'
+    assert alg.scale_factor == 5
 
 
 def test_glyph_orient_and_scale():
