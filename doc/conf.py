@@ -160,23 +160,15 @@ numpydoc_validation_exclude = {  # set of regex
     # parm of abstract classes
     r'\.CompositeFilters$',
     r'\.PolyDataFilters$',
-    r'\.CompositeFilters$',
-    r'\.PolyDataFilters$',
     r'\.UniformGridFilters$',
     r'\.DataSetFilters$',
     r'\.UnstructuredGridFilters$',
     r'\.MultiBlock$',
     r'\.DataSet$',
-    r'\.DataSetFilters$',
-    r'\.PolyDataFilters$',
-    r'\.UnstructuredGridFilters$',
-    r'\.UniformGridFilters$',
-    r'\.CompositeFilters$',
     r'\.Grid$',
     r'\.RectilinearGrid$',
     r'\.UniformGrid$',
     r'\.DataObject$',
-    r'\.Table.save$',
     r'\.Table$',
     r'\.Table.save$',
     r'\.UnstructuredGrid$',
@@ -185,13 +177,11 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.PointGrid$',
     # classes inherit from BaseReader
     r'\.*Reader$',
-    r'\.*Reader\.*',
     # internal
     r'\.Renderer$',
     # deprecated
     r'\.*boolean_add$',
     r'\.*boolean_cut$',
-    r'\.*add_field_array$',
     r'\.*add_field_array$',
     r'DataSetAttributes.append$',
     # methods we probably should make private
