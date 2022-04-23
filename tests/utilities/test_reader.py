@@ -633,3 +633,13 @@ def test_bmpreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_demreader():
+    filename = examples.download_st_helens(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.DEMReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

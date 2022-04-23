@@ -26,6 +26,7 @@ from .reader import (
     BMPReader,
     BYUReader,
     CGNSReader,
+    DEMReader,
     EnSightReader,
     FacetReader,
     OBJReader,
