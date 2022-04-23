@@ -1977,11 +1977,12 @@ class DataSetFilters:
             alg.SetScaleModeToDataScalingOff()
 
         if isinstance(orient, str):
-            dataset.active_vectors_name = orient
+            dataset.set_active_vectors(orient, 'cell')
             orient = True
-        elif isinstance(orient, bool) and orient:
+
+        if orient:
             try:
-                pyvista.set_default_active_vectors(self)
+                pyvista.set_default_active_vectors(dataset)
             except MissingDataError:
                 warnings.warn("No vector-like data to use for orient. orient will be set to False.")
                 orient = False
@@ -1991,28 +1992,22 @@ class DataSetFilters:
                 )
                 orient = False
 
+        set_active_scalars_vectors = False
+
         if scale and orient:
-            if (
-                dataset.active_vectors_info.association == FieldAssociation.CELL
-                and dataset.active_scalars_info.association == FieldAssociation.CELL
-            ):
-                source_data = dataset.cell_centers()
-            elif (
-                dataset.active_vectors_info.association == FieldAssociation.POINT
-                and dataset.active_scalars_info.association == FieldAssociation.POINT
-            ):
-                source_data = dataset
-            else:
-                raise ValueError(
-                    "Both ``scale`` and ``orient`` must use " "point data or cell data."
-                )
-        else:
-            source_data = dataset
+            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
+                raise ValueError("Both ``scale`` and ``orient`` must use " "point data or cell data.")
+
+        source_data = dataset
+        if dataset.active_scalars_info.association == FieldAssociation.CELL or \
+                dataset.active_vectors_info.association == FieldAssociation.CELL:
+            source_data = dataset.cell_centers()
+            set_active_scalars_vectors = True
 
         # Clean the points before glyphing
         if tolerance is not None:
-            small = pyvista.PolyData(source_data.points)
-            small.point_data.update(source_data.point_data)
+            small = pyvista.PolyData(dataset.points)
+            small.point_data.update(dataset.point_data)
             source_data = small.clean(
                 point_merging=True,
                 merge_tol=tolerance,
@@ -2023,10 +2018,15 @@ class DataSetFilters:
                 absolute=absolute,
                 progress_bar=progress_bar,
             )
+            set_active_scalars_vectors = True
 
-        # Ensure that the desired active vectors are still active after point merging, etc.
-        active_vectors_name = dataset.active_vectors_name
-        source_data.set_active_vectors(active_vectors_name, 'point')
+        # converting from cell -> points and the point merging operation both destroy the active vectors, so set them
+        # again
+        if set_active_scalars_vectors:
+            if scale:
+                source_data.set_active_scalars(dataset.active_scalars_name, 'point')
+            if orient:
+                source_data.set_active_vectors(dataset.active_vectors_name, 'point')
 
         if rng is not None:
             alg.SetRange(rng)
