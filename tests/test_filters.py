@@ -716,6 +716,16 @@ def test_glyph_settings(sphere):
     sphere['vectors_points'] = np.ones([sphere.n_points, 3])
     sphere['arr_cell'] = np.ones(sphere.n_cells)
     sphere['arr_points'] = np.ones(sphere.n_points)
+    sphere['active_arr_points'] = np.ones(sphere.n_points)
+    sphere['active_vectors_points'] = np.ones(sphere.n_points)
+
+    sphere.set_active_scalars('active_arr_points')
+    sphere.set_active_scalars('active_vectors_points')
+
+    # cell orient with no scale
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale=False, orient='vectors_cell')
+    assert alg.input_active_vectors_info.name == 'vectors_cell'
+    assert alg.scale_mode == 'DataScalingOff'
 
     # cell orient with cell scale
     alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_cell', orient='vectors_cell')
@@ -723,21 +733,28 @@ def test_glyph_settings(sphere):
     assert alg.input_active_vectors_info.name == 'vectors_cell'
     assert alg.scale_mode == 'ScaleByScalar'
 
+    # cell orient with cell scale and tolerance
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_cell', orient='vectors_cell', tolerance=0.05)
+    assert alg.input_active_scalars_info.name == 'arr_cell'
+    assert alg.input_active_vectors_info.name == 'vectors_cell'
+    assert alg.scale_mode == 'ScaleByScalar'
+
+    # point orient with no scale
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale=False, orient='vectors_points')
+    assert alg.input_active_vectors_info.name == 'vectors_points'
+    assert alg.scale_mode == 'DataScalingOff'
+
     # point orient with point scale
     alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_points', orient='vectors_points')
     assert alg.input_active_scalars_info.name == 'arr_points'
     assert alg.input_active_vectors_info.name == 'vectors_points'
     assert alg.scale_mode == 'ScaleByScalar'
 
-    # cell orient with no scale
-    alg: InterrogateVtkGlyph3D = sphere.glyph(scale=False, orient='vectors_cell')
-    assert alg.input_active_vectors_info.name == 'vectors_cell'
-    assert alg.scale_mode == 'DataScalingOff'
-
-    # point orient with no scale
-    alg: InterrogateVtkGlyph3D = sphere.glyph(scale=False, orient='vectors_points')
+    # point orient with point scale and tolerance
+    alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_points', orient='vectors_points', tolerance=0.05)
+    assert alg.input_active_scalars_info.name == 'arr_points'
     assert alg.input_active_vectors_info.name == 'vectors_points'
-    assert alg.scale_mode == 'DataScalingOff'
+    assert alg.scale_mode == 'ScaleByScalar'
 
     # point orient with point scale + factor
     alg: InterrogateVtkGlyph3D = sphere.glyph(scale='arr_points', orient='vectors_points', factor=5)
