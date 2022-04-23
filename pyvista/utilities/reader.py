@@ -1770,12 +1770,12 @@ class TIFFReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_crater_imagery(load=False)
-    >>> filename.split("/")[-1]  # omit the path
+    >>> filename = examples.download_crater_imagery(load=False)  # doctest:+SKIP
+    >>> filename.split("/")[-1]  # omit the path  # doctest:+SKIP
     'BJ34_GeoTifv1-04_crater_clip.tif'
-    >>> reader = pyvista.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> reader = pyvista.get_reader(filename)  # doctest:+SKIP
+    >>> mesh = reader.read()  # doctest:+SKIP
+    >>> mesh.plot()  # doctest:+SKIP
 
     """
 
