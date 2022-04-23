@@ -703,3 +703,13 @@ def test_slc_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_tiff_reader():
+    filename = examples.download_crater_imagery(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.TIFFReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

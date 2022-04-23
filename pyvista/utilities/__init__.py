@@ -43,6 +43,7 @@ from .reader import (
     PVDReader,
     SLCReader,
     STLReader,
+    TIFFReader,
     TimeReader,
     VTKDataSetReader,
     VTKPDataSetReader,
