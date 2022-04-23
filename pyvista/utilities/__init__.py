@@ -36,6 +36,7 @@ from .reader import (
     OpenFOAMReader,
     Plot3DMetaReader,
     PLYReader,
+    PNGReader,
     PointCellDataSelection,
     PVDDataSet,
     PVDReader,

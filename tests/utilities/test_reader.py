@@ -673,3 +673,13 @@ def test_nrrd_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_png_reader():
+    filename = examples.download_vtk_logo(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.PNGReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
