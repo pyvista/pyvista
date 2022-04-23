@@ -643,3 +643,13 @@ def test_demreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_jpegreader():
+    filename = examples.download_mars_jpg()
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.JPEGReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

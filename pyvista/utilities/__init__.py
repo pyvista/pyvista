@@ -29,6 +29,7 @@ from .reader import (
     DEMReader,
     EnSightReader,
     FacetReader,
+    JPEGReader,
     OBJReader,
     OpenFOAMReader,
     Plot3DMetaReader,
