@@ -539,6 +539,10 @@ else:  # pragma: no cover
         """Lazy import of the vtkHDFReader."""
         return vtk.vtkHDFReader()
 
+    def lazy_vtkSegYReader():
+        """Lazy import of the vtkSegYReader."""
+        return vtk.vtkSegYReader()
+
     class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
