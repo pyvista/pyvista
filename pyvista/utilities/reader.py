@@ -1789,12 +1789,12 @@ class HDRReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_parched_canal_4k(load=False)
-    >>> filename.split("/")[-1]  # omit the path
+    >>> filename = examples.download_parched_canal_4k(load=False)  # doctest:+SKIP
+    >>> filename.split("/")[-1]  # omit the path  # doctest:+SKIP
     'parched_canal_4k.hdr'
-    >>> reader = pyvista.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> reader = pyvista.get_reader(filename)  # doctest:+SKIP
+    >>> mesh = reader.read()  # doctest:+SKIP
+    >>> mesh.plot()  # doctest:+SKIP
 
     """
 
