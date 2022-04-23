@@ -653,3 +653,13 @@ def test_jpegreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_meta_image_reader():
+    filename = examples.download_chest(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.MetaImageReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

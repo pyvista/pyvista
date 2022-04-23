@@ -30,6 +30,7 @@ from .reader import (
     EnSightReader,
     FacetReader,
     JPEGReader,
+    MetaImageReader,
     OBJReader,
     OpenFOAMReader,
     Plot3DMetaReader,
