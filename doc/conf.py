@@ -176,31 +176,31 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.StructuredGrid$',
     r'\.PointGrid$',
     # classes inherit from BaseReader
-    r'\.*Reader$',
+    r'\.Reader$',
     # internal
     r'\.Renderer$',
     # deprecated
-    r'\.*boolean_add$',
-    r'\.*boolean_cut$',
-    r'\.*add_field_array$',
-    r'DataSetAttributes.append$',
+    r'\.boolean_add$',
+    r'\.boolean_cut$',
+    r'\.add_field_array$',
+    r'\.DataSetAttributes.append$',
     # methods we probably should make private
     r'\.store_click_position$',
     r'\.store_mouse_position$',
-    r'\.*fly_to_mouse_position$',
-    r'\.*key_press_event$',
-    r'\.*left_button_down$',
+    r'\.fly_to_mouse_position$',
+    r'\.key_press_event$',
+    r'\.left_button_down$',
     # MISC
-    r'\.*PlotterITK$',
-    r'\.*MultiBlock.copy_meta_from$',
+    r'\.PlotterITK$',
+    r'\.MultiBlock.copy_meta_from$',
     r'\.DataObject.copy_meta_from$',
     # wraps
-    r'\.*Plotter.enable_depth_peeling$',
-    r'\.*add_scalar_bar$',
+    r'\.Plotter.enable_depth_peeling$',
+    r'\.add_scalar_bar$',
     # pending refactor
-    r'\.*MultiBlock.next$',
+    r'\.MultiBlock.next$',
     # called from inherited
-    r'\.*Table.copy_meta_from$',
+    r'\.Table.copy_meta_from$',
     # Type alias
     r'\.color_like$',
 }
