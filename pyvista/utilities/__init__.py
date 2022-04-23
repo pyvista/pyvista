@@ -30,6 +30,7 @@ from .reader import (
     DEMReader,
     EnSightReader,
     FacetReader,
+    HDFReader,
     HDRReader,
     JPEGReader,
     MetaImageReader,

@@ -733,3 +733,13 @@ def test_avsucd_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_hdf_reader():
+    filename = examples.download_can(partial=True, load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.HDFReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
