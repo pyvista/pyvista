@@ -156,6 +156,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.from_dict$',
     r'\.to_dict$',
     r'\.__init__$',
+    r'\.__new__$',
     # parm of abstract classes
     r'\.CompositeFilters$',
     r'\.PolyDataFilters$',
