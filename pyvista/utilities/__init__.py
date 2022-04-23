@@ -37,6 +37,7 @@ from .reader import (
     Plot3DMetaReader,
     PLYReader,
     PNGReader,
+    PNMReader,
     PointCellDataSelection,
     PVDDataSet,
     PVDReader,

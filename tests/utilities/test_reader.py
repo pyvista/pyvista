@@ -683,3 +683,13 @@ def test_png_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_pnm_reader():
+    filename = examples.download_gourds_pnm(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.PNMReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
