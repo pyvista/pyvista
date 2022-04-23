@@ -537,7 +537,7 @@ else:  # pragma: no cover
 
     def lazy_vtkHDFReader():
         """Lazy import of the vtkHDFReader."""
-        return vtk.vtkHDFReader()
+        raise VTKVersionError('vtk.HDFReader requires VTK v9.1.0 or newer')
 
     def lazy_vtkSegYReader():
         """Lazy import of the vtkSegYReader."""

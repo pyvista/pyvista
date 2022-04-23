@@ -735,6 +735,7 @@ def test_avsucd_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_hdf_reader():
     filename = examples.download_can(partial=True, load=False)
     reader = pyvista.get_reader(filename)
