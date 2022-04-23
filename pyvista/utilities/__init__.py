@@ -23,6 +23,7 @@ from .reader import (
     get_reader,
     BaseReader,
     BinaryMarchingCubesReader,
+    BMPReader,
     BYUReader,
     CGNSReader,
     EnSightReader,

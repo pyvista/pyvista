@@ -623,3 +623,13 @@ def test_read_cgns():
 
     assert reader.family_array_names == ['inflow', 'outflow', 'sym', 'wall']
     assert reader.family_array_status('inflow') is True
+
+
+def test_bmpreader():
+    filename = examples.download_masonry_texture(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.BMPReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
