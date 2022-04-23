@@ -176,7 +176,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.UnstructuredGrid$',
     r'\.UnstructuredGridFilters$',
     # classes inherit from BaseReader
-    r'.*Reader$',
+    r'.*Reader(\.|$)',
     # internal
     r'\.Renderer$',
     # deprecated
