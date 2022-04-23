@@ -1996,11 +1996,15 @@ class DataSetFilters:
 
         if scale and orient:
             if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
-                raise ValueError("Both ``scale`` and ``orient`` must use " "point data or cell data.")
+                raise ValueError(
+                    "Both ``scale`` and ``orient`` must use " "point data or cell data."
+                )
 
         source_data = dataset
-        if dataset.active_scalars_info.association == FieldAssociation.CELL or \
-                dataset.active_vectors_info.association == FieldAssociation.CELL:
+        if (
+            dataset.active_scalars_info.association == FieldAssociation.CELL
+            or dataset.active_vectors_info.association == FieldAssociation.CELL
+        ):
             source_data = dataset.cell_centers()
             set_active_scalars_vectors = True
 
