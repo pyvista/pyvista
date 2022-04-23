@@ -693,3 +693,13 @@ def test_pnm_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_slc_reader():
+    filename = examples.download_knee_full(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.SLCReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

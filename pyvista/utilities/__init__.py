@@ -41,6 +41,7 @@ from .reader import (
     PointCellDataSelection,
     PVDDataSet,
     PVDReader,
+    SLCReader,
     STLReader,
     TimeReader,
     VTKDataSetReader,
