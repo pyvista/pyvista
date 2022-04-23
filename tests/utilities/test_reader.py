@@ -713,3 +713,13 @@ def test_tiff_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_hdr_reader():
+    filename = examples.download_parched_canal_4k(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.HDRReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
