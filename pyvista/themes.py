@@ -2313,7 +2313,6 @@ class DocumentTheme(DefaultTheme):
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
-        self.hidden_line_removal = True
 
 
 class _TestingTheme(DefaultTheme):
