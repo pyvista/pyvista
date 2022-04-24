@@ -598,7 +598,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.abspath(os.path.expanduser(filename))
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOExporter import vtkVRMLExporter
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
 
         exporter = vtkVRMLExporter()
         exporter.SetFileName(filename)
