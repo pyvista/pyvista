@@ -212,7 +212,7 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
     pl.export_vrml(filename)
 
     pl_import = pyvista.Plotter()
-    pl_import.import_gltf(filename)
+    pl_import.import_vrml(filename)
     pl_import.show(before_close_callback=verify_cache_image)
 
     with pytest.raises(RuntimeError, match="This plotter has been closed"):
