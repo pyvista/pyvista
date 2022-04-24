@@ -74,7 +74,7 @@ points = np.array(
 face_a = [6, 0, 1, 2, 3, 4, 5]
 face_b = [6, 6, 7, 8, 1, 0, 9]
 face_c = [6, 10, 11, 12, 7, 6, 13]
-faces = np.hstack((face_a, face_b, face_c))
+faces = np.concatenate((face_a, face_b, face_c))
 
 mesh = pv.PolyData(points, faces)
 mesh.plot(show_edges=True, line_width=5)
