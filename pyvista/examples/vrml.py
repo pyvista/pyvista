@@ -33,3 +33,26 @@ def download_teapot():
 
     """
     return _download_file("src/Testing/Data/teapot.wrl")
+
+
+def download_sextant():
+    """Download the sextant example.
+
+    Files hosted at https://github.com/lorensen/VTKExamples/blob/master/src/Testing/Data
+
+    Returns
+    -------
+    str
+        Filename of the VRML file.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> vrml_file = examples.vrml.download_sextant() # doctest:+SKIP
+    >>> pl = pyvista.Plotter() # doctest:+SKIP
+    >>> pl.import_vrml(vrml_file) # doctest:+SKIP
+    >>> pl.show() # doctest:+SKIP
+
+    """
+    return _download_file("src/Testing/Data/sextant.wrl")
