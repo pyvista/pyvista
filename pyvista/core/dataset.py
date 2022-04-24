@@ -645,7 +645,7 @@ class DataSet(DataSetFilters, DataObject):
             return
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
-            raise KeyError(f'Data named "{name}" is a field array which cannot be active.')
+            raise KeyError(f'Data named ({name}) is a field array which cannot be active.')
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             ret = self.GetPointData().SetActiveScalars(name)
