@@ -592,10 +592,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        else:
-            filename = os.path.abspath(os.path.expanduser(filename))
 
         # lazy import here to avoid importing unused modules
         from vtkmodules.vtkIOExport import vtkVRMLExporter
