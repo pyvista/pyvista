@@ -582,6 +582,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Filename to export the scene to.  A filename extension of
             ``'wrl'`` will be added.
 
+        Returns
+        -------
+        vtkOBJExporter
+            Object exporter.
+
         Examples
         --------
         >>> import pyvista
