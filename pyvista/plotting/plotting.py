@@ -591,7 +591,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vrml("sample")
         """
         if not hasattr(self, "ren_win"):
-            raise RuntimeError("This plotter must still have a render window open.")
+            raise RuntimeError("This plotter has been closed and cannot be shown.")
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:

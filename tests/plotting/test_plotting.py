@@ -205,14 +205,18 @@ def test_import_vrml():
 
 
 def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.wrl'))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.wrl"))
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
-    pl.add_mesh(airplane)
-    pl.add_mesh(hexbeam)  # to check warning
-    with pytest.warns(UserWarning, match='Plotter contains non-PolyData datasets'):
-        pl.export_vrml(filename)
+    pl.export_vrml(filename)
+
+    pl_import = pyvista.Plotter()
+    pl_import.import_gltf(filename)
+    pl_import.show(before_close_callback=verify_cache_image)
+
+    with pytest.raises(RuntimeError, match="This plotter has been closed"):
+        pl_import.export_vrml(filename)
 
 
 @skip_not_vtk9
