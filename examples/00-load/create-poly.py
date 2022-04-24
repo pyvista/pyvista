@@ -43,9 +43,9 @@ surf.plot(
 
 
 ###############################################################################
-# Polyhedral PolyData
-# ~~~~~~~~~~~~~~~~~~~
-# Create a three face polyhedral mesh directly from points and faces.
+# Polygonal PolyData
+# ~~~~~~~~~~~~~~~~~~
+# Create a three face polygonal mesh directly from points and faces.
 #
 # .. note::
 #    It is generally more efficient to use a numpy array rather than stacking
