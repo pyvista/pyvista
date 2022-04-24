@@ -570,6 +570,41 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for array in renamed_arrays:
             array.SetName('Normals')
 
+    def export_vrml(self, filename):
+        """Export the current rendering scene as a VRML file.
+
+        See https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html
+        for limitations regarding the exporter.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to export the scene to.  A filename extension of
+            ``'wrl'`` will be added.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_hexbeam())
+        >>> pl.export_vrml("sample")
+        """
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter must still have a render window open.")
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        else:
+            filename = os.path.abspath(os.path.expanduser(filename))
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOExporter import vtkVRMLExporter
+
+        exporter = vtkVRMLExporter()
+        exporter.SetFileName(filename)
+        exporter.SetRenderWindow(self.ren_win)
+        return exporter.Write()
+
     def enable_hidden_line_removal(self, all_renderers=True):
         """Enable hidden line removal.
 
