@@ -52,7 +52,7 @@ class GetOutput:
 
     @property
     def latest_algorithm(self):
-        return self._mock.call_args_list[-1].args[0]
+        return self._mock.call_args_list[-1][0][0]
 
     @property
     def algorithms_of_class(self, alg_class):
