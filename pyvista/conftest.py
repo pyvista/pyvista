@@ -6,7 +6,7 @@ import pyvista
 
 
 @pytest.fixture(autouse=True)
-def autoclose_plotters():  # pragma: no cover
+def autoclose_plotters():
     """Close all plotters."""
     yield
     pyvista.close_all()

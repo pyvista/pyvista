@@ -3,3 +3,4 @@ omit =
     pyvista/ext/coverage.py
     # kept for backwards compatibility:
     pyvista/plotting/theme.py
+    pyvista/conftest.py
