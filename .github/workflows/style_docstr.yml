@@ -61,7 +61,7 @@ jobs:
 
       - name: Test Package Docstrings
         run: |
-          xvfb-run pytest -v --doctest-modules pyvista
+          xvfb-run pytest -v --doctest-plus pyvista
 
       - name: Test Package Docstrings with Local Namespace
         run: |

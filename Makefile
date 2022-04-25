@@ -10,7 +10,7 @@ doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
 doctest-modules:
 	@echo "Runnnig module doctesting"
-	pytest -v --doctest-modules pyvista
+	pytest -v --doctest-plus pyvista
 
 doctest-modules-local-namespace:
 	@echo "Running module doctesting using docstring local namespace"
