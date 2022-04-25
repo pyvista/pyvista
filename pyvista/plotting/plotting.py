@@ -573,7 +573,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def export_vrml(self, filename):
         """Export the current rendering scene as a VRML file.
 
-        See https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html
+        See `vtk.VRMLExporter <https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html>`_
         for limitations regarding the exporter.
 
         Parameters
