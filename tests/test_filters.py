@@ -735,6 +735,13 @@ def test_glyph_settings(sphere):
     sphere.set_active_scalars('active_vectors_points')
 
     with patch('pyvista.core.filters.data_set._get_output', GetOutput()) as go:
+        # no orient with cell scale
+        sphere.glyph(scale='arr_cell', orient=False)
+        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
         # cell orient with no scale
         sphere.glyph(scale=False, orient='vectors_cell')
         alg = InterrogateVtkGlyph3D(go.latest_algorithm)
@@ -755,6 +762,13 @@ def test_glyph_settings(sphere):
         alg = InterrogateVtkGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_cell'
         assert alg.input_active_vectors_info.name == 'vectors_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # no orient with point scale
+        sphere.glyph(scale='arr_points', orient=False)
+        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
         assert alg.scale_mode == 'ScaleByScalar'
         go.reset()
 
