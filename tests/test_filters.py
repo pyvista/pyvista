@@ -54,12 +54,6 @@ class GetOutput:
     def latest_algorithm(self):
         return self._mock.call_args_list[-1][0][0]
 
-    @property
-    def algorithms_of_class(self, alg_class):
-        return filter(
-            lambda alg: isinstance(alg, alg_class), [args[0] for args in self._mock.call_args_list]
-        )
-
 
 @pytest.fixture
 def composite(datasets):
