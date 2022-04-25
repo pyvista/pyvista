@@ -3646,6 +3646,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
     ----------
     partial : bool, optional
         Load part of the dataset. Defaults to ``False``.
+
     load : bool, optional
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.

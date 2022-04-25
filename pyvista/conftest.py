@@ -1,4 +1,4 @@
-"""Close all plotters to help control memory usage for our doctest."""
+"""Close all plotters to help control memory usage for our doctests."""
 
 import pytest
 

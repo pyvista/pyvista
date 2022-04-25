@@ -1864,7 +1864,7 @@ class MFIXReader(BaseReader):
 
 
 class SegYReader(BaseReader):
-    """SegYReader for .sgy and segy files."""
+    """SegYReader for .sgy and .segy files."""
 
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
