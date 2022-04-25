@@ -579,13 +579,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str
-            Filename to export the scene to.  A filename extension of
-            ``'wrl'`` will be added.
-
-        Returns
-        -------
-        vtkOBJExporter
-            Object exporter.
+            Filename to export the scene to.
 
         Examples
         --------
@@ -604,7 +598,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter = vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.ren_win)
-        return exporter.Write()
+        exporter.Write()
 
     def enable_hidden_line_removal(self, all_renderers=True):
         """Enable hidden line removal.
