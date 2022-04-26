@@ -652,10 +652,10 @@ class DataSet(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             ret = self.GetCellData().SetActiveScalars(name)
         else:
-            raise ValueError(f'Data field ({name}) not usable')
+            raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
         if ret < 0:
-            raise ValueError(f'Data field ({name}) could not be set as the active scalars')
+            raise ValueError(f'Data field ({name}) with type ({field}) could not be set as the active scalars')
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
@@ -687,10 +687,10 @@ class DataSet(DataSetFilters, DataObject):
             elif field == FieldAssociation.CELL:
                 ret = self.GetCellData().SetActiveVectors(name)
             else:
-                raise ValueError(f'Data field ({name}) not usable')
+                raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
             if ret < 0:
-                raise ValueError(f'Data field ({name}) could not be set as the active vectors')
+                raise ValueError(f'Data field ({name}) with type ({field}) could not be set as the active vectors')
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
@@ -722,10 +722,10 @@ class DataSet(DataSetFilters, DataObject):
             elif field == FieldAssociation.CELL:
                 ret = self.GetCellData().SetActiveTensors(name)
             else:
-                raise ValueError(f'Data field ({name}) not usable')
+                raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
             if ret < 0:
-                raise ValueError(f'Data field ({name}) could not be set as the active tensors')
+                raise ValueError(f'Data field ({name}) with type ({field}) could not be set as the active tensors')
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
 
