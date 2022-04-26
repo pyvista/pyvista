@@ -1293,7 +1293,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault("reset_camera", False)
-        self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
+        return self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
 
     def add_mesh_isovalue(
         self,
