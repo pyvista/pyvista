@@ -2029,9 +2029,9 @@ class DataSetFilters:
         # again
         if set_active_scalars_vectors:
             if scale:
-                source_data.set_active_scalars(dataset.active_scalars_name, 'point')
+                source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
             if orient:
-                source_data.set_active_vectors(dataset.active_vectors_name, 'point')
+                source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
 
         if rng is not None:
             alg.SetRange(rng)
