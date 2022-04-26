@@ -3639,7 +3639,7 @@ def download_lucy(load=True):  # pragma: no cover
 def download_can(partial=False, load=True):  # pragma: no cover
     """Download the can dataset mesh.
 
-    Original downloaded from Testing/Data/FileSeries at from paraview.org. Used
+    File obtained from `Kitware <https://www.kitware.com/>`_. Used
     for testing hdf files.
 
     Parameters
