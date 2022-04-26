@@ -3836,7 +3836,7 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
 
 
 def download_cells_nd(load=True):  # pragma: no cover
-    """Download dataset.
+    """Download example AVS UCD dataset.
 
     Parameters
     ----------
