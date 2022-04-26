@@ -728,11 +728,14 @@ def test_glyph_settings(sphere):
     sphere['vectors_points'] = np.ones([sphere.n_points, 3])
     sphere['arr_cell'] = np.ones(sphere.n_cells)
     sphere['arr_points'] = np.ones(sphere.n_points)
-    sphere['active_arr_points'] = np.ones(sphere.n_points)
-    sphere['active_vectors_points'] = np.ones(sphere.n_points)
 
-    sphere.set_active_scalars('active_arr_points')
-    sphere.set_active_scalars('active_vectors_points')
+    sphere['arr_both'] = np.ones(sphere.n_points)
+    sphere['arr_both'] = np.ones(sphere.n_cells)
+    sphere['vectors_both'] = np.ones([sphere.n_points, 3])
+    sphere['vectors_both'] = np.ones([sphere.n_cells, 3])
+
+    sphere['active_arr_points'] = np.ones(sphere.n_points)
+    sphere['active_vectors_points'] = np.ones([sphere.n_points, 3])
 
     with patch('pyvista.core.filters.data_set._get_output', GetOutput()) as go:
         # no orient with cell scale
@@ -801,6 +804,23 @@ def test_glyph_settings(sphere):
         assert alg.input_active_scalars_info.name == 'arr_points'
         assert alg.input_active_vectors_info.name == 'vectors_points'
         assert alg.scale_factor == 5
+
+        # ambiguous point/cell prefers points
+        sphere.glyph(scale='arr_both', orient='vectors_both')
+        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_both'
+        assert alg.input_active_vectors_info.name == 'vectors_both'
+        ## Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
+        assert len(alg.input_data_object.active_scalars) == sphere.n_cells
+        assert len(alg.input_data_object.active_scalars) == sphere.n_cells
+
+        # no fields selected uses active
+        sphere.set_active_scalars('active_arr_points')
+        sphere.set_active_vectors('active_vectors_points')
+        sphere.glyph(scale=True, orient=True)
+        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'active_arr_points'
+        assert alg.input_active_vectors_info.name == 'active_vectors_points'
 
 
 def test_glyph_orient_and_scale():

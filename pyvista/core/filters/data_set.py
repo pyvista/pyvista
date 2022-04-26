@@ -1964,7 +1964,7 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.set_active_scalars(scale, 'point')
+            dataset.set_active_scalars(scale, preference='cell')
             scale = True
 
         if scale:
@@ -1981,7 +1981,7 @@ class DataSetFilters:
                 prefer = 'cell'
             else:
                 prefer = 'point'
-            dataset.set_active_vectors(orient, prefer)
+            dataset.set_active_vectors(orient, preference=prefer)
             orient = True
 
         if orient:
