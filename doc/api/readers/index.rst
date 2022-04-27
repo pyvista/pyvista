@@ -23,18 +23,35 @@ Reader Classes
    :toctree: _autosummary
    :template: custom-class-template.rst
 
+    AVSucdReader
     BYUReader
     BinaryMarchingCubesReader
+    BMPReader
     CGNSReader
+    DEMReader
     DICOMReader
     EnSightReader
     FacetReader
+    FluentReader
+    GLTFReader
+    HDFReader
+    HDRReader
+    JPEGReader
+    MetaImageReader
+    MFIXReader
+    NRRDReader
     OBJReader
     OpenFOAMReader
     PLYReader
+    PNGReader
+    PNMReader
+    PTSReader
     PVDReader
     Plot3DMetaReader
+    SegYReader
+    SLCReader
     STLReader
+    TIFFReader
     VTKDataSetReader
     VTKPDataSetReader
     XMLImageDataReader
