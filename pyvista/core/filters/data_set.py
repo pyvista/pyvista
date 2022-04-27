@@ -1996,18 +1996,18 @@ class DataSetFilters:
                 )
                 orient = False
 
-        set_active_scalars_vectors = False
-
         if scale and orient:
             if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
                 raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
 
         source_data = dataset
+        set_actives_on_source_data = False
+
         if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
             orient and dataset.active_vectors_info.association == FieldAssociation.CELL
         ):
             source_data = dataset.cell_centers()
-            set_active_scalars_vectors = True
+            set_actives_on_source_data = True
 
         # Clean the points before glyphing
         if tolerance is not None:
@@ -2023,11 +2023,11 @@ class DataSetFilters:
                 absolute=absolute,
                 progress_bar=progress_bar,
             )
-            set_active_scalars_vectors = True
+            set_actives_on_source_data = True
 
-        # converting from cell -> points and the point merging operation both destroy the active vectors, so set them
-        # again
-        if set_active_scalars_vectors:
+        # upstream operations (cell to point conversion, point merging) may have unset the correct active
+        # scalars/vectors, so set them again
+        if set_actives_on_source_data:
             if scale:
                 source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
             if orient:
