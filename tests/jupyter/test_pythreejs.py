@@ -31,6 +31,10 @@ def test_export_to_html(sphere, tmpdir):
     pl.subplot(0, 1)
     pl.add_text("Sphere 2\n", font_size=30, color='grey')
     pl.add_mesh(sphere, show_edges=False, color='grey')
+    pl.link_views()
+
+    with pytest.raises(ValueError, match="Invalid backend"):
+        pl.export_html(filename, backend='not-a-valid-backend')
 
     pl.export_html(filename)
 

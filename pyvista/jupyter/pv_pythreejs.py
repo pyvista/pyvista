@@ -547,7 +547,7 @@ def convert_plotter(pl):
                 for i_view in range(i, n_row):
                     for j_view in range(j + 1, n_col):
                         if camera is pl.renderers[j_view + n_row * i_view].camera:
-                            # must link camera and controls
+                            # must link both camera and controls
                             grid[i_view, j_view].camera = grid[i, j].camera
                             grid[i_view, j_view].controls = grid[i, j].controls
 

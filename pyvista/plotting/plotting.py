@@ -409,7 +409,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if backend == 'pythreejs':
             widget = self.to_pythreejs()
         elif backend == 'panel':
-            return self._save_panel(filename)
+            self._save_panel(filename)
+            return
         else:
             raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
 
