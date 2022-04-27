@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 import pyvista as pv
@@ -32,3 +34,19 @@ def test_panel(sphere, return_viewer):
         assert isinstance(viewer, VTKRenderWindowSynchronized)
     else:
         return viewer is None
+
+
+@skip_no_panel
+def test_save(sphere, tmpdir):
+    filename = str(tmpdir.join('tmp.html'))
+    plotter = pv.Plotter(shape=(1, 2))
+
+    plotter.add_text("Airplane 1\n", font_size=30, color='grey')
+    plotter.add_mesh(sphere, show_edges=False, color='grey')
+
+    plotter.subplot(0, 1)
+    plotter.add_text("Airplane 2\n", font_size=30, color='grey')
+    plotter.add_mesh(sphere, show_edges=False, color='grey')
+
+    plotter.export_html(filename, backend='panel')
+    assert os.path.isfile(filename)

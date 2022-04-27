@@ -457,7 +457,7 @@ def meshes_from_actors(actors, focal_point):
 
 
 def convert_renderer(pv_renderer):
-    """Convert a pyvista renderer to a pythreejs renderer."""
+    """Convert a pyvista renderer to a pythreejs widget."""
     # verify plotter hasn't been closed
 
     width, height = pv_renderer.width, pv_renderer.height
@@ -536,6 +536,20 @@ def convert_plotter(pl):
                 if i == 0:
                     width += pv_ren.width + pv_ren.border_width * 2
                 grid[i, j] = convert_renderer(pv_ren)
+
+        # check for linked cameras
+        for i in range(n_row):
+            for j in range(n_col):
+                pv_ren = pl.renderers[j + n_row * i]
+                camera = pv_ren.camera
+
+                # check if the camera is cloned with any other cameras
+                for i_view in range(i, n_row):
+                    for j_view in range(j + 1, n_col):
+                        if camera is pl.renderers[j_view + n_row * i_view].camera:
+                            # must link camera and controls
+                            grid[i_view, j_view].camera = grid[i, j].camera
+                            grid[i_view, j_view].controls = grid[i, j].controls
 
         # this is important to ignore when building the gallery
         if not pv.BUILDING_GALLERY:

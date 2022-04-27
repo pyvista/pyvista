@@ -361,21 +361,37 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if set_camera:
             self.camera_position = 'xy'
 
-    def export_html(self, filename):
+    def export_html(self, filename, backend='pythreejs'):
         """Export this plotter as an interactive scene to a HTML file.
+
+        You have the option of exposing the scene using either vtk.js or
+        three.js, both of which are excellent JavaScript libraries to visualize
+        small to moderately complex scenes for scientific visualization.
 
         Parameters
         ----------
         filename : str
             Path to export the html file to.
 
+        backend : str, optional
+            One of the following:
+
+            - ``'pythreejs'``
+            - ``'panel'``
+
+            For more details about the advantages and disavantages of each
+            backend, see :ref:`jupyter_plotting`.
+
         Notes
         -----
-        You will need ``ipywidgets`` and ``pythreejs`` installed for
-        this feature.
+        You will need ``ipywidgets`` and ``pythreejs`` installed for if you
+        wish to export using the ``'pythreejs'`` backend, or ``'panel'``
+        installed to export using ``'panel'``.
 
         Examples
         --------
+        Export as a three.js scene using the pythreejs backend.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
@@ -385,20 +401,45 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
+        Export as a vtk.js scene using the panel backend.
+
+        >>> pl.export_html('pyvista_panel.html', backend='panel')  # doctest:+SKIP
+
         """
-        pythreejs_renderer = self.to_pythreejs()
+        if backend == 'pythreejs':
+            widget = self.to_pythreejs()
+        elif backend == 'panel':
+            return self._save_panel(filename)
+        else:
+            raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
 
         # import after converting as we check for pythreejs import first
         try:
             from ipywidgets.embed import embed_minimal_html
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install ipywidgets with:\n' '\n\tpip install ipywidgets')
+            raise ImportError('Please install ipywidgets with:\n\n\tpip install ipywidgets')
 
         # convert and write to file
-        embed_minimal_html(filename, views=[pythreejs_renderer], title=self.title)
+        embed_minimal_html(filename, views=[widget], title=self.title)
+
+    def _save_panel(self, filename):
+        """Save the render window as a ``panel.pane.vtk`` html file.
+
+        See https://panel.holoviz.org/api/panel.pane.vtk.html
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the plotter as a panel scene to.
+
+        """
+        from ..jupyter.notebook import handle_plotter
+
+        pane = handle_plotter(self, backend='panel', return_viewer=True, title=self.title)
+        pane.save(filename)
 
     def to_pythreejs(self):
-        """Convert this plotting scene to a pythreejs renderer.
+        """Convert this plotting scene to a pythreejs widget.
 
         Returns
         -------

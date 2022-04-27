@@ -21,11 +21,17 @@ def test_set_jupyter_backend_ipygany():
         pyvista.global_theme.jupyter_backend = None
 
 
-def test_export_to_html(cube, tmpdir):
+def test_export_to_html(sphere, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.html'))
 
-    pl = pyvista.Plotter()
-    pl.add_mesh(cube)
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.add_text("Sphere 1\n", font_size=30, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey')
+
+    pl.subplot(0, 1)
+    pl.add_text("Sphere 2\n", font_size=30, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey')
+
     pl.export_html(filename)
 
     raw = open(filename).read()
