@@ -686,7 +686,7 @@ def test_glyph_cell_point_data(sphere):
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
 
 
-class InterrogateVtkGlyph3D:
+class InterrogateVTKGlyph3D:
     def __init__(self, alg: pyvista._vtk.vtkGlyph3D):
         self.alg = alg
 
@@ -740,21 +740,21 @@ def test_glyph_settings(sphere):
     with patch('pyvista.core.filters.data_set._get_output', GetOutput()) as go:
         # no orient with cell scale
         sphere.glyph(scale='arr_cell', orient=False)
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_cell'
         assert alg.scale_mode == 'ScaleByScalar'
         go.reset()
 
         # cell orient with no scale
         sphere.glyph(scale=False, orient='vectors_cell')
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_vectors_info.name == 'vectors_cell'
         assert alg.scale_mode == 'DataScalingOff'
         go.reset()
 
         # cell orient with cell scale
         sphere.glyph(scale='arr_cell', orient='vectors_cell')
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_cell'
         assert alg.input_active_vectors_info.name == 'vectors_cell'
         assert alg.scale_mode == 'ScaleByScalar'
@@ -762,7 +762,7 @@ def test_glyph_settings(sphere):
 
         # cell orient with cell scale and tolerance
         sphere.glyph(scale='arr_cell', orient='vectors_cell', tolerance=0.05)
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_cell'
         assert alg.input_active_vectors_info.name == 'vectors_cell'
         assert alg.scale_mode == 'ScaleByScalar'
@@ -770,21 +770,21 @@ def test_glyph_settings(sphere):
 
         # no orient with point scale
         sphere.glyph(scale='arr_points', orient=False)
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_points'
         assert alg.scale_mode == 'ScaleByScalar'
         go.reset()
 
         # point orient with no scale
         sphere.glyph(scale=False, orient='vectors_points')
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_vectors_info.name == 'vectors_points'
         assert alg.scale_mode == 'DataScalingOff'
         go.reset()
 
         # point orient with point scale
         sphere.glyph(scale='arr_points', orient='vectors_points')
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_points'
         assert alg.input_active_vectors_info.name == 'vectors_points'
         assert alg.scale_mode == 'ScaleByScalar'
@@ -792,7 +792,7 @@ def test_glyph_settings(sphere):
 
         # point orient with point scale and tolerance
         sphere.glyph(scale='arr_points', orient='vectors_points', tolerance=0.05)
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_points'
         assert alg.input_active_vectors_info.name == 'vectors_points'
         assert alg.scale_mode == 'ScaleByScalar'
@@ -800,14 +800,14 @@ def test_glyph_settings(sphere):
 
         # point orient with point scale + factor
         sphere.glyph(scale='arr_points', orient='vectors_points', factor=5)
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_points'
         assert alg.input_active_vectors_info.name == 'vectors_points'
         assert alg.scale_factor == 5
 
         # ambiguous point/cell prefers points
         sphere.glyph(scale='arr_both', orient='vectors_both')
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_both'
         assert alg.input_active_vectors_info.name == 'vectors_both'
         ## Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
@@ -818,7 +818,7 @@ def test_glyph_settings(sphere):
         sphere.set_active_scalars('active_arr_points')
         sphere.set_active_vectors('active_vectors_points')
         sphere.glyph(scale=True, orient=True)
-        alg = InterrogateVtkGlyph3D(go.latest_algorithm)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'active_arr_points'
         assert alg.input_active_vectors_info.name == 'active_vectors_points'
 
