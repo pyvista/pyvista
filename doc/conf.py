@@ -152,7 +152,6 @@ numpydoc_validation_checks = {
     "YD01",  # Yields: No plan to enforce
 }
 numpydoc_validation_exclude = {  # set of regex
-    r'\.PointSet$',  # necessary for this abstract class
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.from_dict$',
     r'\.to_dict$',
@@ -167,6 +166,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.Grid$',
     r'\.MultiBlock$',
     r'\.PointGrid$',
+    r'\.PointSet$',
     r'\.PolyDataFilters$',
     r'\.RectilinearGrid$',
     r'\.StructuredGrid$',
