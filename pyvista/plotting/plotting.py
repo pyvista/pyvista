@@ -4616,6 +4616,126 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 places.append(tuple(self.renderers.index_to_loc(index)))
         return places
 
+    def add_ruler(
+        self,
+        pointa,
+        pointb,
+        number_labels=5,
+        show_labels=True,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        title="Distance",
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+    ):
+        """Add ruler.
+
+        The ruler is a 2D object that is not occluded by 3D objects.
+        To avoid issues with perspective, it is recommended to use
+        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        and place the ruler orthogonal to the viewing direction.
+
+        Parameters
+        ----------
+        pointa : Sequence
+            Starting point for ruler.
+
+        pointb : Sequence
+            Ending point for ruler.
+
+        number_labels : int
+            Number of labels to place on ruler.
+
+        show_labels : bool, optional
+            Whether to show labels.
+
+        font_size_factor : float
+            Factor to scale font size overall.
+
+        label_size_factor : float
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        title : str, optional
+            The title to display.
+
+        number_minor_ticks : int, optional
+            Number of minor ticks between major ticks.
+
+        tick_length : int
+            Length of ticks in pixels.
+
+        minor_tick_length : int
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, optional
+            Whether to show the ticks.
+
+        tick_label_offset : int
+            Offset between tick and label in pixels.
+
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> cone = pyvista.Cone(height=2.0, radius=0.5)
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(cone)
+
+        Measure x direction of cone and place ruler slightly below.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
+        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0]
+        ... )
+
+        Measure y direction of cone and place ruler slightly to left.
+        The title and labels are placed to the right of the ruler when
+        traveling from ``pointa`` to ``pointb``.
+
+        >>> plotter.add_ruler(
+        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
+        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0]
+        ... )
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        """
+        ruler = _vtk.vtkAxisActor2D()
+
+        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
+        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+
+        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        ruler.SetRange(0, distance)
+
+        ruler.SetTitle(title)
+        ruler.SetFontFactor(font_size_factor)
+        ruler.SetLabelFactor(label_size_factor)
+        ruler.SetNumberOfLabels(number_labels)
+        ruler.SetLabelVisibility(show_labels)
+        if label_format:
+            ruler.SetLabelFormat(label_format)
+
+        ruler.SetNumberOfMinorTicks(number_minor_ticks)
+        ruler.SetTickVisibility(show_ticks)
+        ruler.SetTickLength(tick_length)
+        ruler.SetMinorTickLength(minor_tick_length)
+        ruler.SetTickOffset(tick_label_offset)
+
+        self.add_actor(ruler, reset_camera=True, pickable=False)
+        return ruler
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.

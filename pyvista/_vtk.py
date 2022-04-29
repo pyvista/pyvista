@@ -361,6 +361,7 @@ if VTK9:
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
+        vtkAxisActor2D,
         vtkCornerAnnotation,
         vtkCubeAxesActor,
         vtkLegendBoxActor,
