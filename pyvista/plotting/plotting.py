@@ -4708,7 +4708,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
         ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
         ...     flip_range=True,
-                title="Y Distance"
+        ...     title="Y Distance"
         ... )
         >>> plotter.enable_parallel_projection()
         >>> plotter.view_xy()
