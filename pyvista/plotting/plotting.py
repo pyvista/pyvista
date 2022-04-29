@@ -4620,6 +4620,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self,
         pointa,
         pointb,
+        flip_range=False,
         number_labels=5,
         show_labels=True,
         font_size_factor=0.6,
@@ -4646,6 +4647,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         pointb : Sequence
             Ending point for ruler.
+
+        flip_range : bool
+            If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
         number_labels : int
             Number of labels to place on ruler.
@@ -4703,6 +4707,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.add_ruler(
         ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
         ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     flip_range=True,
                 title="Y Distance"
         ... )
         >>> plotter.enable_parallel_projection()
@@ -4719,7 +4724,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
 
         distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
-        ruler.SetRange(0, distance)
+        if flip_range:
+            ruler.SetRange(distance, 0)
+        else:
+            ruler.SetRange(0, distance)
 
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
