@@ -4704,7 +4704,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         The title and labels are placed to the right of the ruler when
         traveling from ``pointa`` to ``pointb``.
 
-        >>> plotter.add_ruler(
+        >>> _ = plotter.add_ruler(
         ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
         ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
         ...     flip_range=True,
