@@ -4692,7 +4692,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> _ = plotter.add_ruler(
         ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
-        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0]
+        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     title="X Distance"
         ... )
 
         Measure y direction of cone and place ruler slightly to left.
@@ -4701,7 +4702,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> plotter.add_ruler(
         ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
-        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0]
+        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+                title="Y Distance"
         ... )
         >>> plotter.enable_parallel_projection()
         >>> plotter.view_xy()
