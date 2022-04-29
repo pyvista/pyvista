@@ -4684,6 +4684,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         tick_label_offset : int
             Offset between tick and label in pixels.
 
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the ruler.
 
         Examples
         --------
