@@ -5,14 +5,14 @@ from .downloads import _retrieve_file
 VRML_SAMPLES_ROOT_URL = "https://raw.githubusercontent.com/lorensen/VTKExamples/master/"
 
 
-def _download_file(end_url):  # pragma: no cover
+def _download_file(end_url):
     """Download a vrml example file."""
     basename = end_url.split('/')[-1]
     filename, _ = _retrieve_file(VRML_SAMPLES_ROOT_URL + end_url, basename)
     return filename
 
 
-def download_teapot():  # pragma: no cover
+def download_teapot():
     """Download the a 2-manifold solid version of the famous teapot example.
 
     Files hosted at https://github.com/lorensen/VTKExamples/blob/master/src/Testing/Data
@@ -35,7 +35,7 @@ def download_teapot():  # pragma: no cover
     return _download_file("src/Testing/Data/teapot.wrl")
 
 
-def download_sextant():  # pragma: no cover
+def download_sextant():
     """Download the sextant example.
 
     Files hosted at https://github.com/lorensen/VTKExamples/blob/master/src/Testing/Data
