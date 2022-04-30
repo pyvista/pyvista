@@ -12,7 +12,7 @@ def _download_file(end_url):
     return filename
 
 
-def download_teapot():
+def download_teapot():  # pragma: no cover
     """Download the a 2-manifold solid version of the famous teapot example.
 
     Files hosted at https://github.com/lorensen/VTKExamples/blob/master/src/Testing/Data
@@ -35,7 +35,7 @@ def download_teapot():
     return _download_file("src/Testing/Data/teapot.wrl")
 
 
-def download_sextant():
+def download_sextant():  # pragma: no cover
     """Download the sextant example.
 
     Files hosted at https://github.com/lorensen/VTKExamples/blob/master/src/Testing/Data
