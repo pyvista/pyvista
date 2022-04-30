@@ -535,6 +535,14 @@ else:  # pragma: no cover
         """Lazy import of the vtkCGNSReader."""
         raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
 
+    def lazy_vtkHDFReader():
+        """Lazy import of the vtkHDFReader."""
+        raise VTKVersionError('vtk.HDFReader requires VTK v9.1.0 or newer')
+
+    def lazy_vtkSegYReader():
+        """Lazy import of the vtkSegYReader."""
+        return vtk.vtkSegYReader()
+
     class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
