@@ -224,7 +224,7 @@ add_module_names = False
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
-        'https://docs.scipy.org/doc/scipy/reference',
+        'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
     ),
     'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-objects.inv')),
