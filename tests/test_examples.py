@@ -394,4 +394,5 @@ if TEST_DOWNLOADS:
         data = examples.vrml.sextant()
         assert data.n_cells
 
+
 # End of download tests
