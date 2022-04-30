@@ -2,7 +2,7 @@
 
 from .downloads import _retrieve_file
 
-VRML_SAMPLES_ROOT_URL = "https://raw.githubusercontent.com/lorensen/VTKExamples/master"
+VRML_SAMPLES_ROOT_URL = "https://raw.githubusercontent.com/lorensen/VTKExamples/master/"
 
 
 def _download_file(end_url):  # pragma: no cover
@@ -26,10 +26,10 @@ def download_teapot():  # pragma: no cover
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_teapot() # doctest:+SKIP
-    >>> pl = pyvista.Plotter() # doctest:+SKIP
-    >>> pl.import_vrml(vrml_file) # doctest:+SKIP
-    >>> pl.show() # doctest:+SKIP
+    >>> vrml_file = examples.vrml.download_teapot()
+    >>> pl = pyvista.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.show()
 
     """
     return _download_file("src/Testing/Data/teapot.wrl")
