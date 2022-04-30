@@ -5,7 +5,7 @@ from .downloads import _retrieve_file
 VRML_SAMPLES_ROOT_URL = "https://raw.githubusercontent.com/lorensen/VTKExamples/master/"
 
 
-def _download_file(end_url):
+def _download_file(end_url):  # pragma: no cover
     """Download a vrml example file."""
     basename = end_url.split('/')[-1]
     filename, _ = _retrieve_file(VRML_SAMPLES_ROOT_URL + end_url, basename)
