@@ -97,7 +97,6 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...    actor.SetVisibility(flag)
-        
         >>> p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
