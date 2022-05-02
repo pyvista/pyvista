@@ -99,7 +99,7 @@ class WidgetHelper:
         >>> p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
-        Download the interactive example at :ref:`checkbox_widget_example`
+        Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
         if not hasattr(self, "box_widgets"):
@@ -1911,7 +1911,7 @@ class WidgetHelper:
         >>> pl.add_checkbox_button_widget(toggle_vis, value=True)
         >>> pl.show()
 
-        Download the interactive example at :ref: `checkbox_widget_example`.
+        Download the interactive example at :ref:`checkbox_widget_example`.
 
         Returns
         -------
@@ -1931,7 +1931,7 @@ class WidgetHelper:
         >>> p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
-        Download the interactive example at :ref: `_checkbox_widget_example`
+        Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
         if not hasattr(self, "button_widgets"):
