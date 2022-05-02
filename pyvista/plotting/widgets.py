@@ -1898,21 +1898,6 @@ class WidgetHelper:
         background_color : color_like, optional
             The background color of the button. Default is ``'white'``.
 
-        Examples
-        --------
-        The following example generates a static image of the widget.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(mesh)
-        >>> def toggle_vis(flag):
-        ...     actor.SetVisibility(flag)
-        >>> pl.add_checkbox_button_widget(toggle_vis, value=True)
-        >>> pl.show()
-
-        Download the interactive example at :ref:`checkbox_widget_example`.
-
         Returns
         -------
         vtk.vtkButtonWidget
