@@ -1139,7 +1139,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def bounds(self):
-        """Return the bounds of the active renderer."""
+        """Return the bounds of the active renderer.
+
+        Returns
+        -------
+        list
+            Bounds of the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_mesh(pyvista.Cube())
+        >>> pl.bounds
+        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+
+        """
         return self.renderer.bounds
 
     @property
