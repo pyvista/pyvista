@@ -1902,7 +1902,7 @@ class WidgetHelper:
             The VTK button widget configured as a checkbox button.
 
         Examples
-        -------
+        --------
         The following example generates a static image of the widget.
 
         >>> import pyvista as pv
