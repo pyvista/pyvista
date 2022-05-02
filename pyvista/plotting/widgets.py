@@ -94,7 +94,7 @@ class WidgetHelper:
         >>> from pyvista import examples
         >>> mesh = examples.download_nefertiti()
         >>> p = pv.Plotter()
-        >>> p.add_mesh_clip_box(mesh, color='white')
+        >>> _ = p.add_mesh_clip_box(mesh, color='white')
         >>> p.show(cpos=[-1, -1, 0.2])
 
         Download the interactive example at :ref:`box_widget_example`.
@@ -1911,7 +1911,7 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...    actor.SetVisibility(flag)
-        >>> p.add_checkbox_button_widget(toggle_vis, value=True)
+        >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
         Download the interactive example at :ref:`checkbox_widget_example`.
