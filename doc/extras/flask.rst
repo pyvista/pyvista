@@ -2,23 +2,19 @@
 
 Flask Application
 =================
-You can use ``pyvista`` in to make a flask application to display
-static plots.  See the following example as well as the demo at `Flask
+You can use ``pyvista`` in to make a flask application to display both static
+and dynamic plots.  See the following example as well as the demo at `Flask
 Example <https://github.com/pyvista/pyvista/tree/main/examples_flask>`__.
 
-For dynamic examples, it's recommended to use `Jupyter Notebooks <https://jupyter.org/>`__.  See our documentation regarding this at :ref:`jupyter_plotting`.
+.. figure:: ../images/gifs/dynamic_flask.gif
 
-
-.. figure:: ../images/user-generated/flask_example.png
-    :width: 500pt
-
-    Example Flask Webpage
+    Example Dynamic Flask Webpage
 
 
 Python Application ``app.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../../examples_flask/app.py
+.. literalinclude:: ../../examples_flask/dynamic_image/app.py
 
 
 Ajax Template ``index.html``
@@ -30,4 +26,4 @@ This template returns the ``meshtype`` parameter back to the
 ``get_img`` method in the flask app, which is used to select the type
 of mesh to be plotted.
 
-.. literalinclude:: ../../examples_flask/templates/index.html
+.. literalinclude:: ../../examples_flask/dynamic_image/templates/index.html
