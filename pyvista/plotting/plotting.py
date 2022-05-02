@@ -1150,7 +1150,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(pyvista.Cube())
+        >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.bounds
         [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
 
@@ -1587,7 +1587,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista
         >>> pl = pyvista.Plotter(shape=(1, 2))
-        >>> pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.add_mesh(pyvista.Sphere())
         >>> pl.subplot(0, 1)
         >>> pl.add_mesh(pyvista.Cube())
         >>> pl.show()
@@ -1595,9 +1595,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Now, plot with the orientation widget.
 
         >>> pl = pyvista.Plotter(shape=(1, 2))
-        >>> pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.add_mesh(pyvista.Sphere())
         >>> pl.subplot(0, 1)
-        >>> pl.add_mesh(pyvista.Cube())
+        >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.show_axes_all()
         >>> pl.show()
 
