@@ -1589,7 +1589,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> _ = pl.add_mesh(pyvista.Sphere())
         >>> pl.subplot(0, 1)
-        >>> pl.add_mesh(pyvista.Cube())
+        >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.show()
 
         Now, plot with the orientation widget.
