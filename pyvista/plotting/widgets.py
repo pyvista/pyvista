@@ -86,21 +86,20 @@ class WidgetHelper:
         vtk.vtkBoxWidget
             Box widget.
 
-
         Examples
-        -------
-        The following example generate a static image of the widget.
+        --------
+        The following example generates a static image of the widget.
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> p = pv.Plotter()
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
-        ...    actor.SetVisibility(flag)
+        ...     actor.SetVisibility(flag)
         >>> p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
-        Download the interactive example at :ref: `_checkbox_widget_example`
+        Download the interactive example at :ref:`checkbox_widget_example`
 
         """
         if not hasattr(self, "box_widgets"):
@@ -1898,11 +1897,11 @@ class WidgetHelper:
 
         background_color : color_like, optional
             The background color of the button. Default is ``'white'``.
-        
+
         Examples
         --------
         The following example generates a static image of the widget.
-        
+
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> pl = pv.Plotter()
