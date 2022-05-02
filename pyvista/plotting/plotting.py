@@ -1564,7 +1564,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.hide_axes()
 
     def show_axes_all(self):
-        """Show the axes orientation widget in all renderers."""
+        """Show the axes orientation widget in all renderers.
+        
+        Example
+        -------- 
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> 
+        >>> # creates multi-window plot (1 row, 2 columns)
+        >>> pl = pyvista.Plotter(shape=(1,2))
+        >>> 
+        >>> # activate subplot 1 and add a mesh
+        >>> pl.subplot(0,0)
+        >>> _ = pl.add_mesh(examples.load_globe())
+        >>> 
+        >>> # activate subplot 2 and add a mesh
+        >>> pl.subplot(0,1)
+        >>> _ = pl.add_mesh(examples.load_airplane())
+        >>> 
+        >>> # show the axes orientation widget in all subplots
+        >>> pl.show_axes_all()
+        >>> 
+        >>> # display the window
+        >>> pl.show()
+
+        """
         for renderer in self.renderers:
             renderer.show_axes()
 
