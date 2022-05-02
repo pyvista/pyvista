@@ -386,16 +386,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
         """
-        pythreejs_renderer = self.to_pythreejs()
+        widget = self.to_pythreejs()
 
         # import after converting as we check for pythreejs import first
         try:
-            from ipywidgets.embed import embed_minimal_html
+            from ipywidgets.embed import dependency_state, embed_minimal_html
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install ipywidgets with:\n' '\n\tpip install ipywidgets')
+            raise ImportError('Please install ipywidgets with:\n\n\tpip install ipywidgets')
+
+        # Garbage collection for embedded html output:
+        # https://github.com/jupyter-widgets/pythreejs/issues/217
+        state = dependency_state(widget)
 
         # convert and write to file
-        embed_minimal_html(filename, views=[pythreejs_renderer], title=self.title)
+        embed_minimal_html(filename, None, title=self.title, state=state)
 
     def to_pythreejs(self):
         """Convert this plotting scene to a pythreejs renderer.

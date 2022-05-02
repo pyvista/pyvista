@@ -40,7 +40,7 @@ repos:
   rev: v0.950
   hooks:
     - id: mypy
-      exclude: ^(doc/|tests/|examples/|pyvista/ext/)
+      exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
       additional_dependencies: [
       "mypy-extensions==0.4.3",
       "toml==0.10.2",
