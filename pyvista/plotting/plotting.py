@@ -1565,6 +1565,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def show_axes_all(self):
         """Show the axes orientation widget in all renderers.
+
         Examples
         -------- 
         >>> import pyvista
