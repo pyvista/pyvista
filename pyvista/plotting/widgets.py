@@ -80,20 +80,19 @@ class WidgetHelper:
         pass_widget : bool, optional
             If ``True``, the widget will be passed as the last
             argument of the callback.
-        
-        Example
-        ---------
+
+        Examples
+        --------
         Shows an interactive clip box.
-        
+
         >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = examples.download_nefertiti()
-        >>> p = pv.Plotter()
-        >>> p.add_mesh_clip_box(mesh, color='white')
-        >>> p.show(cpos=[-1, -1, 0.2])
-        
-        For a full example see :ref:`_box_widget_example`
-        
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
+
+        For a full example see :ref:`box_widget_example`
+
         Returns
         -------
         vtk.vtkBoxWidget
