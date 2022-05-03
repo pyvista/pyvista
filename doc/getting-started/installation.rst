@@ -254,7 +254,7 @@ Running on WSL
 ~~~~~~~~~~~~~~
 Similar to the example of the remote server above, the windows subsystem for Linux does
 not provide an x-server for visualization. Instead, the fastest way to get up and
-running on WSL is through ``jupyter lab``.
+running on WSL is through `JupyterLab <https://jupyter.org/>`_.
 
 First, make sure you have installed the correct environment through Miniconda and
 related packages:
@@ -276,7 +276,7 @@ related packages:
 
 VTK Link to Jupyter
 ^^^^^^^^^^^^^^^^^^^
-There are two ways to get vtk rendering 3D objects in ``jupyter lab``. First you
+There are two ways to get vtk rendering 3D objects in JupyterLab. First you
 can follow the example above for remote servers, skipping over the ``ssh``
 instructions.
 
@@ -300,7 +300,7 @@ Start Jupyter:
 Visit ``localhost:8888`` in the web browser.
 
 Finally add this example code and your interactive visualizations
-should be displayed in ``jupyter lab``.
+should be displayed in JupyterLab.
 
 .. code-block:: python
 
@@ -327,7 +327,7 @@ To do this, first launch the Jupyter server:
 
 Visit ``localhost:8888`` in the web browser.
 
-Finally change the PyVista backend to a web visualization library: `pythreejs`.
+Finally change the PyVista backend to a web visualization library: ``pythreejs``.
 
 .. code-block:: python
 
