@@ -251,12 +251,12 @@ Reconnect to the server with port-forwarding, and start Jupyter:
 Visit ``localhost:8888`` in the web browser.
 
 Running on WSL
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Similar to the remote servers example above, the windows subsystem for linux does
-not provide and x-server for visualization. Instead the fastest way to get up and
+~~~~~~~~~~~~~~
+Similar to the example of the remote server above, the windows subsystem for Linux does
+not provide an x-server for visualization. Instead, the fastest way to get up and
 running on WSL is through ``jupyter lab``.
 
-First make sure you have installed the correct environment through Miniconda and
+First, make sure you have installed the correct environment through Miniconda and
 related packages:
 
 .. code-block:: bash
@@ -275,7 +275,7 @@ related packages:
     sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
 
 VTK Link to Jupyter
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 There are two ways to get vtk rendering 3D objects in ``jupyter lab``. First you
 can follow the example above for remote servers, skipping over the ``ssh``
 instructions.
@@ -299,7 +299,7 @@ Start Jupyter:
 
 Visit ``localhost:8888`` in the web browser.
 
-Finally add this example code, and your interactive visualizations
+Finally add this example code and your interactive visualizations
 should be displayed in ``jupyter lab``.
 
 .. code-block:: python
@@ -312,14 +312,14 @@ should be displayed in ``jupyter lab``.
     pl.set_background('orange', all_renderers=False)
     pl.show()
 
-You're visualizations should now be showing directly in the jupyter frontend.
+Your visualizations should now be showing directly in the Jupyter frontend.
 
 PyThreeJS Rendering in Jupyter
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The second option is to change the ``PyVista`` backend to use
 ``pythreejs``.
 
-To do this, first launch the jupyter server:
+To do this, first launch the Jupyter server:
 
 .. code-block:: bash
 
@@ -340,7 +340,7 @@ Finally change the PyVista backend to a web visualization library: `pythreejs`.
     pl.set_background('orange', all_renderers=False)
     pl.show()
 
-You're visualizations should now be showing directly in the jupyter frontend.
+Your visualizations should now be showing directly in the Jupyter frontend.
 
 Running with Sphinx-Gallery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
