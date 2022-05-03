@@ -91,7 +91,7 @@ class WidgetHelper:
         >>> _ = pl.add_mesh_clip_box(mesh, color='white')
         >>> pl.show()
 
-        For a full example see :ref:`box_widget_example`
+        For a full example see :ref:`box_widget_example`.
 
         Returns
         -------
