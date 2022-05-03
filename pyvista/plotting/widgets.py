@@ -98,6 +98,19 @@ class WidgetHelper:
         vtk.vtkBoxWidget
             Box widget.
 
+        Examples
+        --------
+        The following example generates a static image of the widget.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_nefertiti()
+        >>> p = pv.Plotter()
+        >>> _ = p.add_mesh_clip_box(mesh, color='white')
+        >>> p.show(cpos=[-1, -1, 0.2])
+
+        Download the interactive example at :ref:`box_widget_example`.
+
         """
         if not hasattr(self, "box_widgets"):
             self.box_widgets = []
@@ -1899,6 +1912,21 @@ class WidgetHelper:
         -------
         vtk.vtkButtonWidget
             The VTK button widget configured as a checkbox button.
+
+        Examples
+        --------
+        The following example generates a static image of the widget.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> p = pv.Plotter()
+        >>> actor = p.add_mesh(mesh)
+        >>> def toggle_vis(flag):
+        ...     actor.SetVisibility(flag)
+        >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
+        >>> p.show()
+
+        Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
         if not hasattr(self, "button_widgets"):
