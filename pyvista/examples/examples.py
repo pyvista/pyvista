@@ -26,9 +26,6 @@ globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 channelsfile = os.path.join(dir_path, 'channels.vti')
 
-# get location of this folder
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
 
 def load_ant():
     """Load ply ant mesh.

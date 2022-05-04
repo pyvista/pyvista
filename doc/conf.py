@@ -152,6 +152,7 @@ numpydoc_validation_checks = {
     "YD01",  # Yields: No plan to enforce
 }
 numpydoc_validation_exclude = {  # set of regex
+    r'\.PointSet$',  # necessary for this abstract class
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.from_dict$',
     r'\.to_dict$',
@@ -223,7 +224,7 @@ add_module_names = False
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
-        'https://docs.scipy.org/doc/scipy/reference',
+        'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
     ),
     'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-objects.inv')),

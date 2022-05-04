@@ -1930,20 +1930,7 @@ class DataSetFilters:
 
         """
         dataset = self
-        # Clean the points before glyphing
-        if tolerance is not None:
-            small = pyvista.PolyData(dataset.points)
-            small.point_data.update(dataset.point_data)
-            dataset = small.clean(
-                point_merging=True,
-                merge_tol=tolerance,
-                lines_to_points=False,
-                polys_to_lines=False,
-                strips_to_polys=False,
-                inplace=False,
-                absolute=absolute,
-                progress_bar=progress_bar,
-            )
+
         # Make glyphing geometry if necessary
         if geom is None:
             arrow = _vtk.vtkArrowSource()
@@ -1982,7 +1969,7 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.set_active_scalars(scale, 'cell')
+            dataset.set_active_scalars(scale, preference='cell')
             scale = True
         elif isinstance(scale, bool) and scale:
             try:
@@ -2004,11 +1991,16 @@ class DataSetFilters:
             alg.SetScaleModeToDataScalingOff()
 
         if isinstance(orient, str):
-            dataset.active_vectors_name = orient
+            if scale and dataset.active_scalars_info.association == FieldAssociation.CELL:
+                prefer = 'cell'
+            else:
+                prefer = 'point'
+            dataset.set_active_vectors(orient, preference=prefer)
             orient = True
-        elif isinstance(orient, bool) and orient:
+
+        if orient:
             try:
-                pyvista.set_default_active_vectors(self)
+                pyvista.set_default_active_vectors(dataset)
             except MissingDataError:
                 warnings.warn("No vector-like data to use for orient. orient will be set to False.")
                 orient = False
@@ -2019,22 +2011,42 @@ class DataSetFilters:
                 orient = False
 
         if scale and orient:
-            if (
-                dataset.active_vectors_info.association == FieldAssociation.CELL
-                and dataset.active_scalars_info.association == FieldAssociation.CELL
-            ):
-                source_data = dataset.cell_centers()
-            elif (
-                dataset.active_vectors_info.association == FieldAssociation.POINT
-                and dataset.active_scalars_info.association == FieldAssociation.POINT
-            ):
-                source_data = dataset
-            else:
-                raise ValueError(
-                    "Both ``scale`` and ``orient`` must use " "point data or cell data."
-                )
-        else:
-            source_data = dataset
+            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
+                raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
+
+        source_data = dataset
+        set_actives_on_source_data = False
+
+        if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
+            orient and dataset.active_vectors_info.association == FieldAssociation.CELL
+        ):
+            source_data = dataset.cell_centers()
+            set_actives_on_source_data = True
+
+        # Clean the points before glyphing
+        if tolerance is not None:
+            small = pyvista.PolyData(source_data.points)
+            small.point_data.update(source_data.point_data)
+            source_data = small.clean(
+                point_merging=True,
+                merge_tol=tolerance,
+                lines_to_points=False,
+                polys_to_lines=False,
+                strips_to_polys=False,
+                inplace=False,
+                absolute=absolute,
+                progress_bar=progress_bar,
+            )
+            set_actives_on_source_data = True
+
+        # upstream operations (cell to point conversion, point merging) may have unset the correct active
+        # scalars/vectors, so set them again
+        if set_actives_on_source_data:
+            if scale:
+                source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
+            if orient:
+                source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
+
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
