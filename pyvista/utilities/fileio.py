@@ -8,89 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-
-READERS = {
-    # Standard dataset readers:
-    '.vtk': _vtk.vtkDataSetReader,
-    '.pvtk': _vtk.lazy_vtkPDataSetReader,
-    '.vti': _vtk.vtkXMLImageDataReader,
-    '.pvti': _vtk.vtkXMLPImageDataReader,
-    '.vtr': _vtk.vtkXMLRectilinearGridReader,
-    '.pvtr': _vtk.vtkXMLPRectilinearGridReader,
-    '.vtu': _vtk.vtkXMLUnstructuredGridReader,
-    '.pvtu': _vtk.vtkXMLPUnstructuredGridReader,
-    '.ply': _vtk.vtkPLYReader,
-    '.obj': _vtk.vtkOBJReader,
-    '.stl': _vtk.vtkSTLReader,
-    '.vtp': _vtk.vtkXMLPolyDataReader,
-    '.vts': _vtk.vtkXMLStructuredGridReader,
-    '.vtm': _vtk.vtkXMLMultiBlockDataReader,
-    '.vtmb': _vtk.vtkXMLMultiBlockDataReader,
-    '.case': _vtk.vtkGenericEnSightReader,
-    # Image formats:
-    '.bmp': _vtk.vtkBMPReader,
-    '.dem': _vtk.vtkDEMReader,
-    '.dcm': _vtk.vtkDICOMImageReader,
-    '.img': _vtk.vtkDICOMImageReader,
-    '.jpeg': _vtk.vtkJPEGReader,
-    '.jpg': _vtk.vtkJPEGReader,
-    '.mha': _vtk.vtkMetaImageReader,
-    '.mhd': _vtk.vtkMetaImageReader,
-    '.nrrd': _vtk.vtkNrrdReader,
-    '.nhdr': _vtk.vtkNrrdReader,
-    '.png': _vtk.vtkPNGReader,
-    '.pnm': _vtk.vtkPNMReader,  # TODO: not tested
-    '.slc': _vtk.vtkSLCReader,
-    '.tiff': _vtk.vtkTIFFReader,
-    '.tif': _vtk.vtkTIFFReader,
-    '.gltf': _vtk.vtkGLTFReader,
-    '.glb': _vtk.vtkGLTFReader,
-    '.hdr': _vtk.vtkHDRReader,
-    # Other formats:
-    '.byu': _vtk.vtkBYUReader,  # TODO: not tested with this extension
-    '.g': _vtk.vtkBYUReader,
-    # '.chemml': _vtk.vtkCMLMoleculeReader, # TODO: not tested
-    # '.cml': _vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
-    # TODO: '.csv': _vtk.vtkCSVReader, # vtkTables are currently not supported
-    '.facet': _vtk.lazy_vtkFacetReader,
-    '.cas': _vtk.vtkFLUENTReader,  # TODO: not tested
-    # '.dat': _vtk.vtkFLUENTReader, # TODO: not working
-    # '.cube': _vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
-    '.res': _vtk.vtkMFIXReader,  # TODO: not tested
-    '.foam': _vtk.vtkOpenFOAMReader,
-    # '.pdb': _vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
-    '.p3d': _vtk.lazy_vtkPlot3DMetaReader,
-    '.pts': _vtk.vtkPTSReader,
-    # '.particles': _vtk.vtkParticleReader, # TODO: not tested
-    # TODO: '.pht': _vtk.vtkPhasta??????,
-    # TODO: '.vpc': _vtk.vtkVPIC?????,
-    # '.bin': _vtk.lazy_vtkMultiBlockPLOT3DReader,# TODO: non-default routine
-    '.tri': _vtk.vtkMCubesReader,
-    '.inp': _vtk.vtkAVSucdReader,
-}
-
-VTK_MAJOR = _vtk.vtkVersion().GetVTKMajorVersion()
-VTK_MINOR = _vtk.vtkVersion().GetVTKMinorVersion()
-
-if VTK_MAJOR >= 8 and VTK_MINOR >= 2:
-    try:
-        READERS['.sgy'] = _vtk.lazy_vtkSegYReader
-        READERS['.segy'] = _vtk.lazy_vtkSegYReader
-    except AttributeError:
-        pass
-
-
-if VTK_MAJOR >= 9 and VTK_MINOR >= 0:
-    try:
-        READERS['.hdf'] = _vtk.lazy_vtkHDFReader
-    except AttributeError:  # pragma: no cover
-        pass
-
-if VTK_MAJOR >= 9 and VTK_MINOR >= 1:
-    try:
-        READERS['.cgns'] = _vtk.lazy_vtkCGNSReader
-    except AttributeError:  # pragma: no cover
-        pass
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -104,12 +22,6 @@ def get_ext(filename):
     """Extract the extension of the filename."""
     ext = os.path.splitext(filename)[1].lower()
     return ext
-
-
-def get_vtk_reader(filename, force_ext=None):
-    """Get the corresponding reader based on file extension and instantiates it."""
-    ext = _get_ext_force(filename, force_ext=force_ext)
-    return READERS[ext]()  # Get and instantiate the reader
 
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
@@ -198,58 +110,6 @@ def standard_reader_routine(reader, filename, attrs=None, progress_bar=False):
     return data
 
 
-def read_legacy(filename, progress_bar=False):
-    """Use VTK's legacy reader to read a file.
-
-    This uses ``vtk.vtkDataSetReader`` to read the data.
-
-    Parameters
-    ----------
-    filename : str
-        The string path to the file to read.
-
-    progress_bar : bool, optional
-        Optionally show a progress bar. Default ``False``.
-
-    Returns
-    -------
-    pyvista.DataSet
-        Wrapped pyvista mesh.
-
-    Notes
-    -----
-    Normally, you should use :func:`pyvista.read` to read in meshes
-    from file, and this reader will automatically used for ``'.vtk'``
-    and ``'.pvtk'`` files.
-
-    Examples
-    --------
-    Load an example mesh using the legacy reader.
-
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)
-
-    """
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-    reader = _vtk.vtkDataSetReader()
-    reader.SetFileName(filename)
-    # Ensure all data is fetched with poorly formatted legacy files
-    reader.ReadAllScalarsOn()
-    reader.ReadAllColorScalarsOn()
-    reader.ReadAllNormalsOn()
-    reader.ReadAllTCoordsOn()
-    reader.ReadAllVectorsOn()
-    reader.ReadAllFieldsOn()
-    reader.ReadAllTensorsOn()
-
-    # Perform the read
-    output = standard_reader_routine(reader, None, progress_bar=progress_bar)
-    if output is None:
-        raise RuntimeError('No output when using VTKs legacy reader.')
-    return output
-
-
 def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=False):
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -257,64 +117,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
     readers first then tries to use ``meshio``.
 
-    Supports the following formats:
-
-    Standard dataset readers:
-
-    * ``'.vtk'``
-    * ``'.pvtk'``
-    * ``'.vti'``
-    * ``'.pvti'``
-    * ``'.vtr'``
-    * ``'.pvtr'``
-    * ``'.vtu'``
-    * ``'.pvtu'``
-    * ``'.ply'``
-    * ``'.obj'``
-    * ``'.stl'``
-    * ``'.vtp'``
-    * ``'.vts'``
-    * ``'.vtm'``
-    * ``'.vtmb'``
-    * ``'.case'``
-
-    Image formats:
-
-    * ``'.bmp'``
-    * ``'.dem'``
-    * ``'.dcm'``
-    * ``'.img'``
-    * ``'.jpeg'``
-    * ``'.jpg'``
-    * ``'.mha'``
-    * ``'.mhd'``
-    * ``'.nrrd'``
-    * ``'.nhdr'``
-    * ``'.png'``
-    * ``'.pnm'``
-    * ``'.slc'``
-    * ``'.tiff'``
-    * ``'.tif'``
-
-    Other formats:
-
-    * ``'.byu'``
-    * ``'.g'``
-    * ``'.p3d'``
-    * ``'.pts'``
-    * ``'.tri'``
-    * ``'.inp'``
-
-    .. note::
-       There is limited support for OpenFoam format files.
-       ``pyvista.read`` will automatically return only the first
-       dataset in a single-element :class:`pyvista.MultiBlock`.  These
-       files include:
-
-       * ``'.facet'``
-       * ``'.cas'``
-       * ``'.res'``
-       * ``'.foam'``
+    See :func:`pyvista.get_reader` for list of formats supported.
 
     .. note::
        See https://github.com/nschloe/meshio for formats supported by
@@ -384,44 +187,46 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     if not os.path.isfile(filename):
         raise FileNotFoundError(f'File ({filename}) not found')
 
-    ext = _get_ext_force(filename, force_ext)
-
     # Read file using meshio.read if file_format is present
     if file_format:
         return read_meshio(filename, file_format)
 
-    # From the extension, decide which reader to use
-    if attrs is not None:
-        reader = get_vtk_reader(filename, force_ext=ext)
-        return standard_reader_routine(reader, filename, attrs=attrs, progress_bar=progress_bar)
-    elif ext in ['.e', '.exo']:
+    ext = _get_ext_force(filename, force_ext)
+    if ext in ['.e', '.exo']:
         return read_exodus(filename)
-    elif ext in ['.vtk']:
-        # Attempt to use the legacy reader...
-        return read_legacy(filename, progress_bar=progress_bar)
-    else:
-        # Attempt find a reader in the readers mapping
+
+    try:
+        reader = pyvista.get_reader(
+            filename, force_ext
+        )  # TODO force extension choice, or point user to use reader directly
+    except ValueError:
         try:
-            reader = get_vtk_reader(filename, force_ext=ext)
-            return standard_reader_routine(reader, filename, progress_bar=progress_bar)
-        except KeyError:
-            # Don't fall back to meshio if using `force_ext`, which is really
-            # just intended to be used with the native PyVista readers
-            if force_ext is not None:
-                from meshio._exceptions import ReadError
+            from meshio._exceptions import ReadError
 
-                raise ReadError
-            # Attempt read with meshio
             try:
-                from meshio._exceptions import ReadError
-
-                try:
-                    return read_meshio(filename)
-                except ReadError:
-                    pass
-            except SyntaxError:
-                # https://github.com/pyvista/pyvista/pull/495
+                return read_meshio(filename)
+            except ReadError:
                 pass
+        except SyntaxError:
+            # https://github.com/pyvista/pyvista/pull/495
+            pass
+    else:
+        if attrs is not None:
+            warnings.warn(
+                "attrs use is deprecated.  Use a Reader class for more flexible control",
+                PyvistaDeprecationWarning,
+            )
+            for name, args in attrs.items():
+                attr = getattr(reader.reader, name)
+                if args is not None:
+                    if not isinstance(args, (list, tuple)):
+                        args = [args]
+                    attr(*args)
+                else:
+                    attr()
+        if progress_bar:
+            reader.show_progress()
+        return reader.read()
 
     raise IOError("This file was not able to be automatically read by pyvista.")
 
@@ -465,8 +270,8 @@ def read_texture(filename, attrs=None, progress_bar=False):
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
         # initialize the reader using the extension to find it
-        reader = get_vtk_reader(filename)
-        image = standard_reader_routine(reader, filename, attrs=attrs, progress_bar=progress_bar)
+
+        image = read(filename, attrs=attrs, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError("Problem reading the image with VTK.")
         return pyvista.Texture(image)

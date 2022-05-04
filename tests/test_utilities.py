@@ -148,32 +148,6 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert len(data) == 0
 
 
-@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
-def test_read_legacy(srr_mock):
-    srr_mock.return_value = pyvista.read(ex.planefile)
-    pyvista.read_legacy('legacy.vtk')
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkDataSetReader)
-    assert reader.GetFileName().endswith('legacy.vtk')
-
-    # check error is raised when no data returned
-    srr_mock.reset_mock()
-    srr_mock.return_value = None
-    with pytest.raises(RuntimeError):
-        pyvista.read_legacy('legacy.vtk')
-
-
-@mock.patch('pyvista.utilities.fileio.read_legacy')
-def test_pyvista_read_legacy(read_legacy_mock):
-    # check that reading a file with extension .vtk calls `read_legacy`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pyvista.read(ex.globefile)
-    args, kwargs = read_legacy_mock.call_args
-    filename = args[0]
-    assert filename == ex.globefile
-
-
 @mock.patch('pyvista.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`

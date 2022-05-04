@@ -7,10 +7,12 @@ from xml.etree import ElementTree
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import abstract_class, get_ext, wrap
+from pyvista.utilities import abstract_class, wrap
+
+from .fileio import _get_ext_force
 
 
-def get_reader(filename):
+def get_reader(filename, force_ext=None):
     """Get a reader for fine-grained control of reading data files.
 
     Supported file types and Readers:
@@ -41,6 +43,8 @@ def get_reader(filename):
     | ``.gltf``      | :class:`pyvista.GLTFReader`                 |
     +----------------+---------------------------------------------+
     | ``.hdf``       | :class:`pyvista.HDFReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.img``       | :class:`pyvista.DICOMReader `               |
     +----------------+---------------------------------------------+
     | ``.inp``       | :class:`pyvista.AVSucdReader`               |
     +----------------+---------------------------------------------+
@@ -139,7 +143,7 @@ def get_reader(filename):
     >>> mesh.plot(color='tan')
 
     """
-    ext = get_ext(filename)
+    ext = _get_ext_force(filename, force_ext)
 
     try:
         Reader = CLASS_READERS[ext]
@@ -1882,6 +1886,7 @@ CLASS_READERS = {
     '.g': BYUReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
+    '.img': DICOMReader,
     '.inp': AVSucdReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,
