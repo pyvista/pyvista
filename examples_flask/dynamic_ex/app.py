@@ -1,9 +1,9 @@
-"""Simple flask app to display dynamic images generated from pyvista.
+"""Simple flask app to display dynamic threejs generated from pyvista.
 
 Expected paths:
-flask_example
+dynamic_ex/
 └── app.py
-    templates
+    templates/
     └── index.html
 
 """
