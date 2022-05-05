@@ -764,6 +764,25 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.UpdateTimeStep(self.time_point_value(time_point))
 
     @property
+    def decompose_polyhedra(self):
+        """Whether polyhedra are to be decomposed when read.
+
+        Returns
+        -------
+        bool
+            If ``True``, decompose polyhedra into tetrahedra and pyramids.
+
+        """
+        return bool(self.reader.GetDecomposePolyhedra())
+
+    @decompose_polyhedra.setter
+    def decompose_polyhedra(self, value):
+        if value:
+            self.reader.DecomposePolyhedraOn()
+        else:
+            self.reader.DecomposePolyhedraOff()
+
+    @property
     def cell_to_point_creation(self):
         """Whether cell data is translated to point data when read.
 
