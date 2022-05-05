@@ -490,7 +490,7 @@ def test_openfoamreader_read_data_time_point():
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
     reader.decompose_polyhedra = False
-    assert reader.decompose_polyhedra is True
+    assert reader.decompose_polyhedra is False
     reader.decompose_polyhedra = True
     assert reader.decompose_polyhedra is True
 
