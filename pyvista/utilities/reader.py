@@ -772,6 +772,16 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         bool
             If ``True``, decompose polyhedra into tetrahedra and pyramids.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.decompose_polyhedra = False
+        >>> reader.decompose_polyhedra
+        False
+
         """
         return bool(self.reader.GetDecomposePolyhedra())
 
