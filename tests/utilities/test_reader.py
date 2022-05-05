@@ -487,6 +487,14 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
+def test_openfoam_decompose_polyhedra():
+    reader = get_cavity_reader()
+    reader.decompose_polyhedra = False
+    assert reader.decompose_polyhedra is False
+    reader.decompose_polyhedra = True
+    assert reader.decompose_polyhedra is True
+
+
 def test_openfoam_cell_to_point_default():
     reader = get_cavity_reader()
     mesh = reader.read()
