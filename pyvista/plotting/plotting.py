@@ -4640,6 +4640,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
         and place the ruler orthogonal to the viewing direction.
 
+        The title and labels are placed to the right of ruler moving from
+        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
+        if needed.
+
+        Since the ruler is placed in an overlay on the viewing scene, the camera
+        does not automatically reset to include the ruler in the view.
+
         Parameters
         ----------
         pointa : Sequence
