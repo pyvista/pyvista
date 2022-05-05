@@ -12,31 +12,31 @@ if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
 
-def test_widget_box():
+def test_widget_box(sphere):
     p = pyvista.Plotter()
     func = lambda box: box  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(sphere)
     p.add_box_widget(callback=func)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda box, widget: box  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(sphere)
     p.add_box_widget(callback=func, pass_widget=True)
     p.close()
 
     # clip box with and without crinkle
     p = pyvista.Plotter()
-    p.add_mesh_clip_box(mesh)
+    p.add_mesh_clip_box(sphere)
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_clip_box(mesh, crinkle=True)
+    p.add_mesh_clip_box(sphere, crinkle=True)
     p.close()
 
     p = pyvista.Plotter()
     # merge_points=True is the default and is tested above
-    p.add_mesh_clip_box(mesh, merge_points=False)
+    p.add_mesh_clip_box(sphere, merge_points=False)
     p.close()
 
 

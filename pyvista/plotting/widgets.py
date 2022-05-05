@@ -25,6 +25,7 @@ class WidgetHelper:
     """
 
     _camera_widgets: List[object] = []
+    box_widgets: List[object] = []
 
     def add_box_widget(
         self,
@@ -100,9 +101,6 @@ class WidgetHelper:
         Download the interactive example at :ref:`box_widget_example`.
 
         """
-        if not hasattr(self, "box_widgets"):
-            self.box_widgets = []
-
         if bounds is None:
             bounds = self.bounds
 
@@ -140,10 +138,11 @@ class WidgetHelper:
 
     def clear_box_widgets(self):
         """Disable all of the box widgets."""
-        if hasattr(self, 'box_widgets'):
-            for widget in self.box_widgets:
-                widget.Off()
-            del self.box_widgets
+        # this is necessary for garbage collection
+        for widget in list(self.box_widgets):
+            self.box_widgets.remove(widget)
+
+        self.box_widgets = []
 
     def add_mesh_clip_box(
         self,
@@ -2003,8 +2002,9 @@ class WidgetHelper:
 
     def clear_camera_widgets(self):
         """Disable all of the camera widgets."""
-        for widget in self._camera_widgets:
+        for widget in list(self._camera_widgets):
             widget.Off()
+            self._camera_widgets.remove(widget)  # this is necessary
         self._camera_widgets = []
 
     def clear_button_widgets(self):
