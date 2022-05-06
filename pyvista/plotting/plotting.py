@@ -195,9 +195,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         col_weights=None,
         lighting='light kit',
         theme=None,
+        **kwargs,
     ):
         """Initialize base plotter."""
-        super().__init__()  # cooperative multiple inheritance
+        super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
