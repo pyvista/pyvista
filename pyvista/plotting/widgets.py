@@ -81,6 +81,11 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
+        Returns
+        -------
+        vtk.vtkBoxWidget
+            Box widget.
+
         Examples
         --------
         Shows an interactive clip box.
@@ -92,24 +97,6 @@ class WidgetHelper:
         >>> pl.show()
 
         For a full example see :ref:`box_widget_example`.
-
-        Returns
-        -------
-        vtk.vtkBoxWidget
-            Box widget.
-
-        Examples
-        --------
-        The following example generates a static image of the widget.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = examples.download_nefertiti()
-        >>> p = pv.Plotter()
-        >>> _ = p.add_mesh_clip_box(mesh, color='white')
-        >>> p.show(cpos=[-1, -1, 0.2])
-
-        Download the interactive example at :ref:`box_widget_example`.
 
         """
         if not hasattr(self, "box_widgets"):
