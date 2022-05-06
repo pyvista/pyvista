@@ -146,6 +146,14 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert clp.point_data['to_clip'].max() >= clip_value
 
 
+def test_clip_filter_no_active(sphere):
+    # test no active scalars case
+    sphere.point_data.set_array(sphere.points[:, 2], 'data')
+    assert sphere.active_scalars_name is None
+    clp = sphere.clip_scalar()
+    assert clp.n_points < sphere.n_points
+
+
 def test_clip_filter_scalar_multiple():
     mesh = pyvista.Plane()
     mesh['x'] = mesh.points[:, 0].copy()
