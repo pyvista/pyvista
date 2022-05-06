@@ -278,6 +278,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.theme.antialiasing:
             self.enable_anti_aliasing()
 
+        # widgets
+        self.camera_widgets = []
+        self.box_widgets = []
+        self.box_clipped_meshes = []
+        self.plane_widgets = []
+        self.plane_clipped_meshes = []
+        self.plane_sliced_meshes = []
+        self.line_widgets = []
+        self.slider_widgets = []
+        self.threshold_meshes = []
+        self.isovalue_meshes = []
+        self.spline_widgets = []
+        self.spline_sliced_meshes = []
+        self.sphere_widgets = []
+        self.button_widgets = []
+
     @property
     def theme(self):
         """Return or set the theme used for this plotter.

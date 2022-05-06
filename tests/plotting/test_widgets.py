@@ -234,6 +234,6 @@ def test_widget_checkbox_button(uniform):
 def test_add_camera_orientation_widget(uniform):
     p = pyvista.Plotter()
     p.add_camera_orientation_widget()
-    assert p._camera_widgets
+    assert p.camera_widgets
     p.close()
-    assert not p._camera_widgets
+    assert not p.camera_widgets
