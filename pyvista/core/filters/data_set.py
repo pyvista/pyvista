@@ -412,7 +412,9 @@ class DataSetFilters:
 
         alg.SetInputDataObject(self)
         alg.SetValue(value)
-        if scalars is not None:
+        if scalars is None:
+            pyvista.set_default_active_scalars(self)
+        else:
             self.set_active_scalars(scalars)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
@@ -981,6 +983,7 @@ class DataSetFilters:
 
         # set the scalars to threshold on
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
@@ -1128,6 +1131,7 @@ class DataSetFilters:
 
         """
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             _, tscalars = self.active_scalars_info
         else:
             tscalars = scalars
@@ -1554,6 +1558,7 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = get_array_association(self, scalars, preference=preference)
@@ -1966,6 +1971,15 @@ class DataSetFilters:
         if isinstance(scale, str):
             dataset.set_active_scalars(scale, preference='cell')
             scale = True
+        elif isinstance(scale, bool) and scale:
+            try:
+                pyvista.set_default_active_scalars(self)
+            except MissingDataError:
+                warnings.warn("No data to use for scale. scale will be set to False.")
+                scale = False
+            except AmbiguousDataError as err:
+                warnings.warn(f"{err}\nIt is unclear which one to use. scale will be set to False.")
+                scale = False
 
         if scale:
             if dataset.active_scalars is not None:
@@ -2237,6 +2251,7 @@ class DataSetFilters:
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         _ = get_array(self, scalars, preference='point', err=True)
 
@@ -3629,6 +3644,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -3940,6 +3956,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4069,6 +4086,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4705,9 +4723,8 @@ class DataSetFilters:
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
-            if scalars is None:
-                raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         if not any((gradient, divergence, vorticity, qcriterion)):
