@@ -197,6 +197,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         theme=None,
     ):
         """Initialize base plotter."""
+        super().__init__()  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
@@ -277,22 +278,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set antialiasing based on theme
         if self.theme.antialiasing:
             self.enable_anti_aliasing()
-
-        # widgets
-        self.camera_widgets = []
-        self.box_widgets = []
-        self.box_clipped_meshes = []
-        self.plane_widgets = []
-        self.plane_clipped_meshes = []
-        self.plane_sliced_meshes = []
-        self.line_widgets = []
-        self.slider_widgets = []
-        self.threshold_meshes = []
-        self.isovalue_meshes = []
-        self.spline_widgets = []
-        self.spline_sliced_meshes = []
-        self.sphere_widgets = []
-        self.button_widgets = []
 
     @property
     def theme(self):

@@ -24,15 +24,18 @@ def _launch_pick_event(interactor, event):
 class PickingHelper:
     """An internal class to hold picking related features."""
 
-    picked_cells = None
-    _picked_point = None
-    _picked_mesh = None
-    picked_path = None
-    picked_geodesic = None
-    picked_horizon = None
-    _picking_left_clicking_observer = None
-    _picking_text = None
-    _picker = None
+    def __init__(self, *args, **kwargs):
+        """Initialize the picking helper."""
+        super().__init__(*args, **kwargs)
+        self.picked_cells = None
+        self._picked_point = None
+        self._picked_mesh = None
+        self.picked_path = None
+        self.picked_geodesic = None
+        self.picked_horizon = None
+        self._picking_left_clicking_observer = None
+        self._picking_text = None
+        self._picker = None
 
     def get_pick_position(self):
         """Get the pick position or area.

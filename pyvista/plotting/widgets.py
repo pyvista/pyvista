@@ -22,6 +22,24 @@ class WidgetHelper:
 
     """
 
+    def __init__(self, *args, **kwargs):
+        """Initialize widget helper."""
+        super().__init__(*args, **kwargs)
+        self.camera_widgets = []
+        self.box_widgets = []
+        self.box_clipped_meshes = []
+        self.plane_widgets = []
+        self.plane_clipped_meshes = []
+        self.plane_sliced_meshes = []
+        self.line_widgets = []
+        self.slider_widgets = []
+        self.threshold_meshes = []
+        self.isovalue_meshes = []
+        self.spline_widgets = []
+        self.spline_sliced_meshes = []
+        self.sphere_widgets = []
+        self.button_widgets = []
+
     def add_box_widget(
         self,
         callback,
@@ -132,10 +150,7 @@ class WidgetHelper:
         return box_widget
 
     def clear_box_widgets(self):
-        """Disable all of the box widgets."""
-        # this is necessary for garbage collection
-        for widget in self.box_widgets:
-            widget.Off()
+        """Remove all of the box widgets."""
         self.box_widgets.clear()
 
     def add_mesh_clip_box(
@@ -445,9 +460,7 @@ class WidgetHelper:
         return plane_widget
 
     def clear_plane_widgets(self):
-        """Disable all of the plane widgets."""
-        for widget in self.plane_widgets:
-            widget.Off()
+        """Remove all of the plane widgets."""
         self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
@@ -843,9 +856,7 @@ class WidgetHelper:
         return line_widget
 
     def clear_line_widgets(self):
-        """Disable all of the line widgets."""
-        for widget in self.line_widgets:
-            widget.Off()
+        """Remove all of the line widgets."""
         self.line_widgets.clear()
 
     def add_text_slider_widget(
@@ -1153,9 +1164,7 @@ class WidgetHelper:
         return slider_widget
 
     def clear_slider_widgets(self):
-        """Disable all of the slider widgets."""
-        for widget in self.slider_widgets:
-            widget.Off()
+        """Remove all of the slider widgets."""
         self.slider_widgets.clear()
 
     def add_mesh_threshold(
@@ -1543,9 +1552,7 @@ class WidgetHelper:
         return spline_widget
 
     def clear_spline_widgets(self):
-        """Disable all of the spline widgets."""
-        for widget in self.spline_widgets:
-            widget.Off()
+        """Remove all of the spline widgets."""
         self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
@@ -1808,9 +1815,7 @@ class WidgetHelper:
         return sphere_widget
 
     def clear_sphere_widgets(self):
-        """Disable all of the sphere widgets."""
-        for widget in self.sphere_widgets:
-            widget.Off()
+        """Remove all of the sphere widgets."""
         self.sphere_widgets.clear()
 
     def add_checkbox_button_widget(
@@ -1961,15 +1966,11 @@ class WidgetHelper:
         return widget
 
     def clear_camera_widgets(self):
-        """Disable all of the camera widgets."""
-        for widget in self.camera_widgets:
-            widget.Off()
+        """Remove all of the camera widgets."""
         self.camera_widgets.clear()
 
     def clear_button_widgets(self):
-        """Disable all of the button widgets."""
-        for widget in self.button_widgets:
-            widget.Off()
+        """Remove all of the button widgets."""
         self.button_widgets.clear()
 
     def close(self):
