@@ -540,11 +540,11 @@ def convert_plotter(pl):
         # check for linked cameras
         cameras = [ren.camera for ren in pl.renderers]
         for cc, camera_a in enumerate(cameras):
-            for dd, camera_b in enumerate(cameras[cc + 1 :]):
+            for dd, camera_b in enumerate(cameras[cc + 1 :], start=cc + 1):
                 if camera_a is camera_b:
                     # flatten indices
                     ii_source, jj_source = divmod(cc, n_col)
-                    ii_target, jj_target = divmod(dd + 1, n_col)
+                    ii_target, jj_target = divmod(dd, n_col)
                     grid[ii_target, jj_target].camera = grid[ii_source, jj_source].camera
                     grid[ii_target, jj_target].camera = grid[ii_source, jj_source].camera
 
