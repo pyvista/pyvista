@@ -224,3 +224,20 @@ def test_labels():
     # ensure that we ignore labels
     with pytest.warns(UserWarning):
         pv_pythreejs.convert_plotter(pl)
+
+
+def test_linked_views(sphere):
+
+    n_row, n_col = (2, 3)
+    pl = pyvista.Plotter(shape=(n_row, n_col))
+
+    for ii in range(n_row):
+        for jj in range(n_col):
+            pl.subplot(ii, jj)
+            pl.add_mesh(sphere)
+    pl.link_views()
+
+    # validate all cameras are linked
+    widget = pv_pythreejs.convert_plotter(pl)
+    cameras = [widget[row, col].camera for row in range(n_row) for col in range(n_col)]
+    assert all([camera is cameras[0] for camera in cameras])

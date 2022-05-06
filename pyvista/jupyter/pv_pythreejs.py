@@ -538,18 +538,15 @@ def convert_plotter(pl):
                 grid[i, j] = convert_renderer(pv_ren)
 
         # check for linked cameras
-        for i in range(n_row):
-            for j in range(n_col):
-                pv_ren = pl.renderers[j + n_row * i]
-                camera = pv_ren.camera
-
-                # check if the camera is cloned with any other cameras
-                for i_view in range(i, n_row):
-                    for j_view in range(j + 1, n_col):
-                        if camera is pl.renderers[j_view + n_row * i_view].camera:
-                            # must link both camera and controls
-                            grid[i_view, j_view].camera = grid[i, j].camera
-                            grid[i_view, j_view].controls = grid[i, j].controls
+        cameras = [ren.camera for ren in pl.renderers]
+        for cc, camera_a in enumerate(cameras):
+            for dd, camera_b in enumerate(cameras[cc + 1 :]):
+                if camera_a is camera_b:
+                    # flatten indices
+                    ii_source, jj_source = divmod(cc, n_col)
+                    ii_target, jj_target = divmod(dd + 1, n_col)
+                    grid[ii_target, jj_target].camera = grid[ii_source, jj_source].camera
+                    grid[ii_target, jj_target].camera = grid[ii_source, jj_source].camera
 
         # this is important to ignore when building the gallery
         if not pv.BUILDING_GALLERY:
