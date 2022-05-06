@@ -136,7 +136,7 @@ class WidgetHelper:
         # this is necessary for garbage collection
         for widget in self.box_widgets:
             widget.Off()
-        self.box_widgets = []
+        self.box_widgets.clear()
 
     def add_mesh_clip_box(
         self,
@@ -448,7 +448,7 @@ class WidgetHelper:
         """Disable all of the plane widgets."""
         for widget in self.plane_widgets:
             widget.Off()
-        self.plane_widgets = []
+        self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
         self,
@@ -846,7 +846,7 @@ class WidgetHelper:
         """Disable all of the line widgets."""
         for widget in self.line_widgets:
             widget.Off()
-        self.line_widgets = []
+        self.line_widgets.clear()
 
     def add_text_slider_widget(
         self,
@@ -1156,7 +1156,7 @@ class WidgetHelper:
         """Disable all of the slider widgets."""
         for widget in self.slider_widgets:
             widget.Off()
-        self.slider_widgets = []
+        self.slider_widgets.clear()
 
     def add_mesh_threshold(
         self,
@@ -1546,7 +1546,7 @@ class WidgetHelper:
         """Disable all of the spline widgets."""
         for widget in self.spline_widgets:
             widget.Off()
-        self.spline_widgets = []
+        self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
         self,
@@ -1811,7 +1811,7 @@ class WidgetHelper:
         """Disable all of the sphere widgets."""
         for widget in self.sphere_widgets:
             widget.Off()
-        self.sphere_widgets = []
+        self.sphere_widgets.clear()
 
     def add_checkbox_button_widget(
         self,
@@ -1964,13 +1964,13 @@ class WidgetHelper:
         """Disable all of the camera widgets."""
         for widget in self.camera_widgets:
             widget.Off()
-        self.camera_widgets = []
+        self.camera_widgets.clear()
 
     def clear_button_widgets(self):
         """Disable all of the button widgets."""
         for widget in self.button_widgets:
             widget.Off()
-        self.button_widgets = []
+        self.button_widgets.clear()
 
     def close(self):
         """Close the widgets."""
