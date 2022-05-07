@@ -34,6 +34,9 @@ def test_pointset(pointset):
     pointset.points = np.ones((10, 3))
     assert np.allclose(pointset.points, 1)
 
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.xyz'))
+    pointset.save("")
+
 
 @pytest.mark.parametrize('deep', [True, False])
 def test_cast_to_polydata(pointset, deep):

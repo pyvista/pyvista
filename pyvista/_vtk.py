@@ -307,6 +307,7 @@ if VTK9:
         vtkPolyDataWriter,
         vtkRectilinearGridReader,
         vtkRectilinearGridWriter,
+        vtkSimplePointsWriter,
         vtkStructuredGridReader,
         vtkStructuredGridWriter,
         vtkUnstructuredGridReader,
