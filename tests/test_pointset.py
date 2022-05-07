@@ -38,7 +38,7 @@ def test_save(tmpdir, pointset):
     filename = str(tmpdir.mkdir("tmpdir").join(f'{"tmp.xyz"}'))
     pointset.save(filename)
     points = np.loadtxt(filename)
-    assert np.all(points == pointset.points)
+    assert np.allclose(points, pointset.points)
 
 
 @pytest.mark.parametrize('deep', [True, False])
