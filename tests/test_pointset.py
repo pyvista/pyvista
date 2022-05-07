@@ -34,7 +34,7 @@ def test_pointset(pointset, tmpdir):
     pointset.points = np.ones((10, 3))
     assert np.allclose(pointset.points, 1)
 
-def test_save(extension, tmpdir, pointset):
+def test_save(tmpdir, pointset):
     filename = str(tmpdir.mkdir("tmpdir").join(f'{"tmp.xyz"}'))
     pointset.save(filename)
     points = np.loadtxt(filename)
