@@ -764,6 +764,35 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.UpdateTimeStep(self.time_point_value(time_point))
 
     @property
+    def decompose_polyhedra(self):
+        """Whether polyhedra are to be decomposed when read.
+
+        Returns
+        -------
+        bool
+            If ``True``, decompose polyhedra into tetrahedra and pyramids.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.decompose_polyhedra = False
+        >>> reader.decompose_polyhedra
+        False
+
+        """
+        return bool(self.reader.GetDecomposePolyhedra())
+
+    @decompose_polyhedra.setter
+    def decompose_polyhedra(self, value):
+        if value:
+            self.reader.DecomposePolyhedraOn()
+        else:
+            self.reader.DecomposePolyhedraOff()
+
+    @property
     def cell_to_point_creation(self):
         """Whether cell data is translated to point data when read.
 

@@ -12,6 +12,7 @@ import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
+from pyvista.errors import MissingDataError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -143,6 +144,14 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert aprox_le(clp.point_data['to_clip'].max(), clip_value, rtol=1e-1)
             else:
                 assert clp.point_data['to_clip'].max() >= clip_value
+
+
+def test_clip_filter_no_active(sphere):
+    # test no active scalars case
+    sphere.point_data.set_array(sphere.points[:, 2], 'data')
+    assert sphere.active_scalars_name is None
+    clp = sphere.clip_scalar()
+    assert clp.n_points < sphere.n_points
 
 
 def test_clip_filter_scalar_multiple():
@@ -1728,7 +1737,7 @@ def test_compute_derivatives():
         derv = mesh.compute_derivative(object)
 
     mesh.point_data.clear()
-    with pytest.raises(TypeError):
+    with pytest.raises(MissingDataError):
         derv = mesh.compute_derivative()
 
 
