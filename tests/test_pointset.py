@@ -20,7 +20,7 @@ def test_pointset_basic():
     assert 'PointSet' in repr(pset)
 
 
-def test_pointset(pointset, tmpdir):
+def test_pointset(pointset):
     assert pointset.n_points == pointset.points.shape[0]
     assert pointset.n_cells == 0
 
