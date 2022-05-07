@@ -20,7 +20,7 @@ def test_pointset_basic():
     assert 'PointSet' in repr(pset)
 
 
-def test_pointset(pointset):
+def test_pointset(pointset, tmpdir):
     assert pointset.n_points == pointset.points.shape[0]
     assert pointset.n_cells == 0
 
@@ -35,7 +35,7 @@ def test_pointset(pointset):
     assert np.allclose(pointset.points, 1)
 
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.xyz'))
-    pointset.save("filename")
+    pointset.save(filename)
 
 
 @pytest.mark.parametrize('deep', [True, False])
