@@ -35,7 +35,7 @@ def test_pointset(pointset):
     assert np.allclose(pointset.points, 1)
 
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.xyz'))
-    pointset.save("")
+    pointset.save("filename")
 
 
 @pytest.mark.parametrize('deep', [True, False])
