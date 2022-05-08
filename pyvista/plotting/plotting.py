@@ -379,12 +379,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             - ``'pythreejs'``
             - ``'panel'``
 
-            For more details about the advantages and disavantages of each
+            For more details about the advantages and disadvantages of each
             backend, see :ref:`jupyter_plotting`.
 
         Notes
         -----
-        You will need ``ipywidgets`` and ``pythreejs`` installed for if you
+        You will need ``ipywidgets`` and ``pythreejs`` installed if you
         wish to export using the ``'pythreejs'`` backend, or ``'panel'``
         installed to export using ``'panel'``.
 

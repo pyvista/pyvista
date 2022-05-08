@@ -227,7 +227,6 @@ def test_labels():
 
 
 def test_linked_views(sphere):
-
     n_row, n_col = (2, 3)
     pl = pyvista.Plotter(shape=(n_row, n_col))
 

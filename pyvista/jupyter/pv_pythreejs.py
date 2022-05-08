@@ -545,8 +545,9 @@ def convert_plotter(pl):
                     # flatten indices
                     ii_source, jj_source = divmod(cc, n_col)
                     ii_target, jj_target = divmod(dd, n_col)
+                    # Must link camera and controls
                     grid[ii_target, jj_target].camera = grid[ii_source, jj_source].camera
-                    grid[ii_target, jj_target].camera = grid[ii_source, jj_source].camera
+                    grid[ii_target, jj_target].controls = grid[ii_source, jj_source].controls
 
         # this is important to ignore when building the gallery
         if not pv.BUILDING_GALLERY:
