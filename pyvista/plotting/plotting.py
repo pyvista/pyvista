@@ -2055,6 +2055,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             show_scalar_bar = self._theme.show_scalar_bar
         if lighting is None:
             lighting = self._theme.lighting
+        feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
 
         if smooth_shading is None:
             if pbr:
@@ -2087,7 +2088,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling = 'backface'
 
         rgb = kwargs.pop('rgba', rgb)
-        feature_angle = kwargs.pop('feature_angle', 30)
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover

@@ -349,6 +349,7 @@ def test_set_hidden_line_removal(default_theme):
         ('smooth_shading', True),
         ('name', 'test_theme'),
         ('split_sharp_edges', True),
+        ('sharp_edges_feature_angle', 45.0),
     ],
 )
 def test_theme_parm(default_theme, parm):

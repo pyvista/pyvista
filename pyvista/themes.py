@@ -1146,6 +1146,7 @@ class DefaultTheme(_ThemeConfig):
         '_antialiasing',
         '_enable_camera_orientation_widget',
         '_split_sharp_edges',
+        '_sharp_edges_feature_angle',
     ]
 
     def __init__(self):
@@ -1190,6 +1191,7 @@ class DefaultTheme(_ThemeConfig):
         self._title = 'PyVista'
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
+        self._sharp_edges_feature_angle = 30.0
 
         # Grab system flag for anti-aliasing
         try:
@@ -2222,6 +2224,28 @@ class DefaultTheme(_ThemeConfig):
     @split_sharp_edges.setter
     def split_sharp_edges(self, value: bool):
         self._split_sharp_edges = value
+
+    @property
+    def sharp_edges_feature_angle(self) -> float:
+        """Set or return the angle of the sharp edges feature angle.
+
+        See :ref:`shading_example` for an example showing split sharp edges.
+
+        Examples
+        --------
+        Change the sharp edges feature angle to 45 degrees.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.sharp_edges_feature_angle = 45.0
+        >>> pyvista.global_theme.sharp_edges_feature_angle
+        45.0
+
+        """
+        return self._sharp_edges_feature_angle
+
+    @sharp_edges_feature_angle.setter
+    def sharp_edges_feature_angle(self, value: float):
+        self._sharp_edges_feature_angle = float(value)
 
 
 class DarkTheme(DefaultTheme):
