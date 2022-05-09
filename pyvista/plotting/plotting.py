@@ -1675,7 +1675,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render_points_as_spheres=None,
         render_lines_as_tubes=False,
         smooth_shading=None,
-        split_sharp_edges=False,
+        split_sharp_edges=None,
         ambient=0.0,
         diffuse=1.0,
         specular=0.0,
@@ -1845,11 +1845,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             See :ref:`shading_example`.
 
         split_sharp_edges : bool, optional
-            Split sharp edges exceeding 30 degrees when plotting with
-            smooth shading.  Control the angle with the optional
-            keyword argument ``feature_angle``.  By default this is
-            ``False``.  Note that enabling this will create a copy of
-            the input mesh within the plotter.  See
+            Split sharp edges exceeding 30 degrees when plotting with smooth
+            shading.  Control the angle with the optional keyword argument
+            ``feature_angle``.  By default this is ``False`` unless overridden
+            by the global or plotter theme.  Note that enabling this will
+            create a copy of the input mesh within the plotter.  See
             :ref:`shading_example`.
 
         ambient : float, optional
@@ -2046,12 +2046,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             scalar_bar_args = scalar_bar_args.copy()
 
+        # theme based parameters
         if show_edges is None:
             show_edges = self._theme.show_edges
-
+        if split_sharp_edges is None:
+            split_sharp_edges = self._theme.split_sharp_edges
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar
-
         if lighting is None:
             lighting = self._theme.lighting
 

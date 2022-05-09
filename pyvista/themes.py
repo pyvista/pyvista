@@ -1145,6 +1145,7 @@ class DefaultTheme(_ThemeConfig):
         '_hidden_line_removal',
         '_antialiasing',
         '_enable_camera_orientation_widget',
+        '_split_sharp_edges',
     ]
 
     def __init__(self):
@@ -1188,6 +1189,7 @@ class DefaultTheme(_ThemeConfig):
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
+        self._split_sharp_edges = False
 
         # Grab system flag for anti-aliasing
         try:
@@ -2090,6 +2092,7 @@ class DefaultTheme(_ThemeConfig):
             'Return Camera Position': 'return_cpos',
             'Hidden Line Removal': 'hidden_line_removal',
             'Anti-Aliasing': '_antialiasing',
+            'Split sharp edges': '_split_sharp_edges',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2197,6 +2200,28 @@ class DefaultTheme(_ThemeConfig):
             self.jupyter_backend = 'ipyvtklink'
         else:
             self.jupyter_backend = 'static'
+
+    @property
+    def split_sharp_edges(self) -> bool:
+        """Set or return splitting sharp edges.
+
+        See :ref:`shading_example` for an example showing split sharp edges.
+
+        Examples
+        --------
+        Enable the splitting of sharp edges globally.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.split_sharp_edges = True
+        >>> pyvista.global_theme.split_sharp_edges
+        True
+
+        """
+        return self._split_sharp_edges
+
+    @split_sharp_edges.setter
+    def split_sharp_edges(self, value: bool):
+        self._split_sharp_edges = value
 
 
 class DarkTheme(DefaultTheme):
