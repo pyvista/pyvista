@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import os
+import pathlib
 from typing import Any, List
 from xml.etree import ElementTree
 
@@ -9,7 +10,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class, wrap
 
-from .fileio import _get_ext_force
+from .fileio import _get_ext_force, _process_filename
 
 
 def get_reader(filename, force_ext=None):
@@ -1106,6 +1107,51 @@ class Plot3DMetaReader(BaseReader):
     """Plot3DMeta Reader for .p3d files."""
 
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
+
+
+class MultiBlockPlot3DReader(BaseReader):
+    """MultiBlock Plot3D Reader."""
+
+    _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+
+    def add_q_files(self, files):
+        """Add q file(s).
+
+        Parameters
+        ----------
+        files : str or Iterable(str)
+            Solution file or files to add.
+
+        """
+        # files may be a list or a single filename
+        if files:
+            if isinstance(files, (str, pathlib.Path)):
+                files = [files]
+        files = [_process_filename(f) for f in files]
+
+        if hasattr(self.reader, 'AddFileName'):
+            # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
+            # VTK 8.2. This method supports reading multiple q files.
+            for q_filename in files:
+                self.reader.AddFileName(q_filename)
+        else:
+            # SetQFileName is used to add a single q file to be read, and is still
+            # supported in VTK9.
+            if len(files) > 0:
+                if len(files) > 1:
+                    raise RuntimeError(
+                        'Reading of multiple q files is not supported with this version of VTK.'
+                    )
+                self.reader.SetQFileName(files[0])
+
+    @property
+    def auto_detect_format(self):
+        """Whether to try to automatically detect format such as byte order, etc."""
+        return bool(self.reader.GetAutoDetectFormat())
+
+    @auto_detect_format.setter
+    def auto_detect_format(self, value):
+        self.reader.SetAutoDetectFormat(value)
 
 
 class CGNSReader(BaseReader, PointCellDataSelection):

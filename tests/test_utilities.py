@@ -23,6 +23,7 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 def test_version():
@@ -82,7 +83,8 @@ def test_read(tmpdir, use_pathlib):
     # Now test the standard_reader_routine
     for i, filename in enumerate(fnames):
         # Pass attrs to for the standard_reader_routine to be used
-        obj = fileio.read(filename, attrs={'DebugOn': None})
+        with pytest.warns(PyvistaDeprecationWarning):
+            obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
@@ -159,28 +161,19 @@ def test_pyvista_read_exodus(read_exodus_mock):
 
 
 @pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
-def test_read_plot3d(srr_mock, auto_detect):
+@mock.patch('pyvista.utilities.reader.BaseReader.read')
+@mock.patch('pyvista.utilities.reader.BaseReader.path')
+def test_read_plot3d(path_mock, read_mock, auto_detect):
     # with grid only
-    pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
-    srr_mock.assert_called_once()
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
-    assert reader.GetFileName().endswith('grid.in')
-    assert kwargs['filename'] is None
-    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
+    read_mock.assert_called_once()
 
     # with grid and q
-    srr_mock.reset_mock()
-    pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
-    assert reader.GetFileName().endswith('grid.in')
-    assert args[0].GetQFileName().endswith('q1.save')
-    assert kwargs['filename'] is None
-    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
+    read_mock.reset_mock()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
+    read_mock.assert_called_once()
 
 
 def test_get_array():

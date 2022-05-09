@@ -39,79 +39,11 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
-def standard_reader_routine(reader, filename, attrs=None, progress_bar=False):
-    """Use a given reader in the common VTK reading pipeline routine.
-
-    The reader must come from the ``READERS`` mapping.
-
-    Parameters
-    ----------
-    reader : vtkReader
-        Any instantiated VTK reader class
-
-    filename : str
-        The string filename to the data file to read.
-
-    attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
-
-    progress_bar : bool, optional
-        Optionally show a progress bar.
-
-    """
-    from pyvista.core.filters import _update_alg  # avoid circular import
-
-    observer = pyvista.utilities.errors.Observer()
-    observer.observe(reader)
-
-    if attrs is None:
-        attrs = {}
-    if not isinstance(attrs, dict):
-        raise TypeError('Attributes must be a dictionary of name and arguments.')
-    if filename is not None:
-        try:
-            reader.SetCaseFileName(filename)
-        except AttributeError:
-            reader.SetFileName(filename)
-    # Apply any attributes listed
-    for name, args in attrs.items():
-        attr = getattr(reader, name)
-        if args is not None:
-            if not isinstance(args, (list, tuple)):
-                args = [args]
-            attr(*args)
-        else:
-            attr()
-
-    # Perform the read
-    if filename:
-        msg = f"Reading {os.path.basename(filename)}"
-    else:
-        msg = "Reading file"
-
-    _update_alg(
-        reader,
-        progress_bar=progress_bar,
-        message=msg,
-    )
-
-    # Check reader for errors
-    if observer.has_event_occurred():
-        warnings.warn(
-            f'The VTK reader `{reader.GetClassName()}` raised an error while reading the file.\n'
-            f'\t"{observer.get_message()}"'
-        )
-
-    data = pyvista.wrap(reader.GetOutputDataObject(0))
-    data._post_file_load_processing()
-    return data
-
-
 def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=False):
     """Read any file type supported by ``vtk`` or ``meshio``.
+
+    .. deprecated:: 0.35.0
+        Use of `attrs` is deprecated.  Use `Reader` directly.
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
@@ -196,9 +128,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         return read_exodus(filename)
 
     try:
-        reader = pyvista.get_reader(
-            filename, force_ext
-        )  # TODO force extension choice, or point user to use reader directly
+        reader = pyvista.get_reader(filename, force_ext)
     except ValueError:
         try:
             from meshio._exceptions import ReadError
@@ -212,23 +142,38 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
             pass
     else:
         if attrs is not None:
-            warnings.warn(
-                "attrs use is deprecated.  Use a Reader class for more flexible control",
-                PyvistaDeprecationWarning,
-            )
-            for name, args in attrs.items():
-                attr = getattr(reader.reader, name)
-                if args is not None:
-                    if not isinstance(args, (list, tuple)):
-                        args = [args]
-                    attr(*args)
-                else:
-                    attr()
+            _apply_attrs_to_reader(reader, attrs)
         if progress_bar:
             reader.show_progress()
         return reader.read()
 
     raise IOError("This file was not able to be automatically read by pyvista.")
+
+
+def _apply_attrs_to_reader(reader, attrs):
+    """For a given pyvista reader, call methods according to attrs.
+
+    Parameters
+    ----------
+    reader : pyvista.BaseReader
+        Reader to call methods on.
+
+    attrs : dict
+        Mapping of methods to call on reader.
+
+    """
+    warnings.warn(
+        "attrs use is deprecated.  Use a Reader class for more flexible control",
+        PyvistaDeprecationWarning,
+    )
+    for name, args in attrs.items():
+        attr = getattr(reader.reader, name)
+        if args is not None:
+            if not isinstance(args, (list, tuple)):
+                args = [args]
+            attr(*args)
+        else:
+            attr()
 
 
 def read_texture(filename, attrs=None, progress_bar=False):
@@ -374,6 +319,10 @@ def read_exodus(
 def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress_bar=False):
     """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
 
+    .. deprecated:: 0.35.0
+        This function is deprecated and will be removed in a future version.
+        Use :class:`pyvista.Plot3DMetaReader`.
+
     Parameters
     ----------
     filename : str
@@ -403,36 +352,20 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
         Data read from the file.
 
     """
+    warnings.warn(
+        "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
+        PyvistaDeprecationWarning,
+    )
+
     filename = _process_filename(filename)
-
-    reader = _vtk.lazy_vtkMultiBlockPLOT3DReader()
-    reader.SetFileName(filename)
-
-    # q_filenames may be a list or a single filename
-    if q_filenames:
-        if isinstance(q_filenames, (str, pathlib.Path)):
-            q_filenames = [q_filenames]
-    q_filenames = [_process_filename(f) for f in q_filenames]
-
-    if hasattr(reader, 'AddFileName'):
-        # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
-        # VTK 8.2. This method supports reading multiple q files.
-        for q_filename in q_filenames:
-            reader.AddFileName(q_filename)
-    else:
-        # SetQFileName is used to add a single q file to be read, and is still
-        # supported in VTK9.
-        if len(q_filenames) > 0:
-            if len(q_filenames) > 1:
-                raise RuntimeError(
-                    'Reading of multiple q files is not supported with this version of VTK.'
-                )
-            reader.SetQFileName(q_filenames[0])
-
-    attrs = {} if not attrs else attrs
-    attrs['SetAutoDetectFormat'] = auto_detect
-
-    return standard_reader_routine(reader, filename=None, attrs=attrs, progress_bar=progress_bar)
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files(q_filenames)
+    reader.auto_detect_format = auto_detect
+    if attrs is not None:
+        _apply_attrs_to_reader(reader, attrs)
+    if progress_bar:
+        reader.show_progress()
+    return reader.read()
 
 
 def from_meshio(mesh):
