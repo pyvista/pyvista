@@ -361,7 +361,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if set_camera:
             self.camera_position = 'xy'
 
-    def export_html(self, filename):
+    def export_html(self, filename=None, as_snippet=False):
         """Export this plotter as an interactive scene to a HTML file.
 
         Parameters
@@ -390,7 +390,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # import after converting as we check for pythreejs import first
         try:
-            from ipywidgets.embed import dependency_state, embed_minimal_html
+            from ipywidgets.embed import dependency_state, embed_minimal_html, embed_snippet
         except ImportError:  # pragma: no cover
             raise ImportError('Please install ipywidgets with:\n\n\tpip install ipywidgets')
 
@@ -399,6 +399,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         state = dependency_state(widget)
 
         # convert and write to file
+        if as_snippet:
+            return embed_snippet(
+                None,
+                state=state,
+                requirejs=False,
+                embed_url=False,
+            )
+
+        if filename is None:
+            raise ValueError('`filename` is required when `snippet=False`')
+
         embed_minimal_html(filename, None, title=self.title, state=state)
 
     def to_pythreejs(self):
