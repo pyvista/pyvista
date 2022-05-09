@@ -33,7 +33,6 @@ File IO
    read
    read_exodus
    read_texture
-   read_legacy
    save_meshio
 
 

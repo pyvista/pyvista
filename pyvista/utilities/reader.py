@@ -45,7 +45,7 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.hdf``       | :class:`pyvista.HDFReader`                  |
     +----------------+---------------------------------------------+
-    | ``.img``       | :class:`pyvista.DICOMReader `               |
+    | ``.img``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
     | ``.inp``       | :class:`pyvista.AVSucdReader`               |
     +----------------+---------------------------------------------+
@@ -122,6 +122,9 @@ def get_reader(filename, force_ext=None):
     ----------
     filename : str
         The string path to the file to read.
+
+    force_ext : str, optional
+        An extension to force a specific reader to be chosen.
 
     Returns
     -------
