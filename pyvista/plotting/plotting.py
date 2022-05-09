@@ -195,8 +195,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         col_weights=None,
         lighting='light kit',
         theme=None,
+        **kwargs,
     ):
         """Initialize base plotter."""
+        super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
@@ -451,7 +453,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pyvista.Sphere(radius=0.02)
-        >>> pc = pdata.glyph(scale=False, geom=sphere)
+        >>> pc = pdata.glyph(scale=False, geom=sphere, orient=False)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
         ...                 show_scalar_bar=False)
@@ -1139,7 +1141,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def bounds(self):
-        """Return the bounds of the active renderer."""
+        """Return the bounds of the active renderer.
+
+        Returns
+        -------
+        list
+            Bounds of the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.bounds
+        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+
+        """
         return self.renderer.bounds
 
     @property
@@ -1572,7 +1589,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.hide_axes()
 
     def show_axes_all(self):
-        """Show the axes orientation widget in all renderers."""
+        """Show the axes orientation widget in all renderers.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>>
+        >>> # create multi-window plot (1 row, 2 columns)
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>>
+        >>> # activate subplot 1 and add a mesh
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(examples.load_globe())
+        >>>
+        >>> # activate subplot 2 and add a mesh
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(examples.load_airplane())
+        >>>
+        >>> # show the axes orientation widget in all subplots
+        >>> pl.show_axes_all()
+        >>>
+        >>> # display the window
+        >>> pl.show()
+
+        """
         for renderer in self.renderers:
             renderer.show_axes()
 
@@ -3359,7 +3400,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         filename : str
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See ``imagio.get_writer``.
+            but other filetypes may be supported.  See :func:`imageio.get_writer()
+            <imageio.v2.get_writer>`.
 
         framerate : int, optional
             Frames per second.
@@ -3369,12 +3411,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             range is ``0 - 10``.  Higher quality leads to a larger file.
 
         **kwargs : dict, optional
-            See the documentation for ``imageio.get_writer`` for additional kwargs.
+            See the documentation for :func:`imageio.get_writer()
+            <imageio.v2.get_writer>` for additional kwargs.
 
         Notes
         -----
-        See the documentation for `imageio.get_writer
-        <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.get_writer>`_
+        See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`.
 
         Examples
         --------
@@ -3391,7 +3433,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(self, filename):
+    def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
         """Open a gif file.
 
         Parameters
@@ -3399,13 +3441,46 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Filename of the gif to open.  Filename must end in ``"gif"``.
 
+        loop : int, optional
+            The number of iterations. Default 0 (meaning loop indefinitely).
+
+        fps : float, optional
+            The number of frames per second. If duration is not given, the
+            duration for each frame is set to 1/fps. Default 10.
+
+        palettesize : int, optional
+            The number of colors to quantize the image to. Is rounded to the
+            nearest power of two. Must be between 2 and 256. Default 256.
+
+        subrectangles : bool, optional
+            If ``True``, will try and optimize the GIF by storing only the rectangular
+            parts of each frame that change with respect to the previous. Default
+            ``False``.
+
+            .. note::
+               Setting this to ``True`` may help reduce jitter in colorbars.
+
+        **kwargs : dict, optional
+            See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`
+            for additional kwargs.
+
+        Notes
+        -----
+        Consider using `pygifsicle
+        <https://github.com/LucaCappelletti94/pygifsicle>`_ to reduce the final
+        size of the gif. See `Optimizing a GIF using pygifsicle
+        <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_.
+
         Examples
         --------
-        Open a gif file.
+        Open a gif file, setting the framerate to 8 frames per second and
+        reducing the colorspace to 64.
 
         >>> import pyvista
-        >>> pl = pyvista.Plotter
-        >>> pl.open_gif('movie.gif')  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()
+        >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
+
+        See :ref:`gif_movie_example` for a full example using this method.
 
         """
         from imageio import get_writer
@@ -3415,7 +3490,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
-        self.mwriter = get_writer(filename, mode='I')
+        self.mwriter = get_writer(
+            filename,
+            mode='I',
+            loop=loop,
+            fps=fps,
+            palettesize=palettesize,
+            subrectangles=subrectangles,
+            **kwargs,
+        )
 
     def write_frame(self):
         """Write a single frame to the movie file.
@@ -4581,6 +4664,147 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if name in self.renderers[index]._actors:
                 places.append(tuple(self.renderers.index_to_loc(index)))
         return places
+
+    def add_ruler(
+        self,
+        pointa,
+        pointb,
+        flip_range=False,
+        number_labels=5,
+        show_labels=True,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        title="Distance",
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+    ):
+        """Add ruler.
+
+        The ruler is a 2D object that is not occluded by 3D objects.
+        To avoid issues with perspective, it is recommended to use
+        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        and place the ruler orthogonal to the viewing direction.
+
+        The title and labels are placed to the right of ruler moving from
+        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
+        if needed.
+
+        Since the ruler is placed in an overlay on the viewing scene, the camera
+        does not automatically reset to include the ruler in the view.
+
+        Parameters
+        ----------
+        pointa : Sequence
+            Starting point for ruler.
+
+        pointb : Sequence
+            Ending point for ruler.
+
+        flip_range : bool
+            If ``True``, the distance range goes from ``pointb`` to ``pointa``.
+
+        number_labels : int
+            Number of labels to place on ruler.
+
+        show_labels : bool, optional
+            Whether to show labels.
+
+        font_size_factor : float
+            Factor to scale font size overall.
+
+        label_size_factor : float
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        title : str, optional
+            The title to display.
+
+        number_minor_ticks : int, optional
+            Number of minor ticks between major ticks.
+
+        tick_length : int
+            Length of ticks in pixels.
+
+        minor_tick_length : int
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, optional
+            Whether to show the ticks.
+
+        tick_label_offset : int
+            Offset between tick and label in pixels.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the ruler.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> cone = pyvista.Cone(height=2.0, radius=0.5)
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(cone)
+
+        Measure x direction of cone and place ruler slightly below.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
+        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     title="X Distance"
+        ... )
+
+        Measure y direction of cone and place ruler slightly to left.
+        The title and labels are placed to the right of the ruler when
+        traveling from ``pointa`` to ``pointb``.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
+        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     flip_range=True,
+        ...     title="Y Distance"
+        ... )
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        """
+        ruler = _vtk.vtkAxisActor2D()
+
+        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
+        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+
+        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        if flip_range:
+            ruler.SetRange(distance, 0)
+        else:
+            ruler.SetRange(0, distance)
+
+        ruler.SetTitle(title)
+        ruler.SetFontFactor(font_size_factor)
+        ruler.SetLabelFactor(label_size_factor)
+        ruler.SetNumberOfLabels(number_labels)
+        ruler.SetLabelVisibility(show_labels)
+        if label_format:
+            ruler.SetLabelFormat(label_format)
+
+        ruler.SetNumberOfMinorTicks(number_minor_ticks)
+        ruler.SetTickVisibility(show_ticks)
+        ruler.SetTickLength(tick_length)
+        ruler.SetMinorTickLength(minor_tick_length)
+        ruler.SetTickOffset(tick_label_offset)
+
+        self.add_actor(ruler, reset_camera=True, pickable=False)
+        return ruler
 
 
 class Plotter(BasePlotter):

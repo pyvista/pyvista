@@ -53,7 +53,9 @@ def glyphs(grid_sz=3):
     mesh.point_data['scalars'] = rng_int
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
-    return mesh.glyph(geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1))
+    return mesh.glyph(
+        geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1), orient=False
+    )
 
 
 def plot_glyphs(grid_sz=3, **kwargs):

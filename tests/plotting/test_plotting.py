@@ -1517,7 +1517,7 @@ def test_plot_compare_four():
     data_a = mesh.contour()
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
-    data_d = mesh.glyph(scale=False)
+    data_d = mesh.glyph(scale=False, orient=False)
     pyvista.plot_compare_four(
         data_a,
         data_b,
@@ -2235,3 +2235,26 @@ def test_pointset_plot_as_points(pointset):
     pl = pyvista.Plotter()
     pl.add_points(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_write_gif(sphere, tmpdir):
+    basename = 'write_gif.gif'
+    path = str(tmpdir.join(basename))
+    pl = pyvista.Plotter()
+    pl.open_gif(path)
+    pl.add_mesh(sphere)
+    pl.write_frame()
+    pl.close()
+
+    # assert file exists and is not empty
+    assert os.path.isfile(path)
+    assert os.path.getsize(path)
+
+
+def test_ruler(sphere):
+    sphere = pyvista.Sphere()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.view_xy()
+    plotter.show(before_close_callback=verify_cache_image)
