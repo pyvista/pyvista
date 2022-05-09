@@ -42,7 +42,7 @@ def buffer_normals(trimesh):
     normals = normals.astype(np.float32, copy=False)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Given trait value dtype")
-        return tjs.BufferAttribute(array=normals, dynamic=False)
+        return tjs.BufferAttribute(array=normals)
 
 
 def get_coloring(mapper, dataset):
@@ -126,7 +126,7 @@ def array_to_float_buffer(points):
     # improperly recognized as float64.  Same for the rest
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Given trait value dtype")
-        position = tjs.BufferAttribute(array=points, normalized=False, dynamic=False)
+        position = tjs.BufferAttribute(array=points, normalized=False)
     return position
 
 
@@ -141,7 +141,7 @@ def cast_to_min_size(ind, max_index):
         raise ValueError(
             f'pythreejs does not support a maximum index more than {np.iinfo(np.uint32).max}'
         )
-    return tjs.BufferAttribute(array=ind, normalized=False, dynamic=False)
+    return tjs.BufferAttribute(array=ind, normalized=False)
 
 
 def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):

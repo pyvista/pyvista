@@ -77,8 +77,8 @@ def get_img():
         raise ValueError('Invalid Option')
 
     # generate screenshot
-    # filename = 'mesh.html'
-    # filepath = os.path.join(static_image_path, filename)
+    filename = 'mesh.html'
+    filepath = os.path.join(static_image_path, filename)
 
     # create a plotter and add the mesh to it
     pl = pyvista.Plotter(window_size=(600, 600))
@@ -95,9 +95,8 @@ def get_img():
     if anti_aliasing:
         pl.enable_anti_aliasing()
     pl.background_color = 'white'
-    return pl.export_html(as_snippet=True)
-    # pl.export_html(filepath)
-    # return os.path.join('images', filename)
+    pl.export_html(filepath)
+    return os.path.join('images', filename)
 
 
 if __name__ == '__main__':
