@@ -2095,6 +2095,7 @@ class DefaultTheme(_ThemeConfig):
             'Hidden Line Removal': 'hidden_line_removal',
             'Anti-Aliasing': '_antialiasing',
             'Split sharp edges': '_split_sharp_edges',
+            'Sharp edges feature angle': '_sharp_edges_feature_angle',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2214,8 +2215,8 @@ class DefaultTheme(_ThemeConfig):
         Enable the splitting of sharp edges globally.
 
         >>> import pyvista
-        >>> pyvista.global_theme.split_sharp_edges = True
-        >>> pyvista.global_theme.split_sharp_edges
+        >>> pyvista.global_theme.split_sharp_edges = True  # doctest:+SKIP
+        >>> pyvista.global_theme.split_sharp_edges  # doctest:+SKIP
         True
 
         """
@@ -2236,8 +2237,8 @@ class DefaultTheme(_ThemeConfig):
         Change the sharp edges feature angle to 45 degrees.
 
         >>> import pyvista
-        >>> pyvista.global_theme.sharp_edges_feature_angle = 45.0
-        >>> pyvista.global_theme.sharp_edges_feature_angle
+        >>> pyvista.global_theme.sharp_edges_feature_angle = 45.0  # doctest:+SKIP
+        >>> pyvista.global_theme.sharp_edges_feature_angle  # doctest:+SKIP
         45.0
 
         """
