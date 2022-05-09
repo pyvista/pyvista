@@ -141,11 +141,20 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
             # https://github.com/pyvista/pyvista/pull/495
             pass
     else:
+        observer = pyvista.utilities.errors.Observer()
+        observer.observe(reader.reader)
         if attrs is not None:
             _apply_attrs_to_reader(reader, attrs)
         if progress_bar:
             reader.show_progress()
-        return reader.read()
+        mesh = reader.read()
+        if observer.has_event_occurred():
+            warnings.warn(
+                f"The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` raised an error"
+                "while reading the file.\n"
+                f'\t"{observer.get_message()}"'
+            )
+        return mesh
 
     raise IOError("This file was not able to be automatically read by pyvista.")
 
