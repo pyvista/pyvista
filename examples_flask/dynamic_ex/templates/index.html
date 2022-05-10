@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  </head>
+   <body>
+
+     <fieldset>
+
+       <select style="background-color: #ffffa0" name="meshtype", id="meshtype" onchange="getState(this.value)">
+         <option>Select Mesh Type</option>
+         <option>Sphere</option>
+         <option>Cube</option>
+         <option>Bohemian Dome</option>
+         <option>Cylinder</option>
+         <option>Vectors</option>
+         <option disabled="true" value="divider">-------------</option>
+         <option>Queen Nefertiti</option>
+         
+       </select>
+
+       <div class="item">
+         <input type="checkbox" id="show_edges">
+         <label for="show_edges">Show Edges</label>
+       </div>
+       <div class="item">
+         <input type="checkbox" id="lighting" checked>
+         <label for="lighting">Lighting</label>
+       </div>
+       <div class="item">
+         <input type="checkbox" id="pbr" checked>
+         <label for="pbr">Physically Based Rendering</label>
+       </div>
+       <div class="item">
+         <input type="checkbox" id="anti_aliasing" checked>
+         <label for="anti_aliasing">Anti-Aliasing</label>
+       </div>
+       <label for="colorpicker">Color Picker:</label>
+       <input type="color" id="colorpicker" value="#a4b2ba">
+
+       <div>
+         Style:
+         <input type="radio" class="style" name="style" value="points" /> Points
+         <input type="radio" class="style" name="style" value="wireframe" /> Wireframe
+         <input type="radio" class="style" name="style" value="surface" checked/> Surface
+
+       </div>
+
+       <br>
+       <button type='button' id ='retrieve'>Plot</button>
+
+     </fieldset>
+
+     <iframe src="" height="600" width="600" title="PyVista" id="myimg" frameBorder="0" allowtransparency=yes scrolling=no>
+       <p>Your browser does not support iframes.</p>
+     </iframe>
+     
+   </body>
+  <script>
+    $(document).ready(function() {
+       $('#retrieve').click(function(){
+           $.ajax({
+           url: "{{ url_for ('get_img') }}",
+           type: "GET",
+           data: { 
+               meshtype:       $('#meshtype option:selected').val(),
+               show_edges:    ($("#show_edges").is(":checked")),
+               lighting:      ($("#lighting").is(":checked")),
+               pbr:           ($("#pbr").is(":checked")),
+               color:          $('#colorpicker').val(),
+               style:          $(".style:checked").val(),
+               anti_aliasing: ($("#anti_aliasing").is(":checked")),
+
+           },
+           success: function(response) {
+               $("#myimg").attr('src', '/static/' + response);
+          },
+          error: function(xhr) {
+              alert("Please select a mesh type from the drop down menu.");
+         }
+         });
+       });
+    });
+  </script>
+</html>
