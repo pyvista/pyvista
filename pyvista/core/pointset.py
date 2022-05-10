@@ -43,6 +43,8 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
+    _WRITERS = {".xyz": _vtk.vtkSimplePointsWriter}
+
     def center_of_mass(self, scalars_weight=False):
         """Return the coordinates for the center of mass of the mesh.
 
