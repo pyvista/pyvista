@@ -143,6 +143,15 @@ def test_read_attrs(mock_reader, mock_read):
     mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
 
 
+@mock.patch('pyvista.BaseReader.read')
+@mock.patch('pyvista.BaseReader.reader')
+@mock.patch('pyvista.BaseReader.show_progress')
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
+    """Test passing attrs in read."""
+    pyvista.read(ex.antfile, progress_bar=True)
+    mock_show_progress.assert_called_once()
+
+
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
