@@ -129,6 +129,20 @@ def test_read_force_ext(tmpdir):
         assert isinstance(data, type)
 
 
+@mock.patch('pyvista.BaseReader.read')
+@mock.patch('pyvista.BaseReader.reader')
+def test_read_attrs(mock_reader, mock_read):
+    """Test passing attrs in read."""
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read(ex.antfile, attrs={'test': 'test_arg'})
+    mock_reader.test.assert_called_once_with('test_arg')
+
+    mock_reader.reset_mock()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
+    mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
+
+
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
