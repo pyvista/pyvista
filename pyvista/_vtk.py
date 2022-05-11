@@ -24,6 +24,42 @@ except ImportError:  # pragma: no cover
 _has_vtkRenderingContextOpenGL2 = False
 
 if VTK9:
+    # Nightly builds have build tags that correspond to the date they were
+    # built, e.g. 20220510. Ordinary releases have low-digit build tags
+    # (0, 1, 2 etc.).
+    major = vtkVersion().GetVTKMajorVersion()
+    minor = vtkVersion().GetVTKMinorVersion()
+    build = vtkVersion().GetVTKBuildVersion()
+
+    # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
+    # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
+    # This was first in nightly builds from 20220413 and it will be in
+    # 9.2 and onwards
+    importExtractEdgesFromCore = False
+    if major > 9 or (major == 9 and minor >= 2):
+        importExtractEdgesFromCore = True
+    if build >= 20220413:
+        importExtractEdgesFromCore = True
+
+    if importExtractEdgesFromCore:
+        from vtkmodules.vtkFiltersCore import vtkExtractEdges
+    else:
+        from vtkmodules.vtkFiltersExtraction import vtkExtractEdges
+
+    # vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
+    # VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
+    # This was first in nightly builds from 20220503 and it will be in
+    # 9.2 and onwards
+    importCellTreeLocatorFromCommonDataModel = False
+    if major > 9 or (major == 9 and minor >= 2):
+        importCellTreeLocatorFromCommonDataModel = True
+    if build >= 20220503:
+        importCellTreeLocatorFromCommonDataModel = True
+
+    if importCellTreeLocatorFromCommonDataModel:
+        from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
+    else:
+        from vtkmodules.vtkFiltersGeneral import vtkCellTreeLocator
 
     from vtkmodules.numpy_interface.dataset_adapter import (
         VTKArray,
@@ -198,7 +234,6 @@ if VTK9:
         vtkUnstructuredGridToExplicitStructuredGrid,
     )
     from vtkmodules.vtkFiltersExtraction import (
-        vtkExtractEdges,
         vtkExtractGeometry,
         vtkExtractGrid,
         vtkExtractSelection,
@@ -208,7 +243,6 @@ if VTK9:
         vtkAxes,
         vtkBooleanOperationPolyDataFilter,
         vtkBoxClipDataSet,
-        vtkCellTreeLocator,
         vtkClipClosedSurface,
         vtkCursor3D,
         vtkCurvatures,
