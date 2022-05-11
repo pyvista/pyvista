@@ -1,7 +1,5 @@
 """Module dedicated to widgets."""
 
-from typing import List
-
 import numpy as np
 
 import pyvista
@@ -24,7 +22,23 @@ class WidgetHelper:
 
     """
 
-    _camera_widgets: List[object] = []
+    def __init__(self, *args, **kwargs):
+        """Initialize widget helper."""
+        super().__init__(*args, **kwargs)
+        self.camera_widgets = []
+        self.box_widgets = []
+        self.box_clipped_meshes = []
+        self.plane_widgets = []
+        self.plane_clipped_meshes = []
+        self.plane_sliced_meshes = []
+        self.line_widgets = []
+        self.slider_widgets = []
+        self.threshold_meshes = []
+        self.isovalue_meshes = []
+        self.spline_widgets = []
+        self.spline_sliced_meshes = []
+        self.sphere_widgets = []
+        self.button_widgets = []
 
     def add_box_widget(
         self,
@@ -86,10 +100,19 @@ class WidgetHelper:
         vtk.vtkBoxWidget
             Box widget.
 
-        """
-        if not hasattr(self, "box_widgets"):
-            self.box_widgets = []
+        Examples
+        --------
+        Shows an interactive clip box.
 
+        >>> import pyvista as pv
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
+
+        For a full example see :ref:`box_widget_example`.
+
+        """
         if bounds is None:
             bounds = self.bounds
 
@@ -126,11 +149,8 @@ class WidgetHelper:
         return box_widget
 
     def clear_box_widgets(self):
-        """Disable all of the box widgets."""
-        if hasattr(self, 'box_widgets'):
-            for widget in self.box_widgets:
-                widget.Off()
-            del self.box_widgets
+        """Remove all of the box widgets."""
+        self.box_widgets.clear()
 
     def add_mesh_clip_box(
         self,
@@ -213,8 +233,6 @@ class WidgetHelper:
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
 
-        if not hasattr(self, "box_clipped_meshes"):
-            self.box_clipped_meshes = []
         box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
         self.box_clipped_meshes.append(box_clipped_mesh)
 
@@ -333,9 +351,6 @@ class WidgetHelper:
             Plane widget.
 
         """
-        if not hasattr(self, "plane_widgets"):
-            self.plane_widgets = []
-
         if origin is None:
             origin = self.center
         if bounds is None:
@@ -444,11 +459,8 @@ class WidgetHelper:
         return plane_widget
 
     def clear_plane_widgets(self):
-        """Disable all of the plane widgets."""
-        if hasattr(self, 'plane_widgets'):
-            for widget in self.plane_widgets:
-                widget.Off()
-            del self.plane_widgets
+        """Remove all of the plane widgets."""
+        self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
         self,
@@ -557,8 +569,6 @@ class WidgetHelper:
         alg.SetValue(value)
         alg.SetInsideOut(invert)  # invert the clip if needed
 
-        if not hasattr(self, "plane_clipped_meshes"):
-            self.plane_clipped_meshes = []
         plane_clipped_mesh = _get_output(alg)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
@@ -675,8 +685,6 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        if not hasattr(self, "plane_sliced_meshes"):
-            self.plane_sliced_meshes = []
         plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
@@ -813,9 +821,6 @@ class WidgetHelper:
             Created line widget.
 
         """
-        if not hasattr(self, "line_widgets"):
-            self.line_widgets = []
-
         if bounds is None:
             bounds = self.bounds
 
@@ -850,11 +855,8 @@ class WidgetHelper:
         return line_widget
 
     def clear_line_widgets(self):
-        """Disable all of the line widgets."""
-        if hasattr(self, 'line_widgets'):
-            for widget in self.line_widgets:
-                widget.Off()
-            del self.line_widgets
+        """Remove all of the line widgets."""
+        self.line_widgets.clear()
 
     def add_text_slider_widget(
         self,
@@ -1074,9 +1076,6 @@ class WidgetHelper:
         ... )
         >>> pl.show()
         """
-        if not hasattr(self, "slider_widgets"):
-            self.slider_widgets = []
-
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
@@ -1164,11 +1163,8 @@ class WidgetHelper:
         return slider_widget
 
     def clear_slider_widgets(self):
-        """Disable all of the slider widgets."""
-        if hasattr(self, 'slider_widgets'):
-            for widget in self.slider_widgets:
-                widget.Off()
-            del self.slider_widgets
+        """Remove all of the slider widgets."""
+        self.slider_widgets.clear()
 
     def add_mesh_threshold(
         self,
@@ -1270,8 +1266,6 @@ class WidgetHelper:
         )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
 
-        if not hasattr(self, "threshold_meshes"):
-            self.threshold_meshes = []
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
@@ -1411,8 +1405,6 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
-        if not hasattr(self, "isovalue_meshes"):
-            self.isovalue_meshes = []
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
@@ -1515,9 +1507,6 @@ class WidgetHelper:
         if initial_points is not None and len(initial_points) != n_handles:
             raise ValueError("`initial_points` must be length `n_handles`.")
 
-        if not hasattr(self, "spline_widgets"):
-            self.spline_widgets = []
-
         color = Color(color, default_color=pyvista.global_theme.color)
 
         if bounds is None:
@@ -1562,11 +1551,8 @@ class WidgetHelper:
         return spline_widget
 
     def clear_spline_widgets(self):
-        """Disable all of the spline widgets."""
-        if hasattr(self, 'spline_widgets'):
-            for widget in self.spline_widgets:
-                widget.Off()
-            del self.spline_widgets
+        """Remove all of the spline widgets."""
+        self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
         self,
@@ -1657,8 +1643,6 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        if not hasattr(self, "spline_sliced_meshes"):
-            self.spline_sliced_meshes = []
         spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
@@ -1764,9 +1748,6 @@ class WidgetHelper:
             The sphere widget.
 
         """
-        if not hasattr(self, "sphere_widgets"):
-            self.sphere_widgets = []
-
         if color is None:
             color = pyvista.global_theme.color.float_rgb
         selected_color = Color(selected_color)
@@ -1833,11 +1814,8 @@ class WidgetHelper:
         return sphere_widget
 
     def clear_sphere_widgets(self):
-        """Disable all of the sphere widgets."""
-        if hasattr(self, 'sphere_widgets'):
-            for widget in self.sphere_widgets:
-                widget.Off()
-            del self.sphere_widgets
+        """Remove all of the sphere widgets."""
+        self.sphere_widgets.clear()
 
     def add_checkbox_button_widget(
         self,
@@ -1888,9 +1866,22 @@ class WidgetHelper:
         vtk.vtkButtonWidget
             The VTK button widget configured as a checkbox button.
 
+        Examples
+        --------
+        The following example generates a static image of the widget.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> p = pv.Plotter()
+        >>> actor = p.add_mesh(mesh)
+        >>> def toggle_vis(flag):
+        ...     actor.SetVisibility(flag)
+        >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
+        >>> p.show()
+
+        Download the interactive example at :ref:`checkbox_widget_example`.
+
         """
-        if not hasattr(self, "button_widgets"):
-            self.button_widgets = []
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
@@ -1970,21 +1961,16 @@ class WidgetHelper:
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
         widget.On()
-        self._camera_widgets.append(widget)
+        self.camera_widgets.append(widget)
         return widget
 
     def clear_camera_widgets(self):
-        """Disable all of the camera widgets."""
-        for widget in self._camera_widgets:
-            widget.Off()
-        self._camera_widgets = []
+        """Remove all of the camera widgets."""
+        self.camera_widgets.clear()
 
     def clear_button_widgets(self):
-        """Disable all of the button widgets."""
-        if hasattr(self, 'button_widgets'):
-            for widget in self.button_widgets:
-                widget.Off()
-            del self.button_widgets
+        """Remove all of the button widgets."""
+        self.button_widgets.clear()
 
     def close(self):
         """Close the widgets."""

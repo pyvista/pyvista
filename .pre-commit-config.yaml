@@ -37,10 +37,10 @@ repos:
     exclude: ^pyvista/ext/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.942
+  rev: v0.950
   hooks:
     - id: mypy
-      exclude: ^(doc/|tests/|examples/|pyvista/ext/)
+      exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
       additional_dependencies: [
       "mypy-extensions==0.4.3",
       "toml==0.10.2",

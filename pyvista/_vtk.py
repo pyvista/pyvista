@@ -307,6 +307,7 @@ if VTK9:
         vtkPolyDataWriter,
         vtkRectilinearGridReader,
         vtkRectilinearGridWriter,
+        vtkSimplePointsWriter,
         vtkStructuredGridReader,
         vtkStructuredGridWriter,
         vtkUnstructuredGridReader,
@@ -361,6 +362,7 @@ if VTK9:
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
+        vtkAxisActor2D,
         vtkCornerAnnotation,
         vtkCubeAxesActor,
         vtkLegendBoxActor,

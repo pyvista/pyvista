@@ -1515,3 +1515,55 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
             f"point data: {possible_vectors_point}.\n"
             "Set one as active using DataSet.set_active_vectors(name, preference=type)"
         )
+
+
+def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
+    """Set a default scalars array on mesh, if not already set.
+
+    If an active scalars already exists, no changes are made.
+
+    If an active scalars does not exist, it checks for point or cell
+    arrays.  If only one exists, then it is set as the active scalars.
+    Otherwise, an error is raised.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to set default active scalars.
+
+    Raises
+    ------
+    MissingDataError
+        If no arrays exist.
+
+    AmbiguousDataError
+        If more than one array exists.
+
+    """
+    if mesh.active_scalars_name is not None:
+        return
+
+    point_data = mesh.point_data
+    cell_data = mesh.cell_data
+
+    possible_scalars_point = point_data.keys()
+    possible_scalars_cell = cell_data.keys()
+
+    possible_scalars = possible_scalars_point + possible_scalars_cell
+    n_possible_scalars = len(possible_scalars)
+
+    if n_possible_scalars == 1:
+        if len(possible_scalars_point) == 1:
+            preference = 'point'
+        else:
+            preference = 'cell'
+        mesh.set_active_scalars(possible_scalars[0], preference=preference)
+    elif n_possible_scalars < 1:
+        raise MissingDataError("No data available.")
+    elif n_possible_scalars > 1:
+        raise AmbiguousDataError(
+            "Multiple data available\n"
+            f"cell data: {possible_scalars_cell}.\n"
+            f"point data: {possible_scalars_point}.\n"
+            "Set one as active using DataSet.set_active_scalars(name, preference=type)"
+        )
