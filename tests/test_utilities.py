@@ -172,6 +172,10 @@ def test_read_force_ext_wrong_extension(tmpdir):
         data = fileio.read(fname, force_ext='.vtm')
     assert len(data) == 0
 
+    fname = ex.planefile
+    with pytest.raises(IOError):
+        fileio.read(fname, force_ext='.not_supported')
+
 
 @mock.patch('pyvista.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
