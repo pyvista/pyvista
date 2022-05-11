@@ -130,16 +130,15 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     try:
         reader = pyvista.get_reader(filename, force_ext)
     except ValueError:
-        try:
-            from meshio._exceptions import ReadError
+        # if using force_ext, we are explicitly only using vtk readers
+        if force_ext is not None:
+            raise IOError("This file was not able to be automatically read by pvista.")
+        from meshio._exceptions import ReadError
 
-            try:
-                return read_meshio(filename)
-            except ReadError:
-                pass
-        except SyntaxError:
-            # https://github.com/pyvista/pyvista/pull/495
-            pass
+        try:
+            return read_meshio(filename)
+        except ReadError:
+            raise IOError("This file was not able to be automatically read by pyvista.")
     else:
         observer = pyvista.utilities.errors.Observer()
         observer.observe(reader.reader)
@@ -155,8 +154,6 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
                 f'\t"{observer.get_message()}"'
             )
         return mesh
-
-    raise IOError("This file was not able to be automatically read by pyvista.")
 
 
 def _apply_attrs_to_reader(reader, attrs):
