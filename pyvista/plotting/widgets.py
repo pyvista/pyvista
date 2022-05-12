@@ -102,16 +102,15 @@ class WidgetHelper:
 
         Examples
         --------
-        The following example generates a static image of the widget.
+        Shows an interactive clip box.
 
         >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = examples.download_nefertiti()
-        >>> p = pv.Plotter()
-        >>> _ = p.add_mesh_clip_box(mesh, color='white')
-        >>> p.show(cpos=[-1, -1, 0.2])
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
 
-        Download the interactive example at :ref:`box_widget_example`.
+        For a full example see :ref:`box_widget_example`.
 
         """
         if bounds is None:
