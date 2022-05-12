@@ -181,7 +181,9 @@ class BaseReader:
         self._progress_bar = False
         self._progress_msg = None
         self.__directory = None
+        self._set_defaults()
         self.path = path
+        self._set_defaults_post()
 
     def __repr__(self):
         """Representation of a Reader object."""
@@ -297,6 +299,14 @@ class BaseReader:
 
     def _update_information(self):
         self.reader.UpdateInformation()
+
+    def _set_defaults(self):
+        """Set defaults on reader, if needed."""
+        pass
+
+    def _set_defaults_post(self):
+        """Set defaults on reader post setting file, if needed."""
+        pass
 
 
 class PointCellDataSelection:
@@ -730,18 +740,16 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
-    """OpenFOAM Reader for .foam files."""
+    """OpenFOAM Reader for .foam files.
+
+    By default, pyvista enables all patch arrays.  This is a deviation
+    from the vtk default.
+
+    """
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
-    def __init__(self, path):
-        """Initialize OpenFOAMReader.
-
-        By default, pyvista enables all patch arrays.  This is a deviation
-        from the vtk default.
-
-        """
-        super().__init__(path)
+    def _set_defaults_post(self):
         self.enable_all_patch_arrays()
 
     @property
@@ -1049,10 +1057,7 @@ class VTKDataSetReader(BaseReader):
 
     _class_reader = _vtk.vtkDataSetReader
 
-    def __init__(self, path):
-        """Initialize VTKDataSetReader with filename."""
-        super().__init__(path)
-        # Provide consistency with defaults in pyvista.read
+    def _set_defaults_post(self):
         self.reader.ReadAllScalarsOn()
         self.reader.ReadAllColorScalarsOn()
         self.reader.ReadAllNormalsOn()
@@ -1116,6 +1121,9 @@ class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader."""
 
     _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+
+    def _set_defaults(self):
+        self.auto_detect_format = True
 
     def add_q_files(self, files):
         """Add q file(s).
@@ -1197,9 +1205,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
 
-    def __init__(self, filename: str):
-        """Initialize CGNSReader with filename."""
-        super().__init__(filename)
+    def _set_defaults_post(self):
         self.enable_all_point_arrays()
         self.enable_all_cell_arrays()
         self.load_boundary_patch = True
