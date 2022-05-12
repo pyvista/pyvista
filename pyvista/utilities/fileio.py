@@ -365,7 +365,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
 
     .. deprecated:: 0.35.0
         This function is deprecated and will be removed in a future version.
-        Use :class:`pyvista.Plot3DMetaReader`.
+        Use :class:`pyvista.MultiBlockPlot3DReader`.
 
     Parameters
     ----------
