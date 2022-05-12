@@ -80,7 +80,8 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     .. deprecated:: 0.35.0
-        Use of `attrs` is deprecated.  Use `Reader` directly.
+        Use of `attrs` is deprecated.
+        Use a reader class using :func:`pyvista.get_reader`
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
@@ -101,6 +102,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         each file being a separate block in the dataset.
 
     attrs : dict, optional
+        Deprecated. Use a Reader class using :func:`pyvista.get_reader`.
         A dictionary of attributes to call on the reader. Keys of
         dictionary are the attribute/method names and values are the
         arguments passed to those calls. If you do not have any
