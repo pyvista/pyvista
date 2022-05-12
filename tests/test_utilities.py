@@ -177,6 +177,13 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
+@mock.patch('pyvista.utilities.fileio.read')
+def test_read_legacy(read_mock):
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_legacy(ex.globefile, progress_bar=False)
+    read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
+
+
 @mock.patch('pyvista.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`

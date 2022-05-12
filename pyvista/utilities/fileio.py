@@ -39,6 +39,43 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
+def read_legacy(filename, progress_bar=False):
+    """Use VTK's legacy reader to read a file.
+
+    This uses ``vtk.vtkDataSetReader`` to read the data.
+
+    .. deprecated:: 0.35.0
+        This function is deprecated. Use :func:`pyvsista.read` instead.
+
+    Parameters
+    ----------
+    filename : str
+        The string path to the file to read.
+
+    progress_bar : bool, optional
+        Optionally show a progress bar. Default ``False``.
+
+    Returns
+    -------
+    pyvista.DataSet
+        Wrapped pyvista mesh.
+
+    Examples
+    --------
+    Load an example mesh using the legacy reader.
+
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> mesh = pyvista.read_legacy(examples.uniformfile)
+
+    """
+    warnings.warn(
+        "Using read_legacy is deprecated. Use pyvista.read instead", PyvistaDeprecationWarning
+    )
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
+    return read(filename, progress_bar=progress_bar)
+
+
 def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=False):
     """Read any file type supported by ``vtk`` or ``meshio``.
 
