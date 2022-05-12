@@ -339,19 +339,27 @@ def test_plot3dmetareader():
 
 def test_multiblockplot3dreader():
     filename, _ = _download_file('multi-bin.xyz')
-    _download_file('multi-bin.q')
+    q_filename, _ = _download_file('multi-bin.q')
     reader = pyvista.MultiBlockPlot3DReader(filename)
     assert reader.path == filename
 
     mesh = reader.read()
     for m in mesh:
         assert all([m.n_points, m.n_cells])
+        assert len(m.array_names) == 0
 
     # Reader doesn't yet support reusability
     reader = pyvista.MultiBlockPlot3DReader(filename)
-    reader.add_q_files('multi-bin.q')
+    reader.add_q_files(q_filename)
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
     reader = pyvista.MultiBlockPlot3DReader(filename)
-    reader.add_q_files(['multi-bin.q'])
+    q_filename = reader.add_q_files([q_filename])
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
 
     reader = pyvista.MultiBlockPlot3DReader(filename)
     reader.auto_detect_format = False
