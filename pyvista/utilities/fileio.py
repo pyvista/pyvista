@@ -42,10 +42,10 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
 def read_legacy(filename, progress_bar=False):
     """Use VTK's legacy reader to read a file.
 
-    This uses ``vtk.vtkDataSetReader`` to read the data.
-
     .. deprecated:: 0.35.0
         This function is deprecated. Use :func:`pyvsista.read` instead.
+
+    This uses ``vtk.vtkDataSetReader`` to read the data.
 
     Parameters
     ----------
