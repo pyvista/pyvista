@@ -13,7 +13,7 @@ body:
       description: |
         Provide a clear and concise description of what you would like added.
       placeholder: Tell us what you see!
-      value: "I have a great idea for a new feature!"
+      value: "I have an idea for a new feature!"
     validations:
       required: true
   - type: textarea
