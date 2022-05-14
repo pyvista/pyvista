@@ -1,31 +1,31 @@
 name: Feature Request
-description: Request that a feature be added to PyVista
-labels: ["feature-request"]
+description: Request general maintenance to code, CI, deployment, or otherwise
+labels: ["maintenance"]
 body: 
   - type: markdown
     attributes:
       value: |
           Thanks for taking the time to open this issue to help improve PyVista!
   - type: textarea
-    id: feature-details
+    id: maintenance-request
     attributes:
-      label: Describe the feature you would like to be added.
+      label: Describe what maintenance you would like added.
       description: |
-        Provide a clear and concise description of what you would like added.
+        Provide a clear and concise description of the maintenance problem.
       placeholder: Tell us what you see!
-      value: "I have a great idea for a new feature!"
+      value: "I have a maintenance suggestion!"
     validations:
       required: true
   - type: textarea
-    id: VTK-Links
+    id: code-links
     attributes:
-      label: Links to VTK Documentation, Examples, or Class Definitions.
-      description: If you are requesting that a feature from VTK be wrapped or exposed, please include the relevant links below.
+      label: Links to source code.
+      description: If you are requesting maintenance for a specific line of source code, please include the permanent link for that line.
   - type: textarea
     id: pseudocode-and-screenshots
     attributes:
       label: Pseudocode or Screenshots
-      description: Feel free to include pseudocode or screenshots of the requested outcome
+      description: Feel free to include pseudocode or screenshots of the requested outcome.
       placeholder: Provide some code for us to reproduce the bug!
       value: "```python \n
       Insert code here \n
