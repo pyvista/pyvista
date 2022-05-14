@@ -18,7 +18,6 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.utilities import check_valid_vector
 from pyvista.utilities.misc import PyvistaFutureWarning
 
 
@@ -2825,6 +2824,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
             raise TypeError('Vector must be a length three vector')
+
         extrusions = {"boundary_edges": 0, "all_edges": 1}
         if isinstance(extrusion, str):
             if extrusion not in extrusions:
