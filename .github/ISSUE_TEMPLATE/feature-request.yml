@@ -29,8 +29,9 @@ body:
       placeholder: Provide some code for us to reproduce the bug!
       value: "```python \n
       Insert code here \n
-      ```"
+      ```\n
       Or drag your screenshot here!
+      "
   - type: checkboxes
     id: terms
     attributes:
