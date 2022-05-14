@@ -17,9 +17,23 @@ body:
       value: "I found a bug!"
     validations:
       required: true  
+  - type: log
+    id: system-information
+    label: System Information
+    description: |
+      Please run the following code wherever you are experiencing the bug, and paste the output below.
+      This report helps us track down bugs and will be critical to addressing your bug.
+      ```python
+      # Get system info
+      import pyvista as pv
+      print(pv.Report())
+      ```
+      
+    
   - type: textarea
     attributes:
       label: Steps to reproduce the bug.
       description: Please include a code snippet to reproduce the big in the text box below.
       placeholder: Provide some code for us to reproduce the bug!
       value: "```Insert code here```"
+  
