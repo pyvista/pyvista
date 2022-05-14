@@ -17,7 +17,7 @@ body:
       value: "I found a bug!"
     validations:
       required: true  
-  - type: log
+  - type: textarea
     id: system-information
     label: System Information
     description: |
@@ -28,7 +28,7 @@ body:
       import pyvista as pv
       print(pv.Report())
       ```
-      
+    render: shell      
     
   - type: textarea
     attributes:
