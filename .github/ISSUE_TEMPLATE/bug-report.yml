@@ -34,10 +34,18 @@ body:
     validations:
       required: true
   - type: textarea
+    id: reproduce
     attributes:
       label: Steps to reproduce the bug.
       description: Please include a code snippet to reproduce the big in the text box below.
       placeholder: Provide some code for us to reproduce the bug!
-      value: "```Insert code here```"
+      value: "```python
+      Insert code here
+      ```"
     validations:
       required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, please add screenshots to the text box below 
