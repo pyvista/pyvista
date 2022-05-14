@@ -31,11 +31,13 @@ body:
         print(pv.Report())
         ```
       render: shell      
-    
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: Steps to reproduce the bug.
       description: Please include a code snippet to reproduce the big in the text box below.
       placeholder: Provide some code for us to reproduce the bug!
       value: "```Insert code here```"
-  
+    validations:
+      required: true
