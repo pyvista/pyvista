@@ -15,13 +15,7 @@ mesh = pv.ParametricRandomHills(randomseed=2)
 plane = pv.Plane(center=(0, 0, -5), direction=(0, 0, -1), i_size=100, j_size=100)
 
 # Perform extrude trim
-alg = vtk.vtkTrimmedExtrusionFilter()
-alg.SetInputData(mesh)
-alg.SetTrimSurfaceData(plane)
-alg.SetCappingStrategy(0) # <-- ensure that the cap is defined by the intersection
-alg.SetExtrusionDirection(0, 0, -1.0) # <-- set this with the plane normal
-alg.Update()
-poly = pv.core.filters._get_output(alg)
+poly = mesh.extrude_trim((0, 0, -1.0), plane)
 
 # Render the result
 p = pv.Plotter()

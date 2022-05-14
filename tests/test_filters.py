@@ -2327,36 +2327,43 @@ def test_extrude_rotate_inplace():
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
 
-
 def test_extrude_trim():
-    direction = (0, 0, -1)
+    direction = (0, 0, 1)
     mesh = pyvista.Plane(
-        center=(0, 0, 0), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
-    )
-    surface = pyvista.Plane(
         center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
     )
-    poly = mesh.extrude_trim(surface, direction=direction)
-    assert poly.volume == 1.0
-
-    poly = mesh.extrude_trim(surface, direction=direction, extrusion_strategy="boundary_edges")
-    poly = mesh.extrude_trim(surface, direction=direction, extrusion_strategy="all_edges")
-    poly = mesh.extrude_trim(surface, direction=direction, capping_strategy="intersection")
-    poly = mesh.extrude_trim(surface, direction=direction, capping_strategy="minimum_distance")
-    poly = mesh.extrude_trim(surface, direction=direction, capping_strategy="maximum_distance")
-    poly = mesh.extrude_trim(surface, direction=direction, capping_strategy="average_distance")
-
-
-def test_trim_inplace():
-    direction = (0, 0, -1)
-    mesh = pyvista.Plane(
-        center=(0, 0, 0), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
     )
-    surface = pyvista.Plane(
+    poly = mesh.extrude_trim(direction, trim_surface)
+    assert np.isclose(poly.volume, 1.0)
+
+
+@pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
+@pytest.mark.parametrize('capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"])
+def test_extrude_trim_strategy(extrusion, capping):
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
         center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
     )
-    mesh.extrude_trim(surface, direction=direction, inplace=True, progress_bar=True)
-    assert poly.volume == 1.0
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    poly = mesh.extrude_trim(direction, trim_surface, extrusion=extrusion, capping=capping)
+    assert poly.n_cells
+    assert poly.n_points
+
+
+def test_extrude_trim_inplace():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    mesh.extrude_trim(direction, trim_surface, inplace=True, progress_bar=True)
+    assert np.isclose(mesh.volume, 1.0)
 
 
 @pytest.mark.parametrize('inplace', [True, False])
