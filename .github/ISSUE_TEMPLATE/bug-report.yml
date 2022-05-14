@@ -1,1 +1,19 @@
-
+name: Bug Report
+description: Create a report to help us fix broken features
+labels: ["bug"]
+body: 
+  - type: markdown
+    attributes:
+      value: |
+          Thanks for taking the time to open this issue to help improve PyVista!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the bug, what's wrong, and what you expected:
+      description: |
+        A clear and concise description of what the bug is.
+        A clear and concise description of what you expected to happen.
+      placeholder: Tell us what you see!
+      value: "I found a bug!"
+    validations:
+      required: true
