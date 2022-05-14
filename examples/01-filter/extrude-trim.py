@@ -8,7 +8,6 @@ Extrude volume from one surface to palne and trim.
 """
 
 import pyvista as pv
-import vtk
 
 # Create surface and plane
 mesh = pv.ParametricRandomHills(randomseed=2)
