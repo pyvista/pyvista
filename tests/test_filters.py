@@ -2347,6 +2347,18 @@ def test_extrude_trim():
     poly = mesh.extrude_trim(surface, direction=direction, capping_strategy="average_distance")
 
 
+def test_trim_inplace():
+    direction = (0, 0, -1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    surface = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    mesh.extrude_trim(surface, direction=direction, inplace=True, progress_bar=True)
+    assert poly.volume == 1.0
+
+
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
     orig_n_faces = sphere.n_faces
