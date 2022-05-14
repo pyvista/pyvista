@@ -2766,7 +2766,7 @@ class PolyDataFilters(DataSetFilters):
         inplace=False,
         progress_bar=False,
     ):
-        """extrude polygonal data trimmed by a surface
+        """Extrude polygonal data trimmed by a surface.
 
         This generates polygonal data on output.
 
