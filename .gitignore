@@ -97,3 +97,4 @@ venv/
 
 # VSCode
 .vscode/
+*.code-workspace
