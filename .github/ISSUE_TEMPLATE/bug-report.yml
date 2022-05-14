@@ -22,4 +22,4 @@ body:
       label: Steps to reproduce the bug.
       description: Please include a code snippet to reproduce the big in the text box below.
       placeholder: Provide some code for us to reproduce the bug!
-      value: "```Insert code here```
+      value: "```Insert code here```"
