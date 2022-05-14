@@ -2,7 +2,7 @@ name: Feature Request
 description: Request that a feature be added to PyVista
 labels: ["feature-request"]
 body: 
- - type: markdown
+  - type: markdown
     attributes:
       value: |
           Thanks for taking the time to open this issue to help improve PyVista!
