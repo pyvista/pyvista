@@ -2840,7 +2840,7 @@ class PolyDataFilters(DataSetFilters):
             if capping not in cappings:
                 raise ValueError(f'Invalid strategy of capping "{capping}".')
             capping = cappings[capping]
-        elif isinstance(capping, int) and capping in range(3):
+        elif isinstance(capping, int) and capping not in range(4):
             raise ValueError(f'Invalid strategy of capping index "{capping}".')
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
