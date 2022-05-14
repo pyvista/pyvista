@@ -244,8 +244,8 @@ if VTK9:
         vtkOutlineFilter,
         vtkRibbonFilter,
         vtkRotationalExtrusionFilter,
-        vtkTrimmedExtrusionFilter,
         vtkSelectEnclosedPoints,
+        vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
