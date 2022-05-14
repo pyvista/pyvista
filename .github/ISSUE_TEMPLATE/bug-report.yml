@@ -29,7 +29,7 @@ body:
       Insert code here \n
       ```"
     validations:
-      required: false
+      required: true
   - type: textarea
     id: system-information
     attributes:
