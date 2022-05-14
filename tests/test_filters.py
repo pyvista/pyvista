@@ -2327,6 +2327,7 @@ def test_extrude_rotate_inplace():
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
 
+
 def test_extrude_trim():
     direction = (0, 0, 1)
     mesh = pyvista.Plane(
@@ -2340,7 +2341,9 @@ def test_extrude_trim():
 
 
 @pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
-@pytest.mark.parametrize('capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"])
+@pytest.mark.parametrize(
+    'capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"]
+)
 def test_extrude_trim_strategy(extrusion, capping):
     direction = (0, 0, 1)
     mesh = pyvista.Plane(

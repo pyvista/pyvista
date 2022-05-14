@@ -2755,7 +2755,6 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-
     def extrude_trim(
         self,
         direction,
@@ -2833,9 +2832,16 @@ class PolyDataFilters(DataSetFilters):
         elif isinstance(extrusion, int) and extrusion not in range(2):
             raise ValueError(f'Invalid strategy of extrusion index "{extrusion}".')
         elif not isinstance(extrusion, int):
-            raise ValueError(f'Invalid strategy of extrusion index type "{type(extrusion).__name__}".')
+            raise ValueError(
+                f'Invalid strategy of extrusion index type "{type(extrusion).__name__}".'
+            )
 
-        cappings = {"intersection": 0, "minimum_distance": 1, "maximum_distance": 2, "average_distance": 3}
+        cappings = {
+            "intersection": 0,
+            "minimum_distance": 1,
+            "maximum_distance": 2,
+            "average_distance": 3,
+        }
         if isinstance(capping, str):
             if capping not in cappings:
                 raise ValueError(f'Invalid strategy of capping "{capping}".')
@@ -2855,7 +2861,6 @@ class PolyDataFilters(DataSetFilters):
             self.overwrite(output)
             return self
         return output
-
 
     def strip(
         self,
