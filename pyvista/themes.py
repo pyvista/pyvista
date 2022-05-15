@@ -2095,7 +2095,7 @@ class DefaultTheme(_ThemeConfig):
             'Hidden Line Removal': 'hidden_line_removal',
             'Anti-Aliasing': '_antialiasing',
             'Split sharp edges': '_split_sharp_edges',
-            'Sharp edges feature angle': '_sharp_edges_feature_angle',
+            'Sharp edges feat. angle': '_sharp_edges_feature_angle',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)

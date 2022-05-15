@@ -382,6 +382,14 @@ def test_repr(default_theme):
     assert str(default_theme.colorbar_orientation) in rep
     assert default_theme._name.capitalize() in rep
 
+    # verify that the key for each line in the repr is less than the minimum
+    # key size. This makes sure that any new keys are either less than the size
+    # of the key in the repr or the key length is increased
+    for line in rep.splitlines():
+        if ':' in line:
+            colon_loc = line.find(':')
+            assert line[colon_loc - 1] == ' ', "Key str too long or need to raise key length"
+
 
 def test_theme_slots(default_theme):
     # verify we can't create an arbitrary attribute
