@@ -387,8 +387,8 @@ def test_repr(default_theme):
     # of the key in the repr or the key length is increased
     for line in rep.splitlines():
         if ':' in line:
-            colon_loc = line.find(':')
-            assert line[colon_loc - 1] == ' ', "Key str too long or need to raise key length"
+            pref, *rest = line.split(':', 1)
+            assert pref.endswith(' '), f"Key str too long or need to raise key length:\n{pref!r}"
 
 
 def test_theme_slots(default_theme):
