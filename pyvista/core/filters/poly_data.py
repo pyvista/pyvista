@@ -2779,7 +2779,7 @@ class PolyDataFilters(DataSetFilters):
         direction : numpy.ndarray or sequence
             Direction vector to extrude.
 
-        trim_surface: pyvista.PolyData
+        trim_surface : pyvista.PolyData
             Surface which trims the surface.
 
         extrusion : str or int, optional
