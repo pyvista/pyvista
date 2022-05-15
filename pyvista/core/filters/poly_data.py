@@ -2787,6 +2787,7 @@ class PolyDataFilters(DataSetFilters):
 
             * ``"boundary_edges"`` or ``0``
             * ``"all_edges"`` or ``1``
+
             The default is "boundary_edges".
 
         capping : str or int, optional
@@ -2796,6 +2797,7 @@ class PolyDataFilters(DataSetFilters):
             * ``"minimum_distance"`` or ``1``
             * ``"maximum_distance"`` or ``2``
             * ``"average_distance"`` or ``3``
+
             The default is "intersection".
 
         inplace : bool, optional
