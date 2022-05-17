@@ -2186,9 +2186,9 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
-            dataset.cell_data['C%d' % i] = np.random.randint(0, size=(dataset.n_cells, 3))
+            dataset.cell_data['C%d' % i] = np.random.randint(np.iinfo(int).max, size=(dataset.n_cells, 3))
         for i in range(num_point_data):
-            dataset.point_data['P%d' % i] = np.random.randint(0, size=(dataset.n_points, 3))
+            dataset.point_data['P%d' % i] = np.random.randint(np.iinfo(int).max, size=(dataset.n_points, 3))
         if not (num_cell_arrays == 0 and num_point_data == 0):
             with pytest.warns(UserWarning, match="Integer"):
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
