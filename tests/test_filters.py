@@ -2180,9 +2180,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
             )
 
 
-@pytest.mark.parametrize(
-    "num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2])
-)
+@pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
@@ -2197,9 +2195,7 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
             )
         if not (num_cell_arrays == 0 and num_point_data == 0):
             with pytest.warns(UserWarning, match="Integer"):
-                _ = dataset.transform(
-                    tf, transform_all_input_vectors=True, inplace=False
-                )
+                _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
 @pytest.mark.parametrize(
