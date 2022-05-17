@@ -2191,7 +2191,7 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
             dataset.point_data['P%d' % i] = np.random.randint(0, sys.maxsize, (dataset.n_points, 3))
         if not (num_cell_arrays == 0 and num_point_data == 0):
             with pytest.warns(UserWarning, match="Integer"):
-                transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+                _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
 @pytest.mark.parametrize(
