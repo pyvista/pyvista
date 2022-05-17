@@ -2180,6 +2180,20 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
             )
 
 
+@pytest.mark.parametrize('num_cell_arrays,num_point_data', itertools.product([0, 1, 2], [0, 1, 2]))
+def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+    for dataset in datasets:
+        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        dataset.clear_data()
+        for i in range(num_cell_arrays):
+            dataset.cell_data['C%d' % i] = np.random.randint(0, sys.maxsize, (dataset.n_cells, 3))
+        for i in range(num_point_data):
+            dataset.point_data['P%d' % i] = np.random.randint(0, sys.maxsize, (dataset.n_points, 3))
+        if not (num_cell_arrays == 0 and num_point_data == 0):
+            with pytest.warns(UserWarning, match="Integer"):
+                transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+
+
 @pytest.mark.parametrize(
     'dataset',
     [
