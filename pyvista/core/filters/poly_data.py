@@ -2809,6 +2809,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
+            Extruded mesh trimmed by a surface.
 
         Examples
         --------
