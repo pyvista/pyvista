@@ -360,10 +360,6 @@ def test_threshold(datasets):
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
-    with pytest.raises(ValueError):
-        datasets[0].threshold(
-            [10, 500], scalars='Spatial Point Data', all_scalars=True, progress_bar=True
-        )
 
 
 def test_threshold_all_scalars():
