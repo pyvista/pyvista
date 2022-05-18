@@ -2357,6 +2357,28 @@ def test_extrude_trim_strategy(extrusion, capping):
     assert poly.n_points
 
 
+def test_extrude_trim_invalid_strategy(extrusion, capping):
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane()
+    trim_surface = pyvista.Plane()
+    with pytest.raises(ValueError):
+        poly = mesh.extrude_trim(direction, trim_surface, extrusion="Invalid strategy")
+    with pytest.raises(ValueError):
+        poly = mesh.extrude_trim(
+            direction, trim_surface, extrusion=np.random.randint(2, np.iinfo(int).max)
+        )
+    with pytest.raises(ValueError):
+        poly = mesh.extrude_trim(direction, trim_surface, extrusion=np.random.random())
+    with pytest.raises(ValueError):
+        poly = mesh.extrude_trim(direction, trim_surface, capping="Invalid strategy")
+    with pytest.raises(ValueError):
+        poly = mesh.extrude_trim(
+            direction, trim_surface, capping=np.random.randint(4, np.iinfo(int).max)
+        )
+    with pytest.raises(ValueError):
+        poly = mesh.extrude_trim(direction, trim_surface, capping=np.random.random())
+
+
 def test_extrude_trim_inplace():
     direction = (0, 0, 1)
     mesh = pyvista.Plane(
