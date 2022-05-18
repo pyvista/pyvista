@@ -2357,7 +2357,7 @@ def test_extrude_trim_strategy(extrusion, capping):
     assert poly.n_points
 
 
-def test_extrude_trim_invalid_strategy(extrusion, capping):
+def test_extrude_trim_invalid_strategy():
     direction = (0, 0, 1)
     mesh = pyvista.Plane()
     trim_surface = pyvista.Plane()
