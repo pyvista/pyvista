@@ -884,6 +884,13 @@ class DataSetFilters:
         criterion.  If ``scalars`` is ``None``, the input's active
         scalars array is used.
 
+        .. warning::
+           Thresholding is inherently a cell operation, even though it can use
+           associated point data for determining whether to keep a cell. In
+           other words, whether or not a given point is included after
+           thresholding depends on whether that point is part of a cell that
+           is kept after thresholding.
+
         Parameters
         ----------
         value : float or sequence, optional
@@ -1069,6 +1076,13 @@ class DataSetFilters:
         progress_bar=False,
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
+
+        .. warning::
+           Thresholding is inherently a cell operation, even though it can use
+           associated point data for determining whether to keep a cell. In
+           other words, whether or not a given point is included after
+           thresholding depends on whether that point is part of a cell that
+           is kept after thresholding.
 
         Parameters
         ----------
