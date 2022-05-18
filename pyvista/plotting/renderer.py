@@ -205,6 +205,7 @@ class Renderer(_vtk.vtkRenderer):
         self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
+        self.axes_ranges = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
         self._labels = {}  # tracks labeled actors
@@ -1276,24 +1277,26 @@ class Renderer(_vtk.vtkRenderer):
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
 
-        # set axes ranges
+        # prepare the axes ranges
         if axes_ranges is None:
             axes_ranges = bounds
         elif isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
             axes_ranges = np.asanyarray(axes_ranges)
-            if not np.issubdtype(axes_ranges.dtype, np.number):
-                raise TypeError('Input axes_ranges must be a numeric sequence.')
-
-            if axes_ranges.shape == (6,):
-                cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
-                cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
-                cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
-            else:
-                raise ValueError(
-                    'axes_ranges must be passed as an [xmin, xmax, ymin, ymax, zmin, zmax] list or tuple'
-                )
         else:
             raise TypeError('Input axes_ranges must be a numeric sequence')
+
+        if not np.issubdtype(axes_ranges.dtype, np.number):
+            raise TypeError('all of the elements of axes_ranges must be numbers')
+
+        # set the axes ranges
+        if axes_ranges.shape == (6,):
+            cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
+            cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
+            cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
+        else:
+            raise ValueError(
+                'axes_ranges must be passed as an [xmin, xmax, ymin, ymax, zmin, zmax] sequence'
+            )
 
         self.axes_ranges = axes_ranges
 

@@ -1164,14 +1164,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.bounds
 
     @property
-    def axes_ranges(self):
-        """Return the axes ranges of the active renderer."""
-        if hasattr(self.renderer, 'cube_axes_actor'):
-            return self.renderer.axes_ranges
-        else:
-            return self.bounds
-
-    @property
     def length(self):
         """Return the length of the diagonal of the bounding box of the scene."""
         return self.renderer.length
