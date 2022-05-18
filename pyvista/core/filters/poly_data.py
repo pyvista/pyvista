@@ -2851,7 +2851,7 @@ class PolyDataFilters(DataSetFilters):
             capping = cappings[capping]
         elif isinstance(capping, int) and capping not in range(4):
             raise ValueError(f'Invalid strategy of capping index "{capping}".')
-        elif not isinstance(extrusion, int):
+        elif not isinstance(capping, int):
             raise ValueError(
                 f'Invalid strategy of extrusion index type "{type(capping).__name__}".'
             )
