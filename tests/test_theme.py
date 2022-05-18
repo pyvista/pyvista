@@ -348,6 +348,8 @@ def test_set_hidden_line_removal(default_theme):
         ('multi_rendering_splitting_position', 0.1),
         ('smooth_shading', True),
         ('name', 'test_theme'),
+        ('split_sharp_edges', True),
+        ('sharp_edges_feature_angle', 45.0),
     ],
 )
 def test_theme_parm(default_theme, parm):
@@ -379,6 +381,14 @@ def test_repr(default_theme):
     assert default_theme.cmap in rep
     assert str(default_theme.colorbar_orientation) in rep
     assert default_theme._name.capitalize() in rep
+
+    # verify that the key for each line in the repr is less than the minimum
+    # key size. This makes sure that any new keys are either less than the size
+    # of the key in the repr or the key length is increased
+    for line in rep.splitlines():
+        if ':' in line:
+            pref, *rest = line.split(':', 1)
+            assert pref.endswith(' '), f"Key str too long or need to raise key length:\n{pref!r}"
 
 
 def test_theme_slots(default_theme):
