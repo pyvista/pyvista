@@ -2851,6 +2851,10 @@ class PolyDataFilters(DataSetFilters):
             capping = cappings[capping]
         elif isinstance(capping, int) and capping not in range(4):
             raise ValueError(f'Invalid strategy of capping index "{capping}".')
+        elif not isinstance(extrusion, int):
+            raise ValueError(
+                f'Invalid strategy of extrusion index type "{type(capping).__name__}".'
+            )
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)
