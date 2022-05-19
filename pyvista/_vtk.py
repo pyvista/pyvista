@@ -502,6 +502,12 @@ if VTK9:
 
         return vtkCGNSReader()
 
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+
+        return vtkPOpenFOAMReader()
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
