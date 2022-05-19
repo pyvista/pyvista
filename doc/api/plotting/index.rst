@@ -41,6 +41,13 @@ of at least 9.0 and in a future release will require `vtk>=9.2`.
    charts/index
 
 
+Widget API
+----------
+The :class:`pyvista.Plotter` class inherits all of the widget methods described
+by the ``pyvista.WidgetHelper`` class. For additional details, see the
+:ref:`widgets` examples.
+
+
 Convenience Functions
 ~~~~~~~~~~~~~~~~~~~~~
 These functions provide a simplified interface to the various plotting
