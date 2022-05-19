@@ -1286,7 +1286,7 @@ class Renderer(_vtk.vtkRenderer):
             raise TypeError('Input axes_ranges must be a numeric sequence')
 
         if not np.issubdtype(axes_ranges.dtype, np.number):
-            raise TypeError('all of the elements of axes_ranges must be numbers')
+            raise TypeError('All of the elements of axes_ranges must be numbers')
 
         # set the axes ranges
         if axes_ranges.shape == (6,):
