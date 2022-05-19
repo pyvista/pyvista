@@ -988,6 +988,23 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return {name: self.patch_array_status(name) for name in self.patch_array_names}
 
 
+class POpenFOAMReader(OpenFOAMReader):
+    """POpenFOAM Reader for .foam files."""
+
+    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
+
+    @property
+    def case_type(self):
+        return self.reader.GetCaseType()
+
+    @case_type.setter
+    def case_type(self, value):
+        if value:
+            self.reader.SetCaseType(1)
+        else:
+            self.reader.SetCaseType(0)
+
+
 class PLYReader(BaseReader):
     """PLY Reader for reading .ply files.
 
