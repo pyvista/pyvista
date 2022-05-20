@@ -995,7 +995,7 @@ class POpenFOAMReader(OpenFOAMReader):
 
     @property
     def case_type(self):
-        """The property indicates whether decomposed mesh or reconstructed mesh should be read.
+        """Indicate whether decomposed mesh or reconstructed mesh should be read.
 
         Returns
         -------
@@ -1007,7 +1007,7 @@ class POpenFOAMReader(OpenFOAMReader):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
-        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader = pyvista.POpenFOAMReader(filename)
         >>> reader.case_type = 1
         >>> reader.case_type
         1
@@ -1941,7 +1941,7 @@ CLASS_READERS = {
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,
-    '.foam': OpenFOAMReader,
+    '.foam': (OpenFOAMReader, POpenFOAMReader),
     '.g': BYUReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,

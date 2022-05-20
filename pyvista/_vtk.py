@@ -505,8 +505,12 @@ if VTK9:
     def lazy_vtkPOpenFOAMReader():
         """Lazy import of the vtkPOpenFOAMReader."""
         from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+        from vtkmodules.vtkParallelCore import vtkDummyController
 
-        return vtkPOpenFOAMReader()
+        # Workaround waiting for the fix to be uptream (MR 9195 gitlab.kitware.com/vtk/vtk)
+        reader = vtkPOpenFOAMReader()
+        reader.SetController(vtkDummyController())
+        return reader
 
 else:  # pragma: no cover
 
