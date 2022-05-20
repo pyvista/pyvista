@@ -184,7 +184,6 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         if attrs is not None:
             _apply_attrs_to_reader(reader, attrs)
         if progress_bar:
-            print(reader)
             reader.show_progress()
         mesh = reader.read()
         if observer.has_event_occurred():
