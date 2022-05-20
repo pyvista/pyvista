@@ -507,7 +507,7 @@ if VTK9:
         from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
         from vtkmodules.vtkParallelCore import vtkDummyController
 
-        # Workaround waiting for the fix to be uptream (MR 9195 gitlab.kitware.com/vtk/vtk)
+        # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
         reader = vtkPOpenFOAMReader()
         reader.SetController(vtkDummyController())
         return reader

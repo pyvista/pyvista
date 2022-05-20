@@ -1941,7 +1941,7 @@ CLASS_READERS = {
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,
-    '.foam': (OpenFOAMReader, POpenFOAMReader),
+    '.foam': OpenFOAMReader,
     '.g': BYUReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
