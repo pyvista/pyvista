@@ -994,8 +994,13 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         Returns
         -------
         int
-            If ``"reconstructed"``, reconstructed mesh should be read.
-            If ``"decomposed"``, decomposed mesh should be read.
+            If ``'reconstructed'``, reconstructed mesh should be read.
+            If ``'decomposed'``, decomposed mesh should be read.
+
+        Raises
+        ------
+        ValueError
+            If the value is not in ['reconstructed', 'decomposed']
 
         Examples
         --------
@@ -1003,17 +1008,17 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
         >>> reader = pyvista.OpenFOAMReader(filename)
-        >>> reader.case_type = "reconstructed"
+        >>> reader.case_type = 'reconstructed'
         >>> reader.case_type
-        "reconstructed"
+        'reconstructed'
         """
-        return "reconstructed" if self.reader.GetCaseType() else "decomposed"
+        return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
 
     @case_type.setter
     def case_type(self, value):
-        if value == "reconstructed":
+        if value == 'reconstructed':
             self.reader.SetCaseType(1)
-        elif value == "decomposed":
+        elif value == 'decomposed':
             self.reader.SetCaseType(0)
         else:
             raise ValueError("Unknown case type '" + str(value) + "'.")
