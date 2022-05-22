@@ -724,7 +724,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     """OpenFOAM Reader for .foam files."""
 
-    _class_reader = _vtk.vtkOpenFOAMReader
+    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
 
     def __init__(self, path):
         """Initialize OpenFOAMReader.
@@ -987,12 +987,6 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         return {name: self.patch_array_status(name) for name in self.patch_array_names}
 
-
-class POpenFOAMReader(OpenFOAMReader):
-    """POpenFOAM Reader for .foam files."""
-
-    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
-
     @property
     def case_type(self):
         """Indicate whether decomposed mesh or reconstructed mesh should be read.
@@ -1000,26 +994,31 @@ class POpenFOAMReader(OpenFOAMReader):
         Returns
         -------
         int
-            If ``1``, reconstructed mesh should be read. If ``0``, decomposed mesh should be read.
+            If ``"reconstructed"``, reconstructed mesh should be read.
+            If ``"decomposed"``, decomposed mesh should be read.
 
         Examples
         --------
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
-        >>> reader = pyvista.POpenFOAMReader(filename)
-        >>> reader.case_type = 1
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.case_type = "reconstructed"
         >>> reader.case_type
-        1
+        "reconstructed"
         """
-        return self.reader.GetCaseType()
+        return "reconstructed" if self.reader.GetCaseType() else "decomposed"
 
     @case_type.setter
     def case_type(self, value):
-        if value:
+        if value == "reconstructed":
             self.reader.SetCaseType(1)
-        else:
+        elif value == "decomposed":
             self.reader.SetCaseType(0)
+        else:
+            raise ValueError("Unknown case type '" + str(value) + "'.")
+
+        self._update_information()
 
 
 class PLYReader(BaseReader):
