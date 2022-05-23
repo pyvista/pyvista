@@ -360,10 +360,40 @@ def test_threshold(datasets):
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
-    with pytest.raises(ValueError):
-        datasets[0].threshold(
-            [10, 500], scalars='Spatial Point Data', all_scalars=True, progress_bar=True
-        )
+
+
+def test_threshold_all_scalars():
+    mesh = pyvista.Sphere()
+    mesh.clear_data()
+
+    mesh["scalar0"] = np.zeros(mesh.n_points)
+    mesh["scalar1"] = np.ones(mesh.n_points)
+    mesh.set_active_scalars("scalar1")
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)  # only uses scalar1
+    assert thresh_all.n_points == mesh.n_points
+    assert thresh_all.n_cells == mesh.n_cells
+
+    mesh["scalar1"][0 : int(mesh.n_points / 2)] = 0.0
+    thresh = mesh.threshold(value=0.5, all_scalars=False)
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)
+    assert thresh_all.n_points < mesh.n_points
+    # removes additional cells/points due to all_scalars
+    assert thresh_all.n_points < thresh.n_points
+    assert thresh_all.n_cells < mesh.n_cells
+    assert thresh_all.n_cells < thresh.n_cells
+
+    mesh.clear_data()
+    mesh["scalar0"] = np.zeros(mesh.n_cells)
+    mesh["scalar1"] = np.ones(mesh.n_cells)
+    mesh["scalar1"][0 : int(mesh.n_cells / 2)] = 0.0
+    mesh.set_active_scalars("scalar1")
+    thresh = mesh.threshold(value=0.5, all_scalars=False)
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)
+    # when thresholding by cell data, all_scalars has no effect since it has 1 value per cell
+    assert thresh_all.n_points < mesh.n_points
+    assert thresh_all.n_points == thresh.n_points
+    assert thresh_all.n_cells < mesh.n_cells
+    assert thresh_all.n_cells == thresh.n_cells
 
 
 def test_threshold_multicomponent():
