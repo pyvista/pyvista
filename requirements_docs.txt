@@ -17,7 +17,7 @@ osmnx==1.1.2
 panel==0.13.0
 param==1.12.1  # due to panel bug
 pydata-sphinx-theme==0.8.1
-pypandoc==1.8
+pypandoc==1.8.1
 pytest-sphinx==0.4.0
 pythreejs==2.3.0
 scipy==1.8.1
