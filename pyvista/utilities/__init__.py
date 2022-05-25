@@ -40,6 +40,7 @@ from .reader import (
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
+    POpenFOAMReader,
     Plot3DMetaReader,
     PLYReader,
     PNGReader,

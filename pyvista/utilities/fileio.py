@@ -57,7 +57,7 @@ READERS = {
     # '.dat': _vtk.vtkFLUENTReader, # TODO: not working
     # '.cube': _vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
     '.res': _vtk.vtkMFIXReader,  # TODO: not tested
-    '.foam': _vtk.lazy_vtkPOpenFOAMReader,
+    '.foam': _vtk.vtkOpenFOAMReader,
     # '.pdb': _vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
     '.p3d': _vtk.lazy_vtkPlot3DMetaReader,
     '.pts': _vtk.vtkPTSReader,

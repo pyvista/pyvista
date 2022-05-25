@@ -32,7 +32,7 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
-    | ``.foam``      | :class:`pyvista.OpenFOAMReader`             |
+    | ``.foam``      | :class:`pyvista.POpenFOAMReader`            |
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
@@ -986,6 +986,15 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
         """
         return {name: self.patch_array_status(name) for name in self.patch_array_names}
+
+
+class POpenFOAMReader(OpenFOAMReader):
+    """Parallel OpenFOAM Reader for .foam files.
+
+    Can read parallel-decomposed mesh information and time dependent data.
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
 
     @property
     def case_type(self):
@@ -1945,7 +1954,7 @@ CLASS_READERS = {
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,
-    '.foam': OpenFOAMReader,
+    '.foam': POpenFOAMReader,
     '.g': BYUReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,

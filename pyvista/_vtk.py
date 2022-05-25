@@ -290,6 +290,7 @@ if VTK9:
         vtkMCubesReader,
         vtkMFIXReader,
         vtkOBJReader,
+        vtkOpenFOAMReader,
         vtkPTSReader,
         vtkSTLReader,
         vtkSTLWriter,
