@@ -571,6 +571,16 @@ def test_openfoam_patch_arrays():
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
 
 
+def test_openfoam_case_type():
+    reader = get_cavity_reader()
+    reader.case_type = 'decomposed'
+    assert reader.case_type == 'decomposed'
+    reader.case_type = 'reconstructed'
+    assert reader.case_type == 'reconstructed'
+    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+        reader.case_type = 'wrong_value'
+
+
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_read_hdf():
     can = examples.download_can(partial=True)
