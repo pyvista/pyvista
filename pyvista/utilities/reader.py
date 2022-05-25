@@ -724,7 +724,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     """OpenFOAM Reader for .foam files."""
 
-    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
+    _class_reader = _vtk.vtkOpenFOAMReader
 
     def __init__(self, path):
         """Initialize OpenFOAMReader.
@@ -1002,7 +1002,7 @@ class POpenFOAMReader(OpenFOAMReader):
 
         Returns
         -------
-        int
+        str
             If ``'reconstructed'``, reconstructed mesh should be read.
             If ``'decomposed'``, decomposed mesh should be read.
 
@@ -1030,7 +1030,7 @@ class POpenFOAMReader(OpenFOAMReader):
         elif value == 'decomposed':
             self.reader.SetCaseType(0)
         else:
-            raise ValueError("Unknown case type '" + str(value) + "'.")
+            raise ValueError(f"Unknown case type '{value}'.")
 
         self._update_information()
 
