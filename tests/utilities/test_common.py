@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 
+import pyvista
 from pyvista.utilities.common import _coerce_pointslike_arg
 
 
@@ -83,3 +84,13 @@ def test_coerce_point_like_arg_errors():
     # wrong ndim ndarray
     with pytest.raises(ValueError):
         _coerce_pointslike_arg(np.empty([1, 3, 3]))
+
+
+def test_coerce_points_like_args_does_not_copy():
+    source = np.random.rand(100, 3)
+    grid = pyvista.PolyData()
+    grid.points = source
+    pts = grid.points
+    pts /= 2
+    assert np.allclose(grid.points, pts)
+    assert np.allclose(grid.points, source)

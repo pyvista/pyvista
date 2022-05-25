@@ -8,7 +8,7 @@ from pyvista._typing import NumericArray, VectorArray
 
 
 def _coerce_pointslike_arg(
-    points: Union[NumericArray, VectorArray], copy: bool = True
+    points: Union[NumericArray, VectorArray], copy: bool = False
 ) -> np.ndarray:
     """Check and coerce arg to (n, 3) np.ndarray.
 
