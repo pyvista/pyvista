@@ -30,7 +30,7 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning
+from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
 from .colors import Color, get_cmap_safe
@@ -108,8 +108,7 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # Check if VTK has EGL support
-        ren_win_str = str(type(_vtk.vtkRenderWindow()))
-        if 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str:
+        if uses_egl():
             return
 
         warnings.warn(
