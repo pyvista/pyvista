@@ -2189,6 +2189,17 @@ def test_splitting():
     )
 
 
+def test_splitting_active_cells(cube):
+    cube.cell_data['cell_id'] = range(cube.n_cells)
+    cube = cube.triangulate().subdivide(1)
+    cube.plot(
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
+
+
 def test_add_cursor():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter()

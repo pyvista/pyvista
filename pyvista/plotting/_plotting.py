@@ -78,14 +78,13 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
 
     if split_sharp_edges:
         if is_polydata:
-            if has_scalars:
-                # we must track the original IDs with our own array
+            if has_scalars and use_points:
+                # we must track the original IDs with our own array since point
+                # indices may have changed
                 indices_array = '__orig_ids__'
-                if use_points:
-                    arr_sz = mesh.n_points
-                else:
-                    arr_sz = mesh.n_cells
+                arr_sz = mesh.n_points
                 mesh.point_data[indices_array] = np.arange(arr_sz, dtype=np.int32)
+
         mesh = mesh.compute_normals(
             cell_normals=False,
             split_vertices=True,
@@ -100,7 +99,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
 
-    # remove temporary indices array
+    # remove temporary indices array if applicable
     if indices_array == '__orig_ids__':
         del mesh.point_data['__orig_ids__']
 
