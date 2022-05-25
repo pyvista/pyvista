@@ -2180,12 +2180,15 @@ def test_plot_zoom(sphere):
 
 def test_splitting():
     nut = examples.load_nut()
+    nut['sample_data'] = nut.points[:, 2]
+
     # feature angle of 50 will smooth the outer edges of the nut but not the inner.
     nut.plot(
         smooth_shading=True,
         split_sharp_edges=True,
         feature_angle=50,
         before_close_callback=verify_cache_image,
+        show_scalar_bar=False,
     )
 
 
