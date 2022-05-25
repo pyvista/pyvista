@@ -460,7 +460,6 @@ class Renderer(_vtk.vtkRenderer):
         if uses_egl():
             warnings.warn(
                 "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
-                "\n\nSee https://github.com/pyvista/pyvista/issues/2686"
             )
             return
         self.SetUseFXAA(True)

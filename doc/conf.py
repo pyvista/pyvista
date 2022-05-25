@@ -50,6 +50,13 @@ warnings.filterwarnings(
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
 
+# ignore our anti-aliasing warning
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message="VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled.",
+)
+
 # -- General configuration ------------------------------------------------
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
