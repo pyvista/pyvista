@@ -3,8 +3,8 @@ Sphere Widget
 ~~~~~~~~~~~~~
 
 The sphere widget can be enabled and disabled by the
-:func:`pyvista.WidgetHelper.add_sphere_widget` and
-:func:`pyvista.WidgetHelper.clear_sphere_widgets` methods respectively.
+:func:`pyvista.Plotter.add_sphere_widget` and
+:func:`pyvista.Plotter.clear_sphere_widgets` methods respectively.
 This is a very versatile widget as it can control vertex location that can
 be used to control or update the location of just about anything.
 
