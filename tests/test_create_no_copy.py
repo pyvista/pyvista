@@ -3,6 +3,10 @@ import pytest
 
 import pyvista
 
+pointsetmark = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
+
 
 @pytest.fixture
 def structured_points():
@@ -56,6 +60,7 @@ def test_no_copy_structured_mesh_points_setter(structured_points):
     assert np.allclose(mesh.points, source)
 
 
+@pointsetmark
 def test_no_copy_pointset_init():
     source = np.random.rand(100, 3)
     mesh = pyvista.PointSet(source)
@@ -65,6 +70,7 @@ def test_no_copy_pointset_init():
     assert np.allclose(mesh.points, source)
 
 
+@pointsetmark
 def test_no_copy_pointset_points_setter():
     source = np.random.rand(100, 3)
     mesh = pyvista.PointSet()
