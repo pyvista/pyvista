@@ -11,6 +11,7 @@ from pyvista import _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class
+import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 log = logging.getLogger(__name__)
@@ -163,14 +164,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         """
         # Set the coordinates along each axial direction
         # Must at least be an x array
-        x = np.unique(x.ravel())
-        self.SetXCoordinates(_vtk.numpy_to_vtk(x))
+        self.SetXCoordinates(helpers.convert_array(x.ravel()))
         if y is not None:
-            y = np.unique(y.ravel())
-            self.SetYCoordinates(_vtk.numpy_to_vtk(y))
+            self.SetYCoordinates(helpers.convert_array(y.ravel()))
         if z is not None:
-            z = np.unique(z.ravel())
-            self.SetZCoordinates(_vtk.numpy_to_vtk(z))
+            self.SetZCoordinates(helpers.convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
 
@@ -259,7 +257,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     @x.setter
     def x(self, coords: Sequence):
         """Set the coordinates along the X-direction."""
-        self.SetXCoordinates(_vtk.numpy_to_vtk(coords))
+        self.SetXCoordinates(helpers.convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -292,7 +290,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     @y.setter
     def y(self, coords: Sequence):
         """Set the coordinates along the Y-direction."""
-        self.SetYCoordinates(_vtk.numpy_to_vtk(coords))
+        self.SetYCoordinates(helpers.convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -325,7 +323,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     @z.setter
     def z(self, coords: Sequence):
         """Set the coordinates along the Z-direction."""
-        self.SetZCoordinates(_vtk.numpy_to_vtk(coords))
+        self.SetZCoordinates(helpers.convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
