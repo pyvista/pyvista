@@ -252,7 +252,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         array([-10.,   0.,  10.])
 
         """
-        return _vtk.vtk_to_numpy(self.GetXCoordinates())
+        return helpers.convert_array(self.GetXCoordinates())
 
     @x.setter
     def x(self, coords: Sequence):
@@ -285,7 +285,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         array([-10.,   0.,  10.])
 
         """
-        return _vtk.vtk_to_numpy(self.GetYCoordinates())
+        return helpers.convert_array(self.GetYCoordinates())
 
     @y.setter
     def y(self, coords: Sequence):
@@ -318,7 +318,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         array([-10.,   0.,  10.])
 
         """
-        return _vtk.vtk_to_numpy(self.GetZCoordinates())
+        return helpers.convert_array(self.GetZCoordinates())
 
     @z.setter
     def z(self, coords: Sequence):
