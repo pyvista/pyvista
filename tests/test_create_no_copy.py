@@ -37,14 +37,13 @@ def test_no_copy_polydata_points_setter():
     assert np.allclose(mesh.points, source)
 
 
-# TODO
-# def test_no_copy_structured_mesh_init(structured_points):
-#     source = structured_points
-#     mesh = pyvista.StructuredGrid(source)
-#     pts = mesh.points
-#     pts /= 2
-#     assert np.allclose(mesh.points, pts)
-#     assert np.allclose(mesh.points, source)
+def test_no_copy_structured_mesh_init(structured_points):
+    source = structured_points
+    mesh = pyvista.StructuredGrid(source)
+    pts = mesh.points
+    pts /= 2
+    assert np.allclose(mesh.points, pts)
+    assert np.allclose(mesh.points, source)
 
 
 def test_no_copy_structured_mesh_points_setter(structured_points):
