@@ -3,7 +3,6 @@
 import numpy as np
 import pytest
 
-import pyvista
 from pyvista.utilities.common import _coerce_pointslike_arg
 
 
@@ -88,9 +87,6 @@ def test_coerce_point_like_arg_errors():
 
 def test_coerce_points_like_args_does_not_copy():
     source = np.random.rand(100, 3)
-    grid = pyvista.PolyData()
-    grid.points = source
-    pts = grid.points
-    pts /= 2
-    assert np.allclose(grid.points, pts)
-    assert np.allclose(grid.points, source)
+    output = _coerce_pointslike_arg(source)  # test that copy=False is default
+    output /= 2
+    assert np.allclose(output, source)
