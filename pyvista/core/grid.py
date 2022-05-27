@@ -69,12 +69,27 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     Can be initialized in several ways:
 
-    - Create empty grid
-    - Initialize from a vtk.vtkRectilinearGrid object
-    - Initialize directly from the point arrays
+    * Create empty grid
+    * Initialize from a ``vtk.vtkRectilinearGrid`` object
+    * Initialize directly from the point arrays
 
-    See _from_arrays in the documentation for more details on initializing
-    from point arrays
+    Parameters
+    ----------
+    uinput : str, pathlib.Path, vtk.vtkRectilinearGrid, numpy.ndarray, optional
+        Filename, dataset, or array to initialize the uniform grid from. If a
+        filename is passed, pyvista will attempt to load it as a
+        :class:`RectilinearGrid`. If passed a ``vtk.vtkRectilinearGrid``, it
+        will be wrapped. If a :class:`numpy.ndarray` is passed, this will be
+        loaded as the x range.
+    y : numpy.ndarray, optional
+        Coordinates of the points in y direction. If this is passed, ``uinput``
+        must be a :class:`numpy.ndarray`.
+    z : np.ndarray, optional
+        Coordinates of the points in z direction. If this is passed, ``uinput`` and ``y``
+        must be a :class:`numpy.ndarray`.
+    check_duplicates : bool, optional
+        Check for duplications in any arrays that are passed. Defaults to
+        ``False``.
 
     Examples
     --------
@@ -102,7 +117,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, check_duplicates=False, **kwargs):
         """Initialize the rectilinear grid."""
         super().__init__()
 
@@ -112,7 +127,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0])
             elif isinstance(args[0], np.ndarray):
-                self._from_arrays(args[0], None, None)
+                self._from_arrays(args[0], None, None, check_duplicates)
             else:
                 raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
@@ -125,9 +140,9 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
                 arg2_is_arr = False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2])
+                self._from_arrays(args[0], args[1], args[2], check_duplicates)
             elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(args[0], args[1], None)
+                self._from_arrays(args[0], args[1], None, check_duplicates)
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
@@ -143,7 +158,9 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         """Update the dimensions if coordinates have changed."""
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
-    def _from_arrays(self, x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def _from_arrays(
+        self, x: np.ndarray, y: np.ndarray, z: np.ndarray, check_duplicates: bool = False
+    ):
         """Create VTK rectilinear grid directly from numpy arrays.
 
         Each array gives the uniques coordinates of the mesh along each axial
@@ -152,25 +169,28 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
         Parameters
         ----------
-        x : np.ndarray
+        x : numpy.ndarray
             Coordinates of the points in x direction.
-
-        y : np.ndarray
+        y : numpy.ndarray
             Coordinates of the points in y direction.
-
-        z : np.ndarray
+        z : numpy.ndarray
             Coordinates of the points in z direction.
+        check_duplicates
+            Check for duplications in any arrays that are passed.
 
         """
         # Set the coordinates along each axial direction
         # Must at least be an x array
-        raise_has_duplicates(x)
+        if check_duplicates:
+            raise_has_duplicates(x)
         self.SetXCoordinates(helpers.convert_array(x.ravel()))
         if y is not None:
-            raise_has_duplicates(y)
+            if check_duplicates:
+                raise_has_duplicates(y)
             self.SetYCoordinates(helpers.convert_array(y.ravel()))
         if z is not None:
-            raise_has_duplicates(z)
+            if check_duplicates:
+                raise_has_duplicates(z)
             self.SetZCoordinates(helpers.convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
