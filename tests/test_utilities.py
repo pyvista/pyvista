@@ -448,9 +448,9 @@ def test_cells_dict_utils():
     cells_arr = np.array([3, 0, 1, 2, 3, 3, 4, 5])
     cells_types = np.array([vtk.VTK_TRIANGLE] * 2)
 
-    assert np.all(
-        cells.generate_cell_offsets(cells_arr, cells_types)
-        == cells.generate_cell_offsets(cells_arr, cells_types)
+    assert np.array_equal(
+        cells.generate_cell_offsets(cells_arr, cells_types),
+        cells.generate_cell_offsets_loop(cells_arr, cells_types),
     )
 
     # Non-integer type
