@@ -23,7 +23,7 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
-from pyvista.utilities.misc import get_duplicates
+from pyvista.utilities.misc import has_duplicates, raise_has_duplicates
 
 
 def test_version():
@@ -771,7 +771,10 @@ def test_convert_array():
     assert arr4.GetNumberOfValues() == len(my_list)
 
 
-def test_get_duplicates():
-    assert get_duplicates(np.arange(100)).size == 0
-    assert np.allclose(get_duplicates(np.array([0, 1, 2, 2])), np.array([2]))
-    assert np.allclose(get_duplicates(np.array([[0, 1, 2], [0, 1, 2]])), np.array([0, 1, 2]))
+def test_has_duplicates():
+    assert not has_duplicates(np.arange(100))
+    assert has_duplicates(np.array([0, 1, 2, 2]))
+    assert has_duplicates(np.array([[0, 1, 2], [0, 1, 2]]))
+
+    with pytest.raises(ValueError):
+        raise_has_duplicates(np.array([0, 1, 2, 2]))
