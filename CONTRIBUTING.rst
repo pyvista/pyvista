@@ -286,8 +286,8 @@ To ensure your code meets minimum code styling standards, run::
   pip install pre-commit
   pre-commit run --all-files
 
-If you have issues related to `setuptools` when installing `pre-commit`, see 
-[pre-commit Issue #2178 comment](https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763)
+If you have issues related to ``setuptools`` when installing ``pre-commit``, see 
+`pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
 for a potential resolution.
 
 You can also install this as a pre-commit hook by running::
