@@ -112,3 +112,9 @@ def test_no_copy_rectilinear_grid():
     z /= 2
     assert np.allclose(mesh.z, z)
     assert np.allclose(mesh.z, zrng)
+
+
+def test_raise_rectilinear_grid_non_unique():
+    rng = np.array([0, 1, 2, 2], dtype=float)
+    with pytest.raises(ValueError, match="has duplicates"):
+        pyvista.RectilinearGrid(rng)

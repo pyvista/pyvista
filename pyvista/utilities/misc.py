@@ -7,6 +7,12 @@ import numpy as np
 from pyvista import _vtk
 
 
+def get_duplicates(arr):
+    """Return any duplicates of an array."""
+    s = np.sort(arr, axis=None)
+    return s[:-1][s[1:] == s[:-1]]
+
+
 def _get_vtk_id_type():
     """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()

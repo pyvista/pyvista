@@ -12,7 +12,7 @@ from pyvista.core.dataset import DataSet
 from pyvista.core.filters import UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyvistaDeprecationWarning, get_duplicates
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -162,12 +162,22 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
             Coordinates of the points in z direction.
 
         """
+
+        def raise_not_unique(arr, name):
+            """Raise a ValueError if an array is not unique."""
+            dup = get_duplicates(arr)
+            if dup.size != 0:
+                raise ValueError(f"`{name}` has duplicates of values {dup}. It must be unique.")
+
         # Set the coordinates along each axial direction
         # Must at least be an x array
+        raise_not_unique(x, "x")
         self.SetXCoordinates(helpers.convert_array(x.ravel()))
         if y is not None:
+            raise_not_unique(y, "y")
             self.SetYCoordinates(helpers.convert_array(y.ravel()))
         if z is not None:
+            raise_not_unique(z, "z")
             self.SetZCoordinates(helpers.convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
