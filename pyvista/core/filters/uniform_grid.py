@@ -64,6 +64,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
@@ -150,6 +151,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
@@ -290,6 +292,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
@@ -379,6 +382,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)

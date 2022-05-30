@@ -205,7 +205,6 @@ a look at `this repository`_ that is currently using PyVista on MyBinder.
 
 .. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
 
-
 Running on Remote Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Using PyVista on remote servers requires similar setup steps as in the above
@@ -220,7 +219,7 @@ After logging into the remote server, install Miniconda and related packages:
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p miniconda
     echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
-    conda create --name vtk_env python=3.7
+    conda create --name vtk_env python=3.9
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
     pip install jupyter pyvista ipyvtklink
@@ -247,10 +246,101 @@ Reconnect to the server with port-forwarding, and start Jupyter:
 
     ssh -i "your-ssh-key" your-user-name@your-server-ip -L 8888:localhost:8888
     conda activate vtk_env
-    jupyter notebook --NotebookApp.token='' --no-browser --port=8888
+    jupyter lab --NotebookApp.token='' --no-browser --port=8888
 
 Visit ``localhost:8888`` in the web browser.
 
+Running on WSL
+~~~~~~~~~~~~~~
+Similar to the example of the remote server above, the windows subsystem for Linux does
+not provide an x-server for visualization. Instead, the fastest way to get up and
+running on WSL is through `JupyterLab <https://jupyter.org/>`_.
+
+First, make sure you have installed the correct environment through Miniconda and
+related packages:
+
+.. code-block:: bash
+
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    bash miniconda.sh -b -p miniconda
+    echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
+    conda create --name vtk_env python=3.9
+    conda activate vtk_env
+    conda install nodejs  # required when importing pyvista in Jupyter
+    pip install jupyter pyvista ipyvtklink
+
+    # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
+    # https://stackoverflow.com/q/32389599
+    # https://askubuntu.com/q/629692
+    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
+
+VTK Link to Jupyter
+^^^^^^^^^^^^^^^^^^^
+There are two ways to get vtk rendering 3D objects in JupyterLab. First you
+can follow the example above for remote servers, skipping over the ``ssh``
+instructions.
+
+Configure the headless display:
+
+.. code-block:: bash
+
+    sudo apt-get install xvfb
+    export DISPLAY=:99.0
+    export PYVISTA_OFF_SCREEN=true
+    export PYVISTA_USE_IPYVTK=true
+    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    sleep 3
+
+Start Jupyter:
+
+.. code-block:: bash
+
+    jupyter lab --NotebookApp.token='' --no-browser --port=8888
+
+Visit ``localhost:8888`` in the web browser.
+
+Finally add this example code and your interactive visualizations
+should be displayed in JupyterLab.
+
+.. code-block:: python
+
+    import pyvista
+    pl = pyvista.Plotter(shape=(1, 2))
+    actor = pl.add_mesh(pyvista.Cube())
+    pl.subplot(0, 1)
+    actor = pl.add_mesh(pyvista.Sphere())
+    pl.set_background('orange', all_renderers=False)
+    pl.show()
+
+Your visualizations should now be showing directly in the Jupyter frontend.
+
+PyThreeJS Rendering in Jupyter
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The second option is to change the ``PyVista`` backend to use
+``pythreejs``.
+
+To do this, first launch the Jupyter server:
+
+.. code-block:: bash
+
+    jupyter lab --NotebookApp.token='' --no-browser --port=8888
+
+Visit ``localhost:8888`` in the web browser.
+
+Finally change the PyVista backend to a web visualization library: ``pythreejs``.
+
+.. code-block:: python
+
+    import pyvista
+    pyvista.global_theme.jupyter_backend='pythreejs'
+    pl = pyvista.Plotter(shape=(1, 2))
+    actor = pl.add_mesh(pyvista.Cube())
+    pl.subplot(0, 1)
+    actor = pl.add_mesh(pyvista.Sphere())
+    pl.set_background('orange', all_renderers=False)
+    pl.show()
+
+Your visualizations should now be showing directly in the Jupyter frontend.
 
 Running with Sphinx-Gallery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

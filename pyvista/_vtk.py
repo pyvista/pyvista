@@ -24,6 +24,19 @@ except ImportError:  # pragma: no cover
 _has_vtkRenderingContextOpenGL2 = False
 
 if VTK9:
+    # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
+    # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
+    try:
+        from vtkmodules.vtkFiltersCore import vtkExtractEdges
+    except ImportError:
+        from vtkmodules.vtkFiltersExtraction import vtkExtractEdges
+
+    # vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
+    # VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
+    try:
+        from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
+    except ImportError:
+        from vtkmodules.vtkFiltersGeneral import vtkCellTreeLocator
 
     from vtkmodules.numpy_interface.dataset_adapter import (
         VTKArray,
@@ -198,7 +211,6 @@ if VTK9:
         vtkUnstructuredGridToExplicitStructuredGrid,
     )
     from vtkmodules.vtkFiltersExtraction import (
-        vtkExtractEdges,
         vtkExtractGeometry,
         vtkExtractGrid,
         vtkExtractSelection,
@@ -208,7 +220,6 @@ if VTK9:
         vtkAxes,
         vtkBooleanOperationPolyDataFilter,
         vtkBoxClipDataSet,
-        vtkCellTreeLocator,
         vtkClipClosedSurface,
         vtkCursor3D,
         vtkCurvatures,
@@ -307,6 +318,7 @@ if VTK9:
         vtkPolyDataWriter,
         vtkRectilinearGridReader,
         vtkRectilinearGridWriter,
+        vtkSimplePointsWriter,
         vtkStructuredGridReader,
         vtkStructuredGridWriter,
         vtkUnstructuredGridReader,
@@ -361,6 +373,7 @@ if VTK9:
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
+        vtkAxisActor2D,
         vtkCornerAnnotation,
         vtkCubeAxesActor,
         vtkLegendBoxActor,
@@ -534,6 +547,14 @@ else:  # pragma: no cover
     def lazy_vtkCGNSReader():
         """Lazy import of the vtkCGNSReader."""
         raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
+
+    def lazy_vtkHDFReader():
+        """Lazy import of the vtkHDFReader."""
+        raise VTKVersionError('vtk.HDFReader requires VTK v9.1.0 or newer')
+
+    def lazy_vtkSegYReader():
+        """Lazy import of the vtkSegYReader."""
+        return vtk.vtkSegYReader()
 
     class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""

@@ -2,15 +2,18 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import os
+import pathlib
 from typing import Any, List
 from xml.etree import ElementTree
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import abstract_class, get_ext, wrap
+from pyvista.utilities import abstract_class, wrap
+
+from .fileio import _get_ext_force, _process_filename
 
 
-def get_reader(filename):
+def get_reader(filename, force_ext=None):
     """Get a reader for fine-grained control of reading data files.
 
     Supported file types and Readers:
@@ -18,11 +21,17 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | File Extension | Class                                       |
     +================+=============================================+
+    | ``.bmp``       | :class:`pyvista.BMPReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.cas``       | :class:`pyvista.FluentReader`               |
+    +----------------+---------------------------------------------+
     | ``.case``      | :class:`pyvista.EnSightReader`              |
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
+    +----------------+---------------------------------------------+
+    | ``.dem``       | :class:`pyvista.DEMReader`                  |
     +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
@@ -30,11 +39,41 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
+    | ``.glb``       | :class:`pyvista.GLTFReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.gltf``      | :class:`pyvista.GLTFReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.hdf``       | :class:`pyvista.HDFReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.img``       | :class:`pyvista.DICOMReader`                |
+    +----------------+---------------------------------------------+
+    | ``.inp``       | :class:`pyvista.AVSucdReader`               |
+    +----------------+---------------------------------------------+
+    | ``.jpg``       | :class:`pyvista.JPEGReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.jpeg``      | :class:`pyvista.JPEGReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.hdr``       | :class:`pyvista.HDRReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.mha``       | :class:`pyvista.MetaImageReader`            |
+    +----------------+---------------------------------------------+
+    | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
+    +----------------+---------------------------------------------+
+    | ``.nhdr``      | :class:`pyvista.NRRDReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.nrrd``      | :class:`pyvista.NRRDReader`                 |
+    +----------------+---------------------------------------------+
     | ``.obj``       | :class:`pyvista.OBJReader`                  |
     +----------------+---------------------------------------------+
     | ``.p3d``       | :class:`pyvista.Plot3DMetaReader`           |
     +----------------+---------------------------------------------+
     | ``.ply``       | :class:`pyvista.PLYReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.png``       | :class:`pyvista.PNGReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.pnm``       | :class:`pyvista.PNMReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.pts``       | :class:`pyvista.PTSReader`                  |
     +----------------+---------------------------------------------+
     | ``.pvd``       | :class:`pyvista.PVDReader`                  |
     +----------------+---------------------------------------------+
@@ -46,7 +85,19 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.pvtu``      | :class:`pyvista.XMLPUnstructuredGridReader` |
     +----------------+---------------------------------------------+
+    | ``.res``       | :class:`pyvista.MFIXReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.segy``      | :class:`pyvista.SegYReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.sgy``       | :class:`pyvista.SegYReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.slc``       | :class:`pyvista.SLCReader`                  |
+    +----------------+---------------------------------------------+
     | ``.stl``       | :class:`pyvista.STLReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.tif``       | :class:`pyvista.TIFFReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.tiff``      | :class:`pyvista.TIFFReader`                 |
     +----------------+---------------------------------------------+
     | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
     +----------------+---------------------------------------------+
@@ -72,6 +123,9 @@ def get_reader(filename):
     filename : str
         The string path to the file to read.
 
+    force_ext : str, optional
+        An extension to force a specific reader to be chosen.
+
     Returns
     -------
     pyvista.BaseReader
@@ -93,7 +147,7 @@ def get_reader(filename):
     >>> mesh.plot(color='tan')
 
     """
-    ext = get_ext(filename)
+    ext = _get_ext_force(filename, force_ext)
 
     try:
         Reader = CLASS_READERS[ext]
@@ -127,7 +181,9 @@ class BaseReader:
         self._progress_bar = False
         self._progress_msg = None
         self.__directory = None
+        self._set_defaults()
         self.path = path
+        self._set_defaults_post()
 
     def __repr__(self):
         """Representation of a Reader object."""
@@ -243,6 +299,14 @@ class BaseReader:
 
     def _update_information(self):
         self.reader.UpdateInformation()
+
+    def _set_defaults(self):
+        """Set defaults on reader, if needed."""
+        pass
+
+    def _set_defaults_post(self):
+        """Set defaults on reader post setting file, if needed."""
+        pass
 
 
 class PointCellDataSelection:
@@ -676,18 +740,16 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
-    """OpenFOAM Reader for .foam files."""
+    """OpenFOAM Reader for .foam files.
+
+    By default, pyvista enables all patch arrays.  This is a deviation
+    from the vtk default.
+
+    """
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
-    def __init__(self, path):
-        """Initialize OpenFOAMReader.
-
-        By default, pyvista enables all patch arrays.  This is a deviation
-        from the vtk default.
-
-        """
-        super().__init__(path)
+    def _set_defaults_post(self):
         self.enable_all_patch_arrays()
 
     @property
@@ -716,6 +778,35 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     def set_active_time_point(self, time_point):  # noqa: D102
         self.reader.UpdateTimeStep(self.time_point_value(time_point))
+
+    @property
+    def decompose_polyhedra(self):
+        """Whether polyhedra are to be decomposed when read.
+
+        Returns
+        -------
+        bool
+            If ``True``, decompose polyhedra into tetrahedra and pyramids.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.decompose_polyhedra = False
+        >>> reader.decompose_polyhedra
+        False
+
+        """
+        return bool(self.reader.GetDecomposePolyhedra())
+
+    @decompose_polyhedra.setter
+    def decompose_polyhedra(self, value):
+        if value:
+            self.reader.DecomposePolyhedraOn()
+        else:
+            self.reader.DecomposePolyhedraOff()
 
     @property
     def cell_to_point_creation(self):
@@ -995,10 +1086,7 @@ class VTKDataSetReader(BaseReader):
 
     _class_reader = _vtk.vtkDataSetReader
 
-    def __init__(self, path):
-        """Initialize VTKDataSetReader with filename."""
-        super().__init__(path)
-        # Provide consistency with defaults in pyvista.read
+    def _set_defaults_post(self):
         self.reader.ReadAllScalarsOn()
         self.reader.ReadAllColorScalarsOn()
         self.reader.ReadAllNormalsOn()
@@ -1058,6 +1146,54 @@ class Plot3DMetaReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
+class MultiBlockPlot3DReader(BaseReader):
+    """MultiBlock Plot3D Reader."""
+
+    _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+
+    def _set_defaults(self):
+        self.auto_detect_format = True
+
+    def add_q_files(self, files):
+        """Add q file(s).
+
+        Parameters
+        ----------
+        files : str or Iterable(str)
+            Solution file or files to add.
+
+        """
+        # files may be a list or a single filename
+        if files:
+            if isinstance(files, (str, pathlib.Path)):
+                files = [files]
+        files = [_process_filename(f) for f in files]
+
+        if hasattr(self.reader, 'AddFileName'):
+            # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
+            # VTK 8.2. This method supports reading multiple q files.
+            for q_filename in files:
+                self.reader.AddFileName(q_filename)
+        else:
+            # SetQFileName is used to add a single q file to be read, and is still
+            # supported in VTK9.
+            if len(files) > 0:
+                if len(files) > 1:
+                    raise RuntimeError(
+                        'Reading of multiple q files is not supported with this version of VTK.'
+                    )
+                self.reader.SetQFileName(files[0])
+
+    @property
+    def auto_detect_format(self):
+        """Whether to try to automatically detect format such as byte order, etc."""
+        return bool(self.reader.GetAutoDetectFormat())
+
+    @auto_detect_format.setter
+    def auto_detect_format(self, value):
+        self.reader.SetAutoDetectFormat(value)
+
+
 class CGNSReader(BaseReader, PointCellDataSelection):
     """CGNS Reader for .cgns files.
 
@@ -1098,9 +1234,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
 
-    def __init__(self, filename: str):
-        """Initialize CGNSReader with filename."""
-        super().__init__(filename)
+    def _set_defaults_post(self):
         self.enable_all_point_arrays()
         self.enable_all_cell_arrays()
         self.load_boundary_patch = True
@@ -1565,23 +1699,305 @@ class DICOMReader(BaseReader):
     _class_reader = _vtk.vtkDICOMImageReader
 
 
+class BMPReader(BaseReader):
+    """BMP Reader for .bmp files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_masonry_texture(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'masonry.bmp'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkBMPReader
+
+
+class DEMReader(BaseReader):
+    """DEM Reader for .dem files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_st_helens(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'SainteHelens.dem'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkDEMReader
+
+
+class JPEGReader(BaseReader):
+    """JPEG Reader for .jpeg and .jpg files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_mars_jpg()
+    >>> filename.split("/")[-1]  # omit the path
+    'mars.jpg'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkJPEGReader
+
+
+class MetaImageReader(BaseReader):
+    """Meta Image Reader for .mha and .mhd files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_chest(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'ChestCT-SHORT.mha'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkMetaImageReader
+
+
+class NRRDReader(BaseReader):
+    """NRRDReader for .nrrd and .nhdr files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_beach(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'beach.nrrd'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkNrrdReader
+
+
+class PNGReader(BaseReader):
+    """PNGReader for .png files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_vtk_logo(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'vtk.png'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkPNGReader
+
+
+class PNMReader(BaseReader):
+    """PNMReader for .pnm files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_gourds_pnm(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'Gourds.pnm'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkPNMReader
+
+
+class SLCReader(BaseReader):
+    """SLCReader for .slc files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_knee_full(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'vw_knee.slc'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkSLCReader
+
+
+class TIFFReader(BaseReader):
+    """TIFFReader for .tif and .tiff files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_crater_imagery(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'BJ34_GeoTifv1-04_crater_clip.tif'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkTIFFReader
+
+
+class HDRReader(BaseReader):
+    """HDRReader for .hdr files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_parched_canal_4k(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'parched_canal_4k.hdr'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkHDRReader
+
+
+class PTSReader(BaseReader):
+    """PTSReader for .pts files."""
+
+    _class_reader = _vtk.vtkPTSReader
+
+
+class AVSucdReader(BaseReader):
+    """AVSucdReader for .inp files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_cells_nd(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'cellsnd.ascii.inp'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(cpos="xy")
+
+    """
+
+    _class_reader = _vtk.vtkAVSucdReader
+
+
+class HDFReader(BaseReader):
+    """HDFReader for .hdf files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_can(partial=True, load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'can_0.hdf'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkHDFReader)
+
+
+class GLTFReader(BaseReader):
+    """GLTFeader for .gltf and .glb files."""
+
+    _class_reader = _vtk.vtkGLTFReader
+
+
+class FluentReader(BaseReader):
+    """FluentReader for .cas files."""
+
+    _class_reader = _vtk.vtkFLUENTReader
+
+
+class MFIXReader(BaseReader):
+    """MFIXReader for .res files."""
+
+    _class_reader = _vtk.vtkMFIXReader
+
+
+class SegYReader(BaseReader):
+    """SegYReader for .sgy and .segy files."""
+
+    _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
+
+
 CLASS_READERS = {
     # Standard dataset readers:
+    '.bmp': BMPReader,
+    '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
     '.dcm': DICOMReader,
+    '.dem': DEMReader,
     '.facet': FacetReader,
     '.foam': OpenFOAMReader,
     '.g': BYUReader,
+    '.glb': GLTFReader,
+    '.gltf': GLTFReader,
+    '.img': DICOMReader,
+    '.inp': AVSucdReader,
+    '.jpg': JPEGReader,
+    '.jpeg': JPEGReader,
+    '.hdf': HDFReader,
+    '.hdr': HDRReader,
+    '.mha': MetaImageReader,
+    '.mhd': MetaImageReader,
+    '.nhdr': NRRDReader,
+    '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
     '.ply': PLYReader,
+    '.png': PNGReader,
+    '.pnm': PNMReader,
+    '.pts': PTSReader,
     '.pvd': PVDReader,
     '.pvti': XMLPImageDataReader,
     '.pvtk': VTKPDataSetReader,
     '.pvtr': XMLPRectilinearGridReader,
     '.pvtu': XMLPUnstructuredGridReader,
+    '.res': MFIXReader,
+    '.segy': SegYReader,
+    '.sgy': SegYReader,
+    '.slc': SLCReader,
     '.stl': STLReader,
+    '.tif': TIFFReader,
+    '.tiff': TIFFReader,
     '.tri': BinaryMarchingCubesReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,

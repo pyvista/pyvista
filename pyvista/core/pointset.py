@@ -43,6 +43,8 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
+    _WRITERS = {".xyz": _vtk.vtkSimplePointsWriter}
+
     def center_of_mass(self, scalars_weight=False):
         """Return the coordinates for the center of mass of the mesh.
 
@@ -390,11 +392,22 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     """
 
+    def __new__(cls, *args, **kwargs):
+        """Construct a new PointSet object.
+
+        Wrapping this is necessary for us to show an informative error
+        message when the VTK version is too old, causing PointSet to be
+        an abstract class. Since we inherit the ``__new__()`` method of
+        ``vtk.vtkPointSet``, we would otherwise see a generic error about
+        the class being abstract.
+
+        """
+        if pyvista.vtk_version_info < (9, 1, 0):
+            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
+        return super().__new__(cls, *args, **kwargs)
+
     def __init__(self, points=None, deep=False, force_float=True):
         """Initialize the pointset."""
-        if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
-            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
-
         super().__init__()
         if points is not None:
             self.SetPoints(pyvista.vtk_points(points, deep=deep, force_float=force_float))

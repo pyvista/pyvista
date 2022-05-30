@@ -1,9 +1,9 @@
 """Simple flask app to display static images generated from pyvista.
 
 Expected paths:
-flask_example
+static_ex/
 └── app.py
-    templates
+    templates/
     └── index.html
 
 """

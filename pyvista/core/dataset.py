@@ -645,17 +645,19 @@ class DataSet(DataSetFilters, DataObject):
             return
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
-            raise KeyError(f'Data named "{name}" is a field array which cannot be active.')
+            raise KeyError(f'Data named ({name}) is a field array which cannot be active.')
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             ret = self.GetPointData().SetActiveScalars(name)
         elif field == FieldAssociation.CELL:
             ret = self.GetCellData().SetActiveScalars(name)
         else:
-            raise ValueError(f'Data field ({field}) not usable')
+            raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
         if ret < 0:
-            raise ValueError(f'Data field ({field}) could not be set as the active scalars')
+            raise ValueError(
+                f'Data field ({name}) with type ({field}) could not be set as the active scalars'
+            )
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
@@ -687,10 +689,12 @@ class DataSet(DataSetFilters, DataObject):
             elif field == FieldAssociation.CELL:
                 ret = self.GetCellData().SetActiveVectors(name)
             else:
-                raise ValueError(f'Data field ({field}) not usable')
+                raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
             if ret < 0:
-                raise ValueError(f'Data field ({field}) could not be set as the active vectors')
+                raise ValueError(
+                    f'Data field ({name}) with type ({field}) could not be set as the active vectors'
+                )
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
@@ -722,10 +726,12 @@ class DataSet(DataSetFilters, DataObject):
             elif field == FieldAssociation.CELL:
                 ret = self.GetCellData().SetActiveTensors(name)
             else:
-                raise ValueError(f'Data field ({field}) not usable')
+                raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
             if ret < 0:
-                raise ValueError(f'Data field ({field}) could not be set as the active tensors')
+                raise ValueError(
+                    f'Data field ({name}) with type ({field}) could not be set as the active tensors'
+                )
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
 

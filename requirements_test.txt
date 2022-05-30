@@ -5,9 +5,9 @@ Sphinx<4.6.0
 cmocean<2.1
 codecov<2.2.0
 colorcet<3.1.0
-hypothesis<6.45.1
+hypothesis<6.46.10
 imageio-ffmpeg<0.5.0
-imageio<2.19.0
+imageio<2.20.0
 ipygany<0.6.0
 ipython<9.0.0
 ipyvtklink<0.4.0
@@ -23,4 +23,4 @@ pytest<7.2.0
 pythreejs<2.4.0
 sphinx-gallery<0.11.0
 tqdm<4.65.0
-trimesh<3.11.0
+trimesh<3.13.0

@@ -2,6 +2,7 @@ import itertools
 import os
 import platform
 import sys
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
@@ -11,6 +12,7 @@ import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
+from pyvista.errors import MissingDataError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -32,6 +34,26 @@ def aprox_le(a, b, rtol=1e-5, atol=1e-8):
         return True
     else:
         return np.isclose(a, b, rtol, atol)
+
+
+class GetOutput:
+    """Helper class to patch ``pyvista.filters._get_output`` which captures the raw VTK algorithm objects at the time
+    ``_get_output`` is invoked.
+    """
+
+    def __init__(self):
+        self._mock = Mock()
+
+    def __call__(self, algorithm, *args, **kwargs):
+        self._mock(algorithm, *args, **kwargs)
+        return pyvista.core.filters._get_output(algorithm)
+
+    def reset(self, *args, **kwargs):
+        self._mock.reset_mock(*args, **kwargs)
+
+    @property
+    def latest_algorithm(self):
+        return self._mock.call_args_list[-1][0][0]
 
 
 @pytest.fixture
@@ -122,6 +144,14 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert aprox_le(clp.point_data['to_clip'].max(), clip_value, rtol=1e-1)
             else:
                 assert clp.point_data['to_clip'].max() >= clip_value
+
+
+def test_clip_filter_no_active(sphere):
+    # test no active scalars case
+    sphere.point_data.set_array(sphere.points[:, 2], 'data')
+    assert sphere.active_scalars_name is None
+    clp = sphere.clip_scalar()
+    assert clp.n_points < sphere.n_points
 
 
 def test_clip_filter_scalar_multiple():
@@ -330,10 +360,40 @@ def test_threshold(datasets):
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
-    with pytest.raises(ValueError):
-        datasets[0].threshold(
-            [10, 500], scalars='Spatial Point Data', all_scalars=True, progress_bar=True
-        )
+
+
+def test_threshold_all_scalars():
+    mesh = pyvista.Sphere()
+    mesh.clear_data()
+
+    mesh["scalar0"] = np.zeros(mesh.n_points)
+    mesh["scalar1"] = np.ones(mesh.n_points)
+    mesh.set_active_scalars("scalar1")
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)  # only uses scalar1
+    assert thresh_all.n_points == mesh.n_points
+    assert thresh_all.n_cells == mesh.n_cells
+
+    mesh["scalar1"][0 : int(mesh.n_points / 2)] = 0.0
+    thresh = mesh.threshold(value=0.5, all_scalars=False)
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)
+    assert thresh_all.n_points < mesh.n_points
+    # removes additional cells/points due to all_scalars
+    assert thresh_all.n_points < thresh.n_points
+    assert thresh_all.n_cells < mesh.n_cells
+    assert thresh_all.n_cells < thresh.n_cells
+
+    mesh.clear_data()
+    mesh["scalar0"] = np.zeros(mesh.n_cells)
+    mesh["scalar1"] = np.ones(mesh.n_cells)
+    mesh["scalar1"][0 : int(mesh.n_cells / 2)] = 0.0
+    mesh.set_active_scalars("scalar1")
+    thresh = mesh.threshold(value=0.5, all_scalars=False)
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)
+    # when thresholding by cell data, all_scalars has no effect since it has 1 value per cell
+    assert thresh_all.n_points < mesh.n_points
+    assert thresh_all.n_points == thresh.n_points
+    assert thresh_all.n_cells < mesh.n_cells
+    assert thresh_all.n_cells == thresh.n_cells
 
 
 def test_threshold_multicomponent():
@@ -663,6 +723,143 @@ def test_glyph_cell_point_data(sphere):
         sphere.glyph(orient='vectors_cell', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
+
+
+class InterrogateVTKGlyph3D:
+    def __init__(self, alg: pyvista._vtk.vtkGlyph3D):
+        self.alg = alg
+
+    @property
+    def input_data_object(self):
+        return pyvista.wrap(self.alg.GetInputDataObject(0, 0))
+
+    @property
+    def input_active_scalars_info(self):
+        return self.input_data_object.active_scalars_info
+
+    @property
+    def input_active_vectors_info(self):
+        return self.input_data_object.active_vectors_info
+
+    @property
+    def scaling(self):
+        return self.alg.GetScaling()
+
+    @property
+    def scale_mode(self):
+        return self.alg.GetScaleModeAsString()
+
+    @property
+    def scale_factor(self):
+        return self.alg.GetScaleFactor()
+
+    @property
+    def clamping(self):
+        return self.alg.GetClamping()
+
+    @property
+    def vector_mode(self):
+        return self.alg.GetVectorModeAsString()
+
+
+def test_glyph_settings(sphere):
+    sphere['vectors_cell'] = np.ones([sphere.n_cells, 3])
+    sphere['vectors_points'] = np.ones([sphere.n_points, 3])
+    sphere['arr_cell'] = np.ones(sphere.n_cells)
+    sphere['arr_points'] = np.ones(sphere.n_points)
+
+    sphere['arr_both'] = np.ones(sphere.n_points)
+    sphere['arr_both'] = np.ones(sphere.n_cells)
+    sphere['vectors_both'] = np.ones([sphere.n_points, 3])
+    sphere['vectors_both'] = np.ones([sphere.n_cells, 3])
+
+    sphere['active_arr_points'] = np.ones(sphere.n_points)
+    sphere['active_vectors_points'] = np.ones([sphere.n_points, 3])
+
+    with patch('pyvista.core.filters.data_set._get_output', GetOutput()) as go:
+        # no orient with cell scale
+        sphere.glyph(scale='arr_cell', orient=False)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # cell orient with no scale
+        sphere.glyph(scale=False, orient='vectors_cell')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_vectors_info.name == 'vectors_cell'
+        assert alg.scale_mode == 'DataScalingOff'
+        go.reset()
+
+        # cell orient with cell scale
+        sphere.glyph(scale='arr_cell', orient='vectors_cell')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_cell'
+        assert alg.input_active_vectors_info.name == 'vectors_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # cell orient with cell scale and tolerance
+        sphere.glyph(scale='arr_cell', orient='vectors_cell', tolerance=0.05)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_cell'
+        assert alg.input_active_vectors_info.name == 'vectors_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # no orient with point scale
+        sphere.glyph(scale='arr_points', orient=False)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # point orient with no scale
+        sphere.glyph(scale=False, orient='vectors_points')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_mode == 'DataScalingOff'
+        go.reset()
+
+        # point orient with point scale
+        sphere.glyph(scale='arr_points', orient='vectors_points')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # point orient with point scale and tolerance
+        sphere.glyph(scale='arr_points', orient='vectors_points', tolerance=0.05)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # point orient with point scale + factor
+        sphere.glyph(scale='arr_points', orient='vectors_points', factor=5)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_factor == 5
+
+        # ambiguous point/cell prefers points
+        sphere.glyph(scale='arr_both', orient='vectors_both')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_both'
+        assert alg.input_active_vectors_info.name == 'vectors_both'
+        ## Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
+        assert len(alg.input_data_object.active_scalars) == sphere.n_cells
+        assert len(alg.input_data_object.active_scalars) == sphere.n_cells
+
+        # no fields selected uses active
+        sphere.set_active_scalars('active_arr_points')
+        sphere.set_active_vectors('active_vectors_points')
+        sphere.glyph(scale=True, orient=True)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'active_arr_points'
+        assert alg.input_active_vectors_info.name == 'active_vectors_points'
 
 
 def test_glyph_orient_and_scale():
@@ -1570,7 +1767,7 @@ def test_compute_derivatives():
         derv = mesh.compute_derivative(object)
 
     mesh.point_data.clear()
-    with pytest.raises(TypeError):
+    with pytest.raises(MissingDataError):
         derv = mesh.compute_derivative()
 
 

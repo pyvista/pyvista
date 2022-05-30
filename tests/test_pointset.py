@@ -35,6 +35,13 @@ def test_pointset(pointset):
     assert np.allclose(pointset.points, 1)
 
 
+def test_save(tmpdir, pointset):
+    filename = str(tmpdir.mkdir("tmpdir").join(f'{"tmp.xyz"}'))
+    pointset.save(filename)
+    points = np.loadtxt(filename)
+    assert np.allclose(points, pointset.points)
+
+
 @pytest.mark.parametrize('deep', [True, False])
 def test_cast_to_polydata(pointset, deep):
     data = np.linspace(0, 1, pointset.n_points)

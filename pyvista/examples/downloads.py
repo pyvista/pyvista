@@ -1315,6 +1315,30 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
     return _download_and_read('Gourds2.jpg', texture=True, load=load)
 
 
+def download_gourds_pnm(load=True):  # pragma: no cover
+    """Download gourds dataset from pnm file.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gourds_pnm()
+    >>> dataset.plot(rgba=True, cpos="xy")
+
+    """
+    return _download_and_read('Gourds.pnm', load=load)
+
+
 def download_unstructured_grid(load=True):  # pragma: no cover
     """Download unstructured grid dataset.
 
@@ -3630,22 +3654,25 @@ def download_lucy(load=True):  # pragma: no cover
     return _download_and_read('lucy.ply', load=load)
 
 
-def download_can(partial=False):  # pragma: no cover
+def download_can(partial=False, load=True):  # pragma: no cover
     """Download the can dataset mesh.
 
-    Original downloaded from Testing/Data/FileSeriesat from paraview.org. Used
+    File obtained from `Kitware <https://www.kitware.com/>`_. Used
     for testing hdf files.
 
     Parameters
     ----------
     partial : bool, optional
-        Load part of the dataset. Defaults to to ``False`` and
-        filename will be returned.
+        Load part of the dataset. Defaults to ``False``.
+
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData
-        The example ParaView can DataSet.
+    pyvista.PolyData, str, or List[str]
+        The example ParaView can DataSet or file path(s).
 
     Examples
     --------
@@ -3657,17 +3684,19 @@ def download_can(partial=False):  # pragma: no cover
     >>> dataset.plot(scalars='VEL', smooth_shading=True)
 
     """
-    can_0 = _download_and_read('hdf/can_0.hdf')
+    can_0 = _download_and_read('hdf/can_0.hdf', load=load)
     if partial:
         return can_0
 
-    return pyvista.merge(
-        [
-            can_0,
-            _download_and_read('hdf/can_1.hdf'),
-            _download_and_read('hdf/can_2.hdf'),
-        ]
-    )
+    cans = [
+        can_0,
+        _download_and_read('hdf/can_1.hdf', load=load),
+        _download_and_read('hdf/can_2.hdf', load=load),
+    ]
+
+    if load:
+        return pyvista.merge(cans)
+    return cans
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
@@ -3798,3 +3827,51 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
         reader = pyvista.DICOMReader(path)
         return reader.read()
     return path
+
+
+def download_parched_canal_4k(load=True):  # pragma: no cover
+    """Download parched canal 4k dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.Texture or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_parched_canal_4k()
+    >>> dataset.plot(cpos="xy")
+
+    """
+    return _download_and_read("parched_canal_4k.hdr", texture=True, load=load)
+
+
+def download_cells_nd(load=True):  # pragma: no cover
+    """Download example AVS UCD dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cells_nd()
+    >>> dataset.plot(cpos="xy")
+
+    """
+    return _download_and_read("cellsnd.ascii.inp", load=load)

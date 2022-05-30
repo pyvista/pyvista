@@ -2249,3 +2249,12 @@ def test_write_gif(sphere, tmpdir):
     # assert file exists and is not empty
     assert os.path.isfile(path)
     assert os.path.getsize(path)
+
+
+def test_ruler(sphere):
+    sphere = pyvista.Sphere()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.view_xy()
+    plotter.show(before_close_callback=verify_cache_image)
