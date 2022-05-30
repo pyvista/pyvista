@@ -130,14 +130,19 @@ def verify_cache_image(plotter):
     # since each test must contain a unique name, we can simply
     # use the function test to name the image
     stack = inspect.stack()
-    test_name = None
     for item in stack:
         if item.function == 'check_gc':
             return
         if item.function[:5] == 'test_':
             test_name = item.function
             break
-    if item.function in HIGH_VARIANCE_TESTS:
+    else:
+        raise RuntimeError(
+            'Unable to identify calling test function.  This function '
+            'should only be used within a pytest environment.'
+        )
+
+    if test_name in HIGH_VARIANCE_TESTS:
         allowed_error = VER_IMAGE_REGRESSION_ERROR
         allowed_warning = VER_IMAGE_REGRESSION_WARNING
     else:
@@ -145,14 +150,8 @@ def verify_cache_image(plotter):
         allowed_warning = IMAGE_REGRESSION_WARNING
 
     # some tests fail when on Windows with OSMesa
-    if os.name == 'nt' and item.function in WINDOWS_SKIP_IMAGE_CACHE:
+    if os.name == 'nt' and test_name in WINDOWS_SKIP_IMAGE_CACHE:
         return
-
-    if test_name is None:
-        raise RuntimeError(
-            'Unable to identify calling test function.  This function '
-            'should only be used within a pytest environment.'
-        )
 
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
