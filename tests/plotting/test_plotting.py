@@ -123,7 +123,7 @@ def verify_cache_image(plotter):
     """
     global glb_reset_image_cache, glb_ignore_image_cache
 
-    # Image cache is only valid
+    # Image cache is only valid for VTK9+
     if not VTK9:
         return
 
@@ -144,6 +144,7 @@ def verify_cache_image(plotter):
         allowed_error = IMAGE_REGRESSION_ERROR
         allowed_warning = IMAGE_REGRESSION_WARNING
 
+    # some tests fail when on Windows with OSMesa
     if os.name == 'nt' and item.function in WINDOWS_SKIP_IMAGE_CACHE:
         return
 
