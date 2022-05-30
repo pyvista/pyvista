@@ -366,8 +366,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def export_html(self, filename, backend='pythreejs'):
         """Export this plotter as an interactive scene to a HTML file.
 
-        You have the option of exposing the scene using either vtk.js or
-        three.js, both of which are excellent JavaScript libraries to visualize
+        You have the option of exposing the scene using either vtk.js (using ``panel``) or
+        three.js (using ``pythreejs``), both of which are excellent JavaScript libraries to visualize
         small to moderately complex scenes for scientific visualization.
 
         Parameters
