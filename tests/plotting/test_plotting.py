@@ -109,7 +109,7 @@ def verify_cache_image(plotter):
     global glb_reset_image_cache, glb_ignore_image_cache
 
     # Image cache is only valid for VTK9 on Linux
-    if not VTK9 or platform.system() != 'Linux':
+    if not VTK9 or platform.system() not in ['Linux', 'Darwin']:
         return
 
     # since each test must contain a unique name, we can simply
@@ -267,7 +267,6 @@ def test_plot(sphere, tmpdir):
         interpolate_before_map=True,
         screenshot=filename,
         return_img=True,
-        before_close_callback=verify_cache_image,
         return_cpos=True,
     )
     assert isinstance(cpos, pyvista.CameraPosition)
