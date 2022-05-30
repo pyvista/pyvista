@@ -558,6 +558,14 @@ else:  # pragma: no cover
         """Lazy import of the vtkCGNSReader."""
         raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
 
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        # Workaround to fix the following issue: https://gitlab.kitware.com/vtk/vtk/-/issues/18143
+        # Fixed in vtk > 9.1.0
+        reader = vtk.vtkPOpenFOAMReader()
+        reader.SetController(vtk.vtkDummyController())
+        return reader
+
     def lazy_vtkHDFReader():
         """Lazy import of the vtkHDFReader."""
         raise VTKVersionError('vtk.HDFReader requires VTK v9.1.0 or newer')
