@@ -337,7 +337,7 @@ class Camera(_vtk.vtkCamera):
         self.SetParallelProjection(True)
 
     def disable_parallel_projection(self):
-        """Disable the use of perspective projection.
+        """Disable the use of parallel projection.
 
         This is default behavior.
 

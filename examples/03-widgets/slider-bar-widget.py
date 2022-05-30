@@ -5,8 +5,8 @@ Slider Bar Widget
 ~~~~~~~~~~~~~~~~~
 
 The slider widget can be enabled and disabled by the
-:func:`pyvista.WidgetHelper.add_slider_widget` and
-:func:`pyvista.WidgetHelper.clear_slider_widgets` methods respectively.
+:func:`pyvista.Plotter.add_slider_widget` and
+:func:`pyvista.Plotter.clear_slider_widgets` methods respectively.
 This is one of the most versatile widgets as it can control a value that can
 be used for just about anything.
 """
@@ -14,7 +14,7 @@ be used for just about anything.
 
 ##############################################################################
 # One helper method we've added is the
-# :func:`pyvista.WidgetHelper.add_mesh_threshold` method which leverages the
+# :func:`pyvista.Plotter.add_mesh_threshold` method which leverages the
 # slider widget to control a thresholding value.
 
 import pyvista as pv
