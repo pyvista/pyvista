@@ -80,6 +80,21 @@ HIGH_VARIANCE_TESTS = {
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
 
+# these images vary between Windows when using OSMesa and Linux/MacOS
+# and will not be verified
+WINDOWS_SKIP_IMAGE_CACHE = {
+    'test_user_annotations_scalar_bar_volume',  # occurs even without Windows OSMesa
+    'test_enable_stereo_render',  # occurs even without Windows OSMesa
+    'test_plot_add_scalar_bar',
+    'test_plot_cell_data',
+    'test_scalars_by_name',
+    'test_user_annotations_scalar_bar_volume',
+    'test_plot_string_array',
+    'test_cmap_list',
+    'test_collision_plot',
+    'test_enable_stereo_render',
+}
+
 
 # this must be a session fixture to ensure this runs before any other test
 @pytest.fixture(scope="session", autouse=True)
@@ -108,8 +123,8 @@ def verify_cache_image(plotter):
     """
     global glb_reset_image_cache, glb_ignore_image_cache
 
-    # Image cache is only valid for VTK9 on Linux
-    if not VTK9 or platform.system() not in ['Linux', 'Darwin']:
+    # Image cache is only valid
+    if not VTK9:
         return
 
     # since each test must contain a unique name, we can simply
@@ -128,6 +143,9 @@ def verify_cache_image(plotter):
     else:
         allowed_error = IMAGE_REGRESSION_ERROR
         allowed_warning = IMAGE_REGRESSION_WARNING
+
+    if os.name == 'nt' and item.function in WINDOWS_SKIP_IMAGE_CACHE:
+        return
 
     if test_name is None:
         raise RuntimeError(
