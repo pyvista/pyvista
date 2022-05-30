@@ -96,10 +96,6 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
 
-    # remove temporary indices array if applicable
-    if indices_array == '__orig_ids__':
-        del mesh.point_data['__orig_ids__']
-
     return mesh, scalars
 
 
