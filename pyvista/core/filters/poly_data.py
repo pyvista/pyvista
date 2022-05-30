@@ -1311,7 +1311,9 @@ class PolyDataFilters(DataSetFilters):
             Calculation of point normals. Defaults to ``True``.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to ``False``.
+            Splitting of sharp edges. Defaults to ``False``. Indices to the
+            original points is tracked in the ``"pyvistaNormOriginalPointIds"
+            array.
 
         flip_normals : bool, optional
             Set global flipping of normal orientation. Flipping
@@ -1397,6 +1399,12 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`surface_normal_example` for more examples using this filter.
 
         """
+        # track original point indices
+        if split_vertices:
+            self.point_data.set_array(
+                np.arange(self.n_points, dtype=np.int32), 'pyvistaOriginalPointIds'
+            )
+
         normal = _vtk.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
         normal.SetComputePointNormals(point_normals)

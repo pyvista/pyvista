@@ -77,19 +77,16 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             indices_array = 'vtkOriginalCellIds'
 
     if split_sharp_edges:
-        if is_polydata:
-            if has_scalars and use_points:
-                # we must track the original IDs with our own array since point
-                # indices may have changed
-                indices_array = '__orig_ids__'
-                arr_sz = mesh.n_points
-                mesh.point_data[indices_array] = np.arange(arr_sz, dtype=np.int32)
-
         mesh = mesh.compute_normals(
             cell_normals=False,
             split_vertices=True,
             feature_angle=feature_angle,
         )
+        if is_polydata:
+            if has_scalars and use_points:
+                # we must track the original IDs with our own array from compute_normals
+                indices_array = 'pyvistaOriginalPointIds'
+
     else:
         # consider checking if mesh contains active normals
         # if mesh.point_data.active_normals is None:
