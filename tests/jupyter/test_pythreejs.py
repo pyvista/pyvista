@@ -234,9 +234,21 @@ def test_linked_views(sphere):
         for jj in range(n_col):
             pl.subplot(ii, jj)
             pl.add_mesh(sphere)
-    pl.link_views()
+
+    pl.link_views((0, 1, 2))  # link first row together
+    pl.link_views((3, 4, 5))  # link second row together
 
     # validate all cameras are linked
     widget = pv_pythreejs.convert_plotter(pl)
-    cameras = [widget[row, col].camera for row in range(n_row) for col in range(n_col)]
+
+    # check first row is linked
+    cameras = [widget[0, col].camera for col in range(n_col)]
     assert all([camera is cameras[0] for camera in cameras])
+
+    # check second row is linked
+    cameras = [widget[0, col].camera for col in range(n_col)]
+    assert all([camera is cameras[0] for camera in cameras])
+
+    # check first row camera is different than the second row
+    cameras = [widget[row, 0].camera for row in range(2)]
+    assert widget[0, 0].camera is not widget[1, 0].camera
