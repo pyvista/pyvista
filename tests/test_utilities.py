@@ -23,7 +23,7 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
-from pyvista.utilities.misc import has_duplicates, raise_has_duplicates
+from pyvista.utilities.misc import PyvistaDeprecationWarning, has_duplicates, raise_has_duplicates
 
 
 def test_version():
@@ -83,7 +83,8 @@ def test_read(tmpdir, use_pathlib):
     # Now test the standard_reader_routine
     for i, filename in enumerate(fnames):
         # Pass attrs to for the standard_reader_routine to be used
-        obj = fileio.read(filename, attrs={'DebugOn': None})
+        with pytest.warns(PyvistaDeprecationWarning):
+            obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
@@ -128,6 +129,29 @@ def test_read_force_ext(tmpdir):
         assert isinstance(data, type)
 
 
+@mock.patch('pyvista.BaseReader.read')
+@mock.patch('pyvista.BaseReader.reader')
+def test_read_attrs(mock_reader, mock_read):
+    """Test passing attrs in read."""
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read(ex.antfile, attrs={'test': 'test_arg'})
+    mock_reader.test.assert_called_once_with('test_arg')
+
+    mock_reader.reset_mock()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
+    mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
+
+
+@mock.patch('pyvista.BaseReader.read')
+@mock.patch('pyvista.BaseReader.reader')
+@mock.patch('pyvista.BaseReader.show_progress')
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
+    """Test passing attrs in read."""
+    pyvista.read(ex.antfile, progress_bar=True)
+    mock_show_progress.assert_called_once()
+
+
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -148,31 +172,16 @@ def test_read_force_ext_wrong_extension(tmpdir):
         data = fileio.read(fname, force_ext='.vtm')
     assert len(data) == 0
 
-
-@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
-def test_read_legacy(srr_mock):
-    srr_mock.return_value = pyvista.read(ex.planefile)
-    pyvista.read_legacy('legacy.vtk')
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkDataSetReader)
-    assert reader.GetFileName().endswith('legacy.vtk')
-
-    # check error is raised when no data returned
-    srr_mock.reset_mock()
-    srr_mock.return_value = None
-    with pytest.raises(RuntimeError):
-        pyvista.read_legacy('legacy.vtk')
+    fname = ex.planefile
+    with pytest.raises(IOError):
+        fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.utilities.fileio.read_legacy')
-def test_pyvista_read_legacy(read_legacy_mock):
-    # check that reading a file with extension .vtk calls `read_legacy`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pyvista.read(ex.globefile)
-    args, kwargs = read_legacy_mock.call_args
-    filename = args[0]
-    assert filename == ex.globefile
+@mock.patch('pyvista.utilities.fileio.read')
+def test_read_legacy(read_mock):
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_legacy(ex.globefile, progress_bar=False)
+    read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
 
 
 @mock.patch('pyvista.utilities.fileio.read_exodus')
@@ -186,28 +195,19 @@ def test_pyvista_read_exodus(read_exodus_mock):
 
 
 @pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
-def test_read_plot3d(srr_mock, auto_detect):
+@mock.patch('pyvista.utilities.reader.BaseReader.read')
+@mock.patch('pyvista.utilities.reader.BaseReader.path')
+def test_read_plot3d(path_mock, read_mock, auto_detect):
     # with grid only
-    pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
-    srr_mock.assert_called_once()
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
-    assert reader.GetFileName().endswith('grid.in')
-    assert kwargs['filename'] is None
-    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
+    read_mock.assert_called_once()
 
     # with grid and q
-    srr_mock.reset_mock()
-    pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
-    assert reader.GetFileName().endswith('grid.in')
-    assert args[0].GetQFileName().endswith('q1.save')
-    assert kwargs['filename'] is None
-    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
+    read_mock.reset_mock()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
+    read_mock.assert_called_once()
 
 
 def test_get_array():
@@ -449,9 +449,9 @@ def test_cells_dict_utils():
     cells_arr = np.array([3, 0, 1, 2, 3, 3, 4, 5])
     cells_types = np.array([vtk.VTK_TRIANGLE] * 2)
 
-    assert np.all(
-        cells.generate_cell_offsets(cells_arr, cells_types)
-        == cells.generate_cell_offsets(cells_arr, cells_types)
+    assert np.array_equal(
+        cells.generate_cell_offsets(cells_arr, cells_types),
+        cells.generate_cell_offsets_loop(cells_arr, cells_types),
     )
 
     # Non-integer type
