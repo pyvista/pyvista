@@ -76,20 +76,24 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     Parameters
     ----------
     uinput : str, pathlib.Path, vtk.vtkRectilinearGrid, numpy.ndarray, optional
-        Filename, dataset, or array to initialize the uniform grid from. If a
+        Filename, dataset, or array to initialize the rectilinear grid from. If a
         filename is passed, pyvista will attempt to load it as a
         :class:`RectilinearGrid`. If passed a ``vtk.vtkRectilinearGrid``, it
         will be wrapped. If a :class:`numpy.ndarray` is passed, this will be
         loaded as the x range.
+
     y : numpy.ndarray, optional
         Coordinates of the points in y direction. If this is passed, ``uinput``
         must be a :class:`numpy.ndarray`.
+
     z : np.ndarray, optional
         Coordinates of the points in z direction. If this is passed, ``uinput`` and ``y``
         must be a :class:`numpy.ndarray`.
+
     check_duplicates : bool, optional
         Check for duplications in any arrays that are passed. Defaults to
-        ``False``.
+        ``False``. If ``True``, an error is raised if there are any duplicate values
+        in any of the array-valued input arguments.
 
     Examples
     --------
@@ -171,11 +175,14 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         ----------
         x : numpy.ndarray
             Coordinates of the points in x direction.
+
         y : numpy.ndarray
             Coordinates of the points in y direction.
+
         z : numpy.ndarray
             Coordinates of the points in z direction.
-        check_duplicates
+
+        check_duplicates : bool, optional
             Check for duplications in any arrays that are passed.
 
         """
