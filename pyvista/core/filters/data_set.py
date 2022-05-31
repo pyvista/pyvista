@@ -2115,8 +2115,8 @@ class DataSetFilters:
         # remove regionID from the output when extraction mode is set to the
         # largest to avoid the VTK warning:
         # the Cell array RegionId ... has X tuples but there are only Y cells
-        # if largest:
-        # output.cell_data.pop('RegionId', None)
+        if largest:
+            output.cell_data.pop('RegionId', None)
         return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
