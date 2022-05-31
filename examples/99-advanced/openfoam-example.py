@@ -19,7 +19,7 @@ from pyvista import examples
 # in prior versions.
 
 filename = examples.download_cavity(load=False)
-reader = pyvista.OpenFOAMReader(filename)
+reader = pyvista.POpenFOAMReader(filename)
 
 ###############################################################################
 # OpenFOAM datasets include multiple sub-datasets including the internal mesh

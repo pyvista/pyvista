@@ -1008,6 +1008,7 @@ class POpenFOAMReader(OpenFOAMReader):
     """Parallel OpenFOAM Reader for .foam files.
 
     Can read parallel-decomposed mesh information and time dependent data.
+    This reader can be used both for parallel reconstructed data and decomposed data.
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
@@ -1032,7 +1033,7 @@ class POpenFOAMReader(OpenFOAMReader):
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
-        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader = pyvista.POpenFOAMReader(filename)
         >>> reader.case_type = 'reconstructed'
         >>> reader.case_type
         'reconstructed'
