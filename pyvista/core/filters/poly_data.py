@@ -1312,7 +1312,7 @@ class PolyDataFilters(DataSetFilters):
 
         split_vertices : bool, optional
             Splitting of sharp edges. Defaults to ``False``. Indices to the
-            original points is tracked in the ``"pyvistaNormOriginalPointIds"
+            original points is tracked in the ``"pyvistaNormOriginalPointIds"``
             array.
 
         flip_normals : bool, optional
