@@ -2110,7 +2110,14 @@ class DataSetFilters:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # remove regionID from the output when extraction mode is set to the
+        # largest to avoid the VTK warning:
+        # the Cell array RegionId ... has X tuples but there are only Y cells
+        # if largest:
+        # output.cell_data.pop('RegionId', None)
+        return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
         """Extract largest connected set in mesh.
