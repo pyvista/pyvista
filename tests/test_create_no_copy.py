@@ -19,7 +19,7 @@ def structured_points():
     source[:, 0] = x.ravel('F')
     source[:, 1] = y.ravel('F')
     source[:, 2] = z.ravel('F')
-    return source
+    return source, (*x.shape, 1)
 
 
 def test_no_copy_polydata_init():
@@ -42,8 +42,9 @@ def test_no_copy_polydata_points_setter():
 
 
 def test_no_copy_structured_mesh_init(structured_points):
-    source = structured_points
+    source, dims = structured_points
     mesh = pyvista.StructuredGrid(source)
+    mesh.dimensions = dims
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
@@ -51,9 +52,10 @@ def test_no_copy_structured_mesh_init(structured_points):
 
 
 def test_no_copy_structured_mesh_points_setter(structured_points):
-    source = structured_points
+    source, dims = structured_points
     mesh = pyvista.StructuredGrid()
     mesh.points = source
+    mesh.dimensions = dims
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
