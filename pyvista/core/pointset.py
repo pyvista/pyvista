@@ -1893,6 +1893,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 self.deep_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
+            elif isinstance(args[0], np.ndarray):
+                self.points = args[0]
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
