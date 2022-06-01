@@ -89,4 +89,5 @@ def test_coerce_points_like_args_does_not_copy():
     source = np.random.rand(100, 3)
     output = _coerce_pointslike_arg(source)  # test that copy=False is default
     output /= 2
-    assert np.allclose(output, source)
+    assert np.array_equal(output, source)
+    assert np.may_share_memory(output, source)
