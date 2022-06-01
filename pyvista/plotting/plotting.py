@@ -363,6 +363,38 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if set_camera:
             self.camera_position = 'xy'
 
+    def import_vrml(self, filename):
+        """Import a VRML file into the plotter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the VRML file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_vrml` for a full example using this method.
+
+        """
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
+        importer = vtkVRMLImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
     def export_html(self, filename, backend='pythreejs'):
         """Export this plotter as an interactive scene to a HTML file.
 
@@ -586,6 +618,36 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # revert any renamed arrays
         for array in renamed_arrays:
             array.SetName('Normals')
+
+    def export_vrml(self, filename):
+        """Export the current rendering scene as a VRML file.
+
+        See `vtk.VRMLExporter <https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html>`_
+        for limitations regarding the exporter.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to export the scene to.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_hexbeam())
+        >>> pl.export_vrml("sample")
+        """
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter has been closed and cannot be shown.")
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
+        exporter = vtkVRMLExporter()
+        exporter.SetFileName(filename)
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.Write()
 
     def enable_hidden_line_removal(self, all_renderers=True):
         """Enable hidden line removal.
