@@ -2642,10 +2642,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        # cube_map textures cannot use sphrical harmonics
+        # cube_map textures cannot use spherical harmonics
         if texture.cube_map:
             self.AutomaticLightCreationOff()
-            self.UseSphericalHarmonicsOff()
+            # disable spherical harmonics was added in 9.1.0
+            if hasattr(self, 'UseSphericalHarmonicsOff'):
+                self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
         self.SetEnvironmentTexture(texture, is_srgb)
