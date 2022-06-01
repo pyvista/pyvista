@@ -419,9 +419,10 @@ def test_pvdreader():
 
 
 def test_pvdreader_no_time_group():
-    examples.download_dual_sphere_animation(load=False)  # download all the files
+    filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename, _ = _download_file('PVD/paraview/dualSphereNoTime.pvd')
+    filename = os.path.join(os.path.dirname(filename), 'dualSphereNoTime.pvd')
+
     reader = pyvista.PVDReader(filename)
     assert reader.time_values == [0.0]
     assert reader.active_time_value == 0.0

@@ -38,7 +38,7 @@ def test_decompress(tmpdir):
         os.remove(tmp_file)
         os.remove(tmp_file2)
 
-        examples.downloads._decompress(zipfilename)
+        examples.downloads._decompress(zipfilename, pyvista.EXAMPLES_PATH)
         assert os.path.isfile(tmp_file)
         assert os.path.isfile(tmp_file2)
     finally:

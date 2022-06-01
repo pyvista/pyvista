@@ -101,14 +101,14 @@ def _retrieve_file(retriever, filename):
     _check_examples_path()
     # First check if file has already been downloaded
     local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
+    if os.path.isfile(local_path):
+        return local_path, None
 
     if isinstance(retriever, str):
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
 
     # Make sure folder exists!
-    if not os.path.isdir(os.path.dirname((local_path))):
-        os.makedirs(os.path.dirname((local_path)))
     if pyvista.VTK_DATA_PATH is None:
         shutil.move(saved_file, local_path)
     else:
@@ -150,7 +150,7 @@ def _retrieve_zip(retriever, filename):
     basename = os.path.basename(filename)
     local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, basename).replace('.zip', '')
     if os.path.isdir(local_path_zip_dir):
-        return glob.glob(os.path.join(local_path_zip_dir, '*')), None
+        return local_path_zip_dir, None
     if isinstance(retriever, str):
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
@@ -169,7 +169,7 @@ def _retrieve_zip(retriever, filename):
     # decompress and remove the zip file to save space
     _decompress(local_path_zip_file, local_path_zip_dir)
     os.remove(local_path_zip_file)
-    return os.listdir(local_path_zip_dir), resp
+    return local_path_zip_dir, resp
 
 
 def _download_file(filename):
@@ -188,7 +188,20 @@ def _download_file(filename):
     --------
     Download the ``'blood_vessels.zip'`` file from
     https://github.com/pyvista/vtk-data/tree/master/Data/pvtu_blood_vessels.
-    This will return a directory containing the files.
+    This return a list of all files downloaded.
+
+    >>> files, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
+    >>> files
+    ['/pth/share/pyvista/examples/blood_vessels/__MACOSX',
+     '/pth/share/pyvista/examples/blood_vessels/blood_vessels',
+     '/pth/share/pyvista/examples/blood_vessels/__MACOSX/blood_vessels',
+     '/pth/share/pyvista/examples/blood_vessels/__MACOSX/blood_vessels/T0000000500',
+     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500.pvtu',
+     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500',
+     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/001.vtu',
+     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/002.vtu',
+     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/003.vtu',
+     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/000.vtu']
 
     Download the ``'emote.jpg'`` file.
 
@@ -219,7 +232,12 @@ def _download_file(filename):
 def _download_and_read(filename, texture=False, file_format=None, load=True):
     saved_file, _ = _download_file(filename)
     if pyvista.get_ext(filename) == '.zip':
-        saved_file = saved_file[0]
+        files = os.listdir(saved_file)
+        if len(files) > 1:
+            raise ValueError(
+                'Multiple files in zip archive. Cannot download and read automatically.'
+            )
+        saved_file = os.path.join(saved_file, files[0])
     if not load:
         return saved_file
     if texture:
@@ -931,8 +949,9 @@ def download_blood_vessels(load=True):  # pragma: no cover
     * :ref:`streamlines_example`
 
     """
-    local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
-    filename = os.path.join(local_path, 'T0000000500.pvtu')
+    directory, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
+    filename = os.path.join(directory, 'blood_vessels', 'T0000000500.pvtu')
+
     if not load:
         return filename
     mesh = pyvista.read(filename)
@@ -2983,11 +3002,8 @@ def download_cube_map_debug():  # pragma: no cover
     >>> pl.show()
 
     """
-    files = _download_file('cubemapDebug/cubemapDebug.zip')
-    image_names = ['_nx.jpg', '_ny.jpg', '_nz.jpg', '_px.jpg', '_py.jpg', '_pz.jpg']
-    image_paths = [os.path.join(files[0], image_name) for image_name in image_names]
-
-    return pyvista.cubemap(image_paths=image_paths)
+    path, _ = _download_file('cubemapDebug/cubemapDebug.zip')
+    return pyvista.cubemap(image_paths=glob.glob(path, '*.jpg'))
 
 
 def download_backward_facing_step(load=True):  # pragma: no cover
@@ -3011,8 +3027,8 @@ def download_backward_facing_step(load=True):  # pragma: no cover
     >>> dataset.plot()
 
     """
-    folder, _ = _download_file('EnSight.zip')
-    filename = os.path.join(folder, "foam_case_0_0_0_0.case")
+    directory, _ = _download_file('EnSight.zip')
+    filename = os.path.join(directory, 'EnSight', "foam_case_0_0_0_0.case")
     if not load:
         return filename
     return pyvista.read(filename)
@@ -3639,8 +3655,8 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     >>> plotter.close()
 
     """
-    _download_file('PVD/paraview/dualSphereAnimation.zip')
-    filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
+    path, _ = _download_file('PVD/paraview/dualSphereAnimation.zip')
+    filename = os.path.join(path, 'dualSphereAnimation.pvd')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3708,7 +3724,7 @@ def download_cavity(load=True):
 
     """
     directory, _ = _download_file('OpenFOAM.zip')
-    filename = os.path.join(directory, 'cavity', 'case.foam')
+    filename = os.path.join(directory, 'OpenFOAM', 'cavity', 'case.foam')
     if not load:
         return filename
     return pyvista.OpenFOAMReader(filename).read()
@@ -3937,6 +3953,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
 
     """
     path, _ = _download_file('DICOM_Stack/data.zip')
+    path = os.path.join(path, 'data')
     if load:
         reader = pyvista.DICOMReader(path)
         return reader.read()

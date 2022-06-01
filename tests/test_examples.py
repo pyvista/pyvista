@@ -357,6 +357,10 @@ if TEST_DOWNLOADS:
         data = examples.download_kitchen(split=True)
         assert data.n_blocks
 
+    def test_download_backward_facing_step():
+        data = examples.download_backward_facing_step()
+        assert data.n_blocks
+
     # def test_download_topo_global():
     #     data = examples.download_topo_global()
     #     assert data.n_cells
@@ -387,12 +391,12 @@ if TEST_DOWNLOADS:
         assert all([data.n_points, data.n_cells])
 
     def test_vrml_download_teapot():
-        data = examples.vrml.download_teapot()
-        assert data.n_cells
+        filename = examples.vrml.download_teapot()
+        assert os.path.isfile(filename)
 
     def test_vrml_download_sextant():
-        data = examples.vrml.download_sextant()
-        assert data.n_cells
+        filename = examples.vrml.download_sextant()
+        assert os.path.isfile(filename)
 
 
 # End of download tests
