@@ -248,7 +248,6 @@ def test_pbr(sphere):
 @skip_not_vtk9
 @skip_windows
 @skip_mac
-@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_set_environment_texture_cubemap(sphere):
     """Test set_environment_texture with a cubemap."""
     texture = examples.download_sky_box_cube_map()
