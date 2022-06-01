@@ -1388,7 +1388,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
 
 
-def cubemap(path='', prefix='', ext='.jpg'):
+def cubemap(path='', prefix='', ext='.jpg', image_paths=None):
     """Construct a cubemap from 6 images.
 
     Each of the 6 images must be in the following format:
@@ -1422,6 +1422,9 @@ def cubemap(path='', prefix='', ext='.jpg'):
     ext : str, optional
         The filename extension.  For example ``'.jpg'``.
 
+    image_paths : list, optional
+        If image_paths is given, all other parameters are overridden.
+
     Returns
     -------
     pyvista.Texture
@@ -1429,11 +1432,30 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Examples
     --------
+    Load a skybox given a directory, prefex, and file extension.
+
     >>> import pyvista
     >>> skybox = pyvista.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+
+    Load a skybox given a list of image paths.
+
+    >>> image_paths = [
+            '/home/user/_px.jpg',
+            '/home/user/_nx.jpg',
+            '/home/user/_py.jpg',
+            '/home/user/_ny.jpg',
+            '/home/user/_pz.jpg',
+            '/home/user/_nz.jpg',
+        ]
+    >>> skybox = pyvista.cubemap(image_paths=image_paths)
+
     """
-    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
-    image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
+    if image_paths is not None:
+        if len(image_paths) != 6:
+            raise ValueError("`image_paths`, when set, must contain 6 paths")
+    else:
+        sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+        image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
 
     for image_path in image_paths:
         if not os.path.isfile(image_path):

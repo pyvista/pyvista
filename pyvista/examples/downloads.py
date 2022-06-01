@@ -12,6 +12,7 @@ Examples
 """
 
 from functools import partial
+import glob
 import os
 import shutil
 from typing import Union
@@ -57,10 +58,10 @@ def delete_downloads():
     return True
 
 
-def _decompress(filename):
+def _decompress(filename, output_path):
     _check_examples_path()
     zip_ref = zipfile.ZipFile(filename, 'r')
-    zip_ref.extractall(pyvista.EXAMPLES_PATH)
+    zip_ref.extractall(output_path)
     return zip_ref.close()
 
 
@@ -77,7 +78,7 @@ def _repo_file_request(repo_path, filename):
 
 
 def _retrieve_file(retriever, filename):
-    """Retrieve file and cache it in pyvsita.EXAMPLES_PATH.
+    """Retrieve a file and cache it in pyvsita.EXAMPLES_PATH.
 
     Parameters
     ----------
@@ -89,17 +90,22 @@ def _retrieve_file(retriever, filename):
     filename : str
         The name of the file.
 
+    Returns
+    -------
+    str
+        Path to the downloaded file.
+    http.client.HTTPMessage
+        HTTP download Response.
+
     """
     _check_examples_path()
     # First check if file has already been downloaded
     local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
-    local_path_no_zip = local_path.replace('.zip', '')
-    if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
-        return local_path_no_zip, None
+
     if isinstance(retriever, str):
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
-    # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
+
     # Make sure folder exists!
     if not os.path.isdir(os.path.dirname((local_path))):
         os.makedirs(os.path.dirname((local_path)))
@@ -110,13 +116,87 @@ def _retrieve_file(retriever, filename):
             shutil.copytree(saved_file, local_path)
         else:
             shutil.copy(saved_file, local_path)
-    if pyvista.get_ext(local_path) in ['.zip']:
-        _decompress(local_path)
-        local_path = local_path[:-4]
+
     return local_path, resp
 
 
+def _retrieve_zip(retriever, filename):
+    """Retrieve a zip and cache it in pyvsita.EXAMPLES_PATH.
+
+    Parameters
+    ----------
+    retriever : str or callable
+        If str, it is treated as a url.
+        If callable, the function must take no arguments and must
+        return a tuple like (file_path, resp), where file_path is
+        the path to the file to use.
+    filename : str
+        The name of the file.
+
+    Returns
+    -------
+    list
+        List containing the unzipped files.
+    http.client.HTTPMessage
+        HTTP download Response.
+
+    """
+    _check_examples_path()
+
+    if pyvista.get_ext(filename) != '.zip':
+        raise ValueError('`_retrieve_zip` only accepts zip files')
+
+    # First check if file has already been downloaded
+    basename = os.path.basename(filename)
+    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, basename).replace('.zip', '')
+    if os.path.isdir(local_path_zip_dir):
+        return glob.glob(os.path.join(local_path_zip_dir, '*')), None
+    if isinstance(retriever, str):
+        retriever = partial(_http_request, retriever)
+    saved_file, resp = retriever()
+
+    # Make sure directory exists
+    if not os.path.isdir(local_path_zip_dir):
+        os.makedirs(local_path_zip_dir)
+
+    # move the tmp file to the new directory
+    local_path_zip_file = os.path.join(local_path_zip_dir, basename)
+    if pyvista.VTK_DATA_PATH is None:
+        shutil.move(saved_file, local_path_zip_file)
+    else:
+        shutil.copy(saved_file, local_path_zip_file)
+
+    # decompress and remove the zip file to save space
+    _decompress(local_path_zip_file, local_path_zip_dir)
+    os.remove(local_path_zip_file)
+    return os.listdir(local_path_zip_dir), resp
+
+
 def _download_file(filename):
+    """Download a file from https://github.com/pyvista/vtk-data/master/Data.
+
+    If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
+    to be a local git repository.
+
+    Parameters
+    ----------
+    filename : str
+        Path within https://github.com/pyvista/vtk-data/master/Data to download
+        the file from.
+
+    Examples
+    --------
+    Download the ``'blood_vessels.zip'`` file from
+    https://github.com/pyvista/vtk-data/tree/master/Data/pvtu_blood_vessels.
+    This will return a directory containing the files.
+
+    Download the ``'emote.jpg'`` file.
+
+    >>> path, _ = _download_file('emote.jpg')
+    >>> path
+    /home/user/.local/share/pyvista/examples/emote.jpg
+
+    """
     if pyvista.VTK_DATA_PATH is None:
         url = _get_vtk_file_url(filename)
         retriever = partial(_http_request, url)
@@ -130,11 +210,16 @@ def _download_file(filename):
                 f'VTK data repository does not have "Data" folder at:\n\n{pyvista.VTK_DATA_PATH}'
             )
         retriever = partial(_repo_file_request, pyvista.VTK_DATA_PATH, filename)
+
+    if pyvista.get_ext(filename) == '.zip':
+        return _retrieve_zip(retriever, filename)
     return _retrieve_file(retriever, filename)
 
 
 def _download_and_read(filename, texture=False, file_format=None, load=True):
     saved_file, _ = _download_file(filename)
+    if pyvista.get_ext(filename) == '.zip':
+        saved_file = saved_file[0]
     if not load:
         return saved_file
     if texture:
@@ -2874,6 +2959,35 @@ def download_sky_box_cube_map():  # pragma: no cover
         _download_file(image)
 
     return pyvista.cubemap(pyvista.EXAMPLES_PATH, prefix)
+
+
+def download_cube_map_debug():  # pragma: no cover
+    """Download the debug cube map texture.
+
+    Textures obtained from `BabylonJS/Babylon.js
+    <https://github.com/BabylonJS/Babylon.js>`_ and licensed under Apache2.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing a skybox.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
+    >>> dataset = examples.download_sky_box_cube_map()
+    >>> _ = pl.add_actor(dataset.to_skybox())
+    >>> pl.set_environment_texture(dataset)
+    >>> pl.show()
+
+    """
+    files = _download_file('cubemapDebug/cubemapDebug.zip')
+    image_names = ['_nx.jpg', '_ny.jpg', '_nz.jpg', '_px.jpg', '_py.jpg', '_pz.jpg']
+    image_paths = [os.path.join(files[0], image_name) for image_name in image_names]
+
+    return pyvista.cubemap(image_paths=image_paths)
 
 
 def download_backward_facing_step(load=True):  # pragma: no cover
