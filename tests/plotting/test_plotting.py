@@ -71,7 +71,7 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
     'test_pbr',
-    'test_set_environment_texture',
+    'test_set_environment_texture_cubemap',
     'test_set_viewup',
     'test_add_title',
     'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
