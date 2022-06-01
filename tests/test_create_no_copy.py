@@ -83,10 +83,6 @@ def test_no_copy_pointset_points_setter():
     assert np.allclose(mesh.points, source)
 
 
-# def test_no_copy_unstructured_grid_init():
-#     ...  # TODO
-
-
 def test_no_copy_unstructured_grid_points_setter():
     source = np.random.rand(100, 3)
     mesh = pyvista.UnstructuredGrid()
