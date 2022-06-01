@@ -28,7 +28,9 @@ def test_no_copy_polydata_init():
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
     assert np.allclose(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
 
 
 def test_no_copy_polydata_points_setter():
@@ -38,7 +40,9 @@ def test_no_copy_polydata_points_setter():
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
     assert np.allclose(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
 
 
 def test_no_copy_structured_mesh_init(structured_points):
@@ -48,7 +52,9 @@ def test_no_copy_structured_mesh_init(structured_points):
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
     assert np.allclose(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
 
 
 def test_no_copy_structured_mesh_points_setter(structured_points):
@@ -59,7 +65,9 @@ def test_no_copy_structured_mesh_points_setter(structured_points):
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
     assert np.allclose(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
 
 
 @pointsetmark
@@ -69,7 +77,9 @@ def test_no_copy_pointset_init():
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
     assert np.allclose(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
 
 
 @pointsetmark
@@ -80,7 +90,9 @@ def test_no_copy_pointset_points_setter():
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
     assert np.allclose(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
 
 
 def test_no_copy_unstructured_grid_points_setter():
@@ -90,7 +102,9 @@ def test_no_copy_unstructured_grid_points_setter():
     pts = mesh.points
     pts /= 2
     assert np.allclose(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
     assert np.allclose(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
 
 
 def test_no_copy_rectilinear_grid():
@@ -101,15 +115,21 @@ def test_no_copy_rectilinear_grid():
     x = mesh.x
     x /= 2
     assert np.allclose(mesh.x, x)
+    assert np.may_share_memory(mesh.x, x)
     assert np.allclose(mesh.x, xrng)
+    assert np.may_share_memory(mesh.x, xrng)
     y = mesh.y
     y /= 2
     assert np.allclose(mesh.y, y)
+    assert np.may_share_memory(mesh.y, y)
     assert np.allclose(mesh.y, yrng)
+    assert np.may_share_memory(mesh.y, yrng)
     z = mesh.z
     z /= 2
     assert np.allclose(mesh.z, z)
+    assert np.may_share_memory(mesh.z, z)
     assert np.allclose(mesh.z, zrng)
+    assert np.may_share_memory(mesh.z, zrng)
 
 
 def test_raise_rectilinear_grid_non_unique():
