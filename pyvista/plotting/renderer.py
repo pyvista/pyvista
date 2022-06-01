@@ -2619,9 +2619,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ----------
         texture : vtk.vtkTexture
             Texture.
+
         is_srgb : bool, optional
             If the texture is in sRGB color space, set the color flag on the
-            texture or set the parameter this parameter to ``True``.
+            texture or set this parameter to ``True``. Textures are assumed
+            to be in linear color space by default.
 
         Examples
         --------
