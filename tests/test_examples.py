@@ -147,7 +147,7 @@ if TEST_DOWNLOADS:
 
     def test_download_tetra_dc_mesh():
         data = examples.download_tetra_dc_mesh()
-        assert data.n_cells
+        assert data.n_blocks
 
     def test_download_tetrahedron():
         data = examples.download_tetrahedron()

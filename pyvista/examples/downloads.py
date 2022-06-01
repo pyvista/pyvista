@@ -37,6 +37,17 @@ def _check_examples_path():
         )
 
 
+def _cache_version(cache_version_file) -> int:
+    """Return the cache version."""
+    if os.path.isfile(cache_version_file):
+        with open(cache_version_file) as fid:
+            try:
+                return int(fid.read())
+            except:
+                pass
+    return 0
+
+
 def _verify_cache_integrity():  # pragma: no cover
     """Verify that the version of the cache matches the expected version.
 
@@ -45,17 +56,13 @@ def _verify_cache_integrity():  # pragma: no cover
 
     """
     cache_version_file = os.path.join(pyvista.EXAMPLES_PATH, 'VERSION')
-    # clear with no version file or an old version file
-    if not os.path.isfile(cache_version_file):
-        return delete_downloads()
+    cache_version = _cache_version(cache_version_file)
 
-    with open(cache_version_file) as fid:
-        try:
-            cache_version = int(fid.read())
-            if cache_version < CACHE_VERSION:
-                return delete_downloads()
-        except:
-            return delete_downloads()
+    # clear with no version file or an old cache version
+    if cache_version < CACHE_VERSION:
+        delete_downloads()
+        with open(cache_version_file, 'w') as fid:
+            fid.write(str(CACHE_VERSION))
 
 
 def delete_downloads():
