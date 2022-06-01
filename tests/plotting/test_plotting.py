@@ -245,7 +245,7 @@ def test_pbr(sphere):
     pl.show(before_close_callback=verify_cache_image)
 
 
-@kip_not_vtk9
+@skip_not_vtk9
 @skip_windows
 @skip_mac
 def test_set_environment_texture_cubemap(sphere):
