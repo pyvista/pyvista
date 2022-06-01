@@ -68,6 +68,10 @@ def test_load_random_hills():
 
 if TEST_DOWNLOADS:
 
+    def test_download_single_sphere_animation():
+        data = examples.download_single_sphere_animation()
+        assert data.n_blocks
+
     def test_download_masonry_texture():
         data = examples.download_masonry_texture()
         assert isinstance(data, vtk.vtkTexture)
@@ -139,6 +143,10 @@ if TEST_DOWNLOADS:
 
     def test_download_iron_protein():
         data = examples.download_iron_protein()
+        assert data.n_cells
+
+    def test_download_tetra_dc_mesh():
+        data = examples.download_tetra_dc_mesh()
         assert data.n_cells
 
     def test_download_tetrahedron():

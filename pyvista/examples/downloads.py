@@ -24,6 +24,8 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
+CACHE_VERSION = 1
+
 
 def _check_examples_path():
     """Check if the examples path exists."""
@@ -33,6 +35,27 @@ def _check_examples_path():
             'environment variable `PYVISTA_USERDATA_PATH` '
             'to a writable path and restarting python'
         )
+
+
+def _verify_cache_integrity():  # pragma: no cover
+    """Verify that the version of the cache matches the expected version.
+
+    Clears cache when there is a version mismatch. This avoids any potential
+    issues with old file structures due to changed download methods.
+
+    """
+    cache_version_file = os.path.join(pyvista.EXAMPLES_PATH, 'VERSION')
+    # clear with no version file or an old version file
+    if not os.path.isfile(cache_version_file):
+        return delete_downloads()
+
+    with open(cache_version_file) as fid:
+        try:
+            cache_version = int(fid.read())
+            if cache_version < CACHE_VERSION:
+                return delete_downloads()
+        except:
+            return delete_downloads()
 
 
 def delete_downloads():
@@ -188,20 +211,11 @@ def _download_file(filename):
     --------
     Download the ``'blood_vessels.zip'`` file from
     https://github.com/pyvista/vtk-data/tree/master/Data/pvtu_blood_vessels.
-    This return a list of all files downloaded.
+    This returns a path of the unzipped archive.
 
-    >>> files, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
-    >>> files
-    ['/pth/share/pyvista/examples/blood_vessels/__MACOSX',
-     '/pth/share/pyvista/examples/blood_vessels/blood_vessels',
-     '/pth/share/pyvista/examples/blood_vessels/__MACOSX/blood_vessels',
-     '/pth/share/pyvista/examples/blood_vessels/__MACOSX/blood_vessels/T0000000500',
-     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500.pvtu',
-     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500',
-     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/001.vtu',
-     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/002.vtu',
-     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/003.vtu',
-     '/pth/share/pyvista/examples/blood_vessels/blood_vessels/T0000000500/000.vtu']
+    >>> path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
+    >>> path
+    /home/user/.local/share/pyvista/examples/blood_vessels
 
     Download the ``'emote.jpg'`` file.
 
@@ -2503,6 +2517,7 @@ def download_tetra_dc_mesh():  # pragma: no cover
 
     """
     local_path, _ = _download_file('dc-inversion.zip')
+    local_path = os.path.join(local_path, 'dc-inversion')
     filename = os.path.join(local_path, 'mesh-forward.vtu')
     fwd = pyvista.read(filename)
     fwd.set_active_scalars('Resistivity(log10)-fwd')
@@ -3615,8 +3630,8 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     >>> plotter.close()
 
     """
-    _download_file('PVD/paraview/singleSphereAnimation.zip')
-    filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
+    path, _ = _download_file('PVD/paraview/singleSphereAnimation.zip')
+    filename = os.path.join(path, 'singleSphereAnimation.pvd')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
