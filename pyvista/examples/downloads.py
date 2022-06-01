@@ -173,15 +173,12 @@ def _retrieve_zip(retriever, filename):
     """
     _check_examples_path()
 
-    if pyvista.get_ext(filename) != '.zip':
-        raise ValueError('`_retrieve_zip` only accepts zip files')
-
     # First check if file has already been downloaded
     basename = os.path.basename(filename)
     local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, basename).replace('.zip', '')
     if os.path.isdir(local_path_zip_dir):
         return local_path_zip_dir, None
-    if isinstance(retriever, str):
+    if isinstance(retriever, str):  # pragma: no cover
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
 
@@ -193,7 +190,7 @@ def _retrieve_zip(retriever, filename):
     local_path_zip_file = os.path.join(local_path_zip_dir, basename)
     if pyvista.VTK_DATA_PATH is None:
         shutil.move(saved_file, local_path_zip_file)
-    else:
+    else:  # pragma: no cover
         shutil.copy(saved_file, local_path_zip_file)
 
     # decompress and remove the zip file to save space
@@ -251,14 +248,41 @@ def _download_file(filename):
 
 
 def _download_and_read(filename, texture=False, file_format=None, load=True):
+    """Download and read a file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the filename. If filename is a zip archive, must contain a
+        single file to be read.
+
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
+    file_format : str, optional
+        Override the file format with a different extension.
+
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    """
     saved_file, _ = _download_file(filename)
-    if pyvista.get_ext(filename) == '.zip':
+
+    # if zip contains a single file, permit read and load
+    if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
         files = os.listdir(saved_file)
         if len(files) > 1:
             raise ValueError(
                 'Multiple files in zip archive. Cannot download and read automatically.'
             )
         saved_file = os.path.join(saved_file, files[0])
+
     if not load:
         return saved_file
     if texture:

@@ -144,6 +144,9 @@ def test_skybox(tmpdir):
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
         pyvista.cubemap('')
 
+    with pytest.raises(ValueError, match='must contain 6 paths'):
+        pyvista.cubemap(image_paths=['/path'])
+
 
 def test_array_association():
     # TODO: cover vtkTable/ROW association case

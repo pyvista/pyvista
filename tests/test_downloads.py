@@ -5,6 +5,26 @@ import pytest
 
 import pyvista
 from pyvista import examples
+from pyvista.examples.downloads import _cache_version
+
+
+def test_cache_version(tmpdir):
+    tmp_cache_file = str(tmpdir.join('VERSION'))
+
+    # non-existent file should return 0
+    assert not os.path.isfile(tmp_cache_file)
+    assert _cache_version(tmp_cache_file) == 0
+
+    # invalid file returns 0
+    with open(tmp_cache_file, 'w') as fid:
+        fid.write('aaa')
+    assert _cache_version(tmp_cache_file) == 0
+
+    # read it correctly
+    ver = 1
+    with open(tmp_cache_file, 'w') as fid:
+        fid.write(str(ver))
+    assert _cache_version(tmp_cache_file) == ver
 
 
 def test_invalid_dir():
