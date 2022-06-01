@@ -27,9 +27,9 @@ def test_no_copy_polydata_init():
     mesh = pyvista.PolyData(source)
     pts = mesh.points
     pts /= 2
-    assert np.allclose(mesh.points, pts)
+    assert np.array_equal(mesh.points, pts)
     assert np.may_share_memory(mesh.points, pts)
-    assert np.allclose(mesh.points, source)
+    assert np.array_equal(mesh.points, source)
     assert np.may_share_memory(mesh.points, source)
 
 
@@ -39,9 +39,9 @@ def test_no_copy_polydata_points_setter():
     mesh.points = source
     pts = mesh.points
     pts /= 2
-    assert np.allclose(mesh.points, pts)
+    assert np.array_equal(mesh.points, pts)
     assert np.may_share_memory(mesh.points, pts)
-    assert np.allclose(mesh.points, source)
+    assert np.array_equal(mesh.points, source)
     assert np.may_share_memory(mesh.points, source)
 
 
@@ -51,9 +51,9 @@ def test_no_copy_structured_mesh_init(structured_points):
     mesh.dimensions = dims
     pts = mesh.points
     pts /= 2
-    assert np.allclose(mesh.points, pts)
+    assert np.array_equal(mesh.points, pts)
     assert np.may_share_memory(mesh.points, pts)
-    assert np.allclose(mesh.points, source)
+    assert np.array_equal(mesh.points, source)
     assert np.may_share_memory(mesh.points, source)
 
 
@@ -64,9 +64,9 @@ def test_no_copy_structured_mesh_points_setter(structured_points):
     mesh.dimensions = dims
     pts = mesh.points
     pts /= 2
-    assert np.allclose(mesh.points, pts)
+    assert np.array_equal(mesh.points, pts)
     assert np.may_share_memory(mesh.points, pts)
-    assert np.allclose(mesh.points, source)
+    assert np.array_equal(mesh.points, source)
     assert np.may_share_memory(mesh.points, source)
 
 
@@ -76,9 +76,9 @@ def test_no_copy_pointset_init():
     mesh = pyvista.PointSet(source)
     pts = mesh.points
     pts /= 2
-    assert np.allclose(mesh.points, pts)
+    assert np.array_equal(mesh.points, pts)
     assert np.may_share_memory(mesh.points, pts)
-    assert np.allclose(mesh.points, source)
+    assert np.array_equal(mesh.points, source)
     assert np.may_share_memory(mesh.points, source)
 
 
@@ -89,9 +89,9 @@ def test_no_copy_pointset_points_setter():
     mesh.points = source
     pts = mesh.points
     pts /= 2
-    assert np.allclose(mesh.points, pts)
+    assert np.array_equal(mesh.points, pts)
     assert np.may_share_memory(mesh.points, pts)
-    assert np.allclose(mesh.points, source)
+    assert np.array_equal(mesh.points, source)
     assert np.may_share_memory(mesh.points, source)
 
 
@@ -101,9 +101,9 @@ def test_no_copy_unstructured_grid_points_setter():
     mesh.points = source
     pts = mesh.points
     pts /= 2
-    assert np.allclose(mesh.points, pts)
+    assert np.array_equal(mesh.points, pts)
     assert np.may_share_memory(mesh.points, pts)
-    assert np.allclose(mesh.points, source)
+    assert np.array_equal(mesh.points, source)
     assert np.may_share_memory(mesh.points, source)
 
 
@@ -114,21 +114,21 @@ def test_no_copy_rectilinear_grid():
     mesh = pyvista.RectilinearGrid(xrng, yrng, zrng)
     x = mesh.x
     x /= 2
-    assert np.allclose(mesh.x, x)
+    assert np.array_equal(mesh.x, x)
     assert np.may_share_memory(mesh.x, x)
-    assert np.allclose(mesh.x, xrng)
+    assert np.array_equal(mesh.x, xrng)
     assert np.may_share_memory(mesh.x, xrng)
     y = mesh.y
     y /= 2
-    assert np.allclose(mesh.y, y)
+    assert np.array_equal(mesh.y, y)
     assert np.may_share_memory(mesh.y, y)
-    assert np.allclose(mesh.y, yrng)
+    assert np.array_equal(mesh.y, yrng)
     assert np.may_share_memory(mesh.y, yrng)
     z = mesh.z
     z /= 2
-    assert np.allclose(mesh.z, z)
+    assert np.array_equal(mesh.z, z)
     assert np.may_share_memory(mesh.z, z)
-    assert np.allclose(mesh.z, zrng)
+    assert np.array_equal(mesh.z, zrng)
     assert np.may_share_memory(mesh.z, zrng)
 
 
