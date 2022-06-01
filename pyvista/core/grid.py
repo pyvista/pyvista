@@ -129,7 +129,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
             if isinstance(args[0], _vtk.vtkRectilinearGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
+                self._from_file(args[0], **kwargs)
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0], None, None, check_duplicates)
             else:
