@@ -71,6 +71,7 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
     'test_pbr',
+    'test_set_environment_texture',
     'test_set_viewup',
     'test_add_title',
     'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
@@ -241,6 +242,20 @@ def test_pbr(sphere):
         smooth_shading=True,
         diffuse=1,
     )
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_not_vtk9
+@skip_windows
+@skip_mac
+@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
+def test_set_environment_texture_cubemap(sphere):
+    """Test set_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter(lighting=None)
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
     pl.show(before_close_callback=verify_cache_image)
 
 

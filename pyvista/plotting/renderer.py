@@ -2606,7 +2606,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.GradientBackgroundOff()
         self.Modified()
 
-    def set_environment_texture(self, texture):
+    def set_environment_texture(self, texture, is_srgb=False):
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
@@ -2619,12 +2619,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ----------
         texture : vtk.vtkTexture
             Texture.
-
-        Warnings
-        --------
-        This texture must be expressed in linear color space. If the
-        texture is in sRGB color space, set the color flag on the texture or
-        set the argument isSRGB to true.
+        is_srgb : bool, optional
+            If the texture is in sRGB color space, set the color flag on the
+            texture or set the parameter this parameter to ``True``.
 
         Examples
         --------
@@ -2649,7 +2646,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture)
+        self.SetEnvironmentTexture(texture, is_srgb)
         self.Modified()
 
     def close(self):
