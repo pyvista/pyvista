@@ -1440,14 +1440,14 @@ def cubemap(path='', prefix='', ext='.jpg', image_paths=None):
     Load a skybox given a list of image paths.
 
     >>> image_paths = [
-            '/home/user/_px.jpg',
-            '/home/user/_nx.jpg',
-            '/home/user/_py.jpg',
-            '/home/user/_ny.jpg',
-            '/home/user/_pz.jpg',
-            '/home/user/_nz.jpg',
-        ]
-    >>> skybox = pyvista.cubemap(image_paths=image_paths)
+    ...     '/home/user/_px.jpg',
+    ...     '/home/user/_nx.jpg',
+    ...     '/home/user/_py.jpg',
+    ...     '/home/user/_ny.jpg',
+    ...     '/home/user/_pz.jpg',
+    ...     '/home/user/_nz.jpg',
+    ... ]
+    >>> skybox = pyvista.cubemap(image_paths=image_paths)  # doctest:+SKIP
 
     """
     if image_paths is not None:

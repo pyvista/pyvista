@@ -220,14 +220,14 @@ def _download_file(filename):
     https://github.com/pyvista/vtk-data/tree/master/Data/pvtu_blood_vessels.
     This returns a path of the unzipped archive.
 
-    >>> path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
-    >>> path
+    >>> path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')  # doctest:+SKIP
+    >>> path  # doctest:+SKIP
     /home/user/.local/share/pyvista/examples/blood_vessels
 
     Download the ``'emote.jpg'`` file.
 
-    >>> path, _ = _download_file('emote.jpg')
-    >>> path
+    >>> path, _ = _download_file('emote.jpg')  # doctest:+SKIP
+    >>> path  # doctest:+SKIP
     /home/user/.local/share/pyvista/examples/emote.jpg
 
     """
