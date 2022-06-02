@@ -446,8 +446,10 @@ class Texture(_vtk.vtkTexture, DataObject):
                 flip.SetFilteredAxis(1)  # flip y axis
                 flip.Update()
                 self.SetInputDataObject(i, flip.GetOutput())
+        elif uinput is None:
+            pass
         else:
-            raise TypeError(f'Texture unable to be made from ({type(uinput)})')
+            raise TypeError(f'Cannot create a pyvista.Texture from ({type(uinput)})')
 
     def __repr__(self):
         """Return the object representation."""
