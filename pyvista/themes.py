@@ -13,8 +13,8 @@ Apply a built-in theme
 Load a theme into pyvista
 
 >>> theme = pyvista.themes.DefaultTheme()
->>> theme.save('my_theme.json')
->>> loaded_theme = pyvista.load_theme('my_theme.json')
+>>> theme.save('my_theme.json')  # doctest:+SKIP
+>>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
 pyvista.

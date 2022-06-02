@@ -477,6 +477,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     Returns
     -------
     pyvista.PolyData
+        Line mesh.
 
     Examples
     --------

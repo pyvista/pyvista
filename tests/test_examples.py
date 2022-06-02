@@ -386,5 +386,13 @@ if TEST_DOWNLOADS:
         assert isinstance(data, pyvista.UniformGrid)
         assert all([data.n_points, data.n_cells])
 
+    def test_vrml_download_teapot():
+        data = examples.vrml.download_teapot()
+        assert data.n_cells
+
+    def test_vrml_download_sextant():
+        data = examples.vrml.download_sextant()
+        assert data.n_cells
+
 
 # End of download tests

@@ -3772,7 +3772,13 @@ def download_cgns_multi(load=True):  # pragma: no cover
     filename, _ = _download_file('cgns/multi.cgns')
     if not load:
         return filename
-    return pyvista.get_reader(filename).read()
+    reader = pyvista.get_reader(filename)
+
+    # disable reading the boundary patch. As of VTK 9.1.0 this generates
+    # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
+    # yet."
+    reader.load_boundary_patch = False
+    return reader.read()
 
 
 def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
