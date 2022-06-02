@@ -1001,6 +1001,7 @@ def test_iren_context_style(pl):
     assert pl.iren._context_style.GetScene() is None
 
 
+@skip_mac
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d
