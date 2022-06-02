@@ -226,7 +226,6 @@ def test_texture():
 def test_texture_from_images(image):
     texture = pyvista.Texture([image] * 6)
     assert texture.cube_map
-    texture.plot(off_screen=False)
 
 
 def test_skybox():
