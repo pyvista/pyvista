@@ -373,7 +373,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         * +Y
         * +Z
 
-    kwargs : dict, optional
+    **kwargs : dict, optional
         Optional arguments when reading from a file.
 
     Examples
@@ -396,6 +396,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     Create a texture from a RGBA array. Note how this is colored per "point"
     rather than per "pixel".
 
+    >>> import numpy as np
     >>> arr = np.array(
     ...     [
     ...         [255, 255, 255],
