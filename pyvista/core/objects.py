@@ -361,7 +361,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, list
+    uinput : str, vtkImageData, vtkTexture, list, optional
         Filename, ``vtkImagedata``, ``vtkTexture``, or a list of images to
         create a cubemap. If a list of images. Must be of the same size and in
         the following order:
@@ -372,6 +372,9 @@ class Texture(_vtk.vtkTexture, DataObject):
         * +X
         * +Y
         * +Z
+
+    kwargs : dict, optional
+        Optional arguments when reading from a file.
 
     Examples
     --------
@@ -419,33 +422,32 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
-        super().__init__(*args, **kwargs)
+        super().__init__(uinput, **kwargs)
 
-        if len(args) == 1:
-            if isinstance(args[0], _vtk.vtkTexture):
-                self._from_texture(args[0])
-            elif isinstance(args[0], np.ndarray):
-                self._from_array(args[0])
-            elif isinstance(args[0], _vtk.vtkImageData):
-                self._from_image_data(args[0])
-            elif isinstance(args[0], str):
-                self._from_file(filename=args[0], **kwargs)
-            elif isinstance(args[0], list):
-                self.SetMipmap(True)
-                self.SetInterpolate(True)
-                self.cube_map = True  # Must be set prior to setting images
+        if isinstance(uinput, _vtk.vtkTexture):
+            self._from_texture(uinput)
+        elif isinstance(uinput, np.ndarray):
+            self._from_array(uinput)
+        elif isinstance(uinput, _vtk.vtkImageData):
+            self._from_image_data(uinput)
+        elif isinstance(uinput, str):
+            self._from_file(filename=uinput, **kwargs)
+        elif isinstance(uinput, list):
+            self.SetMipmap(True)
+            self.SetInterpolate(True)
+            self.cube_map = True  # Must be set prior to setting images
 
-                # add each image to the cubemap
-                for i, image in enumerate(args[0]):
-                    flip = _vtk.vtkImageFlip()
-                    flip.SetInputDataObject(image)
-                    flip.SetFilteredAxis(1)  # flip y axis
-                    flip.Update()
-                    self.SetInputDataObject(i, flip.GetOutput())
-            else:
-                raise TypeError(f'Texture unable to be made from ({type(args[0])})')
+            # add each image to the cubemap
+            for i, image in enumerate(uinput):
+                flip = _vtk.vtkImageFlip()
+                flip.SetInputDataObject(image)
+                flip.SetFilteredAxis(1)  # flip y axis
+                flip.Update()
+                self.SetInputDataObject(i, flip.GetOutput())
+        else:
+            raise TypeError(f'Texture unable to be made from ({type(uinput)})')
 
     def __repr__(self):
         """Return the object representation."""

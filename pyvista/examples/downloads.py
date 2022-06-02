@@ -2876,7 +2876,7 @@ def download_sky_box_cube_map():  # pragma: no cover
     return pyvista.cubemap(pyvista.EXAMPLES_PATH, prefix)
 
 
-def download_sky(direction='nx', load=True):
+def download_sky(direction='nx', load=True):  # pragma: no cover
     """Download sample skybox image.
 
     Parameters
@@ -2894,6 +2894,11 @@ def download_sky(direction='nx', load=True):
     load : bool, optional
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid
+        Image of the sky in the specified direction.
 
     Examples
     --------

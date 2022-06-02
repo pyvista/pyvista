@@ -223,6 +223,14 @@ def test_texture():
     assert texture is not None
 
 
+def test_texture_repr():
+    texture = pyvista.Texture(examples.mapfile)
+    tex_repr = str(repr(texture))
+    assert 'Cube Map:\tFalse' in tex_repr
+    assert 'Components:\t3' in tex_repr
+    assert 'Dimensions:\t2048, 1024\n' in tex_repr
+
+
 def test_texture_from_images(image):
     texture = pyvista.Texture([image] * 6)
     assert texture.cube_map
