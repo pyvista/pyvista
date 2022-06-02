@@ -133,6 +133,11 @@ def test_no_copy_rectilinear_grid():
 
 
 def test_raise_rectilinear_grid_non_unique():
-    rng = np.array([0, 1, 2, 2], dtype=float)
+    rng_uniq = np.arange(4.0)
+    rng_dupe = np.array([0, 1, 2, 2], dtype=float)
     with pytest.raises(ValueError, match="Array contains duplicate values"):
-        pyvista.RectilinearGrid(rng, check_duplicates=True)
+        pyvista.RectilinearGrid(rng_dupe, check_duplicates=True)
+    with pytest.raises(ValueError, match="Array contains duplicate values"):
+        pyvista.RectilinearGrid(rng_uniq, rng_dupe, check_duplicates=True)
+    with pytest.raises(ValueError, match="Array contains duplicate values"):
+        pyvista.RectilinearGrid(rng_uniq, rng_uniq, rng_dupe, check_duplicates=True)
