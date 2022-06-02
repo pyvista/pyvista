@@ -62,6 +62,10 @@ skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
 )
+skip_mac_flaky = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
+)
+
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -2192,6 +2196,7 @@ def test_splitting():
     )
 
 
+@skip_mac_flaky
 def test_splitting_active_cells(cube):
     cube.cell_data['cell_id'] = range(cube.n_cells)
     cube = cube.triangulate().subdivide(1)
