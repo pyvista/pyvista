@@ -580,7 +580,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         --------
         >>> import pyvista
         >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
-        >>> grid.y
+        >>> grid.x
         array([0., 1., 0., 1., 0., 1., 0., 1.])
 
         """

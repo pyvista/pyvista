@@ -13,9 +13,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 class UniformGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(
-        self, radius_factor=1.5, std_dev=2.0, scalars=None, preference='points', progress_bar=False
-    ):
+    def gaussian_smooth(self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False):
         """Smooth the data with a Gaussian kernel.
 
         Parameters
@@ -29,11 +27,6 @@ class UniformGridFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        preference : str, optional
-            When scalars is specified, this is the preferred array
-            type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``.
-
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -42,13 +35,43 @@ class UniformGridFilters(DataSetFilters):
         pyvista.UniformGrid
             Uniform grid with smoothed scalars.
 
+        Notes
+        -----
+        This filter only supports point data. Consider converting any cell
+        data to point data using the :func:`DataSet.cell_data_to_point_data`
+        filter to convert any cell data to point data.
+
+        Examples
+        --------
+        First, create sample data to smooth. Here, we use
+        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        to create meaningful data.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid.plot(show_scalar_bar=False)
+
+        Next, smooth the sample data.
+
+        >>> smoothed = grid.gaussian_smooth()
+        >>> smoothed.plot(show_scalar_bar=False)
+
+        See :ref:`gaussian_smoothing_example` for a full example using this filter.
+
         """
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
+            if field.value == 1:
+                raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference=preference)
+            field = self.get_array_association(scalars, preference='point')
+            if field.value == 1:
+                raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -67,6 +90,15 @@ class UniformGridFilters(DataSetFilters):
         self, kernel_size=(3, 3, 3), scalars=None, preference='points', progress_bar=False
     ):
         """Smooth data using a median filter.
+
+        The Median filter that replaces each pixel with the median value from a
+        rectangular neighborhood around that pixel. Neighborhoods can be no
+        more than 3 dimensional. Setting one axis of the neighborhood
+        kernelSize to 1 changes the filter into a 2D median.
+
+        See `vtkImageMedian3D
+        <https://vtk.org/doc/nightly/html/classvtkImageMedian3D.html#details>`_
+        for more details.
 
         Parameters
         ----------
@@ -92,10 +124,34 @@ class UniformGridFilters(DataSetFilters):
         pyvista.UniformGrid
             Uniform grid with smoothed scalars.
 
+        Warnings
+        --------
+        Applying this filter to cell data will send the output to a new point
+        array with the same name, overwriting any existing point data array
+        with the same name.
+
+        Examples
+        --------
+        First, create sample data to smooth. Here, we use
+        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        to create meaningful data.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid.plot(show_scalar_bar=False)
+
+        Next, smooth the sample data.
+
+        >>> smoothed = grid.median_smooth(kernel_size=(10, 10, 10))
+        >>> smoothed.plot(show_scalar_bar=False)
+
         """
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
@@ -171,7 +227,6 @@ class UniformGridFilters(DataSetFilters):
         erode_value=0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        preference='points',
         progress_bar=False,
     ):
         """Dilates one value and erodes another.
@@ -198,11 +253,6 @@ class UniformGridFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        preference : str, optional
-            When scalars are specified, this is the preferred array
-            type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``.
-
         progress_bar : bool, optional
             Display a progress bar to indicate progress. Default ``False``.
 
@@ -210,6 +260,12 @@ class UniformGridFilters(DataSetFilters):
         -------
         pyvista.UniformGrid
             Dataset that has been dilated/eroded on the boundary of the specified scalars.
+
+        Notes
+        -----
+        This filter only supports point data. Consider converting any cell
+        data to point data using the :func:`DataSet.cell_data_to_point_data`
+        filter to convert ny cell data to point data.
 
         Examples
         --------
@@ -236,9 +292,14 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
+            if field.value == 1:
+                raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference=preference)
+            field = self.get_array_association(scalars, preference='point')
+            if field.value == 1:
+                raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -266,6 +327,10 @@ class UniformGridFilters(DataSetFilters):
 
         If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
         If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
+
+        Warning: applying this filter to cell data will send the output to a
+        new point array with the same name, overwriting any existing point data
+        array with the same name.
 
         Parameters
         ----------
@@ -317,6 +382,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)

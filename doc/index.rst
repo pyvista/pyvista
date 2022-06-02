@@ -118,7 +118,7 @@ the points directly.
 
     # create many spheres from the point cloud
     sphere = pyvista.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
-    pc = pdata.glyph(scale=False, geom=sphere)
+    pc = pdata.glyph(scale=False, geom=sphere, orient=False)
     pc.plot(cmap='Reds')
 
 

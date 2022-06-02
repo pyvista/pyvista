@@ -14,6 +14,7 @@ Examples
 from functools import partial
 import os
 import shutil
+from typing import Union
 from urllib.request import urlretrieve
 import zipfile
 
@@ -87,6 +88,7 @@ def _retrieve_file(retriever, filename):
         the path to the file to use.
     filename : str
         The name of the file.
+
     """
     _check_examples_path()
     # First check if file has already been downloaded
@@ -1311,6 +1313,30 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
     if zoom:
         return _download_and_read('Gourds.png', texture=True, load=load)
     return _download_and_read('Gourds2.jpg', texture=True, load=load)
+
+
+def download_gourds_pnm(load=True):  # pragma: no cover
+    """Download gourds dataset from pnm file.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gourds_pnm()
+    >>> dataset.plot(rgba=True, cpos="xy")
+
+    """
+    return _download_and_read('Gourds.pnm', load=load)
 
 
 def download_unstructured_grid(load=True):  # pragma: no cover
@@ -2719,7 +2745,7 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
     """Download the room surface mesh.
 
     This mesh is for demonstrating the difference that depth peeling can
-    provide whenn rendering translucent geometries.
+    provide when rendering translucent geometries.
 
     This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
 
@@ -3440,9 +3466,27 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_single_sphere_animation(load=False)
+    >>> reader = pyvista.PVDReader(filename)
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.open_gif("single_sphere_pvd.gif")
+    >>> for time_value in reader.time_values:
+    ...     reader.set_active_time_value(time_value)
+    ...     mesh = reader.read()
+    ...     _ = plotter.add_mesh(mesh, smooth_shading=True)
+    ...     _ = plotter.add_text(f"Time: {time_value:.0f}", color="black")
+    ...     plotter.write_frame()
+    ...     plotter.clear()
+    ...     plotter.enable_lightkit()
+    >>> plotter.close()
+
     """
+    _download_file('PVD/paraview/singleSphereAnimation.zip')
     filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
-    folder, _ = _download_file('PVD/paraview/singleSphereAnimation')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3462,9 +3506,27 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_dual_sphere_animation(load=False)
+    >>> reader = pyvista.PVDReader(filename)
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.open_gif("sphere_pvd.gif")
+    >>> for time_value in reader.time_values:
+    ...     reader.set_active_time_value(time_value)
+    ...     mesh = reader.read()
+    ...     _ = plotter.add_mesh(mesh, smooth_shading=True)
+    ...     _ = plotter.add_text(f"Time: {time_value:.0f}", color="black")
+    ...     plotter.write_frame()
+    ...     plotter.clear()
+    ...     plotter.enable_lightkit()
+    >>> plotter.close()
+
     """
+    _download_file('PVD/paraview/dualSphereAnimation.zip')
     filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
-    folder, _ = _download_file('PVD/paraview/dualSphereAnimation')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3592,22 +3654,25 @@ def download_lucy(load=True):  # pragma: no cover
     return _download_and_read('lucy.ply', load=load)
 
 
-def download_can(partial=False):  # pragma: no cover
+def download_can(partial=False, load=True):  # pragma: no cover
     """Download the can dataset mesh.
 
-    Original downloaded from Testing/Data/FileSeriesat from paraview.org. Used
+    File obtained from `Kitware <https://www.kitware.com/>`_. Used
     for testing hdf files.
 
     Parameters
     ----------
     partial : bool, optional
-        Load part of the dataset. Defaults to to ``False`` and
-        filename will be returned.
+        Load part of the dataset. Defaults to ``False``.
+
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData
-        The example ParaView can DataSet.
+    pyvista.PolyData, str, or List[str]
+        The example ParaView can DataSet or file path(s).
 
     Examples
     --------
@@ -3619,17 +3684,19 @@ def download_can(partial=False):  # pragma: no cover
     >>> dataset.plot(scalars='VEL', smooth_shading=True)
 
     """
-    can_0 = _download_and_read('hdf/can_0.hdf')
+    can_0 = _download_and_read('hdf/can_0.hdf', load=load)
     if partial:
         return can_0
 
-    return pyvista.merge(
-        [
-            can_0,
-            _download_and_read('hdf/can_1.hdf'),
-            _download_and_read('hdf/can_2.hdf'),
-        ]
-    )
+    cans = [
+        can_0,
+        _download_and_read('hdf/can_1.hdf', load=load),
+        _download_and_read('hdf/can_2.hdf', load=load),
+    ]
+
+    if load:
+        return pyvista.merge(cans)
+    return cans
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
@@ -3705,4 +3772,112 @@ def download_cgns_multi(load=True):  # pragma: no cover
     filename, _ = _download_file('cgns/multi.cgns')
     if not load:
         return filename
-    return pyvista.get_reader(filename).read()
+    reader = pyvista.get_reader(filename)
+
+    # disable reading the boundary patch. As of VTK 9.1.0 this generates
+    # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
+    # yet."
+    reader.load_boundary_patch = False
+    return reader.read()
+
+
+def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
+    """Download TCIA DICOM stack volume.
+
+    Original download from the `The Cancer Imaging Archive (TCIA)
+    <https://www.cancerimagingarchive.net/>`_. This is part of the
+    Clinical Proteomic Tumor Analysis Consortium Sarcomas (CPTAC-SAR)
+    collection.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    References
+    ----------
+    * **Data Citation**
+
+        National Cancer Institute Clinical Proteomic Tumor Analysis Consortium
+        (CPTAC). (2018).  Radiology Data from the Clinical Proteomic Tumor
+        Analysis Consortium Sarcomas [CPTAC-SAR] collection [Data set]. The
+        Cancer Imaging Archive.  DOI: 10.7937/TCIA.2019.9bt23r95
+
+    * **Acknowledgement**
+
+        Data used in this publication were generated by the National Cancer Institute Clinical
+        Proteomic Tumor Analysis Consortium (CPTAC).
+
+    * **TCIA Citation**
+
+        Clark K, Vendt B, Smith K, Freymann J, Kirby J, Koppel P, Moore S, Phillips S,
+        Maffitt D, Pringle M, Tarbox L, Prior F. The Cancer Imaging Archive (TCIA):
+        Maintaining and Operating a Public Information Repository, Journal of Digital Imaging,
+        Volume 26, Number 6, December, 2013, pp 1045-1057. doi: 10.1007/s10278-013-9622-7
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_dicom_stack()
+    >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
+
+    """
+    path, _ = _download_file('DICOM_Stack/data.zip')
+    if load:
+        reader = pyvista.DICOMReader(path)
+        return reader.read()
+    return path
+
+
+def download_parched_canal_4k(load=True):  # pragma: no cover
+    """Download parched canal 4k dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.Texture or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_parched_canal_4k()
+    >>> dataset.plot(cpos="xy")
+
+    """
+    return _download_and_read("parched_canal_4k.hdr", texture=True, load=load)
+
+
+def download_cells_nd(load=True):  # pragma: no cover
+    """Download example AVS UCD dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cells_nd()
+    >>> dataset.plot(cpos="xy")
+
+    """
+    return _download_and_read("cellsnd.ascii.inp", load=load)

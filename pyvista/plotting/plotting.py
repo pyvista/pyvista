@@ -195,8 +195,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         col_weights=None,
         lighting='light kit',
         theme=None,
+        **kwargs,
     ):
         """Initialize base plotter."""
+        super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
@@ -361,21 +363,69 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if set_camera:
             self.camera_position = 'xy'
 
-    def export_html(self, filename):
+    def import_vrml(self, filename):
+        """Import a VRML file into the plotter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the VRML file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_vrml` for a full example using this method.
+
+        """
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
+        importer = vtkVRMLImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
+    def export_html(self, filename, backend='pythreejs'):
         """Export this plotter as an interactive scene to a HTML file.
+
+        You have the option of exposing the scene using either vtk.js (using ``panel``) or
+        three.js (using ``pythreejs``), both of which are excellent JavaScript libraries to visualize
+        small to moderately complex scenes for scientific visualization.
 
         Parameters
         ----------
         filename : str
             Path to export the html file to.
 
+        backend : str, optional
+            One of the following:
+
+            - ``'pythreejs'``
+            - ``'panel'``
+
+            For more details about the advantages and disadvantages of each
+            backend, see :ref:`jupyter_plotting`.
+
         Notes
         -----
-        You will need ``ipywidgets`` and ``pythreejs`` installed for
-        this feature.
+        You will need ``ipywidgets`` and ``pythreejs`` installed if you
+        wish to export using the ``'pythreejs'`` backend, or ``'panel'``
+        installed to export using ``'panel'``.
 
         Examples
         --------
+        Export as a three.js scene using the pythreejs backend.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
@@ -385,20 +435,51 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
+        Export as a vtk.js scene using the panel backend.
+
+        >>> pl.export_html('pyvista_panel.html', backend='panel')  # doctest:+SKIP
+
         """
-        pythreejs_renderer = self.to_pythreejs()
+        if backend == 'pythreejs':
+            widget = self.to_pythreejs()
+        elif backend == 'panel':
+            self._save_panel(filename)
+            return
+        else:
+            raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
+        widget = self.to_pythreejs()
 
         # import after converting as we check for pythreejs import first
         try:
-            from ipywidgets.embed import embed_minimal_html
+            from ipywidgets.embed import dependency_state, embed_minimal_html
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install ipywidgets with:\n' '\n\tpip install ipywidgets')
+            raise ImportError('Please install ipywidgets with:\n\n\tpip install ipywidgets')
+
+        # Garbage collection for embedded html output:
+        # https://github.com/jupyter-widgets/pythreejs/issues/217
+        state = dependency_state(widget)
 
         # convert and write to file
-        embed_minimal_html(filename, views=[pythreejs_renderer], title=self.title)
+        embed_minimal_html(filename, None, title=self.title, state=state)
+
+    def _save_panel(self, filename):
+        """Save the render window as a ``panel.pane.vtk`` html file.
+
+        See https://panel.holoviz.org/api/panel.pane.vtk.html
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the plotter as a panel scene to.
+
+        """
+        from ..jupyter.notebook import handle_plotter
+
+        pane = handle_plotter(self, backend='panel', return_viewer=True, title=self.title)
+        pane.save(filename)
 
     def to_pythreejs(self):
-        """Convert this plotting scene to a pythreejs renderer.
+        """Convert this plotting scene to a pythreejs widget.
 
         Returns
         -------
@@ -451,7 +532,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pyvista.Sphere(radius=0.02)
-        >>> pc = pdata.glyph(scale=False, geom=sphere)
+        >>> pc = pdata.glyph(scale=False, geom=sphere, orient=False)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
         ...                 show_scalar_bar=False)
@@ -537,6 +618,36 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # revert any renamed arrays
         for array in renamed_arrays:
             array.SetName('Normals')
+
+    def export_vrml(self, filename):
+        """Export the current rendering scene as a VRML file.
+
+        See `vtk.VRMLExporter <https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html>`_
+        for limitations regarding the exporter.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to export the scene to.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_hexbeam())
+        >>> pl.export_vrml("sample")
+        """
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter has been closed and cannot be shown.")
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
+        exporter = vtkVRMLExporter()
+        exporter.SetFileName(filename)
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.Write()
 
     def enable_hidden_line_removal(self, all_renderers=True):
         """Enable hidden line removal.
@@ -1139,7 +1250,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def bounds(self):
-        """Return the bounds of the active renderer."""
+        """Return the bounds of the active renderer.
+
+        Returns
+        -------
+        list
+            Bounds of the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.bounds
+        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+
+        """
         return self.renderer.bounds
 
     @property
@@ -1564,7 +1690,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.hide_axes()
 
     def show_axes_all(self):
-        """Show the axes orientation widget in all renderers."""
+        """Show the axes orientation widget in all renderers.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>>
+        >>> # create multi-window plot (1 row, 2 columns)
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>>
+        >>> # activate subplot 1 and add a mesh
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(examples.load_globe())
+        >>>
+        >>> # activate subplot 2 and add a mesh
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(examples.load_airplane())
+        >>>
+        >>> # show the axes orientation widget in all subplots
+        >>> pl.show_axes_all()
+        >>>
+        >>> # display the window
+        >>> pl.show()
+
+        """
         for renderer in self.renderers:
             renderer.show_axes()
 
@@ -1634,7 +1784,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render_points_as_spheres=None,
         render_lines_as_tubes=False,
         smooth_shading=None,
-        split_sharp_edges=False,
+        split_sharp_edges=None,
         ambient=0.0,
         diffuse=1.0,
         specular=0.0,
@@ -1804,11 +1954,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             See :ref:`shading_example`.
 
         split_sharp_edges : bool, optional
-            Split sharp edges exceeding 30 degrees when plotting with
-            smooth shading.  Control the angle with the optional
-            keyword argument ``feature_angle``.  By default this is
-            ``False``.  Note that enabling this will create a copy of
-            the input mesh within the plotter.  See
+            Split sharp edges exceeding 30 degrees when plotting with smooth
+            shading.  Control the angle with the optional keyword argument
+            ``feature_angle``.  By default this is ``False`` unless overridden
+            by the global or plotter theme.  Note that enabling this will
+            create a copy of the input mesh within the plotter.  See
             :ref:`shading_example`.
 
         ambient : float, optional
@@ -2005,14 +2155,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             scalar_bar_args = scalar_bar_args.copy()
 
+        # theme based parameters
         if show_edges is None:
             show_edges = self._theme.show_edges
-
+        if split_sharp_edges is None:
+            split_sharp_edges = self._theme.split_sharp_edges
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar
-
         if lighting is None:
             lighting = self._theme.lighting
+        feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
 
         if smooth_shading is None:
             if pbr:
@@ -2045,7 +2197,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling = 'backface'
 
         rgb = kwargs.pop('rgba', rgb)
-        feature_angle = kwargs.pop('feature_angle', 30)
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
@@ -3193,6 +3344,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
+        self.disable_picking()
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         if getattr(self, 'mesh', None) is not None:
@@ -3350,7 +3502,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         filename : str
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See ``imagio.get_writer``.
+            but other filetypes may be supported.  See :func:`imageio.get_writer()
+            <imageio.v2.get_writer>`.
 
         framerate : int, optional
             Frames per second.
@@ -3360,12 +3513,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             range is ``0 - 10``.  Higher quality leads to a larger file.
 
         **kwargs : dict, optional
-            See the documentation for ``imageio.get_writer`` for additional kwargs.
+            See the documentation for :func:`imageio.get_writer()
+            <imageio.v2.get_writer>` for additional kwargs.
 
         Notes
         -----
-        See the documentation for `imageio.get_writer
-        <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.get_writer>`_
+        See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`.
 
         Examples
         --------
@@ -3382,7 +3535,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(self, filename):
+    def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
         """Open a gif file.
 
         Parameters
@@ -3390,13 +3543,46 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Filename of the gif to open.  Filename must end in ``"gif"``.
 
+        loop : int, optional
+            The number of iterations. Default 0 (meaning loop indefinitely).
+
+        fps : float, optional
+            The number of frames per second. If duration is not given, the
+            duration for each frame is set to 1/fps. Default 10.
+
+        palettesize : int, optional
+            The number of colors to quantize the image to. Is rounded to the
+            nearest power of two. Must be between 2 and 256. Default 256.
+
+        subrectangles : bool, optional
+            If ``True``, will try and optimize the GIF by storing only the rectangular
+            parts of each frame that change with respect to the previous. Default
+            ``False``.
+
+            .. note::
+               Setting this to ``True`` may help reduce jitter in colorbars.
+
+        **kwargs : dict, optional
+            See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`
+            for additional kwargs.
+
+        Notes
+        -----
+        Consider using `pygifsicle
+        <https://github.com/LucaCappelletti94/pygifsicle>`_ to reduce the final
+        size of the gif. See `Optimizing a GIF using pygifsicle
+        <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_.
+
         Examples
         --------
-        Open a gif file.
+        Open a gif file, setting the framerate to 8 frames per second and
+        reducing the colorspace to 64.
 
         >>> import pyvista
-        >>> pl = pyvista.Plotter
-        >>> pl.open_gif('movie.gif')  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()
+        >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
+
+        See :ref:`gif_movie_example` for a full example using this method.
 
         """
         from imageio import get_writer
@@ -3406,7 +3592,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
-        self.mwriter = get_writer(filename, mode='I')
+        self.mwriter = get_writer(
+            filename,
+            mode='I',
+            loop=loop,
+            fps=fps,
+            palettesize=palettesize,
+            subrectangles=subrectangles,
+            **kwargs,
+        )
 
     def write_frame(self):
         """Write a single frame to the movie file.
@@ -4573,6 +4767,147 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 places.append(tuple(self.renderers.index_to_loc(index)))
         return places
 
+    def add_ruler(
+        self,
+        pointa,
+        pointb,
+        flip_range=False,
+        number_labels=5,
+        show_labels=True,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        title="Distance",
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+    ):
+        """Add ruler.
+
+        The ruler is a 2D object that is not occluded by 3D objects.
+        To avoid issues with perspective, it is recommended to use
+        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        and place the ruler orthogonal to the viewing direction.
+
+        The title and labels are placed to the right of ruler moving from
+        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
+        if needed.
+
+        Since the ruler is placed in an overlay on the viewing scene, the camera
+        does not automatically reset to include the ruler in the view.
+
+        Parameters
+        ----------
+        pointa : Sequence
+            Starting point for ruler.
+
+        pointb : Sequence
+            Ending point for ruler.
+
+        flip_range : bool
+            If ``True``, the distance range goes from ``pointb`` to ``pointa``.
+
+        number_labels : int
+            Number of labels to place on ruler.
+
+        show_labels : bool, optional
+            Whether to show labels.
+
+        font_size_factor : float
+            Factor to scale font size overall.
+
+        label_size_factor : float
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        title : str, optional
+            The title to display.
+
+        number_minor_ticks : int, optional
+            Number of minor ticks between major ticks.
+
+        tick_length : int
+            Length of ticks in pixels.
+
+        minor_tick_length : int
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, optional
+            Whether to show the ticks.
+
+        tick_label_offset : int
+            Offset between tick and label in pixels.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the ruler.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> cone = pyvista.Cone(height=2.0, radius=0.5)
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(cone)
+
+        Measure x direction of cone and place ruler slightly below.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
+        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     title="X Distance"
+        ... )
+
+        Measure y direction of cone and place ruler slightly to left.
+        The title and labels are placed to the right of the ruler when
+        traveling from ``pointa`` to ``pointb``.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
+        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     flip_range=True,
+        ...     title="Y Distance"
+        ... )
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        """
+        ruler = _vtk.vtkAxisActor2D()
+
+        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
+        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+
+        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        if flip_range:
+            ruler.SetRange(distance, 0)
+        else:
+            ruler.SetRange(0, distance)
+
+        ruler.SetTitle(title)
+        ruler.SetFontFactor(font_size_factor)
+        ruler.SetLabelFactor(label_size_factor)
+        ruler.SetNumberOfLabels(number_labels)
+        ruler.SetLabelVisibility(show_labels)
+        if label_format:
+            ruler.SetLabelFormat(label_format)
+
+        ruler.SetNumberOfMinorTicks(number_minor_ticks)
+        ruler.SetTickVisibility(show_ticks)
+        ruler.SetTickLength(tick_length)
+        ruler.SetMinorTickLength(minor_tick_length)
+        ruler.SetTickOffset(tick_label_offset)
+
+        self.add_actor(ruler, reset_camera=True, pickable=False)
+        return ruler
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -5069,7 +5404,7 @@ class Plotter(BasePlotter):
                 )
                 auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
-        #       as if a user presed the close button, then it destroys the
+        #       as if a user pressed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
         #       kernel if code here tries to access that renderer.
         #       See issues #135 and #186 for insight before editing the

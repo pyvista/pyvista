@@ -41,6 +41,13 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
         scale). Phase tends to repeat about every unit, so a phase of
         0.5 is a half-cycle shift.
 
+    Returns
+    -------
+    vtk.vtkPerlinNoise
+        Instance of ``vtk.vtkPerlinNoise`` to a Perlin noise field as an
+        implicit function. Use with :func:`pyvista.sample_function()
+        <pyvista.core.imaging.sample_function>`.
+
     Examples
     --------
     Create a Perlin noise function with an amplitude of 0.1, frequency

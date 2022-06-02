@@ -16,6 +16,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.errors import AmbiguousDataError, MissingDataError
 
 from . import transformations
 from .fileio import from_meshio
@@ -1458,3 +1459,111 @@ def cubemap(path='', prefix='', ext='.jpg'):
         texture.SetInputDataObject(i, flip.GetOutput())
 
     return texture
+
+
+def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
+    """Set a default vectors array on mesh, if not already set.
+
+    If an active vector already exists, no changes are made.
+
+    If an active vectors does not exist, it checks for possibly cell
+    or point arrays with shape ``(n, 3)``.  If only one exists, then
+    it is set as the active vectors.  Otherwise, an error is raised.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to set default active vectors.
+
+    Raises
+    ------
+    MissingDataError
+        If no vector-like arrays exist.
+
+    AmbiguousDataError
+        If more than one vector-like arrays exist.
+
+    """
+    if mesh.active_vectors_name is not None:
+        return
+
+    point_data = mesh.point_data
+    cell_data = mesh.cell_data
+
+    possible_vectors_point = [
+        name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+    possible_vectors_cell = [
+        name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+
+    possible_vectors = possible_vectors_point + possible_vectors_cell
+    n_possible_vectors = len(possible_vectors)
+
+    if n_possible_vectors == 1:
+        if len(possible_vectors_point) == 1:
+            preference = 'point'
+        else:
+            preference = 'cell'
+        mesh.set_active_vectors(possible_vectors[0], preference=preference)
+    elif n_possible_vectors < 1:
+        raise MissingDataError("No vector-like data available.")
+    elif n_possible_vectors > 1:
+        raise AmbiguousDataError(
+            "Multiple vector-like data available\n"
+            f"cell data: {possible_vectors_cell}.\n"
+            f"point data: {possible_vectors_point}.\n"
+            "Set one as active using DataSet.set_active_vectors(name, preference=type)"
+        )
+
+
+def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
+    """Set a default scalars array on mesh, if not already set.
+
+    If an active scalars already exists, no changes are made.
+
+    If an active scalars does not exist, it checks for point or cell
+    arrays.  If only one exists, then it is set as the active scalars.
+    Otherwise, an error is raised.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to set default active scalars.
+
+    Raises
+    ------
+    MissingDataError
+        If no arrays exist.
+
+    AmbiguousDataError
+        If more than one array exists.
+
+    """
+    if mesh.active_scalars_name is not None:
+        return
+
+    point_data = mesh.point_data
+    cell_data = mesh.cell_data
+
+    possible_scalars_point = point_data.keys()
+    possible_scalars_cell = cell_data.keys()
+
+    possible_scalars = possible_scalars_point + possible_scalars_cell
+    n_possible_scalars = len(possible_scalars)
+
+    if n_possible_scalars == 1:
+        if len(possible_scalars_point) == 1:
+            preference = 'point'
+        else:
+            preference = 'cell'
+        mesh.set_active_scalars(possible_scalars[0], preference=preference)
+    elif n_possible_scalars < 1:
+        raise MissingDataError("No data available.")
+    elif n_possible_scalars > 1:
+        raise AmbiguousDataError(
+            "Multiple data available\n"
+            f"cell data: {possible_scalars_cell}.\n"
+            f"point data: {possible_scalars_point}.\n"
+            "Set one as active using DataSet.set_active_scalars(name, preference=type)"
+        )

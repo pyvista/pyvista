@@ -23,28 +23,47 @@ Reader Classes
    :toctree: _autosummary
    :template: custom-class-template.rst
 
-    XMLImageDataReader
-    XMLPImageDataReader
-    XMLRectilinearGridReader
-    XMLPRectilinearGridReader
-    XMLUnstructuredGridReader
-    XMLPUnstructuredGridReader
-    XMLPolyDataReader
-    XMLStructuredGridReader
-    XMLMultiBlockDataReader
+    AVSucdReader
+    BYUReader
+    BinaryMarchingCubesReader
+    BMPReader
     CGNSReader
-    PVDReader
+    DEMReader
+    DICOMReader
     EnSightReader
+    FacetReader
+    FluentReader
+    GLTFReader
+    HDFReader
+    HDRReader
+    JPEGReader
+    MetaImageReader
+    MFIXReader
+    MultiBlockPlot3DReader
+    NRRDReader
+    OBJReader
     OpenFOAMReader
     PLYReader
-    OBJReader
+    PNGReader
+    PNMReader
+    PTSReader
+    PVDReader
+    Plot3DMetaReader
+    SegYReader
+    SLCReader
     STLReader
+    TIFFReader
     VTKDataSetReader
     VTKPDataSetReader
-    BYUReader
-    FacetReader
-    Plot3DMetaReader
-    BinaryMarchingCubesReader
+    XMLImageDataReader
+    XMLMultiBlockDataReader
+    XMLPImageDataReader
+    XMLPRectilinearGridReader
+    XMLPUnstructuredGridReader
+    XMLPolyDataReader
+    XMLRectilinearGridReader
+    XMLStructuredGridReader
+    XMLUnstructuredGridReader
 
 
 Inherited Classes
