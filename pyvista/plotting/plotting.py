@@ -1843,7 +1843,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using either the the Phong
+            Enable smooth shading when ``True`` using the Phong
             shading algorithm.  When ``False``, use flat shading.
             Automatically enabled when ``pbr=True``.  See
             :ref:`shading_example`.
