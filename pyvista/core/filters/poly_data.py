@@ -1300,7 +1300,7 @@ class PolyDataFilters(DataSetFilters):
         The algorithm works by determining normals for each polygon
         and then averaging them at shared points. When sharp edges are
         present, the edges are split and new points generated to
-        prevent blurry edges (due to Gouraud shading).
+        prevent blurry edges (due to Phong shading).
 
         Parameters
         ----------

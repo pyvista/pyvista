@@ -50,6 +50,7 @@ warnings.filterwarnings(
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
 
+
 # -- General configuration ------------------------------------------------
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
