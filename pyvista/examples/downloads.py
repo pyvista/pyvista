@@ -2891,6 +2891,10 @@ def download_sky(direction='nx', load=True):
         * ``"py"``
         * ``"pz"``
 
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Examples
     --------
     Download and plot an example skybox image.

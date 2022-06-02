@@ -36,4 +36,4 @@ Fit Plane to Points
 
 Textures
 ~~~~~~~~
-.. automethod:: pyvista.Texture
+.. automethod:: pyvista.core.objects.Texture
