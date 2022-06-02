@@ -1,6 +1,6 @@
 import os
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 import pytest
 import trimesh
@@ -131,18 +131,33 @@ def test_inheritance_no_wrappers():
     assert isinstance(foo_new_mesh, Foo)
 
 
-def test_skybox(tmpdir):
+def test_cubemap(tmpdir):
+    # plot cubemap with markers to debug
     path = str(tmpdir.mkdir("tmpdir"))
-    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
-    for suffix in sets:
-        image = Image.new('RGB', (10, 10))
+    sets = {
+        'posx': '+X',
+        'negx': '-X',
+        'posy': '+Y',
+        'negy': '-Y',
+        'posz': '+Z',
+        'negz': '-Z',
+    }
+    size = 100
+    sz = (size, size)
+    text_corner = ((sz[0] - 15) // 2, (sz[0] - 15) // 2)
+    for suffix, name in sets.items():
+        image = Image.new('RGB', sz)
+        ImageDraw.Draw(image).text(text_corner, name)
+        image = ImageOps.mirror(image)
         image.save(os.path.join(path, suffix + '.jpg'))
 
-    skybox = pyvista.cubemap(path)
-    assert isinstance(skybox, pyvista.Texture)
+    cubemap = pyvista.cubemap(path)
+    assert isinstance(cubemap, pyvista.Texture)
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
         pyvista.cubemap('')
+
+    cubemap.plot()
 
 
 def test_array_association():

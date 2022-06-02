@@ -101,3 +101,14 @@ def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
+
+
+@fixture()
+def image():
+    # create a basic texture by plotting a sphere
+    pl = pyvista.Plotter(window_size=(200, 200), lighting=None, off_screen=True)
+    pl.add_mesh(pyvista.Sphere(), color='k')
+    pl.background_color = 'w'
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.5)
+    return pyvista.Texture(pl.screenshot()).to_image()

@@ -2876,6 +2876,49 @@ def download_sky_box_cube_map():  # pragma: no cover
     return pyvista.cubemap(pyvista.EXAMPLES_PATH, prefix)
 
 
+def download_sky(direction='nx', load=True):
+    """Download sample skybox image.
+
+    Parameters
+    ----------
+    direction : str, optional
+        Direction. Should be one of the following:
+
+        * ``"nx"``
+        * ``"ny"``
+        * ``"nz"``
+        * ``"px"``
+        * ``"py"``
+        * ``"pz"``
+
+    Examples
+    --------
+    Download and plot an example skybox image.
+
+    >>> from pyvista import examples
+    >>> image = examples.download_sky(direction='nx')
+    >>> image.plot(rgba=True, cpos='xy')
+
+    Just download the file and return the filename.
+
+    >>> import os
+    >>> filename = examples.download_sky(direction='nx', load=False)
+    >>> os.path.basename(filename)
+    'skybox-nx.jpg'
+
+    """
+    allowed_directions = ['nx', 'ny', 'nz', 'px', 'py', 'pz']
+    if direction not in allowed_directions:
+        raise ValueError(
+            f'Invalid direction "{direction}". Should be one of the following:'
+            f'{allowed_directions}'
+        )
+    filename, _ = _download_file(f'skybox-{direction}.jpg')
+    if not load:
+        return filename
+    return pyvista.read(filename)
+
+
 def download_backward_facing_step(load=True):  # pragma: no cover
     """Download an ensight gold case of a fluid simulation.
 

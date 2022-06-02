@@ -1388,7 +1388,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
 
 
-def cubemap(path='', prefix='', ext='.jpg'):
+def cubemap(path='', prefix='', ext='.jpg', images=None):
     """Construct a cubemap from 6 images.
 
     Each of the 6 images must be in the following format:

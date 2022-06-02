@@ -33,3 +33,7 @@ Convert to and from VTK Datatypes
 Fit Plane to Points
 ~~~~~~~~~~~~~~~~~~~
 .. automethod:: pyvista.helpers.fit_plane_to_points
+
+Textures
+~~~~~~~~
+.. automethod:: pyvista.Texture

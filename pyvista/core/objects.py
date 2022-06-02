@@ -357,7 +357,67 @@ class Table(_vtk.vtkTable, DataObject):
 
 
 class Texture(_vtk.vtkTexture, DataObject):
-    """A helper class for vtkTextures."""
+    """A helper class for vtkTextures.
+
+    Parameters
+    ----------
+    uinput : str, vtkImageData, vtkTexture, list
+        Filename, ``vtkImagedata``, ``vtkTexture``, or a list of images to
+        create a cubemap. If a list of images. Must be of the same size and in
+        the following order:
+
+        * -X
+        * -Y
+        * -Z
+        * +X
+        * +Y
+        * +Z
+
+    Examples
+    --------
+    Load a texture from file. Files should be "image" or "image-like" files.
+
+    >>> import os
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> path = examples.download_masonry_texture(load=False)
+    >>> os.path.basename(path)
+    'masonry.bmp'
+    >>> texture = pyvista.Texture(path)
+    >>> texture  # doctest:+SKIP
+    Texture (0x7f3131807fa0)
+      Components:      3
+      Cube Map:        False
+      Dimensions:      256, 256
+
+    Create a texture from a RGBA array. Note how this is colored per "point"
+    rather than per "pixel".
+
+    >>> arr = np.array(
+    ...     [
+    ...         [255, 255, 255],
+    ...         [255, 0, 0],
+    ...         [0, 255, 0],
+    ...         [0, 0, 255],
+    ...     ], dtype=np.uint8
+    ... )
+    >>> arr = arr.reshape((2, 2, 3))
+    >>> texture = pyvista.Texture(arr)
+    >>> texture.plot()
+
+    Create a cubemap from 6 textures.
+
+    >>> nx = examples.download_sky(direction='nx')  # doctest:+SKIP
+    >>> ny = examples.download_sky(direction='ny')  # doctest:+SKIP
+    >>> nz = examples.download_sky(direction='nz')  # doctest:+SKIP
+    >>> px = examples.download_sky(direction='px')  # doctest:+SKIP
+    >>> py = examples.download_sky(direction='py')  # doctest:+SKIP
+    >>> pz = examples.download_sky(direction='pz')  # doctest:+SKIP
+    >>> texture = pyvista.Texture([nx, ny, nz, px, py, pz])  # doctest:+SKIP
+    >>> texture.cube_map  # doctest:+SKIP
+    True
+
+    """
 
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
@@ -372,8 +432,46 @@ class Texture(_vtk.vtkTexture, DataObject):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
                 self._from_file(filename=args[0], **kwargs)
+            elif isinstance(args[0], list):
+                self.SetMipmap(True)
+                self.SetInterpolate(True)
+                self.cube_map = True  # Must be set prior to setting images
+
+                # add each image to the cubemap
+                for i, image in enumerate(args[0]):
+                    flip = _vtk.vtkImageFlip()
+                    flip.SetInputDataObject(image)
+                    flip.SetFilteredAxis(1)  # flip y axis
+                    flip.Update()
+                    self.SetInputDataObject(i, flip.GetOutput())
             else:
                 raise TypeError(f'Texture unable to be made from ({type(args[0])})')
+
+    def __repr__(self):
+        """Return the object representation."""
+        return pyvista.DataSet.__repr__(self)
+
+    def _get_attrs(self):
+        """Return the representation methods (internal helper)."""
+        attrs = []
+        attrs.append(("Components", self.n_components, "{:d}"))
+        attrs.append(("Cube Map", self.cube_map, "{:}"))
+        attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}"))
+        return attrs
+
+    @property
+    def dimensions(self) -> tuple:
+        """Dimensions of the texture.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.dimensions
+        (256, 256)
+
+        """
+        return self.to_image().dimensions[:2]
 
     def _from_file(self, filename, **kwargs):
         try:
@@ -426,8 +524,17 @@ class Texture(_vtk.vtkTexture, DataObject):
         self.SetRepeat(flag)
 
     @property
-    def n_components(self):
-        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
+    def n_components(self) -> int:
+        """Components in the image (e.g. 3 [or 4] for RGB[A]).
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.n_components
+        3
+
+        """
         image = self.to_image()
         return image.active_scalars.shape[1]
 
@@ -447,8 +554,24 @@ class Texture(_vtk.vtkTexture, DataObject):
         pyvista.UniformGrid
             Texture represented as a uniform grid.
 
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.to_image()  # doctest:+SKIP
+        UniformGrid (0x7f313126afa0)
+          N Cells:      65025
+          N Points:     65536
+          X Bounds:     0.000e+00, 2.550e+02
+          Y Bounds:     0.000e+00, 2.550e+02
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   256, 256, 1
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
+
+
         """
-        return self.GetInput()
+        return pyvista.wrap(self.GetInput())
 
     def to_array(self):
         """Return the texture as an array.
@@ -457,6 +580,16 @@ class Texture(_vtk.vtkTexture, DataObject):
         -------
         numpy.ndarray
             Texture as a numpy array
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> arr = texture.to_array()
+        >>> arr.shape
+        (256, 256, 3)
+        >>> arr.dtype
+        dtype('uint8')
 
         """
         image = self.to_image()
@@ -469,9 +602,28 @@ class Texture(_vtk.vtkTexture, DataObject):
         return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
 
     def plot(self, *args, **kwargs):
-        """Plot the texture as image data by itself."""
+        """Plot the texture as image data by itself.
+
+        If the texture is a cubemap, it will be displayed as a skybox.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.plot()
+
+        """
+        if self.cube_map:
+            return self._plot_skybox(*args, **kwargs)
         kwargs.setdefault("rgba", True)
         return self.to_image().plot(*args, **kwargs)
+
+    def _plot_skybox(self, *args, **kwargs):
+        """Plot this texture as a skybox."""
+        pl = pyvista.Plotter(**kwargs)
+        pl.add_actor(self.to_skybox())
+        pl.camera_position = kwargs.pop('cpos', 'xy')
+        pl.show()
 
     @property
     def cube_map(self):
@@ -506,6 +658,13 @@ class Texture(_vtk.vtkTexture, DataObject):
         -------
         vtk.vtkSkybox
             Skybox if cube mapping is enabled.  Otherwise, ``None``.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_sky_box_cube_map()  # doctest:+SKIP
+        >>> texture.to_skybox()  # doctest:+SKIP
+        <vtkmodules.vtkRenderingOpenGL2.vtkOpenGLSkybox(0x464dbb0) at 0x7f3130fab1c0>
 
         """
         if self.cube_map:
