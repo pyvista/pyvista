@@ -337,6 +337,37 @@ def test_plot3dmetareader():
         assert all([m.n_points, m.n_cells])
 
 
+def test_multiblockplot3dreader():
+    filename, _ = _download_file('multi-bin.xyz')
+    q_filename, _ = _download_file('multi-bin.q')
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    for m in mesh:
+        assert all([m.n_points, m.n_cells])
+        assert len(m.array_names) == 0
+
+    # Reader doesn't yet support reusability
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files(q_filename)
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    q_filename = reader.add_q_files([q_filename])
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.auto_detect_format = False
+    assert reader.auto_detect_format is False
+    reader.auto_detect_format = True
+    assert reader.auto_detect_format is True
+
+
 def test_binarymarchingcubesreader():
     filename = examples.download_pine_roots(load=False)
     reader = pyvista.get_reader(filename)

@@ -362,21 +362,69 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if set_camera:
             self.camera_position = 'xy'
 
-    def export_html(self, filename):
+    def import_vrml(self, filename):
+        """Import a VRML file into the plotter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the VRML file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_vrml` for a full example using this method.
+
+        """
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
+        importer = vtkVRMLImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
+    def export_html(self, filename, backend='pythreejs'):
         """Export this plotter as an interactive scene to a HTML file.
+
+        You have the option of exposing the scene using either vtk.js (using ``panel``) or
+        three.js (using ``pythreejs``), both of which are excellent JavaScript libraries to visualize
+        small to moderately complex scenes for scientific visualization.
 
         Parameters
         ----------
         filename : str
             Path to export the html file to.
 
+        backend : str, optional
+            One of the following:
+
+            - ``'pythreejs'``
+            - ``'panel'``
+
+            For more details about the advantages and disadvantages of each
+            backend, see :ref:`jupyter_plotting`.
+
         Notes
         -----
-        You will need ``ipywidgets`` and ``pythreejs`` installed for
-        this feature.
+        You will need ``ipywidgets`` and ``pythreejs`` installed if you
+        wish to export using the ``'pythreejs'`` backend, or ``'panel'``
+        installed to export using ``'panel'``.
 
         Examples
         --------
+        Export as a three.js scene using the pythreejs backend.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
@@ -386,7 +434,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
+        Export as a vtk.js scene using the panel backend.
+
+        >>> pl.export_html('pyvista_panel.html', backend='panel')  # doctest:+SKIP
+
         """
+        if backend == 'pythreejs':
+            widget = self.to_pythreejs()
+        elif backend == 'panel':
+            self._save_panel(filename)
+            return
+        else:
+            raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
         widget = self.to_pythreejs()
 
         # import after converting as we check for pythreejs import first
@@ -402,8 +461,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # convert and write to file
         embed_minimal_html(filename, None, title=self.title, state=state)
 
+    def _save_panel(self, filename):
+        """Save the render window as a ``panel.pane.vtk`` html file.
+
+        See https://panel.holoviz.org/api/panel.pane.vtk.html
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the plotter as a panel scene to.
+
+        """
+        from ..jupyter.notebook import handle_plotter
+
+        pane = handle_plotter(self, backend='panel', return_viewer=True, title=self.title)
+        pane.save(filename)
+
     def to_pythreejs(self):
-        """Convert this plotting scene to a pythreejs renderer.
+        """Convert this plotting scene to a pythreejs widget.
 
         Returns
         -------
@@ -542,6 +617,36 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # revert any renamed arrays
         for array in renamed_arrays:
             array.SetName('Normals')
+
+    def export_vrml(self, filename):
+        """Export the current rendering scene as a VRML file.
+
+        See `vtk.VRMLExporter <https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html>`_
+        for limitations regarding the exporter.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to export the scene to.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_hexbeam())
+        >>> pl.export_vrml("sample")
+        """
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter has been closed and cannot be shown.")
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
+        exporter = vtkVRMLExporter()
+        exporter.SetFileName(filename)
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.Write()
 
     def enable_hidden_line_removal(self, all_renderers=True):
         """Enable hidden line removal.
