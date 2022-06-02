@@ -4919,7 +4919,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
