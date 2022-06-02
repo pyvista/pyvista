@@ -444,9 +444,9 @@ class Renderer(_vtk.vtkRenderer):
 
         Warnings
         --------
-        Enabling this causes screenshots generated with OSMesa to be all
-        black. See https://github.com/pyvista/pyvista/issues/2686 for more
-        details.
+        Enabling this causes screenshots with vtk compiled with OSMesa to be
+        all black. This cannot be enabled when compiled with OSMesa (EGL). See
+        https://github.com/pyvista/pyvista/issues/2686 for more details.
 
         Examples
         --------
@@ -458,9 +458,11 @@ class Renderer(_vtk.vtkRenderer):
 
         """
         if uses_egl():
-            warnings.warn(
-                "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
-            )
+            # only display the warning when not building documentation
+            if not pyvista.BUILDING_GALLERY:  # pragma: no cover
+                warnings.warn(
+                    "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
+                )
             return
         self.SetUseFXAA(True)
         self.Modified()
