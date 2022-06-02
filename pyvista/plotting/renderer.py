@@ -457,9 +457,9 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        if uses_egl():
+        if uses_egl():  # pragma: no cover
             # only display the warning when not building documentation
-            if not pyvista.BUILDING_GALLERY:  # pragma: no cover
+            if not pyvista.BUILDING_GALLERY:
                 warnings.warn(
                     "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
                 )
