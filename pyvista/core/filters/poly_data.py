@@ -1402,7 +1402,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(
-                np.arange(self.n_points, dtype=np.int32), 'pyvistaOriginalPointIds'
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
             )
 
         normal = _vtk.vtkPolyDataNormals()
