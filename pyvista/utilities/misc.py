@@ -16,7 +16,7 @@ def raise_has_duplicates(arr):
 def has_duplicates(arr):
     """Return if an array has any duplicates."""
     s = np.sort(arr, axis=None)
-    return (s[:-1][s[1:] == s[:-1]]).any()
+    return (s[1:] == s[:-1]).any()
 
 
 def _get_vtk_id_type():
