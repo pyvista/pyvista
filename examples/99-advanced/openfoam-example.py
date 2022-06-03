@@ -11,7 +11,7 @@ from pyvista import examples
 
 ###############################################################################
 # This example uses data from a lid-driven cavity flow.  It is recommended to
-# use :class:`pyvista.OpenFOAMReader` for reading OpenFOAM files for more
+# use :class:`pyvista.POpenFOAMReader` for reading OpenFOAM files for more
 # control over reading data.
 #
 # This example will only run correctly in versions of vtk>=9.1.0.  The names
