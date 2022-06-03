@@ -147,6 +147,7 @@ class StructuredGridFilters(DataSetFilters):
         # slice to cut off the repeated grid face
         slice_spec = [slice(None, None, None)] * 3
         slice_spec[axis] = slice(0, -1, None)
+        slice_spec = tuple(slice_spec)  # trigger basic indexing
 
         # concatenate points, cutting off duplicate
         new_points = np.concatenate(
