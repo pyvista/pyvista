@@ -1948,10 +1948,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using either the
-            Gouraud or Phong shading algorithm.  When ``False``, use
-            flat shading.  Automatically enabled when ``pbr=True``.
-            See :ref:`shading_example`.
+            Enable smooth shading when ``True`` using the Phong
+            shading algorithm.  When ``False``, use flat shading.
+            Automatically enabled when ``pbr=True``.  See
+            :ref:`shading_example`.
 
         split_sharp_edges : bool, optional
             Split sharp edges exceeding 30 degrees when plotting with smooth

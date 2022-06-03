@@ -521,6 +521,14 @@ def test_compute_normals(sphere):
     assert cell_normals.shape[0] == sphere.n_cells
 
 
+def test_compute_normals_split_vertices(cube):
+    # verify edge splitting occurs and point IDs are tracked
+    cube_split_norm = cube.compute_normals(split_vertices=True)
+    assert cube_split_norm.n_points == 24
+    assert 'pyvistaOriginalPointIds' in cube_split_norm.point_data
+    assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
+
+
 def test_point_normals(sphere):
     assert sphere.point_normals.shape[0] == sphere.n_points
 
