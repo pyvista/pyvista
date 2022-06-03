@@ -1121,7 +1121,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def cell_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the cell normals.
 
-        If the cell data already contains an array named ``Normals``, this array will be returned. Otherwise, the
+        If the cell data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
         normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
 
         Returns
