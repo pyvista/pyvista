@@ -21,11 +21,21 @@ def test_set_jupyter_backend_ipygany():
         pyvista.global_theme.jupyter_backend = None
 
 
-def test_export_to_html(cube, tmpdir):
+def test_export_to_html(sphere, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.html'))
 
-    pl = pyvista.Plotter()
-    pl.add_mesh(cube)
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.add_text("Sphere 1\n", font_size=30, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey')
+
+    pl.subplot(0, 1)
+    pl.add_text("Sphere 2\n", font_size=30, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey')
+    pl.link_views()
+
+    with pytest.raises(ValueError, match="Invalid backend"):
+        pl.export_html(filename, backend='not-a-valid-backend')
+
     pl.export_html(filename)
 
     raw = open(filename).read()
@@ -214,3 +224,31 @@ def test_labels():
     # ensure that we ignore labels
     with pytest.warns(UserWarning):
         pv_pythreejs.convert_plotter(pl)
+
+
+def test_linked_views(sphere):
+    n_row, n_col = (2, 3)
+    pl = pyvista.Plotter(shape=(n_row, n_col))
+
+    for ii in range(n_row):
+        for jj in range(n_col):
+            pl.subplot(ii, jj)
+            pl.add_mesh(sphere)
+
+    pl.link_views((0, 1, 2))  # link first row together
+    pl.link_views((3, 4, 5))  # link second row together
+
+    # validate all cameras are linked
+    widget = pv_pythreejs.convert_plotter(pl)
+
+    # check first row is linked
+    cameras = [widget[0, col].camera for col in range(n_col)]
+    assert all([camera is cameras[0] for camera in cameras])
+
+    # check second row is linked
+    cameras = [widget[0, col].camera for col in range(n_col)]
+    assert all([camera is cameras[0] for camera in cameras])
+
+    # check first row camera is different than the second row
+    cameras = [widget[row, 0].camera for row in range(2)]
+    assert widget[0, 0].camera is not widget[1, 0].camera

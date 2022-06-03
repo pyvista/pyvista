@@ -6,7 +6,7 @@ Checkbox Widget
 
 Use a checkbox to turn on/off the visibility of meshes in a scene.
 
-See :func:`pyvista.WidgetHelper.add_checkbox_button_widget` for more details.
+See :func:`pyvista.Plotter.add_checkbox_button_widget` for more details.
 
 """
 # sphinx_gallery_thumbnail_number = 2

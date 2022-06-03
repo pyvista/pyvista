@@ -2,15 +2,18 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import os
+import pathlib
 from typing import Any, List
 from xml.etree import ElementTree
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import abstract_class, get_ext, wrap
+from pyvista.utilities import abstract_class, wrap
+
+from .fileio import _get_ext_force, _process_filename
 
 
-def get_reader(filename):
+def get_reader(filename, force_ext=None):
     """Get a reader for fine-grained control of reading data files.
 
     Supported file types and Readers:
@@ -41,6 +44,8 @@ def get_reader(filename):
     | ``.gltf``      | :class:`pyvista.GLTFReader`                 |
     +----------------+---------------------------------------------+
     | ``.hdf``       | :class:`pyvista.HDFReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.img``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
     | ``.inp``       | :class:`pyvista.AVSucdReader`               |
     +----------------+---------------------------------------------+
@@ -118,6 +123,9 @@ def get_reader(filename):
     filename : str
         The string path to the file to read.
 
+    force_ext : str, optional
+        An extension to force a specific reader to be chosen.
+
     Returns
     -------
     pyvista.BaseReader
@@ -139,7 +147,7 @@ def get_reader(filename):
     >>> mesh.plot(color='tan')
 
     """
-    ext = get_ext(filename)
+    ext = _get_ext_force(filename, force_ext)
 
     try:
         Reader = CLASS_READERS[ext]
@@ -173,7 +181,9 @@ class BaseReader:
         self._progress_bar = False
         self._progress_msg = None
         self.__directory = None
+        self._set_defaults()
         self.path = path
+        self._set_defaults_post()
 
     def __repr__(self):
         """Representation of a Reader object."""
@@ -289,6 +299,14 @@ class BaseReader:
 
     def _update_information(self):
         self.reader.UpdateInformation()
+
+    def _set_defaults(self):
+        """Set defaults on reader, if needed."""
+        pass
+
+    def _set_defaults_post(self):
+        """Set defaults on reader post setting file, if needed."""
+        pass
 
 
 class PointCellDataSelection:
@@ -722,18 +740,16 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
-    """OpenFOAM Reader for .foam files."""
+    """OpenFOAM Reader for .foam files.
+
+    By default, pyvista enables all patch arrays.  This is a deviation
+    from the vtk default.
+
+    """
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
-    def __init__(self, path):
-        """Initialize OpenFOAMReader.
-
-        By default, pyvista enables all patch arrays.  This is a deviation
-        from the vtk default.
-
-        """
-        super().__init__(path)
+    def _set_defaults_post(self):
         self.enable_all_patch_arrays()
 
     @property
@@ -1070,10 +1086,7 @@ class VTKDataSetReader(BaseReader):
 
     _class_reader = _vtk.vtkDataSetReader
 
-    def __init__(self, path):
-        """Initialize VTKDataSetReader with filename."""
-        super().__init__(path)
-        # Provide consistency with defaults in pyvista.read
+    def _set_defaults_post(self):
         self.reader.ReadAllScalarsOn()
         self.reader.ReadAllColorScalarsOn()
         self.reader.ReadAllNormalsOn()
@@ -1133,6 +1146,54 @@ class Plot3DMetaReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
+class MultiBlockPlot3DReader(BaseReader):
+    """MultiBlock Plot3D Reader."""
+
+    _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+
+    def _set_defaults(self):
+        self.auto_detect_format = True
+
+    def add_q_files(self, files):
+        """Add q file(s).
+
+        Parameters
+        ----------
+        files : str or Iterable(str)
+            Solution file or files to add.
+
+        """
+        # files may be a list or a single filename
+        if files:
+            if isinstance(files, (str, pathlib.Path)):
+                files = [files]
+        files = [_process_filename(f) for f in files]
+
+        if hasattr(self.reader, 'AddFileName'):
+            # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
+            # VTK 8.2. This method supports reading multiple q files.
+            for q_filename in files:
+                self.reader.AddFileName(q_filename)
+        else:
+            # SetQFileName is used to add a single q file to be read, and is still
+            # supported in VTK9.
+            if len(files) > 0:
+                if len(files) > 1:
+                    raise RuntimeError(
+                        'Reading of multiple q files is not supported with this version of VTK.'
+                    )
+                self.reader.SetQFileName(files[0])
+
+    @property
+    def auto_detect_format(self):
+        """Whether to try to automatically detect format such as byte order, etc."""
+        return bool(self.reader.GetAutoDetectFormat())
+
+    @auto_detect_format.setter
+    def auto_detect_format(self, value):
+        self.reader.SetAutoDetectFormat(value)
+
+
 class CGNSReader(BaseReader, PointCellDataSelection):
     """CGNS Reader for .cgns files.
 
@@ -1173,9 +1234,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
 
-    def __init__(self, filename: str):
-        """Initialize CGNSReader with filename."""
-        super().__init__(filename)
+    def _set_defaults_post(self):
         self.enable_all_point_arrays()
         self.enable_all_cell_arrays()
         self.load_boundary_patch = True
@@ -1911,6 +1970,7 @@ CLASS_READERS = {
     '.g': BYUReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
+    '.img': DICOMReader,
     '.inp': AVSucdReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,
