@@ -522,11 +522,33 @@ def test_compute_normals(sphere):
 
 
 def test_point_normals(sphere):
-    assert sphere.point_normals.shape[0] == sphere.n_points
+    sphere = sphere.compute_normals(cell_normals=False, point_normals=True)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
+    assert np.all(normals == sphere.point_data['Normals'])
+    assert np.shares_memory(normals, sphere.point_data['Normals'])
+
+    # when they don't, compute them
+    sphere.point_data.pop('Normals')
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
 
 
 def test_cell_normals(sphere):
-    assert sphere.cell_normals.shape[0] == sphere.n_cells
+    sphere = sphere.compute_normals(cell_normals=True, point_normals=False)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
+    assert np.all(normals == sphere.cell_data['Normals'])
+    assert np.shares_memory(normals, sphere.cell_data['Normals'])
+
+    # when they don't, compute them
+    sphere.cell_data.pop('Normals')
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
 
 
 def test_face_normals(sphere):
