@@ -415,16 +415,20 @@ class UniformGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         return _get_output(alg)
 
-    def image_fft(self, progress_bar=False):
-        """Fast Fourier Transform.
+    def fft(self, progress_bar=False):
+        """Apply the fast fourier transform to the active scalars.
 
-        The input can have real or complex data in any components and data types,
-        but the output is always complex doubles with real values in component0,
-        and imaginary values in component1. The filter is fastest for images
-        that have power of two sizes. The filter uses a butterfly diagram for
-        each prime factor of the dimension. This makes images with prime number
-        dimensions (i.e. 17x17) much slower to compute. Multi dimensional
-        (i.e volumes) FFT's are decomposed so that each axis executes serially.
+        The input can have real or complex data in any components and data
+        types, but the output is always complex doubles, with the first
+        component containing real values and the second component containing
+        imaginary values. The filter is fastest for images that have power of
+        two sizes.
+
+        The filter is fastest for images that have power of two sizes. The
+        filter uses a butterfly diagram for each prime factor of the
+        dimension. This makes images with prime number dimensions (i.e. 17x17)
+        much slower to compute. Multi dimensional (i.e volumes) FFT's are
+        decomposed so that each axis executes serially.
 
         Parameters
         ----------
@@ -434,38 +438,194 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid subset.
+            UniformGrid with applied FFT.
+
+        Examples
+        --------
+        Apply FFT to an example image.
+
+        >>> from pyvista import examples
+        >>> image = examples.download_moonlanding_image()
+        >>> fft_image = image.fft()
+        >>> fft_image.point_data  # doctest:+SKIP
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : PNGImage
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+        PNGImage                float64  (298620, 2)          SCALARS
+
+        See :ref:`image_fft_example` for a full example using this filter.
+
         """
+        # check for active scalars, otherwise risk of segfault
+        if self.point_data.active_scalars_name is None:
+            raise ValueError('FFT filter requires active point scalars')
+
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Fast Fourier Transform.')
-        result = _get_output(alg)
-        return result
+        _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
+        return _get_output(alg)
 
-    def image_rfft(self, progress_bar=False):
-        """Reverse Fast Fourier Transform.
+    def rfft(self, progress_bar=False):
+        """Apply the reverse fast fourier transform to the active scalars.
 
-        The input can have real or complex data in any components and data types,
-        but the output is always complex doubles with real values in component0,
-        and imaginary values in component1. The filter is fastest for images that
-        have power of two sizes. The filter uses a butterfly diagram for each prime
-        factor of the dimension. This makes images with prime number dimensions
-        (i.e. 17x17) much slower to compute. Multi dimensional (i.e volumes)
-        FFT's are decomposed so that each axis executes serially.
+        The input can have real or complex data in any components and data
+        types, but the output is always complex doubles, with the first
+        component containing real values and the second component containing
+        imaginary values. The filter is fastest for images that have power of
+        two sizes.
+
+        The filter uses a butterfly diagram for each prime factor of the
+        dimension. This makes images with prime number dimensions (i.e. 17x17)
+        much slower to compute. Multi dimensional (i.e volumes) FFT's are
+        decomposed so that each axis executes serially.
 
         Parameters
         ----------
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
-            UniformGrid subset.
 
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid subset.
+            UniformGrid with the applied reverse FFT.
+
+        Examples
+        --------
+        Apply reverse FFT to an example image.
+
+        >>> from pyvista import examples
+        >>> image = examples.download_moonlanding_image()
+        >>> fft_image = image.fft()
+        >>> image_again = fft_image.rfft()
+        >>> image_again.point_data  # doctest:+SKIP
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : PNGImage
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+        PNGImage                float64  (298620, 2)          SCALARS
+
+        See :ref:`image_fft_example` for a full example using this filter.
+
         """
+        self._check_fft_scalars()
         alg = _vtk.vtkImageRFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Reverse Fast Fourier Transform.')
-        result = _get_output(alg)
-        return result
+        _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
+        return _get_output(alg)
+
+    def low_pass(self, x_cutoff, y_cutoff, z_cutoff, order=1, progress_bar=False):
+        """Perform a low pass filter in the frequency domain.
+
+        This filter only works on an image after it has been converted to
+        frequency domain by a :func:`UniformGridFilters.fft` filter.
+
+        A :func:`UniformGridFilters.rfft` filter can be
+        used to convert the output back into the spatial
+        domain. This filter attenuates high frequency components.
+        Input and output are in doubles, with two components.
+
+        Parameters
+        ----------
+        x_cutoff : double
+            The cutoff frequency for the x axis.
+
+        y_cutoff : double
+            The cutoff frequency for the y axis.
+
+        z_cutoff : double
+            The cutoff frequency for the z axis.
+
+        order : int, optional
+            The order of the cutoff curve. Given from the equation
+             ``(1 + pow(CutOff/Freq(i, j), 2*Order))``
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            UniformGrid with the applied low pass filter
+
+        Examples
+        --------
+        See :ref:`image_fft_perlin_example` for a full example using this filter.
+
+        """
+        self._check_fft_scalars()
+        alg = _vtk.vtkImageButterworthLowPass()
+        alg.SetInputDataObject(self)
+        alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
+        alg.SetOrder(1)
+        _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
+        return _get_output(alg)
+
+    def high_pass(self, x_cutoff, y_cutoff, z_cutoff, order=1, progress_bar=False):
+        """Perform a high pass filter in the frequency domain.
+
+        This filter only works on an image after it has been converted to
+        frequency domain by a :func:`UniformGridFilters.fft` filter.
+
+        A :func:`UniformGridFilters.rfft` filter can be
+        used to convert the output back into the spatial
+        domain. This filter attenuates low frequency components.
+        Input and output are in doubles, with two components.
+
+        Parameters
+        ----------
+        x_cutoff : double
+            The cutoff frequency for the x axis.
+
+        y_cutoff : double
+            The cutoff frequency for the y axis.
+
+        z_cutoff : double
+            The cutoff frequency for the z axis.
+
+        order : int, optional
+            The order of the cutoff curve. Given from the equation
+             ``(1 + pow(CutOff/Freq(i, j), 2*Order))``
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            UniformGrid with the applied high pass filter
+
+        Examples
+        --------
+        See :ref:`image_fft_perlin_example` for a full example using this filter.
+
+        """
+        self._check_fft_scalars()
+        alg = _vtk.vtkImageButterworthHighPass()
+        alg.SetInputDataObject(self)
+        alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
+        alg.SetOrder(1)
+        _update_alg(alg, progress_bar, 'Performing High Pass Filter')
+        return _get_output(alg)
+
+    def _check_fft_scalars(self):
+        """Check for active scalars with two components.
+
+        This is necessary for rfft, low_pass, and high_pass filters.
+
+        """
+        # check for active scalars, otherwise risk of segfault
+        if self.point_data.active_scalars_name is None:
+            raise ValueError('FFT filters require active point scalars')
+
+        scalars = self.point_data.active_scalars
+
+        meets_req = scalars.ndim == 2 and scalars.shape[1] == 2
+        if not meets_req:
+            raise ValueError('Active scalars must contain 2 components for this FFT filter.')

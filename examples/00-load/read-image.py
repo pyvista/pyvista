@@ -5,7 +5,6 @@ Read Image Files
 Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
-import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
@@ -33,29 +32,3 @@ image.plot(rgb=True, cpos="xy")
 
 # Mapped image colors
 image.plot(cpos="xy")
-
-###############################################################################
-# Convert rgb to grayscale.
-# https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems
-
-r = image["JPEGImage"][:, 0]
-g = image["JPEGImage"][:, 1]
-b = image["JPEGImage"][:, 2]
-image.clear_data()
-image["GrayScale"] = 0.299 * r + 0.587 * g + 0.114 * b
-pv.global_theme.cmap = "gray"
-image.copy().plot(cpos="xy")
-
-###############################################################################
-# It is also possible to apply filters to images. The following is the Fast
-# Fourier Transformed image data.
-
-fft = image.image_fft()
-fft.copy().plot(cpos="xy", log_scale=True)
-
-###############################################################################
-# Once Fast Fourier Transformed, images can also Reverse Fast Fourier
-# Transformed.
-
-rfft = fft.image_rfft()
-rfft.copy().plot(cpos="xy")

@@ -766,23 +766,41 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
-def test_fft_and_rfft():
-    grid = examples.download_puppy()
-    # Convert rgb to grayscale.
-    # https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems
-    r = grid['JPEGImage'][:, 0]
-    g = grid['JPEGImage'][:, 1]
-    b = grid['JPEGImage'][:, 2]
-    grid.clear_data()
-    grid['GrayScale'] = 0.299 * r + 0.587 * g + 0.114 * b
-    fft = grid.image_fft()
-    assert fft.n_points == grid.n_points
-    assert fft.n_arrays == grid.n_arrays
-    rfft = fft.image_rfft()
-    assert rfft.n_points == grid.n_points
-    assert rfft.n_arrays == grid.n_arrays
-    assert np.allclose(rfft['GrayScale'][:, 0], grid['GrayScale'])
-    assert np.allclose(rfft['GrayScale'][:, 1], 0.0)
+def test_fft_and_rfft(noise):
+    grid = pyvista.UniformGrid(dims=(10, 10, 1))
+    with pytest.raises(ValueError, match='active point scalars'):
+        grid.fft()
+
+    full_pass = noise.fft().rfft()
+    assert full_pass['ImageScalars'].ndim == 2
+
+    # expect FFT and and RFFT to transform from time --> freq --> time domain
+    assert np.allclose(noise['scalars'], full_pass['ImageScalars'][:, 0])
+    assert np.allclose(full_pass['ImageScalars'][:, 1], 0)
+
+
+def test_low_pass(noise):
+    noise_no_scalars = noise.copy()
+    noise_no_scalars.clear_data()
+    with pytest.raises(ValueError, match='active point scalars'):
+        noise_no_scalars.low_pass(1, 1, 1)
+
+    with pytest.raises(ValueError, match='2 components'):
+        noise.low_pass(1, 1, 1)
+
+    out_zeros = noise.fft().low_pass(0, 0, 0)
+    assert np.allclose(out_zeros['ImageScalars'][1:], 0)
+
+    out = noise.fft().low_pass(1, 1, 1)
+    assert not np.allclose(out['ImageScalars'][1:], 0)
+
+
+def test_high_pass(noise):
+    out_zeros = noise.fft().high_pass(100000, 100000, 100000)
+    assert np.allclose(out_zeros['ImageScalars'][1:], 0)
+
+    out = noise.fft().high_pass(10, 10, 10)
+    assert not np.allclose(out['ImageScalars'][1:], 0)
 
 
 @pytest.mark.parametrize('binary', [True, False])

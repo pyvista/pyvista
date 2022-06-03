@@ -101,3 +101,10 @@ def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
+
+
+@fixture()
+def noise():
+    freq = [10, 5, 0]
+    noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
+    return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(20, 20, 1))

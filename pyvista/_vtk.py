@@ -397,7 +397,12 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
-    from vtkmodules.vtkImagingFourier import vtkImageFFT, vtkImageRFFT
+    from vtkmodules.vtkImagingFourier import (
+        vtkImageButterworthHighPass,
+        vtkImageButterworthLowPass,
+        vtkImageFFT,
+        vtkImageRFFT,
+    )
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,
