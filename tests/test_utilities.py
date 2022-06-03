@@ -23,7 +23,7 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyvistaDeprecationWarning, has_duplicates, raise_has_duplicates
 
 
 def test_version():
@@ -764,3 +764,17 @@ def test_convert_array():
         pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
     )
     assert arr3.GetNumberOfValues() == 4
+
+    # check lists work
+    my_list = [1, 2, 3]
+    arr4 = pyvista.utilities.convert_array(my_list)
+    assert arr4.GetNumberOfValues() == len(my_list)
+
+
+def test_has_duplicates():
+    assert not has_duplicates(np.arange(100))
+    assert has_duplicates(np.array([0, 1, 2, 2]))
+    assert has_duplicates(np.array([[0, 1, 2], [0, 1, 2]]))
+
+    with pytest.raises(ValueError):
+        raise_has_duplicates(np.array([0, 1, 2, 2]))
