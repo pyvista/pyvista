@@ -415,7 +415,7 @@ class UniformGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         return _get_output(alg)
 
-    def fft(self, progress_bar=False):
+    def fft(self, output_scalars_name='ImageScalars', progress_bar=False):
         """Apply the fast fourier transform to the active scalars.
 
         The input can have real or complex data in any components and data
@@ -432,6 +432,10 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
+        output_scalars_name : str, optional
+            The name of the output scalars. By default this is
+            `'ImageScalars'`.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -467,9 +471,11 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
-        return _get_output(alg)
+        output = _get_output(alg)
+        self._change_output_scalars(output, output_scalars_name)
+        return output
 
-    def rfft(self, progress_bar=False):
+    def rfft(self, output_scalars_name='ImageScalars', progress_bar=False):
         """Apply the reverse fast fourier transform to the active scalars.
 
         The input can have real or complex data in any components and data
@@ -485,6 +491,10 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
+        output_scalars_name : str, optional
+            The name of the output scalars. By default this is
+            `'ImageScalars'`.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -518,9 +528,19 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageRFFT()
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
-        return _get_output(alg)
+        output = _get_output(alg)
+        self._change_output_scalars(output, output_scalars_name)
+        return output
 
-    def low_pass(self, x_cutoff, y_cutoff, z_cutoff, order=1, progress_bar=False):
+    def low_pass(
+        self,
+        x_cutoff,
+        y_cutoff,
+        z_cutoff,
+        order=1,
+        output_scalars_name='ImageScalars',
+        progress_bar=False,
+    ):
         """Perform a low pass filter in the frequency domain.
 
         This filter only works on an image after it has been converted to
@@ -546,6 +566,10 @@ class UniformGridFilters(DataSetFilters):
             The order of the cutoff curve. Given from the equation
              ``(1 + pow(CutOff/Freq(i, j), 2*Order))``.
 
+        output_scalars_name : str, optional
+            The name of the output scalars. By default this is
+            `'ImageScalars'`.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -565,9 +589,19 @@ class UniformGridFilters(DataSetFilters):
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(1)
         _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
-        return _get_output(alg)
+        output = _get_output(alg)
+        self._change_output_scalars(output, output_scalars_name)
+        return output
 
-    def high_pass(self, x_cutoff, y_cutoff, z_cutoff, order=1, progress_bar=False):
+    def high_pass(
+        self,
+        x_cutoff,
+        y_cutoff,
+        z_cutoff,
+        order=1,
+        output_scalars_name='ImageScalars',
+        progress_bar=False,
+    ):
         """Perform a high pass filter in the frequency domain.
 
         This filter only works on an image after it has been converted to
@@ -593,6 +627,10 @@ class UniformGridFilters(DataSetFilters):
             The order of the cutoff curve. Given from the equation
              ``(1 + pow(CutOff/Freq(i, j), 2*Order))``.
 
+        output_scalars_name : str, optional
+            The name of the output scalars. By default this is
+            `'ImageScalars'`.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -610,9 +648,18 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageButterworthHighPass()
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
-        alg.SetOrder(1)
+        alg.SetOrder(order)
         _update_alg(alg, progress_bar, 'Performing High Pass Filter')
-        return _get_output(alg)
+        output = _get_output(alg)
+        self._change_output_scalars(output, output_scalars_name)
+        return output
+
+    def _change_output_scalars(self, dataset, name):
+        """Modify the name of the output scalars for a FFT filter."""
+        default_name = 'ImageScalars'
+        if name != default_name:
+            pdata = dataset.point_data
+            dataset.point_data[name] = pdata.pop(default_name)
 
     def _check_fft_scalars(self):
         """Check for active scalars with two components.

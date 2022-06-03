@@ -32,7 +32,7 @@ xdim, ydim = (500, 500)
 sampled = pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(xdim, ydim, 1))
 
 # plot the sampled noise
-sampled.plot(cpos='xy', show_scalar_bar=False)
+sampled.plot(cpos='xy', show_scalar_bar=False, text='Perlin Noise')
 
 ###############################################################################
 # Next, perform a FFT of the noise and plot the frequency content.
@@ -62,6 +62,7 @@ pl = pv.Plotter()
 pl.add_mesh(subset, cmap='gray', show_scalar_bar=False)
 pl.camera_position = 'xy'
 pl.show_bounds(xlabel='X Frequency', ylabel='Y Frequency')
+pl.add_text('Frequency Domain of the Perlin Noise')
 pl.show()
 
 ###############################################################################
@@ -75,7 +76,7 @@ pl.show()
 low_pass = sampled_fft.low_pass(0.5, 0.5, 0.5).rfft()
 # remove the complex data
 low_pass['ImageScalars'] = low_pass['ImageScalars'][:, 0]
-low_pass.plot(cpos='xy', show_scalar_bar=False)
+low_pass.plot(cpos='xy', show_scalar_bar=False, text='Low Pass of the Perlin Noise')
 
 
 ###############################################################################
@@ -89,4 +90,4 @@ low_pass.plot(cpos='xy', show_scalar_bar=False)
 
 high_pass_noise = sampled_fft.high_pass(5, 5, 5).rfft()
 high_pass_noise['ImageScalars'] = high_pass_noise['ImageScalars'][:, 0]
-high_pass_noise.plot(cpos='xy', show_scalar_bar=False)
+high_pass_noise.plot(cpos='xy', show_scalar_bar=False, text='High Pass of the Perlin Noise')

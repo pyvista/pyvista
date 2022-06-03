@@ -778,6 +778,10 @@ def test_fft_and_rfft(noise):
     assert np.allclose(noise['scalars'], full_pass['ImageScalars'][:, 0])
     assert np.allclose(full_pass['ImageScalars'][:, 1], 0)
 
+    output_scalars_name = 'out_scalars'
+    noise_fft = noise.fft(output_scalars_name=output_scalars_name)
+    assert output_scalars_name in noise_fft.point_data
+
 
 def test_low_pass(noise):
     noise_no_scalars = noise.copy()
