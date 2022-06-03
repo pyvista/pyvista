@@ -1088,7 +1088,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def point_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the point normals.
 
-        If the point data already contains an array named ``Normals``, this array will be returned. Otherwise, the
+        If the point data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
         normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
 
         Returns
