@@ -1008,7 +1008,8 @@ class POpenFOAMReader(OpenFOAMReader):
     """Parallel OpenFOAM Reader for .foam files.
 
     Can read parallel-decomposed mesh information and time dependent data.
-    This reader can be used both for parallel reconstructed data and decomposed data.
+    This reader can be used for serial generated data,
+    parallel reconstructed data, and decomposed data.
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
