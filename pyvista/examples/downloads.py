@@ -3890,6 +3890,10 @@ def download_moonlanding_image(load=True):  # pragma: no cover
     <https://scipy-lectures.org/index.html>`_ and can be used to demonstrate a
     low pass filter.
 
+    See the `scipy-lectures license
+    <http://scipy-lectures.org/preface.html#license>`_ for more details
+    regarding this image's use and distribution.
+
     Parameters
     ----------
     load : bool, optional
