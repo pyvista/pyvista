@@ -544,7 +544,7 @@ class UniformGridFilters(DataSetFilters):
 
         order : int, optional
             The order of the cutoff curve. Given from the equation
-             ``(1 + pow(CutOff/Freq(i, j), 2*Order))``
+             ``(1 + pow(CutOff/Freq(i, j), 2*Order))``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -552,7 +552,7 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid with the applied low pass filter
+            UniformGrid with the applied low pass filter.
 
         Examples
         --------
@@ -591,7 +591,7 @@ class UniformGridFilters(DataSetFilters):
 
         order : int, optional
             The order of the cutoff curve. Given from the equation
-             ``(1 + pow(CutOff/Freq(i, j), 2*Order))``
+             ``(1 + pow(CutOff/Freq(i, j), 2*Order))``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -599,7 +599,7 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid with the applied high pass filter
+            UniformGrid with the applied high pass filter.
 
         Examples
         --------
