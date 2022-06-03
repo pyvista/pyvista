@@ -5132,3 +5132,33 @@ class DataSetFilters:
             inplace=inplace,
             progress_bar=progress_bar,
         )
+
+    def find_closest_point_on_surface(self, point, return_distance=False):
+        """Find the closest point _on the surface_ to a given target point.
+
+        This differs from :func:`find_closest_point`, which returns the index of the closest mesh node, not the closest
+        point on the surface.
+
+        Parameters
+        ----------
+        point : list
+            The target point.
+
+        return_distance : bool, optional
+            Set to true to return the signed distance between the closest point and the target point.
+
+        Returns
+        -------
+        np.ndarray
+            The coordinates of the closest point.
+
+        float
+            The distance to the closest point. Only returned if ``return_distance`` is set to ``True``.
+        """
+        alg = _vtk.vtkImplicitPolyDataDistance()
+        alg.SetInput(self)
+        closest = np.zeros(3)
+        distance = alg.EvaluateFunctionAndGetClosestPoint(point, closest)
+        if return_distance:
+            return closest, distance
+        return closest

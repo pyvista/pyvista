@@ -269,6 +269,26 @@ def test_implicit_distance():
     assert "implicit_distance" in dataset.point_data
 
 
+def test_find_closest_point_on_surface():
+    surface = pyvista.Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=1, j_resolution=1)
+
+    target = ((0, 0, 0))  # this point is on the surface but is not one of the nodes
+    closest_point_on_surface = surface.find_closest_point_on_surface(target)
+    assert closest_point_on_surface == pytest.approx((0, 0, 0))
+    closest_point = surface.points[surface.find_closest_point(target)]
+    assert np.linalg.norm((closest_point - closest_point_on_surface)) == pytest.approx(np.linalg.norm((0.5, 0.5)))
+
+    target = ((0, 0, 0.25))  # this point is below the surface
+    closest_point_on_surface, distance_to_surface = surface.find_closest_point_on_surface(target, return_distance=True)
+    assert closest_point_on_surface == pytest.approx((0, 0, 0))
+    assert distance_to_surface == pytest.approx(-0.25)
+
+    target = ((0, 0, -0.25))  # this point is above the surface
+    closest_point_on_surface, distance_to_surface = surface.find_closest_point_on_surface(target, return_distance=True)
+    assert closest_point_on_surface == pytest.approx((0, 0, 0))
+    assert distance_to_surface == pytest.approx(0.25)
+
+
 def test_slice_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
