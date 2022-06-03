@@ -466,6 +466,11 @@ def test_merge_invalid(hexbeam, sphere):
         sphere.merge([hexbeam], inplace=True)
 
 
+def test_init_structured_raise():
+    with pytest.raises(TypeError, match="Invalid parameters"):
+        pyvista.StructuredGrid(['a', 'b', 'c'])
+
+
 def test_init_structured(struct_grid):
     xrng = np.arange(-10, 10, 2, dtype=np.float32)
     yrng = np.arange(-10, 10, 2, dtype=np.float32)
@@ -478,6 +483,16 @@ def test_init_structured(struct_grid):
 
     grid_a = pyvista.StructuredGrid(grid)
     assert np.allclose(grid_a.points, grid.points)
+
+
+def test_grid_repr(struct_grid):
+    str_ = str(struct_grid)
+    assert 'StructuredGrid' in str_
+    assert f'N Points:\t{struct_grid.n_points}\n' in str_
+
+    repr_ = repr(struct_grid)
+    assert 'StructuredGrid' in repr_
+    assert f'N Points:\t{struct_grid.n_points}\n' in repr_
 
 
 def test_slice_structured(struct_grid):
