@@ -183,7 +183,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkRenderer):
+class Renderer(_vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -2606,25 +2606,51 @@ class Renderer(_vtk.vtkRenderer):
             self.GradientBackgroundOff()
         self.Modified()
 
-    def set_environment_texture(self, texture):
+    def set_environment_texture(self, texture, is_srgb=False):
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
         it is not a cubemap, the texture is supposed to represent an
         equirectangular projection. If used with raytracing backends,
         the texture must be an equirectangular projection and must be
-        constructed with a valid vtkImageData. Warning, this texture
-        must be expressed in linear color space. If the texture is in
-        sRGB color space, set the color flag on the texture or set the
-        argument isSRGB to true.
+        constructed with a valid ``vtk.vtkImageData``.
 
         Parameters
         ----------
         texture : vtk.vtkTexture
             Texture.
+
+        is_srgb : bool, optional
+            If the texture is in sRGB color space, set the color flag on the
+            texture or set this parameter to ``True``. Textures are assumed
+            to be in linear color space by default.
+
+        Examples
+        --------
+        Add a skybox cubemap as an environment texture and show that the
+        lighting from the texture is mapped on to a sphere dataset. Note how
+        even when disabling the default lightkit, the scene lighting will still
+        be mapped onto the actor.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting=None)
+        >>> cubemap = examples.download_sky_box_cube_map()
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
+        >>> pl.set_environment_texture(cubemap)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
         """
+        # cube_map textures cannot use spherical harmonics
+        if texture.cube_map:
+            self.AutomaticLightCreationOff()
+            # disable spherical harmonics was added in 9.1.0
+            if hasattr(self, 'UseSphericalHarmonicsOff'):
+                self.UseSphericalHarmonicsOff()
+
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture)
+        self.SetEnvironmentTexture(texture, is_srgb)
         self.Modified()
 
     def close(self):
