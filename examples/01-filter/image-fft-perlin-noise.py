@@ -8,7 +8,7 @@ This example shows how to apply a Fast Fourier Transform (FFT) to a
 :class:`pyvista.UniformGrid` using :func:`pyvista.UniformGridFilters.fft`
 filter.
 
-Here, we demonstrate FFT usage by first generating perlin noise using
+Here, we demonstrate FFT usage by first generating Perlin noise using
 :func:`pyvista.sample_function() <pyvista.core.imaging.sample_function>` to
 sample :func:`pyvista.perlin_noise <pyvista.core.common_data.perlin_noise>`,
 and then performing FFT of the sampled noise to show the frequency content of
@@ -70,7 +70,7 @@ pl.show()
 # Low Pass Filter
 # ~~~~~~~~~~~~~~~
 # For fun, let's perform a low pass filter on the frequency content and then
-# convert it back into the "time" domain by immediately apply a reverse FFT.
+# convert it back into the "time" domain by immediately applying a reverse FFT.
 #
 # As expected, we only see low frequency noise.
 
@@ -83,7 +83,7 @@ low_pass.plot(cpos='xy', show_scalar_bar=False, text='Low Pass of the Perlin Noi
 # High Pass Filter
 # ~~~~~~~~~~~~~~~~
 # This time, let's perform a high pass filter on the frequency content and then
-# convert it back into the "time" domain by immediately apply a reverse FFT.
+# convert it back into the "time" domain by immediately applying a reverse FFT.
 #
 # As expected, we only see the high frequency noise content as the low
 # frequency noise has been attenuated.

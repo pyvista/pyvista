@@ -416,13 +416,12 @@ class UniformGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def fft(self, output_scalars_name='ImageScalars', progress_bar=False):
-        """Apply the fast fourier transform to the active scalars.
+        """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can have real or complex data in any components and data
         types, but the output is always complex doubles, with the first
         component containing real values and the second component containing
-        imaginary values. The filter is fastest for images that have power of
-        two sizes.
+        imaginary values.
 
         The filter is fastest for images that have power of two sizes. The
         filter uses a butterfly diagram for each prime factor of the
@@ -442,7 +441,7 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid with applied FFT.
+            :class:`pyvista.UniformGrid` with applied FFT.
 
         Examples
         --------
@@ -476,7 +475,7 @@ class UniformGridFilters(DataSetFilters):
         return output
 
     def rfft(self, output_scalars_name='ImageScalars', progress_bar=False):
-        """Apply the reverse fast fourier transform to the active scalars.
+        """Apply the reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can have real or complex data in any components and data
         types, but the output is always complex doubles, with the first
@@ -501,7 +500,7 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid with the applied reverse FFT.
+            :class:`pyvista.UniformGrid` with the applied reverse FFT.
 
         Examples
         --------
@@ -576,7 +575,7 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid with the applied low pass filter.
+            :class:`pyvista.UniformGrid` with the applied low pass filter.
 
         Examples
         --------
@@ -587,7 +586,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageButterworthLowPass()
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
-        alg.SetOrder(1)
+        alg.SetOrder(order)
         _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
         output = _get_output(alg)
         self._change_output_scalars(output, output_scalars_name)

@@ -9,7 +9,7 @@ This example shows how to apply a Fast Fourier Transform (FFT) to a
 filter.
 
 Here, we demonstrate FFT usage by denoising an image, effectively removing any
-"high frequency" content by effectively performing a `low pass filter
+"high frequency" content by performing a `low pass filter
 <https://en.wikipedia.org/wiki/Low-pass_filter>`_
 
 This example was inspired by `Image denoising by FFT
@@ -21,7 +21,7 @@ import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
-# Load the example image moon-landing image and plot it.
+# Load the example Moon-landing image and plot it.
 
 image = examples.download_moonlanding_image()
 print(image.point_data)

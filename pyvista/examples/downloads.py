@@ -3903,7 +3903,7 @@ def download_moonlanding_image(load=True):  # pragma: no cover
     Returns
     -------
     pyvista.UniformGrid or str
-        DataSet or filename depending on ``load``.
+        ``DataSet`` or filename depending on ``load``.
 
     Examples
     --------
