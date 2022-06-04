@@ -17,6 +17,7 @@ that noise.
 """
 
 import numpy as np
+import pyvista as pv
 
 ###############################################################################
 # Start by generating some `Perlin Noise <https://en.wikipedia.org/wiki/Perlin_noise>`_
@@ -24,7 +25,6 @@ import numpy as np
 # Note that we are generating it in a flat plane and using 10 Hz in the x
 # direction and 5 Hz in the y direction.
 #
-import pyvista as pv
 
 freq = [10, 5, 0]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
@@ -74,8 +74,7 @@ pl.show()
 # As expected, we only see low frequency noise.
 
 low_pass = sampled_fft.low_pass(0.5, 0.5, 0.5).rfft()
-# remove the complex data
-low_pass['ImageScalars'] = low_pass['ImageScalars'][:, 0]
+low_pass['ImageScalars'] = low_pass['ImageScalars'][:, 0]  # remove the complex data
 low_pass.plot(cpos='xy', show_scalar_bar=False, text='Low Pass of the Perlin Noise')
 
 
@@ -89,5 +88,5 @@ low_pass.plot(cpos='xy', show_scalar_bar=False, text='Low Pass of the Perlin Noi
 # frequency noise has been attenuated.
 
 high_pass_noise = sampled_fft.high_pass(5, 5, 5).rfft()
-high_pass_noise['ImageScalars'] = high_pass_noise['ImageScalars'][:, 0]
+high_pass_noise['ImageScalars'] = high_pass_noise['ImageScalars'][:, 0]  # remove the complex data
 high_pass_noise.plot(cpos='xy', show_scalar_bar=False, text='High Pass of the Perlin Noise')

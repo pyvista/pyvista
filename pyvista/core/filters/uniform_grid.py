@@ -434,7 +434,7 @@ class UniformGridFilters(DataSetFilters):
         ----------
         output_scalars_name : str, optional
             The name of the output scalars. By default this is
-            `'ImageScalars'`.
+            ``'ImageScalars'``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -493,7 +493,7 @@ class UniformGridFilters(DataSetFilters):
         ----------
         output_scalars_name : str, optional
             The name of the output scalars. By default this is
-            `'ImageScalars'`.
+            ``'ImageScalars'``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -568,7 +568,7 @@ class UniformGridFilters(DataSetFilters):
 
         output_scalars_name : str, optional
             The name of the output scalars. By default this is
-            `'ImageScalars'`.
+            ``'ImageScalars'``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -629,7 +629,7 @@ class UniformGridFilters(DataSetFilters):
 
         output_scalars_name : str, optional
             The name of the output scalars. By default this is
-            `'ImageScalars'`.
+            ``'ImageScalars'``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
