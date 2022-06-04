@@ -71,6 +71,11 @@ setup(
             '2k_earth_daymap.jpg',
         ],
     },
+    project_urls={
+        "Bug Tracker": "https://github.com/pyvista/pyvista/issues",
+        "Documentation": https://docs.pyvista.org/,
+        "Source Code": "https://github.com/pyvista/pyvista",
+    },
     python_requires='>=3.7.*',
     install_requires=install_requires,
     extras_require={
