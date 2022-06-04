@@ -181,7 +181,7 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 4. Wait acceptance by transifex pyvista translation maintainers.
 5. (After acceptance) Translate on transifex.
 6. You can host the translated document in `GitHub Pages`_ by creating `GitHub repository`.
-7. Translation is backuped in `pyvista-doc-translations`.
+7. Translation is backed up in `pyvista-doc-translations`_.
 
 Details can be found here: https://docs.transifex.com/getting-started-1/translators
 
@@ -189,6 +189,7 @@ Details can be found here: https://docs.transifex.com/getting-started-1/translat
 .. _Transifex: https://www.transifex.com/
 .. _`GitHub Pages`: https://github.com/tkoyama010/pyvista-docs-dev-ja
 .. _`GitHub repository`: https://github.com/tkoyama010/pyvista-docs-dev-ja
+.. _`pyvista-doc-translations`: https://github.com/tkoyama010/pyvista-doc-translations
 
 
 Status
