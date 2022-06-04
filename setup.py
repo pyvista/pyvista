@@ -73,7 +73,7 @@ setup(
     },
     project_urls={
         "Bug Tracker": "https://github.com/pyvista/pyvista/issues",
-        "Documentation": https://docs.pyvista.org/,
+        "Documentation": "https://docs.pyvista.org/",
         "Source Code": "https://github.com/pyvista/pyvista",
     },
     python_requires='>=3.7.*',
