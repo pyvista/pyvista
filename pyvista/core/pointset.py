@@ -1088,6 +1088,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def point_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the point normals.
 
+        If the point data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
+        normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
+
         Returns
         -------
         pyvista.pyvista_ndarray
@@ -1108,12 +1111,18 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                         dtype=float32)
 
         """
-        mesh = self.compute_normals(cell_normals=False, inplace=False)
-        return mesh.point_data['Normals']
+        if 'Normals' in self.point_data:
+            normals = self.point_data['Normals']
+        else:
+            normals = self.compute_normals(cell_normals=False, inplace=False).point_data['Normals']
+        return normals
 
     @property
     def cell_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the cell normals.
+
+        If the cell data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
+        normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
 
         Returns
         -------
@@ -1134,8 +1143,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                          [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
 
         """
-        mesh = self.compute_normals(point_normals=False, inplace=False)
-        return mesh.cell_data['Normals']
+        if 'Normals' in self.cell_data:
+            normals = self.cell_data['Normals']
+        else:
+            normals = self.compute_normals(point_normals=False, inplace=False).cell_data['Normals']
+        return normals
 
     @property
     def face_normals(self) -> 'pyvista.pyvista_ndarray':
