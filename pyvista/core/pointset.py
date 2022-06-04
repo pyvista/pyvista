@@ -172,7 +172,7 @@ class _PointSet(DataSet):
         Parameters
         ----------
         xyz : list or tuple or numpy.ndarray
-            Cartesian values to displace. Length 3 list, tuple or array.
+            Cartesian values to displace with. Length 3 list, tuple or array.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are transformed. Otherwise, only
