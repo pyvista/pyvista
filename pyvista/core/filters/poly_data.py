@@ -2785,18 +2785,18 @@ class PolyDataFilters(DataSetFilters):
         extrusion : str or int, optional
             Control the strategy of extrusion. One of the following:
 
-            * ``"boundary_edges"`` or ``0``
-            * ``"all_edges"`` or ``1``
+            * ``"boundary_edges"``
+            * ``"all_edges"``
 
             The default is "boundary_edges".
 
         capping : str or int, optional
             Control the strategy of capping. One of the following:
 
-            * ``"intersection"`` or ``0``
-            * ``"minimum_distance"`` or ``1``
-            * ``"maximum_distance"`` or ``2``
-            * ``"average_distance"`` or ``3``
+            * ``"intersection"``
+            * ``"minimum_distance"``
+            * ``"maximum_distance"``
+            * ``"average_distance"``
 
             The default is "intersection".
 
@@ -2832,9 +2832,7 @@ class PolyDataFilters(DataSetFilters):
             if extrusion not in extrusions:
                 raise ValueError(f'Invalid strategy of extrusion "{extrusion}".')
             extrusion = extrusions[extrusion]
-        elif isinstance(extrusion, int) and extrusion not in range(2):
-            raise ValueError(f'Invalid strategy of extrusion index "{extrusion}".')
-        elif not isinstance(extrusion, int):
+        else:
             raise ValueError(
                 f'Invalid strategy of extrusion index type "{type(extrusion).__name__}".'
             )
@@ -2849,9 +2847,7 @@ class PolyDataFilters(DataSetFilters):
             if capping not in cappings:
                 raise ValueError(f'Invalid strategy of capping "{capping}".')
             capping = cappings[capping]
-        elif isinstance(capping, int) and capping not in range(4):
-            raise ValueError(f'Invalid strategy of capping index "{capping}".')
-        elif not isinstance(capping, int):
+        else:
             raise ValueError(
                 f'Invalid strategy of extrusion index type "{type(capping).__name__}".'
             )
