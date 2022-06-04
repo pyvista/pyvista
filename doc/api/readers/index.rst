@@ -39,9 +39,11 @@ Reader Classes
     JPEGReader
     MetaImageReader
     MFIXReader
+    MultiBlockPlot3DReader
     NRRDReader
     OBJReader
     OpenFOAMReader
+    POpenFOAMReader
     PLYReader
     PNGReader
     PNMReader

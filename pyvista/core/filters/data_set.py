@@ -2110,7 +2110,14 @@ class DataSetFilters:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # remove regionID from the output when extraction mode is set to the
+        # largest to avoid the VTK warning:
+        # the Cell array RegionId ... has X tuples but there are only Y cells
+        if largest:
+            output.cell_data.pop('RegionId', None)
+        return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
         """Extract largest connected set in mesh.
@@ -4912,7 +4919,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -4994,7 +5001,7 @@ class DataSetFilters:
                 name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_points, 3)
+                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals

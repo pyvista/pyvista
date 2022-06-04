@@ -337,6 +337,37 @@ def test_plot3dmetareader():
         assert all([m.n_points, m.n_cells])
 
 
+def test_multiblockplot3dreader():
+    filename, _ = _download_file('multi-bin.xyz')
+    q_filename, _ = _download_file('multi-bin.q')
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    for m in mesh:
+        assert all([m.n_points, m.n_cells])
+        assert len(m.array_names) == 0
+
+    # Reader doesn't yet support reusability
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files(q_filename)
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    q_filename = reader.add_q_files([q_filename])
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.auto_detect_format = False
+    assert reader.auto_detect_format is False
+    reader.auto_detect_format = True
+    assert reader.auto_detect_format is True
+
+
 def test_binarymarchingcubesreader():
     filename = examples.download_pine_roots(load=False)
     reader = pyvista.get_reader(filename)
@@ -569,6 +600,16 @@ def test_openfoam_patch_arrays():
     assert mesh.n_blocks == 1
     assert patch_array_key in mesh.keys()
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
+
+
+def test_openfoam_case_type():
+    reader = get_cavity_reader()
+    reader.case_type = 'decomposed'
+    assert reader.case_type == 'decomposed'
+    reader.case_type = 'reconstructed'
+    assert reader.case_type == 'reconstructed'
+    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+        reader.case_type = 'wrong_value'
 
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
