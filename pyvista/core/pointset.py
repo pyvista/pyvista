@@ -1932,8 +1932,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 "Invalid parameters. Expecting one of the following:\n"
                 " - No arguments\n"
                 " - Filename as the only argument\n"
-                " - StructurdGrid as the only argument\n"
-                " - Three `numpy.ndarray` as the the first three arguments"
+                " - StructuredGrid as the only argument\n"
+                " - Three `numpy.ndarray` as the first three arguments"
             )
 
     def __repr__(self):
