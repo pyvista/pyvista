@@ -1873,13 +1873,13 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         be wrapped as a deep copy.
 
         If a :class:`numpy.ndarray` is provided and ``y`` and ``z`` are empty,
-        this array will define the points of this StructuredGrid. Set the
-        dimensions with :attr:`StructuredGrid.dimensions`.
+        this array will define the points of this :class:`StructuredGrid`.
+        Set the dimensions with :attr:`StructuredGrid.dimensions`.
 
-        Otherwise, this parameter be loaded as the ``x`` points and ``y`` and
-        ``z`` points must be set. The shape of this array defines the shape of
-        the structured data and the shape should be ``(dimx, dimy,
-        dimz)``. Missing dimensions are assumed to be ``1``.
+        Otherwise, this parameter will be loaded as the ``x`` points, and ``y``
+        and ``z`` points must be set. The shape of this array defines the shape
+        of the structured data and the shape should be ``(dimx, dimy,
+        dimz)``. Missing trailing dimensions are assumed to be ``1``.
 
     y : numpy.ndarray, optional
         Coordinates of the points in y direction. If this is passed, ``uinput``
