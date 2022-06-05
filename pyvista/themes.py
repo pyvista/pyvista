@@ -2219,6 +2219,13 @@ class DefaultTheme(_ThemeConfig):
         >>> pyvista.global_theme.split_sharp_edges
         True
 
+        Disable the splitting of sharp edges globally.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.split_sharp_edges = False
+        >>> pyvista.global_theme.split_sharp_edges
+        False
+
         """
         return self._split_sharp_edges
 
