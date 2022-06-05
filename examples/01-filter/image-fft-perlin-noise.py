@@ -21,7 +21,7 @@ import numpy as np
 import pyvista as pv
 
 ###############################################################################
-# Start by generating some `Perlin Noise <https://en.wikipedia.org/wiki/Perlin_noise>`_
+# Start by generating some `Perlin Noise <https://en.wikipedia.org/wiki/Perlin_noise>`_.
 #
 # Note that we are generating it in a flat plane and using 10 Hz in the x
 # direction and 5 Hz in the y direction.

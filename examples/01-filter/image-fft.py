@@ -10,7 +10,7 @@ filter.
 
 Here, we demonstrate FFT usage by denoising an image, effectively removing any
 "high frequency" content by performing a `low pass filter
-<https://en.wikipedia.org/wiki/Low-pass_filter>`_
+<https://en.wikipedia.org/wiki/Low-pass_filter>`_.
 
 This example was inspired by `Image denoising by FFT
 <https://scipy-lectures.org/intro/scipy/auto_examples/solutions/plot_fft_image_denoise.html>`_.
@@ -21,7 +21,7 @@ import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
-# Load the example Moon-landing image and plot it.
+# Load the example Moon landing image and plot it.
 
 image = examples.download_moonlanding_image()
 print(image.point_data)
@@ -52,7 +52,7 @@ fft_image.point_data
 # .. note::
 #    VTK internally creates a normalized array to plot both the real and
 #    imaginary values from the FFT filter. To avoid having this array included
-#    in the dataset, we use :func:`copy() <DataObject.copy>` to create a
+#    in the dataset, we use :func:`copy() <pyvista.DataObject.copy>` to create a
 #    temporary copy that's plotted.
 
 fft_image.copy().plot(
