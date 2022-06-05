@@ -62,6 +62,10 @@ skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
 )
+skip_mac_flaky = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
+)
+
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -71,6 +75,7 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
     'test_pbr',
+    'test_set_environment_texture_cubemap',
     'test_set_viewup',
     'test_add_title',
     'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
@@ -79,6 +84,21 @@ HIGH_VARIANCE_TESTS = {
 }
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
+
+# these images vary between Windows when using OSMesa and Linux/MacOS
+# and will not be verified
+WINDOWS_SKIP_IMAGE_CACHE = {
+    'test_user_annotations_scalar_bar_volume',  # occurs even without Windows OSMesa
+    'test_enable_stereo_render',  # occurs even without Windows OSMesa
+    'test_plot_add_scalar_bar',
+    'test_plot_cell_data',
+    'test_scalars_by_name',
+    'test_user_annotations_scalar_bar_volume',
+    'test_plot_string_array',
+    'test_cmap_list',
+    'test_collision_plot',
+    'test_enable_stereo_render',
+}
 
 
 # this must be a session fixture to ensure this runs before any other test
@@ -108,32 +128,35 @@ def verify_cache_image(plotter):
     """
     global glb_reset_image_cache, glb_ignore_image_cache
 
-    # Image cache is only valid for VTK9 on Linux
-    if not VTK9 or platform.system() != 'Linux':
+    # Image cache is only valid for VTK9+
+    if not VTK9:
         return
 
     # since each test must contain a unique name, we can simply
     # use the function test to name the image
     stack = inspect.stack()
-    test_name = None
     for item in stack:
         if item.function == 'check_gc':
             return
         if item.function[:5] == 'test_':
             test_name = item.function
             break
-    if item.function in HIGH_VARIANCE_TESTS:
+    else:
+        raise RuntimeError(
+            'Unable to identify calling test function.  This function '
+            'should only be used within a pytest environment.'
+        )
+
+    if test_name in HIGH_VARIANCE_TESTS:
         allowed_error = VER_IMAGE_REGRESSION_ERROR
         allowed_warning = VER_IMAGE_REGRESSION_WARNING
     else:
         allowed_error = IMAGE_REGRESSION_ERROR
         allowed_warning = IMAGE_REGRESSION_WARNING
 
-    if test_name is None:
-        raise RuntimeError(
-            'Unable to identify calling test function.  This function '
-            'should only be used within a pytest environment.'
-        )
+    # some tests fail when on Windows with OSMesa
+    if os.name == 'nt' and test_name in WINDOWS_SKIP_IMAGE_CACHE:
+        return
 
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
@@ -193,6 +216,32 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_gltf(filename)
 
 
+def test_import_vrml():
+    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.wrl')
+    pl = pyvista.Plotter()
+
+    with pytest.raises(FileNotFoundError):
+        pl.import_vrml('not a file')
+
+    pl.import_vrml(filename)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.wrl"))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+    pl.export_vrml(filename)
+
+    pl_import = pyvista.Plotter()
+    pl_import.import_vrml(filename)
+    pl_import.show(before_close_callback=verify_cache_image)
+
+    with pytest.raises(RuntimeError, match="This plotter has been closed"):
+        pl_import.export_vrml(filename)
+
+
 @skip_not_vtk9
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
@@ -215,6 +264,19 @@ def test_pbr(sphere):
         smooth_shading=True,
         diffuse=1,
     )
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_not_vtk9
+@skip_windows
+@skip_mac
+def test_set_environment_texture_cubemap(sphere):
+    """Test set_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter(lighting=None)
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -267,7 +329,6 @@ def test_plot(sphere, tmpdir):
         interpolate_before_map=True,
         screenshot=filename,
         return_img=True,
-        before_close_callback=verify_cache_image,
         return_cpos=True,
     )
     assert isinstance(cpos, pyvista.CameraPosition)
@@ -2180,11 +2241,26 @@ def test_plot_zoom(sphere):
 
 def test_splitting():
     nut = examples.load_nut()
+    nut['sample_data'] = nut.points[:, 2]
+
     # feature angle of 50 will smooth the outer edges of the nut but not the inner.
     nut.plot(
         smooth_shading=True,
         split_sharp_edges=True,
         feature_angle=50,
+        before_close_callback=verify_cache_image,
+        show_scalar_bar=False,
+    )
+
+
+@skip_mac_flaky
+def test_splitting_active_cells(cube):
+    cube.cell_data['cell_id'] = range(cube.n_cells)
+    cube = cube.triangulate().subdivide(1)
+    cube.plot(
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
         before_close_callback=verify_cache_image,
     )
 

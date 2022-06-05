@@ -503,6 +503,16 @@ if VTK9:
 
         return vtkCGNSReader()
 
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+        from vtkmodules.vtkParallelCore import vtkDummyController
+
+        # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
+        reader = vtkPOpenFOAMReader()
+        reader.SetController(vtkDummyController())
+        return reader
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
@@ -548,6 +558,14 @@ else:  # pragma: no cover
     def lazy_vtkCGNSReader():
         """Lazy import of the vtkCGNSReader."""
         raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
+
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        # Workaround to fix the following issue: https://gitlab.kitware.com/vtk/vtk/-/issues/18143
+        # Fixed in vtk > 9.1.0
+        reader = vtk.vtkPOpenFOAMReader()
+        reader.SetController(vtk.vtkDummyController())
+        return reader
 
     def lazy_vtkHDFReader():
         """Lazy import of the vtkHDFReader."""

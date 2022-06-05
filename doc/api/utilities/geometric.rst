@@ -22,6 +22,7 @@ additional details see :ref:`ref_geometric_example` example.
    Dodecahedron
    Icosahedron
    Line
+   MultipleLines
    Tube
    Octahedron
    Plane

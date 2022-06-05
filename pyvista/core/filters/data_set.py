@@ -919,11 +919,11 @@ class DataSetFilters:
             ``'point'`` or ``'cell'``.
 
         all_scalars : bool, optional
-            If using scalars from point data, all scalars for all
+            If using scalars from point data, all
             points in a cell must satisfy the threshold when this
             value is ``True``.  When ``False``, any point of the cell
             with a scalar value satisfying the threshold criterion
-            will extract the cell.
+            will extract the cell. Has no effect when using cell data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -982,12 +982,6 @@ class DataSetFilters:
         See :ref:`common_filter_example` for more examples using this filter.
 
         """
-        if all_scalars and scalars is not None:
-            raise ValueError(
-                'Setting `all_scalars=True` and designating `scalars` '
-                'is incompatible.  Set one or the other but not both.'
-            )
-
         # set the scalars to threshold on
         if scalars is None:
             pyvista.set_default_active_scalars(self)
@@ -2116,7 +2110,14 @@ class DataSetFilters:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # remove regionID from the output when extraction mode is set to the
+        # largest to avoid the VTK warning:
+        # the Cell array RegionId ... has X tuples but there are only Y cells
+        if largest:
+            output.cell_data.pop('RegionId', None)
+        return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
         """Extract largest connected set in mesh.
@@ -4918,7 +4919,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -5000,7 +5001,7 @@ class DataSetFilters:
                 name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_points, 3)
+                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals

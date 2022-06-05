@@ -7,6 +7,18 @@ import numpy as np
 from pyvista import _vtk
 
 
+def raise_has_duplicates(arr):
+    """Raise a ValueError if an array is not unique."""
+    if has_duplicates(arr):
+        raise ValueError("Array contains duplicate values.")
+
+
+def has_duplicates(arr):
+    """Return if an array has any duplicates."""
+    s = np.sort(arr, axis=None)
+    return (s[1:] == s[:-1]).any()
+
+
 def _get_vtk_id_type():
     """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
@@ -43,6 +55,12 @@ def VTKVersionInfo():
         major, minor, micro = (4, 0, 0)
 
     return version_info(major, minor, micro)
+
+
+def uses_egl() -> bool:
+    """Check if VTK has been compiled with EGL support via OSMesa."""
+    ren_win_str = str(type(_vtk.vtkRenderWindow()))
+    return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str
 
 
 vtk_version_info = VTKVersionInfo()
