@@ -1871,16 +1871,20 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         Filename, dataset, or array to initialize the structured grid from. If
         a filename is passed, pyvista will attempt to load it as a
         :class:`StructuredGrid`. If passed a ``vtk.vtkStructuredGrid``, it will
-        be wrapped as a deep copy. If a :class:`numpy.ndarray` is passed, this
-        will be loaded as the x points and ``y`` and ``z`` points must be set.
+        be wrapped as a deep copy.
+
+        If a :class:`numpy.ndarray` is passed, this will be loaded as the x
+        points and ``y`` and ``z`` points must be set. The shape of this array
+        defines the shape of the structured data and the shape should be
+        ``(dimx, dimy, dimz)``. Missing dimensions are assumed to be ``1``.
 
     y : numpy.ndarray, optional
         Coordinates of the points in y direction. If this is passed, ``uinput``
-        must be a :class:`numpy.ndarray`.
+        must be a :class:`numpy.ndarray` and match the shape of ``y``.
 
     z : numpy.ndarray, optional
         Coordinates of the points in z direction. If this is passed, ``uinput``
-        and ``y`` must be a :class:`numpy.ndarray`.
+        and ``y`` must be a :class:`numpy.ndarray` and match the shape of ``z``.
 
     **kwargs : dict, optional
         Additional keyword arguments passed when reading from a file or loading
