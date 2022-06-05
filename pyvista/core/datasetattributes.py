@@ -119,12 +119,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     Active Texture  : TextureCoordinates
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32  (4, 3)               NORMALS
-        TextureCoordinates      float32  (4, 2)               TCOORDS
-        my-data                 int64    (4,)
-        my-other-data           int64    (4,)
-        vectors1                float64  (4, 3)               VECTORS
-        vectors0                float64  (4, 3)
+        Normals                 float32    (4, 3)               NORMALS
+        TextureCoordinates      float32    (4, 2)               TCOORDS
+        my-data                 int64      (4,)
+        my-other-data           int64      (4,)
+        vectors1                float64    (4, 3)               VECTORS
+        vectors0                float64    (4, 3)
 
     """
 
@@ -667,7 +667,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my-scalars              int64    (8,)                 SCALARS
+            my-scalars              int64      (8,)                 SCALARS
 
         """
         vtk_arr = self._prepare_array(scalars, name, deep_copy)
@@ -730,7 +730,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my-vectors              float64  (8, 3)               VECTORS
+            my-vectors              float64    (8, 3)               VECTORS
 
         """
         # prepare the array and add an attribute so that we can track this as a vector
@@ -1075,9 +1075,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            Spatial Point Data      float64  (1000,)
-            foo                     int64    (1000,)
-            rand                    float64  (1000,)              SCALARS
+            Spatial Point Data      float64    (1000,)
+            foo                     int64      (1000,)
+            rand                    float64    (1000,)              SCALARS
 
         """
         for name, array in array_dict.items():
@@ -1209,8 +1209,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : TextureCoordinates
         Active Normals  : Normals
         Contains arrays :
-            Normals                 float32  (4, 3)               NORMALS
-            TextureCoordinates      float32  (4, 2)               TCOORDS
+            Normals                 float32    (4, 3)               NORMALS
+            TextureCoordinates      float32    (4, 2)               TCOORDS
 
         >>> mesh.point_data.active_normals
         pyvista_ndarray([[0.000000e+00,  0.000000e+00, -1.000000e+00],
@@ -1231,7 +1231,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : Normals
         Contains arrays :
-            Normals                 float64  (1, 3)               NORMALS
+            Normals                 float64    (1, 3)               NORMALS
 
         """
         self._raise_no_normals()

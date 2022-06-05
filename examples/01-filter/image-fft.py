@@ -75,7 +75,7 @@ fft_image.copy().plot(
 per_keep = 0.10
 
 width, height, _ = fft_image.dimensions
-data = fft_image['PNGImage'].reshape(height, width, 2)  # note: axes flipped
+data = fft_image['PNGImage'].reshape(height, width)  # note: axes flipped
 data[int(height * per_keep) : -int(height * per_keep)] = 0
 data[:, int(width * per_keep) : -int(width * per_keep)] = 0
 
