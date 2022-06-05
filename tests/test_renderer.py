@@ -1,8 +1,10 @@
+import warnings
+
 import pytest
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
-from pyvista.plotting.renderer import ACTOR_LOC_MAP
+from pyvista.plotting.renderer import ACTOR_LOC_MAP, EGLWarning
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -116,3 +118,8 @@ def test_legend_face(sphere, face):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)
+
+
+def test_eglwarning():
+    with pytest.warns(EGLWarning):
+        warnings.warn("testing egl warning", EGLWarning)

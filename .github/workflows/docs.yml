@@ -93,8 +93,6 @@ jobs:
 
       - name: Build Documentation
         run: make -C doc html SPHINXOPTS="-W --keep-going"
-        env:
-          PYTHONWARNINGS: EGLWarning
 
       - name: Tar build
         run: tar -zcvf docs-build.tar.gz doc/_build/

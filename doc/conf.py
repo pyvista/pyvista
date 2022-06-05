@@ -2,6 +2,7 @@ import datetime
 import locale
 import os
 import sys
+import warnings
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
@@ -41,9 +42,10 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
 
-# SG warnings
-import warnings
+# ignore any EGLWarnings when building documentation with VTK compiled with OSMesa
+os.environ['PYTHONWARNINGS'] = 'EGLWarning'
 
+# SG warnings
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
