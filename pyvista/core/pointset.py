@@ -1862,8 +1862,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     Can be initialized in one of the following several ways:
 
     * Create empty grid
+    * Initialize from a filename.
     * Initialize from a ``vtk.vtkStructuredGrid`` object
-    * Initialize directly from the point arrays
+    * Initialize directly from :class:`numpy.ndarray`. See example or
+      documentation of ``uinput``.
 
     Parameters
     ----------
