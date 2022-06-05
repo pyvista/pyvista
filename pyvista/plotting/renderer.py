@@ -3,7 +3,6 @@
 import collections.abc
 from functools import partial
 from typing import Sequence
-import warnings
 from weakref import proxy
 
 import numpy as np
@@ -11,7 +10,6 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
-from pyvista.utilities.misc import uses_egl
 
 from .camera import Camera
 from .charts import Charts
@@ -442,12 +440,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         This tends to make edges appear softer and less pixelated.
 
-        Warnings
-        --------
-        Enabling this causes screenshots with vtk compiled with OSMesa to be
-        all black. This cannot be enabled when compiled with OSMesa (EGL). See
-        https://github.com/pyvista/pyvista/issues/2686 for more details.
-
         Examples
         --------
         >>> import pyvista
@@ -457,13 +449,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if uses_egl():  # pragma: no cover
-            # only display the warning when not building documentation
-            if not pyvista.BUILDING_GALLERY:
-                warnings.warn(
-                    "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
-                )
-            return
         self.SetUseFXAA(True)
         self.Modified()
 

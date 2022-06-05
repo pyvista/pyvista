@@ -57,10 +57,4 @@ def VTKVersionInfo():
     return version_info(major, minor, micro)
 
 
-def uses_egl() -> bool:
-    """Check if VTK has been compiled with EGL support via OSMesa."""
-    ren_win_str = str(type(_vtk.vtkRenderWindow()))
-    return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str
-
-
 vtk_version_info = VTKVersionInfo()
