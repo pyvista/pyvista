@@ -1,5 +1,6 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 from collections.abc import Iterable
+from functools import wraps
 from typing import Union
 
 import numpy as np
@@ -59,7 +60,7 @@ class pyvista_ndarray(np.ndarray):
     def __setitem__(self, key: Union[int, np.ndarray], value):
         """Implement [] set operator.
 
-        When the array is changed it triggers "Modified()" which updates
+        When the array is changed it triggers ``Modified()`` which updates
         all upstream objects, including any render windows holding the
         object.
         """
@@ -71,5 +72,53 @@ class pyvista_ndarray(np.ndarray):
         dataset = self.dataset
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
+
+    @wraps(np.max)
+    def max(self, *args, **kwargs):
+        """Wrap numpy.max to return a single value when applicable."""
+        output = super().max(*args, **kwargs)
+        if output.shape == ():
+            return output.item(0)
+        return output
+
+    @wraps(np.mean)
+    def mean(self, *args, **kwargs):
+        """Wrap numpy.mean to return a single value when applicable."""
+        output = super().mean(*args, **kwargs)
+        if output.shape == ():
+            return output.item(0)
+        return output
+
+    @wraps(np.sum)
+    def sum(self, *args, **kwargs):
+        """Wrap numpy.sum to return a single value when applicable."""
+        output = super().sum(*args, **kwargs)
+        if output.shape == ():
+            return output.item(0)
+        return output
+
+    @wraps(np.min)
+    def min(self, *args, **kwargs):
+        """Wrap numpy.min to return a single value when applicable."""
+        output = super().min(*args, **kwargs)
+        if output.shape == ():
+            return output.item(0)
+        return output
+
+    @wraps(np.std)
+    def std(self, *args, **kwargs):
+        """Wrap numpy.std to return a single value when applicable."""
+        output = super().std(*args, **kwargs)
+        if output.shape == ():
+            return output.item(0)
+        return output
+
+    @wraps(np.prod)
+    def prod(self, *args, **kwargs):
+        """Wrap numpy.prod to return a single value when applicable."""
+        output = super().prod(*args, **kwargs)
+        if output.shape == ():
+            return output.item(0)
+        return output
 
     __getattr__ = _vtk.VTKArray.__getattr__

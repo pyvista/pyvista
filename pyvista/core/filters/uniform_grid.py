@@ -415,13 +415,12 @@ class UniformGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         return _get_output(alg)
 
-    def fft(self, output_scalars_name='ImageScalars', progress_bar=False):
-        """Apply a fast Fourier transform (FFT) to the active scalars.
+    def fft(self, output_scalars_name=None, progress_bar=False):
+        """Apply the fast fourier transform to the active scalars.
 
         The input can have real or complex data in any components and data
-        types, but the output is always complex doubles, with the first
-        component containing real values and the second component containing
-        imaginary values.
+        types, but the output is always complex128. The filter is fastest for
+        images that have power of two sizes.
 
         The filter is fastest for images that have power of two sizes. The
         filter uses a butterfly diagram for each prime factor of the
@@ -432,8 +431,8 @@ class UniformGridFilters(DataSetFilters):
         Parameters
         ----------
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is
-            ``'ImageScalars'``.
+            The name of the output scalars. By default this is the same as the
+            active scalars of the dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -458,7 +457,7 @@ class UniformGridFilters(DataSetFilters):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-        PNGImage                float64  (298620, 2)          SCALARS
+        PNGImage                complex128 (298620,)          SCALARS
 
         See :ref:`image_fft_example` for a full example using this filter.
 
@@ -471,11 +470,13 @@ class UniformGridFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
         output = _get_output(alg)
-        self._change_output_scalars(output, output_scalars_name)
+        self._change_fft_output_scalars(
+            output, self.point_data.active_scalars_name, output_scalars_name
+        )
         return output
 
-    def rfft(self, output_scalars_name='ImageScalars', progress_bar=False):
-        """Apply the reverse fast Fourier transform (RFFT) to the active scalars.
+    def rfft(self, output_scalars_name=None, progress_bar=False):
+        """Apply the reverse fast fourier transform (RFFT) to the active scalars.
 
         The input can have real or complex data in any components and data
         types, but the output is always complex doubles, with the first
@@ -491,8 +492,8 @@ class UniformGridFilters(DataSetFilters):
         Parameters
         ----------
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is
-            ``'ImageScalars'``.
+            The name of the output scalars. By default this is the same as the
+            active scalars of the dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -528,7 +529,9 @@ class UniformGridFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
         output = _get_output(alg)
-        self._change_output_scalars(output, output_scalars_name)
+        self._change_fft_output_scalars(
+            output, self.point_data.active_scalars_name, output_scalars_name
+        )
         return output
 
     def low_pass(
@@ -537,7 +540,7 @@ class UniformGridFilters(DataSetFilters):
         y_cutoff,
         z_cutoff,
         order=1,
-        output_scalars_name='ImageScalars',
+        output_scalars_name=None,
         progress_bar=False,
     ):
         """Perform a low pass filter in the frequency domain.
@@ -566,8 +569,8 @@ class UniformGridFilters(DataSetFilters):
             ``1 + (cutoff/freq(i, j))**(2*order)``.
 
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is
-            ``'ImageScalars'``.
+            The name of the output scalars. By default this is the same as the
+            active scalars of the dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -589,7 +592,9 @@ class UniformGridFilters(DataSetFilters):
         alg.SetOrder(order)
         _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
         output = _get_output(alg)
-        self._change_output_scalars(output, output_scalars_name)
+        self._change_fft_output_scalars(
+            output, self.point_data.active_scalars_name, output_scalars_name
+        )
         return output
 
     def high_pass(
@@ -598,7 +603,7 @@ class UniformGridFilters(DataSetFilters):
         y_cutoff,
         z_cutoff,
         order=1,
-        output_scalars_name='ImageScalars',
+        output_scalars_name=None,
         progress_bar=False,
     ):
         """Perform a high pass filter in the frequency domain.
@@ -627,8 +632,8 @@ class UniformGridFilters(DataSetFilters):
             ``1 + (cutoff/freq(i, j))**(2*order)``.
 
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is
-            ``'ImageScalars'``.
+            The name of the output scalars. By default this is the same as the
+            active scalars of the dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -650,15 +655,20 @@ class UniformGridFilters(DataSetFilters):
         alg.SetOrder(order)
         _update_alg(alg, progress_bar, 'Performing High Pass Filter')
         output = _get_output(alg)
-        self._change_output_scalars(output, output_scalars_name)
+        self._change_fft_output_scalars(
+            output, self.point_data.active_scalars_name, output_scalars_name
+        )
         return output
 
-    def _change_output_scalars(self, dataset, name):
-        """Modify the name of the output scalars for a FFT filter."""
-        default_name = 'ImageScalars'
-        if name != default_name:
-            pdata = dataset.point_data
-            dataset.point_data[name] = pdata.pop(default_name)
+    def _change_fft_output_scalars(self, dataset, orig_name, out_name):
+        """Modify the name and dtype of the output scalars for a FFT filter."""
+        name = orig_name if out_name is None else out_name
+        pdata = dataset.point_data
+        if pdata.active_scalars_name != name:
+            pdata[name] = pdata.pop(pdata.active_scalars_name)
+
+        # always view the datatype of the point_data as complex128
+        dataset._association_complex_names['POINT'].add(name)
 
     def _check_fft_scalars(self):
         """Check for active scalars with two components.
@@ -674,4 +684,8 @@ class UniformGridFilters(DataSetFilters):
 
         meets_req = scalars.ndim == 2 and scalars.shape[1] == 2
         if not meets_req:
-            raise ValueError('Active scalars must contain 2 components for this FFT filter.')
+            raise ValueError(
+                'Active scalars must be complex data for this filter, represented '
+                'either as a 2 component float array, or as an array with '
+                'dtype=numpy.complex128'
+            )

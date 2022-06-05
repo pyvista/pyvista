@@ -21,15 +21,17 @@ import numpy as np
 import pyvista as pv
 
 ###############################################################################
-# Start by generating some `Perlin Noise <https://en.wikipedia.org/wiki/Perlin_noise>`_.
+# Start by generating some `Perlin Noise <https://en.wikipedia.org/wiki/Perlin_noise>`_ as in :ref:`perlin_noise_2d_example` example.
 #
-# Note that we are generating it in a flat plane and using 10 Hz in the x
-# direction and 5 Hz in the y direction.
+# Note that we are generating it in a flat plane and using a frequency of 10 in
+# the x direction and 5 in the y direction. Units of the frequency is ``1/pixel``.
 #
+# Also note that the dimensions of the image are a power of 2. This is because
+# FFT is an efficient implement of the discrete fourier transform.
 
 freq = [10, 5, 0]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
-xdim, ydim = (500, 500)
+xdim, ydim = (512, 512)
 sampled = pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(xdim, ydim, 1))
 
 # plot the sampled noise

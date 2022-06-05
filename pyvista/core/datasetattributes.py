@@ -145,7 +145,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             for i, (name, array) in enumerate(self.items()):
                 if len(name) > 23:
                     name = f'{name[:20]}...'
-                # vtk_arr = array.VTKObject
                 try:
                     arr_type = attr_type[self.IsArrayAnAttribute(i)]
                 except (IndexError, TypeError, AttributeError):  # pragma: no cover
@@ -156,9 +155,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
 
-                line = (
-                    f'{name[:23]:<24}{str(array.dtype):<9}{str(array.shape):<20} {arr_type}'.strip()
-                )
+                line = f'{name[:23]:<24}{str(array.dtype):<11}{str(array.shape):<20} {arr_type}'.strip()
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
@@ -547,8 +544,16 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if type(vtk_arr) == _vtk.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
-        if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association.name]:
+
+        name = vtk_arr.GetName()
+        if name in self.dataset.association_bitarray_names[self.association.name]:
             narray = narray.view(np.bool_)  # type: ignore
+        elif name in self.dataset._association_complex_names[self.association.name]:
+            narray = narray.view(np.complex128)  # type: ignore
+            # ravel to keep this array flat to match the behavior of the rest
+            # of VTK arrays
+            if narray.ndim == 2 and narray.shape[-1] == 1:
+                narray = narray.ravel()
         return narray
 
     def set_array(
@@ -583,6 +588,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         You can simply use the ``[]`` operator to add an array to the
         dataset.  Note that this will automatically become the active
         scalars.
+
+        Complex arrays will be represented internally as a 2 component float64
+        array. This is due to limitations of VTK's native datatypes.
 
         Examples
         --------
@@ -771,6 +779,18 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if data.dtype == np.bool_:
             self.dataset.association_bitarray_names[self.association.name].add(name)
             data = data.view(np.uint8)
+        elif np.issubdtype(data.dtype, np.complexfloating):
+            if data.dtype != np.complex128:
+                raise ValueError('Only numpy.complex128 is supported when setting data attributes')
+
+            if data.ndim != 1:
+                if data.shape[1] != 1:
+                    raise ValueError('Complex data must be single dimensional.')
+            self.dataset._association_complex_names[self.association.name].add(name)
+
+            # complex data is stored internally as a contiguous 2 component
+            # float64 array
+            data = data.view(np.float64).reshape(-1, 2)
 
         shape = data.shape
         if data.ndim == 3:
@@ -804,7 +824,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
         copy = pyvista_ndarray(data)
-
         return helpers.convert_array(copy, name, deep=deep_copy)
 
     def append(
@@ -1000,12 +1019,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
-        values = []
-        for name in self.keys():
-            array = self.VTKObject.GetAbstractArray(name)
-            arr = pyvista_ndarray(array, dataset=self.dataset, association=self.association)
-            values.append(arr)
-        return values
+        return [self.get_array(name) for name in self.keys()]
 
     def clear(self):
         """Remove all arrays in this object.

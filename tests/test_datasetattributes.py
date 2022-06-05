@@ -517,3 +517,18 @@ def test_active_t_coords_name(plane):
 
     with raises(AttributeError):
         plane.field_data.active_t_coords_name = 'arr'
+
+
+def test_complex(plane):
+    """Test if complex data can be properly represented in datasetattributes."""
+    with raises(ValueError, match='Only numpy.complex128'):
+        plane.point_data['my_data'] = np.empty(plane.n_points, dtype=np.complex64)
+
+    with raises(ValueError, match='Complex data must be single dimensional'):
+        plane.point_data['my_data'] = np.empty((plane.n_points, 2), dtype=np.complex128)
+
+    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
+    plane.point_data['my_data'] = data
+    assert np.allclose(plane.point_data['my_data'], data)
+
+    assert 'complex128' in str(plane.point_data)

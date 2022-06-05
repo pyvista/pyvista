@@ -213,12 +213,14 @@ def point_array(obj, name):
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.ndarray or None
+        Wrapped array if available.
 
     """
-    vtkarr = obj.GetPointData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    try:
+        return obj.point_data.get_array(name)
+    except KeyError:
+        return
 
 
 def field_array(obj, name):
@@ -234,12 +236,14 @@ def field_array(obj, name):
 
     Returns
     -------
-    numpy.ndarray
+    pyvista.ndarray
         Wrapped array.
 
     """
-    vtkarr = obj.GetFieldData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    try:
+        return obj.field_data.get_array(name)
+    except KeyError:
+        return
 
 
 def cell_array(obj, name):
@@ -255,12 +259,14 @@ def cell_array(obj, name):
 
     Returns
     -------
-    numpy.ndarray
+    pyvista.ndarray
         Wrapped array.
 
     """
-    vtkarr = obj.GetCellData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    try:
+        return obj.cell_data.get_array(name)
+    except KeyError:
+        return
 
 
 def row_array(obj, name):

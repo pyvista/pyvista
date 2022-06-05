@@ -36,6 +36,9 @@ class DataObject:
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self.association_bitarray_names: DefaultDict = collections.defaultdict(set)
 
+        # view these arrays as complex128
+        self._association_complex_names: DefaultDict = collections.defaultdict(set)
+
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
