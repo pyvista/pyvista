@@ -31,6 +31,14 @@ ACTOR_LOC_MAP = [
 ]
 
 
+class EGLWarning(Warning):
+    """Custom EGL warning."""
+
+    def __init__(self, message):
+        """Initialize EGLWarning."""
+        self.message = message
+
+
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
 
@@ -458,11 +466,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if uses_egl():  # pragma: no cover
-            # only display the warning when not building documentation
-            if not pyvista.BUILDING_GALLERY:
-                warnings.warn(
-                    "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
-                )
+            warnings.warn(
+                "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled.",
+                EGLWarning,
+            )
             return
         self.SetUseFXAA(True)
         self.Modified()
