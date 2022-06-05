@@ -62,6 +62,10 @@ skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
 )
+skip_mac_flaky = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
+)
+
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -2237,11 +2241,26 @@ def test_plot_zoom(sphere):
 
 def test_splitting():
     nut = examples.load_nut()
+    nut['sample_data'] = nut.points[:, 2]
+
     # feature angle of 50 will smooth the outer edges of the nut but not the inner.
     nut.plot(
         smooth_shading=True,
         split_sharp_edges=True,
         feature_angle=50,
+        before_close_callback=verify_cache_image,
+        show_scalar_bar=False,
+    )
+
+
+@skip_mac_flaky
+def test_splitting_active_cells(cube):
+    cube.cell_data['cell_id'] = range(cube.n_cells)
+    cube = cube.triangulate().subdivide(1)
+    cube.plot(
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
         before_close_callback=verify_cache_image,
     )
 

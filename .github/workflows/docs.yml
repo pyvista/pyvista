@@ -92,10 +92,7 @@ jobs:
           key: autosummary-rst-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
-
-      - name: Check for Warnings
-        run: python doc/print_errors.py
+        run: make -C doc html SPHINXOPTS="-W --keep-going"
 
       - name: Tar build
         run: tar -zcvf docs-build.tar.gz doc/_build/

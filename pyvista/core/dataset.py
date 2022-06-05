@@ -411,7 +411,7 @@ class DataSet(DataSetFilters, DataObject):
             self.Modified()
             return
         # otherwise, wrap and use the array
-        points = _coerce_pointslike_arg(points)
+        points = _coerce_pointslike_arg(points, copy=False)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
