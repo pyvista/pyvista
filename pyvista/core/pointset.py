@@ -260,9 +260,6 @@ class _PointSet(DataSet):
             # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             inplace = True
-        if inplace:
-            self.points *= np.asarray(xyz)  # type: ignore
-            return self
         return super().scale(
             xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
@@ -1864,8 +1861,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     * Create empty grid.
     * Initialize from a filename.
     * Initialize from a ``vtk.vtkStructuredGrid`` object.
-    * Initialize directly from :class:`numpy.ndarray`. See example or
-      documentation of ``uinput``.
+    * Initialize directly from one or more :class:`numpy.ndarray`. See the
+      example or the documentation of ``uinput``.
 
     Parameters
     ----------
@@ -1875,10 +1872,14 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         :class:`StructuredGrid`. If passed a ``vtk.vtkStructuredGrid``, it will
         be wrapped as a deep copy.
 
-        If a :class:`numpy.ndarray` is passed, this will be loaded as the x
-        points and ``y`` and ``z`` points must be set. The shape of this array
-        defines the shape of the structured data and the shape should be
-        ``(dimx, dimy, dimz)``. Missing dimensions are assumed to be ``1``.
+        If a :class:`numpy.ndarray` is provided and ``y`` and ``z`` are empty,
+        this array will define the points of this StructuredGrid. Set the
+        dimensions with :attr:`StructuredGrid.dimensions`.
+
+        Otherwise, this parameter be loaded as the ``x`` points and ``y`` and
+        ``z`` points must be set. The shape of this array defines the shape of
+        the structured data and the shape should be ``(dimx, dimy,
+        dimz)``. Missing dimensions are assumed to be ``1``.
 
     y : numpy.ndarray, optional
         Coordinates of the points in y direction. If this is passed, ``uinput``
@@ -1942,6 +1943,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             and isinstance(z, np.ndarray)
         ):
             self._from_arrays(uinput, y, z, **kwargs)
+        elif isinstance(uinput, np.ndarray) and y is None and z is None:
+            self.points = uinput
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
@@ -1951,6 +1954,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 " - No arguments\n"
                 " - Filename as the only argument\n"
                 " - StructuredGrid as the only argument\n"
+                " - Single `numpy.ndarray` as the only argument"
                 " - Three `numpy.ndarray` as the first three arguments"
             )
 
