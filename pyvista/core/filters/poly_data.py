@@ -1300,7 +1300,7 @@ class PolyDataFilters(DataSetFilters):
         The algorithm works by determining normals for each polygon
         and then averaging them at shared points. When sharp edges are
         present, the edges are split and new points generated to
-        prevent blurry edges (due to Gouraud shading).
+        prevent blurry edges (due to Phong shading).
 
         Parameters
         ----------
@@ -1311,7 +1311,9 @@ class PolyDataFilters(DataSetFilters):
             Calculation of point normals. Defaults to ``True``.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to ``False``.
+            Splitting of sharp edges. Defaults to ``False``. Indices to the
+            original points are tracked in the ``"pyvistaOriginalPointIds"``
+            array.
 
         flip_normals : bool, optional
             Set global flipping of normal orientation. Flipping
@@ -1397,6 +1399,12 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`surface_normal_example` for more examples using this filter.
 
         """
+        # track original point indices
+        if split_vertices:
+            self.point_data.set_array(
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
+            )
+
         normal = _vtk.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
         normal.SetComputePointNormals(point_normals)

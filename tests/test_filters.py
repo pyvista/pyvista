@@ -2169,10 +2169,13 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
 
         for i in range(num_point_data):
-            dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
+
+        # track original untransformed dataset
+        orig_dataset = dataset.copy(deep=True)
 
         # handle
         f = pyvista._vtk.vtkTransformFilter()
@@ -2183,31 +2186,55 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
         transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
+        # verify that the dataset has not modified
+        if num_cell_arrays:
+            assert dataset.cell_data == orig_dataset.cell_data
+        if num_point_data:
+            assert dataset.point_data == orig_dataset.point_data
+
         assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
         assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
         assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
         for i in range(num_cell_arrays):
-            assert dataset.cell_data['C%d' % i][:, 0] == pytest.approx(
-                transformed.cell_data['C%d' % i][:, 0]
+            assert dataset.cell_data[f'C{i}'][:, 0] == pytest.approx(
+                transformed.cell_data[f'C{i}'][:, 0]
             )
-            assert dataset.cell_data['C%d' % i][:, 2] == pytest.approx(
-                -transformed.cell_data['C%d' % i][:, 1]
+            assert dataset.cell_data[f'C{i}'][:, 2] == pytest.approx(
+                -transformed.cell_data[f'C{i}'][:, 1]
             )
-            assert dataset.cell_data['C%d' % i][:, 1] == pytest.approx(
-                transformed.cell_data['C%d' % i][:, 2]
+            assert dataset.cell_data[f'C{i}'][:, 1] == pytest.approx(
+                transformed.cell_data[f'C{i}'][:, 2]
             )
 
         for i in range(num_point_data):
-            assert dataset.point_data['P%d' % i][:, 0] == pytest.approx(
-                transformed.point_data['P%d' % i][:, 0]
+            assert dataset.point_data[f'P{i}'][:, 0] == pytest.approx(
+                transformed.point_data[f'P{i}'][:, 0]
             )
-            assert dataset.point_data['P%d' % i][:, 2] == pytest.approx(
-                -transformed.point_data['P%d' % i][:, 1]
+            assert dataset.point_data[f'P{i}'][:, 2] == pytest.approx(
+                -transformed.point_data[f'P{i}'][:, 1]
             )
-            assert dataset.point_data['P%d' % i][:, 1] == pytest.approx(
-                transformed.point_data['P%d' % i][:, 2]
+            assert dataset.point_data[f'P{i}'][:, 1] == pytest.approx(
+                transformed.point_data[f'P{i}'][:, 2]
             )
+
+
+@pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
+def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+    for dataset in datasets:
+        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        dataset.clear_data()
+        for i in range(num_cell_arrays):
+            dataset.cell_data[f"C{i}"] = np.random.randint(
+                np.iinfo(int).max, size=(dataset.n_cells, 3)
+            )
+        for i in range(num_point_data):
+            dataset.point_data[f"P{i}"] = np.random.randint(
+                np.iinfo(int).max, size=(dataset.n_points, 3)
+            )
+        if not (num_cell_arrays == 0 and num_point_data == 0):
+            with pytest.warns(UserWarning, match="Integer"):
+                _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
 @pytest.mark.parametrize(
