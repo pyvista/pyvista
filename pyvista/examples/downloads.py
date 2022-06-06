@@ -3468,12 +3468,18 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import os
+    >>> import tempfile
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_single_sphere_animation(load=False)
     >>> reader = pyvista.PVDReader(filename)
     >>> plotter = pyvista.Plotter()
-    >>> plotter.open_gif("single_sphere_pvd.gif")
+    >>> filename = os.path.join(
+    ...     tempfile._get_default_tempdir(),
+    ...     next(tempfile._get_candidate_names()) + '.gif'
+    ... )
+    >>> plotter.open_gif(filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
@@ -3508,12 +3514,18 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import os
+    >>> import tempfile
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_dual_sphere_animation(load=False)
     >>> reader = pyvista.PVDReader(filename)
     >>> plotter = pyvista.Plotter()
-    >>> plotter.open_gif("sphere_pvd.gif")
+    >>> filename = os.path.join(
+    ...     tempfile._get_default_tempdir(),
+    ...     next(tempfile._get_candidate_names()) + '.gif'
+    ... )
+    >>> plotter.open_gif(filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
