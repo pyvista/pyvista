@@ -13,7 +13,7 @@ Here, we demonstrate FFT usage by first generating Perlin noise using
 sample :func:`pyvista.perlin_noise <pyvista.core.common_data.perlin_noise>`,
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
-
+n
 """
 
 import numpy as np
@@ -21,6 +21,8 @@ import numpy as np
 import pyvista as pv
 
 ###############################################################################
+# Generate Perlin Noise
+# ~~~~~~~~~~~~~~~~~~~~~
 # Start by generating some `Perlin Noise
 # <https://en.wikipedia.org/wiki/Perlin_noise>`_ as in
 # :ref:`perlin_noise_2d_example` example.
@@ -43,6 +45,8 @@ warped_noise.plot(show_scalar_bar=False, text='Perlin Noise', lighting=False)
 
 
 ###############################################################################
+# Perform FFT of Perlin Noise
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Next, perform a FFT of the noise and plot the frequency content.
 # For the sake of simplicity, we will only plot the content in the first
 # quadrant.
@@ -62,6 +66,8 @@ subset.spacing = (spacing, spacing, spacing)
 
 
 ###############################################################################
+# Plot the Frequency Domain
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, plot the noise in the frequency domain. Note how there is more high
 # frequency content in the x direction and this matches the frequencies given
 # to :func:`pyvista.perlin_noise <pyvista.core.common_data.perlin_noise>`.
@@ -120,6 +126,8 @@ warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise
 
 
 ###############################################################################
+# Sum Low and High Pass
+# ~~~~~~~~~~~~~~~~~~~~~
 # Show that the sum of the low and high passes equal the original noise.
 
 grid = pv.UniformGrid(dims=sampled.dimensions, spacing=sampled.spacing)

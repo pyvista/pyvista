@@ -35,20 +35,22 @@ image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 
 ###############################################################################
 # Apply FFT to the image
+# ~~~~~~~~~~~~~~~~~~~~~~
+# FFT will be applied to the active scalars, ``'PNGImage'``, the default
+# scalars name when loading a PNG image.
 #
-# FFT will be applied to the active scalars, which is stored as ``'PNGImage'``,
-# the default scalars name when loading a PNG image.
-#
-# The output from the filter is a complex array.
+# The output from the filter is a complex array stored as the same array unless
+# specified using ``output_scalars_name``.
 
 fft_image = image.fft()
 fft_image.point_data
 
 ###############################################################################
-# Plot the FFT of the image. Note that we are effectively viewing the
-# "frequency" of the data in this image, where the four corners contain the low
-# frequency content of the image, and the middle is the high frequency content
-# of the image.
+# Plot the FFT of the image.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Note that we are effectively viewing the "frequency" of the data in this
+# image, where the four corners contain the low frequency content of the image,
+# and the middle is the high frequency content of the image.
 #
 # .. note::
 #    VTK internally creates a normalized array to plot both the real and
@@ -64,8 +66,8 @@ fft_image.copy().plot(
 )
 
 ###############################################################################
-# Remove the noise from the fft_image
-#
+# Remove the noise from the ``fft_image``
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
 # First, let's reshape by the size of the image. Note that the image data is in
 # real and imaginary axes.
@@ -94,6 +96,8 @@ fft_image.copy().plot(
 
 
 ###############################################################################
+# Convert to the spatial domain using reverse FFT
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, convert the image data back to the "spacial" domain and plot it.
 
 rfft = fft_image.rfft()
