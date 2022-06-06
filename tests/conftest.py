@@ -104,7 +104,7 @@ def pointset():
 
 
 @fixture()
-def noise():
+def noise_2d():
     freq = [10, 5, 0]
     noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))

@@ -777,50 +777,50 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
-def test_fft_and_rfft(noise):
+def test_fft_and_rfft(noise_2d):
     grid = pyvista.UniformGrid(dims=(10, 10, 1))
     with pytest.raises(ValueError, match='active point scalars'):
         grid.fft()
 
-    name = noise.active_scalars_name
-    noise_fft = noise.fft()
+    name = noise_2d.active_scalars_name
+    noise_fft = noise_2d.fft()
     assert noise_fft[name].dtype == np.complex128
 
-    full_pass = noise.fft().rfft()
+    full_pass = noise_2d.fft().rfft()
     assert full_pass[name].dtype == np.complex128
 
     # expect FFT and and RFFT to transform from time --> freq --> time domain
-    assert np.allclose(noise['scalars'], full_pass[name].real)
+    assert np.allclose(noise_2d['scalars'], full_pass[name].real)
     assert np.allclose(full_pass[name].imag, 0)
 
     output_scalars_name = 'out_scalars'
-    noise_fft = noise.fft(output_scalars_name=output_scalars_name)
+    noise_fft = noise_2d.fft(output_scalars_name=output_scalars_name)
     assert output_scalars_name in noise_fft.point_data
 
 
-def test_fft_low_pass(noise):
-    name = noise.active_scalars_name
-    noise_no_scalars = noise.copy()
+def test_fft_low_pass(noise_2d):
+    name = noise_2d.active_scalars_name
+    noise_no_scalars = noise_2d.copy()
     noise_no_scalars.clear_data()
     with pytest.raises(ValueError, match='active point scalars'):
         noise_no_scalars.low_pass(1, 1, 1)
 
     with pytest.raises(ValueError, match='must be complex data'):
-        noise.low_pass(1, 1, 1)
+        noise_2d.low_pass(1, 1, 1)
 
-    out_zeros = noise.fft().low_pass(0, 0, 0)
+    out_zeros = noise_2d.fft().low_pass(0, 0, 0)
     assert np.allclose(out_zeros[name][1:], 0)
 
-    out = noise.fft().low_pass(1, 1, 1)
+    out = noise_2d.fft().low_pass(1, 1, 1)
     assert not np.allclose(out[name][1:], 0)
 
 
-def test_fft_high_pass(noise):
-    name = noise.active_scalars_name
-    out_zeros = noise.fft().high_pass(100000, 100000, 100000)
+def test_fft_high_pass(noise_2d):
+    name = noise_2d.active_scalars_name
+    out_zeros = noise_2d.fft().high_pass(100000, 100000, 100000)
     assert np.allclose(out_zeros[name][1:], 0)
 
-    out = noise.fft().high_pass(10, 10, 10)
+    out = noise_2d.fft().high_pass(10, 10, 10)
     assert not np.allclose(out[name][1:], 0)
 
 
