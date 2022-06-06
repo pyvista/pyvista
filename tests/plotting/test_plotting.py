@@ -2338,9 +2338,12 @@ def test_ruler(sphere):
 
 def test_plot_complex_value(plane):
     """Test plotting complex data."""
-    data = np.arange(plane.n_points * 2).astype(np.float64).reshape(-1, 2).view(np.complex128)
-    plane.plot(scalars=data)
+    data = np.arange(plane.n_points, dtype=np.complex128)
+    data += np.linspace(0, 1, plane.n_points) * -1j
+    with pytest.warns(np.ComplexWarning):
+        plane.plot(scalars=data)
 
     pl = pyvista.Plotter()
-    pl.add_mesh(plane, scalars=data, show_scalar_bar=False)
+    with pytest.warns(np.ComplexWarning):
+        pl.add_mesh(plane, scalars=data, show_scalar_bar=False)
     pl.show(before_close_callback=verify_cache_image)

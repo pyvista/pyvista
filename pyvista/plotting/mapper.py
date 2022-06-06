@@ -102,10 +102,10 @@ def make_mapper(mapper_class):
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
 
-            # Convert complex to real if applicable
+            # Use only the real component if an array is complex
             if np.issubdtype(scalars.dtype, complex):
-                scalars = np.abs(scalars)
-                title = f'{title}-normed'
+                scalars = scalars.astype(float)
+                title = f'{title}-real'
 
             if rgb:
                 show_scalar_bar = False
