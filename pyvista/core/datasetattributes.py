@@ -619,6 +619,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         vtk_arr = self._prepare_array(data, name, deep_copy)
+        complex_assoc = self.dataset._association_complex_names
+        if name in complex_assoc[self.association.name]:
+            if isinstance(data, np.ndarray):
+                if not np.issubdtype(data.dtype, complex):
+                    complex_assoc[self.association.name].remove(name)
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 

@@ -21,13 +21,16 @@ import numpy as np
 import pyvista as pv
 
 ###############################################################################
-# Start by generating some `Perlin Noise <https://en.wikipedia.org/wiki/Perlin_noise>`_ as in :ref:`perlin_noise_2d_example` example.
+# Start by generating some `Perlin Noise
+# <https://en.wikipedia.org/wiki/Perlin_noise>`_ as in
+# :ref:`perlin_noise_2d_example` example.
 #
 # Note that we are generating it in a flat plane and using a frequency of 10 in
-# the x direction and 5 in the y direction. Units of the frequency is ``1/pixel``.
+# the x direction and 5 in the y direction. Units of the frequency is
+# ``1/pixel``.
 #
 # Also note that the dimensions of the image are a power of 2. This is because
-# FFT is an efficient implement of the discrete fourier transform.
+# the FFT is most efficient for images dimensioned in a power of 2.
 
 freq = [10, 5, 0]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
@@ -71,25 +74,49 @@ pl.show()
 ###############################################################################
 # Low Pass Filter
 # ~~~~~~~~~~~~~~~
-# For fun, let's perform a low pass filter on the frequency content and then
-# convert it back into the "time" domain by immediately applying a reverse FFT.
+# Let's perform a low pass filter on the frequency content and then convert it
+# back into the space (pixel) domain by immediately applying a reverse FFT.
+#
+# When converting back, keep only the real content. The imaginary content has no
+# physical meaning in the physical domain.
 #
 # As expected, we only see low frequency noise.
 
-low_pass = sampled_fft.low_pass(0.5, 0.5, 0.5).rfft()
-low_pass['ImageScalars'] = low_pass['ImageScalars'][:, 0]  # remove the complex data
+low_pass = sampled_fft.low_pass(1.0, 1.0, 1.0).rfft()
+low_pass['scalars'] = low_pass.active_scalars.real
 low_pass.plot(cpos='xy', show_scalar_bar=False, text='Low Pass of the Perlin Noise')
+# low_pass.plot(scalars=low_pass.active_scalars.real, cpos='xy', show_scalar_bar=True, text='Low Pass of the Perlin Noise')
 
 
 ###############################################################################
 # High Pass Filter
 # ~~~~~~~~~~~~~~~~
 # This time, let's perform a high pass filter on the frequency content and then
-# convert it back into the "time" domain by immediately applying a reverse FFT.
+# convert it back into the space (pixel) domain by immediately applying a
+# reverse FFT.
+#
+# When converting back, keep only the real content. The imaginary content has no
+# physical meaning in the pixel domain.
 #
 # As expected, we only see the high frequency noise content as the low
 # frequency noise has been attenuated.
 
-high_pass_noise = sampled_fft.high_pass(5, 5, 5).rfft()
-high_pass_noise['ImageScalars'] = high_pass_noise['ImageScalars'][:, 0]  # remove the complex data
-high_pass_noise.plot(cpos='xy', show_scalar_bar=False, text='High Pass of the Perlin Noise')
+high_pass = sampled_fft.high_pass(1.0, 1.0, 1.0).rfft()
+high_pass['scalars'] = high_pass.active_scalars.real
+high_pass.plot(cpos='xy', show_scalar_bar=False, text='High Pass of the Perlin Noise')
+
+###############################################################################
+# Show that the low and high passes of the original noise sum to the original.
+
+grid = pv.UniformGrid(dims=(xdim, ydim, 1))
+grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
+
+pl = pv.Plotter(shape=(1, 2))
+pl.add_mesh(sampled, show_scalar_bar=False)
+pl.add_text('Original Dataset')
+pl.camera_position = 'xy'
+pl.subplot(0, 1)
+pl.add_mesh(grid, show_scalar_bar=False)
+pl.add_text('Summed Low and High Passes')
+pl.camera_position = 'xy'
+pl.show()

@@ -2315,3 +2315,13 @@ def test_ruler(sphere):
     plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
     plotter.view_xy()
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_complex_value(plane):
+    """Test plotting complex data."""
+    data = np.arange(plane.n_points * 2).astype(np.float64).reshape(-1, 2).view(np.complex128)
+    plane.plot(scalars=data)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(plane, scalars=data, show_scalar_bar=False)
+    pl.show(before_close_callback=verify_cache_image)

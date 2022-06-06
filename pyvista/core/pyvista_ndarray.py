@@ -121,4 +121,7 @@ class pyvista_ndarray(np.ndarray):
             return output.item(0)
         return output
 
+    # def __del__(self):
+    #     del self.dataset
+
     __getattr__ = _vtk.VTKArray.__getattr__

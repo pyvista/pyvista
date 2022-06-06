@@ -36,9 +36,10 @@ image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 ###############################################################################
 # Apply FFT to the image
 #
-# FFT will be applied to the active scalars, which is stored in ``'PNGImage'``.
-# The output from the filter contains both real and imaginary components and is
-# stored in the same array.
+# FFT will be applied to the active scalars, which is stored as ``'PNGImage'``,
+# the default scalars name when loading a PNG image.
+#
+# The output from the filter is a complex array.
 
 fft_image = image.fft()
 fft_image.point_data
@@ -71,6 +72,11 @@ fft_image.copy().plot(
 #
 # Next, perform a low pass filter by removing the middle 80% of the content of
 # the image. Note that the high frequency content is in the middle of the array.
+#
+# .. note::
+#    It is easier and more efficient to use the existing
+#    :func:`pyvista.UniformGridFilters.low_pass` filter. This section is here
+#    for demonstration purposes.
 
 per_keep = 0.10
 
@@ -88,7 +94,7 @@ fft_image.copy().plot(
 
 
 ###############################################################################
-# Finally, convert the image data back to the "image domain" and plot it.
+# Finally, convert the image data back to the "spacial" domain and plot it.
 
 rfft = fft_image.rfft()
 rfft.plot(cpos="xy", theme=grey_theme, text='Processed Moon Landing Image')
