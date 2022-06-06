@@ -105,7 +105,7 @@ def make_mapper(mapper_class):
             # Convert complex to real if applicable
             if np.issubdtype(scalars.dtype, complex):
                 scalars = np.abs(scalars)
-                title = title + '-Normed'
+                title = f'{title}-normed'
 
             if rgb:
                 show_scalar_bar = False
