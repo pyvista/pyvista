@@ -1412,6 +1412,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
         self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+        self._association_complex_names = ido._association_complex_names
 
     @property
     def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
