@@ -140,8 +140,7 @@ def make_mapper(mapper_class):
                 n_colors,
                 preference,
                 interpolate_before_map,
-                rgb,
-                _custom_opac,
+                rgb or _custom_opac,
             )
             table = self.GetLookupTable()
 
@@ -219,8 +218,7 @@ def make_mapper(mapper_class):
                             n_colors,
                             preference,
                             interpolate_before_map,
-                            rgb,
-                            _custom_opac,
+                            rgb or _custom_opac,
                         )
 
             else:  # no cmap specified
@@ -239,10 +237,38 @@ def make_mapper(mapper_class):
             n_colors,
             preference,
             interpolate_before_map,
-            rgb,
-            _custom_opac,
+            direct_scalars_color_mode,
         ):
-            """Configure scalar mode."""
+            """Configure scalar mode.
+
+            Parameters
+            ----------
+            scalars : numpy.ndarray
+                Array of scalars to assign to the mapper.
+
+            mesh : pyvista.Dataset
+                Dataset to assign the scalars to.
+
+            title : str
+                Name to assign the scalars.
+
+            n_colors : int
+                Number of colors.
+
+            preference : str
+                Either ``'point'`` or ``'cell'``.
+
+            interpolate_before_map : bool
+                Enabling makes for a smoother scalars display.  Default is
+                ``True``.  When ``False``, OpenGL will interpolate the
+                mapped colors which can result is showing colors that are
+                not present in the color map.
+
+            direct_scalars_color_mode : bool
+                When ``True``, scalars are treated as RGB colors. When
+                ``False``, scalars are mapped to the color table.
+
+            """
             if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
                 use_points = preference == 'point'
                 use_cells = not use_points
@@ -252,11 +278,13 @@ def make_mapper(mapper_class):
 
             # Scalars interpolation approach
             if use_points:
-                mesh.point_data.set_array(scalars, title, True)
+                if title not in mesh.point_data:
+                    mesh.point_data.set_array(scalars, title, deep=False)
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUsePointData()
             elif use_cells:
-                mesh.cell_data.set_array(scalars, title, True)
+                if title not in mesh.cell_data:
+                    mesh.cell_data.set_array(scalars, title, deep=False)
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUseCellData()
             else:
@@ -265,7 +293,7 @@ def make_mapper(mapper_class):
             self.GetLookupTable().SetNumberOfTableValues(n_colors)
             if interpolate_before_map:
                 self.InterpolateScalarsBeforeMappingOn()
-            if rgb or _custom_opac:
+            if direct_scalars_color_mode:
                 self.SetColorModeToDirectScalars()
             else:
                 self.SetColorModeToMapScalars()
@@ -295,7 +323,7 @@ def make_mapper(mapper_class):
             rgba[:, -1] = np.around(opacity * 255)
 
             self.configure_scalars_mode(
-                rgba, mesh, '', n_colors, preference, interpolate_before_map, rgb, True
+                rgba, mesh, '', n_colors, preference, interpolate_before_map, True
             )
             self.SetColorModeToDirectScalars()
 
