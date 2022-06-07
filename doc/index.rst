@@ -187,9 +187,9 @@ Details can be found here: https://docs.transifex.com/getting-started-1/translat
 
 .. _`pyvista translation page`: https://www.transifex.com/tkoyama010/pyvista-doc/
 .. _Transifex: https://www.transifex.com/
-.. _`GitHub Pages`: https://github.com/tkoyama010/pyvista-docs-dev-ja
-.. _`GitHub repository`: https://github.com/tkoyama010/pyvista-docs-dev-ja
-.. _`pyvista-doc-translations`: https://github.com/tkoyama010/pyvista-doc-translations
+.. _`GitHub Pages`: https://pyvista.github.io/pyvista-docs-dev-ja/index.html
+.. _`GitHub repository`: https://github.com/pyvista/pyvista-docs-dev-ja
+.. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 
 Status
