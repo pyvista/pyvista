@@ -1,6 +1,5 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-from collections.abc import Iterable
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 import warnings
 
@@ -9,7 +8,7 @@ import numpy as np
 from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyvistaDeprecationWarning, copy_vtk_array
 
 from .._typing import Number
 from .pyvista_ndarray import pyvista_ndarray
@@ -750,8 +749,24 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Prepare an array to be added to this dataset."""
         if data is None:
             raise TypeError('``data`` cannot be None.')
-        if isinstance(data, Iterable):
-            data = pyvista_ndarray(data)
+
+        # attempt to reuse the existing pointer to underlying VTK data
+        if isinstance(data, pyvista_ndarray):
+            # pyvista_ndarray already contains the reference to the vtk object
+            # pyvista needs to use the copy of this object rather than wrapping
+            # the array (which leaves a C++ pointer uncollected.
+            if data.VTKObject is not None:
+                # VTK doesn't support strides, therefore we can't directly
+                # point to the underlying object
+                if data.__array_interface__['strides'] is None:
+                    vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
+                    if isinstance(name, str):
+                        vtk_arr.SetName(name)
+                        return vtk_arr
+
+        # convert to numpy type
+        if not isinstance(data, np.ndarray):
+            data = np.asarray(data)
 
         if self.association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()

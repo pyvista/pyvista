@@ -1647,7 +1647,8 @@ def test_opacity_by_array_uncertainty(uniform):
 
 
 def test_opacity_by_array_user_transform(uniform):
-    uniform['Spatial Point Data'] /= uniform['Spatial Point Data'].max()
+    scaled = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
+    uniform['Spatial Point Data'] = scaled
 
     # Test with user defined transfer function
     opacities = [0, 0.2, 0.9, 0.2, 0.1]

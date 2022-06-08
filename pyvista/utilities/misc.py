@@ -63,4 +63,51 @@ def uses_egl() -> bool:
     return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str
 
 
+def copy_vtk_array(array, deep=True):
+    """Create a deep or shallow copy a of vtk array.
+
+    Parametres
+    ----------
+    array : vtk.vtkDataArray or vtk.vtkAbstractArray
+        VTK array.
+
+    deep : bool, optional
+        When ``True``, create a deep copy of the array. When ``False``, returns
+        a shallow copy.
+
+    Returns
+    -------
+    vtk.vtkDataArray or vtk.vtkAbstractArray
+        Copy of the original VTK array.
+
+    Examples
+    --------
+    Perform a deep copy of a vtk array.
+
+    >>> import vtk
+    >>> import pyvista
+    >>> arr = vtk.vtkFloatArray()
+    >>> arr.SetNumberOfValues(10)
+    >>> arr.SetValue(0, 1)
+    >>> arr_copy = pyvista.utilities.misc.copy_vtk_array(arr)
+    >>> arr_copy.GetValue(0)
+    1
+
+    """
+    if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
+        raise TypeError(f"Invalid type {type(array)}.")
+
+    vtk_type = str(type(array)).split('.')[-1][:-2]
+    if vtk_type not in dir(_vtk):  # pragma: no cover
+        raise RuntimeError(f'Type {vtk_type} not supported.')
+
+    new_array = getattr(_vtk, vtk_type)()
+    if deep:
+        new_array.DeepCopy(array)
+    else:
+        new_array.ShallowCopy(array)
+
+    return new_array
+
+
 vtk_version_info = VTKVersionInfo()

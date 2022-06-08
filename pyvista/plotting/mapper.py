@@ -133,15 +133,6 @@ def make_mapper(mapper_class):
             if scalars.dtype == np.bool_:
                 scalars = scalars.astype(np.float_)
 
-            self.configure_scalars_mode(
-                scalars,
-                mesh,
-                title,
-                n_colors,
-                preference,
-                interpolate_before_map,
-                rgb or _custom_opac,
-            )
             table = self.GetLookupTable()
 
             if _using_labels:
@@ -211,21 +202,22 @@ def make_mapper(mapper_class):
                         scalars = cmap(scalars) * 255
                         scalars[:, -1] *= opacity
                         scalars = scalars.astype(np.uint8)
-                        self.configure_scalars_mode(
-                            scalars,
-                            mesh,
-                            title,
-                            n_colors,
-                            preference,
-                            interpolate_before_map,
-                            rgb or _custom_opac,
-                        )
 
             else:  # no cmap specified
                 if flip_scalars:
                     table.SetHueRange(0.0, 0.66667)
                 else:
                     table.SetHueRange(0.66667, 0.0)
+
+            self.configure_scalars_mode(
+                scalars,
+                mesh,
+                title,
+                n_colors,
+                preference,
+                interpolate_before_map,
+                rgb or _custom_opac,
+            )
 
             return show_scalar_bar, n_colors, clim
 
@@ -279,12 +271,12 @@ def make_mapper(mapper_class):
             # Scalars interpolation approach
             if use_points:
                 if title not in mesh.point_data:
-                    mesh.point_data.set_array(scalars, title, deep=False)
+                    mesh.point_data.set_array(scalars, title, False)
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUsePointData()
             elif use_cells:
                 if title not in mesh.cell_data:
-                    mesh.cell_data.set_array(scalars, title, deep=False)
+                    mesh.cell_data.set_array(scalars, title, False)
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUseCellData()
             else:
