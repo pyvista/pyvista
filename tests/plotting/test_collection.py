@@ -1,12 +1,9 @@
 """This module contains any tests which cause memory leaks."""
-
 import numpy as np
 
 
 def test_pyvistandarray_assign(sphere):
-    sphere.clear_data()
-    arr = np.ones((sphere.n_points, 3))
-    sphere.point_data['data'] = arr
+    sphere.point_data['data'] = range(sphere.n_points)
 
     # this might leave a reference behind if we don't property use the pointer
     # to the vtk array.
