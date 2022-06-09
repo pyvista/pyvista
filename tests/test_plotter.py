@@ -90,3 +90,32 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     )
 
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
+
+
+def test_get_datasets(sphere, hexbeam):
+    """Test edge cases for smooth shading"""
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_mesh(hexbeam)
+    datasets = pl._datasets
+    assert len(datasets) == 2
+    assert sphere in datasets and hexbeam in datasets
+
+
+def test_remove_scalars(sphere, hexbeam):
+    """Test edge cases for smooth shading"""
+    sphere.clear_data()
+    hexbeam.clear_data()
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=range(sphere.n_points))
+    pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells))
+
+    for mesh, (name, assoc) in pl._added_scalars:
+        assert name == 'Data'
+        if mesh is sphere:
+            assert assoc in 'points'
+        else:
+            assert assoc in 'cells'
+
+    pl.close()
+    assert pl._added_scalars == []

@@ -270,6 +270,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
         self._has_background_layer = False
+        self._added_scalars = []
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -2374,8 +2375,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         # Scalars formatting ==================================================
+        new_scalars = None
         if scalars is not None:
-            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
+            show_scalar_bar, n_colors, clim, new_scalars = self.mapper.set_scalars(
                 mesh,
                 scalars,
                 scalar_bar_args,
@@ -2399,7 +2401,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_scalar_bar,
             )
         elif custom_opac:  # no scalars but custom opacity
-            self.mapper.set_custom_opacity(
+            new_scalars = self.mapper.set_custom_opacity(
                 opacity,
                 color,
                 mesh,
@@ -2411,6 +2413,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         else:
             self.mapper.SetScalarModeToUseFieldData()
+
+        # track if any data arrays have been added
+        self._added_scalars.append((mesh, new_scalars))
 
         # Set actor properties ================================================
 
@@ -3340,6 +3345,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
+
+        # remove any added scalars
+        self._remove_added_scalars()
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -4577,6 +4585,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.SetFilePrefix(filename)
         exporter.SetRenderWindow(self.ren_win)
         return exporter.Write()
+
+    @property
+    def _datasets(self):
+        """List of all datasets associated with this plotter."""
+        datasets = []
+        for renderer in self.renderers:
+            for actor in renderer.actors.values():
+                mapper = actor.GetMapper()
+
+                # ignore any mappers whose inputs are not datasets
+                if hasattr(mapper, 'GetInputAsDataSet'):
+                    datasets.append(mapper.GetInputAsDataSet())
+
+        return datasets
+
+    def _remove_added_scalars(self):
+        """Remove any scalars added to the datasets."""
+        for mesh, (name, assoc) in self._added_scalars:
+            if name is None:
+                continue
+            if assoc == 'points':
+                del mesh.point_data[name]
+            else:
+                del mesh.cell_data[name]
+        self._added_scalars = []
 
     def __del__(self):
         """Delete the plotter."""

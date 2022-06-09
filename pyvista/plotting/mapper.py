@@ -209,7 +209,7 @@ def make_mapper(mapper_class):
                 else:
                     table.SetHueRange(0.66667, 0.0)
 
-            self.configure_scalars_mode(
+            new_scalars = self.configure_scalars_mode(
                 scalars,
                 mesh,
                 title,
@@ -219,7 +219,7 @@ def make_mapper(mapper_class):
                 rgb or _custom_opac,
             )
 
-            return show_scalar_bar, n_colors, clim
+            return show_scalar_bar, n_colors, clim, new_scalars
 
         def configure_scalars_mode(
             self,
@@ -260,6 +260,14 @@ def make_mapper(mapper_class):
                 When ``True``, scalars are treated as RGB colors. When
                 ``False``, scalars are mapped to the color table.
 
+            Returns
+            -------
+            str or None
+                If the scalars do not exist within the dataset, this is the
+                name of the scalars array.
+            str
+                Association of the scalars, either ``'points'`` or ``'cells'``.
+
             """
             if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
                 use_points = preference == 'point'
@@ -269,18 +277,23 @@ def make_mapper(mapper_class):
                 use_cells = scalars.shape[0] == mesh.n_cells
 
             # Scalars interpolation approach
+            new_scalars_name = None
             if use_points:
                 if title not in mesh.point_data:
                     mesh.point_data.set_array(scalars, title, False)
+                    new_scalars_name = title
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUsePointData()
             elif use_cells:
                 if title not in mesh.cell_data:
                     mesh.cell_data.set_array(scalars, title, False)
+                    new_scalars_name = title
                 mesh.active_scalars_name = title
                 self.SetScalarModeToUseCellData()
             else:
                 raise_not_matching(scalars, mesh)
+
+            assoc = 'points' if use_points else 'cells'
 
             self.GetLookupTable().SetNumberOfTableValues(n_colors)
             if interpolate_before_map:
@@ -290,10 +303,20 @@ def make_mapper(mapper_class):
             else:
                 self.SetColorModeToMapScalars()
 
+            return new_scalars_name, assoc
+
         def set_custom_opacity(
             self, opacity, color, mesh, n_colors, preference, interpolate_before_map, rgb, theme
         ):
-            """Set custom opacity."""
+            """Set custom opacity.
+
+            Returns
+            -------
+            str or None
+                If the scalars do not exist within the dataset, this is the
+                name of the scalars array.
+
+            """
             # create a custom RGBA array to supply our opacity to
             if opacity.size == mesh.n_points and opacity.size == mesh.n_cells:
                 if preference == 'points':
@@ -314,9 +337,10 @@ def make_mapper(mapper_class):
             rgba[:, :-1] = Color(color, default_color=theme.color).int_rgb
             rgba[:, -1] = np.around(opacity * 255)
 
-            self.configure_scalars_mode(
+            new_scalars = self.configure_scalars_mode(
                 rgba, mesh, '', n_colors, preference, interpolate_before_map, True
             )
             self.SetColorModeToDirectScalars()
+            return new_scalars
 
     return MapperHelper()
