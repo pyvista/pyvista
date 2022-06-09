@@ -87,7 +87,7 @@ def copy_vtk_array(array, deep=True):
     >>> import vtk
     >>> import pyvista
     >>> arr = vtk.vtkFloatArray()
-    >>> arr.SetNumberOfValues(10)
+    >>> _ = arr.SetNumberOfValues(10)
     >>> arr.SetValue(0, 1)
     >>> arr_copy = pyvista.utilities.misc.copy_vtk_array(arr)
     >>> arr_copy.GetValue(0)
