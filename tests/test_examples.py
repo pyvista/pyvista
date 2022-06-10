@@ -406,5 +406,19 @@ if TEST_DOWNLOADS:
         filename = examples.vrml.download_sextant()
         assert os.path.isfile(filename)
 
+    def test_download_cavity():
+        filename = examples.download_cavity(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_cavity(load=True)
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_download_lucy():
+        filename = examples.download_lucy(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_lucy(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+
 
 # End of download tests

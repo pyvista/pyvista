@@ -129,8 +129,9 @@ def _retrieve_file(retriever, filename):
 
     """
     _check_examples_path()
+
     # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
+    local_path = os.path.join(pyvista.EXAMPLES_PATH, filename)
     if os.path.isfile(local_path):
         return local_path, None
 
@@ -138,7 +139,11 @@ def _retrieve_file(retriever, filename):
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
 
-    # Make sure folder exists!
+    # Make sure folder exists
+    local_dir = os.path.dirname(local_path)
+    if not os.path.isdir(local_dir):
+        os.makedirs(local_dir)
+
     if pyvista.VTK_DATA_PATH is None:
         shutil.move(saved_file, local_path)
     else:
@@ -174,8 +179,8 @@ def _retrieve_zip(retriever, filename):
     _check_examples_path()
 
     # First check if file has already been downloaded
-    basename = os.path.basename(filename)
-    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, basename).replace('.zip', '')
+    # dirname = os.path.join(os.path.dirname(filename), os.path.basename(filename))
+    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, filename).replace('.zip', '')
     if os.path.isdir(local_path_zip_dir):
         return local_path_zip_dir, None
     if isinstance(retriever, str):  # pragma: no cover
@@ -187,7 +192,7 @@ def _retrieve_zip(retriever, filename):
         os.makedirs(local_path_zip_dir)
 
     # move the tmp file to the new directory
-    local_path_zip_file = os.path.join(local_path_zip_dir, basename)
+    local_path_zip_file = os.path.join(local_path_zip_dir, os.path.basename(filename))
     if pyvista.VTK_DATA_PATH is None:
         shutil.move(saved_file, local_path_zip_file)
     else:  # pragma: no cover
