@@ -180,7 +180,7 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 3. Click ``Request language`` and fill form.
 4. Wait acceptance by transifex pyvista translation maintainers.
 5. (After acceptance) Translate on transifex.
-6. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`.
+6. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
 7. Translation is backed up in `pyvista-doc-translations`_.
 
 Details can be found here: https://docs.transifex.com/getting-started-1/translators
