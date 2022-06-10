@@ -2415,7 +2415,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetScalarModeToUseFieldData()
 
         # track if any data arrays have been added
-        self._added_scalars.append((mesh, new_scalars))
+        if new_scalars:
+            self._added_scalars.append((mesh, new_scalars))
 
         # Set actor properties ================================================
 
@@ -4606,9 +4607,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if name is None:
                 continue
             if assoc == 'points':
-                del mesh.point_data[name]
+                mesh.point_data.pop(name, None)
             else:
-                del mesh.cell_data[name]
+                mesh.cell_data.pop(name, None)
         self._added_scalars = []
 
     def __del__(self):

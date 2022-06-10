@@ -103,7 +103,8 @@ def test_get_datasets(sphere, hexbeam):
 
 
 def test_remove_scalars(sphere, hexbeam):
-    """Test edge cases for smooth shading"""
+    """Ensure no scalars are added when plotting datasets."""
+    # test single component scalars
     sphere.clear_data()
     hexbeam.clear_data()
     pl = pyvista.Plotter()
@@ -119,3 +120,12 @@ def test_remove_scalars(sphere, hexbeam):
 
     pl.close()
     assert pl._added_scalars == []
+
+    assert sphere.n_arrays == 0
+    assert hexbeam.n_arrays == 0
+
+    # test multi-component
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=np.random.random((sphere.n_points, 3)))
+    pl.close()
+    assert sphere.n_arrays == 0
