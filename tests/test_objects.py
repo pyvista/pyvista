@@ -210,6 +210,9 @@ def test_table_iter():
 
 
 def test_texture():
+    with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
+        texture = pyvista.Texture(range(10))
+
     texture = pyvista.Texture(examples.mapfile)
     assert texture is not None
     image = texture.to_image()
