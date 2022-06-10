@@ -3469,17 +3469,21 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     Examples
     --------
     >>> import os
-    >>> import tempfile
+    >>> from tempfile import mkdtemp
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_single_sphere_animation(load=False)
     >>> reader = pyvista.PVDReader(filename)
+
+    Write the gif to a temporary directory. Normally you would write to a local
+    path.
+
+    >>> gif_filename = os.path.join(mkdtemp(), 'single_sphere.gif')
+
+    Generate the animation.
+
     >>> plotter = pyvista.Plotter()
-    >>> filename = os.path.join(
-    ...     tempfile._get_default_tempdir(),
-    ...     next(tempfile._get_candidate_names()) + '.gif'
-    ... )
-    >>> plotter.open_gif(filename)
+    >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
@@ -3515,17 +3519,21 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     Examples
     --------
     >>> import os
-    >>> import tempfile
+    >>> from tempfile import mkdtemp
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_dual_sphere_animation(load=False)
     >>> reader = pyvista.PVDReader(filename)
+
+    Write the gif to a temporary directory. Normally you would write to a local
+    path.
+
+    >>> gif_filename = os.path.join(mkdtemp(), 'dual_sphere.gif')
+
+    Generate the animation.
+
     >>> plotter = pyvista.Plotter()
-    >>> filename = os.path.join(
-    ...     tempfile._get_default_tempdir(),
-    ...     next(tempfile._get_candidate_names()) + '.gif'
-    ... )
-    >>> plotter.open_gif(filename)
+    >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
