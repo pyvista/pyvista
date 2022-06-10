@@ -258,8 +258,7 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
     Parameters
     ----------
     filename : str
-        Path to the filename. If filename is a zip archive, must contain a
-        single file to be read.
+        Path to the filename. This cannot be a zip file.
 
     texture : bool, optional
         ``True`` when file being read is a texture.
@@ -278,15 +277,8 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
 
     """
     saved_file, _ = _download_file(filename)
-
-    # if zip contains a single file, permit read and load
     if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
-        files = os.listdir(saved_file)
-        if len(files) > 1:
-            raise ValueError(
-                'Multiple files in zip archive. Cannot download and read automatically.'
-            )
-        saved_file = os.path.join(saved_file, files[0])
+        raise ValueError('Cannot download and read an archive file')
 
     if not load:
         return saved_file
@@ -970,7 +962,11 @@ def download_nefertiti(load=True):  # pragma: no cover
     * :ref:`box_widget_example`
 
     """
-    return _download_and_read('nefertiti.ply.zip', load=load)
+    path, _ = _download_file('nefertiti.ply.zip')
+    filename = os.path.join(path, 'nefertiti.ply')
+    if not load:
+        return filename
+    return pyvista.read(filename)
 
 
 def download_blood_vessels(load=True):  # pragma: no cover
