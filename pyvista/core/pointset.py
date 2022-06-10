@@ -1906,7 +1906,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], np.ndarray):
-                self.points = args[0]
+                self.points = args[0]  # type: ignore
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
