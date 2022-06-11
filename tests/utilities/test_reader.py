@@ -461,6 +461,11 @@ def test_openfoamreader_active_time():
     reader.set_active_time_value(1.0)
     assert reader.active_time_value == 1.0
 
+    with pytest.raises(
+        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]'
+    ):
+        reader.set_active_time_value(1000)
+
 
 def test_openfoamreader_read_data_time_value():
     reader = get_cavity_reader()
