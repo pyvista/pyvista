@@ -82,6 +82,6 @@ class pyvista_ndarray(np.ndarray):
             return np.ndarray.__array_wrap__(self, out_arr, context)
 
         # Match numpy's behavior and return a numpy dtype scalar
-        return out_arr.dtype.type(out_arr.item(0))
+        return out_arr[()]
 
     __getattr__ = _vtk.VTKArray.__getattr__
