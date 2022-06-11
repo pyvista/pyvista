@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 Vector = Union[List[float], Tuple[float, float, float], np.ndarray]
 VectorArray = Union[np.ndarray, Sequence[Vector]]
-Number = Union[float, int]
+Number = Union[float, int, np.number]
 NumericArray = Union[Sequence[Number], np.ndarray]
 color_like = Union[
     Tuple[int, int, int],
