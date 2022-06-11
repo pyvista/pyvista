@@ -764,9 +764,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                         vtk_arr.SetName(name)
                         return vtk_arr
 
-        # convert to numpy type
-        if not isinstance(data, np.ndarray):
-            data = np.asarray(data)
+        # convert to numpy type if necessary
+        data = np.asarray(data)
 
         if self.association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()

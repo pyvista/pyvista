@@ -789,7 +789,7 @@ def test_copy_vtk_array():
     arr.SetNumberOfValues(2)
     arr.SetValue(0, value)
     arr_copy = pyvista.utilities.misc.copy_vtk_array(arr, deep=True)
-    arr_copy.GetValue(0)
+    assert arr_copy.GetNumberOfValues()
     assert value == arr_copy.GetValue(0)
 
     arr_copy_shallow = pyvista.utilities.misc.copy_vtk_array(arr, deep=False)
