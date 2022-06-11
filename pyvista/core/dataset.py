@@ -1748,7 +1748,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
-    ) -> np.ndarray:
+    ) -> 'pyvista.pyvista_ndarray':
         """Search both point, cell and field data for an array.
 
         Parameters
