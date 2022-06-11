@@ -2774,8 +2774,6 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Extrude polygonal data trimmed by a surface.
 
-        This generates polygonal data on output.
-
         The input dataset is swept along a specified direction forming a
         "skirt" from the boundary edges 2D primitives (i.e., edges used
         by only one polygon); and/or from vertices and lines. The extent
@@ -2796,7 +2794,9 @@ class PolyDataFilters(DataSetFilters):
             * ``"boundary_edges"``
             * ``"all_edges"``
 
-            The default is "boundary_edges".
+            The default is ``"boundary_edges"``, which only generates faces on
+            the boundary of the original input surface. When using
+            ``"all_edges"``, faces are created along interior points as well.
 
         capping : str or int, optional
             Control the strategy of capping. One of the following:
@@ -2821,15 +2821,15 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Extrude a beam from surface.
+        Extrude a disc.
 
         >>> import pyvista
         >>> import numpy as np
-        >>> direction = np.array([0, 0, 2])
-        >>> plane = pyvista.Plane()
-        >>> disc = pyvista.Disc(center=(0, 0, 0))
-        >>> extruded = disc.extrude_trim(direction, plane)
-        >>> extruded.plot(color="tan")
+        >>> plane = pyvista.Plane(i_size=2, j_size=2, direction=[0, 0.8, 1])
+        >>> disc = pyvista.Disc(center=(0, 0, -1), c_res=50)
+        >>> direction = [0, 0, 1]
+        >>> extruded_disc = disc.extrude_trim(direction, plane)
+        >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
 
         """
         if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
@@ -2841,9 +2841,7 @@ class PolyDataFilters(DataSetFilters):
                 raise ValueError(f'Invalid strategy of extrusion "{extrusion}".')
             extrusion = extrusions[extrusion]
         else:
-            raise ValueError(
-                f'Invalid strategy of extrusion index type "{type(extrusion).__name__}".'
-            )
+            raise TypeError('Invalid type given to `extrusion`. Must be a string.')
 
         cappings = {
             "intersection": 0,
@@ -2856,9 +2854,7 @@ class PolyDataFilters(DataSetFilters):
                 raise ValueError(f'Invalid strategy of capping "{capping}".')
             capping = cappings[capping]
         else:
-            raise ValueError(
-                f'Invalid strategy of extrusion index type "{type(capping).__name__}".'
-            )
+            raise TypeError('Invalid type given to `capping`. Must be a string.')
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)

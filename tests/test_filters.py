@@ -2410,30 +2410,27 @@ def test_extrude_trim_strategy(extrusion, capping):
         center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
     )
     poly = mesh.extrude_trim(direction, trim_surface, extrusion=extrusion, capping=capping)
+    assert isinstance(poly, pyvista.PolyData)
     assert poly.n_cells
     assert poly.n_points
 
 
-def test_extrude_trim_invalid_strategy():
+def test_extrude_trim_catch():
     direction = (0, 0, 1)
     mesh = pyvista.Plane()
     trim_surface = pyvista.Plane()
     with pytest.raises(ValueError):
         _ = mesh.extrude_trim(direction, trim_surface, extrusion="Invalid strategy")
-    with pytest.raises(ValueError):
-        _ = mesh.extrude_trim(
-            direction, trim_surface, extrusion=np.random.randint(2, np.iinfo(int).max)
-        )
-    with pytest.raises(ValueError):
-        _ = mesh.extrude_trim(direction, trim_surface, extrusion=np.random.random())
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
     with pytest.raises(ValueError):
         _ = mesh.extrude_trim(direction, trim_surface, capping="Invalid strategy")
-    with pytest.raises(ValueError):
-        _ = mesh.extrude_trim(
-            direction, trim_surface, capping=np.random.randint(4, np.iinfo(int).max)
-        )
-    with pytest.raises(ValueError):
-        _ = mesh.extrude_trim(direction, trim_surface, capping=np.random.random())
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, capping=0)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim('foobar', trim_surface)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim([1, 2], trim_surface)
 
 
 def test_extrude_trim_inplace():
