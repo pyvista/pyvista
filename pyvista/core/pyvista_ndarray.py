@@ -1,33 +1,11 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 from collections.abc import Iterable
-from functools import wraps
 from typing import Union
 
 import numpy as np
 
 from pyvista import _vtk
 from pyvista.utilities.helpers import FieldAssociation, convert_array
-
-
-def _to_numpy_dtype(array):
-    """Return a NumPy dtype when an array is 0d.
-
-    Otherwise, returns the array.
-
-    Parameters
-    ----------
-    array : numpy.ndarray
-        NumPy array.
-
-    Returns
-    -------
-    numpy.ndarray or np.dtype
-        NumPy dtype when an array is 0d. Otherwise, returns the array.
-
-    """
-    if array.shape == ():
-        return array.dtype.type(array.item(0))
-    return array
 
 
 class pyvista_ndarray(np.ndarray):
@@ -94,39 +72,16 @@ class pyvista_ndarray(np.ndarray):
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    @wraps(np.min)
-    def min(self, *args, **kwargs):
-        """Wrap numpy.min to return a single value when applicable."""
-        return _to_numpy_dtype(super().min(*args, **kwargs))
+    def __array_wrap__(self, out_arr, context=None):
+        """Return a numpy scalar if array is 0d.
 
-    @wraps(np.mean)
-    def mean(self, *args, **kwargs):
-        """Wrap numpy.mean to return a single value when applicable."""
-        return _to_numpy_dtype(super().mean(*args, **kwargs))
+        See https://github.com/numpy/numpy/issues/5819
 
-    @wraps(np.max)
-    def max(self, *args, **kwargs):
-        """Wrap numpy.max to return a single value when applicable."""
-        return _to_numpy_dtype(super().max(*args, **kwargs))
+        """
+        if out_arr.ndim:
+            return np.ndarray.__array_wrap__(self, out_arr, context)
 
-    @wraps(np.sum)
-    def sum(self, *args, **kwargs):
-        """Wrap numpy.sum to return a single value when applicable."""
-        return _to_numpy_dtype(super().sum(*args, **kwargs))
-
-    @wraps(np.prod)
-    def prod(self, *args, **kwargs):
-        """Wrap numpy.prod to return a single value when applicable."""
-        return _to_numpy_dtype(super().prod(*args, **kwargs))
-
-    @wraps(np.std)
-    def std(self, *args, **kwargs):
-        """Wrap numpy.std to return a single value when applicable."""
-        return _to_numpy_dtype(super().std(*args, **kwargs))
-
-    @wraps(np.ptp)
-    def ptp(self, *args, **kwargs):
-        """Wrap numpy.ptp to return a single value when applicable."""
-        return _to_numpy_dtype(super().ptp(*args, **kwargs))
+        # Match numpy's behavior and return a numpy dtype scalar
+        return out_arr.dtype.type(out_arr.item(0))
 
     __getattr__ = _vtk.VTKArray.__getattr__
