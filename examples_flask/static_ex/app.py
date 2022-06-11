@@ -9,7 +9,7 @@ static_ex/
 """
 import os
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, escape
 
 import pyvista
 
@@ -52,7 +52,7 @@ def get_img():
 
     # generate screenshot
     filename = f'{meshtype}.png'
-    filepath = os.path.join(static_image_path, filename)
+    filepath = os.path.join(static_image_path, escape(filename))
     mesh.plot(off_screen=True, window_size=(300, 300), screenshot=filepath)
     return os.path.join('images', filename)
 
