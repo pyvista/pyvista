@@ -141,9 +141,9 @@ def test_polygon():
     geom = pyvista.Polygon()
     assert np.any(geom.points)
 
-    geom1 = pyvista.Polygon(generate_polygon=True)
+    geom1 = pyvista.Polygon(fill=True)
     assert geom1.n_cells == 2
-    geom2 = pyvista.Polygon(generate_polygon=False)
+    geom2 = pyvista.Polygon(fill=False)
     assert geom2.n_cells == 1
 
 

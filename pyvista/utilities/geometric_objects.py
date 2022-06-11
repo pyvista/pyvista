@@ -750,7 +750,7 @@ def Cone(
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6, generate_polygon=True):
+def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6, fill=True):
     """Create a polygon.
 
     Parameters
@@ -768,8 +768,8 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6, gener
     n_sides : int, optional
         Number of sides of the polygon.
 
-    generate_polygon : bool, optional
-        Enable or disable the producing filled polygons.
+    fill : bool, optional
+        Enable or disable producing filled polygons.
 
     Returns
     -------
@@ -786,10 +786,7 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6, gener
 
     """
     src = _vtk.vtkRegularPolygonSource()
-    if generate_polygon:
-        src.GeneratePolygonOn()
-    else:
-        src.GeneratePolygonOff()
+    src.SetGeneratePolygon(generate_polygon)
     src.SetCenter(center)
     src.SetNumberOfSides(n_sides)
     src.SetRadius(radius)
