@@ -141,6 +141,11 @@ def test_polygon():
     geom = pyvista.Polygon()
     assert np.any(geom.points)
 
+    geom1 = pyvista.Polygon(generate_polygon=True)
+    assert geom.n_cells == 2
+    geom2 = pyvista.Polygon(generate_polygon=False)
+    assert geom.n_cells == 1
+
 
 def test_disc():
     geom = pyvista.Disc()
