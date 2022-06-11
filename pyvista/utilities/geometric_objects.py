@@ -786,7 +786,7 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6, fill=
 
     """
     src = _vtk.vtkRegularPolygonSource()
-    src.SetGeneratePolygon(generate_polygon)
+    src.SetGeneratePolygon(fill)
     src.SetCenter(center)
     src.SetNumberOfSides(n_sides)
     src.SetRadius(radius)
