@@ -64,9 +64,9 @@ def uses_egl() -> bool:
 
 
 def copy_vtk_array(array, deep=True):
-    """Create a deep or shallow copy a of vtk array.
+    """Create a deep or shallow copy of a VTK array.
 
-    Parametres
+    Parameters
     ----------
     array : vtk.vtkDataArray or vtk.vtkAbstractArray
         VTK array.

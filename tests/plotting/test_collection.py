@@ -5,7 +5,7 @@ import numpy as np
 def test_pyvistandarray_assign(sphere):
     sphere.point_data['data'] = range(sphere.n_points)
 
-    # this might leave a reference behind if we don't property use the pointer
+    # this might leave a reference behind if we don't properly use the pointer
     # to the vtk array.
     sphere.point_data['data'] = sphere.point_data['data']
 

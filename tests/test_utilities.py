@@ -792,8 +792,8 @@ def test_copy_vtk_array():
     arr_copy.GetValue(0)
     assert value == arr_copy.GetValue(0)
 
-    arr_copy_not_deep = pyvista.utilities.misc.copy_vtk_array(arr, deep=False)
+    arr_copy_shallow = pyvista.utilities.misc.copy_vtk_array(arr, deep=False)
     new_value = 5
     arr.SetValue(1, new_value)
     arr_copy.GetValue(1)
-    assert new_value == arr_copy_not_deep.GetValue(1)
+    assert new_value == arr_copy_shallow.GetValue(1)
