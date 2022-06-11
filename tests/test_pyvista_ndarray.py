@@ -75,13 +75,13 @@ def test_min(pv_ndarray_1d):
     arr = np.array(pv_ndarray_1d)
     assert pv_ndarray_1d.min() == arr.min()
 
-    # also ensure that methods like return float-like values just like numpy
+    # also ensure that methods return float-like values just like numpy
     assert isinstance(pv_ndarray_1d.min(), type(arr.min()))
 
 
 def test_squeeze(pv_ndarray_1d):
     reshaped_pvarr = pv_ndarray_1d.reshape((3, 1))
-    assert np.allclose(reshaped_pvarr.squeeze(), np.array(reshaped_pvarr.squeeze()))
+    assert np.array_equal(reshaped_pvarr.squeeze(), np.array(reshaped_pvarr.squeeze()))
 
 
 def test_tobytes(pv_ndarray_1d):
@@ -92,4 +92,4 @@ def test_add_1d():
     # ensure that 1d single value arrays match numpy
     pv_arr = pyvista_ndarray([1]) + pyvista_ndarray([1])
     np_arr = np.array([1]) + np.array([1])
-    assert np.allclose(pv_arr, np_arr)
+    assert np.array_equal(pv_arr, np_arr)
