@@ -103,6 +103,11 @@ def make_mapper(mapper_class):
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
 
+            # Use only the real component if an array is complex
+            if np.issubdtype(scalars.dtype, complex):
+                scalars = scalars.astype(float)
+                title = f'{title}-real'
+
             if rgb:
                 show_scalar_bar = False
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:

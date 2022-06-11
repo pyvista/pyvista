@@ -1420,6 +1420,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
         self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+        self._association_complex_names = ido._association_complex_names.copy()
 
     @property
     def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
@@ -1457,8 +1458,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64  (8,)
-            my_other_array          int64    (8,)                 SCALARS
+            my_array                float64    (8,)
+            my_other_array          int64      (8,)                 SCALARS
 
         Access an array from ``point_data``.
 
@@ -1594,8 +1595,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64  (6,)
-            my_other_array          int64    (6,)                 SCALARS
+            my_array                float64    (6,)
+            my_other_array          int64      (6,)                 SCALARS
 
         Access an array from ``cell_data``.
 

@@ -34,7 +34,10 @@ class DataObject:
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self.association_bitarray_names: DefaultDict = collections.defaultdict(set)
+        self._association_bitarray_names: DefaultDict = collections.defaultdict(set)
+
+        # view these arrays as complex128 as VTK doesn't support complex types
+        self._association_complex_names: DefaultDict = collections.defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
