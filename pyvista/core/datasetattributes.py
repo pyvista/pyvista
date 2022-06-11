@@ -762,7 +762,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
                     if isinstance(name, str):
                         vtk_arr.SetName(name)
-                        return vtk_arr
+                    return vtk_arr
 
         # convert to numpy type if necessary
         data = np.asarray(data)

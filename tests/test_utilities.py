@@ -788,6 +788,7 @@ def test_copy_vtk_array():
     arr = vtk.vtkFloatArray()
     arr.SetNumberOfValues(2)
     arr.SetValue(0, value)
+    arr.SetValue(1, 100.0)
     arr_copy = pyvista.utilities.misc.copy_vtk_array(arr, deep=True)
     assert arr_copy.GetNumberOfValues()
     assert value == arr_copy.GetValue(0)
