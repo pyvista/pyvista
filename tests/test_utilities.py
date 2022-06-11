@@ -13,6 +13,7 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
+from pyvista.plotting import system_supports_plotting
 from pyvista.utilities import (
     GPUInfo,
     Observer,
@@ -24,6 +25,10 @@ from pyvista.utilities import (
     transformations,
 )
 from pyvista.utilities.misc import PyvistaDeprecationWarning
+
+skip_no_plotting = pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 
 
 def test_version():
@@ -417,6 +422,7 @@ def test_observer():
         obs.observe(alg)
 
 
+@skip_no_plotting
 def test_gpuinfo():
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()

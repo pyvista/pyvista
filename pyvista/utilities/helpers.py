@@ -1422,9 +1422,6 @@ def cubemap(path='', prefix='', ext='.jpg', image_paths=None):
     ext : str, optional
         The filename extension.  For example ``'.jpg'``.
 
-    image_paths : list, optional
-        If image_paths is given, all other parameters are overridden.
-
     Returns
     -------
     pyvista.Texture
@@ -1437,6 +1434,36 @@ def cubemap(path='', prefix='', ext='.jpg', image_paths=None):
     >>> import pyvista
     >>> skybox = pyvista.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
 
+    """
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
+    return _cubemap_from_paths(image_paths)
+
+
+def cubemap_from_filenames(image_paths):
+    """Construct a cubemap from 6 images.
+
+    Images must be in the following order:
+
+    - Positive X
+    - Negative X
+    - Positive Y
+    - Negative Y
+    - Positive Z
+    - Negative Z
+
+    Parameters
+    ----------
+    image_paths : list
+        Paths of the individual cubemap images.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture with cubemap.
+
+    Examples
+    --------
     Load a skybox given a list of image paths.
 
     >>> image_paths = [
@@ -1450,13 +1477,14 @@ def cubemap(path='', prefix='', ext='.jpg', image_paths=None):
     >>> skybox = pyvista.cubemap(image_paths=image_paths)  # doctest:+SKIP
 
     """
-    if image_paths is not None:
-        if len(image_paths) != 6:
-            raise ValueError("`image_paths`, when set, must contain 6 paths")
-    else:
-        sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
-        image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
+    if len(image_paths) != 6:
+        raise ValueError("image_paths must contain 6 paths")
 
+    return _cubemap_from_paths(image_paths)
+
+
+def _cubemap_from_paths(image_paths):
+    """Construct a cubemap from image paths."""
     for image_path in image_paths:
         if not os.path.isfile(image_path):
             file_str = '\n'.join(image_paths)
