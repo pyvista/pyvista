@@ -98,6 +98,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_plot_complex_value',
 }
 
 
