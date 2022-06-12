@@ -2345,5 +2345,5 @@ def test_plot_complex_value(plane):
 
     pl = pyvista.Plotter()
     with pytest.warns(np.ComplexWarning):
-        pl.add_mesh(plane, scalars=data, show_scalar_bar=False)
+        pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show(before_close_callback=verify_cache_image)

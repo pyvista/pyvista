@@ -616,6 +616,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         pyvista_ndarray([0, 1, 2])
 
         """
+        if not isinstance(name, str):
+            raise TypeError('`name` must be a string')
+
         vtk_arr = self._prepare_array(data, name, deep_copy)
 
         # remove complex association if dataset is not complex

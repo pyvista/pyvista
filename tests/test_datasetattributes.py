@@ -243,6 +243,12 @@ def test_contains_should_contain_when_added(insert_arange_narray):
     assert 'sample_array' in dsa
 
 
+def test_set_array_catch(hexbeam):
+    data = np.zeros(hexbeam.n_points)
+    with raises(TypeError, match='`name` must be a string'):
+        hexbeam.point_data.set_array(data, name=['foo'])
+
+
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_should_accept_scalar_value(scalar, hexbeam_point_attributes):
