@@ -228,7 +228,7 @@ def test_texture():
 
 def test_texture_repr():
     texture = pyvista.Texture(examples.mapfile)
-    tex_repr = str(repr(texture))
+    tex_repr = repr(texture)
     assert 'Cube Map:\tFalse' in tex_repr
     assert 'Components:\t3' in tex_repr
     assert 'Dimensions:\t2048, 1024\n' in tex_repr
