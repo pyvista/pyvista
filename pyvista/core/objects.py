@@ -625,7 +625,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def _plot_skybox(self, *args, **kwargs):
         """Plot this texture as a skybox."""
-        pl = pyvista.Plotter(**kwargs)
+        pl = pyvista.Plotter(*args, **kwargs)
         pl.add_actor(self.to_skybox())
         pl.camera_position = kwargs.pop('cpos', 'xy')
         pl.show()
