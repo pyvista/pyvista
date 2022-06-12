@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista import _vtk, pyvista_ndarray
 from pyvista.errors import AmbiguousDataError, MissingDataError
 
 from . import transformations
@@ -215,7 +215,7 @@ def point_array(obj, name):
 
     Returns
     -------
-    pyvista.pyvista_ndarray or numpy.ndarray
+    pyvista.pyvista_ndarray
         Wrapped array.
 
     """
@@ -224,8 +224,7 @@ def point_array(obj, name):
             return obj.point_data.get_array(name)
         except KeyError:  # pragma: no cover
             return None
-    vtkarr = obj.GetPointData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return pyvista_ndarray(obj.GetPointData().GetAbstractArray(name))
 
 
 def field_array(obj, name):
@@ -241,7 +240,7 @@ def field_array(obj, name):
 
     Returns
     -------
-    pyvista.pyvista_ndarray or numpy.ndarray
+    pyvista.pyvista_ndarray
         Wrapped array.
 
     """
@@ -250,8 +249,7 @@ def field_array(obj, name):
             return obj.field_data.get_array(name)
         except KeyError:  # pragma: no cover
             return None
-    vtkarr = obj.GetFieldData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return pyvista_ndarray(obj.GetFieldData().GetAbstractArray(name))
 
 
 def cell_array(obj, name):
@@ -267,7 +265,7 @@ def cell_array(obj, name):
 
     Returns
     -------
-    pyvista.pyvista_ndarray or numpy.ndarray
+    pyvista.pyvista_ndarray
         Wrapped array.
 
     """
@@ -276,8 +274,7 @@ def cell_array(obj, name):
             return obj.cell_data.get_array(name)
         except KeyError:  # pragma: no cover
             return None
-    vtkarr = obj.GetCellData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return pyvista_ndarray(obj.GetCellData().GetAbstractArray(name))
 
 
 def row_array(obj, name):
