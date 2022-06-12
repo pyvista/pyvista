@@ -9,7 +9,7 @@ static_ex/
 """
 import os
 
-from flask import Flask, render_template, request, escape
+from flask import Flask, escape, render_template, request
 
 import pyvista
 
