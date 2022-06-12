@@ -1278,7 +1278,14 @@ def test_scale():
     scale3 = mesh.scale(xyz, inplace=False)
     assert np.allclose(scale1.points, scale2.points)
     assert np.allclose(scale3.points, scale2.points)
-    # Test non-point-based mesh doesn't fail
+    # test scalar scale case
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    xyz = 4.0
+    scale1.scale(xyz, inplace=True)
+    scale2.scale([xyz] * 3, inplace=True)
+    assert np.allclose(scale1.points, scale2.points)
+    # test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
