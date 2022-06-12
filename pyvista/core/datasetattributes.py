@@ -551,10 +551,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             narray = narray.view(np.bool_)  # type: ignore
         elif name in self.dataset._association_complex_names[self.association.name]:
             narray = narray.view(np.complex128)  # type: ignore
-            # ravel to keep this array flat to match the behavior of the rest
-            # of VTK arrays
-            if narray.ndim == 2 and narray.shape[-1] == 1:
-                narray = narray.ravel()
+            # remove singleton dimensions to match the behavior of the rest of 1D
+            # VTK arrays
+            narray = narray.squeeze()
 
         return narray
 
@@ -784,6 +783,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             data = tmparray
         if data.shape[0] != array_len:
             raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
+
+        # reset data association
+        if name in self.dataset._association_bitarray_names[self.association.name]:
+            self.dataset._association_bitarray_names[self.association.name].remove(name)
+        if name in self.dataset._association_complex_names[self.association.name]:
+            self.dataset._association_complex_names[self.association.name].remove(name)
 
         if data.dtype == np.bool_:
             self.dataset._association_bitarray_names[self.association.name].add(name)
