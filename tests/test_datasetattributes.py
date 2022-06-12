@@ -1,6 +1,5 @@
 from string import ascii_letters, digits, whitespace
 import sys
-import weakref
 
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
@@ -518,44 +517,3 @@ def test_active_t_coords_name(plane):
 
     with raises(AttributeError):
         plane.field_data.active_t_coords_name = 'arr'
-
-
-def test_complex(plane):
-    """Test if complex data can be properly represented in datasetattributes."""
-    name = 'my_data'
-    with raises(ValueError, match='Only numpy.complex128'):
-        plane.point_data[name] = np.empty(plane.n_points, dtype=np.complex64)
-
-    with raises(ValueError, match='Complex data must be single dimensional'):
-        plane.point_data[name] = np.empty((plane.n_points, 2), dtype=np.complex128)
-
-    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
-    plane.point_data[name] = data
-    assert np.allclose(plane.point_data[name], data)
-
-    assert 'complex128' in str(plane.point_data)
-
-    # test setter
-    plane.active_scalars_name = name
-
-    # ensure that association is removed when changing datatype
-    assert plane.point_data[name].dtype == np.complex128
-    plane.point_data[name] = plane.point_data[name].real
-    assert np.issubdtype(plane.point_data[name].dtype, float)
-
-
-def test_complex_collection(plane):
-    name = 'my_data'
-    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
-    plane.point_data[name] = data
-
-    # ensure shallow copy
-    data[0] += 1
-    data_copy = data.copy()
-    assert np.allclose(plane.point_data[name], data)
-
-    # ensure references remain
-    ref = weakref.ref(data)
-    del data
-    assert np.allclose(plane.point_data[name], data_copy)
-    assert ref is not None

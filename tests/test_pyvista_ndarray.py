@@ -64,12 +64,3 @@ def test_slices_are_associated_single_index():
     assert points[1, 1].VTKObject == points.VTKObject
     assert points[1, 1].dataset.Get() == points.dataset.Get()
     assert points[1, 1].association == points.association
-
-
-def test_methods_return_float():
-    # ensure that methods like np.sum return float just like numpy
-    arr = pyvista_ndarray([1.2, 1.3])
-    # breakpoint()
-    # arr.max()
-    assert isinstance(arr.max(), float)
-    assert isinstance(arr.sum(), float)

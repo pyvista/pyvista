@@ -34,10 +34,7 @@ class DataObject:
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self._association_bitarray_names: DefaultDict = collections.defaultdict(set)
-
-        # view these arrays as complex128
-        self._association_complex_names: DefaultDict = collections.defaultdict(set)
+        self.association_bitarray_names: DefaultDict = collections.defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -333,7 +330,7 @@ class DataObject:
         >>> mesh = pyvista.Sphere()
         >>> mesh.add_field_data(np.arange(10), 'my-field-data')
         >>> mesh['my-field-data']
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         Add field data to a UniformGrid dataset.
 
@@ -341,7 +338,7 @@ class DataObject:
         >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
-        pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
+        array(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
         Add field data to a MultiBlock dataset.
 

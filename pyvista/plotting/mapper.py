@@ -93,6 +93,7 @@ def make_mapper(mapper_class):
 
             _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):
+                # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
                 # TODO: If str array, digitive and annotate
                 cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
                 values = np.unique(scalars)
@@ -101,11 +102,6 @@ def make_mapper(mapper_class):
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
-
-            # Use only the real component if an array is complex
-            if np.issubdtype(scalars.dtype, complex):
-                scalars = scalars.astype(float)
-                title = f'{title}-real'
 
             if rgb:
                 show_scalar_bar = False

@@ -119,12 +119,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     Active Texture  : TextureCoordinates
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32    (4, 3)               NORMALS
-        TextureCoordinates      float32    (4, 2)               TCOORDS
-        my-data                 int64      (4,)
-        my-other-data           int64      (4,)
-        vectors1                float64    (4, 3)               VECTORS
-        vectors0                float64    (4, 3)
+        Normals                 float32  (4, 3)               NORMALS
+        TextureCoordinates      float32  (4, 2)               TCOORDS
+        my-data                 int64    (4,)
+        my-other-data           int64    (4,)
+        vectors1                float64  (4, 3)               VECTORS
+        vectors0                float64  (4, 3)
 
     """
 
@@ -145,6 +145,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             for i, (name, array) in enumerate(self.items()):
                 if len(name) > 23:
                     name = f'{name[:20]}...'
+                # vtk_arr = array.VTKObject
                 try:
                     arr_type = attr_type[self.IsArrayAnAttribute(i)]
                 except (IndexError, TypeError, AttributeError):  # pragma: no cover
@@ -155,7 +156,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
 
-                line = f'{name[:23]:<24}{str(array.dtype):<11}{str(array.shape):<20} {arr_type}'.strip()
+                line = (
+                    f'{name[:23]:<24}{str(array.dtype):<9}{str(array.shape):<20} {arr_type}'.strip()
+                )
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
@@ -544,16 +547,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if type(vtk_arr) == _vtk.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
-
-        name = vtk_arr.GetName()
-        if name in self.dataset._association_bitarray_names[self.association.name]:
+        if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association.name]:
             narray = narray.view(np.bool_)  # type: ignore
-        elif name in self.dataset._association_complex_names[self.association.name]:
-            narray = narray.view(np.complex128)  # type: ignore
-            # ravel to keep this array flat to match the behavior of the rest
-            # of VTK arrays
-            if narray.ndim == 2 and narray.shape[-1] == 1:
-                narray = narray.ravel()
         return narray
 
     def set_array(
@@ -589,9 +584,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         dataset.  Note that this will automatically become the active
         scalars.
 
-        Complex arrays will be represented internally as a 2 component float64
-        array. This is due to limitations of VTK's native datatypes.
-
         Examples
         --------
         Add a point array to a mesh.
@@ -619,11 +611,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         vtk_arr = self._prepare_array(data, name, deep_copy)
-        complex_assoc = self.dataset._association_complex_names
-        if name in complex_assoc[self.association.name]:
-            if isinstance(data, np.ndarray):
-                if not np.issubdtype(data.dtype, complex):
-                    complex_assoc[self.association.name].remove(name)
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
@@ -672,7 +659,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my-scalars              int64      (8,)                 SCALARS
+            my-scalars              int64    (8,)                 SCALARS
 
         """
         vtk_arr = self._prepare_array(scalars, name, deep_copy)
@@ -735,7 +722,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my-vectors              float64    (8, 3)               VECTORS
+            my-vectors              float64  (8, 3)               VECTORS
 
         """
         # prepare the array and add an attribute so that we can track this as a vector
@@ -782,20 +769,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
 
         if data.dtype == np.bool_:
-            self.dataset._association_bitarray_names[self.association.name].add(name)
+            self.dataset.association_bitarray_names[self.association.name].add(name)
             data = data.view(np.uint8)
-        elif np.issubdtype(data.dtype, np.complexfloating):
-            if data.dtype != np.complex128:
-                raise ValueError('Only numpy.complex128 is supported when setting data attributes')
-
-            if data.ndim != 1:
-                if data.shape[1] != 1:
-                    raise ValueError('Complex data must be single dimensional.')
-            self.dataset._association_complex_names[self.association.name].add(name)
-
-            # complex data is stored internally as a contiguous 2 component
-            # float64 array
-            data = data.view(np.float64).reshape(-1, 2)
 
         shape = data.shape
         if data.ndim == 3:
@@ -829,6 +804,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
         copy = pyvista_ndarray(data)
+
         return helpers.convert_array(copy, name, deep=deep_copy)
 
     def append(
@@ -900,7 +876,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise KeyError(f'{key} not present.')
 
         try:
-            self.dataset._association_bitarray_names[self.association.name].remove(key)
+            self.dataset.association_bitarray_names[self.association.name].remove(key)
         except KeyError:
             pass
         self.VTKObject.RemoveArray(key)
@@ -1024,7 +1000,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
-        return [self.get_array(name) for name in self.keys()]
+        values = []
+        for name in self.keys():
+            array = self.VTKObject.GetAbstractArray(name)
+            arr = pyvista_ndarray(array, dataset=self.dataset, association=self.association)
+            values.append(arr)
+        return values
 
     def clear(self):
         """Remove all arrays in this object.
@@ -1080,9 +1061,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            Spatial Point Data      float64    (1000,)
-            foo                     int64      (1000,)
-            rand                    float64    (1000,)              SCALARS
+            Spatial Point Data      float64  (1000,)
+            foo                     int64    (1000,)
+            rand                    float64  (1000,)              SCALARS
 
         """
         for name, array in array_dict.items():
@@ -1214,8 +1195,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : TextureCoordinates
         Active Normals  : Normals
         Contains arrays :
-            Normals                 float32    (4, 3)               NORMALS
-            TextureCoordinates      float32    (4, 2)               TCOORDS
+            Normals                 float32  (4, 3)               NORMALS
+            TextureCoordinates      float32  (4, 2)               TCOORDS
 
         >>> mesh.point_data.active_normals
         pyvista_ndarray([[0.000000e+00,  0.000000e+00, -1.000000e+00],
@@ -1236,7 +1217,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : Normals
         Contains arrays :
-            Normals                 float64    (1, 3)               NORMALS
+            Normals                 float64  (1, 3)               NORMALS
 
         """
         self._raise_no_normals()

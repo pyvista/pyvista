@@ -772,7 +772,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
             )
         self.reader.UpdateTimeStep(time_value)
 
@@ -1272,12 +1272,12 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     Active Texture  : None
     Active Normals  : None
     Contains arrays :
-        Density                 float64    (2928,)
-        Momentum                float64    (2928, 3)            VECTORS
-        EnergyStagnationDensity float64    (2928,)
-        ViscosityEddy           float64    (2928,)
-        TurbulentDistance       float64    (2928,)
-        TurbulentSANuTilde      float64    (2928,)
+        Density                 float64  (2928,)
+        Momentum                float64  (2928, 3)            VECTORS
+        EnergyStagnationDensity float64  (2928,)
+        ViscosityEddy           float64  (2928,)
+        TurbulentDistance       float64  (2928,)
+        TurbulentSANuTilde      float64  (2928,)
 
     """
 

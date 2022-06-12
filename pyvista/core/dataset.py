@@ -29,7 +29,7 @@ from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import NumericArray, Vector, VectorArray
+from .._typing import Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -763,7 +763,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cube['my_array'] = range(cube.n_points)
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
+        array([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
         field = get_array_association(self, old_name, preference=preference)
@@ -1143,7 +1143,10 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def scale(
-        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+        self,
+        xyz: Union[Number, list, tuple, np.ndarray],
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Scale the mesh.
 
@@ -1154,8 +1157,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : scale factor list or tuple or np.ndarray
-            Length 3 list, tuple or array.
+        xyz : float or list or tuple or np.ndarray
+            A scalar or length 3 list, tuple or array defining the scale
+            factors along x, y, and z. If a scalar, the same uniform scale is
+            used along all three axes.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -1187,6 +1192,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
+        if isinstance(xyz, (float, int, np.number)):
+            xyz = [xyz] * 3
+
         transform = _vtk.vtkTransform()
         transform.Scale(xyz)
         return self.transform(
@@ -1412,7 +1420,6 @@ class DataSet(DataSetFilters, DataObject):
         self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
         self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
-        self._association_complex_names = ido._association_complex_names.copy()
 
     @property
     def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
@@ -1450,8 +1457,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64    (8,)
-            my_other_array          int64      (8,)                 SCALARS
+            my_array                float64  (8,)
+            my_other_array          int64    (8,)                 SCALARS
 
         Access an array from ``point_data``.
 
@@ -1587,8 +1594,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64    (6,)
-            my_other_array          int64      (6,)                 SCALARS
+            my_array                float64  (6,)
+            my_other_array          int64    (6,)                 SCALARS
 
         Access an array from ``cell_data``.
 
@@ -1783,17 +1790,17 @@ class DataSet(DataSetFilters, DataObject):
         Get the point data array.
 
         >>> mesh.get_array('point-data')
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
+        array([0, 1, 2, 3, 4, 5, 6, 7])
 
         Get the cell data array.
 
         >>> mesh.get_array('cell-data')
-        pyvista_ndarray([0, 1, 2, 3, 4, 5])
+        array([0, 1, 2, 3, 4, 5])
 
         Get the field data array.
 
         >>> mesh.get_array('field-data')
-        pyvista_ndarray(['a', 'b', 'c'], dtype='<U1')
+        array(['a', 'b', 'c'], dtype='<U1')
 
         """
         arr = get_array(self, name, preference=preference, err=True)

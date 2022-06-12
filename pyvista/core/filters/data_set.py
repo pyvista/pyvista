@@ -320,7 +320,7 @@ class DataSetFilters:
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> type(dist)
-        <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
+        <class 'numpy.ndarray'>
 
         Plot these distances as a heatmap
 
