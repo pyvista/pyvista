@@ -558,4 +558,4 @@ def test_complex_collection(plane):
     ref = weakref.ref(data)
     del data
     assert np.allclose(plane.point_data[name], data_copy)
-    assert ref is not None
+    assert ref() is not None

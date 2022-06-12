@@ -104,7 +104,7 @@ def make_mapper(mapper_class):
                 _using_labels = True
 
             # Use only the real component if an array is complex
-            if np.issubdtype(scalars.dtype, complex):
+            if np.issubdtype(scalars.dtype, np.complexfloating):
                 scalars = scalars.astype(float)
                 title = f'{title}-real'
 
