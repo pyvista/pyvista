@@ -299,8 +299,8 @@ def load_sphere_vectors():
     Active Texture  : None
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32    (842, 3)             NORMALS
-        vectors                 float32    (842, 3)             VECTORS
+        Normals                 float32  (842, 3)             NORMALS
+        vectors                 float32  (842, 3)             VECTORS
 
     """
     sphere = pyvista.Sphere(radius=3.14)
