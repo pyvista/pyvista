@@ -1428,10 +1428,13 @@ class DataSet(DataSetFilters, DataObject):
         if deep:
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
+            self._active_tensors_info = ido.active_tensors_info.copy()
             self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
         else:
+            # pass by reference
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
+            self._active_tensors_info = ido.active_tensors_info
             self._textures = ido.textures
 
     @property

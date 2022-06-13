@@ -190,12 +190,18 @@ def test_copy_metadata(globe):
 
     globe_shallow = globe.copy(deep=False)
     assert globe_shallow._active_scalars_info is globe._active_scalars_info
+    assert globe_shallow._active_vectors_info is globe._active_vectors_info
+    assert globe_shallow._active_tensors_info is globe._active_tensors_info
     assert globe.textures is globe_shallow.textures
 
     globe_deep = globe.copy(deep=True)
-    assert globe_deep._active_scalars_info is not globe._active_scalars_info
     assert globe_deep.textures is not globe.textures
+    assert globe_deep._active_scalars_info is not globe._active_scalars_info
+    assert globe_deep._active_vectors_info is not globe._active_vectors_info
+    assert globe_deep._active_tensors_info is not globe._active_tensors_info
     assert globe_deep._active_scalars_info == globe._active_scalars_info
+    assert globe_deep._active_vectors_info == globe._active_vectors_info
+    assert globe_deep._active_tensors_info == globe._active_tensors_info
     assert globe_deep.textures == globe.textures
 
     globe.clear_textures()
