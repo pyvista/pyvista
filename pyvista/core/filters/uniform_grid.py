@@ -218,7 +218,7 @@ class UniformGridFilters(DataSetFilters):
         fixed.point_data.update(result.point_data)
         fixed.cell_data.update(result.cell_data)
         fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result)
+        fixed.copy_meta_from(result, deep=True)
         return fixed
 
     def image_dilate_erode(
