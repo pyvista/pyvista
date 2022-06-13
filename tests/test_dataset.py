@@ -195,6 +195,8 @@ def test_copy_metadata(globe):
     globe_deep = globe.copy(deep=True)
     assert globe_deep._active_scalars_info is not globe._active_scalars_info
     assert globe_deep.textures is not globe_shallow.textures
+    assert globe_deep._active_scalars_info == globe._active_scalars_info
+    assert globe_deep.textures == globe_shallow.textures
 
     globe.clear_textures()
     assert not globe.textures
