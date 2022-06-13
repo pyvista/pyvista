@@ -189,7 +189,7 @@ jobs:
 
       - name: Unit Testing
         run: |
-          xvfb-run pytest -v --cov pyvista --cov-report xml
+          xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
 
       - uses: codecov/codecov-action@v2
         if: matrix.python-version == '3.8'
