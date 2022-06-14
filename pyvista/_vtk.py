@@ -257,6 +257,7 @@ if VTK9:
         vtkRotationalExtrusionFilter,
         vtkSelectEnclosedPoints,
     )
+    from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,

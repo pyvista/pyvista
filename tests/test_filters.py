@@ -2430,7 +2430,33 @@ def test_is_manifold(sphere, plane):
     assert not plane.is_manifold
 
 
-def test_reconstruct_surface_unstructured(datasets):
+def test_reconstruct_surface_unstructured():
     mesh = examples.load_hexbeam().reconstruct_surface()
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
+
+
+def test_integrate_data_datasets(datasets):
+    """Test multiple dataset types."""
+    for dataset in datasets:
+        integrated = dataset.integrate_data()
+        if "Area" in integrated.array_names:
+            assert integrated["Area"] > 0
+        elif "Volume" in integrated.array_names:
+            assert integrated["Volume"] > 0
+        else:
+            raise ValueError("Unexpected integration")
+
+
+def test_integrate_data():
+    """Test specific case."""
+    # sphere with radius = 0.5, area = pi
+    # increase resolution to increase precision
+    sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+    sphere.cell_data["cdata"] = 2 * np.ones(sphere.n_cells)
+    sphere.point_data["pdata"] = 3 * np.ones(sphere.n_points)
+
+    integrated = sphere.integrate_data()
+    assert np.isclose(integrated["Area"], np.pi, rtol=1e-3)
+    assert np.isclose(integrated["cdata"], 2 * np.pi, rtol=1e-3)
+    assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)

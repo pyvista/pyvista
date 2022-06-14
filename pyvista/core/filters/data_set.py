@@ -5132,3 +5132,41 @@ class DataSetFilters:
             inplace=inplace,
             progress_bar=progress_bar,
         )
+
+    def integrate_data(self, divide_by_volume=False, progress_bar=False):
+        """Integrate point and cell data.
+
+        Area or volume also provided in point data.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGird
+            Mesh with 1 point and 1 vertex cell with integrated data in point and cell data.
+
+        Examples
+        --------
+        Integrate data on a sphere mesh.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+        >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
+        >>> integrated = sphere.integrate_data()
+
+         There is only 1 point/cell, so access the only value.
+
+        >>> integrated["Area"][0]
+        3.14
+        >>> integrated["data"][0]
+        6.28
+        """
+        filter = _vtk.vtkIntegrateAttributes()
+        filter.SetInputData(self)
+        filter.SetDivideAllCellDataByVolume(False)
+        _update_alg(filter, progress_bar, 'Integrating Variables')
+        return _get_output(filter)
