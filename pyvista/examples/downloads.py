@@ -24,7 +24,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-CACHE_VERSION = 1
+CACHE_VERSION = 2
 
 
 def _check_examples_path():
@@ -156,22 +156,24 @@ def _retrieve_file(retriever, filename):
 
 
 def _retrieve_zip(retriever, filename):
-    """Retrieve a zip and cache it in pyvsita.EXAMPLES_PATH.
+    """Retrieve a zip and cache it in pyvista.EXAMPLES_PATH.
 
     Parameters
     ----------
     retriever : str or callable
-        If str, it is treated as a url.
+        If str, it is treated as a URL.
         If callable, the function must take no arguments and must
         return a tuple like (file_path, resp), where file_path is
         the path to the file to use.
+
     filename : str
         The name of the file.
 
     Returns
     -------
-    list
-        List containing the unzipped files.
+    str
+        Path of the directory with the unzipped files.
+
     http.client.HTTPMessage
         HTTP download Response.
 
@@ -179,13 +181,19 @@ def _retrieve_zip(retriever, filename):
     _check_examples_path()
 
     # First check if file has already been downloaded
-    # dirname = os.path.join(os.path.dirname(filename), os.path.basename(filename))
-    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, filename).replace('.zip', '')
+    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, filename)
     if os.path.isdir(local_path_zip_dir):
         return local_path_zip_dir, None
     if isinstance(retriever, str):  # pragma: no cover
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
+
+    # Edge case where retriever saves to an identical location as the saved
+    # file name.
+    if filename == saved_file:  # pragma: no cover
+        new_saved_file = saved_file + '.download'
+        os.rename(saved_file, new_saved_file)
+        saved_file = new_saved_file
 
     # Make sure directory exists
     if not os.path.isdir(local_path_zip_dir):
