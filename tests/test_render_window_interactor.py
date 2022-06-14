@@ -4,6 +4,11 @@ import pytest
 
 import pyvista
 from pyvista import _vtk
+from pyvista.plotting import system_supports_plotting
+
+skip_no_plotting = pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 
 
 def empty_callback():
@@ -57,6 +62,7 @@ def test_clear_key_event_callbacks():
     pl.reset_key_events()
 
 
+@skip_no_plotting
 def test_track_mouse_position():
     pl = pyvista.Plotter()
     pl.track_mouse_position()
@@ -70,6 +76,7 @@ def test_track_mouse_position():
     assert "MouseMoveEvent" not in pl.iren._observers.values()
 
 
+@skip_no_plotting
 def test_track_click_position_multi_render():
     points = []
 

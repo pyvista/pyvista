@@ -28,7 +28,7 @@ from pyvista.plotting.plotting import SUPPORTED_FORMATS
 
 # skip all tests if unable to render
 if not system_supports_plotting():
-    pytestmark = pytest.mark.skip
+    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
 
 ffmpeg_failed = False
