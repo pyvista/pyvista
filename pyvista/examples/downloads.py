@@ -844,7 +844,7 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
     * :ref:`read_parallel_example`
     * :ref:`streamlines_example`
-    * :ref:`integrate_data`
+    * :ref:`integrate_example`
 
     """
     local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')

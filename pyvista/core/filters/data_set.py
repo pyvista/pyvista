@@ -5164,6 +5164,9 @@ class DataSetFilters:
         3.14
         >>> integrated["data"][0]
         6.28
+
+        See the :ref:`integrate_example` for more examples using this filter.
+
         """
         filter = _vtk.vtkIntegrateAttributes()
         filter.SetInputData(self)
