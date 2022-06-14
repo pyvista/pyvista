@@ -2642,7 +2642,7 @@ class PolyDataFilters(DataSetFilters):
         """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
 
         This takes polygonal data as input and generates polygonal
-        data on output. The input dataset is swept around the z-axis
+        data on output. The input dataset is swept around the axis
         to create new polygonal primitives. These primitives form a
         "skirt" or swept surface. For example, sweeping a line results
         in a cylindrical shell, and sweeping a circle creates a torus.
@@ -2651,7 +2651,7 @@ class PolyDataFilters(DataSetFilters):
         can control whether the sweep of a 2D object (i.e., polygon or
         triangle strip) is capped with the generating geometry via the
         ``capping`` parameter. Also, you can control the angle of
-        rotation, and whether translation along the z-axis is
+        rotation, and whether translation along the axis is
         performed along with the rotation.  (Translation is useful for
         creating "springs".) You also can adjust the radius of the
         generating geometry with the ``dradius`` parameter.
@@ -2681,7 +2681,7 @@ class PolyDataFilters(DataSetFilters):
             Overwrites the original mesh inplace.
 
         translation : float, optional
-            Total amount of translation along the z-axis.
+            Total amount of translation along the axis.
 
         dradius : float, optional
             Change in radius during sweep process.
