@@ -202,6 +202,24 @@ def is_pyvista_dataset(obj):
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
+def _assoc_array(obj, name, association='point'):
+    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+
+    If the array or index doesn't exist, return nothing. This matches VTK's
+    behavior when using ``GetAbstractArray`` with an invalid key or index.
+
+    """
+    vtk_attr = f'Get{association.title()}Data'
+    python_attr = f'{association.lower()}_data'
+
+    if isinstance(obj, pyvista.DataSet):
+        try:
+            return getattr(obj, python_attr).get_array(name)
+        except KeyError:  # pragma: no cover
+            return None
+    return pyvista.pyvista_ndarray(getattr(obj, vtk_attr)().GetAbstractArray(name))
+
+
 def point_array(obj, name):
     """Return point array of a pyvista or vtk object.
 
@@ -219,12 +237,7 @@ def point_array(obj, name):
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    if isinstance(obj, pyvista.DataSet):
-        try:
-            return obj.point_data.get_array(name)
-        except KeyError:  # pragma: no cover
-            return None
-    return pyvista.pyvista_ndarray(obj.GetPointData().GetAbstractArray(name))
+    return _assoc_array(obj, name, 'point')
 
 
 def field_array(obj, name):
@@ -244,12 +257,7 @@ def field_array(obj, name):
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    if isinstance(obj, pyvista.DataSet):
-        try:
-            return obj.field_data.get_array(name)
-        except KeyError:  # pragma: no cover
-            return None
-    return pyvista.pyvista_ndarray(obj.GetFieldData().GetAbstractArray(name))
+    return _assoc_array(obj, name, 'field')
 
 
 def cell_array(obj, name):
@@ -269,12 +277,7 @@ def cell_array(obj, name):
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    if isinstance(obj, pyvista.DataSet):
-        try:
-            return obj.cell_data.get_array(name)
-        except KeyError:  # pragma: no cover
-            return None
-    return pyvista.pyvista_ndarray(obj.GetCellData().GetAbstractArray(name))
+    return _assoc_array(obj, name, 'cell')
 
 
 def row_array(obj, name):
