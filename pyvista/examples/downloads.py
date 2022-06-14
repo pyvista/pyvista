@@ -186,6 +186,13 @@ def _retrieve_zip(retriever, filename):
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
 
+    # Edge case where retreiver saves to an identical location as the saved
+    # file name.
+    if filename == saved_file:  # pragma: no cover
+        new_saved_file = saved_file + '.download'
+        os.rename(saved_file, new_saved_file)
+        saved_file = new_saved_file
+
     # Make sure directory exists
     if not os.path.isdir(local_path_zip_dir):
         os.makedirs(local_path_zip_dir)
