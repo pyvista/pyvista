@@ -4,7 +4,7 @@
 Integrate Data
 ~~~~~~~~~~~~~~
 
-Integrate data over a surface and volume.
+Integrate data over a surface.
 """
 import pyvista
 from pyvista import examples
