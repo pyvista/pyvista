@@ -419,9 +419,10 @@ def test_pvdreader():
 
 
 def test_pvdreader_no_time_group():
-    examples.download_dual_sphere_animation(load=False)  # download all the files
+    filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename, _ = _download_file('PVD/paraview/dualSphereNoTime.pvd')
+    filename = os.path.join(os.path.dirname(filename), 'dualSphereNoTime.pvd')
+
     reader = pyvista.PVDReader(filename)
     assert reader.time_values == [0.0]
     assert reader.active_time_value == 0.0
@@ -460,6 +461,11 @@ def test_openfoamreader_active_time():
     assert reader.active_time_value == 0.5
     reader.set_active_time_value(1.0)
     assert reader.active_time_value == 1.0
+
+    with pytest.raises(
+        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]'
+    ):
+        reader.set_active_time_value(1000)
 
 
 def test_openfoamreader_read_data_time_value():
@@ -600,6 +606,16 @@ def test_openfoam_patch_arrays():
     assert mesh.n_blocks == 1
     assert patch_array_key in mesh.keys()
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
+
+
+def test_openfoam_case_type():
+    reader = get_cavity_reader()
+    reader.case_type = 'decomposed'
+    assert reader.case_type == 'decomposed'
+    reader.case_type = 'reconstructed'
+    assert reader.case_type == 'reconstructed'
+    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+        reader.case_type = 'wrong_value'
 
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")

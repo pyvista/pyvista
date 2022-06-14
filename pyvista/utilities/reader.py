@@ -35,7 +35,7 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
-    | ``.foam``      | :class:`pyvista.OpenFOAMReader`             |
+    | ``.foam``      | :class:`pyvista.POpenFOAMReader`            |
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
@@ -772,7 +772,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
             )
         self.reader.UpdateTimeStep(time_value)
 
@@ -1002,6 +1002,55 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
         """
         return {name: self.patch_array_status(name) for name in self.patch_array_names}
+
+
+class POpenFOAMReader(OpenFOAMReader):
+    """Parallel OpenFOAM Reader for .foam files.
+
+    Can read parallel-decomposed mesh information and time dependent data.
+    This reader can be used for serial generated data,
+    parallel reconstructed data, and decomposed data.
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
+
+    @property
+    def case_type(self):
+        """Indicate whether decomposed mesh or reconstructed mesh should be read.
+
+        Returns
+        -------
+        str
+            If ``'reconstructed'``, reconstructed mesh should be read.
+            If ``'decomposed'``, decomposed mesh should be read.
+
+        Raises
+        ------
+        ValueError
+            If the value is not in ['reconstructed', 'decomposed']
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.POpenFOAMReader(filename)
+        >>> reader.case_type = 'reconstructed'
+        >>> reader.case_type
+        'reconstructed'
+        """
+        return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
+
+    @case_type.setter
+    def case_type(self, value):
+        if value == 'reconstructed':
+            self.reader.SetCaseType(1)
+        elif value == 'decomposed':
+            self.reader.SetCaseType(0)
+        else:
+            raise ValueError(f"Unknown case type '{value}'.")
+
+        self._update_information()
 
 
 class PLYReader(BaseReader):
@@ -1966,7 +2015,7 @@ CLASS_READERS = {
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,
-    '.foam': OpenFOAMReader,
+    '.foam': POpenFOAMReader,
     '.g': BYUReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,

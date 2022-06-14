@@ -112,3 +112,9 @@ def image():
     pl.camera_position = 'xy'
     pl.camera.zoom(0.5)
     return pyvista.Texture(pl.screenshot()).to_image()
+
+
+def pytest_addoption(parser):
+    parser.addoption("--reset_image_cache", action='store_true', default=False)
+    parser.addoption("--ignore_image_cache", action='store_true', default=False)
+    parser.addoption("--fail_extra_image_cache", action='store_true', default=False)

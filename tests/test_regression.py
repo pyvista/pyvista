@@ -1,6 +1,11 @@
 import pytest
 
 import pyvista as pv
+from pyvista.plotting import system_supports_plotting
+
+# skip all tests if unable to render
+if not system_supports_plotting():
+    pytestmark = pytest.mark.skip
 
 
 def test_compare_images_two_plotters_same(sphere, tmpdir):

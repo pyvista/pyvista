@@ -43,6 +43,7 @@ Reader Classes
     NRRDReader
     OBJReader
     OpenFOAMReader
+    POpenFOAMReader
     PLYReader
     PNGReader
     PNMReader

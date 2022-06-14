@@ -29,7 +29,7 @@ from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import NumericArray, Vector, VectorArray
+from .._typing import Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -411,7 +411,7 @@ class DataSet(DataSetFilters, DataObject):
             self.Modified()
             return
         # otherwise, wrap and use the array
-        points = _coerce_pointslike_arg(points)
+        points = _coerce_pointslike_arg(points, copy=False)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
@@ -1143,7 +1143,10 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def scale(
-        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+        self,
+        xyz: Union[Number, list, tuple, np.ndarray],
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Scale the mesh.
 
@@ -1154,8 +1157,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : scale factor list or tuple or np.ndarray
-            Length 3 list, tuple or array.
+        xyz : float or list or tuple or np.ndarray
+            A scalar or length 3 list, tuple or array defining the scale
+            factors along x, y, and z. If a scalar, the same uniform scale is
+            used along all three axes.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -1187,6 +1192,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
+        if isinstance(xyz, (float, int, np.number)):
+            xyz = [xyz] * 3
+
         transform = _vtk.vtkTransform()
         transform.Scale(xyz)
         return self.transform(

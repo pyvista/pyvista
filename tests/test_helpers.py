@@ -145,11 +145,14 @@ def test_cubemap(tmpdir):
     size = 100
     sz = (size, size)
     text_corner = ((sz[0] - 15) // 2, (sz[0] - 15) // 2)
+    filenames = []
     for suffix, name in sets.items():
         image = Image.new('RGB', sz)
         ImageDraw.Draw(image).text(text_corner, name)
         image = ImageOps.mirror(image)
-        image.save(os.path.join(path, suffix + '.jpg'))
+        filename = os.path.join(path, suffix + '.jpg')
+        image.save(filename)
+        filenames.append(filename)
 
     cubemap = pyvista.cubemap(path)
     assert isinstance(cubemap, pyvista.Texture)
@@ -158,6 +161,12 @@ def test_cubemap(tmpdir):
         pyvista.cubemap('')
 
     cubemap.plot()
+
+    skybox = pyvista.cubemap_from_filenames(filenames)
+    assert isinstance(skybox, pyvista.Texture)
+
+    with pytest.raises(ValueError, match='must contain 6 paths'):
+        pyvista.cubemap_from_filenames(image_paths=['/path'])
 
 
 def test_array_association():

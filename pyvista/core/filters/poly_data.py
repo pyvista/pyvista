@@ -1300,7 +1300,7 @@ class PolyDataFilters(DataSetFilters):
         The algorithm works by determining normals for each polygon
         and then averaging them at shared points. When sharp edges are
         present, the edges are split and new points generated to
-        prevent blurry edges (due to Gouraud shading).
+        prevent blurry edges (due to Phong shading).
 
         Parameters
         ----------
@@ -1311,7 +1311,9 @@ class PolyDataFilters(DataSetFilters):
             Calculation of point normals. Defaults to ``True``.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to ``False``.
+            Splitting of sharp edges. Defaults to ``False``. Indices to the
+            original points are tracked in the ``"pyvistaOriginalPointIds"``
+            array.
 
         flip_normals : bool, optional
             Set global flipping of normal orientation. Flipping
@@ -1397,6 +1399,12 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`surface_normal_example` for more examples using this filter.
 
         """
+        # track original point indices
+        if split_vertices:
+            self.point_data.set_array(
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
+            )
+
         normal = _vtk.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
         normal.SetComputePointNormals(point_normals)
@@ -2749,6 +2757,112 @@ class PolyDataFilters(DataSetFilters):
         alg.SetCapping(capping)
         alg.SetAngle(angle)
         _update_alg(alg, progress_bar, 'Extruding')
+        output = pyvista.wrap(alg.GetOutput())
+        if inplace:
+            self.overwrite(output)
+            return self
+        return output
+
+    def extrude_trim(
+        self,
+        direction,
+        trim_surface,
+        extrusion="boundary_edges",
+        capping="intersection",
+        inplace=False,
+        progress_bar=False,
+    ):
+        """Extrude polygonal data trimmed by a surface.
+
+        The input dataset is swept along a specified direction forming a
+        "skirt" from the boundary edges 2D primitives (i.e., edges used
+        by only one polygon); and/or from vertices and lines. The extent
+        of the sweeping is defined where the sweep intersects a
+        user-specified surface.
+
+        Parameters
+        ----------
+        direction : numpy.ndarray or sequence
+            Direction vector to extrude.
+
+        trim_surface : pyvista.PolyData
+            Surface which trims the surface.
+
+        extrusion : str or int, optional
+            Control the strategy of extrusion. One of the following:
+
+            * ``"boundary_edges"``
+            * ``"all_edges"``
+
+            The default is ``"boundary_edges"``, which only generates faces on
+            the boundary of the original input surface. When using
+            ``"all_edges"``, faces are created along interior points as well.
+
+        capping : str or int, optional
+            Control the strategy of capping. One of the following:
+
+            * ``"intersection"``
+            * ``"minimum_distance"``
+            * ``"maximum_distance"``
+            * ``"average_distance"``
+
+            The default is "intersection".
+
+        inplace : bool, optional
+            Overwrites the original mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Extruded mesh trimmed by a surface.
+
+        Examples
+        --------
+        Extrude a disc.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> plane = pyvista.Plane(i_size=2, j_size=2, direction=[0, 0.8, 1])
+        >>> disc = pyvista.Disc(center=(0, 0, -1), c_res=50)
+        >>> direction = [0, 0, 1]
+        >>> extruded_disc = disc.extrude_trim(direction, plane)
+        >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
+
+        """
+        if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
+            raise TypeError('Vector must be a length three vector')
+
+        extrusions = {"boundary_edges": 0, "all_edges": 1}
+        if isinstance(extrusion, str):
+            if extrusion not in extrusions:
+                raise ValueError(f'Invalid strategy of extrusion "{extrusion}".')
+            extrusion = extrusions[extrusion]
+        else:
+            raise TypeError('Invalid type given to `extrusion`. Must be a string.')
+
+        cappings = {
+            "intersection": 0,
+            "minimum_distance": 1,
+            "maximum_distance": 2,
+            "average_distance": 3,
+        }
+        if isinstance(capping, str):
+            if capping not in cappings:
+                raise ValueError(f'Invalid strategy of capping "{capping}".')
+            capping = cappings[capping]
+        else:
+            raise TypeError('Invalid type given to `capping`. Must be a string.')
+
+        alg = _vtk.vtkTrimmedExtrusionFilter()
+        alg.SetInputData(self)
+        alg.SetExtrusionDirection(*direction)
+        alg.SetTrimSurfaceData(trim_surface)
+        alg.SetExtrusionStrategy(extrusion)
+        alg.SetCappingStrategy(capping)
+        _update_alg(alg, progress_bar, 'Extruding with trimming')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
             self.overwrite(output)

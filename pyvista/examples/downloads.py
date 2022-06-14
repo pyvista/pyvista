@@ -12,6 +12,7 @@ Examples
 """
 
 from functools import partial
+import glob
 import os
 import shutil
 from typing import Union
@@ -23,6 +24,8 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
+CACHE_VERSION = 1
+
 
 def _check_examples_path():
     """Check if the examples path exists."""
@@ -32,6 +35,34 @@ def _check_examples_path():
             'environment variable `PYVISTA_USERDATA_PATH` '
             'to a writable path and restarting python'
         )
+
+
+def _cache_version(cache_version_file) -> int:
+    """Return the cache version."""
+    if os.path.isfile(cache_version_file):
+        with open(cache_version_file) as fid:
+            try:
+                return int(fid.read())
+            except:
+                pass
+    return 0
+
+
+def _verify_cache_integrity():  # pragma: no cover
+    """Verify that the version of the cache matches the expected version.
+
+    Clears cache when there is a version mismatch. This avoids any potential
+    issues with old file structures due to changed download methods.
+
+    """
+    cache_version_file = os.path.join(pyvista.EXAMPLES_PATH, 'VERSION')
+    cache_version = _cache_version(cache_version_file)
+
+    # clear with no version file or an old cache version
+    if cache_version < CACHE_VERSION:
+        delete_downloads()
+        with open(cache_version_file, 'w') as fid:
+            fid.write(str(CACHE_VERSION))
 
 
 def delete_downloads():
@@ -57,10 +88,10 @@ def delete_downloads():
     return True
 
 
-def _decompress(filename):
+def _decompress(filename, output_path):
     _check_examples_path()
     zip_ref = zipfile.ZipFile(filename, 'r')
-    zip_ref.extractall(pyvista.EXAMPLES_PATH)
+    zip_ref.extractall(output_path)
     return zip_ref.close()
 
 
@@ -77,7 +108,7 @@ def _repo_file_request(repo_path, filename):
 
 
 def _retrieve_file(retriever, filename):
-    """Retrieve file and cache it in pyvsita.EXAMPLES_PATH.
+    """Retrieve a file and cache it in pyvsita.EXAMPLES_PATH.
 
     Parameters
     ----------
@@ -89,20 +120,30 @@ def _retrieve_file(retriever, filename):
     filename : str
         The name of the file.
 
+    Returns
+    -------
+    str
+        Path to the downloaded file.
+    http.client.HTTPMessage
+        HTTP download Response.
+
     """
     _check_examples_path()
+
     # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
-    local_path_no_zip = local_path.replace('.zip', '')
-    if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
-        return local_path_no_zip, None
+    local_path = os.path.join(pyvista.EXAMPLES_PATH, filename)
+    if os.path.isfile(local_path):
+        return local_path, None
+
     if isinstance(retriever, str):
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
-    # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
-    # Make sure folder exists!
-    if not os.path.isdir(os.path.dirname((local_path))):
-        os.makedirs(os.path.dirname((local_path)))
+
+    # Make sure folder exists
+    local_dir = os.path.dirname(local_path)
+    if not os.path.isdir(local_dir):
+        os.makedirs(local_dir)
+
     if pyvista.VTK_DATA_PATH is None:
         shutil.move(saved_file, local_path)
     else:
@@ -110,13 +151,88 @@ def _retrieve_file(retriever, filename):
             shutil.copytree(saved_file, local_path)
         else:
             shutil.copy(saved_file, local_path)
-    if pyvista.get_ext(local_path) in ['.zip']:
-        _decompress(local_path)
-        local_path = local_path[:-4]
+
     return local_path, resp
 
 
+def _retrieve_zip(retriever, filename):
+    """Retrieve a zip and cache it in pyvsita.EXAMPLES_PATH.
+
+    Parameters
+    ----------
+    retriever : str or callable
+        If str, it is treated as a url.
+        If callable, the function must take no arguments and must
+        return a tuple like (file_path, resp), where file_path is
+        the path to the file to use.
+    filename : str
+        The name of the file.
+
+    Returns
+    -------
+    list
+        List containing the unzipped files.
+    http.client.HTTPMessage
+        HTTP download Response.
+
+    """
+    _check_examples_path()
+
+    # First check if file has already been downloaded
+    # dirname = os.path.join(os.path.dirname(filename), os.path.basename(filename))
+    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, filename).replace('.zip', '')
+    if os.path.isdir(local_path_zip_dir):
+        return local_path_zip_dir, None
+    if isinstance(retriever, str):  # pragma: no cover
+        retriever = partial(_http_request, retriever)
+    saved_file, resp = retriever()
+
+    # Make sure directory exists
+    if not os.path.isdir(local_path_zip_dir):
+        os.makedirs(local_path_zip_dir)
+
+    # move the tmp file to the new directory
+    local_path_zip_file = os.path.join(local_path_zip_dir, os.path.basename(filename))
+    if pyvista.VTK_DATA_PATH is None:
+        shutil.move(saved_file, local_path_zip_file)
+    else:  # pragma: no cover
+        shutil.copy(saved_file, local_path_zip_file)
+
+    # decompress and remove the zip file to save space
+    _decompress(local_path_zip_file, local_path_zip_dir)
+    os.remove(local_path_zip_file)
+    return local_path_zip_dir, resp
+
+
 def _download_file(filename):
+    """Download a file from https://github.com/pyvista/vtk-data/master/Data.
+
+    If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
+    to be a local git repository.
+
+    Parameters
+    ----------
+    filename : str
+        Path within https://github.com/pyvista/vtk-data/master/Data to download
+        the file from.
+
+    Examples
+    --------
+    Download the ``'blood_vessels.zip'`` file from
+    https://github.com/pyvista/vtk-data/tree/master/Data/pvtu_blood_vessels.
+    This returns a path of the unzipped archive.
+
+    >>> path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')  # doctest:+SKIP
+    >>> path  # doctest:+SKIP
+    /home/user/.local/share/pyvista/examples/blood_vessels
+
+    Download the ``'emote.jpg'`` file.
+
+    >>> path, _ = _download_file('emote.jpg')  # doctest:+SKIP
+    >>> path  # doctest:+SKIP
+    /home/user/.local/share/pyvista/examples/emote.jpg
+
+    """
     if pyvista.VTK_DATA_PATH is None:
         url = _get_vtk_file_url(filename)
         retriever = partial(_http_request, url)
@@ -130,11 +246,40 @@ def _download_file(filename):
                 f'VTK data repository does not have "Data" folder at:\n\n{pyvista.VTK_DATA_PATH}'
             )
         retriever = partial(_repo_file_request, pyvista.VTK_DATA_PATH, filename)
+
+    if pyvista.get_ext(filename) == '.zip':
+        return _retrieve_zip(retriever, filename)
     return _retrieve_file(retriever, filename)
 
 
 def _download_and_read(filename, texture=False, file_format=None, load=True):
+    """Download and read a file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the filename. This cannot be a zip file.
+
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
+    file_format : str, optional
+        Override the file format with a different extension.
+
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    """
     saved_file, _ = _download_file(filename)
+    if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
+        raise ValueError('Cannot download and read an archive file')
+
     if not load:
         return saved_file
     if texture:
@@ -817,7 +962,11 @@ def download_nefertiti(load=True):  # pragma: no cover
     * :ref:`box_widget_example`
 
     """
-    return _download_and_read('nefertiti.ply.zip', load=load)
+    path, _ = _download_file('nefertiti.ply.zip')
+    filename = os.path.join(path, 'nefertiti.ply')
+    if not load:
+        return filename
+    return pyvista.read(filename)
 
 
 def download_blood_vessels(load=True):  # pragma: no cover
@@ -846,8 +995,9 @@ def download_blood_vessels(load=True):  # pragma: no cover
     * :ref:`streamlines_example`
 
     """
-    local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
-    filename = os.path.join(local_path, 'T0000000500.pvtu')
+    directory, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
+    filename = os.path.join(directory, 'blood_vessels', 'T0000000500.pvtu')
+
     if not load:
         return filename
     mesh = pyvista.read(filename)
@@ -2399,6 +2549,7 @@ def download_tetra_dc_mesh():  # pragma: no cover
 
     """
     local_path, _ = _download_file('dc-inversion.zip')
+    local_path = os.path.join(local_path, 'dc-inversion')
     filename = os.path.join(local_path, 'mesh-forward.vtu')
     fwd = pyvista.read(filename)
     fwd.set_active_scalars('Resistivity(log10)-fwd')
@@ -2928,6 +3079,32 @@ def download_sky(direction='nx', load=True):  # pragma: no cover
     return pyvista.read(filename)
 
 
+def download_cube_map_debug():  # pragma: no cover
+    """Download the debug cube map texture.
+
+    Textures obtained from `BabylonJS/Babylon.js
+    <https://github.com/BabylonJS/Babylon.js>`_ and licensed under Apache2.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing a skybox.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
+    >>> dataset = examples.download_sky_box_cube_map()
+    >>> _ = pl.add_actor(dataset.to_skybox())
+    >>> pl.set_environment_texture(dataset)
+    >>> pl.show()
+
+    """
+    path, _ = _download_file('cubemapDebug/cubemapDebug.zip')
+    return pyvista.cubemap(image_paths=glob.glob(path, '*.jpg'))
+
+
 def download_backward_facing_step(load=True):  # pragma: no cover
     """Download an ensight gold case of a fluid simulation.
 
@@ -2949,8 +3126,8 @@ def download_backward_facing_step(load=True):  # pragma: no cover
     >>> dataset.plot()
 
     """
-    folder, _ = _download_file('EnSight.zip')
-    filename = os.path.join(folder, "foam_case_0_0_0_0.case")
+    directory, _ = _download_file('EnSight.zip')
+    filename = os.path.join(directory, 'EnSight', "foam_case_0_0_0_0.case")
     if not load:
         return filename
     return pyvista.read(filename)
@@ -3520,12 +3697,22 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import os
+    >>> from tempfile import mkdtemp
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_single_sphere_animation(load=False)
     >>> reader = pyvista.PVDReader(filename)
+
+    Write the gif to a temporary directory. Normally you would write to a local
+    path.
+
+    >>> gif_filename = os.path.join(mkdtemp(), 'single_sphere.gif')
+
+    Generate the animation.
+
     >>> plotter = pyvista.Plotter()
-    >>> plotter.open_gif("single_sphere_pvd.gif")
+    >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
@@ -3537,8 +3724,8 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     >>> plotter.close()
 
     """
-    _download_file('PVD/paraview/singleSphereAnimation.zip')
-    filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
+    path, _ = _download_file('PVD/paraview/singleSphereAnimation.zip')
+    filename = os.path.join(path, 'singleSphereAnimation.pvd')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3560,12 +3747,22 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import os
+    >>> from tempfile import mkdtemp
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_dual_sphere_animation(load=False)
     >>> reader = pyvista.PVDReader(filename)
+
+    Write the gif to a temporary directory. Normally you would write to a local
+    path.
+
+    >>> gif_filename = os.path.join(mkdtemp(), 'dual_sphere.gif')
+
+    Generate the animation.
+
     >>> plotter = pyvista.Plotter()
-    >>> plotter.open_gif("sphere_pvd.gif")
+    >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
@@ -3577,8 +3774,8 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     >>> plotter.close()
 
     """
-    _download_file('PVD/paraview/dualSphereAnimation.zip')
-    filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
+    path, _ = _download_file('PVD/paraview/dualSphereAnimation.zip')
+    filename = os.path.join(path, 'dualSphereAnimation.pvd')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3646,7 +3843,7 @@ def download_cavity(load=True):
 
     """
     directory, _ = _download_file('OpenFOAM.zip')
-    filename = os.path.join(directory, 'cavity', 'case.foam')
+    filename = os.path.join(directory, 'OpenFOAM', 'cavity', 'case.foam')
     if not load:
         return filename
     return pyvista.OpenFOAMReader(filename).read()
@@ -3824,7 +4021,13 @@ def download_cgns_multi(load=True):  # pragma: no cover
     filename, _ = _download_file('cgns/multi.cgns')
     if not load:
         return filename
-    return pyvista.get_reader(filename).read()
+    reader = pyvista.get_reader(filename)
+
+    # disable reading the boundary patch. As of VTK 9.1.0 this generates
+    # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
+    # yet."
+    reader.load_boundary_patch = False
+    return reader.read()
 
 
 def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
@@ -3875,6 +4078,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
 
     """
     path, _ = _download_file('DICOM_Stack/data.zip')
+    path = os.path.join(path, 'data')
     if load:
         reader = pyvista.DICOMReader(path)
         return reader.read()

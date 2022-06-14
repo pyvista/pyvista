@@ -2169,10 +2169,13 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
 
         for i in range(num_point_data):
-            dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
+
+        # track original untransformed dataset
+        orig_dataset = dataset.copy(deep=True)
 
         # handle
         f = pyvista._vtk.vtkTransformFilter()
@@ -2183,31 +2186,55 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
         transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
+        # verify that the dataset has not modified
+        if num_cell_arrays:
+            assert dataset.cell_data == orig_dataset.cell_data
+        if num_point_data:
+            assert dataset.point_data == orig_dataset.point_data
+
         assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
         assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
         assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
         for i in range(num_cell_arrays):
-            assert dataset.cell_data['C%d' % i][:, 0] == pytest.approx(
-                transformed.cell_data['C%d' % i][:, 0]
+            assert dataset.cell_data[f'C{i}'][:, 0] == pytest.approx(
+                transformed.cell_data[f'C{i}'][:, 0]
             )
-            assert dataset.cell_data['C%d' % i][:, 2] == pytest.approx(
-                -transformed.cell_data['C%d' % i][:, 1]
+            assert dataset.cell_data[f'C{i}'][:, 2] == pytest.approx(
+                -transformed.cell_data[f'C{i}'][:, 1]
             )
-            assert dataset.cell_data['C%d' % i][:, 1] == pytest.approx(
-                transformed.cell_data['C%d' % i][:, 2]
+            assert dataset.cell_data[f'C{i}'][:, 1] == pytest.approx(
+                transformed.cell_data[f'C{i}'][:, 2]
             )
 
         for i in range(num_point_data):
-            assert dataset.point_data['P%d' % i][:, 0] == pytest.approx(
-                transformed.point_data['P%d' % i][:, 0]
+            assert dataset.point_data[f'P{i}'][:, 0] == pytest.approx(
+                transformed.point_data[f'P{i}'][:, 0]
             )
-            assert dataset.point_data['P%d' % i][:, 2] == pytest.approx(
-                -transformed.point_data['P%d' % i][:, 1]
+            assert dataset.point_data[f'P{i}'][:, 2] == pytest.approx(
+                -transformed.point_data[f'P{i}'][:, 1]
             )
-            assert dataset.point_data['P%d' % i][:, 1] == pytest.approx(
-                transformed.point_data['P%d' % i][:, 2]
+            assert dataset.point_data[f'P{i}'][:, 1] == pytest.approx(
+                transformed.point_data[f'P{i}'][:, 2]
             )
+
+
+@pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
+def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+    for dataset in datasets:
+        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        dataset.clear_data()
+        for i in range(num_cell_arrays):
+            dataset.cell_data[f"C{i}"] = np.random.randint(
+                np.iinfo(int).max, size=(dataset.n_cells, 3)
+            )
+        for i in range(num_point_data):
+            dataset.point_data[f"P{i}"] = np.random.randint(
+                np.iinfo(int).max, size=(dataset.n_points, 3)
+            )
+        if not (num_cell_arrays == 0 and num_point_data == 0):
+            with pytest.warns(UserWarning, match="Integer"):
+                _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
 @pytest.mark.parametrize(
@@ -2356,6 +2383,66 @@ def test_extrude_rotate_inplace():
     poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True, capping=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
+
+
+def test_extrude_trim():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    poly = mesh.extrude_trim(direction, trim_surface)
+    assert np.isclose(poly.volume, 1.0)
+
+
+@pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
+@pytest.mark.parametrize(
+    'capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"]
+)
+def test_extrude_trim_strategy(extrusion, capping):
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    poly = mesh.extrude_trim(direction, trim_surface, extrusion=extrusion, capping=capping)
+    assert isinstance(poly, pyvista.PolyData)
+    assert poly.n_cells
+    assert poly.n_points
+
+
+def test_extrude_trim_catch():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane()
+    trim_surface = pyvista.Plane()
+    with pytest.raises(ValueError):
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion="Invalid strategy")
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
+    with pytest.raises(ValueError):
+        _ = mesh.extrude_trim(direction, trim_surface, capping="Invalid strategy")
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, capping=0)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim('foobar', trim_surface)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim([1, 2], trim_surface)
+
+
+def test_extrude_trim_inplace():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    mesh.extrude_trim(direction, trim_surface, inplace=True, progress_bar=True)
+    assert np.isclose(mesh.volume, 1.0)
 
 
 @pytest.mark.parametrize('inplace', [True, False])

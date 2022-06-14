@@ -40,6 +40,7 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
+os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
 # SG warnings
 import warnings
@@ -49,6 +50,7 @@ warnings.filterwarnings(
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
+
 
 # -- General configuration ------------------------------------------------
 numfig = False

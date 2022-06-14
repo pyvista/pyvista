@@ -13,6 +13,7 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
+from pyvista.plotting import system_supports_plotting
 from pyvista.utilities import (
     GPUInfo,
     Observer,
@@ -23,7 +24,11 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyvistaDeprecationWarning, has_duplicates, raise_has_duplicates
+
+skip_no_plotting = pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 
 
 def test_version():
@@ -417,6 +422,7 @@ def test_observer():
         obs.observe(alg)
 
 
+@skip_no_plotting
 def test_gpuinfo():
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
@@ -764,3 +770,17 @@ def test_convert_array():
         pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
     )
     assert arr3.GetNumberOfValues() == 4
+
+    # check lists work
+    my_list = [1, 2, 3]
+    arr4 = pyvista.utilities.convert_array(my_list)
+    assert arr4.GetNumberOfValues() == len(my_list)
+
+
+def test_has_duplicates():
+    assert not has_duplicates(np.arange(100))
+    assert has_duplicates(np.array([0, 1, 2, 2]))
+    assert has_duplicates(np.array([[0, 1, 2], [0, 1, 2]]))
+
+    with pytest.raises(ValueError):
+        raise_has_duplicates(np.array([0, 1, 2, 2]))

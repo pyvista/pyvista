@@ -7,6 +7,11 @@ import vtk as _vtk
 from pyvista import examples, pyvista_ndarray
 
 
+@pytest.fixture
+def pv_ndarray_1d():
+    return pyvista_ndarray([1.0, 2.0, 3.0])
+
+
 def test_slices_are_associated():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
@@ -64,3 +69,27 @@ def test_slices_are_associated_single_index():
     assert points[1, 1].VTKObject == points.VTKObject
     assert points[1, 1].dataset.Get() == points.dataset.Get()
     assert points[1, 1].association == points.association
+
+
+def test_min(pv_ndarray_1d):
+    arr = np.array(pv_ndarray_1d)
+    assert pv_ndarray_1d.min() == arr.min()
+
+    # also ensure that methods return float-like values just like numpy
+    assert isinstance(pv_ndarray_1d.min(), type(arr.min()))
+
+
+def test_squeeze(pv_ndarray_1d):
+    reshaped_pvarr = pv_ndarray_1d.reshape((3, 1))
+    assert np.array_equal(reshaped_pvarr.squeeze(), np.array(reshaped_pvarr.squeeze()))
+
+
+def test_tobytes(pv_ndarray_1d):
+    assert pv_ndarray_1d.tobytes() == np.array(pv_ndarray_1d).tobytes()
+
+
+def test_add_1d():
+    # ensure that 1d single value arrays match numpy
+    pv_arr = pyvista_ndarray([1]) + pyvista_ndarray([1])
+    np_arr = np.array([1]) + np.array([1])
+    assert np.array_equal(pv_arr, np_arr)

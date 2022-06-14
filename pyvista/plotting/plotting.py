@@ -30,7 +30,7 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning
+from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
 from .colors import Color, get_cmap_safe
@@ -108,8 +108,7 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # Check if VTK has EGL support
-        ren_win_str = str(type(_vtk.vtkRenderWindow()))
-        if 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str:
+        if uses_egl():
             return
 
         warnings.warn(
@@ -380,7 +379,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
-        See :ref:`load_vrml` for a full example using this method.
+        See :ref:`load_vrml_example` for a full example using this method.
 
         """
         filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -398,9 +397,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def export_html(self, filename, backend='pythreejs'):
         """Export this plotter as an interactive scene to a HTML file.
 
-        You have the option of exposing the scene using either vtk.js (using ``panel``) or
-        three.js (using ``pythreejs``), both of which are excellent JavaScript libraries to visualize
-        small to moderately complex scenes for scientific visualization.
+        You have the option of exposing the scene using either vtk.js (using
+        ``panel``) or three.js (using ``pythreejs``), both of which are
+        excellent JavaScript libraries to visualize small to moderately complex
+        scenes for scientific visualization.
 
         Parameters
         ----------
@@ -636,7 +636,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(examples.load_hexbeam())
-        >>> pl.export_vrml("sample")
+        >>> pl.export_vrml("sample")  # doctest:+SKIP
+
         """
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
@@ -1948,10 +1949,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using either the
-            Gouraud or Phong shading algorithm.  When ``False``, use
-            flat shading.  Automatically enabled when ``pbr=True``.
-            See :ref:`shading_example`.
+            Enable smooth shading when ``True`` using the Phong
+            shading algorithm.  When ``False``, use flat shading.
+            Automatically enabled when ``pbr=True``.  See
+            :ref:`shading_example`.
 
         split_sharp_edges : bool, optional
             Split sharp edges exceeding 30 degrees when plotting with smooth
@@ -4449,12 +4450,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         Plot an orbit around the earth.  Save the gif as a temporary file.
 
-        >>> import tempfile
         >>> import os
+        >>> from tempfile import mkdtemp
         >>> import pyvista
-        >>> filename = os.path.join(tempfile._get_default_tempdir(),
-        ...                         next(tempfile._get_candidate_names()) + '.gif')
         >>> from pyvista import examples
+        >>> filename = os.path.join(mkdtemp(), 'orbit.gif')
         >>> plotter = pyvista.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(examples.load_globe(), smooth_shading=True)
         >>> plotter.open_gif(filename)

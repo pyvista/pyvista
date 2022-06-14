@@ -27,7 +27,7 @@ examples.download_blood_vessels()
 # of files.
 #
 # Let's inspect where this downloaded our dataset:
-path = os.path.join(pv.EXAMPLES_PATH, "blood_vessels")
+path = os.path.join(pv.EXAMPLES_PATH, "blood_vessels", "blood_vessels")
 os.listdir(path)
 
 ###############################################################################

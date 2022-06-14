@@ -28,7 +28,7 @@ from pyvista.plotting.plotting import SUPPORTED_FORMATS
 
 # skip all tests if unable to render
 if not system_supports_plotting():
-    pytestmark = pytest.mark.skip
+    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
 
 ffmpeg_failed = False
@@ -62,6 +62,10 @@ skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
 )
+skip_mac_flaky = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
+)
+
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -71,6 +75,7 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
     'test_pbr',
+    'test_set_environment_texture_cubemap',
     'test_set_viewup',
     'test_add_title',
     'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
@@ -99,9 +104,10 @@ WINDOWS_SKIP_IMAGE_CACHE = {
 # this must be a session fixture to ensure this runs before any other test
 @pytest.fixture(scope="session", autouse=True)
 def get_cmd_opt(pytestconfig):
-    global glb_reset_image_cache, glb_ignore_image_cache
+    global glb_reset_image_cache, glb_ignore_image_cache, glb_fail_extra_image_cache
     glb_reset_image_cache = pytestconfig.getoption('reset_image_cache')
     glb_ignore_image_cache = pytestconfig.getoption('ignore_image_cache')
+    glb_fail_extra_image_cache = pytestconfig.getoption('fail_extra_image_cache')
 
 
 def verify_cache_image(plotter):
@@ -121,7 +127,7 @@ def verify_cache_image(plotter):
     plotter.show(before_close_callback=verify_cache_image)
 
     """
-    global glb_reset_image_cache, glb_ignore_image_cache
+    global glb_reset_image_cache, glb_ignore_image_cache, glb_fail_extra_image_cache
 
     # Image cache is only valid for VTK9+
     if not VTK9:
@@ -156,13 +162,15 @@ def verify_cache_image(plotter):
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
 
+    if glb_ignore_image_cache:
+        return
+
+    if not os.path.isfile(image_filename) and glb_fail_extra_image_cache:
+        raise RuntimeError(f"{image_filename} does not exist in image cache")
     # simply save the last screenshot if it doesn't exist or the cache
     # is being reset.
     if glb_reset_image_cache or not os.path.isfile(image_filename):
         return plotter.screenshot(image_filename)
-
-    if glb_ignore_image_cache:
-        return
 
     # otherwise, compare with the existing cached image
     error = pyvista.compare_images(image_filename, plotter)
@@ -259,6 +267,19 @@ def test_pbr(sphere):
         smooth_shading=True,
         diffuse=1,
     )
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_not_vtk9
+@skip_windows
+@skip_mac
+def test_set_environment_texture_cubemap(sphere):
+    """Test set_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter(lighting=None)
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2223,11 +2244,26 @@ def test_plot_zoom(sphere):
 
 def test_splitting():
     nut = examples.load_nut()
+    nut['sample_data'] = nut.points[:, 2]
+
     # feature angle of 50 will smooth the outer edges of the nut but not the inner.
     nut.plot(
         smooth_shading=True,
         split_sharp_edges=True,
         feature_angle=50,
+        before_close_callback=verify_cache_image,
+        show_scalar_bar=False,
+    )
+
+
+@skip_mac_flaky
+def test_splitting_active_cells(cube):
+    cube.cell_data['cell_id'] = range(cube.n_cells)
+    cube = cube.triangulate().subdivide(1)
+    cube.plot(
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
         before_close_callback=verify_cache_image,
     )
 
