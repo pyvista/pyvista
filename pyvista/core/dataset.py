@@ -763,7 +763,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cube['my_array'] = range(cube.n_points)
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
-        array([0, 1, 2, 3, 4, 5, 6, 7])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
         field = get_array_association(self, old_name, preference=preference)
@@ -1790,17 +1790,17 @@ class DataSet(DataSetFilters, DataObject):
         Get the point data array.
 
         >>> mesh.get_array('point-data')
-        array([0, 1, 2, 3, 4, 5, 6, 7])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         Get the cell data array.
 
         >>> mesh.get_array('cell-data')
-        array([0, 1, 2, 3, 4, 5])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5])
 
         Get the field data array.
 
         >>> mesh.get_array('field-data')
-        array(['a', 'b', 'c'], dtype='<U1')
+        pyvista_ndarray(['a', 'b', 'c'], dtype='<U1')
 
         """
         arr = get_array(self, name, preference=preference, err=True)
