@@ -620,13 +620,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('`name` must be a string')
 
         vtk_arr = self._prepare_array(data, name, deep_copy)
-
-        # remove complex association if dataset is not complex
-        complex_assoc = self.dataset._association_complex_names
-        if name in complex_assoc[self.association.name]:
-            if not isinstance(data, np.ndarray) or not np.issubdtype(data.dtype, complex):
-                complex_assoc[self.association.name].remove(name)
-
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
@@ -766,7 +759,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def _prepare_array(
         self, data: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy: bool
     ) -> _vtk.vtkDataSet:
-        """Prepare an array to be added to this dataset."""
+        """Prepare an array to be added to this dataset.
+
+        Notes
+        -----
+        This method also adds metadata necessary for VTK to support non-VTK
+        compatible datatypes like ``numpy.complex128`` or ``numpy.bool_`` to
+        the underlying dataset.
+
+        """
         if data is None:
             raise TypeError('``data`` cannot be None.')
         if isinstance(data, Iterable):

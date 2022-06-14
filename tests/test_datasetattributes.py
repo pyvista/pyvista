@@ -198,6 +198,24 @@ def test_set_invalid_vectors(hexbeam):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
 
 
+def test_set_bitarray(hexbeam):
+    """Test bitarrays are properly loaded and represented in datasetattributes."""
+    hexbeam.clear_data()
+    assert 'bool' not in str(hexbeam.point_data)
+
+    arr = np.zeros(hexbeam.n_points, dtype=bool)
+    arr[::2] = 1
+    hexbeam.point_data['bitarray'] = arr
+
+    assert hexbeam.point_data['bitarray'].dtype == np.bool_
+    assert 'bool' in str(hexbeam.point_data)
+    assert np.allclose(hexbeam.point_data['bitarray'], arr)
+
+    # ensure overwriting the type changes association
+    hexbeam.point_data['bitarray'] = arr.astype(np.int32)
+    assert hexbeam.point_data['bitarray'].dtype == np.int32
+
+
 @mark.parametrize('array_key', ['invalid_array_name', -1])
 def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attributes):
     with raises(KeyError):
