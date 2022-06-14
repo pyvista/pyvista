@@ -24,7 +24,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-CACHE_VERSION = 1
+CACHE_VERSION = 2
 
 
 def _check_examples_path():
