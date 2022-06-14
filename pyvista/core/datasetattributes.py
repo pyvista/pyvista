@@ -765,7 +765,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     return vtk_arr
 
         # convert to numpy type if necessary
-        data = np.asarray(data)
+        data = np.asanyarray(data)
 
         if self.association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()
@@ -1086,7 +1086,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def _raise_index_out_of_bounds(self, index: Any):
         if isinstance(index, int):
             max_index = self.VTKObject.GetNumberOfArrays()
-            if index < 0 or index >= self.VTKObject.GetNumberOfArrays():
+            if not 0 <= index < max_index:
                 raise KeyError(f'Array index ({index}) out of range [0, {max_index}]')
 
     def _raise_field_data_no_scalars_vectors(self):
