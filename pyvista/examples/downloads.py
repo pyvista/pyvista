@@ -161,7 +161,7 @@ def _retrieve_zip(retriever, filename):
     Parameters
     ----------
     retriever : str or callable
-        If str, it is treated as a url.
+        If str, it is treated as a URL.
         If callable, the function must take no arguments and must
         return a tuple like (file_path, resp), where file_path is
         the path to the file to use.
@@ -171,8 +171,8 @@ def _retrieve_zip(retriever, filename):
 
     Returns
     -------
-    list
-        List containing the unzipped files.
+    str
+        Path of the directory with the unzipped files.
 
     http.client.HTTPMessage
         HTTP download Response.
