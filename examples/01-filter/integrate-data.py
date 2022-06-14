@@ -38,7 +38,7 @@ plotter.show()
 
 ###############################################################################
 # The total flow rate is calculated using the
-# :method:`pyvista.DataSetFilters.integrate_data` filter.  Note that the data
+# :func:`pyvista.DataSetFilters.integrate_data` filter.  Note that the data
 # is a :class:`pyvista.UnstructuredGrid` object with only 1 point and 1 cell.
 integrated_data = inlet_surface.integrate_data()
 integrated_data
