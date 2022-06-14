@@ -210,13 +210,13 @@ def point_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    pyvista.pyvista_ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
     if isinstance(obj, pyvista.DataSet):
@@ -235,13 +235,13 @@ def field_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    pyvista.pyvista_ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
     if isinstance(obj, pyvista.DataSet):
@@ -260,13 +260,13 @@ def cell_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    pyvista.pyvista_ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
     if isinstance(obj, pyvista.DataSet):

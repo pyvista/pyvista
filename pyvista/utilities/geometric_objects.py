@@ -1446,7 +1446,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     solid.Update()
     solid = pyvista.wrap(solid.GetOutput())
     # rename and activate cell scalars
-    cell_data = solid.get_array(0)
+    cell_data = solid.cell_data.get_array(0)
     solid.clear_data()
     solid.cell_data['FaceIndex'] = cell_data
     # scale and translate

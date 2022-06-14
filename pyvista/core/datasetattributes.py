@@ -1084,8 +1084,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self[name] = array.copy()
 
     def _raise_index_out_of_bounds(self, index: Any):
-        max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int):
+            max_index = self.VTKObject.GetNumberOfArrays()
             if index < 0 or index >= self.VTKObject.GetNumberOfArrays():
                 raise KeyError(f'Array index ({index}) out of range [0, {max_index}]')
 
