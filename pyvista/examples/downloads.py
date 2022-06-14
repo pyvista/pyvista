@@ -156,7 +156,7 @@ def _retrieve_file(retriever, filename):
 
 
 def _retrieve_zip(retriever, filename):
-    """Retrieve a zip and cache it in pyvsita.EXAMPLES_PATH.
+    """Retrieve a zip and cache it in pyvista.EXAMPLES_PATH.
 
     Parameters
     ----------
@@ -165,6 +165,7 @@ def _retrieve_zip(retriever, filename):
         If callable, the function must take no arguments and must
         return a tuple like (file_path, resp), where file_path is
         the path to the file to use.
+
     filename : str
         The name of the file.
 
@@ -172,6 +173,7 @@ def _retrieve_zip(retriever, filename):
     -------
     list
         List containing the unzipped files.
+
     http.client.HTTPMessage
         HTTP download Response.
 
@@ -186,7 +188,7 @@ def _retrieve_zip(retriever, filename):
         retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
 
-    # Edge case where retreiver saves to an identical location as the saved
+    # Edge case where retriever saves to an identical location as the saved
     # file name.
     if filename == saved_file:  # pragma: no cover
         new_saved_file = saved_file + '.download'
