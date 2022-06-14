@@ -179,8 +179,7 @@ def _retrieve_zip(retriever, filename):
     _check_examples_path()
 
     # First check if file has already been downloaded
-    # dirname = os.path.join(os.path.dirname(filename), os.path.basename(filename))
-    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, filename).replace('.zip', '')
+    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, filename)
     if os.path.isdir(local_path_zip_dir):
         return local_path_zip_dir, None
     if isinstance(retriever, str):  # pragma: no cover
