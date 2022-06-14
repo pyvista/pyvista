@@ -5133,7 +5133,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def integrate_data(self, divide_by_volume=False, progress_bar=False):
+    def integrate_data(self, progress_bar=False):
         """Integrate point and cell data.
 
         Area or volume also provided in point data.
