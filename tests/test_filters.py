@@ -2376,17 +2376,16 @@ def test_extrude_rotate():
     )
 
     rotation_axis = (0, 1, 0)
-    if pyvista.vtk_version_info >= (9, 1, 0):
+    f = pyvista._vtk.vtkRotationalExtrusionFilter()
+    if not hasattr(f, 'SetRotationAxis'):
+        with pytest.raises(VTKVersionError):
+            poly = line.extrude_rotate(rotation_axis=rotation_axis)
+    else:
         poly = line.extrude_rotate(
             rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
         )
         assert poly.n_cells == line.n_points - 1
         assert poly.n_points == (resolution + 1) * line.n_points
-    else:
-        with pytest.raises(VTKVersionError, matches="requires vtk>=9.1.0"):
-            poly = line.extrude_rotate(
-                rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
-            )
 
     with pytest.raises(ValueError):
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)
