@@ -2376,11 +2376,14 @@ def test_extrude_rotate():
     )
 
     rotation_axis = (0, 1, 0)
-    poly = line.extrude_rotate(
-        rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
-    )
-    assert poly.n_cells == line.n_points - 1
-    assert poly.n_points == (resolution + 1) * line.n_points
+    if pyvista.vtk_version_info >= (9, 1, 0):
+        poly = line.extrude_rotate(
+            rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
+        )
+        assert poly.n_cells == line.n_points - 1
+        assert poly.n_points == (resolution + 1) * line.n_points
+    else:
+        with pytest.warns(UserWarning, match="is not supported with vtk < 9.1.0."):
 
     with pytest.raises(TypeError):
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)
