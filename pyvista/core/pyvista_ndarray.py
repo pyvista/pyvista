@@ -72,4 +72,16 @@ class pyvista_ndarray(np.ndarray):
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
+    def __array_wrap__(self, out_arr, context=None):
+        """Return a numpy scalar if array is 0d.
+
+        See https://github.com/numpy/numpy/issues/5819
+
+        """
+        if out_arr.ndim:
+            return np.ndarray.__array_wrap__(self, out_arr, context)
+
+        # Match numpy's behavior and return a numpy dtype scalar
+        return out_arr[()]
+
     __getattr__ = _vtk.VTKArray.__getattr__

@@ -218,7 +218,7 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, ido):  # pragma: no cover
+    def copy_meta_from(self, ido, deep):  # pragma: no cover
         """Copy pyvista meta data onto this object from another object."""
         pass  # called only by the inherited class
 
@@ -256,7 +256,7 @@ class DataObject:
             newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self)
+        newobject.copy_meta_from(self, deep)
         return newobject
 
     def __eq__(self, other):

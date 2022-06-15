@@ -101,3 +101,9 @@ def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
+
+
+def pytest_addoption(parser):
+    parser.addoption("--reset_image_cache", action='store_true', default=False)
+    parser.addoption("--ignore_image_cache", action='store_true', default=False)
+    parser.addoption("--fail_extra_image_cache", action='store_true', default=False)

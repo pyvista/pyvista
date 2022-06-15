@@ -185,6 +185,31 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
+def test_copy_metadata(globe):
+    """Ensure metadata is copied correctly."""
+
+    globe_shallow = globe.copy(deep=False)
+    assert globe_shallow._active_scalars_info is globe._active_scalars_info
+    assert globe_shallow._active_vectors_info is globe._active_vectors_info
+    assert globe_shallow._active_tensors_info is globe._active_tensors_info
+    assert globe.textures is globe_shallow.textures
+
+    globe_deep = globe.copy(deep=True)
+    assert globe_deep.textures is not globe.textures
+    assert globe_deep._active_scalars_info is not globe._active_scalars_info
+    assert globe_deep._active_vectors_info is not globe._active_vectors_info
+    assert globe_deep._active_tensors_info is not globe._active_tensors_info
+    assert globe_deep._active_scalars_info == globe._active_scalars_info
+    assert globe_deep._active_vectors_info == globe._active_vectors_info
+    assert globe_deep._active_tensors_info == globe._active_tensors_info
+    assert globe_deep.textures == globe.textures
+
+    globe.clear_textures()
+    assert not globe.textures
+    assert globe_deep.textures
+    assert not globe_shallow.textures
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
 def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
@@ -1278,7 +1303,14 @@ def test_scale():
     scale3 = mesh.scale(xyz, inplace=False)
     assert np.allclose(scale1.points, scale2.points)
     assert np.allclose(scale3.points, scale2.points)
-    # Test non-point-based mesh doesn't fail
+    # test scalar scale case
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    xyz = 4.0
+    scale1.scale(xyz, inplace=True)
+    scale2.scale([xyz] * 3, inplace=True)
+    assert np.allclose(scale1.points, scale2.points)
+    # test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)

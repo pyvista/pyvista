@@ -29,7 +29,7 @@ from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import NumericArray, Vector, VectorArray
+from .._typing import Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -49,6 +49,10 @@ class ActiveArrayInfo:
         """Initialize."""
         self.association = association
         self.name = name
+
+    def copy(self):
+        """Return a copy of this object."""
+        return ActiveArrayInfo(self.association, self.name)
 
     def __getstate__(self):
         """Support pickling."""
@@ -1143,7 +1147,10 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def scale(
-        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+        self,
+        xyz: Union[Number, list, tuple, np.ndarray],
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Scale the mesh.
 
@@ -1154,8 +1161,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : scale factor list or tuple or np.ndarray
-            Length 3 list, tuple or array.
+        xyz : float or list or tuple or np.ndarray
+            A scalar or length 3 list, tuple or array defining the scale
+            factors along x, y, and z. If a scalar, the same uniform scale is
+            used along all three axes.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -1187,6 +1196,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
+        if isinstance(xyz, (float, int, np.number)):
+            xyz = [xyz] * 3
+
         transform = _vtk.vtkTransform()
         transform.Scale(xyz)
         return self.transform(
@@ -1399,7 +1411,7 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def copy_meta_from(self, ido: 'DataSet'):
+    def copy_meta_from(self, ido: 'DataSet', deep: bool = True):
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1407,11 +1419,23 @@ class DataSet(DataSetFilters, DataObject):
         ido : pyvista.DataSet
             Dataset to copy the metadata from.
 
+        deep : bool, optional
+            Deep or shallow copy.
+
         """
-        self._active_scalars_info = ido.active_scalars_info
-        self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
-        self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+
+        if deep:
+            self._active_scalars_info = ido.active_scalars_info.copy()
+            self._active_vectors_info = ido.active_vectors_info.copy()
+            self._active_tensors_info = ido.active_tensors_info.copy()
+            self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+        else:
+            # pass by reference
+            self._active_scalars_info = ido.active_scalars_info
+            self._active_vectors_info = ido.active_vectors_info
+            self._active_tensors_info = ido.active_tensors_info
+            self._textures = ido.textures
 
     @property
     def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
@@ -2027,7 +2051,7 @@ class DataSet(DataSetFilters, DataObject):
             )
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh)
+            self.copy_meta_from(mesh, deep=True)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
