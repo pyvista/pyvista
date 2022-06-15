@@ -2703,7 +2703,8 @@ class PolyDataFilters(DataSetFilters):
                in behavior and warnings.
 
         rotation_axis : numpy.ndarray or sequence
-            Direction vector of axis around which the rotation is done.
+            The direction vector of the axis around which the rotation is done.
+            It requires vtk>=9.1.0.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -2769,7 +2770,7 @@ class PolyDataFilters(DataSetFilters):
         if pyvista.vtk_version_info >= (9, 1, 0):
             alg.SetRotationAxis(rotation_axis)
         elif rotation_axis != (0, 0, 1):  # pragma: no cover
-            warnings.warn("rotation_axis is not supported with vtk < 9.1.0. Z-axis is used.")
+            raise VTKVersionError('vtkRotationalExtrusionFilter.SetRotationAxis requires vtk>=9.1.0')
 
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
