@@ -2756,7 +2756,7 @@ class PolyDataFilters(DataSetFilters):
             not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
             or len(rotation_axis) != 3
         ):
-            raise TypeError('Vector must be a length three vector')
+            raise ValueError('Vector must be a length three vector')
 
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
