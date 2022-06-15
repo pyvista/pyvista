@@ -1,6 +1,7 @@
 """Attributes common to PolyData and Grid Objects."""
 
 import collections.abc
+from copy import deepcopy
 import logging
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
@@ -1426,8 +1427,8 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_textures()
 
         if deep:
-            self._association_complex_names = ido._association_complex_names.copy()
-            self._association_bitarray_names = ido._association_bitarray_names.copy()
+            self._association_complex_names = deepcopy(ido._association_complex_names)
+            self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
