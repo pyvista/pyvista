@@ -5158,7 +5158,7 @@ class DataSetFilters:
         >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
         >>> integrated = sphere.integrate_data()
 
-         There is only 1 point/cell, so access the only value.
+        There is only 1 point/cell, so access the only value.
 
         >>> integrated["Area"][0]
         3.14
