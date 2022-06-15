@@ -2382,7 +2382,7 @@ def test_extrude_rotate():
         )
         assert poly.n_cells == line.n_points - 1
         assert poly.n_points == (resolution + 1) * line.n_points
-    elif:
+    else:
         with pytest.raises(VTKVersionError, matches="requires vtk>=9.1.0")
 
     with pytest.raises(ValueError):
