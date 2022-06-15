@@ -4,7 +4,9 @@
 Integrate Data
 ~~~~~~~~~~~~~~
 
-Integrate data over a surface.
+Integrate data over a surface using the
+:func:`pyvista.DataSetFilters.integrate_data` filter.
+
 """
 import pyvista
 from pyvista import examples
@@ -31,6 +33,7 @@ plotter.add_mesh(
     scalars="normal_velocity",
     component=2,
     scalar_bar_args=dict(vertical=True, title_font_size=16),
+    lighting=False,
 )
 plotter.add_axes()
 plotter.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
@@ -51,13 +54,37 @@ integrated_data["normal_velocity"]
 # An additional ``Area`` or ``Volume`` array is added.
 print(f"Original arrays: {inlet_surface.array_names}")
 new_arrays = [name for name in integrated_data.array_names if name not in inlet_surface.array_names]
-print(f"New arrays     : {new_arrays}")
+print(f"New arrays      : {new_arrays}")
 
 ###############################################################################
 # Display the total flow rate, area of inlet surface, and average velocity.
 total_flow_rate = integrated_data["normal_velocity"][0]
 area = integrated_data["Area"][0]
 average_velocity = total_flow_rate / area
-print(f"total flow rate : {total_flow_rate:.1f}")
-print(f"area            : {area:.0f}")
-print(f"average velocity: {average_velocity:.3f}")
+print(f"Total flow rate : {total_flow_rate:.1f}")
+print(f"Area            : {area:.0f}")
+print(f"Average velocity: {average_velocity:.3f}")
+
+
+###############################################################################
+# Volume Integration
+# ~~~~~~~~~~~~~~~~~~
+# You can also integrate over a volume. Here, we effectively sum the cell and
+# point data across the entire volume. You can use this to compute mean values
+# by dividing by the volume of the dataset.
+#
+# Note that the calculated volume is the same as :attr:`pyvista.DataSet.volume`.
+#
+# Also note that the center of the dataset is the "point" of the integrated
+# volume.
+
+integrated_volume = dataset.integrate_data()
+center = integrated_volume.points[0]
+volume = integrated_volume['Volume'][0]
+mean_density = integrated_volume['density'][0] / volume
+mean_velocity = integrated_volume['velocity'][0] / volume
+
+print(f"Center          : {center}")
+print(f"Volume          : {volume:.0f}")
+print(f"Mean density    : {mean_density:.4f}")
+print(f"Mean velocity   : {mean_velocity}")
