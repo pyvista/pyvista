@@ -2384,6 +2384,9 @@ def test_extrude_rotate():
         assert poly.n_points == (resolution + 1) * line.n_points
     else:
         with pytest.warns(UserWarning, match="is not supported with vtk < 9.1.0."):
+            poly = line.extrude_rotate(
+                rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
+            )
 
     with pytest.raises(TypeError):
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)
