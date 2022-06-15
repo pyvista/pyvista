@@ -486,9 +486,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if np.issubdtype(dtype, np.number) or dtype == bool:
             self.SetActiveScalars(name)
 
-    def get_array(
-        self, key: Union[str, int]
-    ) -> Union[pyvista_ndarray, _vtk.vtkDataArray, _vtk.vtkAbstractArray]:
+    def get_array(self, key: Union[str, int]) -> pyvista_ndarray:
         """Get an array in this object.
 
         Parameters
@@ -500,11 +498,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        pyvista.pyvista_ndarray or vtkDataArray
-            Returns a :class:`pyvista.pyvista_ndarray` if the
-            underlying array is either a ``vtk.vtkDataArray`` or
-            ``vtk.vtkStringArray``.  Otherwise, returns a
-            ``vtk.vtkAbstractArray``.
+        pyvista.pyvista_ndarray
+            Returns a :class:`pyvista.pyvista_ndarray`.
 
         Raises
         ------
@@ -544,8 +539,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             vtk_arr = self.GetAbstractArray(key)
             if vtk_arr is None:
                 raise KeyError(f'{key}')
-            if type(vtk_arr) == _vtk.vtkAbstractArray:
-                return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association.name]:
             narray = narray.view(np.bool_)  # type: ignore
