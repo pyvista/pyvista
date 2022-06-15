@@ -2766,7 +2766,11 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        alg.SetRotationAxis(rotation_axis)
+        if pyvista.vtk_version_info >= (9, 1, 0):
+            alg.SetRotationAxis(rotation_axis)
+        else if rotation_axis != (0, 0, 1):
+            warnings.warn("rotation_axis is not supported with vtk < 9.1.0. Z-axis is used.")
+
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
