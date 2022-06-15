@@ -5136,7 +5136,7 @@ class DataSetFilters:
     def integrate_data(self, progress_bar=False):
         """Integrate point and cell data.
 
-        Area or volume also provided in point data.
+        Area or volume is also provided in point data.
 
         Parameters
         ----------
