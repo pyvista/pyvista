@@ -3422,8 +3422,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and 1.0 and support for HiDPI).
 
         orientation : float, optional
-            Orientation of text counterclockwise.  The text is rotated around an anchor point
-            that may be on the edge or corner of the text,
+            Angle orientation of text counterclockwise in degrees.  The text
+            is rotated around an anchor point that may be on the edge or
+            corner of the text.  The default is 0 degrees, which is horizontal.
 
         render : bool, optional
             Force a render when ``True`` (default).
