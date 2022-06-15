@@ -771,7 +771,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if data.VTKObject is not None:
                 # VTK doesn't support strides, therefore we can't directly
                 # point to the underlying object
-                if data.__array_interface__['strides'] is None:
+                if data.flags.c_contiguous:
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
                     if isinstance(name, str):
                         vtk_arr.SetName(name)
@@ -1115,7 +1115,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if isinstance(index, int):
             max_index = self.VTKObject.GetNumberOfArrays()
             if not 0 <= index < max_index:
-                raise KeyError(f'Array index ({index}) out of range [0, {max_index}]')
+                raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
 
     def _raise_field_data_no_scalars_vectors(self):
         """Raise a TypeError if FieldData."""
