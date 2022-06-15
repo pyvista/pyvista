@@ -197,6 +197,8 @@ def test_copy_metadata(globe):
     assert globe_shallow.textures is globe.textures
     assert globe_shallow.point_data['bitarray'].dtype == np.bool_
     assert globe_shallow.point_data['complex_data'].dtype == np.complex128
+    assert globe_shallow._association_bitarray_names is globe._association_bitarray_names
+    assert globe_shallow._association_complex_names is globe._association_complex_names
 
     globe_deep = globe.copy(deep=True)
     assert globe_deep.textures is not globe.textures
@@ -209,6 +211,14 @@ def test_copy_metadata(globe):
     assert globe_deep.textures == globe.textures
     assert globe_deep.point_data['bitarray'].dtype == np.bool_
     assert globe_deep.point_data['complex_data'].dtype == np.complex128
+    assert (
+        globe_deep._association_bitarray_names['POINT']
+        is not globe._association_bitarray_names['POINT']
+    )
+    assert (
+        globe_deep._association_complex_names['POINT']
+        is not globe._association_complex_names['POINT']
+    )
 
     globe.clear_textures()
     assert not globe.textures
