@@ -2751,7 +2751,10 @@ class PolyDataFilters(DataSetFilters):
                 PyvistaFutureWarning,
             )
 
-        if not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence)) or len(rotation_axis) != 3:
+        if (
+            not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
+            or len(rotation_axis) != 3
+        ):
             raise TypeError('Vector must be a length three vector')
 
         if resolution <= 0:
