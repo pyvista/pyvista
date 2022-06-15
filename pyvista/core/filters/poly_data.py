@@ -2637,6 +2637,7 @@ class PolyDataFilters(DataSetFilters):
         dradius=0.0,
         angle=360.0,
         capping=None,
+        rotation_axis=(0, 0, 1),
         progress_bar=False,
     ):
         """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
@@ -2701,6 +2702,9 @@ class PolyDataFilters(DataSetFilters):
                a value for this keyword argument to prevent future changes
                in behavior and warnings.
 
+        rotation_axis : numpy.ndarray or sequence
+            Direction vector of axis around which the rotation is done.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -2747,6 +2751,9 @@ class PolyDataFilters(DataSetFilters):
                 PyvistaFutureWarning,
             )
 
+        if not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence)) or len(rotation_axis) != 3:
+            raise TypeError('Vector must be a length three vector')
+
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
         alg = _vtk.vtkRotationalExtrusionFilter()
@@ -2756,6 +2763,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
+        alg.SetRotationAxis(rotation_axis)
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
