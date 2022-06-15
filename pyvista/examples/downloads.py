@@ -3402,8 +3402,8 @@ def download_mars_jpg():  # pragma: no cover
     Active Texture  : Texture Coordinates
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32  (14280, 3)           NORMALS
-        Texture Coordinates     float64  (14280, 2)           TCOORDS
+        Normals                 float32    (14280, 3)           NORMALS
+        Texture Coordinates     float64    (14280, 2)           TCOORDS
 
     Plot with stars in the background.
 
