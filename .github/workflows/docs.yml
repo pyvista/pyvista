@@ -82,7 +82,7 @@ jobs:
         if: env.USE_CACHE == 'true'
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: example-data-${{ hashFiles('pyvista/_version.py') }}
+          key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache autosummary
         uses: actions/cache@v2

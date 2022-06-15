@@ -333,7 +333,7 @@ In this manner, you can get the "best of both worlds" should you need
 the flexibility of PyVista and the raw power of VTK.
 
 .. note::
-   You can use :func:`pyvista.Circle` for a one line replacement of
+   You can use :func:`pyvista.Polygon` for a one line replacement of
    the above VTK code.
 
 

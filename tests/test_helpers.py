@@ -134,15 +134,24 @@ def test_inheritance_no_wrappers():
 def test_skybox(tmpdir):
     path = str(tmpdir.mkdir("tmpdir"))
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    filenames = []
     for suffix in sets:
         image = Image.new('RGB', (10, 10))
-        image.save(os.path.join(path, suffix + '.jpg'))
+        filename = os.path.join(path, suffix + '.jpg')
+        image.save(filename)
+        filenames.append(filename)
 
     skybox = pyvista.cubemap(path)
     assert isinstance(skybox, pyvista.Texture)
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
         pyvista.cubemap('')
+
+    skybox = pyvista.cubemap_from_filenames(filenames)
+    assert isinstance(skybox, pyvista.Texture)
+
+    with pytest.raises(ValueError, match='must contain 6 paths'):
+        pyvista.cubemap_from_filenames(image_paths=['/path'])
 
 
 def test_array_association():

@@ -28,7 +28,7 @@ from pyvista.plotting.plotting import SUPPORTED_FORMATS
 
 # skip all tests if unable to render
 if not system_supports_plotting():
-    pytestmark = pytest.mark.skip
+    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
 
 ffmpeg_failed = False
@@ -105,9 +105,10 @@ WINDOWS_SKIP_IMAGE_CACHE = {
 # this must be a session fixture to ensure this runs before any other test
 @pytest.fixture(scope="session", autouse=True)
 def get_cmd_opt(pytestconfig):
-    global glb_reset_image_cache, glb_ignore_image_cache
+    global glb_reset_image_cache, glb_ignore_image_cache, glb_fail_extra_image_cache
     glb_reset_image_cache = pytestconfig.getoption('reset_image_cache')
     glb_ignore_image_cache = pytestconfig.getoption('ignore_image_cache')
+    glb_fail_extra_image_cache = pytestconfig.getoption('fail_extra_image_cache')
 
 
 def verify_cache_image(plotter):
@@ -127,7 +128,7 @@ def verify_cache_image(plotter):
     plotter.show(before_close_callback=verify_cache_image)
 
     """
-    global glb_reset_image_cache, glb_ignore_image_cache
+    global glb_reset_image_cache, glb_ignore_image_cache, glb_fail_extra_image_cache
 
     # Image cache is only valid for VTK9+
     if not VTK9:
@@ -162,13 +163,15 @@ def verify_cache_image(plotter):
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
 
+    if glb_ignore_image_cache:
+        return
+
+    if not os.path.isfile(image_filename) and glb_fail_extra_image_cache:
+        raise RuntimeError(f"{image_filename} does not exist in image cache")
     # simply save the last screenshot if it doesn't exist or the cache
     # is being reset.
     if glb_reset_image_cache or not os.path.isfile(image_filename):
         return plotter.screenshot(image_filename)
-
-    if glb_ignore_image_cache:
-        return
 
     # otherwise, compare with the existing cached image
     error = pyvista.compare_images(image_filename, plotter)
