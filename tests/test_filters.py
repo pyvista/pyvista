@@ -2382,6 +2382,9 @@ def test_extrude_rotate():
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1) * line.n_points
 
+    with pytest.raises(TypeError):
+        line.extrude_rotate(rotation_axis=[1, 2], capping=True)
+
 
 def test_extrude_rotate_inplace():
     resolution = 4
