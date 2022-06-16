@@ -105,7 +105,7 @@ extruded_line
 ###############################################################################
 # Plot the Extruded Line
 # ~~~~~~~~~~~~~~~~~~~~~~
-# Note how that the scalars are copied to the extruded line.
+# Note how the scalars are copied to the extruded line.
 
 pl = pv.Plotter()
 pl.add_mesh(line, style='wireframe', line_width=20, show_scalar_bar=False, color='r')
