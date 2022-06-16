@@ -2702,7 +2702,7 @@ class PolyDataFilters(DataSetFilters):
                a value for this keyword argument to prevent future changes
                in behavior and warnings.
 
-        rotation_axis : numpy.ndarray or sequence
+        rotation_axis : numpy.ndarray or sequence, optional
             The direction vector of the axis around which the rotation is done.
             It requires vtk>=9.1.0.
 
