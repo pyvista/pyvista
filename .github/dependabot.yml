@@ -12,3 +12,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - "maintenance"
+      - "dependencies"
