@@ -2376,7 +2376,6 @@ def test_extrude_rotate():
     )
 
     rotation_axis = (0, 1, 0)
-    f = pyvista._vtk.vtkRotationalExtrusionFilter()
     if not pyvista.vtk_version_info >= (9, 1, 0):
         with pytest.raises(VTKVersionError):
             poly = line.extrude_rotate(rotation_axis=rotation_axis)
