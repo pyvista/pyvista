@@ -217,7 +217,10 @@ def _assoc_array(obj, name, association='point'):
             return getattr(obj, python_attr).get_array(name)
         except KeyError:  # pragma: no cover
             return None
-    return pyvista.pyvista_ndarray(getattr(obj, vtk_attr)().GetAbstractArray(name))
+    abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
+    if abstract_array is not None:
+        return pyvista.pyvista_ndarray(abstract_array)
+    return None
 
 
 def point_array(obj, name):
@@ -331,7 +334,7 @@ def parse_field_choice(field):
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise ValueError(f'Data field ({field}) not supported.')
+        raise TypeError(f'Data field ({field}) not supported.')
     return field
 
 

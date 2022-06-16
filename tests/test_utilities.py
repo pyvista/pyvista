@@ -233,6 +233,18 @@ def test_get_array():
     assert helpers.get_array(grid, 'foo') is None
     assert helpers.get_array(grid, 'test_data', preference='field') is None
     assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
+    # invalid inputs
+    with pytest.raises(TypeError):
+        helpers.get_array(grid, 'test_data', preference={'invalid'})
+    with pytest.raises(ValueError):
+        helpers.get_array(grid, 'test_data', preference='invalid')
+    with pytest.raises(ValueError):
+        helpers.get_array(grid, 'test_data', preference='row')
+    # test raw VTK input
+    grid_vtk = vtk.vtkUnstructuredGrid()
+    grid_vtk.DeepCopy(grid)
+    helpers.get_array(grid_vtk, 'test_data')
+    helpers.get_array(grid_vtk, 'foo')
 
 
 def test_is_inside_bounds():
