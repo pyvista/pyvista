@@ -2767,7 +2767,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        if hasattr(alg, 'SetRotationAxis'):
+        if pyvista.vtk_version_info >= (9, 1, 0):
             alg.SetRotationAxis(rotation_axis)
         else:  # pragma: no cover
             if rotation_axis != (0, 0, 1):
