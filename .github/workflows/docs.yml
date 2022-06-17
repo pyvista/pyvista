@@ -97,12 +97,12 @@ jobs:
       - name: Tar build
         run: tar -zcvf docs-build.tar.gz doc/_build/
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: docs-build
           path: docs-build.tar.gz
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: examples
           path: doc/examples/
@@ -110,7 +110,7 @@ jobs:
         run: |
           mkdir _notebooks
           find doc/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: pyvista-notebooks
           path: _notebooks
