@@ -47,7 +47,7 @@ jobs:
 
       - name: Extract metadata for the Jupyter Docker image
         id: jupyter_meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       - name: Build and push the Jupyter Docker image
@@ -61,7 +61,7 @@ jobs:
 
       - name: Extract metadata for the Slim Docker image
         id: slim_meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
