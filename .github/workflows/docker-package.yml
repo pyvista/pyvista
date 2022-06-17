@@ -39,7 +39,7 @@ jobs:
           python setup.py sdist
 
       - name: Log into the Container registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: token
