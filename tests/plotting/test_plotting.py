@@ -2358,3 +2358,10 @@ def test_warn_screenshot_notebook():
     pl.theme.jupyter_backend = 'static'
     with pytest.warns(UserWarning, match='Set `jupyter_backend` backend to `"none"`'):
         pl.show(screenshot='tmp.png')
+
+
+def test_add_text():
+    plotter = pyvista.Plotter()
+    plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
+    plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
+    plotter.show(before_close_callback=verify_cache_image)
