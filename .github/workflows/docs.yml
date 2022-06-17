@@ -28,7 +28,7 @@ jobs:
       ALLOW_PLOTTING: true
       SHELLOPTS: 'errexit:pipefail'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -121,7 +121,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v2
         with:
           name: docs-build
@@ -157,7 +157,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
         with:
           python-version: '3.8'
