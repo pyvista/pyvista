@@ -24,7 +24,7 @@ jobs:
       - name: Run pre-commit autoupdate
         run: pre-commit autoupdate
       
-      - uses: peter-evans/create-pull-request@v3
+      - uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: ci/update-pre-commit-hooks
