@@ -651,7 +651,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Return the number of blocks."""
         return self.n_blocks
 
-    def copy_meta_from(self, ido):
+    def copy_meta_from(self, ido, deep):
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
@@ -687,6 +687,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self)
+        newobject.copy_meta_from(self, deep)
         newobject.wrap_nested()
         return newobject

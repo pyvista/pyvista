@@ -34,7 +34,10 @@ class DataObject:
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self.association_bitarray_names: DefaultDict = collections.defaultdict(set)
+        self._association_bitarray_names: DefaultDict = collections.defaultdict(set)
+
+        # view these arrays as complex128 as VTK doesn't support complex types
+        self._association_complex_names: DefaultDict = collections.defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -218,7 +221,7 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, ido):  # pragma: no cover
+    def copy_meta_from(self, ido, deep):  # pragma: no cover
         """Copy pyvista meta data onto this object from another object."""
         pass  # called only by the inherited class
 
@@ -256,7 +259,7 @@ class DataObject:
             newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self)
+        newobject.copy_meta_from(self, deep)
         return newobject
 
     def __eq__(self, other):

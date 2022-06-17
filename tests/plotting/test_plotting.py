@@ -98,6 +98,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_plot_complex_value',
 }
 
 
@@ -2336,4 +2337,24 @@ def test_ruler(sphere):
     plotter.add_mesh(sphere)
     plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
     plotter.view_xy()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_complex_value(plane):
+    """Test plotting complex data."""
+    data = np.arange(plane.n_points, dtype=np.complex128)
+    data += np.linspace(0, 1, plane.n_points) * -1j
+    with pytest.warns(np.ComplexWarning):
+        plane.plot(scalars=data)
+
+    pl = pyvista.Plotter()
+    with pytest.warns(np.ComplexWarning):
+        pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_add_text():
+    plotter = pyvista.Plotter()
+    plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
+    plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
