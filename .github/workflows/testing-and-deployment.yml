@@ -191,7 +191,7 @@ jobs:
         run: |
           xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
 
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.8'
         name: 'Upload coverage to CodeCov'
 
