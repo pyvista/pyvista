@@ -521,8 +521,28 @@ def test_plot_bounds_axes_with_no_data():
 
 def test_plot_show_grid(sphere):
     plotter = pyvista.Plotter()
+
+    with pytest.raises(ValueError, match='Value of location'):
+        plotter.show_grid(location='foo')
+    with pytest.raises(TypeError, match='location must be a string'):
+        plotter.show_grid(location=10)
+    with pytest.raises(ValueError, match='Value of ticks'):
+        plotter.show_grid(ticks='foo')
+    with pytest.raises(TypeError, match='ticks must be a string'):
+        plotter.show_grid(ticks=10)
+
     plotter.show_grid()
     plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_show_grid_with_mesh(hexbeam, plane):
+    """Show the grid bounds for a specific mesh."""
+    hexbeam.clear_data()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(hexbeam, style='wireframe')
+    plotter.add_mesh(plane)
+    plotter.show_grid(mesh=plane)
     plotter.show(before_close_callback=verify_cache_image)
 
 
