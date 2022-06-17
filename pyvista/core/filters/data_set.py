@@ -4919,7 +4919,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -5001,7 +5001,7 @@ class DataSetFilters:
                 name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_points, 3)
+                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
@@ -5132,3 +5132,47 @@ class DataSetFilters:
             inplace=inplace,
             progress_bar=progress_bar,
         )
+
+    def integrate_data(self, progress_bar=False):
+        """Integrate point and cell data.
+
+        Area or volume is also provided in point data.
+
+        This filter uses the VTK `vtkIntegrateAttributes
+        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGird
+            Mesh with 1 point and 1 vertex cell with integrated data in point and cell data.
+
+        Examples
+        --------
+        Integrate data on a sphere mesh.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+        >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
+        >>> integrated = sphere.integrate_data()
+
+        There is only 1 point and cell, so access the only value.
+
+        >>> integrated["Area"][0]
+        3.14
+        >>> integrated["data"][0]
+        6.28
+
+        See the :ref:`integrate_example` for more examples using this filter.
+
+        """
+        filter = _vtk.vtkIntegrateAttributes()
+        filter.SetInputData(self)
+        filter.SetDivideAllCellDataByVolume(False)
+        _update_alg(filter, progress_bar, 'Integrating Variables')
+        return _get_output(filter)

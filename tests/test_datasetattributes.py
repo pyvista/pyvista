@@ -1,5 +1,6 @@
 from string import ascii_letters, digits, whitespace
 import sys
+import weakref
 
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
@@ -197,6 +198,24 @@ def test_set_invalid_vectors(hexbeam):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
 
 
+def test_set_bitarray(hexbeam):
+    """Test bitarrays are properly loaded and represented in datasetattributes."""
+    hexbeam.clear_data()
+    assert 'bool' not in str(hexbeam.point_data)
+
+    arr = np.zeros(hexbeam.n_points, dtype=bool)
+    arr[::2] = 1
+    hexbeam.point_data['bitarray'] = arr
+
+    assert hexbeam.point_data['bitarray'].dtype == np.bool_
+    assert 'bool' in str(hexbeam.point_data)
+    assert np.allclose(hexbeam.point_data['bitarray'], arr)
+
+    # ensure overwriting the type changes association
+    hexbeam.point_data['bitarray'] = arr.astype(np.int32)
+    assert hexbeam.point_data['bitarray'].dtype == np.int32
+
+
 @mark.parametrize('array_key', ['invalid_array_name', -1])
 def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attributes):
     with raises(KeyError):
@@ -240,6 +259,12 @@ def test_getters_should_return_same_result(insert_arange_narray):
 def test_contains_should_contain_when_added(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     assert 'sample_array' in dsa
+
+
+def test_set_array_catch(hexbeam):
+    data = np.zeros(hexbeam.n_points)
+    with raises(TypeError, match='`name` must be a string'):
+        hexbeam.point_data.set_array(data, name=['foo'])
 
 
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
@@ -517,3 +542,44 @@ def test_active_t_coords_name(plane):
 
     with raises(AttributeError):
         plane.field_data.active_t_coords_name = 'arr'
+
+
+def test_complex(plane):
+    """Test if complex data can be properly represented in datasetattributes."""
+    name = 'my_data'
+    with raises(ValueError, match='Only numpy.complex128'):
+        plane.point_data[name] = np.empty(plane.n_points, dtype=np.complex64)
+
+    with raises(ValueError, match='Complex data must be single dimensional'):
+        plane.point_data[name] = np.empty((plane.n_points, 2), dtype=np.complex128)
+
+    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
+    plane.point_data[name] = data
+    assert np.allclose(plane.point_data[name], data)
+
+    assert 'complex128' in str(plane.point_data)
+
+    # test setter
+    plane.active_scalars_name = name
+
+    # ensure that association is removed when changing datatype
+    assert plane.point_data[name].dtype == np.complex128
+    plane.point_data[name] = plane.point_data[name].real
+    assert np.issubdtype(plane.point_data[name].dtype, float)
+
+
+def test_complex_collection(plane):
+    name = 'my_data'
+    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
+    plane.point_data[name] = data
+
+    # ensure shallow copy
+    data[0] += 1
+    data_copy = data.copy()
+    assert np.allclose(plane.point_data[name], data)
+
+    # ensure references remain
+    ref = weakref.ref(data)
+    del data
+    assert np.allclose(plane.point_data[name], data_copy)
+    assert ref() is not None
