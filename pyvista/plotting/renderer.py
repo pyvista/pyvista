@@ -1086,9 +1086,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
 
-        axes_ranges : list, tuple, or np.ndarray, optional
-            Bounds that can be used to separate the physical bounds of the mesh
-            and the values of the bounds shown on the axes. In the form
+        axes_ranges : list, tuple, or numpy.ndarray, optional
+            When set, these values override the values that are shown on the
+            axes. This can be useful when plotting scaled datasets or you wish
+            to manually display different values. These values must be in the
+            form:
+
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
@@ -1259,7 +1262,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 cube_axes_actor.SetTickLocationToBoth()
             else:
                 raise ValueError(
-                    f'Value of ticks ({ticks}) should be either "inside", "outside", ' 'or "both".'
+                    f'Value of ticks ("{ticks}") should be either "inside", "outside", '
+                    'or "both".'
                 )
         elif ticks is not None:
             raise TypeError('ticks must be a string')
@@ -1278,7 +1282,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
                 raise ValueError(
-                    f'Value of location ({location}) should be either "all", "origin",'
+                    f'Value of location ("{location}") should be either "all", "origin",'
                     ' "outer", "default", "closest", "front", "furthest", or "back".'
                 )
         elif location is not None:
