@@ -3368,6 +3368,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         shadow=False,
         name=None,
         viewport=False,
+        orientation=0.0,
         *,
         render=True,
     ):
@@ -3419,6 +3420,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``True`` and position is a tuple of float, uses the
             normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
+
+        orientation : float, optional
+            Angle orientation of text counterclockwise in degrees.  The text
+            is rotated around an anchor point that may be on the edge or
+            corner of the text.  The default is 0 degrees, which is horizontal.
 
         render : bool, optional
             Force a render when ``True`` (default).
@@ -3487,11 +3493,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
-        self.textActor.GetTextProperty().SetColor(
-            Color(color, default_color=self._theme.font.color).float_rgb
-        )
-        self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
-        self.textActor.GetTextProperty().SetShadow(shadow)
+        text_prop = self.textActor.GetTextProperty()
+        text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
+        text_prop.SetFontFamily(FONTS[font].value)
+        text_prop.SetShadow(shadow)
+        text_prop.SetOrientation(orientation)
 
         self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False, render=render)
         return self.textActor

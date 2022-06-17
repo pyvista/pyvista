@@ -2351,3 +2351,10 @@ def test_plot_complex_value(plane):
     with pytest.warns(np.ComplexWarning):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_add_text():
+    plotter = pyvista.Plotter()
+    plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
+    plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
+    plotter.show(before_close_callback=verify_cache_image)
