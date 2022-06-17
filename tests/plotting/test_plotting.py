@@ -542,7 +542,7 @@ def test_plot_show_grid_with_mesh(hexbeam, plane):
     plotter = pyvista.Plotter()
     plotter.add_mesh(hexbeam, style='wireframe')
     plotter.add_mesh(plane)
-    plotter.show_grid(mesh=plane)
+    plotter.show_grid(mesh=plane, show_zlabels=False, show_zaxis=False)
     plotter.show(before_close_callback=verify_cache_image)
 
 
