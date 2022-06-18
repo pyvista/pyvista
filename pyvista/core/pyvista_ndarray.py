@@ -25,7 +25,7 @@ class pyvista_ndarray(np.ndarray):
             obj.VTKObject = array
         else:
             raise TypeError(
-                f'pyvista_ndarray got an invalid type {type(array)}.  '
+                f'pyvista_ndarray got an invalid type {type(array)}. '
                 'Expected an Iterable or vtk.vtkAbstractArray'
             )
 

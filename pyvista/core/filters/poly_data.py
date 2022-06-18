@@ -3071,7 +3071,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        array([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
+        pyvista_ndarray([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data.  Cells with a collision are

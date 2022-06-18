@@ -202,6 +202,27 @@ def is_pyvista_dataset(obj):
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
+def _assoc_array(obj, name, association='point'):
+    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+
+    If the array or index doesn't exist, return nothing. This matches VTK's
+    behavior when using ``GetAbstractArray`` with an invalid key or index.
+
+    """
+    vtk_attr = f'Get{association.title()}Data'
+    python_attr = f'{association.lower()}_data'
+
+    if isinstance(obj, pyvista.DataSet):
+        try:
+            return getattr(obj, python_attr).get_array(name)
+        except KeyError:  # pragma: no cover
+            return None
+    abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
+    if abstract_array is not None:
+        return pyvista.pyvista_ndarray(abstract_array)
+    return None
+
+
 def point_array(obj, name):
     """Return point array of a pyvista or vtk object.
 
@@ -210,17 +231,16 @@ def point_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetPointData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'point')
 
 
 def field_array(obj, name):
@@ -231,17 +251,16 @@ def field_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetFieldData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'field')
 
 
 def cell_array(obj, name):
@@ -252,17 +271,16 @@ def cell_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetCellData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'cell')
 
 
 def row_array(obj, name):
@@ -316,7 +334,7 @@ def parse_field_choice(field):
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise ValueError(f'Data field ({field}) not supported.')
+        raise TypeError(f'Data field ({field}) not supported.')
     return field
 
 

@@ -1,6 +1,5 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-from collections.abc import Iterable
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 import warnings
 
@@ -9,7 +8,7 @@ import numpy as np
 from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyvistaDeprecationWarning, copy_vtk_array
 
 from .._typing import Number
 from .pyvista_ndarray import pyvista_ndarray
@@ -763,8 +762,23 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         if data is None:
             raise TypeError('``data`` cannot be None.')
-        if isinstance(data, Iterable):
-            data = pyvista_ndarray(data)
+
+        # attempt to reuse the existing pointer to underlying VTK data
+        if isinstance(data, pyvista_ndarray):
+            # pyvista_ndarray already contains the reference to the vtk object
+            # pyvista needs to use the copy of this object rather than wrapping
+            # the array (which leaves a C++ pointer uncollected.
+            if data.VTKObject is not None:
+                # VTK doesn't support strides, therefore we can't directly
+                # point to the underlying object
+                if data.flags.c_contiguous:
+                    vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
+                    if isinstance(name, str):
+                        vtk_arr.SetName(name)
+                    return vtk_arr
+
+        # convert to numpy type if necessary
+        data = np.asanyarray(data)
 
         if self.association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()
@@ -1098,10 +1112,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self[name] = array.copy()
 
     def _raise_index_out_of_bounds(self, index: Any):
-        max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int):
-            if index < 0 or index >= self.VTKObject.GetNumberOfArrays():
-                raise KeyError(f'Array index ({index}) out of range [0, {max_index}]')
+            max_index = self.VTKObject.GetNumberOfArrays()
+            if not 0 <= index < max_index:
+                raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
 
     def _raise_field_data_no_scalars_vectors(self):
         """Raise a TypeError if FieldData."""

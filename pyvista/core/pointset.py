@@ -1944,7 +1944,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         ):
             self._from_arrays(uinput, y, z, **kwargs)
         elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput
+            self.points = uinput  # type: ignore
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
