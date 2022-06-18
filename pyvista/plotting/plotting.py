@@ -2378,9 +2378,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         # Scalars formatting ==================================================
-        new_scalars = None
+        added_scalar_info = None
         if scalars is not None:
-            show_scalar_bar, n_colors, clim, new_scalars = self.mapper.set_scalars(
+            show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
                 mesh,
                 scalars,
                 scalar_bar_args,
@@ -2404,7 +2404,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_scalar_bar,
             )
         elif custom_opac:  # no scalars but custom opacity
-            new_scalars = self.mapper.set_custom_opacity(
+            added_scalar_info = self.mapper.set_custom_opacity(
                 opacity,
                 color,
                 mesh,
@@ -2418,8 +2418,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetScalarModeToUseFieldData()
 
         # track if any data arrays have been added
-        if new_scalars:
-            self._added_scalars.append((mesh, new_scalars))
+        if added_scalar_info is not None and added_scalar_info[0] is not None:
+            self._added_scalars.append((mesh, added_scalar_info))
 
         # Set actor properties ================================================
 
@@ -4644,8 +4644,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             dsattr.pop(name, None)
 
         for mesh, (name, assoc) in self._added_scalars:
-            if name is None:
-                continue
             if assoc == 'point':
                 remove_and_reactivate_prior_scalars(mesh.point_data, name)
             else:
