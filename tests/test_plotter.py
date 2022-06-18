@@ -111,6 +111,10 @@ def test_remove_scalars(sphere, hexbeam):
     pl.add_mesh(sphere, scalars=range(sphere.n_points))
     pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells))
 
+    assert sphere.n_arrays == 1
+    assert hexbeam.n_arrays == 1
+
+    assert len(pl._added_scalars) == 2
     for mesh, (name, assoc) in pl._added_scalars:
         assert name == 'Data'
         if mesh is sphere:
@@ -127,5 +131,6 @@ def test_remove_scalars(sphere, hexbeam):
     # test multi-component
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=np.random.random((sphere.n_points, 3)))
+    assert sphere.n_arrays == 1
     pl.close()
     assert sphere.n_arrays == 0
