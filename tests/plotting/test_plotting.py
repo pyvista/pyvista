@@ -1670,6 +1670,25 @@ def test_opacity_mismatched_fail(uniform):
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+def test_opacity_by_array_preference():
+    tetra = pyvista.Tetrahedron()  # 4 points, 4 cells
+    opacities = np.linspace(0.2, 0.8, tetra.n_points)
+    tetra.clear_data()
+    tetra.point_data['scalars'] = tetra.cell_data['scalars'] = np.arange(tetra.n_points)
+    tetra.point_data['opac'] = tetra.cell_data['opac'] = opacities
+
+    # test opacity by key
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity='opac', preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity='opac', preference='point')
+
+    # test opacity by array
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
+    p.show(before_close_callback=verify_cache_image)
+
+
 def test_opacity_transfer_functions():
     n = 256
     mapping = pyvista.opacity_transfer_function('linear', n)
