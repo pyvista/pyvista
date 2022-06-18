@@ -4615,7 +4615,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Additional point or cell data may be added to be able to correctly plot
         scalars. This usually occurs in one of the following cases:
 
-        * ``<scalar-name>-Real`` for complex data
+        * ``<scalar-name>-real`` for complex data
         * ``<scalar-name>-normed`` for normalized multi-component arrays.
         * ``scalars`` when adding scalars within ``add_mesh`` rather than
           selecting an existing array.
