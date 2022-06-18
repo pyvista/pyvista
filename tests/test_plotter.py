@@ -173,7 +173,7 @@ def test_remove_scalars_component(sphere):
     pl.close()
     assert sphere.n_arrays == 1
 
-    # only point_data_name remains, no 'data-0' component should remain
+    # only point_data_name remains, no 'data-0' array should remain
     assert sphere.point_data.keys() == [point_data_name]
 
     # however, the original active array should remain active
@@ -189,7 +189,7 @@ def test_remove_scalars_rgba(sphere):
     pl.close()
     assert sphere.n_arrays == 1
 
-    # only point_data_name remains, no 'data-0' component should remain
+    # only point_data_name remains, no '_custom_rgba' array should remain
     assert sphere.point_data.keys() == [point_data_name]
 
     # TODO: we are not re-enabling the old scalars
