@@ -184,7 +184,7 @@ def test_remove_scalars_rgba(sphere):
     point_data_name = 'data'
     sphere[point_data_name] = np.random.random(sphere.n_points)
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, scalars=point_data_name, opacity='data')
+    pl.add_mesh(sphere, scalars=point_data_name, opacity=point_data_name)
     assert sphere.n_arrays == 2
     pl.close()
     assert sphere.n_arrays == 1

@@ -4617,10 +4617,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         * ``<scalar-name>-real`` for complex data
         * ``<scalar-name>-normed`` for normalized multi-component arrays.
-        * ``scalars-<index>`` when setting ``component=<index>`` in
+        * ``<scalars-name>-<index>`` when setting ``component=<index>`` in
           ``add_mesh`` when plotting multi-component arrays.
-        * ``scalars`` when adding scalars within ``add_mesh`` rather than
-          selecting an existing array.
+        * ``Data`` when passing an array as ``scalars`` with ``add_mesh`` rather than
+          selecting an existing array using a string.
         * ``__custom_rgba`` when the color mode is set to map directly to the
           scalars (an RGBA array).
 
