@@ -1157,13 +1157,12 @@ class PickingHelper:
         >>> pl.disable_picking()
 
         """
-        if self._picker is not None:
+        if getattr(self, '_picker', None):
             self._picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
 
         # remove left clicking observer if available
-        if hasattr(self, 'iren'):
-            if self.iren is not None:
-                self.iren.remove_observer(self._picking_left_clicking_observer)
+        if getattr(self, 'iren', None):
+            self.iren.remove_observer(self._picking_left_clicking_observer)
         self._picking_left_clicking_observer = None
 
         # remove any picking text
