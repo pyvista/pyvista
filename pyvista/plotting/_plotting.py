@@ -165,7 +165,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
                     "Opacity array and scalars array must have the same number of elements."
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
-        opacity = np.array(opacity)
+        opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
             # User could pass an array of opacities for every point/cell
             _custom_opac = True
