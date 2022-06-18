@@ -1155,7 +1155,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         location : str, optional
             Set how the axes are drawn: either static (``'all'``),
-            closest triad (``front``), furthest triad (``'back'``),
+            closest triad (``'front'``), furthest triad (``'back'``),
             static closest to the origin (``'origin'``), or outer
             edges (``'outer'``) in relation to the camera
             position. Options include: ``'all', 'front', 'back',
