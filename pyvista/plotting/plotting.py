@@ -4646,7 +4646,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for mesh, (name, assoc) in self._added_scalars:
             if name is None:
                 continue
-            if assoc == 'points':
+            if assoc == 'point':
                 remove_and_reactivate_prior_scalars(mesh.point_data, name)
             else:
                 remove_and_reactivate_prior_scalars(mesh.cell_data, name)

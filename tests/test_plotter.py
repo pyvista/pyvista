@@ -138,7 +138,9 @@ def test_remove_scalars_complex(sphere):
     pl = pyvista.Plotter()
     with pytest.warns(np.ComplexWarning):
         pl.add_mesh(sphere, scalars=point_data_name)
+    assert sphere.n_arrays == 2
     pl.close()
+    assert sphere.n_arrays == 1
 
     assert sphere.point_data.keys() == [point_data_name]
     assert sphere.point_data.active_scalars_name == point_data_name
@@ -167,7 +169,9 @@ def test_remove_scalars_component(sphere):
     sphere[point_data_name] = np.random.random((sphere.n_points, 3))
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=point_data_name, component=0)
+    assert sphere.n_arrays == 2
     pl.close()
+    assert sphere.n_arrays == 1
 
     # only point_data_name remains, no 'data-0' component should remain
     assert sphere.point_data.keys() == [point_data_name]
