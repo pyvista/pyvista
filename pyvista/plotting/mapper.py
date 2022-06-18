@@ -304,7 +304,7 @@ def make_mapper(mapper_class):
             """Set custom opacity."""
             # create a custom RGBA array to supply our opacity to
             if opacity.size == mesh.n_points and opacity.size == mesh.n_cells:
-                if preference == 'points':
+                if preference == 'point':
                     rgba = np.empty((mesh.n_points, 4), np.uint8)
                 else:
                     rgba = np.empty((mesh.n_cells, 4), np.uint8)

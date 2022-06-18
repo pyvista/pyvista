@@ -87,7 +87,7 @@ class UniformGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def median_smooth(
-        self, kernel_size=(3, 3, 3), scalars=None, preference='points', progress_bar=False
+        self, kernel_size=(3, 3, 3), scalars=None, preference='point', progress_bar=False
     ):
         """Smooth data using a median filter.
 
@@ -315,7 +315,7 @@ class UniformGridFilters(DataSetFilters):
         in_value=1,
         out_value=0,
         scalars=None,
-        preference='points',
+        preference='point',
         progress_bar=False,
     ):
         """Apply a threshold to scalar values in a uniform grid.

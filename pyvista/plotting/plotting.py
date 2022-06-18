@@ -2043,9 +2043,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
+            mapped to the mesh.  Default ``'point'``, causes the
             scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            either ``'point'`` or ``'cell'``.
 
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
@@ -2644,9 +2644,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
+            mapped to the mesh.  Default ``'point'``, causes the
             scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            either ``'point'`` or ``'cell'``.
 
         opacity_unit_distance : float
             Set/Get the unit distance on which the scalar opacity

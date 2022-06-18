@@ -113,22 +113,27 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     ----------
     mesh : pyvista.DataSet
         Dataset to process the opacity for.
+
     opacity : str, sequence
         String or array.  If string, can be a ``str`` name of a
         predefined mapping such as ``'linear'``, ``'geom'``,
         ``'sigmoid'``, ``'sigmoid3-10'``, or the key of a cell or
         point data array.
-    preference : str, optional
+
+    preference : str
         When ``mesh.n_points == mesh.n_cells``, this parameter
-        sets how the scalars will be mapped to the mesh.  Default
-        ``'points'``, causes the scalars will be associated with
-        the mesh points.  Can be either ``'points'`` or
-        ``'cells'``.
-    n_colors : int, optional
+        sets how the scalars will be mapped to the mesh. If
+        ``'point'``, causes the scalars will be associated with
+        the mesh points.  Can be either ``'point'`` or
+        ``'cell'``.
+
+    n_colors : int
         Number of colors to use when displaying the opacity.
-    scalars : numpy.ndarray, optional
+
+    scalars : numpy.ndarray
         Dataset scalars.
-    use_transparency : bool, optional
+
+    use_transparency : bool
         Invert the opacity mappings and make the values correspond
         to transparency.
 
@@ -136,6 +141,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     -------
     _custom_opac : bool
         If using custom opacity.
+
     opacity : numpy.ndarray
         Array containing the opacity.
 

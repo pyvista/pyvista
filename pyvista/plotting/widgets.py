@@ -1210,9 +1210,9 @@ class WidgetHelper:
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
-            scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            mapped to the mesh.  Default ``'cell'``, causes the
+            scalars to be associated with the mesh cells.  Can be
+            either ``'point'`` or ``'cell'``.
 
         title : str, optional
             The string label of the slider widget.
@@ -1338,9 +1338,9 @@ class WidgetHelper:
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
+            mapped to the mesh.  Default ``'point'``, causes the
             scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            either ``'point'`` or ``'cell'``.
 
         title : str, optional
             The string label of the slider widget.
