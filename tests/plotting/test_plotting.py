@@ -1659,7 +1659,7 @@ def test_opacity_by_array_user_transform(uniform):
     opacities = [0, 0.2, 0.9, 0.2, 0.1]
     p = pyvista.Plotter()
     p.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
-    p.show()  # note: =verify_cache_image does not work between Xvfb
+    p.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_mismatched_fail(uniform):
