@@ -307,7 +307,7 @@ def make_mapper(mapper_class):
                 rgba = np.empty((mesh.n_points, 4), np.uint8)
             elif opacity.size == mesh.n_cells:
                 rgba = np.empty((mesh.n_cells, 4), np.uint8)
-            else:
+            else:  # pragma: no cover
                 raise ValueError(
                     f"Opacity array size ({opacity.size}) does not equal "
                     f"the number of points ({mesh.n_points}) or the "
