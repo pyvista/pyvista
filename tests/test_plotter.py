@@ -114,9 +114,9 @@ def test_remove_scalars(sphere, hexbeam):
     for mesh, (name, assoc) in pl._added_scalars:
         assert name == 'Data'
         if mesh is sphere:
-            assert assoc in 'points'
+            assert assoc == 'point'
         else:
-            assert assoc in 'cells'
+            assert assoc == 'cell'
 
     pl.close()
     assert pl._added_scalars == []

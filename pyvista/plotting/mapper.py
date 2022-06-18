@@ -273,8 +273,9 @@ def make_mapper(mapper_class):
             str or None
                 If the scalars do not exist within the dataset, this is the
                 name of the scalars array.
+
             str
-                Association of the scalars, either ``'points'`` or ``'cells'``.
+                Association of the scalars, either ``'point'`` or ``'cell'``.
 
             """
             if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
@@ -301,7 +302,7 @@ def make_mapper(mapper_class):
             else:
                 raise_not_matching(scalars, mesh)
 
-            assoc = 'points' if use_points else 'cells'
+            assoc = 'point' if use_points else 'cell'
 
             self.GetLookupTable().SetNumberOfTableValues(n_colors)
             if interpolate_before_map:
