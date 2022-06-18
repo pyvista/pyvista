@@ -1633,7 +1633,13 @@ def test_opacity_by_array_direct(plane):
 
 
 def test_opacity_by_array(uniform):
-    # Test with opacity array
+    # Test with opacity array (cell and point data both)
+    opac = uniform['Spatial Cell Data'] / uniform['Spatial Cell Data'].max()
+    uniform_cells = uniform.copy()
+    uniform_cells['opac'] = opac
+    p = pyvista.Plotter()
+    p.add_mesh(uniform_cells, scalars='Spatial Cell Data', opacity='opac')
+
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['opac'] = opac
     p = pyvista.Plotter()
@@ -1667,6 +1673,7 @@ def test_opacity_mismatched_fail(uniform):
     # Test using mismatched arrays
     p = pyvista.Plotter()
     with pytest.raises(ValueError):
+        # cell scalars vs point opacity
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
