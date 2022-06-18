@@ -1626,20 +1626,16 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
 
 @skip_windows
 def test_opacity_by_array_direct(plane):
-    # test with opacity parm as an array
+    # test with opacity parm as an array, both cell and point sized
+    plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pyvista.Plotter()
     pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points), show_edges=True)
+    pl.add_mesh(plane_shift, color='r', opacity=np.linspace(0, 1, plane.n_cells), show_edges=True)
     pl.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_by_array(uniform):
-    # Test with opacity array (cell and point data both)
-    opac = uniform['Spatial Cell Data'] / uniform['Spatial Cell Data'].max()
-    uniform_cells = uniform.copy()
-    uniform_cells['opac'] = opac
-    p = pyvista.Plotter()
-    p.add_mesh(uniform_cells, scalars='Spatial Cell Data', opacity='opac')
-
+    # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['opac'] = opac
     p = pyvista.Plotter()
