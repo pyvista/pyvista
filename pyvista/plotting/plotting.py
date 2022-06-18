@@ -4613,7 +4613,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for mesh, (name, assoc) in self._added_scalars:
             if name is None:
                 continue
-            if assoc == 'points':
+            if assoc == 'point':
                 mesh.point_data.pop(name, None)
             else:
                 mesh.cell_data.pop(name, None)
