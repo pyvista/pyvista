@@ -4621,7 +4621,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
           selecting an existing array.
 
         This method removes those arrays, which are tracked in
-        ``self._added_scalars``.
+        ``self._added_scalars``. It also tries to restore the original scalars
+        as active scalars.
 
         """
 
