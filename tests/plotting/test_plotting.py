@@ -101,6 +101,12 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_complex_value',
 }
 
+# these images vary between Linux/Windows and MacOS
+# and will not be verified for MacOS
+MACOS_SKIP_IMAGE_CACHE = {
+    'test_plot_show_grid_with_mesh',
+}
+
 
 # this must be a session fixture to ensure this runs before any other test
 @pytest.fixture(scope="session", autouse=True)
@@ -158,6 +164,9 @@ def verify_cache_image(plotter):
 
     # some tests fail when on Windows with OSMesa
     if os.name == 'nt' and test_name in WINDOWS_SKIP_IMAGE_CACHE:
+        return
+    # high variation for MacOS
+    if platform.system() == 'Darwin' and test_name in MACOS_SKIP_IMAGE_CACHE:
         return
 
     # cached image name
