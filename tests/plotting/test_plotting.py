@@ -74,13 +74,14 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # Image regression warning/error thresholds for releases after 9.0.1
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
+    'test_add_title',
+    'test_export_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
+    'test_opacity_by_array_user_transform',
     'test_pbr',
     'test_set_environment_texture_cubemap',
     'test_set_viewup',
-    'test_add_title',
-    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
-    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
-    'test_export_gltf',  # image cache created with 9.0.20210612.dev0
 }
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
