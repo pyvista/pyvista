@@ -5350,6 +5350,12 @@ class Plotter(BasePlotter):
                 jupyter_backend = self._theme.jupyter_backend
 
             if jupyter_backend != 'none':
+                if screenshot:
+                    warnings.warn(
+                        '\nSet `jupyter_backend` backend to `"none"` to take a screenshot'
+                        ' within a notebook environment.'
+                    )
+
                 disp = handle_plotter(
                     self, backend=jupyter_backend, return_viewer=return_viewer, **jupyter_kwargs
                 )
