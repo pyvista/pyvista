@@ -762,5 +762,5 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
-        grid.copy_meta_from(self)
+        grid.copy_meta_from(self, deep=True)
         return grid

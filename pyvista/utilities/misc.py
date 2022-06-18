@@ -64,9 +64,9 @@ def uses_egl() -> bool:
 
 
 def copy_vtk_array(array, deep=True):
-    """Create a deep or shallow copy a of vtk array.
+    """Create a deep or shallow copy of a VTK array.
 
-    Parametres
+    Parameters
     ----------
     array : vtk.vtkDataArray or vtk.vtkAbstractArray
         VTK array.
@@ -97,11 +97,7 @@ def copy_vtk_array(array, deep=True):
     if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
         raise TypeError(f"Invalid type {type(array)}.")
 
-    vtk_type = str(type(array)).split('.')[-1][:-2]
-    if vtk_type not in dir(_vtk):  # pragma: no cover
-        raise RuntimeError(f'Type {vtk_type} not supported.')
-
-    new_array = getattr(_vtk, vtk_type)()
+    new_array = type(array)()
     if deep:
         new_array.DeepCopy(array)
     else:

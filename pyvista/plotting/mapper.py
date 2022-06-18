@@ -103,6 +103,11 @@ def make_mapper(mapper_class):
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
 
+            # Use only the real component if an array is complex
+            if np.issubdtype(scalars.dtype, np.complexfloating):
+                scalars = scalars.astype(float)
+                title = f'{title}-real'
+
             if rgb:
                 show_scalar_bar = False
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
@@ -242,7 +247,9 @@ def make_mapper(mapper_class):
                 Dataset to assign the scalars to.
 
             title : str
-                Name to assign the scalars.
+                If the name of this array exists, scalars is
+                ignored. Otherwise, the scalars will be added to ``mesh`` and
+                this parameter is the name to assign the scalars.
 
             n_colors : int
                 Number of colors.
@@ -251,10 +258,11 @@ def make_mapper(mapper_class):
                 Either ``'point'`` or ``'cell'``.
 
             interpolate_before_map : bool
-                Enabling makes for a smoother scalars display.  Default is
-                ``True``.  When ``False``, OpenGL will interpolate the
-                mapped colors which can result is showing colors that are
-                not present in the color map.
+                When ``True`` scalars will be interpolated within polygons and
+                color mapping will happen on a per-pixel basis.  When
+                ``False``, Colors are interpolated after being mapped. This
+                option avoids color interpolation by using a one dimensional
+                texture map for the colors.
 
             direct_scalars_color_mode : bool
                 When ``True``, scalars are treated as RGB colors. When

@@ -23,6 +23,7 @@ Object Conversions
    array_from_vtkmatrix
    vtkmatrix_from_array
    cubemap
+   cubemap_from_filenames
 
 
 File IO
