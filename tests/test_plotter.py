@@ -178,3 +178,19 @@ def test_remove_scalars_component(sphere):
 
     # however, the original active array should remain active
     assert sphere.point_data.active_scalars_name == point_data_name
+
+
+def test_remove_scalars_rgba(sphere):
+    point_data_name = 'data'
+    sphere[point_data_name] = np.random.random(sphere.n_points)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=point_data_name, opacity='data')
+    assert sphere.n_arrays == 2
+    pl.close()
+    assert sphere.n_arrays == 1
+
+    # only point_data_name remains, no 'data-0' component should remain
+    assert sphere.point_data.keys() == [point_data_name]
+
+    # TODO: we are not re-enabling the old scalars
+    # assert sphere.point_data.active_scalars_name == point_data_name

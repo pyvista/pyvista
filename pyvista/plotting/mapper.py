@@ -214,7 +214,7 @@ def make_mapper(mapper_class):
                 else:
                     table.SetHueRange(0.66667, 0.0)
 
-            new_scalars = self.configure_scalars_mode(
+            added_scalar_info = self.configure_scalars_mode(
                 scalars,
                 mesh,
                 title,
@@ -224,7 +224,7 @@ def make_mapper(mapper_class):
                 rgb or _custom_opac,
             )
 
-            return show_scalar_bar, n_colors, clim, new_scalars
+            return show_scalar_bar, n_colors, clim, added_scalar_info
 
         def configure_scalars_mode(
             self,

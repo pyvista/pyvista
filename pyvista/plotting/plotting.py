@@ -4619,6 +4619,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         * ``<scalar-name>-normed`` for normalized multi-component arrays.
         * ``scalars`` when adding scalars within ``add_mesh`` rather than
           selecting an existing array.
+        * ``__custom_rgba`` when the color mode is set to map directly to the
+          scalars (an RGBA array).
 
         This method removes those arrays, which are tracked in
         ``self._added_scalars``. It also tries to restore the original scalars
