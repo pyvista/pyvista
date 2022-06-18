@@ -324,8 +324,9 @@ def make_mapper(mapper_class):
             str or None
                 If the scalars do not exist within the dataset, this is the
                 name of the scalars array.
+
             str
-                Association of the scalars, either ``'points'`` or ``'cells'``.
+                Association of the scalars, either ``'point'`` or ``'cell'``.
 
             """
             # create a custom RGBA array to supply our opacity to
