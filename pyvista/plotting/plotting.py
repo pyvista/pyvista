@@ -4628,26 +4628,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
         def remove_and_reactivate_prior_scalars(dsattr, name):
             """Remove ``name`` and reactivate prior scalars if applicable."""
             # reactivate prior active scalars
-            if '-normed' == name[-7:]:
-                if name[:-7] in dsattr:
-                    dsattr.active_scalars_name = name[:-7]
-            elif '-real' == name[-5:]:
-                if name[:-5] in dsattr:
-                    dsattr.active_scalars_name = name[:-5]
+            if name.endswith('-normed'):
+                orig_name = name[:-7]
+                if orig_name in dsattr:
+                    dsattr.active_scalars_name = orig_name
+            elif name.endswith('-real'):
+                orig_name = name[:-5]
+                if orig_name in dsattr:
+                    dsattr.active_scalars_name = orig_name
             elif re.findall('-[0-9]+$', name):
                 # component
-                match = re.findall('-[0-9]+$', name)[0]
-                orig_scalars = name.replace(match, '')
+                orig_scalars = re.sub('-[0-9]+$', '', name)
                 if orig_scalars in dsattr:
                     dsattr.active_scalars_name = orig_scalars
 
             dsattr.pop(name, None)
 
         for mesh, (name, assoc) in self._added_scalars:
-            if assoc == 'point':
-                remove_and_reactivate_prior_scalars(mesh.point_data, name)
-            else:
-                remove_and_reactivate_prior_scalars(mesh.cell_data, name)
+            dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
+            remove_and_reactivate_prior_scalars(dsattr, name)
         self._added_scalars = []
 
     def __del__(self):
