@@ -93,7 +93,7 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
 
 
 def test_get_datasets(sphere, hexbeam):
-    """Test edge cases for smooth shading"""
+    """Test pyvista.Plotter._datasets."""
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
     pl.add_mesh(hexbeam)
@@ -102,10 +102,9 @@ def test_get_datasets(sphere, hexbeam):
     assert sphere in datasets and hexbeam in datasets
 
 
-def test_remove_scalars(sphere, hexbeam):
+def test_remove_scalars_single(sphere, hexbeam):
     """Ensure no scalars are added when plotting datasets."""
     # test single component scalars
-    sphere.clear_data()
     hexbeam.clear_data()
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_points))
@@ -124,8 +123,49 @@ def test_remove_scalars(sphere, hexbeam):
     assert sphere.n_arrays == 0
     assert hexbeam.n_arrays == 0
 
-    # test multi-component
+
+def test_remove_scalars_complex(sphere):
+    """Test plotting complex data."""
+    data = np.arange(sphere.n_points, dtype=np.complex128)
+    data += np.linspace(0, 1, sphere.n_points) * -1j
+    point_data_name = 'data'
+    sphere[point_data_name] = data
+
+    pl = pyvista.Plotter()
+    with pytest.warns(np.ComplexWarning):
+        pl.add_mesh(sphere, scalars=point_data_name)
+    pl.close()
+
+    assert sphere.point_data.keys() == [point_data_name]
+    assert sphere.point_data.active_scalars_name == point_data_name
+
+
+def test_remove_scalars_normalized(sphere):
+    # test scalars are removed for normalized multi-component
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=np.random.random((sphere.n_points, 3)))
     pl.close()
     assert sphere.n_arrays == 0
+
+    # test scalars are removed for normalized multi-component
+    point_data_name = 'data'
+    sphere[point_data_name] = np.random.random((sphere.n_points, 3))
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=point_data_name)
+    pl.close()
+    assert sphere.point_data.keys() == [point_data_name]
+    assert sphere.point_data.active_scalars_name == point_data_name
+
+
+def test_remove_scalars_component(sphere):
+    point_data_name = 'data'
+    sphere[point_data_name] = np.random.random((sphere.n_points, 3))
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=point_data_name, component=0)
+    pl.close()
+
+    # only point_data_name remains, no 'data-0' component should remain
+    assert sphere.point_data.keys() == [point_data_name]
+
+    # however, the original active array should remain active
+    assert sphere.point_data.active_scalars_name == point_data_name

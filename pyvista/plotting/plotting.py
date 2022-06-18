@@ -7,6 +7,7 @@ import logging
 import os
 import pathlib
 import platform
+import re
 import textwrap
 from threading import Thread
 import time
@@ -4596,7 +4597,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def _datasets(self):
-        """List of all datasets associated with this plotter."""
+        """Return a list of all datasets associated with this plotter."""
         datasets = []
         for renderer in self.renderers:
             for actor in renderer.actors.values():
@@ -4609,14 +4610,46 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return datasets
 
     def _remove_added_scalars(self):
-        """Remove any scalars added to the datasets."""
+        """Remove any scalars added to this plotter's datasets by this plotter.
+
+        Additional point or cell data may be added to be able to correctly plot
+        scalars. This usually occurs in one of the following cases:
+
+        * ``<scalar-name>-Real`` for complex data
+        * ``<scalar-name>-normed`` for normalized multi-component arrays.
+        * ``scalars`` when adding scalars within ``add_mesh`` rather than
+          selecting an existing array.
+
+        This method removes those arrays, which are tracked in
+        ``self._added_scalars``.
+
+        """
+
+        def remove_and_reactivate_prior_scalars(dsattr, name):
+            """Remove ``name`` and reactivate prior scalars if applicable."""
+            # reactivate prior active scalars
+            if '-normed' == name[-7:]:
+                if name[:-7] in dsattr:
+                    dsattr.active_scalars_name = name[:-7]
+            elif '-real' == name[-5:]:
+                if name[:-5] in dsattr:
+                    dsattr.active_scalars_name = name[:-5]
+            elif re.findall('-[0-9]+$', name):
+                # component
+                match = re.findall('-[0-9]+$', name)[0]
+                orig_scalars = name.replace(match, '')
+                if orig_scalars in dsattr:
+                    dsattr.active_scalars_name = orig_scalars
+
+            dsattr.pop(name, None)
+
         for mesh, (name, assoc) in self._added_scalars:
             if name is None:
                 continue
             if assoc == 'points':
-                mesh.point_data.pop(name, None)
+                remove_and_reactivate_prior_scalars(mesh.point_data, name)
             else:
-                mesh.cell_data.pop(name, None)
+                remove_and_reactivate_prior_scalars(mesh.cell_data, name)
         self._added_scalars = []
 
     def __del__(self):

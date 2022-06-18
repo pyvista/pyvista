@@ -323,6 +323,8 @@ def make_mapper(mapper_class):
             str or None
                 If the scalars do not exist within the dataset, this is the
                 name of the scalars array.
+            str
+                Association of the scalars, either ``'points'`` or ``'cells'``.
 
             """
             # create a custom RGBA array to supply our opacity to
@@ -345,10 +347,9 @@ def make_mapper(mapper_class):
             rgba[:, :-1] = Color(color, default_color=theme.color).int_rgb
             rgba[:, -1] = np.around(opacity * 255)
 
-            new_scalars = self.configure_scalars_mode(
+            self.SetColorModeToDirectScalars()
+            return self.configure_scalars_mode(
                 rgba, mesh, '', n_colors, preference, interpolate_before_map, True
             )
-            self.SetColorModeToDirectScalars()
-            return new_scalars
 
     return MapperHelper()
