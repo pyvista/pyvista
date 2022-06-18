@@ -1684,6 +1684,7 @@ def test_opacity_by_array_preference():
     p = pyvista.Plotter()
     p.add_mesh(tetra.copy(), opacity='opac', preference='cell')
     p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity='opac', preference='point')
+    p.close()
 
     # test opacity by array
     p = pyvista.Plotter()
