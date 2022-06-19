@@ -104,14 +104,22 @@ def pointset():
 
 
 @fixture()
-def image():
+def texture():
     # create a basic texture by plotting a sphere
     pl = pyvista.Plotter(window_size=(200, 200), lighting=None, off_screen=True)
-    pl.add_mesh(pyvista.Sphere(), color='k')
+    mesh = pyvista.Sphere()
+    pl.add_mesh(mesh, scalars=mesh.points[:, 2], show_scalar_bar=False)
     pl.background_color = 'w'
-    pl.camera_position = 'xy'
+    pl.camera_position = 'xz'
     pl.camera.zoom(0.5)
-    return pyvista.Texture(pl.screenshot()).to_image()
+
+    # convert to an image
+    return pyvista.Texture(pl.screenshot())
+
+
+@fixture()
+def image(texture):
+    return texture.to_image()
 
 
 def pytest_addoption(parser):

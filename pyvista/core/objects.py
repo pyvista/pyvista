@@ -3,11 +3,13 @@
 The data objects does not have any sort of spatial reference.
 
 """
+import warnings
+
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, get_array, row_array
+from pyvista.utilities import FieldAssociation, PyvistaDeprecationWarning, get_array, row_array
 
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
@@ -476,12 +478,15 @@ class Texture(_vtk.vtkTexture, DataObject):
         (256, 256)
 
         """
-        return self.to_image().dimensions[:2]
+        input_data = self.GetInput()
+        if input_data is None:
+            return (0, 0)
+        return input_data.GetDimensions()[:2]
 
     def _from_file(self, filename, **kwargs):
         try:
             image = pyvista.read(filename, **kwargs)
-            if image.GetNumberOfPoints() < 2:
+            if image.GetNumberOfPoints() < 2:  # pragma: no cover
                 raise ValueError("Problem reading the image with VTK.")
             self._from_image_data(image)
         except (KeyError, ValueError):
@@ -506,8 +511,10 @@ class Texture(_vtk.vtkTexture, DataObject):
             raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
-            if not 3 <= image.shape[2] <= 4:
-                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+            if image.shape[2] not in [1, 3, 4]:
+                raise ValueError(
+                    'Third dimension of the array must be of size 1 (greyscale), 3 (RGB), or 4 (RGBA)'
+                )
             n_components = image.shape[2]
         elif image.ndim == 2:
             n_components = 1
@@ -520,17 +527,20 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(grid)
 
     @property
-    def repeat(self):
-        """Repeat the texture."""
-        return self.GetRepeat()
+    def repeat(self) -> bool:
+        """Enable or disable repeating the texture."""
+        return bool(self.GetRepeat())
 
     @repeat.setter
-    def repeat(self, flag):
+    def repeat(self, flag: bool):
         self.SetRepeat(flag)
 
     @property
     def n_components(self) -> int:
-        """Components in the image (e.g. 3 [or 4] for RGB[A]).
+        """Components in the image.
+
+        Single component textures are greyscale, while 3 or 4 component are
+        used for representing RGB and RGBA images.
 
         Examples
         --------
@@ -540,15 +550,16 @@ class Texture(_vtk.vtkTexture, DataObject):
         3
 
         """
-        image = self.to_image()
-        return image.active_scalars.shape[1]
+        input_data = self.GetInput()
+        if input_data is None:
+            return 0
+        return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
-        if not 0 <= axis <= 1:
-            raise ValueError(f"Axis {axis} out of bounds")
-        array = self.to_array()
-        array = np.flip(array, axis=1 - axis)
+        if axis not in [0, 1]:
+            raise ValueError(f"axis must be 0 or 1. Got {axis}")
+        array = np.flip(self.image_data, axis=1 - axis)
         self._from_array(array)
 
     def to_image(self):
@@ -574,17 +585,21 @@ class Texture(_vtk.vtkTexture, DataObject):
           Spacing:      1.000e+00, 1.000e+00, 1.000e+00
           N Arrays:     1
 
-
         """
-        return pyvista.wrap(self.GetInput())
+        input_dataset = self.GetInput()
+        if isinstance(input_dataset, pyvista.UniformGrid):
+            return input_dataset
+
+        # this results in a copy
+        return pyvista.wrap(input_dataset)
 
     def to_array(self):
         """Return the texture as an array.
 
         Returns
         -------
-        numpy.ndarray
-            Texture as a numpy array
+        pyvista_ndarray
+            Texture data as a numpy array.
 
         Examples
         --------
@@ -597,17 +612,14 @@ class Texture(_vtk.vtkTexture, DataObject):
         dtype('uint8')
 
         """
-        image = self.to_image()
-
-        if image.active_scalars.ndim > 1:
-            shape = (image.dimensions[1], image.dimensions[0], self.n_components)
-        else:
-            shape = (image.dimensions[1], image.dimensions[0])
-
-        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
+        # Deprecated on v0.35.0, estimated removal on v0.37.0
+        warnings.warn(  # pragma: no cover
+            '`Texture.to_array` is deprecated. Use `image_data` instead', PyvistaDeprecationWarning
+        )
+        return self.image_data
 
     def plot(self, *args, **kwargs):
-        """Plot the texture as image data by itself.
+        """Plot the texture an image.
 
         If the texture is a cubemap, it will be displayed as a skybox.
 
@@ -620,7 +632,12 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         if self.cube_map:
             return self._plot_skybox(*args, **kwargs)
-        kwargs.setdefault("rgba", True)
+        kwargs.setdefault('cpos', 'xy')
+        kwargs.setdefault('rgba', self.n_components > 1)
+        kwargs.setdefault('show_axes', False)
+        kwargs.setdefault('show_scalar_bar', False)
+        if self.n_components == 1:
+            kwargs.setdefault('cmap', 'gray')
         return self.to_image().plot(*args, **kwargs)
 
     def _plot_skybox(self, *args, **kwargs):
@@ -647,15 +664,20 @@ class Texture(_vtk.vtkTexture, DataObject):
         """Enable cube mapping if ``flag`` is True, disable it otherwise."""
         self.SetCubeMap(flag)
 
-    def copy(self):
+    def copy(self, deep=True):
         """Make a copy of this texture.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            Perform a deep copy when ``True``. Shallow copy when ``False``.
 
         Returns
         -------
         pyvista.Texture
             Copied texture.
         """
-        return Texture(self.to_image().copy())
+        return Texture(self.to_image().copy(deep=deep))
 
     def to_skybox(self):
         """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
@@ -663,7 +685,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         Returns
         -------
         vtk.vtkSkybox
-            Skybox if cube mapping is enabled.  Otherwise, ``None``.
+            Skybox if cube mapping is enabled.  Otherwise, raises an exception.
 
         Examples
         --------
@@ -673,7 +695,72 @@ class Texture(_vtk.vtkTexture, DataObject):
         <vtkmodules.vtkRenderingOpenGL2.vtkOpenGLSkybox(0x464dbb0) at 0x7f3130fab1c0>
 
         """
-        if self.cube_map:
-            skybox = _vtk.vtkSkybox()
-            skybox.SetTexture(self)
-            return skybox
+        if not self.cube_map:
+            raise ValueError('This texture is not a cube map.')
+        skybox = _vtk.vtkSkybox()
+        skybox.SetTexture(self)
+        return skybox
+
+    @property
+    def image_data(self):
+        """Return the underlying image data associated with this texture.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            Array of the image data.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.image_data.shape
+        (256, 256, 3)
+        >>> texture.image_data.shape
+        dtype('uint8')
+
+        """
+        data = pyvista.wrap(self.GetInput().GetPointData().GetScalars())
+        if data.ndim > 1:
+            shape = (self.dimensions[1], self.dimensions[0], data.shape[1])
+        else:
+            shape = (self.dimensions[1], self.dimensions[0])
+
+        return np.flip(data.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
+
+    @image_data.setter
+    def image_data(self, image_data):
+        """Set the image data."""
+        self._from_array(image_data)
+
+    def to_greyscale(self):
+        """Convert this texture as a single component (greyscale) texture.
+
+        Returns
+        -------
+        pyvista.Texture
+            Texture converted to greyscale. If already black and white,
+
+        Notes
+        -----
+        The transparency channel (if available) will be dropped.
+
+        Uses NTSC/PAL implementation.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> bw_texture = texture.to_bw()
+        >>> bw_texture.plot()
+
+        """
+        if self.n_components == 1:
+            return self
+
+        new_texture = self.copy()
+        r, g, b = np.asarray(new_texture.image_data).T[:3]
+        greyscale = (0.2989 * r + 0.5870 * g + 0.1140 * b).astype(np.uint8)
+        greyscale = greyscale.reshape(self.dimensions, order='F').swapaxes(1, 0)
+        new_texture.image_data = greyscale
+        return new_texture

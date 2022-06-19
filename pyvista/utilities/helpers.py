@@ -937,7 +937,7 @@ def wrap(dataset):
             mesh.active_scalars_name = 'values'
             return mesh
         else:
-            raise NotImplementedError('NumPy array could not be wrapped pyvista.')
+            raise NotImplementedError('NumPy array could not be wrapped by pyvista.')
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):

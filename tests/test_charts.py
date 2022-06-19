@@ -153,7 +153,7 @@ def test_brush():
     # Test constructor arguments
     brush = charts.Brush(color=c_red, texture=t_masonry)
     assert brush.color == c_red
-    assert np.allclose(brush.texture.to_array(), t_masonry.to_array())
+    assert np.allclose(brush.texture.image_data, t_masonry.image_data)
 
     # Test properties
     brush.color = c_blue
@@ -164,8 +164,8 @@ def test_brush():
 
     brush.texture = t_puppy
     t = pyvista.Texture(brush.GetTexture())
-    assert np.allclose(brush.texture.to_array(), t_puppy.to_array())
-    assert np.allclose(t.to_array(), t_puppy.to_array())
+    assert np.allclose(brush.texture.image_data, t_puppy.image_data)
+    assert np.allclose(t.image_data, t_puppy.image_data)
 
     brush.texture_interpolate = False
     assert not brush.texture_interpolate

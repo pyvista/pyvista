@@ -1122,15 +1122,15 @@ def test_plot_texture():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_plot_texture_alone(tmpdir):
-    """Test adding a texture to a plot"""
-    path = str(tmpdir.mkdir("tmpdir"))
-    image = Image.new('RGB', (10, 10), color='blue')
-    filename = os.path.join(path, 'tmp.jpg')
-    image.save(filename)
+def test_plot_texture_alone(texture):
+    """Test plotting directly from the Texture class."""
+    texture.plot(before_close_callback=verify_cache_image)
 
-    texture = pyvista.read_texture(filename)
-    texture.plot(rgba=True, before_close_callback=verify_cache_image)
+
+def test_plot_texture_alone_greyscale(texture):
+    """Test plotting a greyscale texture directly from the Texture class."""
+    texture_grey = texture.to_greyscale()
+    texture_grey.plot(before_close_callback=verify_cache_image)
 
 
 def test_plot_texture_associated():
