@@ -242,13 +242,35 @@ def test_texture():
     arr = texture.image_data
     assert isinstance(arr, pyvista.pyvista_ndarray)
     assert arr.shape[0] * arr.shape[1] == image.n_points
-    texture.flip(0)
-    texture.flip(1)
+
     texture = pyvista.Texture(examples.load_globe_texture())
     assert texture is not None
 
-    with pytest.raises(ValueError, match="axis must be 0 or 1"):
+
+def test_texture_flip(texture):
+    with pytest.raises(ValueError, match="axis must be 0"):
         texture.flip(2)
+
+    orig_data = texture.image_data.copy()
+
+    texture.flip(0)
+    assert not np.allclose(orig_data, texture.image_data)
+    texture.flip(0)
+    assert np.allclose(orig_data, texture.image_data)
+
+    texture.flip(1)
+    assert not np.allclose(orig_data, texture.image_data)
+    texture.flip(1)
+    assert np.allclose(orig_data, texture.image_data)
+
+
+def test_texture_rotate(texture):
+    orig_data = texture.image_data.copy()
+
+    texture.rotate_ccw()
+    assert orig_data.shape[:2] == texture.image_data.shape[:2][::-1]
+    texture.rotate_cw()
+    assert np.allclose(orig_data, texture.image_data)
 
 
 def test_image_data():
@@ -261,7 +283,7 @@ def test_texture_repr(texture):
     tex_repr = repr(texture)
     assert 'Cube Map:\tFalse' in tex_repr
     assert 'Components:\t3' in tex_repr
-    assert 'Dimensions:\t200, 200\n' in tex_repr
+    assert 'Dimensions:\t300, 200\n' in tex_repr
 
 
 def test_texture_from_images(image):

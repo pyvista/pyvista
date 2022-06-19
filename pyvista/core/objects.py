@@ -556,11 +556,51 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     def flip(self, axis):
-        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
+        """Flip this texture inplace along the specified axis.
+
+        Parameters
+        ----------
+        axis : int
+            Axis about to flip.  0 for the X axis and 1 for the Y axis.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> texture.flip(0)
+        >>> texture.plot()
+
+        """
         if axis not in [0, 1]:
-            raise ValueError(f"axis must be 0 or 1. Got {axis}")
-        array = np.flip(self.image_data, axis=1 - axis)
-        self._from_array(array)
+            raise ValueError(f"axis must be 0 (x axis) or 1 or (y axis). Got {axis}")
+        new_data = np.flip(self.image_data.swapaxes(1, 0), axis=1 - axis)
+        self.image_data[:] = new_data.swapaxes(1, 0)
+
+    def rotate_cw(self):
+        """Rotate this texture clockwise.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> texture.rotate_cw()
+        >>> texture.plot()
+
+        """
+        self._from_array(np.flip(self.image_data, axis=0))
+
+    def rotate_ccw(self):
+        """Rotate this texture counter-clockwise.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> texture.rotate_ccw()
+        >>> texture.plot()
+
+        """
+        self._from_array(np.flip(self.image_data, axis=1))
 
     def to_image(self):
         """Return the texture as an image.
@@ -633,6 +673,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         if self.cube_map:
             return self._plot_skybox(*args, **kwargs)
         kwargs.setdefault('cpos', 'xy')
+        kwargs.setdefault('lighting', False)
         kwargs.setdefault('rgba', self.n_components > 1)
         kwargs.setdefault('show_axes', False)
         kwargs.setdefault('show_scalar_bar', False)
@@ -726,7 +767,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         else:
             shape = (self.dimensions[1], self.dimensions[0])
 
-        return np.flip(data.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
+        return np.flip(data.reshape(shape), axis=1).swapaxes(1, 0)
 
     @image_data.setter
     def image_data(self, image_data):

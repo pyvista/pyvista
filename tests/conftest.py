@@ -106,7 +106,7 @@ def pointset():
 @fixture()
 def texture():
     # create a basic texture by plotting a sphere
-    pl = pyvista.Plotter(window_size=(200, 200), lighting=None, off_screen=True)
+    pl = pyvista.Plotter(window_size=(300, 200), lighting=None, off_screen=True)
     mesh = pyvista.Sphere()
     pl.add_mesh(mesh, scalars=mesh.points[:, 2], show_scalar_bar=False)
     pl.background_color = 'w'

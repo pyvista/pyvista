@@ -2740,18 +2740,20 @@ def download_crater_imagery(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [  66.,  73. , -382.6],
-    ...     [  66.,  73. ,    0. ],
-    ...     [  -0.,  -1. ,    0. ]
-    ... ]
     >>> dataset = examples.download_crater_imagery()
     >>> dataset.plot(cpos=cpos)
 
     See :ref:`ref_topo_map_example` for an example using this dataset.
 
     """
-    return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True, load=load)
+    texture_or_file = _download_and_read(
+        'BJ34_GeoTifv1-04_crater_clip.tif',
+        texture=True,
+        load=load,
+    )
+    if load:
+        texture_or_file.flip(1)
+    return texture_or_file
 
 
 def download_dolfin(load=True):  # pragma: no cover

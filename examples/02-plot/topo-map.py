@@ -15,20 +15,18 @@ from pyvista import examples
 
 # Load the elevation data as a surface
 elevation = examples.download_crater_topo().warp_by_scalar()
-# Load the topographic map from a GeoTiff
-topo_map = examples.download_crater_imagery()
 
 elevation
 
-import matplotlib as mpl
-
 ###############################################################################
-# Let's inspect the imagery that we just loaded
-import matplotlib.pyplot as plt
+# Load the topographic map from a GeoTiff
+# Let's inspect the imagery that we just loaded.
 
-mpl.rcParams['figure.dpi'] = 500
+topo_map = examples.download_crater_imagery()
+# topo_map.flip(0)
+topo_map.flip(1)
+topo_map.plot()
 
-plt.imshow(topo_map.to_array())
 
 ###############################################################################
 # Once you have a topography mesh loaded as a surface mesh
