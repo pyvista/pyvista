@@ -1154,12 +1154,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``'frontface'``) of the axes actor.
 
         location : str, optional
-            Set how the axes are drawn: either static (``'all'``),
-            closest triad (``'front'``), furthest triad (``'back'``),
-            static closest to the origin (``'origin'``), or outer
-            edges (``'outer'``) in relation to the camera
-            position. Options include: ``'all', 'front', 'back',
-            'origin', 'outer'``.
+            Set how the axes are drawn: either static (``'all'``), closest
+            triad (``'front'``, ``'closest'``, ``'default'``), furthest triad
+            (``'back'``, ``'furthest'``), static closest to the origin
+            (``'origin'``), or outer edges (``'outer'``) in relation to the
+            camera position.
 
         ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
