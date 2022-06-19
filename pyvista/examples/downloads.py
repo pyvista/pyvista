@@ -2741,7 +2741,7 @@ def download_crater_imagery(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_crater_imagery()
-    >>> dataset.plot(cpos=cpos)
+    >>> dataset.plot()
 
     See :ref:`ref_topo_map_example` for an example using this dataset.
 

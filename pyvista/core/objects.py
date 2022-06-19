@@ -757,7 +757,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> texture = examples.download_masonry_texture()
         >>> texture.image_data.shape
         (256, 256, 3)
-        >>> texture.image_data.shape
+        >>> texture.image_data.dtype
         dtype('uint8')
 
         """
@@ -792,7 +792,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         --------
         >>> from pyvista import examples
         >>> texture = examples.download_masonry_texture()
-        >>> bw_texture = texture.to_bw()
+        >>> bw_texture = texture.to_greyscale()
         >>> bw_texture.plot()
 
         """
@@ -802,6 +802,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         new_texture = self.copy()
         r, g, b = np.asarray(new_texture.image_data).T[:3]
         greyscale = (0.2989 * r + 0.5870 * g + 0.1140 * b).astype(np.uint8)
-        greyscale = greyscale.reshape(self.dimensions, order='F').swapaxes(1, 0)
         new_texture.image_data = greyscale
+        new_texture.flip(0)
+        new_texture.flip(1)
         return new_texture
