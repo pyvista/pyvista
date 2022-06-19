@@ -366,12 +366,12 @@ class Texture(_vtk.vtkTexture, DataObject):
         create a cubemap. If a list of images, must be of the same size and in
         the following order:
 
-        * -X
-        * -Y
-        * -Z
         * +X
+        * -X
         * +Y
+        * -Y
         * +Z
+        * -Z
 
     **kwargs : dict, optional
         Optional arguments when reading from a file.
@@ -393,7 +393,7 @@ class Texture(_vtk.vtkTexture, DataObject):
       Cube Map:        False
       Dimensions:      256, 256
 
-    Create a texture from a RGBA array. Note how this is colored per "point"
+    Create a texture from an RGB array. Note how this is colored per "point"
     rather than per "pixel".
 
     >>> import numpy as np
@@ -411,12 +411,12 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Create a cubemap from 6 textures.
 
-    >>> nx = examples.download_sky(direction='nx')  # doctest:+SKIP
-    >>> ny = examples.download_sky(direction='ny')  # doctest:+SKIP
-    >>> nz = examples.download_sky(direction='nz')  # doctest:+SKIP
     >>> px = examples.download_sky(direction='px')  # doctest:+SKIP
+    >>> nx = examples.download_sky(direction='nx')  # doctest:+SKIP
     >>> py = examples.download_sky(direction='py')  # doctest:+SKIP
+    >>> ny = examples.download_sky(direction='ny')  # doctest:+SKIP
     >>> pz = examples.download_sky(direction='pz')  # doctest:+SKIP
+    >>> nz = examples.download_sky(direction='nz')  # doctest:+SKIP
     >>> texture = pyvista.Texture([px, nx, py, ny, pz, nz])  # doctest:+SKIP
     >>> texture.cube_map  # doctest:+SKIP
     True
