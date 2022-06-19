@@ -14,7 +14,6 @@ import warnings
 
 from PIL import Image
 import imageio
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import vtk
@@ -25,6 +24,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.utilities.misc import can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -46,6 +46,10 @@ except:  # noqa: E722
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 skip_9_1_0 = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
+
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
+)
 
 # Reset image cache with new images
 glb_reset_image_cache = False
@@ -2200,8 +2204,11 @@ def test_chart_plot():
 
 
 @skip_9_1_0
+@skip_no_mpl_figure
 def test_chart_matplotlib_plot():
     """Test integration with matplotlib"""
+    import matplotlib.pyplot as plt
+
     rng = np.random.default_rng(1)
     # First, create the matplotlib figure
     # use tight layout to keep axis labels visible on smaller figures
