@@ -2518,8 +2518,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()
-        >>> grid.dimensions
+        >>> grid = examples.load_explicit_structured()  # pragma: no cover
+        >>> grid.dimensions  # pragma: no cover
         (5, 6, 7)
 
         """
