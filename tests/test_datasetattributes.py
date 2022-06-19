@@ -1,6 +1,5 @@
 from string import ascii_letters, digits, whitespace
 import sys
-import weakref
 
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
@@ -566,20 +565,3 @@ def test_complex(plane):
     assert plane.point_data[name].dtype == np.complex128
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, float)
-
-
-def test_complex_collection(plane):
-    name = 'my_data'
-    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
-    plane.point_data[name] = data
-
-    # ensure shallow copy
-    data[0] += 1
-    data_copy = data.copy()
-    assert np.allclose(plane.point_data[name], data)
-
-    # ensure references remain
-    ref = weakref.ref(data)
-    del data
-    assert np.allclose(plane.point_data[name], data_copy)
-    assert ref() is not None

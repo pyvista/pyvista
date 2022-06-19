@@ -2353,6 +2353,13 @@ def test_plot_complex_value(plane):
     pl.show(before_close_callback=verify_cache_image)
 
 
+def test_warn_screenshot_notebook():
+    pl = pyvista.Plotter(notebook=True)
+    pl.theme.jupyter_backend = 'static'
+    with pytest.warns(UserWarning, match='Set `jupyter_backend` backend to `"none"`'):
+        pl.show(screenshot='tmp.png')
+
+
 def test_add_text():
     plotter = pyvista.Plotter()
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
