@@ -57,6 +57,7 @@ def make_mapper(mapper_class):
             self,
             mesh,
             scalars,
+            scalars_name,
             scalar_bar_args,
             rgb,
             component,
@@ -84,9 +85,7 @@ def make_mapper(mapper_class):
 
             # Set the array title for when it is added back to the mesh
             if _custom_opac:
-                title = '__custom_rgba'
-            else:
-                title = scalar_bar_args.get('title', 'Data')
+                scalars_name = '__custom_rgba'
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -98,7 +97,7 @@ def make_mapper(mapper_class):
                 cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                title = f'{title}-digitized'
+                scalars_name = f'{scalars_name}-digitized'
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
@@ -106,7 +105,7 @@ def make_mapper(mapper_class):
             # Use only the real component if an array is complex
             if np.issubdtype(scalars.dtype, np.complexfloating):
                 scalars = scalars.astype(float)
-                title = f'{title}-real'
+                scalars_name = f'{scalars_name}-real'
 
             if rgb:
                 show_scalar_bar = False
@@ -123,10 +122,10 @@ def make_mapper(mapper_class):
                         raise TypeError('component must be either None or an integer')
                     if component is None:
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
-                        title = '{}-normed'.format(title)
+                        scalars_name = '{}-normed'.format(scalars_name)
                     elif component < scalars.shape[1] and component >= 0:
                         scalars = scalars[:, component].copy()
-                        title = '{}-{}'.format(title, component)
+                        scalars_name = '{}-{}'.format(scalars_name, component)
                     else:
                         raise ValueError(
                             'Component must be nonnegative and less than the '
@@ -217,7 +216,7 @@ def make_mapper(mapper_class):
             self.configure_scalars_mode(
                 scalars,
                 mesh,
-                title,
+                scalars_name,
                 n_colors,
                 preference,
                 interpolate_before_map,
@@ -230,7 +229,7 @@ def make_mapper(mapper_class):
             self,
             scalars,
             mesh,
-            title,
+            scalars_name,
             n_colors,
             preference,
             interpolate_before_map,
@@ -246,7 +245,7 @@ def make_mapper(mapper_class):
             mesh : pyvista.Dataset
                 Dataset to assign the scalars to.
 
-            title : str
+            scalars_name : str
                 If the name of this array exists, scalars is
                 ignored. Otherwise, the scalars will be added to ``mesh`` and
                 this parameter is the name to assign the scalars.
@@ -278,14 +277,14 @@ def make_mapper(mapper_class):
 
             # Scalars interpolation approach
             if use_points:
-                if title not in mesh.point_data:
-                    mesh.point_data.set_array(scalars, title, False)
-                mesh.active_scalars_name = title
+                if scalars_name not in mesh.point_data:
+                    mesh.point_data.set_array(scalars, scalars_name, False)
+                mesh.active_scalars_name = scalars_name
                 self.SetScalarModeToUsePointData()
             elif use_cells:
-                if title not in mesh.cell_data:
-                    mesh.cell_data.set_array(scalars, title, False)
-                mesh.active_scalars_name = title
+                if scalars_name not in mesh.cell_data:
+                    mesh.cell_data.set_array(scalars, scalars_name, False)
+                mesh.active_scalars_name = scalars_name
                 self.SetScalarModeToUseCellData()
             else:
                 raise_not_matching(scalars, mesh)

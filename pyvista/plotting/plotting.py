@@ -2313,6 +2313,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
+        scalars_name = 'Data'
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
 
@@ -2324,6 +2325,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', original_scalar_name)
+            scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2380,6 +2382,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
                 mesh,
                 scalars,
+                scalars_name,
                 scalar_bar_args,
                 rgb,
                 component,
