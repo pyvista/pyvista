@@ -1562,8 +1562,9 @@ class DefaultTheme(_ThemeConfig):
         except ImportError:  # pragma: no cover
             warnings.warn(
                 'Unable to set a default theme colormap without matplotlib. '
-                'The builtin "jet" colormap will be used.'
+                'The builtin VTK "jet" colormap will be used.'
             )
+            self._cmap = None
 
     @property
     def color(self) -> Color:
