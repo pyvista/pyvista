@@ -3079,7 +3079,7 @@ def download_sky(direction='nx', load=True):  # pragma: no cover
     allowed_directions = ['nx', 'ny', 'nz', 'px', 'py', 'pz']
     if direction not in allowed_directions:
         raise ValueError(
-            f'Invalid direction "{direction}". Should be one of the following:'
+            f'Invalid direction "{direction}". Should be one of the following: '
             f'{allowed_directions}'
         )
     filename, _ = _download_file(f'skybox-{direction}.jpg')

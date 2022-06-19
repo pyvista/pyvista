@@ -363,7 +363,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     ----------
     uinput : str, vtkImageData, vtkTexture, list, optional
         Filename, ``vtkImagedata``, ``vtkTexture``, or a list of images to
-        create a cubemap. If a list of images. Must be of the same size and in
+        create a cubemap. If a list of images, must be of the same size and in
         the following order:
 
         * -X
@@ -417,7 +417,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     >>> px = examples.download_sky(direction='px')  # doctest:+SKIP
     >>> py = examples.download_sky(direction='py')  # doctest:+SKIP
     >>> pz = examples.download_sky(direction='pz')  # doctest:+SKIP
-    >>> texture = pyvista.Texture([nx, ny, nz, px, py, pz])  # doctest:+SKIP
+    >>> texture = pyvista.Texture([px, nx, py, ny, pz, nz])  # doctest:+SKIP
     >>> texture.cube_map  # doctest:+SKIP
     True
 
@@ -625,9 +625,10 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def _plot_skybox(self, *args, **kwargs):
         """Plot this texture as a skybox."""
+        cpos = kwargs.pop('cpos', 'xy')
         pl = pyvista.Plotter(*args, **kwargs)
         pl.add_actor(self.to_skybox())
-        pl.camera_position = kwargs.pop('cpos', 'xy')
+        pl.camera_position = cpos
         pl.show()
 
     @property

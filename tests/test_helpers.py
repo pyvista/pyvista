@@ -162,8 +162,8 @@ def test_cubemap(tmpdir):
 
     cubemap.plot()
 
-    skybox = pyvista.cubemap_from_filenames(filenames)
-    assert isinstance(skybox, pyvista.Texture)
+    cubemap = pyvista.cubemap_from_filenames(filenames)
+    assert isinstance(cubemap, pyvista.Texture)
 
     with pytest.raises(ValueError, match='must contain 6 paths'):
         pyvista.cubemap_from_filenames(image_paths=['/path'])

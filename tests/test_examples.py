@@ -21,8 +21,8 @@ except:  # noqa: E722
     ffmpeg_failed = True
 
 # Download examples flag. This defaults to False and skips tests that download
-# examples. These examples require signifiant bandwidth is the cache is empty,
-# and leads to longer or more unstable GitHub CI/CD workflows.
+# examples. These examples require significant bandwidth if the cache is empty,
+# and lead to longer or more unstable GitHub CI/CD workflows.
 TEST_DOWNLOADS = False
 try:
     if os.environ['TEST_DOWNLOADS'].lower() == 'true':
