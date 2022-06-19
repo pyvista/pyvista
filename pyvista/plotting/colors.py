@@ -948,7 +948,8 @@ def get_cmap_safe(cmap):
     try:
         from matplotlib.cm import get_cmap
     except ImportError:
-        raise ImportError('cmap requires matplotlib')
+        raise ImportError('The use of custom colormaps requires the installation of matplotlib')
+
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
@@ -974,11 +975,15 @@ def get_cmap_safe(cmap):
             return cmap
         # Else use Matplotlib
         cmap = get_cmap(cmap)
+
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
                 raise TypeError('When inputting a list as a cmap, each item should be a string.')
-        from matplotlib.colors import ListedColormap
+        try:
+            from matplotlib.colors import ListedColormap
+        except ImportError:
+            raise ImportError('Listed colormaps require the installation of matplotlib')
 
         cmap = ListedColormap(cmap)
 

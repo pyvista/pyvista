@@ -1556,8 +1556,14 @@ class DefaultTheme(_ThemeConfig):
 
     @cmap.setter
     def cmap(self, cmap):
-        get_cmap_safe(cmap)  # for validation
-        self._cmap = cmap
+        try:
+            get_cmap_safe(cmap)  # for validation
+            self._cmap = cmap
+        except ImportError:  # pragma: no cover
+            warnings.warn(
+                'Unable to set a default theme colormap without matplotlib. '
+                'The builtin "jet" colormap will be used.'
+            )
 
     @property
     def color(self) -> Color:
