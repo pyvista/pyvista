@@ -74,13 +74,14 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # Image regression warning/error thresholds for releases after 9.0.1
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
+    'test_add_title',
+    'test_export_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
+    'test_opacity_by_array_user_transform',
     'test_pbr',
     'test_set_environment_texture_cubemap',
     'test_set_viewup',
-    'test_add_title',
-    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
-    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
-    'test_export_gltf',  # image cache created with 9.0.20210612.dev0
 }
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
@@ -1626,9 +1627,11 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
 
 @skip_windows
 def test_opacity_by_array_direct(plane):
-    # test with opacity parm as an array
+    # test with opacity parm as an array, both cell and point sized
+    plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pyvista.Plotter()
     pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points), show_edges=True)
+    pl.add_mesh(plane_shift, color='r', opacity=np.linspace(0, 1, plane.n_cells), show_edges=True)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -1657,7 +1660,7 @@ def test_opacity_by_array_user_transform(uniform):
     opacities = [0, 0.2, 0.9, 0.2, 0.1]
     p = pyvista.Plotter()
     p.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
-    p.show()  # note: =verify_cache_image does not work between Xvfb
+    p.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_mismatched_fail(uniform):
@@ -1667,7 +1670,28 @@ def test_opacity_mismatched_fail(uniform):
     # Test using mismatched arrays
     p = pyvista.Plotter()
     with pytest.raises(ValueError):
+        # cell scalars vs point opacity
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
+
+
+def test_opacity_by_array_preference():
+    tetra = pyvista.Tetrahedron()  # 4 points, 4 cells
+    opacities = np.linspace(0.2, 0.8, tetra.n_points)
+    tetra.clear_data()
+    tetra.point_data['scalars'] = tetra.cell_data['scalars'] = np.arange(tetra.n_points)
+    tetra.point_data['opac'] = tetra.cell_data['opac'] = opacities
+
+    # test opacity by key
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity='opac', preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity='opac', preference='point')
+    p.close()
+
+    # test opacity by array
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
+    p.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_transfer_functions():

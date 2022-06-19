@@ -330,19 +330,14 @@ def make_mapper(mapper_class):
 
             """
             # create a custom RGBA array to supply our opacity to
-            if opacity.size == mesh.n_points and opacity.size == mesh.n_cells:
-                if preference == 'points':
-                    rgba = np.empty((mesh.n_points, 4), np.uint8)
-                else:
-                    rgba = np.empty((mesh.n_cells, 4), np.uint8)
-            elif opacity.size == mesh.n_points:
+            if opacity.size == mesh.n_points:
                 rgba = np.empty((mesh.n_points, 4), np.uint8)
             elif opacity.size == mesh.n_cells:
                 rgba = np.empty((mesh.n_cells, 4), np.uint8)
-            else:
+            else:  # pragma: no cover
                 raise ValueError(
                     f"Opacity array size ({opacity.size}) does not equal "
-                    f"the number of points {mesh.n_points} or the "
+                    f"the number of points ({mesh.n_points}) or the "
                     f"number of cells ({mesh.n_cells})."
                 )
 
