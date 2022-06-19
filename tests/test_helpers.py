@@ -20,6 +20,9 @@ def test_wrap_pyvista_ndarray(sphere):
     pd = pyvista.wrap(sphere.points)
     assert isinstance(pd, pyvista.PolyData)
 
+    with pytest.raises(NotImplementedError):
+        pyvista.wrap(np.arange(3).reshape(1, 1, 1, -1))
+
 
 # NOTE: It's not necessary to test all data types here, several of the
 # most used ones.  We're just checking that we can wrap VTK data types.
