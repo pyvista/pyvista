@@ -22,8 +22,20 @@ the following projects are required dependencies of PyVista:
 * `NumPy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
 * `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+* `scooby <https://github.com/banesullivan/scooby>`_ - Reporting and debugging tools.
+
+
+Optional Dependencies
+~~~~~~~~~~~~~~~~~~~~~
+PyVista includes several optional dependencies for visualization and file IO, including:
+
+* `cmocean <https://pypi.org/project/cmocean/>`_ - Colormaps for Oceanography.
+* `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
+* `ipyvtklink <https://github.com/Kitware/ipyvtklink>`_ - Minimalist ipywidget to interface with any Python vtkRenderWindow.
+* `matplotlib <https://pypi.org/project/matplotlib/>`_ - Used for colormaps and 2D plotting with :class:`pyvista.ChartMPL`.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
-* `scooby <https://github.com/banesullivan/scooby>`_ - Debugging tools
+* `pythreejs <https://pythreejs.readthedocs.io/en/stable/>`_ - Jupyter widgets based notebook extension that allows Jupyter to leverage the WebGL capabilities of modern browsers.
+
 
 PyPI
 ~~~~
@@ -35,6 +47,11 @@ PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
 using ``pip``::
 
     pip install pyvista
+
+To install all the additional packages that extend pyvista, install using
+``pip`` with::
+
+    pip install pyvista[all]
 
 
 Anaconda
