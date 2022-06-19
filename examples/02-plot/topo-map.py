@@ -20,11 +20,8 @@ elevation
 
 ###############################################################################
 # Load the topographic map from a GeoTiff
-# Let's inspect the imagery that we just loaded.
 
 topo_map = examples.download_crater_imagery()
-# topo_map.flip(0)
-topo_map.flip(1)
 topo_map.plot()
 
 
@@ -41,17 +38,20 @@ local = elevation.clip_box(bounds, invert=False)
 # Apply texturing coordinates to associate the image to the surface
 local.texture_map_to_plane(use_bounds=True, inplace=True)
 
+
 ###############################################################################
 # Now display it! Note that the imagery is aligned as we expect.
 local.plot(texture=topo_map, cpos="xy")
+
 
 ###############################################################################
 # And here is a 3D perspective!
 local.plot(texture=topo_map)
 
+
 ###############################################################################
 # We could also display the entire region by extracting the surrounding region
-# and plotting the texture mapped local topography and the outside area
+# and plotting the texture mapped local topography and the outside area.
 
 # Extract surrounding region from elevation data
 surrounding = elevation.clip_box(bounds, invert=True)
