@@ -7,6 +7,7 @@ import logging
 import os
 import pathlib
 import platform
+import re
 import textwrap
 from threading import Thread
 import time
@@ -270,6 +271,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
         self._has_background_layer = False
+        self._added_scalars = []
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -2378,8 +2380,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         # Scalars formatting ==================================================
+        added_scalar_info = None
         if scalars is not None:
-            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
+            show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
                 mesh,
                 scalars,
                 scalars_name,
@@ -2404,7 +2407,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_scalar_bar,
             )
         elif custom_opac:  # no scalars but custom opacity
-            self.mapper.set_custom_opacity(
+            added_scalar_info = self.mapper.set_custom_opacity(
                 opacity,
                 color,
                 mesh,
@@ -2416,6 +2419,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         else:
             self.mapper.SetScalarModeToUseFieldData()
+
+        # track if any data arrays have been added
+        if added_scalar_info is not None and added_scalar_info[0] is not None:
+            self._added_scalars.append((mesh, added_scalar_info))
 
         # Set actor properties ================================================
 
@@ -3345,6 +3352,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
+
+        # remove any added scalars
+        self._remove_added_scalars()
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -4587,6 +4597,65 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.SetFilePrefix(filename)
         exporter.SetRenderWindow(self.ren_win)
         return exporter.Write()
+
+    @property
+    def _datasets(self):
+        """Return a list of all datasets associated with this plotter."""
+        datasets = []
+        for renderer in self.renderers:
+            for actor in renderer.actors.values():
+                mapper = actor.GetMapper()
+
+                # ignore any mappers whose inputs are not datasets
+                if hasattr(mapper, 'GetInputAsDataSet'):
+                    datasets.append(mapper.GetInputAsDataSet())
+
+        return datasets
+
+    def _remove_added_scalars(self):
+        """Remove any scalars added to this plotter's datasets by this plotter.
+
+        Additional point or cell data may be added to be able to correctly plot
+        scalars. This usually occurs in one of the following cases:
+
+        * ``<scalar-name>-real`` for complex data
+        * ``<scalar-name>-normed`` for normalized multi-component arrays.
+        * ``<scalars-name>-<index>`` when setting ``component=<index>`` in
+          ``add_mesh`` when plotting multi-component arrays.
+        * ``Data`` when passing an array as ``scalars`` with ``add_mesh`` rather than
+          selecting an existing array using a string.
+        * ``__custom_rgba`` when the color mode is set to map directly to the
+          scalars (an RGBA array).
+
+        This method removes those arrays, which are tracked in
+        ``self._added_scalars``. It also tries to restore the original scalars
+        as active scalars.
+
+        """
+
+        def remove_and_reactivate_prior_scalars(dsattr, name):
+            """Remove ``name`` and reactivate prior scalars if applicable."""
+            # reactivate prior active scalars
+            if name.endswith('-normed'):
+                orig_name = name[:-7]
+                if orig_name in dsattr:
+                    dsattr.active_scalars_name = orig_name
+            elif name.endswith('-real'):
+                orig_name = name[:-5]
+                if orig_name in dsattr:
+                    dsattr.active_scalars_name = orig_name
+            elif re.findall('-[0-9]+$', name):
+                # component
+                orig_scalars = re.sub('-[0-9]+$', '', name)
+                if orig_scalars in dsattr:
+                    dsattr.active_scalars_name = orig_scalars
+
+            dsattr.pop(name, None)
+
+        for mesh, (name, assoc) in self._added_scalars:
+            dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
+            remove_and_reactivate_prior_scalars(dsattr, name)
+        self._added_scalars = []
 
     def __del__(self):
         """Delete the plotter."""
