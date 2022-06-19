@@ -947,7 +947,7 @@ def get_cmap_safe(cmap):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
     try:
         from matplotlib.cm import get_cmap
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('The use of custom colormaps requires the installation of matplotlib')
 
     if isinstance(cmap, str):
@@ -982,7 +982,7 @@ def get_cmap_safe(cmap):
                 raise TypeError('When inputting a list as a cmap, each item should be a string.')
         try:
             from matplotlib.colors import ListedColormap
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError('Listed colormaps require the installation of matplotlib')
 
         cmap = ListedColormap(cmap)
