@@ -785,8 +785,8 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this changes the bounds as well. Since we use default spacing
-        of 1 here, the bounds match the extent. The dimensions also make sense.
+        Note how this also modifies the grid bounds and dimensions. Since we
+        use default spacing of 1 here, the bounds match the extent exactly.
 
         >>> grid.bounds
         (2.0, 5.0, 2.0, 5.0, 2.0, 5.0)
