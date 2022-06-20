@@ -27,7 +27,7 @@ the following projects are required dependencies of PyVista:
 
 Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
-PyVista includes several optional dependencies for visualization and file IO, including:
+PyVista includes several optional dependencies for visualization and reading a variety of additional file formats, including:
 
 * `cmocean <https://pypi.org/project/cmocean/>`_ - Colormaps for Oceanography.
 * `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
@@ -48,7 +48,7 @@ using ``pip``::
 
     pip install pyvista
 
-To install all the additional packages that extend pyvista, install using
+To install all the additional packages that extend PyVista, install using
 ``pip`` with::
 
     pip install pyvista[all]
