@@ -64,28 +64,28 @@ jobs:
           echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)") >> $GITHUB_ENV
 
       - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: doc/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache docs _build directory
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: doc/_build/
           key: doc-_build-${{ hashFiles('pyvista/_version.py') }}-${{ hashFiles('doc/conf.py') }}
 
       - name: Cache example data
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache autosummary
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: /**/_autosummary/*.rst

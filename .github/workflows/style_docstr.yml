@@ -30,12 +30,12 @@ jobs:
         with:
           python-version: 3.9
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-Data-${{ hashFiles('*') }}
