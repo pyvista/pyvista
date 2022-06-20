@@ -998,12 +998,25 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
-def test_smooth():
-    data = examples.load_uniform()
-    vol = data.threshold_percent(30)
-    surf = vol.extract_geometry(progress_bar=True)
+def test_smooth(uniform):
+    vol = uniform.threshold_percent(30)
+    surf = vol.extract_geometry()
     smooth = surf.smooth()
     assert np.any(smooth.points)
+
+    surf.smooth(inplace=True)
+    assert np.allclose(surf.points, smooth.points)
+
+
+def test_smooth_taubin(uniform):
+    data = examples.load_uniform()
+    vol = data.threshold_percent(30)
+    surf = vol.extract_geometry()
+    smooth = surf.smooth_taubin()
+    assert np.any(smooth.points)
+
+    surf.smooth_taubin(inplace=True)
+    assert np.allclose(surf.points, smooth.points)
 
 
 def test_resample():
