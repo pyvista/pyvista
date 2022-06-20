@@ -842,9 +842,11 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = examples.download_foot_bones().subdivide(2)
         >>> smoothed_mesh = mesh.smooth_taubin()
         >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_text('Original Mesh')
         >>> pl.subplot(0, 1)
-        >>> pl.add_mesh(smoothed_mesh)
+        >>> _ = pl.add_mesh(smoothed_mesh)
+        >>> _ = pl.add_text('Smoothed Mesh')
         >>> pl.show()
 
         See :ref:`surface_smoothing_example` for more examples using this filter.
