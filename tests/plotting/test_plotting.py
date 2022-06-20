@@ -102,6 +102,12 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_complex_value',
 }
 
+# these images vary between Linux/Windows and MacOS
+# and will not be verified for MacOS
+MACOS_SKIP_IMAGE_CACHE = {
+    'test_plot_show_grid_with_mesh',
+}
+
 
 # this must be a session fixture to ensure this runs before any other test
 @pytest.fixture(scope="session", autouse=True)
@@ -159,6 +165,9 @@ def verify_cache_image(plotter):
 
     # some tests fail when on Windows with OSMesa
     if os.name == 'nt' and test_name in WINDOWS_SKIP_IMAGE_CACHE:
+        return
+    # high variation for MacOS
+    if platform.system() == 'Darwin' and test_name in MACOS_SKIP_IMAGE_CACHE:
         return
 
     # cached image name
@@ -522,8 +531,28 @@ def test_plot_bounds_axes_with_no_data():
 
 def test_plot_show_grid(sphere):
     plotter = pyvista.Plotter()
+
+    with pytest.raises(ValueError, match='Value of location'):
+        plotter.show_grid(location='foo')
+    with pytest.raises(TypeError, match='location must be a string'):
+        plotter.show_grid(location=10)
+    with pytest.raises(ValueError, match='Value of ticks'):
+        plotter.show_grid(ticks='foo')
+    with pytest.raises(TypeError, match='ticks must be a string'):
+        plotter.show_grid(ticks=10)
+
     plotter.show_grid()
     plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_show_grid_with_mesh(hexbeam, plane):
+    """Show the grid bounds for a specific mesh."""
+    hexbeam.clear_data()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(hexbeam, style='wireframe')
+    plotter.add_mesh(plane)
+    plotter.show_grid(mesh=plane, show_zlabels=False, show_zaxis=False)
     plotter.show(before_close_callback=verify_cache_image)
 
 
