@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/Library/Caches/pip
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
@@ -74,14 +74,14 @@ jobs:
         uses: pyvista/setup-headless-display-action@v1
 
       - name: Cache Conda
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/anaconda3/pkgs
           key: Conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
           restore-keys: |
             ${{ runner.os }}-conda-
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -150,14 +150,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.vtk-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -236,7 +236,7 @@ jobs:
           echo ("PIP_CACHE_DIR=" + $(pip cache dir)) >> $env:GITHUB_ENV
 
       - name: Restore pip cache dir
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
@@ -259,7 +259,7 @@ jobs:
           echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")) >> $env:GITHUB_ENV
 
       - name: Cache example data
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: Examples-1-${{ hashFiles('*') }}
