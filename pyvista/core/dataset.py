@@ -1,6 +1,7 @@
 """Attributes common to PolyData and Grid Objects."""
 
 import collections.abc
+from copy import deepcopy
 import logging
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
@@ -49,6 +50,10 @@ class ActiveArrayInfo:
         """Initialize."""
         self.association = association
         self.name = name
+
+    def copy(self):
+        """Return a copy of this object."""
+        return ActiveArrayInfo(self.association, self.name)
 
     def __getstate__(self):
         """Support pickling."""
@@ -763,7 +768,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cube['my_array'] = range(cube.n_points)
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
-        array([0, 1, 2, 3, 4, 5, 6, 7])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
         field = get_array_association(self, old_name, preference=preference)
@@ -1407,7 +1412,7 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def copy_meta_from(self, ido: 'DataSet'):
+    def copy_meta_from(self, ido: 'DataSet', deep: bool = True):
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1415,11 +1420,27 @@ class DataSet(DataSetFilters, DataObject):
         ido : pyvista.DataSet
             Dataset to copy the metadata from.
 
+        deep : bool, optional
+            Deep or shallow copy.
+
         """
-        self._active_scalars_info = ido.active_scalars_info
-        self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
-        self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+
+        if deep:
+            self._association_complex_names = deepcopy(ido._association_complex_names)
+            self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
+            self._active_scalars_info = ido.active_scalars_info.copy()
+            self._active_vectors_info = ido.active_vectors_info.copy()
+            self._active_tensors_info = ido.active_tensors_info.copy()
+            self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+        else:
+            # pass by reference
+            self._association_complex_names = ido._association_complex_names
+            self._association_bitarray_names = ido._association_bitarray_names
+            self._active_scalars_info = ido.active_scalars_info
+            self._active_vectors_info = ido.active_vectors_info
+            self._active_tensors_info = ido.active_tensors_info
+            self._textures = ido.textures
 
     @property
     def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
@@ -1457,8 +1478,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64  (8,)
-            my_other_array          int64    (8,)                 SCALARS
+            my_array                float64    (8,)
+            my_other_array          int64      (8,)                 SCALARS
 
         Access an array from ``point_data``.
 
@@ -1594,8 +1615,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64  (6,)
-            my_other_array          int64    (6,)                 SCALARS
+            my_array                float64    (6,)
+            my_other_array          int64      (6,)                 SCALARS
 
         Access an array from ``cell_data``.
 
@@ -1756,7 +1777,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
-    ) -> np.ndarray:
+    ) -> 'pyvista.pyvista_ndarray':
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -1790,17 +1811,17 @@ class DataSet(DataSetFilters, DataObject):
         Get the point data array.
 
         >>> mesh.get_array('point-data')
-        array([0, 1, 2, 3, 4, 5, 6, 7])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         Get the cell data array.
 
         >>> mesh.get_array('cell-data')
-        array([0, 1, 2, 3, 4, 5])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5])
 
         Get the field data array.
 
         >>> mesh.get_array('field-data')
-        array(['a', 'b', 'c'], dtype='<U1')
+        pyvista_ndarray(['a', 'b', 'c'], dtype='<U1')
 
         """
         arr = get_array(self, name, preference=preference, err=True)
@@ -2035,7 +2056,7 @@ class DataSet(DataSetFilters, DataObject):
             )
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh)
+            self.copy_meta_from(mesh, deep=True)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.

@@ -1,8 +1,53 @@
 import pytest
+from pytest import raises
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
+
+
+def test_show_bounds_axes_ranges():
+    plotter = pyvista.Plotter()
+
+    # test empty call
+    plotter.show_bounds()
+    cube_axes_actor = plotter.renderer.cube_axes_actor
+    assert cube_axes_actor.GetBounds() == tuple(plotter.bounds)
+
+    # send bounds but no axes ranges
+    bounds = (0, 1, 0, 1, 0, 1)
+    plotter.show_bounds(bounds=bounds)
+    cube_axes_actor = plotter.renderer.cube_axes_actor
+    assert cube_axes_actor.GetBounds() == bounds
+
+    # send bounds and axes ranges
+    axes_ranges = [0, 1, 0, 2, 0, 3]
+    plotter.show_bounds(bounds=bounds, axes_ranges=axes_ranges)
+    cube_axes_actor = plotter.renderer.cube_axes_actor
+    assert cube_axes_actor.GetBounds() == bounds
+    test_ranges = [
+        *cube_axes_actor.GetXAxisRange(),
+        *cube_axes_actor.GetYAxisRange(),
+        *cube_axes_actor.GetZAxisRange(),
+    ]
+    assert test_ranges == axes_ranges
+
+
+def test_show_bounds_invalid_axes_ranges():
+    plotter = pyvista.Plotter()
+
+    # send incorrect axes_ranges types
+    with raises(TypeError, match='numeric sequence'):
+        axes_ranges = 1
+        plotter.show_bounds(axes_ranges=axes_ranges)
+
+    with raises(TypeError, match='All of the elements'):
+        axes_ranges = [0, 1, 'a', 'b', 2, 3]
+        plotter.show_bounds(axes_ranges=axes_ranges)
+
+    with raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
+        axes_ranges = [0, 1, 2, 3, 4]
+        plotter.show_bounds(axes_ranges=axes_ranges)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")

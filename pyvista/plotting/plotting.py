@@ -7,6 +7,7 @@ import logging
 import os
 import pathlib
 import platform
+import re
 import textwrap
 from threading import Thread
 import time
@@ -270,6 +271,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
         self._has_background_layer = False
+        self._added_scalars = []
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -379,7 +381,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
-        See :ref:`load_vrml` for a full example using this method.
+        See :ref:`load_vrml_example` for a full example using this method.
 
         """
         filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -397,9 +399,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def export_html(self, filename, backend='pythreejs'):
         """Export this plotter as an interactive scene to a HTML file.
 
-        You have the option of exposing the scene using either vtk.js (using ``panel``) or
-        three.js (using ``pythreejs``), both of which are excellent JavaScript libraries to visualize
-        small to moderately complex scenes for scientific visualization.
+        You have the option of exposing the scene using either vtk.js (using
+        ``panel``) or three.js (using ``pythreejs``), both of which are
+        excellent JavaScript libraries to visualize small to moderately complex
+        scenes for scientific visualization.
 
         Parameters
         ----------
@@ -635,7 +638,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(examples.load_hexbeam())
-        >>> pl.export_vrml("sample")
+        >>> pl.export_vrml("sample")  # doctest:+SKIP
+
         """
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
@@ -2041,9 +2045,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
+            mapped to the mesh.  Default ``'point'``, causes the
             scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            either ``'point'`` or ``'cell'``.
 
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
@@ -2374,8 +2378,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         # Scalars formatting ==================================================
+        added_scalar_info = None
         if scalars is not None:
-            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
+            show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
                 mesh,
                 scalars,
                 scalar_bar_args,
@@ -2399,7 +2404,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_scalar_bar,
             )
         elif custom_opac:  # no scalars but custom opacity
-            self.mapper.set_custom_opacity(
+            added_scalar_info = self.mapper.set_custom_opacity(
                 opacity,
                 color,
                 mesh,
@@ -2411,6 +2416,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         else:
             self.mapper.SetScalarModeToUseFieldData()
+
+        # track if any data arrays have been added
+        if added_scalar_info is not None and added_scalar_info[0] is not None:
+            self._added_scalars.append((mesh, added_scalar_info))
 
         # Set actor properties ================================================
 
@@ -2642,9 +2651,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
+            mapped to the mesh.  Default ``'point'``, causes the
             scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            either ``'point'`` or ``'cell'``.
 
         opacity_unit_distance : float
             Set/Get the unit distance on which the scalar opacity
@@ -3341,6 +3350,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # this helps managing closed plotters
         self._closed = True
 
+        # remove any added scalars
+        self._remove_added_scalars()
+
     def deep_clean(self):
         """Clean the plotter of the memory."""
         self.disable_picking()
@@ -3366,6 +3378,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         shadow=False,
         name=None,
         viewport=False,
+        orientation=0.0,
         *,
         render=True,
     ):
@@ -3417,6 +3430,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``True`` and position is a tuple of float, uses the
             normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
+
+        orientation : float, optional
+            Angle orientation of text counterclockwise in degrees.  The text
+            is rotated around an anchor point that may be on the edge or
+            corner of the text.  The default is 0 degrees, which is horizontal.
 
         render : bool, optional
             Force a render when ``True`` (default).
@@ -3485,11 +3503,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
-        self.textActor.GetTextProperty().SetColor(
-            Color(color, default_color=self._theme.font.color).float_rgb
-        )
-        self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
-        self.textActor.GetTextProperty().SetShadow(shadow)
+        text_prop = self.textActor.GetTextProperty()
+        text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
+        text_prop.SetFontFamily(FONTS[font].value)
+        text_prop.SetShadow(shadow)
+        text_prop.SetOrientation(orientation)
 
         self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False, render=render)
         return self.textActor
@@ -4448,12 +4466,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         Plot an orbit around the earth.  Save the gif as a temporary file.
 
-        >>> import tempfile
         >>> import os
+        >>> from tempfile import mkdtemp
         >>> import pyvista
-        >>> filename = os.path.join(tempfile._get_default_tempdir(),
-        ...                         next(tempfile._get_candidate_names()) + '.gif')
         >>> from pyvista import examples
+        >>> filename = os.path.join(mkdtemp(), 'orbit.gif')
         >>> plotter = pyvista.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(examples.load_globe(), smooth_shading=True)
         >>> plotter.open_gif(filename)
@@ -4577,6 +4594,65 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.SetFilePrefix(filename)
         exporter.SetRenderWindow(self.ren_win)
         return exporter.Write()
+
+    @property
+    def _datasets(self):
+        """Return a list of all datasets associated with this plotter."""
+        datasets = []
+        for renderer in self.renderers:
+            for actor in renderer.actors.values():
+                mapper = actor.GetMapper()
+
+                # ignore any mappers whose inputs are not datasets
+                if hasattr(mapper, 'GetInputAsDataSet'):
+                    datasets.append(mapper.GetInputAsDataSet())
+
+        return datasets
+
+    def _remove_added_scalars(self):
+        """Remove any scalars added to this plotter's datasets by this plotter.
+
+        Additional point or cell data may be added to be able to correctly plot
+        scalars. This usually occurs in one of the following cases:
+
+        * ``<scalar-name>-real`` for complex data
+        * ``<scalar-name>-normed`` for normalized multi-component arrays.
+        * ``<scalars-name>-<index>`` when setting ``component=<index>`` in
+          ``add_mesh`` when plotting multi-component arrays.
+        * ``Data`` when passing an array as ``scalars`` with ``add_mesh`` rather than
+          selecting an existing array using a string.
+        * ``__custom_rgba`` when the color mode is set to map directly to the
+          scalars (an RGBA array).
+
+        This method removes those arrays, which are tracked in
+        ``self._added_scalars``. It also tries to restore the original scalars
+        as active scalars.
+
+        """
+
+        def remove_and_reactivate_prior_scalars(dsattr, name):
+            """Remove ``name`` and reactivate prior scalars if applicable."""
+            # reactivate prior active scalars
+            if name.endswith('-normed'):
+                orig_name = name[:-7]
+                if orig_name in dsattr:
+                    dsattr.active_scalars_name = orig_name
+            elif name.endswith('-real'):
+                orig_name = name[:-5]
+                if orig_name in dsattr:
+                    dsattr.active_scalars_name = orig_name
+            elif re.findall('-[0-9]+$', name):
+                # component
+                orig_scalars = re.sub('-[0-9]+$', '', name)
+                if orig_scalars in dsattr:
+                    dsattr.active_scalars_name = orig_scalars
+
+            dsattr.pop(name, None)
+
+        for mesh, (name, assoc) in self._added_scalars:
+            dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
+            remove_and_reactivate_prior_scalars(dsattr, name)
+        self._added_scalars = []
 
     def __del__(self):
         """Delete the plotter."""
@@ -5343,6 +5419,12 @@ class Plotter(BasePlotter):
                 jupyter_backend = self._theme.jupyter_backend
 
             if jupyter_backend != 'none':
+                if screenshot:
+                    warnings.warn(
+                        '\nSet `jupyter_backend` backend to `"none"` to take a screenshot'
+                        ' within a notebook environment.'
+                    )
+
                 disp = handle_plotter(
                     self, backend=jupyter_backend, return_viewer=return_viewer, **jupyter_kwargs
                 )
