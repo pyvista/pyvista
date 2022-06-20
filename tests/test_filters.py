@@ -1400,7 +1400,7 @@ def test_plot_over_circular_arc(tmpdir):
 
 @skip_no_mpl_figure
 def test_plot_over_circular_arc_normal(tmpdir):
-    """this requires matplotlib"""
+    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
