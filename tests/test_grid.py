@@ -1079,7 +1079,7 @@ def test_set_extent():
 
     extent = [0, 1, 0, 1, 0, 1]
     uni_grid.extent = extent
-    assert np.allclose(uni_grid.extent, extent)
+    assert np.array_equal(uni_grid.extent, extent)
 
 
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')

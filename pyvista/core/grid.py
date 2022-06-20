@@ -769,8 +769,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     def extent(self) -> tuple:
         """Return or set the extent of the UniformGrid.
 
-        This is the same as :class:`Grid.dimensions` with the upper bounds
-        minus one.
+        The extent is simply the first and last indices for each of the three axes.
 
         Examples
         --------
@@ -797,8 +796,8 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetExtent()
 
     @extent.setter
-    def extent(self, extent: Sequence[int]):
+    def extent(self, new_extent: Sequence[int]):
         """Set the extent of the UniformGrid."""
-        if len(extent) != 6:
+        if len(new_extent) != 6:
             raise ValueError('Extent must be a vector of 6 values.')
-        self.SetExtent(extent)
+        self.SetExtent(new_extent)
