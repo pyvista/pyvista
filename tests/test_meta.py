@@ -8,6 +8,10 @@ anything that's beyond testing actual library code.
 
 def test_mpl_backend():
     """Check if the backend is correctly set for testing."""
-    import matplotlib
+    # only fail if matplotlib is otherwise available
+    try:
+        import matplotlib
+    except ImportError:
+        return
 
     assert matplotlib.get_backend() == 'agg'
