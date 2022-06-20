@@ -556,7 +556,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     def flip(self, axis):
-        """Flip this texture inplace along the specified axis.
+        """Flip (mirror) this texture inplace along the specified axis.
 
         Parameters
         ----------
@@ -659,7 +659,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return self.image_data
 
     def plot(self, *args, **kwargs):
-        """Plot the texture an image.
+        """Plot the texture as an image.
 
         If the texture is a cubemap, it will be displayed as a skybox.
 
@@ -781,6 +781,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         -------
         pyvista.Texture
             Texture converted to greyscale. If already black and white,
+            the original texture itself is returned.
 
         Notes
         -----
@@ -801,7 +802,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         new_texture = self.copy()
         r, g, b = np.asarray(new_texture.image_data).T[:3]
-        greyscale = (0.2989 * r + 0.5870 * g + 0.1140 * b).astype(np.uint8)
+        greyscale = (0.2989 * r + 0.5870 * g + 0.1140 * b).round().astype(np.uint8)
         new_texture.image_data = greyscale
         new_texture.flip(0)
         new_texture.flip(1)

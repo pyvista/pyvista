@@ -216,7 +216,7 @@ def test_texture_empty_init():
 
 def test_texture_greyscale():
     # verify a greyscale image can be created
-    texture = pyvista.Texture(np.zeros((10, 10, 1), dtype=np.int8))
+    texture = pyvista.Texture(np.zeros((10, 10, 1), dtype=np.uint8))
     assert texture.dimensions == (10, 10)
     assert texture.n_components == 1
 
@@ -254,14 +254,14 @@ def test_texture_flip(texture):
     orig_data = texture.image_data.copy()
 
     texture.flip(0)
-    assert not np.allclose(orig_data, texture.image_data)
+    assert not np.array_equal(orig_data, texture.image_data)
     texture.flip(0)
-    assert np.allclose(orig_data, texture.image_data)
+    assert np.array_equal(orig_data, texture.image_data)
 
     texture.flip(1)
-    assert not np.allclose(orig_data, texture.image_data)
+    assert not np.array_equal(orig_data, texture.image_data)
     texture.flip(1)
-    assert np.allclose(orig_data, texture.image_data)
+    assert np.array_equal(orig_data, texture.image_data)
 
 
 def test_texture_rotate(texture):
