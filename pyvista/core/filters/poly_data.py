@@ -753,7 +753,6 @@ class PolyDataFilters(DataSetFilters):
         self,
         n_iter=20,
         pass_band=0.1,
-        convergence=0.0,
         edge_angle=15,
         feature_angle=45,
         boundary_smoothing=True,
@@ -808,7 +807,7 @@ class PolyDataFilters(DataSetFilters):
             translation effects, the algorithm can translate and scale the
             position coordinates to within the unit cube ``[-1, 1]``, perform the
             smoothing, and translate and scale the position coordinates back to
-            the original coordinate frame. This defaults to ``False``
+            the original coordinate frame. This defaults to ``False``.
 
         inplace : bool, optional
             Updates mesh in-place.
