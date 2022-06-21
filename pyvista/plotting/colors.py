@@ -985,7 +985,7 @@ def get_cmap_safe(cmap):
         try:
             from matplotlib.colors import ListedColormap
         except ImportError:  # pragma: no cover
-            raise ImportError('Listed colormaps require the installation of matplotlib')
+            raise ImportError('Listed colormaps require the installation of matplotlib') from None
 
         cmap = ListedColormap(cmap)
 
