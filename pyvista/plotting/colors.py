@@ -948,7 +948,9 @@ def get_cmap_safe(cmap):
     try:
         from matplotlib.cm import get_cmap
     except ImportError:  # pragma: no cover
-        raise ImportError('The use of custom colormaps requires the installation of matplotlib') from None
+        raise ImportError(
+            'The use of custom colormaps requires the installation of matplotlib'
+        ) from None
 
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
