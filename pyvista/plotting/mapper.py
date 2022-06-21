@@ -122,10 +122,10 @@ def make_mapper(mapper_class):
                         raise TypeError('component must be either None or an integer')
                     if component is None:
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
-                        scalars_name = '{}-normed'.format(scalars_name)
+                        scalars_name = f'{scalars_name}-normed'
                     elif component < scalars.shape[1] and component >= 0:
                         scalars = scalars[:, component].copy()
-                        scalars_name = '{}-{}'.format(scalars_name, component)
+                        scalars_name = f'{scalars_name}-{component}'
                     else:
                         raise ValueError(
                             'Component must be nonnegative and less than the '
