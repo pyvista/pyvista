@@ -4088,3 +4088,27 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     """
     return _download_and_read("cellsnd.ascii.inp", load=load)
+
+
+def download_dolfinx_mesh(load=True):  # pragma: no cover
+    """Download a mesh of DOLFINx.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_dolfinx_mesh()
+    >>> dataset.plot()
+
+    """
+    return _download_and_read("dolfinx/mesh.xdmf", load=load)
