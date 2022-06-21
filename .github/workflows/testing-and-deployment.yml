@@ -137,9 +137,14 @@ jobs:
       matrix:
         python-version: ['3.7', '3.8', '3.9']
         vtk-version: ['latest']
+        allow-failure: ['false']
         include:
           - python-version: '3.9'
-            vtk-version: '9.0.3'
+            vtk-version: '==9.0.3'
+            allow-failure: 'false'
+          - python-version: '3.9'
+            vtk-version: "~=9.2.0rc1"
+            allow-failure: 'true'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -172,7 +177,7 @@ jobs:
 
       - name: Set up vtk
         if: ${{ matrix.vtk-version != 'latest' }}
-        run: pip install vtk==${{ matrix.vtk-version }}
+        run: pip install vtk${{ matrix.vtk-version }}
 
       - name: Install Testing Requirements
         run: |
@@ -188,6 +193,7 @@ jobs:
           pip list
 
       - name: Unit Testing
+        continue-on-error: ${{ matrix.allow-failure == 'true' }}
         run: |
           xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
 
