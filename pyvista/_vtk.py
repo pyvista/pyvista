@@ -346,6 +346,7 @@ if VTK9:
         vtkXMLUnstructuredGridWriter,
         vtkXMLWriter,
     )
+    from vtkmodules.vtkIOXdmf2 import vtkXdmfReader
     from vtkmodules.vtkImagingCore import (
         vtkExtractVOI,
         vtkImageDifference,

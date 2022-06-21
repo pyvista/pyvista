@@ -117,6 +117,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.vtu``       | :class:`pyvista.XMLUnstructuredGridReader`  |
     +----------------+---------------------------------------------+
+    | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -2006,6 +2008,25 @@ class SegYReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
 
+class XdmfReader(BaseReader):
+    """XdmfReader for .xdmf files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_dolfinx_mesh(load=True)
+    >>> reader = pyvista.get_reader(filename)
+    >>> filename.split("/")[-1]  # omit the path
+    'mesh.xdmf'
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkXdmfReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2056,4 +2077,5 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
+    '.xdmf': XdmfReader,
 }
