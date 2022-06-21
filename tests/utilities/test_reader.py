@@ -799,3 +799,13 @@ def test_hdf_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_xdmf_reader():
+    filename = examples.download_dolfinx_mesh(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.XdmfReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
