@@ -5,7 +5,7 @@ on: [pull_request, workflow_dispatch]
 
 jobs:
   stylecheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -21,7 +21,7 @@ jobs:
         run: pre-commit run --all-files
 
   docstringcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
