@@ -2015,7 +2015,7 @@ class XdmfReader(BaseReader, PointCellDataSelection):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_dolfinx_mesh(load=True)
+    >>> filename = examples.download_dolfinx_mesh(load=False)
     >>> reader = pyvista.get_reader(filename)
     >>> filename.split("/")[-1]  # omit the path
     'mesh.xdmf'
