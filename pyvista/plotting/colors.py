@@ -982,10 +982,7 @@ def get_cmap_safe(cmap):
         for item in cmap:
             if not isinstance(item, str):
                 raise TypeError('When inputting a list as a cmap, each item should be a string.')
-        try:
-            from matplotlib.colors import ListedColormap
-        except ImportError:  # pragma: no cover
-            raise ImportError('Listed colormaps require the installation of matplotlib') from None
+        from matplotlib.colors import ListedColormap
 
         cmap = ListedColormap(cmap)
 
