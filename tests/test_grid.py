@@ -945,8 +945,14 @@ def test_fft_low_pass(noise_2d):
     name = noise_2d.active_scalars_name
     noise_no_scalars = noise_2d.copy()
     noise_no_scalars.clear_data()
-    with pytest.raises(ValueError, match='active point scalars'):
+    with pytest.raises(ValueError, match='FFT filters require'):
         noise_no_scalars.low_pass(1, 1, 1)
+
+    noise_too_many_scalars = noise_no_scalars.copy()
+    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), 'a')
+    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), 'b')
+    with pytest.raises(ValueError, match='There are multiple point scalars available'):
+        noise_too_many_scalars.low_pass(1, 1, 1)
 
     with pytest.raises(ValueError, match='must be complex data'):
         noise_2d.low_pass(1, 1, 1)

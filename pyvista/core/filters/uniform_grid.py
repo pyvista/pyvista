@@ -7,6 +7,7 @@ import pyvista
 from pyvista import _vtk, abstract_class
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.errors import AmbiguousDataError, MissingDataError
 
 
 @abstract_class
@@ -678,7 +679,16 @@ class UniformGridFilters(DataSetFilters):
         """
         # check for active scalars, otherwise risk of segfault
         if self.point_data.active_scalars_name is None:
-            raise ValueError('FFT filters require active point scalars')
+            possible_scalars = self.point_data.keys()
+            if len(possible_scalars) == 1:
+                self.set_active_scalars(possible_scalars[0], preference='point')
+            elif len(possible_scalars) > 1:
+                raise AmbiguousDataError(
+                    'There are multiple point scalars available. Set one to be active'
+                    'active with `point_data.active_scalars_name = `'
+                )
+            else:
+                raise MissingDataError('FFT filters require point scalars.')
 
         scalars = self.point_data.active_scalars
 
