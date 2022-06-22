@@ -1117,15 +1117,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Bolds axis labels and numbers.  Default ``True``.
 
         font_size : float, optional
-            Sets the size of the label font.  Defaults to 16.
+            Sets the size of the label font. Defaults to
+            :attr:`pyvista.global_theme.font.size
+            <pyvista.themes._Font.size>`.
 
         font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
-            or ``'arial'``.
+            or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
+            <pyvista.themes._Font.family>`.
 
         color : color_like, optional
-            Color of all labels and axis titles.  Default white.
-            Either a string, rgb list, or hex color string.  For
+            Color of all labels and axis titles.  Defaults to
+            :attr:`pyvista.global_theme.font.color
+            <pyvista.themes._Font.color>`.
+
+            Either a string, RGB list, or hex color string.  For
             example:
 
             * ``color='white'``
@@ -1391,10 +1397,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             prop.SetBold(bold)
 
         # Note: font_size does nothing as a property, use SetScreenSize instead
-        # Here, we normalize relative to 16 to give the user an illusion of
-        # just changing "font size". 10 is used here since it's the default
-        # "screen size".
-        cube_axes_actor.SetScreenSize(font_size / 16 * 10.0)
+        # Here, we normalize relative to 12 to give the user an illusion of
+        # just changing the font size relative to a font size of 12. 10 is used
+        # here since it's the default "screen size".
+        cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor

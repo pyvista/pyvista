@@ -4662,7 +4662,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for mesh, (name, assoc) in self._added_scalars:
             dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
             remove_and_reactivate_prior_scalars(dsattr, name)
-        self._added_scalars = []
 
         # reactivate prior active scalars
         for mesh, point_name, cell_name in self._prev_active_scalars:
@@ -4672,6 +4671,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if cell_name is not None:
                 if mesh.cell_data.active_scalars_name != cell_name:
                     mesh.cell_data.active_scalars_name = cell_name
+
+        self._added_scalars = []
+        self._prev_active_scalars = []
 
     def __del__(self):
         """Delete the plotter."""
