@@ -544,10 +544,12 @@ class UniformGridFilters(DataSetFilters):
         output_scalars_name=None,
         progress_bar=False,
     ):
-        """Perform a low pass filter in the frequency domain.
+        """Perform a butterworth low pass filter in the frequency domain.
 
-        This filter only works on an image after it has been converted to
-        frequency domain by a :func:`UniformGridFilters.fft` filter.
+        This filter requires that the :class`UniformGrid` have complex point
+        scalars, usually generated after the :class:`UniformGrid` has been
+        converted to frequency domain by a :func:`UniformGridFilters.fft`
+        filter.
 
         A :func:`UniformGridFilters.rfft` filter can be
         used to convert the output back into the spatial
@@ -607,10 +609,12 @@ class UniformGridFilters(DataSetFilters):
         output_scalars_name=None,
         progress_bar=False,
     ):
-        """Perform a high pass filter in the frequency domain.
+        """Perform a butterworth high pass filter in the frequency domain.
 
-        This filter only works on an image after it has been converted to
-        frequency domain by a :func:`UniformGridFilters.fft` filter.
+        This filter requires that the :class`UniformGrid` have complex point
+        scalars, usually generated after the :class:`UniformGrid` has been
+        converted to frequency domain by a :func:`UniformGridFilters.fft`
+        filter.
 
         A :func:`UniformGridFilters.rfft` filter can be
         used to convert the output back into the spatial
