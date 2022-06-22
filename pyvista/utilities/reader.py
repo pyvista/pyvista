@@ -809,6 +809,35 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             self.reader.DecomposePolyhedraOff()
 
     @property
+    def skip_zero_time(self):
+        """Indicate whether or not to ignore the '/0' time directory.
+
+        Returns
+        -------
+        bool
+            If ``True``, ignore the '/0' time directory.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.skip_zero_time = False
+        >>> reader.skip_zero_time
+        False
+
+        """
+        return bool(self.reader.GetSkipZeroTime())
+
+    @skip_zero_time.setter
+    def skip_zero_time(self, value):
+        if value:
+            self.reader.SkipZeroTimeOn()
+        else:
+            self.reader.SkipZeroTimeOff()
+
+    @property
     def cell_to_point_creation(self):
         """Whether cell data is translated to point data when read.
 
