@@ -799,14 +799,3 @@ def test_hdf_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
-
-
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
-def test_xdmf_reader():
-    filename = examples.download_dolfinx_mesh(load=False)
-    reader = pyvista.get_reader(filename)
-    assert isinstance(reader, pyvista.XdmfReader)
-    assert reader.path == filename
-
-    mesh = reader.read()
-    assert all([mesh.n_points, mesh.n_cells])
