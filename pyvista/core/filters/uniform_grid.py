@@ -423,8 +423,7 @@ class UniformGridFilters(DataSetFilters):
         types, but the output is always complex128. The filter is fastest for
         images that have power of two sizes.
 
-        The filter is fastest for images that have power of two sizes. The
-        filter uses a butterfly diagram for each prime factor of the
+        The filter uses a butterfly diagram for each prime factor of the
         dimension. This makes images with prime number dimensions (i.e. 17x17)
         much slower to compute. Multi dimensional (i.e volumes) FFT's are
         decomposed so that each axis executes serially.
@@ -544,7 +543,7 @@ class UniformGridFilters(DataSetFilters):
         output_scalars_name=None,
         progress_bar=False,
     ):
-        """Perform a butterworth low pass filter in the frequency domain.
+        """Perform a Butterworth low pass filter in the frequency domain.
 
         This filter requires that the :class`UniformGrid` have complex point
         scalars, usually generated after the :class:`UniformGrid` has been
@@ -609,7 +608,7 @@ class UniformGridFilters(DataSetFilters):
         output_scalars_name=None,
         progress_bar=False,
     ):
-        """Perform a butterworth high pass filter in the frequency domain.
+        """Perform a Butterworth high pass filter in the frequency domain.
 
         This filter requires that the :class`UniformGrid` have complex point
         scalars, usually generated after the :class:`UniformGrid` has been
@@ -666,7 +665,7 @@ class UniformGridFilters(DataSetFilters):
         return output
 
     def _change_fft_output_scalars(self, dataset, orig_name, out_name):
-        """Modify the name and dtype of the output scalars for a FFT filter."""
+        """Modify the name and dtype of the output scalars for an FFT filter."""
         name = orig_name if out_name is None else out_name
         pdata = dataset.point_data
         if pdata.active_scalars_name != name:

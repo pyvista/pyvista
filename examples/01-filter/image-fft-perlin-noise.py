@@ -13,7 +13,6 @@ Here, we demonstrate FFT usage by first generating Perlin noise using
 sample :func:`pyvista.perlin_noise <pyvista.core.common_data.perlin_noise>`,
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
-n
 """
 
 import numpy as np
@@ -31,7 +30,7 @@ import pyvista as pv
 # the x direction and 5 in the y direction. Units of the frequency is
 # ``1/pixel``.
 #
-# Also note that the dimensions of the image are a power of 2. This is because
+# Also note that the dimensions of the image are powers of 2. This is because
 # the FFT is much more efficient for arrays sized as a power of 2.
 
 freq = [10, 5, 0]
@@ -47,7 +46,7 @@ warped_noise.plot(show_scalar_bar=False, text='Perlin Noise', lighting=False)
 ###############################################################################
 # Perform FFT of Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Next, perform a FFT of the noise and plot the frequency content.
+# Next, perform an FFT of the noise and plot the frequency content.
 # For the sake of simplicity, we will only plot the content in the first
 # quadrant.
 #

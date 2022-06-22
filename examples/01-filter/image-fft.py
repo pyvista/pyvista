@@ -42,7 +42,7 @@ image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 # FFT will be applied to the active scalars, ``'PNGImage'``, the default
 # scalars name when loading a PNG image.
 #
-# The output from the filter is a complex array stored as the same array unless
+# The output from the filter is a complex array stored by the same name unless
 # specified using ``output_scalars_name``.
 
 fft_image = image.fft()
@@ -50,8 +50,8 @@ fft_image.point_data
 
 
 ###############################################################################
-# Plot the FFT of the image.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the FFT of the image
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the absolute value of the FFT of the image.
 #
 # Note that we are effectively viewing the "frequency" of the data in this
@@ -102,7 +102,7 @@ fft_image.plot(
 ###############################################################################
 # Convert to the spatial domain using reverse FFT
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Finally, convert the image data back to the "spacial" domain and plot it.
+# Finally, convert the image data back to the "spatial" domain and plot it.
 
 
 rfft = fft_image.rfft()
