@@ -52,17 +52,13 @@ warped_noise.plot(show_scalar_bar=False, text='Perlin Noise', lighting=False)
 # quadrant.
 #
 # Note the usage of :func:`numpy.fft.fftfreq` to get the frequencies.
-#
+
 sampled_fft = sampled.fft()
 freq = np.fft.fftfreq(sampled.dimensions[0], sampled.spacing[0])
+max_freq = freq.max()
 
 # only show the first quadrant
-subset = sampled_fft.extract_subset((0, xdim // 4, 0, ydim // 4, 0, 0))
-
-# shift the position of the uniform grid to match the frequency
-subset.origin = (0, 0, 0)
-spacing = np.diff(freq[:2])[0]
-subset.spacing = (spacing, spacing, spacing)
+subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 
 
 ###############################################################################
@@ -74,15 +70,18 @@ subset.spacing = (spacing, spacing, spacing)
 
 # scale by log to make the plot viewable
 subset['scalars'] = np.abs(subset.active_scalars.real)
-warped_subset = subset.warp_by_scalar(factor=0.001)
+warped_subset = subset.warp_by_scalar(factor=0.0001)
 
 pl = pv.Plotter(lighting='three lights')
 pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
 pl.show_bounds(
+    axes_ranges=(0, max_freq, 0, max_freq, 0, max_freq),
     xlabel='X Frequency',
     ylabel='Y Frequency',
     zlabel='Amplitude',
+    show_zlabels=False,
     color='k',
+    font_size=26,
 )
 pl.add_text('Frequency Domain of the Perlin Noise')
 pl.show()
@@ -138,7 +137,7 @@ pl.add_mesh(sampled.warp_by_scalar(), show_scalar_bar=False, lighting=False)
 pl.add_text('Original Dataset')
 pl.subplot(0, 1)
 pl.add_mesh(grid.warp_by_scalar(), show_scalar_bar=False, lighting=False)
-pl.add_text('Summed Low and High Passes')
+pl.add_text('Sum of the Low and High Passes')
 pl.show()
 
 
@@ -155,19 +154,23 @@ def warp_low_pass_noise(cfreq):
     return output.warp_by_scalar()
 
 
-# initialize the plotter and plot off-screen
+# Initialize the plotter and plot off-screen to save the animation as a GIF.
 plotter = pv.Plotter(notebook=False, off_screen=True)
 plotter.open_gif("low_pass.gif", fps=8)
 
 # add the initial mesh
 init_mesh = warp_low_pass_noise(1e-2)
-plotter.add_mesh(init_mesh, show_scalar_bar=False, lighting=False)
+plotter.add_mesh(init_mesh, show_scalar_bar=False, lighting=False, n_colors=128)
 
 for freq in np.logspace(-2, 1, 25):
+    plotter.clear()
     mesh = warp_low_pass_noise(freq)
-    plotter.add_mesh(mesh, show_scalar_bar=False, lighting=False)
+    plotter.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
     plotter.add_text(f"Cutoff Frequency: {freq:.2f}", color="black")
     plotter.write_frame()
-    plotter.clear()
+
+# write the last frame a few times to "pause" the gif
+for _ in range(10):
+    plotter.write_frame()
 
 plotter.close()

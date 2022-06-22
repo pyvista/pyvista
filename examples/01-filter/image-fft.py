@@ -17,6 +17,8 @@ This example was inspired by `Image denoising by FFT
 
 """
 
+import numpy as np
+
 import pyvista as pv
 from pyvista import examples
 
@@ -33,6 +35,7 @@ grey_theme.show_scalar_bar = False
 grey_theme.axes.show = False
 image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 
+
 ###############################################################################
 # Apply FFT to the image
 # ~~~~~~~~~~~~~~~~~~~~~~
@@ -45,25 +48,24 @@ image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 fft_image = image.fft()
 fft_image.point_data
 
+
 ###############################################################################
 # Plot the FFT of the image.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the absolute value of the FFT of the image.
+#
 # Note that we are effectively viewing the "frequency" of the data in this
 # image, where the four corners contain the low frequency content of the image,
 # and the middle is the high frequency content of the image.
-#
-# .. note::
-#    VTK internally creates a normalized array to plot both the real and
-#    imaginary values from the FFT filter. To avoid having this array included
-#    in the dataset, we use :func:`copy() <pyvista.DataObject.copy>` to create a
-#    temporary copy that's plotted.
 
-fft_image.copy().plot(
+fft_image.plot(
+    scalars=np.abs(fft_image.point_data['PNGImage']),
     cpos="xy",
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT',
 )
+
 
 ###############################################################################
 # Remove the noise from the ``fft_image``
@@ -82,16 +84,18 @@ fft_image.copy().plot(
 
 per_keep = 0.10
 
+# modify the fft_image data
 width, height, _ = fft_image.dimensions
 data = fft_image['PNGImage'].reshape(height, width)  # note: axes flipped
 data[int(height * per_keep) : -int(height * per_keep)] = 0
 data[:, int(width * per_keep) : -int(width * per_keep)] = 0
 
-fft_image.copy().plot(
+fft_image.plot(
+    scalars=np.abs(data),
     cpos="xy",
     theme=grey_theme,
     log_scale=True,
-    text='Moon Landing Image FFT with Noise Removed ',
+    text='Moon Landing Image FFT with Noise Removed',
 )
 
 
@@ -100,5 +104,7 @@ fft_image.copy().plot(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, convert the image data back to the "spacial" domain and plot it.
 
+
 rfft = fft_image.rfft()
+rfft['PNGImage'] = np.real(rfft['PNGImage'])
 rfft.plot(cpos="xy", theme=grey_theme, text='Processed Moon Landing Image')

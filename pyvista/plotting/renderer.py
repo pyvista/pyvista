@@ -1055,6 +1055,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         show_ylabels=True,
         show_zlabels=True,
         bold=True,
+        size=10.0,
         font_size=None,
         font_family=None,
         color=None,
@@ -1230,6 +1231,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # create actor
         cube_axes_actor = _vtk.vtkCubeAxesActor()
+        cube_axes_actor.SetScreenSize(1.0)
         if use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
             cube_axes_actor.SetUse2DMode(True)
         else:
@@ -1374,16 +1376,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set font
         font_family = parse_font_family(font_family)
-        for i in range(3):
-            cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetTitleTextProperty(i).SetColor(color.float_rgb)
-            cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
+        props = [
+            cube_axes_actor.GetTitleTextProperty(0),
+            cube_axes_actor.GetTitleTextProperty(1),
+            cube_axes_actor.GetTitleTextProperty(2),
+            cube_axes_actor.GetLabelTextProperty(0),
+            cube_axes_actor.GetLabelTextProperty(1),
+            cube_axes_actor.GetLabelTextProperty(2),
+        ]
 
-            cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetLabelTextProperty(i).SetColor(color.float_rgb)
-            cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
+        for prop in props:
+            prop.SetColor(color.float_rgb)
+            prop.SetFontFamily(font_family)
+            prop.SetBold(bold)
+
+        # Note: font_size does nothing as a property, use SetScreenSize instead
+        # Here, we normalize relative to 16 to give the user an illusion of
+        # just changing "font size". 10 is used here since it's the default
+        # "screen size".
+        cube_axes_actor.SetScreenSize(font_size / 16 * 10.0)
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor

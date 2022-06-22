@@ -272,6 +272,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image = None
         self._has_background_layer = False
         self._added_scalars = []
+        self._prev_active_scalars = []
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -2380,6 +2381,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Scalars formatting ==================================================
         added_scalar_info = None
         if scalars is not None:
+            # track the previous active scalars
+            self._prev_active_scalars.append(
+                (
+                    mesh,
+                    mesh.point_data.active_scalars_name,
+                    mesh.cell_data.active_scalars_name,
+                )
+            )
+
             show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
                 mesh,
                 scalars,
@@ -4653,6 +4663,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
             remove_and_reactivate_prior_scalars(dsattr, name)
         self._added_scalars = []
+
+        # reactivate prior active scalars
+        for mesh, point_name, cell_name in self._prev_active_scalars:
+            if point_name is not None:
+                if mesh.point_data.active_scalars_name != point_name:
+                    mesh.point_data.active_scalars_name = point_name
+            if cell_name is not None:
+                if mesh.cell_data.active_scalars_name != cell_name:
+                    mesh.cell_data.active_scalars_name = cell_name
 
     def __del__(self):
         """Delete the plotter."""

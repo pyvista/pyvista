@@ -194,3 +194,21 @@ def test_remove_scalars_rgba(sphere):
 
     # TODO: we are not re-enabling the old scalars
     # assert sphere.point_data.active_scalars_name == point_data_name
+
+
+def test_active_scalars_remain(sphere, hexbeam):
+    """Ensure active scalars remain active despite plotting different scalars."""
+    point_data_name = 'point_data'
+    cell_data_name = 'cell_data'
+    sphere[point_data_name] = np.random.random(sphere.n_points)
+    hexbeam[cell_data_name] = np.random.random(hexbeam.n_cells)
+    assert sphere.point_data.active_scalars_name == point_data_name
+    assert hexbeam.cell_data.active_scalars_name == cell_data_name
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=range(sphere.n_points))
+    pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells))
+    pl.close()
+
+    assert sphere.point_data.active_scalars_name == point_data_name
+    assert hexbeam.cell_data.active_scalars_name == cell_data_name
