@@ -2008,7 +2008,7 @@ class SegYReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
 
-class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
+class XdmfReader(BaseReader, PointCellDataSelection):
     """XdmfReader for .xdmf files.
 
     Examples
@@ -2024,7 +2024,7 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
 
     """
 
-    _class_reader = _vtk.vtkXdmfReader
+    _class_reader = staticmethod(_vtk.lazy_vtkXdmfReader)
 
 
 CLASS_READERS = {

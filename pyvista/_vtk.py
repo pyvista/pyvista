@@ -346,7 +346,6 @@ if VTK9:
         vtkXMLUnstructuredGridWriter,
         vtkXMLWriter,
     )
-    from vtkmodules.vtkIOXdmf2 import vtkXdmfReader
     from vtkmodules.vtkImagingCore import (
         vtkExtractVOI,
         vtkImageDifference,
@@ -515,6 +514,12 @@ if VTK9:
         reader.SetController(vtkDummyController())
         return reader
 
+    def lazy_vtkXdmfReader():
+        """Lazy import of the vtkXdmfReader."""
+        from vtkmodules.vtkIOXdmf2 import vtkXdmfReader
+
+        return vtkXdmfReader()
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
@@ -585,6 +590,10 @@ else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('vtkHDRReader requires VTK v9 or newer')
+
+    def lazy_vtkXdmfReader():
+        """Lazy import of the vtkXdmfReader."""
+        raise VTKVersionError('vtk. requires VTK v9.1.0 or newer')
 
     class vtkHDRReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
