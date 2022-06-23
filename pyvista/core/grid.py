@@ -114,7 +114,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
-    >>> zrng = np.arange(-10, 10, 1.1)
+    >>> zrng = np.arange(-10, 10, 1)
     >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
 
     """
