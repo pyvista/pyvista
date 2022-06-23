@@ -79,8 +79,9 @@ setup(
     python_requires='>=3.7.*',
     install_requires=install_requires,
     extras_require={
-        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio'],
+        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio>=5.2', 'ipyvtklink', 'pythreejs'],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
         'io': ['meshio>=5.2'],
+        'jupyter': ['ipyvtklink', 'pythreejs'],
     },
 )

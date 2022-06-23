@@ -212,3 +212,12 @@ def test_active_scalars_remain(sphere, hexbeam):
 
     assert sphere.point_data.active_scalars_name == point_data_name
     assert hexbeam.cell_data.active_scalars_name == cell_data_name
+
+
+def test_no_added_with_scalar_bar(sphere):
+    point_data_name = 'data'
+    sphere[point_data_name] = np.random.random(sphere.n_points)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
+    assert sphere.n_arrays == 1
+

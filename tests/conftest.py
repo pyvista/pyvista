@@ -8,12 +8,12 @@ from pyvista import examples
 pyvista.OFF_SCREEN = True
 
 
-@fixture(scope='session')
+@fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
     try:
         import matplotlib
-    except Exception:
+    except ImportError:
         pass
     else:
         matplotlib.use('agg', force=True)
