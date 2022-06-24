@@ -757,6 +757,7 @@ class PolyDataFilters(DataSetFilters):
         feature_angle=45,
         boundary_smoothing=True,
         feature_smoothing=False,
+        non_manifold_smoothing=False,
         normalize_coordinates=False,
         inplace=False,
         progress_bar=False,
@@ -800,6 +801,9 @@ class PolyDataFilters(DataSetFilters):
             Flag to control smoothing of feature edges.  When ``True``,
             boundary edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``. Default ``False``.
+
+        non_manifold_smoothing : bool, optional
+            Smooth non-manifold points, default ``False``.
 
         normalize_coordinates : bool, optional
             Flag to control coordinate normalization. To improve the
@@ -855,6 +859,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetNumberOfIterations(n_iter)
         alg.SetFeatureEdgeSmoothing(feature_smoothing)
+        alg.SetNonManifoldSmoothing(non_manifold_smoothing)
         alg.SetFeatureAngle(feature_angle)
         alg.SetEdgeAngle(edge_angle)
         alg.SetBoundarySmoothing(boundary_smoothing)
