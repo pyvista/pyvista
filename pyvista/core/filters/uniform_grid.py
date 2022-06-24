@@ -419,9 +419,9 @@ class UniformGridFilters(DataSetFilters):
     def fft(self, output_scalars_name=None, progress_bar=False):
         """Apply the fast fourier transform to the active scalars.
 
-        The input can have real or complex data in any components and data
-        types, but the output is always complex128. The filter is fastest for
-        images that have power of two sizes.
+        The input can be real or complex data, but the output is always
+        ``numpy.complex128``. The filter is fastest for images that have power
+        of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
         dimension. This makes images with prime number dimensions (i.e. 17x17)
