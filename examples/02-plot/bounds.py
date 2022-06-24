@@ -27,9 +27,9 @@ plotter.show()
 ###############################################################################
 # Override Shown Values Limits
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# In this example we override the values shown along the X and Y axes with our
+# In this example, we override the values shown along the X and Y axes with our
 # own custom values. This can be useful when you wish to display different
-# values along the axes without having to scale the dataset. Also note how we
+# values along the axes without having to scale the dataset. Also, note how we
 # hide the Z labels by setting ``show_zlabels=False``.
 
 gears = examples.download_gears()
