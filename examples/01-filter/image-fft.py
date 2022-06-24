@@ -71,8 +71,7 @@ fft_image.plot(
 # Remove the noise from the ``fft_image``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
-# First, let's reshape by the size of the image. Note that the image data is in
-# real and imaginary axes.
+# First, let's reshape by the size of the image.
 #
 # Next, perform a low pass filter by removing the middle 80% of the content of
 # the image. Note that the high frequency content is in the middle of the array.
@@ -82,13 +81,13 @@ fft_image.plot(
 #    :func:`pyvista.UniformGridFilters.low_pass` filter. This section is here
 #    for demonstration purposes.
 
-per_keep = 0.10
+ratio_to_keep = 0.10
 
 # modify the fft_image data
 width, height, _ = fft_image.dimensions
 data = fft_image['PNGImage'].reshape(height, width)  # note: axes flipped
-data[int(height * per_keep) : -int(height * per_keep)] = 0
-data[:, int(width * per_keep) : -int(width * per_keep)] = 0
+data[int(height * ratio_to_keep) : -int(height * ratio_to_keep)] = 0
+data[:, int(width * ratio_to_keep) : -int(width * ratio_to_keep)] = 0
 
 fft_image.plot(
     scalars=np.abs(data),

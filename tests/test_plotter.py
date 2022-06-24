@@ -220,3 +220,15 @@ def test_no_added_with_scalar_bar(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
     assert sphere.n_arrays == 1
+
+
+def test_add_multiple(sphere):
+    point_data_name = 'data'
+    sphere[point_data_name] = np.random.random(sphere.n_points)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_mesh(sphere, scalars=np.arange(sphere.n_points))
+    pl.add_mesh(sphere, scalars=np.arange(sphere.n_cells))
+    pl.add_mesh(sphere, scalars='data')
+    pl.show()
+    assert sphere.n_arrays == 1

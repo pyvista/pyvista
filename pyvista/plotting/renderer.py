@@ -1055,7 +1055,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         show_ylabels=True,
         show_zlabels=True,
         bold=True,
-        size=10.0,
         font_size=None,
         font_family=None,
         color=None,
@@ -1237,7 +1236,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # create actor
         cube_axes_actor = _vtk.vtkCubeAxesActor()
-        cube_axes_actor.SetScreenSize(1.0)
         if use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
             cube_axes_actor.SetUse2DMode(True)
         else:

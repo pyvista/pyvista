@@ -1,4 +1,4 @@
-"""Filters module with a class to manage filters/algorithms for uniform grid datasets."""
+"""Filters with a class to manage filters/algorithms for uniform grid datasets."""
 import collections.abc
 
 import numpy as np
@@ -464,7 +464,14 @@ class UniformGridFilters(DataSetFilters):
         """
         # check for active scalars, otherwise risk of segfault
         if self.point_data.active_scalars_name is None:
-            raise ValueError('FFT filter requires active point scalars')
+            try:
+                pyvista.set_default_active_scalars(self)
+            except MissingDataError:
+                raise MissingDataError('FFT filter requires point scalars.') from None
+
+            # possible only cell scalars were made active
+            if self.point_data.active_scalars_name is None:
+                raise MissingDataError('FFT filter requires point scalars.')
 
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
@@ -550,10 +557,10 @@ class UniformGridFilters(DataSetFilters):
         converted to frequency domain by a :func:`UniformGridFilters.fft`
         filter.
 
-        A :func:`UniformGridFilters.rfft` filter can be
-        used to convert the output back into the spatial
-        domain. This filter attenuates high frequency components.
-        Input and output are in doubles, with two components.
+        A :func:`UniformGridFilters.rfft` filter can be used to convert the
+        output back into the spatial domain. This filter attenuates high
+        frequency components.  Input and output are complext arrays with
+        datatype ``numpy.complex128``.
 
         Parameters
         ----------
@@ -615,10 +622,10 @@ class UniformGridFilters(DataSetFilters):
         converted to frequency domain by a :func:`UniformGridFilters.fft`
         filter.
 
-        A :func:`UniformGridFilters.rfft` filter can be
-        used to convert the output back into the spatial
-        domain. This filter attenuates low frequency components.
-        Input and output are in doubles, with two components.
+        A :func:`UniformGridFilters.rfft` filter can be used to convert the
+        output back into the spatial domain. This filter attenuates low
+        frequency components.  Input and output are complext arrays with
+        datatype ``numpy.complex128``.
 
         Parameters
         ----------
@@ -675,12 +682,12 @@ class UniformGridFilters(DataSetFilters):
         dataset._association_complex_names['POINT'].add(name)
 
     def _check_fft_scalars(self):
-        """Check for active scalars with two components.
+        """Check for complext active scalars.
 
         This is necessary for rfft, low_pass, and high_pass filters.
 
         """
-        # check for active scalars, otherwise risk of segfault
+        # check for complex active point scalars, otherwise risk of segfault
         if self.point_data.active_scalars_name is None:
             possible_scalars = self.point_data.keys()
             if len(possible_scalars) == 1:

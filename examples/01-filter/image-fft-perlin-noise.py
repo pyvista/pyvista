@@ -67,14 +67,14 @@ subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 # frequency content in the x direction and this matches the frequencies given
 # to :func:`pyvista.perlin_noise <pyvista.core.common_data.perlin_noise>`.
 
-# scale by log to make the plot viewable
-subset['scalars'] = np.abs(subset.active_scalars.real)
+# scale to make the plot viewable
+subset['scalars'] = np.abs(subset.active_scalars)
 warped_subset = subset.warp_by_scalar(factor=0.0001)
 
 pl = pv.Plotter(lighting='three lights')
 pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
 pl.show_bounds(
-    axes_ranges=(0, max_freq, 0, max_freq, 0, max_freq),
+    axes_ranges=(0, max_freq, 0, max_freq, 0, warped_subset.bounds[-1]),
     xlabel='X Frequency',
     ylabel='Y Frequency',
     zlabel='Amplitude',
@@ -99,7 +99,7 @@ pl.show()
 # As expected, we only see low frequency noise.
 
 low_pass = sampled_fft.low_pass(1.0, 1.0, 1.0).rfft()
-low_pass['scalars'] = low_pass.active_scalars.real
+low_pass['scalars'] = np.real(low_pass.active_scalars)
 warped_low_pass = low_pass.warp_by_scalar()
 warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise', lighting=False)
 
@@ -118,7 +118,7 @@ warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise',
 # frequency noise has been attenuated.
 
 high_pass = sampled_fft.high_pass(1.0, 1.0, 1.0).rfft()
-high_pass['scalars'] = high_pass.active_scalars.real
+high_pass['scalars'] = np.real(high_pass.active_scalars)
 warped_high_pass = high_pass.warp_by_scalar()
 warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise', lighting=False)
 
@@ -130,6 +130,10 @@ warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise
 
 grid = pv.UniformGrid(dims=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
+
+print(
+    'Low and High Pass identical to the original:', np.allclose(grid['scalars'], sampled['scalars'])
+)
 
 pl = pv.Plotter(shape=(1, 2))
 pl.add_mesh(sampled.warp_by_scalar(), show_scalar_bar=False, lighting=False)

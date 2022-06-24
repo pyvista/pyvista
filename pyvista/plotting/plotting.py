@@ -7,7 +7,6 @@ import logging
 import os
 import pathlib
 import platform
-import re
 import textwrap
 from threading import Thread
 import time
@@ -272,7 +271,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image = None
         self._has_background_layer = False
         self._added_scalars = []
-        self._prev_active_scalars = []
+        self._prev_active_scalars = {}
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -2384,13 +2383,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         added_scalar_info = None
         if scalars is not None:
             # track the previous active scalars
-            self._prev_active_scalars.append(
-                (
+            if mesh.memory_address not in self._prev_active_scalars:
+                self._prev_active_scalars[mesh.memory_address] = (
                     mesh,
                     mesh.point_data.active_scalars_name,
                     mesh.cell_data.active_scalars_name,
                 )
-            )
 
             show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
                 mesh,
@@ -4642,32 +4640,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         as active scalars.
 
         """
-
-        def remove_and_reactivate_prior_scalars(dsattr, name):
-            """Remove ``name`` and reactivate prior scalars if applicable."""
-            # reactivate prior active scalars
-            if name.endswith('-normed'):
-                orig_name = name[:-7]
-                if orig_name in dsattr:
-                    dsattr.active_scalars_name = orig_name
-            elif name.endswith('-real'):
-                orig_name = name[:-5]
-                if orig_name in dsattr:
-                    dsattr.active_scalars_name = orig_name
-            elif re.findall('-[0-9]+$', name):
-                # component
-                orig_scalars = re.sub('-[0-9]+$', '', name)
-                if orig_scalars in dsattr:
-                    dsattr.active_scalars_name = orig_scalars
-
-            dsattr.pop(name, None)
-
+        # remove the added scalars
         for mesh, (name, assoc) in self._added_scalars:
             dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
-            remove_and_reactivate_prior_scalars(dsattr, name)
+            dsattr.pop(name, None)
 
         # reactivate prior active scalars
-        for mesh, point_name, cell_name in self._prev_active_scalars:
+        for mesh, point_name, cell_name in self._prev_active_scalars.values():
             if point_name is not None:
                 if mesh.point_data.active_scalars_name != point_name:
                     mesh.point_data.active_scalars_name = point_name
@@ -4676,7 +4655,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     mesh.cell_data.active_scalars_name = cell_name
 
         self._added_scalars = []
-        self._prev_active_scalars = []
+        self._prev_active_scalars = {}
 
     def __del__(self):
         """Delete the plotter."""
