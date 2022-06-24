@@ -1125,6 +1125,16 @@ def test_hide_points(ind, struct_grid):
         struct_grid.hide_points(np.ones(10, dtype=np.bool))
 
 
+def test_set_extent():
+    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
+    with pytest.raises(ValueError):
+        uni_grid.extent = [0, 1]
+
+    extent = [0, 1, 0, 1, 0, 1]
+    uni_grid.extent = extent
+    assert np.array_equal(uni_grid.extent, extent)
+
+
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
