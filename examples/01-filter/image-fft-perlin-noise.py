@@ -165,7 +165,7 @@ plotter.open_gif("low_pass.gif", fps=8)
 init_mesh = warp_low_pass_noise(1e-2)
 plotter.add_mesh(init_mesh, show_scalar_bar=False, lighting=False, n_colors=128)
 
-for freq in np.logspace(-2, 1, 25):
+for freq in np.geomspace(1e-2, 10, 25):
     plotter.clear()
     mesh = warp_low_pass_noise(freq)
     plotter.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
