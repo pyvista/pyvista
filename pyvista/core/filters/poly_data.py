@@ -768,7 +768,7 @@ class PolyDataFilters(DataSetFilters):
         implementation in :func:`smooth() <PolyDataFilters.smooth>`. However,
         unlike Laplacian smoothing the surface does not "shrink" since this
         filter relies on an alternative approach to smoothing. This filter is
-        more akin to low pass filter where undesirable high frequency features
+        more akin to a low pass filter where undesirable high frequency features
         are removed.
 
         This PyVista filter uses the VTK `vtkWindowedSincPolyDataFilter
