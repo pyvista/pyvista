@@ -640,7 +640,7 @@ class UniformGridFilters(DataSetFilters):
 
         order : int, optional
             The order of the cutoff curve. Given from the equation
-            ``1 + (cutoff/freq(i, j))**(2*order)``.
+            ``1/(1 + (cutoff/freq(i, j))**(2*order))``.
 
         output_scalars_name : str, optional
             The name of the output scalars. By default this is the same as the
