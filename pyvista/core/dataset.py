@@ -4,7 +4,7 @@ import collections.abc
 from copy import deepcopy
 import logging
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
 
 if sys.version_info >= (3, 8):
@@ -1733,25 +1733,6 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return list(self.GetCenter())
-
-    @property
-    def extent(self) -> Optional[tuple]:
-        """Return the range of the bounding box."""
-        try:
-            _extent = self.GetExtent()
-        except AttributeError:
-            return None
-        return _extent
-
-    @extent.setter
-    def extent(self, extent: Sequence[float]):
-        """Set the range of the bounding box."""
-        if hasattr(self, 'SetExtent'):
-            if len(extent) != 6:
-                raise ValueError('Extent must be a vector of 6 values.')
-            self.SetExtent(extent)
-        else:
-            raise AttributeError('This mesh type does not handle extents.')
 
     @property
     def volume(self) -> float:

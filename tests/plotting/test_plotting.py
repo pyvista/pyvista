@@ -14,7 +14,6 @@ import warnings
 
 from PIL import Image
 import imageio
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import vtk
@@ -25,6 +24,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.utilities.misc import can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -46,6 +46,10 @@ except:  # noqa: E722
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 skip_9_1_0 = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
+
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
+)
 
 # Reset image cache with new images
 glb_reset_image_cache = False
@@ -74,13 +78,14 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # Image regression warning/error thresholds for releases after 9.0.1
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
+    'test_add_title',
+    'test_export_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
+    'test_opacity_by_array_user_transform',
     'test_pbr',
     'test_set_environment_texture_cubemap',
     'test_set_viewup',
-    'test_add_title',
-    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
-    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
-    'test_export_gltf',  # image cache created with 9.0.20210612.dev0
 }
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
@@ -99,6 +104,12 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
+}
+
+# these images vary between Linux/Windows and MacOS
+# and will not be verified for MacOS
+MACOS_SKIP_IMAGE_CACHE = {
+    'test_plot_show_grid_with_mesh',
 }
 
 
@@ -158,6 +169,9 @@ def verify_cache_image(plotter):
 
     # some tests fail when on Windows with OSMesa
     if os.name == 'nt' and test_name in WINDOWS_SKIP_IMAGE_CACHE:
+        return
+    # high variation for MacOS
+    if platform.system() == 'Darwin' and test_name in MACOS_SKIP_IMAGE_CACHE:
         return
 
     # cached image name
@@ -521,8 +535,28 @@ def test_plot_bounds_axes_with_no_data():
 
 def test_plot_show_grid(sphere):
     plotter = pyvista.Plotter()
+
+    with pytest.raises(ValueError, match='Value of location'):
+        plotter.show_grid(location='foo')
+    with pytest.raises(TypeError, match='location must be a string'):
+        plotter.show_grid(location=10)
+    with pytest.raises(ValueError, match='Value of ticks'):
+        plotter.show_grid(ticks='foo')
+    with pytest.raises(TypeError, match='ticks must be a string'):
+        plotter.show_grid(ticks=10)
+
     plotter.show_grid()
     plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_show_grid_with_mesh(hexbeam, plane):
+    """Show the grid bounds for a specific mesh."""
+    hexbeam.clear_data()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(hexbeam, style='wireframe')
+    plotter.add_mesh(plane)
+    plotter.show_grid(mesh=plane, show_zlabels=False, show_zaxis=False)
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -1626,9 +1660,11 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
 
 @skip_windows
 def test_opacity_by_array_direct(plane):
-    # test with opacity parm as an array
+    # test with opacity parm as an array, both cell and point sized
+    plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pyvista.Plotter()
     pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points), show_edges=True)
+    pl.add_mesh(plane_shift, color='r', opacity=np.linspace(0, 1, plane.n_cells), show_edges=True)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -1657,7 +1693,7 @@ def test_opacity_by_array_user_transform(uniform):
     opacities = [0, 0.2, 0.9, 0.2, 0.1]
     p = pyvista.Plotter()
     p.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
-    p.show()  # note: =verify_cache_image does not work between Xvfb
+    p.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_mismatched_fail(uniform):
@@ -1667,6 +1703,7 @@ def test_opacity_mismatched_fail(uniform):
     # Test using mismatched arrays
     p = pyvista.Plotter()
     with pytest.raises(ValueError):
+        # cell scalars vs point opacity
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
@@ -1675,6 +1712,25 @@ def test_plot_uniform(uniform):
     data = np.arange(uniform.n_points).reshape(uniform.dimensions)
     p = pyvista.Plotter()
     p.add_mesh(uniform, scalars=data)
+
+
+def test_opacity_by_array_preference():
+    tetra = pyvista.Tetrahedron()  # 4 points, 4 cells
+    opacities = np.linspace(0.2, 0.8, tetra.n_points)
+    tetra.clear_data()
+    tetra.point_data['scalars'] = tetra.cell_data['scalars'] = np.arange(tetra.n_points)
+    tetra.point_data['opac'] = tetra.cell_data['opac'] = opacities
+
+    # test opacity by key
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity='opac', preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity='opac', preference='point')
+    p.close()
+
+    # test opacity by array
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
     p.show(before_close_callback=verify_cache_image)
 
 
@@ -2208,8 +2264,11 @@ def test_chart_plot():
 
 
 @skip_9_1_0
+@skip_no_mpl_figure
 def test_chart_matplotlib_plot():
     """Test integration with matplotlib"""
+    import matplotlib.pyplot as plt
+
     rng = np.random.default_rng(1)
     # First, create the matplotlib figure
     # use tight layout to keep axis labels visible on smaller figures

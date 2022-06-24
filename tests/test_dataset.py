@@ -721,25 +721,6 @@ def test_get_cell_array_fail():
         sphere.cell_data[None]
 
 
-def test_extent_none(grid):
-    assert grid.extent is None
-
-
-def test_set_extent_expect_error(grid):
-    with pytest.raises(AttributeError):
-        grid.extent = [1, 2, 3]
-
-
-def test_set_extent():
-    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
-    with pytest.raises(ValueError):
-        uni_grid.extent = [0, 1]
-
-    extent = [0, 1, 0, 1, 0, 1]
-    uni_grid.extent = extent
-    assert np.allclose(uni_grid.extent, extent)
-
-
 def test_get_item(grid):
     with pytest.raises(KeyError):
         grid[0]

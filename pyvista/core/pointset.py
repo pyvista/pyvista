@@ -2505,7 +2505,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         # K directions.
-        dims = self.extent
+        dims = self.GetExtent()
         dims = np.reshape(dims, (3, 2))
         dims = np.diff(dims, axis=1)
         dims = dims.flatten() + 1
