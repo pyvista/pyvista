@@ -1,0 +1,20 @@
+name: Community Review
+on:
+  schedule:
+    - cron: "30 1 * * *"
+permissions:
+  pull-requests: write
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        with:
+          stale-pr-message: "This PR is reviewd by community because it has been open 1 day with no activity."
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
+          days-before-pr-stale: 1
+          days-before-pr-close: -1
+          stale-pr-label: "community-reviewed"
+          remove-pr-stale-when-updated: "community-reviewed"
+          labels-to-add-when-unstale: "do-not-merge"

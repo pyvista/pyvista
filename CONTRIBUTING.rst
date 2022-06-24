@@ -430,6 +430,17 @@ The main features of our branching model are:
    release branches should not be deleted so they can be patched as
    needed.
 
+Labels
+~~~~~~
+
+The appropriate label will be added to pull request by CI. This will
+be used for future release notes. CI will also verify that the necessary
+labels have been added. If CI doesn't add a label, please it manually.
+The ``community-reviewed`` label is required for merging. This is added
+when there has been no reviewer action for one day since the last
+pull request action. This system is designed to give reviewers in all
+time zones a chance to review.
+
 Minor Release Steps
 ^^^^^^^^^^^^^^^^^^^
 
