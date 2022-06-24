@@ -21,7 +21,7 @@ def _has_matplotlib():
 def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
     """Prepare a dataset for smooth shading.
 
-    VTK requires datasets with prong shading to have active normals.
+    VTK requires datasets with Phong shading to have active normals.
     This requires extracting the external surfaces from non-polydata
     datasets and computing the point normals.
 
@@ -29,10 +29,13 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     ----------
     mesh : pyvista.DataSet
         Dataset to prepare smooth shading for.
+
     scalars : sequence
         Sequence of scalars.
+
     texture : vtk.vtkTexture or np.ndarray or bool, optional
         A texture to apply to the mesh.
+
     split_sharp_edges : bool
         Split sharp edges exceeding 30 degrees when plotting with
         smooth shading.  Control the angle with the optional
@@ -40,11 +43,13 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         ``False``.  Note that enabling this will create a copy of
         the input mesh within the plotter.  See
         :ref:`shading_example`.
+
     feature_angle : float
         Angle to consider an edge a sharp edge.
+
     preference : str
         If the number of points is identical to the number of cells.
-        Either ``'point'`` or '``cell'``.
+        Either ``'point'`` or ``'cell'``.
 
     Returns
     -------
@@ -77,20 +82,15 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             indices_array = 'vtkOriginalCellIds'
 
     if split_sharp_edges:
-        if is_polydata:
-            if has_scalars:
-                # we must track the original IDs with our own array
-                indices_array = '__orig_ids__'
-                if use_points:
-                    arr_sz = mesh.n_points
-                else:
-                    arr_sz = mesh.n_cells
-                mesh.point_data[indices_array] = np.arange(arr_sz, dtype=np.int32)
         mesh = mesh.compute_normals(
             cell_normals=False,
             split_vertices=True,
             feature_angle=feature_angle,
         )
+        if is_polydata:
+            if has_scalars and use_points:
+                # we must track the original IDs with our own array from compute_normals
+                indices_array = 'pyvistaOriginalPointIds'
     else:
         # consider checking if mesh contains active normals
         # if mesh.point_data.active_normals is None:
@@ -99,10 +99,6 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     if has_scalars and indices_array is not None:
         ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
-
-    # remove temporary indices array
-    if indices_array == '__orig_ids__':
-        del mesh.point_data['__orig_ids__']
 
     return mesh, scalars
 
@@ -117,22 +113,27 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     ----------
     mesh : pyvista.DataSet
         Dataset to process the opacity for.
+
     opacity : str, sequence
         String or array.  If string, can be a ``str`` name of a
         predefined mapping such as ``'linear'``, ``'geom'``,
         ``'sigmoid'``, ``'sigmoid3-10'``, or the key of a cell or
         point data array.
-    preference : str, optional
+
+    preference : str
         When ``mesh.n_points == mesh.n_cells``, this parameter
-        sets how the scalars will be mapped to the mesh.  Default
-        ``'points'``, causes the scalars will be associated with
-        the mesh points.  Can be either ``'points'`` or
-        ``'cells'``.
-    n_colors : int, optional
+        sets how the scalars will be mapped to the mesh. If
+        ``'point'``, causes the scalars will be associated with
+        the mesh points.  Can be either ``'point'`` or
+        ``'cell'``.
+
+    n_colors : int
         Number of colors to use when displaying the opacity.
-    scalars : numpy.ndarray, optional
+
+    scalars : numpy.ndarray
         Dataset scalars.
-    use_transparency : bool, optional
+
+    use_transparency : bool
         Invert the opacity mappings and make the values correspond
         to transparency.
 
@@ -140,6 +141,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     -------
     _custom_opac : bool
         If using custom opacity.
+
     opacity : numpy.ndarray
         Array containing the opacity.
 
@@ -163,7 +165,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
                     "Opacity array and scalars array must have the same number of elements."
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
-        opacity = np.array(opacity)
+        opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
             # User could pass an array of opacities for every point/cell
             _custom_opac = True

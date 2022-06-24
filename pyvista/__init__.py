@@ -43,12 +43,7 @@ if vtk_version_info.major < 5:  # pragma: no cover
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
-OFF_SCREEN = False
-try:
-    if os.environ['PYVISTA_OFF_SCREEN'].lower() == 'true':
-        OFF_SCREEN = True
-except KeyError:
-    pass
+OFF_SCREEN = os.environ.get("PYVISTA_OFF_SCREEN", "false").lower() == "true"
 
 # If available, a local vtk-data instance will be used for examples
 VTK_DATA_PATH: Optional[str] = None
@@ -103,6 +98,11 @@ except Exception as e:
         '`PYVISTA_USERDATA_PATH` to a writable path.'
     )
     EXAMPLES_PATH = ''
+
+# verify example cache integrity
+from pyvista.examples.downloads import _verify_cache_integrity
+
+_verify_cache_integrity()
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()

@@ -26,9 +26,6 @@ globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 channelsfile = os.path.join(dir_path, 'channels.vti')
 
-# get location of this folder
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
 
 def load_ant():
     """Load ply ant mesh.
@@ -224,6 +221,8 @@ def load_spline():
 
     .. code:: python
 
+       >>> import numpy as np
+       >>> import pyvista
        >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
        >>> z = np.linspace(-2, 2, 100)
        >>> r = z**2 + 1
@@ -263,8 +262,8 @@ def load_random_hills():
 
     .. code:: python
 
-       >>> mesh = pyvista.ParametricRandomHills()
-       >>> mesh = mesh.elevation()
+       >>> mesh = pyvista.ParametricRandomHills()  # doctest:+SKIP
+       >>> mesh = mesh.elevation()  # doctest:+SKIP
 
     Returns
     -------
@@ -302,8 +301,8 @@ def load_sphere_vectors():
     Active Texture  : None
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32  (842, 3)             NORMALS
-        vectors                 float32  (842, 3)             VECTORS
+        Normals                 float32    (842, 3)             NORMALS
+        vectors                 float32    (842, 3)             VECTORS
 
     """
     sphere = pyvista.Sphere(radius=3.14)

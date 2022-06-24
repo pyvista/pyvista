@@ -118,7 +118,7 @@ the points directly.
 
     # create many spheres from the point cloud
     sphere = pyvista.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
-    pc = pdata.glyph(scale=False, geom=sphere)
+    pc = pdata.glyph(scale=False, geom=sphere, orient=False)
     pc.plot(cmap='Reds')
 
 
@@ -180,13 +180,16 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 3. Click ``Request language`` and fill form.
 4. Wait acceptance by transifex pyvista translation maintainers.
 5. (After acceptance) Translate on transifex.
-6. You can see the translated document in `Read The Docs`_.
+6. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
+7. Translation is backed up in `pyvista-doc-translations`_.
 
 Details can be found here: https://docs.transifex.com/getting-started-1/translators
 
-.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista-doc/
+.. _`pyvista translation page`: https://www.transifex.com/tkoyama010/pyvista-doc/
 .. _Transifex: https://www.transifex.com/
-.. _`Read The Docs`: https://pyvista-doc.readthedocs.io/en/latest
+.. _`GitHub Pages`: https://pyvista.github.io/pyvista-docs-dev-ja/index.html
+.. _`GitHub repository`: https://github.com/pyvista/pyvista-docs-dev-ja
+.. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 
 Status

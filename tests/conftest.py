@@ -8,12 +8,12 @@ from pyvista import examples
 pyvista.OFF_SCREEN = True
 
 
-@fixture(scope='session')
+@fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
     try:
         import matplotlib
-    except Exception:
+    except ImportError:
         pass
     else:
         matplotlib.use('agg', force=True)
@@ -101,3 +101,9 @@ def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
+
+
+def pytest_addoption(parser):
+    parser.addoption("--reset_image_cache", action='store_true', default=False)
+    parser.addoption("--ignore_image_cache", action='store_true', default=False)
+    parser.addoption("--fail_extra_image_cache", action='store_true', default=False)

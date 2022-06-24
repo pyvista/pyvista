@@ -3,6 +3,7 @@
 import collections.abc
 from functools import partial
 from typing import Sequence
+import warnings
 from weakref import proxy
 
 import numpy as np
@@ -10,6 +11,7 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
+from pyvista.utilities.misc import uses_egl
 
 from .camera import Camera
 from .charts import Charts
@@ -183,7 +185,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkRenderer):
+class Renderer(_vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -440,6 +442,12 @@ class Renderer(_vtk.vtkRenderer):
 
         This tends to make edges appear softer and less pixelated.
 
+        Warnings
+        --------
+        Enabling this causes screenshots with vtk compiled with OSMesa to be
+        all black. This cannot be enabled when compiled with OSMesa (EGL). See
+        https://github.com/pyvista/pyvista/issues/2686 for more details.
+
         Examples
         --------
         >>> import pyvista
@@ -449,6 +457,13 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
+        if uses_egl():  # pragma: no cover
+            # only display the warning when not building documentation
+            if not pyvista.BUILDING_GALLERY:
+                warnings.warn(
+                    "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
+                )
+            return
         self.SetUseFXAA(True)
         self.Modified()
 
@@ -1032,6 +1047,7 @@ class Renderer(_vtk.vtkRenderer):
         self,
         mesh=None,
         bounds=None,
+        axes_ranges=None,
         show_xaxis=True,
         show_yaxis=True,
         show_zaxis=True,
@@ -1069,6 +1085,14 @@ class Renderer(_vtk.vtkRenderer):
         bounds : list or tuple, optional
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
+
+        axes_ranges : list, tuple, or numpy.ndarray, optional
+            When set, these values override the values that are shown on the
+            axes. This can be useful when plotting scaled datasets or if you wish
+            to manually display different values. These values must be in the
+            form:
+
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
             Makes x axis visible.  Default ``True``.
@@ -1130,12 +1154,11 @@ class Renderer(_vtk.vtkRenderer):
             ``'frontface'``) of the axes actor.
 
         location : str, optional
-            Set how the axes are drawn: either static (``'all'``),
-            closest triad (``front``), furthest triad (``'back'``),
-            static closest to the origin (``'origin'``), or outer
-            edges (``'outer'``) in relation to the camera
-            position. Options include: ``'all', 'front', 'back',
-            'origin', 'outer'``.
+            Set how the axes are drawn: either static (``'all'``), closest
+            triad (``'front'``, ``'closest'``, ``'default'``), furthest triad
+            (``'back'``, ``'furthest'``), static closest to the origin
+            (``'origin'``), or outer edges (``'outer'``) in relation to the
+            camera position.
 
         ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
@@ -1177,8 +1200,11 @@ class Renderer(_vtk.vtkRenderer):
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(grid='front', location='outer',
-        ...                             all_edges=True)
+        >>> actor = plotter.show_bounds(
+        ...     grid='front',
+        ...     location='outer',
+        ...     all_edges=True,
+        ... )
         >>> plotter.show()
 
         """
@@ -1193,9 +1219,14 @@ class Renderer(_vtk.vtkRenderer):
 
         color = Color(color, default_color=self._theme.font.color)
 
-        # Use the bounds of all data in the rendering window
         if mesh is None and bounds is None:
-            bounds = self.bounds
+            # Use the bounds of all data in the rendering window
+            bounds = np.array(self.bounds)
+        elif bounds is None:
+            # otherwise, use the bounds of the mesh (if available)
+            bounds = np.array(mesh.bounds)
+        else:
+            bounds = np.asanyarray(bounds, dtype=float)
 
         # create actor
         cube_axes_actor = _vtk.vtkCubeAxesActor()
@@ -1229,7 +1260,12 @@ class Renderer(_vtk.vtkRenderer):
             elif ticks in ('both'):
                 cube_axes_actor.SetTickLocationToBoth()
             else:
-                raise ValueError(f'Value of ticks ({ticks}) not understood.')
+                raise ValueError(
+                    f'Value of ticks ("{ticks}") should be either "inside", "outside", '
+                    'or "both".'
+                )
+        elif ticks is not None:
+            raise TypeError('ticks must be a string')
 
         if isinstance(location, str):
             location = location.lower()
@@ -1244,11 +1280,13 @@ class Renderer(_vtk.vtkRenderer):
             elif location in ('furthest', 'back'):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
-                raise ValueError(f'Value of location ({location}) not understood.')
+                raise ValueError(
+                    f'Value of location ("{location}") should be either "all", "origin",'
+                    ' "outer", "default", "closest", "front", "furthest", or "back".'
+                )
+        elif location is not None:
+            raise TypeError('location must be a string')
 
-        # set bounds
-        if bounds is None:
-            bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
                 cushion = (
@@ -1266,6 +1304,26 @@ class Renderer(_vtk.vtkRenderer):
         else:
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
+
+        # set axes ranges if input
+        if axes_ranges is not None:
+            if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
+                axes_ranges = np.asanyarray(axes_ranges)
+            else:
+                raise TypeError('Input axes_ranges must be a numeric sequence.')
+
+            if not np.issubdtype(axes_ranges.dtype, np.number):
+                raise TypeError('All of the elements of axes_ranges must be numbers.')
+
+            # set the axes ranges
+            if axes_ranges.shape != (6,):
+                raise ValueError(
+                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
+                )
+
+            cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
+            cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
+            cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
 
         # show or hide axes
         cube_axes_actor.SetXAxisVisibility(show_xaxis)
@@ -1360,7 +1418,7 @@ class Renderer(_vtk.vtkRenderer):
         vtk.vtkAxesActor
             Bounds actor.
 
-         Examples
+        Examples
         --------
         >>> import pyvista
         >>> from pyvista import examples
@@ -2606,25 +2664,51 @@ class Renderer(_vtk.vtkRenderer):
             self.GradientBackgroundOff()
         self.Modified()
 
-    def set_environment_texture(self, texture):
+    def set_environment_texture(self, texture, is_srgb=False):
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
         it is not a cubemap, the texture is supposed to represent an
         equirectangular projection. If used with raytracing backends,
         the texture must be an equirectangular projection and must be
-        constructed with a valid vtkImageData. Warning, this texture
-        must be expressed in linear color space. If the texture is in
-        sRGB color space, set the color flag on the texture or set the
-        argument isSRGB to true.
+        constructed with a valid ``vtk.vtkImageData``.
 
         Parameters
         ----------
         texture : vtk.vtkTexture
             Texture.
+
+        is_srgb : bool, optional
+            If the texture is in sRGB color space, set the color flag on the
+            texture or set this parameter to ``True``. Textures are assumed
+            to be in linear color space by default.
+
+        Examples
+        --------
+        Add a skybox cubemap as an environment texture and show that the
+        lighting from the texture is mapped on to a sphere dataset. Note how
+        even when disabling the default lightkit, the scene lighting will still
+        be mapped onto the actor.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting=None)
+        >>> cubemap = examples.download_sky_box_cube_map()
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
+        >>> pl.set_environment_texture(cubemap)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
         """
+        # cube_map textures cannot use spherical harmonics
+        if texture.cube_map:
+            self.AutomaticLightCreationOff()
+            # disable spherical harmonics was added in 9.1.0
+            if hasattr(self, 'UseSphericalHarmonicsOff'):
+                self.UseSphericalHarmonicsOff()
+
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture)
+        self.SetEnvironmentTexture(texture, is_srgb)
         self.Modified()
 
     def close(self):

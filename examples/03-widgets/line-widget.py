@@ -5,8 +5,8 @@ Line Widget
 ~~~~~~~~~~~
 
 The line widget can be enabled and disabled by the
-:func:`pyvista.WidgetHelper.add_line_widget` and
-:func:`pyvista.WidgetHelper.clear_line_widgets` methods respectively.
+:func:`pyvista.Plotter.add_line_widget` and
+:func:`pyvista.Plotter.clear_line_widgets` methods respectively.
 Unfortunately, PyVista does not have any helper methods to utilize this
 widget, so it is necessary to pass a custom callback method.
 

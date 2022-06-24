@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Label based on changed files
-      uses: actions/labeler@v3
+      uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         # https://github.com/actions/labeler/issues/112#issuecomment-1000491676
@@ -43,15 +43,3 @@ jobs:
       if: startsWith(github.event.pull_request.head.ref, 'release')
       with:
         labels: release
-    - uses: peter-evans/create-or-update-comment@v2
-      if: |
-        not contains(github.event.pull_request.labels.*.name, 'enhancement') &&
-        not contains(github.event.pull_request.labels.*.name, 'documentation') &&
-        not contains(github.event.pull_request.labels.*.name, 'maintenance')
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        body: |
-          Please add one of the following labels to add this contribution to the Release Notes :point_down:
-          - [enhancement](https://github.com/pyvista/pyvista/pulls?q=label%3Aenhancement+)
-          - [documentation](https://github.com/pyvista/pyvista/pulls?q=label%3Adocumentation+)
-          - [maintenance](https://github.com/pyvista/pyvista/pulls?q=label%3Amaintenance+)

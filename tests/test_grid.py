@@ -19,6 +19,10 @@ HEXBEAM_CELLS_BOOL = np.ones(40, np.bool_)  # matches hexbeam.n_cells == 40
 STRUCTGRID_CELLS_BOOL = np.ones(729, np.bool_)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, np.bool_)  # struct_grid.n_points == 1000
 
+pointsetmark = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
+
 
 def test_volume(hexbeam):
     assert hexbeam.volume > 0.0
@@ -466,6 +470,11 @@ def test_merge_invalid(hexbeam, sphere):
         sphere.merge([hexbeam], inplace=True)
 
 
+def test_init_structured_raise():
+    with pytest.raises(TypeError, match="Invalid parameters"):
+        pyvista.StructuredGrid(['a', 'b', 'c'])
+
+
 def test_init_structured(struct_grid):
     xrng = np.arange(-10, 10, 2, dtype=np.float32)
     yrng = np.arange(-10, 10, 2, dtype=np.float32)
@@ -478,6 +487,140 @@ def test_init_structured(struct_grid):
 
     grid_a = pyvista.StructuredGrid(grid)
     assert np.allclose(grid_a.points, grid.points)
+
+
+@pytest.fixture
+def structured_points():
+    x = np.arange(-10, 10, 0.25)
+    y = np.arange(-10, 10, 0.25)
+    x, y = np.meshgrid(x, y)
+    r = np.sqrt(x**2 + y**2)
+    z = np.sin(r)
+    source = np.empty((x.size, 3), x.dtype)
+    source[:, 0] = x.ravel('F')
+    source[:, 1] = y.ravel('F')
+    source[:, 2] = z.ravel('F')
+    return source, (*x.shape, 1)
+
+
+def test_no_copy_polydata_init():
+    source = np.random.rand(100, 3)
+    mesh = pyvista.PolyData(source)
+    pts = mesh.points
+    pts /= 2
+    assert np.array_equal(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
+    assert np.array_equal(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
+
+
+def test_no_copy_polydata_points_setter():
+    source = np.random.rand(100, 3)
+    mesh = pyvista.PolyData()
+    mesh.points = source
+    pts = mesh.points
+    pts /= 2
+    assert np.array_equal(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
+    assert np.array_equal(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
+
+
+def test_no_copy_structured_mesh_init(structured_points):
+    source, dims = structured_points
+    mesh = pyvista.StructuredGrid(source)
+    mesh.dimensions = dims
+    pts = mesh.points
+    pts /= 2
+    assert np.array_equal(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
+    assert np.array_equal(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
+
+
+def test_no_copy_structured_mesh_points_setter(structured_points):
+    source, dims = structured_points
+    mesh = pyvista.StructuredGrid()
+    mesh.points = source
+    mesh.dimensions = dims
+    pts = mesh.points
+    pts /= 2
+    assert np.array_equal(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
+    assert np.array_equal(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
+
+
+@pointsetmark
+def test_no_copy_pointset_init():
+    source = np.random.rand(100, 3)
+    mesh = pyvista.PointSet(source)
+    pts = mesh.points
+    pts /= 2
+    assert np.array_equal(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
+    assert np.array_equal(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
+
+
+@pointsetmark
+def test_no_copy_pointset_points_setter():
+    source = np.random.rand(100, 3)
+    mesh = pyvista.PointSet()
+    mesh.points = source
+    pts = mesh.points
+    pts /= 2
+    assert np.array_equal(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
+    assert np.array_equal(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
+
+
+def test_no_copy_unstructured_grid_points_setter():
+    source = np.random.rand(100, 3)
+    mesh = pyvista.UnstructuredGrid()
+    mesh.points = source
+    pts = mesh.points
+    pts /= 2
+    assert np.array_equal(mesh.points, pts)
+    assert np.may_share_memory(mesh.points, pts)
+    assert np.array_equal(mesh.points, source)
+    assert np.may_share_memory(mesh.points, source)
+
+
+def test_no_copy_rectilinear_grid():
+    xrng = np.arange(-10, 10, 2, dtype=float)
+    yrng = np.arange(-10, 10, 5, dtype=float)
+    zrng = np.arange(-10, 10, 1, dtype=float)
+    mesh = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    x = mesh.x
+    x /= 2
+    assert np.array_equal(mesh.x, x)
+    assert np.may_share_memory(mesh.x, x)
+    assert np.array_equal(mesh.x, xrng)
+    assert np.may_share_memory(mesh.x, xrng)
+    y = mesh.y
+    y /= 2
+    assert np.array_equal(mesh.y, y)
+    assert np.may_share_memory(mesh.y, y)
+    assert np.array_equal(mesh.y, yrng)
+    assert np.may_share_memory(mesh.y, yrng)
+    z = mesh.z
+    z /= 2
+    assert np.array_equal(mesh.z, z)
+    assert np.may_share_memory(mesh.z, z)
+    assert np.array_equal(mesh.z, zrng)
+    assert np.may_share_memory(mesh.z, zrng)
+
+
+def test_grid_repr(struct_grid):
+    str_ = str(struct_grid)
+    assert 'StructuredGrid' in str_
+    assert f'N Points:\t{struct_grid.n_points}\n' in str_
+
+    repr_ = repr(struct_grid)
+    assert 'StructuredGrid' in repr_
+    assert f'N Points:\t{struct_grid.n_points}\n' in repr_
 
 
 def test_slice_structured(struct_grid):
@@ -629,6 +772,17 @@ def test_read_rectilinear_grid_from_pathlib():
     assert grid.n_points == 18144
     assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
     assert grid.n_arrays == 1
+
+
+def test_raise_rectilinear_grid_non_unique():
+    rng_uniq = np.arange(4.0)
+    rng_dupe = np.array([0, 1, 2, 2], dtype=float)
+    with pytest.raises(ValueError, match="Array contains duplicate values"):
+        pyvista.RectilinearGrid(rng_dupe, check_duplicates=True)
+    with pytest.raises(ValueError, match="Array contains duplicate values"):
+        pyvista.RectilinearGrid(rng_uniq, rng_dupe, check_duplicates=True)
+    with pytest.raises(ValueError, match="Array contains duplicate values"):
+        pyvista.RectilinearGrid(rng_uniq, rng_uniq, rng_dupe, check_duplicates=True)
 
 
 def test_cast_rectilinear_grid():
@@ -916,6 +1070,16 @@ def test_hide_points(ind, struct_grid):
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
         struct_grid.hide_points(np.ones(10, dtype=np.bool))
+
+
+def test_set_extent():
+    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
+    with pytest.raises(ValueError):
+        uni_grid.extent = [0, 1]
+
+    extent = [0, 1, 0, 1, 0, 1]
+    uni_grid.extent = extent
+    assert np.array_equal(uni_grid.extent, extent)
 
 
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')

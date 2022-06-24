@@ -64,6 +64,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
@@ -86,7 +87,7 @@ class UniformGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def median_smooth(
-        self, kernel_size=(3, 3, 3), scalars=None, preference='points', progress_bar=False
+        self, kernel_size=(3, 3, 3), scalars=None, preference='point', progress_bar=False
     ):
         """Smooth data using a median filter.
 
@@ -150,6 +151,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
@@ -216,7 +218,7 @@ class UniformGridFilters(DataSetFilters):
         fixed.point_data.update(result.point_data)
         fixed.cell_data.update(result.cell_data)
         fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result)
+        fixed.copy_meta_from(result, deep=True)
         return fixed
 
     def image_dilate_erode(
@@ -290,6 +292,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
@@ -312,7 +315,7 @@ class UniformGridFilters(DataSetFilters):
         in_value=1,
         out_value=0,
         scalars=None,
-        preference='points',
+        preference='point',
         progress_bar=False,
     ):
         """Apply a threshold to scalar values in a uniform grid.
@@ -379,6 +382,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)

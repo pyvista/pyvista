@@ -124,6 +124,31 @@ def test_enable_surface_picking(sphere, left_clicking):
     assert pl.picked_point is None
 
 
+@pytest.mark.parametrize('left_clicking', [False, True])
+def test_disable_picking(sphere, left_clicking):
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.enable_surface_picking(left_clicking=left_clicking)
+    pl.disable_picking()
+    pl.show(auto_close=False)
+
+    width, height = pl.window_size
+
+    # clicking is to "activate" the renderer
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width, height)
+    pl.iren._mouse_move(width // 2, height // 2)
+    if not left_clicking:
+        pl.iren._simulate_keypress('p')
+
+    assert pl.picked_point is None
+
+    # ensure it can safely be called twice
+    pl.disable_picking()
+    assert pl._picking_text not in pl.renderer.actors
+
+
 def test_enable_cell_picking_interactive():
 
     n_cells = []

@@ -9,6 +9,7 @@ import pyvista
 from pyvista import FieldAssociation, _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
+from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.utilities import (
     NORMALS,
     abstract_class,
@@ -319,7 +320,7 @@ class DataSetFilters:
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> type(dist)
-        <class 'numpy.ndarray'>
+        <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
 
         Plot these distances as a heatmap
 
@@ -411,7 +412,9 @@ class DataSetFilters:
 
         alg.SetInputDataObject(self)
         alg.SetValue(value)
-        if scalars is not None:
+        if scalars is None:
+            pyvista.set_default_active_scalars(self)
+        else:
             self.set_active_scalars(scalars)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
@@ -881,6 +884,13 @@ class DataSetFilters:
         criterion.  If ``scalars`` is ``None``, the input's active
         scalars array is used.
 
+        .. warning::
+           Thresholding is inherently a cell operation, even though it can use
+           associated point data for determining whether to keep a cell. In
+           other words, whether or not a given point is included after
+           thresholding depends on whether that point is part of a cell that
+           is kept after thresholding.
+
         Parameters
         ----------
         value : float or sequence, optional
@@ -909,11 +919,11 @@ class DataSetFilters:
             ``'point'`` or ``'cell'``.
 
         all_scalars : bool, optional
-            If using scalars from point data, all scalars for all
+            If using scalars from point data, all
             points in a cell must satisfy the threshold when this
             value is ``True``.  When ``False``, any point of the cell
             with a scalar value satisfying the threshold criterion
-            will extract the cell.
+            will extract the cell. Has no effect when using cell data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -972,14 +982,9 @@ class DataSetFilters:
         See :ref:`common_filter_example` for more examples using this filter.
 
         """
-        if all_scalars and scalars is not None:
-            raise ValueError(
-                'Setting `all_scalars=True` and designating `scalars` '
-                'is incompatible.  Set one or the other but not both.'
-            )
-
         # set the scalars to threshold on
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
@@ -1072,6 +1077,13 @@ class DataSetFilters:
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
+        .. warning::
+           Thresholding is inherently a cell operation, even though it can use
+           associated point data for determining whether to keep a cell. In
+           other words, whether or not a given point is included after
+           thresholding depends on whether that point is part of a cell that
+           is kept after thresholding.
+
         Parameters
         ----------
         percent : float or tuple(float), optional
@@ -1127,6 +1139,7 @@ class DataSetFilters:
 
         """
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             _, tscalars = self.active_scalars_info
         else:
             tscalars = scalars
@@ -1553,6 +1566,7 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = get_array_association(self, scalars, preference=preference)
@@ -1924,20 +1938,7 @@ class DataSetFilters:
 
         """
         dataset = self
-        # Clean the points before glyphing
-        if tolerance is not None:
-            small = pyvista.PolyData(dataset.points)
-            small.point_data.update(dataset.point_data)
-            dataset = small.clean(
-                point_merging=True,
-                merge_tol=tolerance,
-                lines_to_points=False,
-                polys_to_lines=False,
-                strips_to_polys=False,
-                inplace=False,
-                absolute=absolute,
-                progress_bar=progress_bar,
-            )
+
         # Make glyphing geometry if necessary
         if geom is None:
             arrow = _vtk.vtkArrowSource()
@@ -1976,8 +1977,17 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.set_active_scalars(scale, 'cell')
+            dataset.set_active_scalars(scale, preference='cell')
             scale = True
+        elif isinstance(scale, bool) and scale:
+            try:
+                pyvista.set_default_active_scalars(self)
+            except MissingDataError:
+                warnings.warn("No data to use for scale. scale will be set to False.")
+                scale = False
+            except AmbiguousDataError as err:
+                warnings.warn(f"{err}\nIt is unclear which one to use. scale will be set to False.")
+                scale = False
 
         if scale:
             if dataset.active_scalars is not None:
@@ -1989,26 +1999,62 @@ class DataSetFilters:
             alg.SetScaleModeToDataScalingOff()
 
         if isinstance(orient, str):
-            dataset.active_vectors_name = orient
+            if scale and dataset.active_scalars_info.association == FieldAssociation.CELL:
+                prefer = 'cell'
+            else:
+                prefer = 'point'
+            dataset.set_active_vectors(orient, preference=prefer)
             orient = True
 
-        if scale and orient:
-            if (
-                dataset.active_vectors_info.association == FieldAssociation.CELL
-                and dataset.active_scalars_info.association == FieldAssociation.CELL
-            ):
-                source_data = dataset.cell_centers()
-            elif (
-                dataset.active_vectors_info.association == FieldAssociation.POINT
-                and dataset.active_scalars_info.association == FieldAssociation.POINT
-            ):
-                source_data = dataset
-            else:
-                raise ValueError(
-                    "Both ``scale`` and ``orient`` must use " "point data or cell data."
+        if orient:
+            try:
+                pyvista.set_default_active_vectors(dataset)
+            except MissingDataError:
+                warnings.warn("No vector-like data to use for orient. orient will be set to False.")
+                orient = False
+            except AmbiguousDataError as err:
+                warnings.warn(
+                    f"{err}\nIt is unclear which one to use. orient will be set to False."
                 )
-        else:
-            source_data = dataset
+                orient = False
+
+        if scale and orient:
+            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
+                raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
+
+        source_data = dataset
+        set_actives_on_source_data = False
+
+        if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
+            orient and dataset.active_vectors_info.association == FieldAssociation.CELL
+        ):
+            source_data = dataset.cell_centers()
+            set_actives_on_source_data = True
+
+        # Clean the points before glyphing
+        if tolerance is not None:
+            small = pyvista.PolyData(source_data.points)
+            small.point_data.update(source_data.point_data)
+            source_data = small.clean(
+                point_merging=True,
+                merge_tol=tolerance,
+                lines_to_points=False,
+                polys_to_lines=False,
+                strips_to_polys=False,
+                inplace=False,
+                absolute=absolute,
+                progress_bar=progress_bar,
+            )
+            set_actives_on_source_data = True
+
+        # upstream operations (cell to point conversion, point merging) may have unset the correct active
+        # scalars/vectors, so set them again
+        if set_actives_on_source_data:
+            if scale:
+                source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
+            if orient:
+                source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
+
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
@@ -2064,7 +2110,14 @@ class DataSetFilters:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # remove regionID from the output when extraction mode is set to the
+        # largest to avoid the VTK warning:
+        # the Cell array RegionId ... has X tuples but there are only Y cells
+        if largest:
+            output.cell_data.pop('RegionId', None)
+        return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
         """Extract largest connected set in mesh.
@@ -2213,6 +2266,7 @@ class DataSetFilters:
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         _ = get_array(self, scalars, preference='point', err=True)
 
@@ -2288,6 +2342,7 @@ class DataSetFilters:
 
         """
         if vectors is None:
+            pyvista.set_default_active_vectors(self)
             field, vectors = self.active_vectors_info
         arr = get_array(self, vectors, preference='point')
         field = get_array_association(self, vectors, preference='point')
@@ -3202,6 +3257,9 @@ class DataSetFilters:
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
+        elif vectors is None:
+            pyvista.set_default_active_vectors(self)
+
         if max_time is None:
             max_velocity = self.get_data_range()[-1]
             max_time = 4.0 * self.GetLength() / max_velocity
@@ -3386,6 +3444,8 @@ class DataSetFilters:
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
+        elif vectors is None:
+            pyvista.set_default_active_vectors(self)
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -3599,6 +3659,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -3910,6 +3971,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4039,6 +4101,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4675,9 +4738,8 @@ class DataSetFilters:
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
+            pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
-            if scalars is None:
-                raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         if not any((gradient, divergence, vorticity, qcriterion)):
@@ -4857,7 +4919,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -4939,7 +5001,7 @@ class DataSetFilters:
                 name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_points, 3)
+                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
@@ -5070,3 +5132,47 @@ class DataSetFilters:
             inplace=inplace,
             progress_bar=progress_bar,
         )
+
+    def integrate_data(self, progress_bar=False):
+        """Integrate point and cell data.
+
+        Area or volume is also provided in point data.
+
+        This filter uses the VTK `vtkIntegrateAttributes
+        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGird
+            Mesh with 1 point and 1 vertex cell with integrated data in point and cell data.
+
+        Examples
+        --------
+        Integrate data on a sphere mesh.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+        >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
+        >>> integrated = sphere.integrate_data()
+
+        There is only 1 point and cell, so access the only value.
+
+        >>> integrated["Area"][0]
+        3.14
+        >>> integrated["data"][0]
+        6.28
+
+        See the :ref:`integrate_example` for more examples using this filter.
+
+        """
+        filter = _vtk.vtkIntegrateAttributes()
+        filter.SetInputData(self)
+        filter.SetDivideAllCellDataByVolume(False)
+        _update_alg(filter, progress_bar, 'Integrating Variables')
+        return _get_output(filter)
