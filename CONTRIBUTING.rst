@@ -441,7 +441,6 @@ when there has been no reviewer action for one day since the last
 pull request action. This system is designed to give reviewers in all
 time zones a chance to review.
 
-
 Minor Release Steps
 ^^^^^^^^^^^^^^^^^^^
 
