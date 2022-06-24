@@ -70,9 +70,7 @@ def test_pickable_actors():
 
 def test_prepare_smooth_shading_texture(globe):
     """Test edge cases for smooth shading"""
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        globe, None, True, True, False, None
-    )
+    mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
     assert scalars is None
     assert "Normals" in mesh.point_data
     assert "Texture Coordinates" in mesh.point_data
@@ -82,9 +80,7 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     """Test edge cases for smooth shading"""
     scalars_name = "sample_point_scalars"
     scalars = hexbeam.point_data[scalars_name]
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        hexbeam, scalars, False, True, True, None
-    )
+    mesh, scalars = _plotting.prepare_smooth_shading(hexbeam, scalars, False, True, True, None)
 
     assert "Normals" in mesh.point_data
 
