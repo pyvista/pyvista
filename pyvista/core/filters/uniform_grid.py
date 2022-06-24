@@ -328,10 +328,6 @@ class UniformGridFilters(DataSetFilters):
         If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
         If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
 
-        Warning: applying this filter to cell data will send the output to a
-        new point array with the same name, overwriting any existing point data
-        array with the same name.
-
         Parameters
         ----------
         threshold : float or sequence
@@ -362,6 +358,12 @@ class UniformGridFilters(DataSetFilters):
         -------
         pyvista.UniformGrid
             Dataset with the specified scalars thresholded.
+
+        Warnings
+        --------
+        Applying this filter to cell data will send the output to a new point
+        array with the same name, overwriting any existing point data array
+        with the same name.
 
         Examples
         --------

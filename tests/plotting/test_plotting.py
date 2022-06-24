@@ -1127,9 +1127,9 @@ def test_plot_texture_alone(texture):
     texture.plot(before_close_callback=verify_cache_image)
 
 
-def test_plot_texture_alone_greyscale(texture):
-    """Test plotting a greyscale texture directly from the Texture class."""
-    texture_grey = texture.to_greyscale()
+def test_plot_texture_alone_grayscale(texture):
+    """Test plotting a grayscale texture directly from the Texture class."""
+    texture_grey = texture.to_grayscale()
     texture_grey.plot(before_close_callback=verify_cache_image)
 
 
@@ -1670,6 +1670,14 @@ def test_opacity_mismatched_fail(uniform):
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+def test_plot_uniform(uniform):
+    # Test with user defined transfer function
+    data = np.arange(uniform.n_points).reshape(uniform.dimensions)
+    p = pyvista.Plotter()
+    p.add_mesh(uniform, scalars=data)
+    p.show(before_close_callback=verify_cache_image)
+
+
 def test_opacity_transfer_functions():
     n = 256
     mapping = pyvista.opacity_transfer_function('linear', n)
@@ -1765,8 +1773,8 @@ def test_plot_string_array():
     mesh = examples.load_uniform()
     labels = np.empty(mesh.n_cells, dtype='<U10')
     labels[:] = 'High'
-    labels[mesh['Spatial Cell Data'] < 300] = 'Medium'
-    labels[mesh['Spatial Cell Data'] < 100] = 'Low'
+    labels[mesh['Spatial Cell Data'].ravel() < 300] = 'Medium'
+    labels[mesh['Spatial Cell Data'].ravel() < 100] = 'Low'
     mesh['labels'] = labels
     p = pyvista.Plotter()
     p.add_mesh(mesh, scalars='labels')

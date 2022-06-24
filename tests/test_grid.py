@@ -960,6 +960,13 @@ def test_save_uniform(extension, binary, tmpdir):
     assert grid.dimensions == ogrid.dimensions
 
 
+def test_grid_cell_dimensions():
+    dims = (4, 6, 8)
+    grid = pyvista.UniformGrid(dims=dims)
+    cell_dim = (dims[0] - 1, dims[1] - 1, dims[2] - 1)
+    assert grid._cell_dimensions == cell_dim
+
+
 def test_grid_points():
     """Test the points methods on UniformGrid and RectilinearGrid"""
     # test creation of 2d grids
@@ -1028,6 +1035,30 @@ def test_gaussian_smooth(hexbeam):
     assert uniform.active_scalars_name == active
     assert uniform.active_scalars.shape == values.shape
     assert not np.all(uniform.active_scalars == values)
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_grid_flip_x(uniform, inplace):
+    flipped = uniform.flip_x(inplace)
+    flipped_array = flipped.point_data['Spatial Point Data']
+    array = uniform.point_data['Spatial Point Data']
+    assert np.allclose(array[::-1], flipped_array)
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_grid_flip_y(uniform, inplace):
+    flipped = uniform.flip_y(inplace)
+    flipped_array = flipped.point_data['Spatial Point Data']
+    array = uniform.point_data['Spatial Point Data']
+    assert np.allclose(array[:, ::-1], flipped_array)
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_grid_flip_z(uniform, inplace):
+    flipped = uniform.flip_z(inplace)
+    flipped_array = flipped.point_data['Spatial Point Data']
+    array = uniform.point_data['Spatial Point Data']
+    assert np.allclose(array[..., ::-1], flipped_array)
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])

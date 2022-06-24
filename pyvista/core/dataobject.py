@@ -341,7 +341,11 @@ class DataObject:
         >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
-        pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
+        pyvista_ndarray([[['I could'],
+                          ['notes']],
+        <BLANKLINE>
+                         [['write'],
+                          ['here']]], dtype='<U7')
 
         Add field data to a MultiBlock dataset.
 

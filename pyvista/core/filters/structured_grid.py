@@ -157,14 +157,14 @@ class StructuredGridFilters(DataSetFilters):
         # concatenate point arrays, cutting off duplicate
         new_point_data = {}
         for name, point_array in self.point_data.items():
-            arr_1 = self._reshape_point_array(point_array)
-            arr_2 = other._reshape_point_array(other.point_data[name])
+            arr_1 = point_array
+            arr_2 = other.point_data[name]
             if not np.array_equal(
                 np.take(arr_1, indices=-1, axis=axis), np.take(arr_2, indices=0, axis=axis)
             ):
                 raise RuntimeError(
-                    'Grids cannot be joined along axis %d, as field '
-                    '`%s` is not identical along the seam.' % (axis, name)
+                    f'Grids cannot be joined along axis {axis}, as field '
+                    f'`{name}` is not identical along the seam.'
                 )
             new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(
                 order='F'

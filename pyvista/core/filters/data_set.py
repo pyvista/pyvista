@@ -1969,7 +1969,8 @@ class DataSetFilters:
             for index, subgeom in zip(indices, geom):
                 alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:
-                if dataset.active_scalars.ndim > 1:
+                n_dim = 2 if isinstance(dataset, (pyvista.UniformGrid, pyvista.Grid)) else 4
+                if dataset.active_scalars.ndim == n_dim:
                     alg.SetIndexModeToVector()
                 else:
                     alg.SetIndexModeToScalar()
@@ -4997,12 +4998,18 @@ class DataSetFilters:
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
-            point_vectors = [
-                name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
-            ]
-            cell_vectors = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
-            ]
+            if isinstance(self, (pyvista.Grid, pyvista.StructuredGrid)):
+                point_vectors = [name for name, data in self.point_data.items() if data.ndim == 4]
+                cell_vectors = [name for name, data in self.cell_data.items() if data.ndim == 4]
+            else:
+                point_vectors = [
+                    name
+                    for name, data in self.point_data.items()
+                    if data.shape == (self.n_points, 3)
+                ]
+                cell_vectors = [
+                    name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
+                ]
         else:
             # we'll only transform active vectors and normals
             point_vectors = [

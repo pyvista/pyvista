@@ -3,6 +3,7 @@
 The data objects does not have any sort of spatial reference.
 
 """
+import copy
 import warnings
 
 import numpy as np
@@ -364,9 +365,9 @@ class Texture(_vtk.vtkTexture, DataObject):
     Parameters
     ----------
     uinput : str, vtkImageData, vtkTexture, list, optional
-        Filename, ``vtkImagedata``, ``vtkTexture``, or a list of images to
-        create a cubemap. If a list of images, must be of the same size and in
-        the following order:
+        Filename, ``vtkImagedata``, ``vtkTexture``, :class:`numpy.ndarray` or a
+        list of images to create a cubemap. If a list of images, must be of the
+        same size and in the following order:
 
         * +X
         * -X
@@ -486,44 +487,47 @@ class Texture(_vtk.vtkTexture, DataObject):
     def _from_file(self, filename, **kwargs):
         try:
             image = pyvista.read(filename, **kwargs)
-            if image.GetNumberOfPoints() < 2:  # pragma: no cover
+            if image.n_points < 2:  # pragma: no cover
                 raise ValueError("Problem reading the image with VTK.")
-            self._from_image_data(image)
+
+            # to have textures match imageio's format, flip_x
+            self._from_image_data(image.flip_y())
         except (KeyError, ValueError):
             from imageio import imread
 
             self._from_array(imread(filename))
 
     def _from_texture(self, texture):
-        image = texture.GetInput()
-        self._from_image_data(image)
+        """Initialize or update from a pyvista.Texture."""
+        self._from_image_data(texture.GetInput())
 
     def _from_image_data(self, image):
+        """Initialize or update from a UniformGrid."""
         if not isinstance(image, pyvista.UniformGrid):
             image = pyvista.UniformGrid(image)
         self.SetInputDataObject(image)
         self.Update()
 
-    def _from_array(self, image):
+    def _from_array(self, arr):
         """Create a texture from a np.ndarray."""
-        if not 2 <= image.ndim <= 3:
+        if not isinstance(arr, np.ndarray):
+            raise TypeError(f"Invalid type {type(arr)}. Type must be numpy.ndarray")
+
+        if arr.ndim not in [2, 3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise ValueError('Input image must be nn by nm by RGB[A]')
 
-        if image.ndim == 3:
-            if image.shape[2] not in [1, 3, 4]:
+        if arr.ndim == 3:
+            if arr.shape[2] not in [1, 3, 4]:
                 raise ValueError(
-                    'Third dimension of the array must be of size 1 (greyscale), 3 (RGB), or 4 (RGBA)'
+                    'Third dimension of the array must be of size 1 (grayscale), 3 (RGB), or 4 (RGBA)'
                 )
-            n_components = image.shape[2]
-        elif image.ndim == 2:
+            n_components = arr.shape[2]
+        elif arr.ndim == 2:
             n_components = 1
 
-        grid = pyvista.UniformGrid(dims=(image.shape[1], image.shape[0], 1))
-        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
-            (-1, n_components), order='F'
-        )
-        grid.set_active_scalars('Image')
+        grid = pyvista.UniformGrid(dims=(arr.shape[1], arr.shape[0], 1))
+        grid.point_data['Image'] = arr.reshape(-1, n_components)
         self._from_image_data(grid)
 
     @property
@@ -539,7 +543,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     def n_components(self) -> int:
         """Components in the image.
 
-        Single component textures are greyscale, while 3 or 4 component are
+        Single component textures are grayscale, while 3 or 4 component are
         used for representing RGB and RGBA images.
 
         Examples
@@ -555,55 +559,42 @@ class Texture(_vtk.vtkTexture, DataObject):
             return 0
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
-    def flip(self, axis):
-        """Flip (mirror) this texture inplace along the specified axis.
-
-        Parameters
-        ----------
-        axis : int
-            Axis about to flip.  0 for the X axis and 1 for the Y axis.
+    def rotate_cw(self, inplace=False):
+        """Rotate this texture 90 degrees clockwise.
 
         Examples
         --------
         >>> from pyvista import examples
         >>> texture = examples.download_puppy_texture()
-        >>> texture.flip(0)
-        >>> texture.plot()
+        >>> rotated = texture.rotate_cw()
+        >>> rotated.plot()
 
         """
-        if axis not in [0, 1]:
-            raise ValueError(f"axis must be 0 (x axis) or 1 or (y axis). Got {axis}")
-        new_data = np.flip(self.image_data.swapaxes(1, 0), axis=1 - axis)
-        self.image_data[:] = new_data.swapaxes(1, 0)
+        data = self.image_data[:, ::-1, :]
+        if inplace:
+            self._from_array(data)
+            return self
+        return Texture(data)
 
-    def rotate_cw(self):
-        """Rotate this texture clockwise.
+    def rotate_ccw(self, inplace=False):
+        """Rotate this texture 90 degrees counter-clockwise.
 
         Examples
         --------
         >>> from pyvista import examples
         >>> texture = examples.download_puppy_texture()
-        >>> texture.rotate_cw()
-        >>> texture.plot()
+        >>> rotated = texture.rotate_ccw()
+        >>> rotated.plot()
 
         """
-        self._from_array(np.flip(self.image_data, axis=0))
+        data = self.image_data[::-1, :, :]
+        if inplace:
+            self._from_array(data)
+            return self
+        return Texture(data)
 
-    def rotate_ccw(self):
-        """Rotate this texture counter-clockwise.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> texture = examples.download_puppy_texture()
-        >>> texture.rotate_ccw()
-        >>> texture.plot()
-
-        """
-        self._from_array(np.flip(self.image_data, axis=1))
-
-    def to_image(self):
-        """Return the texture as an image.
+    def to_image(self) -> 'pyvista.UniformGrid':
+        """Return the texture as an image (:class:`pyvista.UniformGrid`).
 
         Returns
         -------
@@ -672,7 +663,14 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         if self.cube_map:
             return self._plot_skybox(*args, **kwargs)
-        kwargs.setdefault('cpos', 'xy')
+
+        # using theme here because we can't set both the viewup and view
+        # direction in the same cpos arg
+        theme = copy.deepcopy(pyvista.global_theme)
+        theme.camera['viewup'] = [0, -1, 0]
+        kwargs.setdefault('theme', theme)
+        kwargs.setdefault('cpos', [0, 0, -1])
+
         kwargs.setdefault('lighting', False)
         kwargs.setdefault('rgba', self.n_components > 1)
         kwargs.setdefault('show_axes', False)
@@ -761,49 +759,73 @@ class Texture(_vtk.vtkTexture, DataObject):
         dtype('uint8')
 
         """
-        data = pyvista.wrap(self.GetInput().GetPointData().GetScalars())
-        if data.ndim > 1:
-            shape = (self.dimensions[1], self.dimensions[0], data.shape[1])
-        else:
-            shape = (self.dimensions[1], self.dimensions[0])
-
-        return np.flip(data.reshape(shape), axis=1).swapaxes(1, 0)
+        return self.to_image().active_scalars.squeeze()
 
     @image_data.setter
     def image_data(self, image_data):
         """Set the image data."""
         self._from_array(image_data)
 
-    def to_greyscale(self):
-        """Convert this texture as a single component (greyscale) texture.
+    def to_grayscale(self):
+        """Convert this texture as a single component (grayscale) texture.
 
         Returns
         -------
         pyvista.Texture
-            Texture converted to greyscale. If already black and white,
-            the original texture itself is returned.
+            Texture converted to grayscale. If already grayscale, the original
+            texture itself is returned.
 
         Notes
         -----
         The transparency channel (if available) will be dropped.
 
-        Uses NTSC/PAL implementation.
+        Follows the `CCIR 601 <https://en.wikipedia.org/wiki/Rec._601>`_ luma
+        calculation equation of ``Y = 0.299*R + 0.587*G + 0.114*B``.
 
         Examples
         --------
         >>> from pyvista import examples
         >>> texture = examples.download_masonry_texture()
-        >>> bw_texture = texture.to_greyscale()
+        >>> bw_texture = texture.to_grayscale()
         >>> bw_texture.plot()
 
         """
         if self.n_components == 1:
             return self
 
-        new_texture = self.copy()
-        r, g, b = np.asarray(new_texture.image_data).T[:3]
-        greyscale = (0.2989 * r + 0.5870 * g + 0.1140 * b).round().astype(np.uint8)
-        new_texture.image_data = greyscale
-        new_texture.flip(0)
-        new_texture.flip(1)
-        return new_texture
+        data = np.array(self.image_data)  # decouple VTK data
+        r, g, b = data[..., 0], data[..., 1], data[..., 2]
+        grayscale = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
+        return Texture(grayscale.T)
+
+    def flip_x(self, inplace=False):
+        """Flip the texture in the x direction.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> flipped = texture.flip_x()
+        >>> flipped.plot()
+
+        """
+        if inplace:
+            self.to_image().flip_x(inplace)
+            return self
+        return Texture(self.to_image().flip_x(inplace))
+
+    def flip_y(self, inplace=False):
+        """Flip the texture in the y direction.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> flipped = texture.flip_y()
+        >>> flipped.plot()
+
+        """
+        if inplace:
+            self.to_image().flip_y(inplace)
+            return self
+        return Texture(self.to_image().flip_y(inplace))

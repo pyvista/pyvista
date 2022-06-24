@@ -1000,7 +1000,7 @@ def numpy_to_texture(image):
         VTK texture.
 
     """
-    return pyvista.Texture(image)
+    return pyvista.Texture(image).flip_y()
 
 
 def is_inside_bounds(point, bounds):
@@ -1115,6 +1115,13 @@ def raise_not_matching(scalars, dataset):
         raise ValueError(
             f'Number of scalars ({scalars.size}) must match number of rows ({dataset.n_rows}).'
         )
+    if isinstance(dataset, pyvista.UniformGrid) and scalars.ndim != 1:
+        raise ValueError(
+            f'Shape of the scalars {scalars.shape[:3]} '
+            f'must match either the dimensionality of points {dataset.dimensions} '
+            f'or the dimensionality of cells {dataset._cell_dimensions}.'
+        )
+
     raise ValueError(
         f'Number of scalars ({scalars.size}) '
         f'must match either the number of points ({dataset.n_points}) '
@@ -1168,6 +1175,43 @@ def try_callback(func, *args):
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
         ).rstrip('\n')
         logging.warning(formatted_exception)
+
+
+def ravel_grid_array(dataset, data):
+    """Ravel data associated with a pyvista.StructuredGrid or pyvista.Grid.
+
+    Returns a 1D or 2D shaped array.
+
+    Parameters
+    ----------
+    dataset : pyvista.DataSet
+        Dataset associated with the data.
+
+    data : numpy.ndarray
+        Data Array. May have 1-4 dimensions.
+
+    Returns
+    -------
+    numpy.ndarray
+        1D or 2D array of data.
+
+    """
+    # here we allow either raveled data or data with the same shape as
+    # the grid
+    if data.shape[:3] in [dataset.dimensions, dataset._cell_dimensions]:
+        if data.ndim > 3:
+            data = data.reshape((-1, data.shape[-1]), order="F")
+        else:
+            data = data.ravel(order="F")
+    elif data.shape[0] not in [dataset.n_points, dataset.n_cells]:
+        ValueError(
+            f'data dimensions ({data.shape}) should either match the point '
+            f'dimensions of the UniformGrid ({dataset.dimensions}), the '
+            f'cell_dimensions {dataset._cell_dimensions} or when '
+            f'flattened to one dimension, ({dataset.n_points}, ) or '
+            f'({dataset.n_cells}, )'
+        )
+    return data
 
 
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
@@ -1560,11 +1604,12 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     point_data = mesh.point_data
     cell_data = mesh.cell_data
 
+    n_dim = 4 if isinstance(mesh, (pyvista.Grid, pyvista.StructuredGrid)) else 2
     possible_vectors_point = [
-        name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
+        name for name, value in point_data.items() if value.ndim == n_dim and value.shape[-1] == 3
     ]
     possible_vectors_cell = [
-        name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
+        name for name, value in cell_data.items() if value.ndim == n_dim and value.shape[-1] == 3
     ]
 
     possible_vectors = possible_vectors_point + possible_vectors_cell
@@ -1637,3 +1682,10 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
             f"point data: {possible_scalars_point}.\n"
             "Set one as active using DataSet.set_active_scalars(name, preference=type)"
         )
+
+
+def get_cell_dimensions(dataset):
+    """Return the cell dimensions of a dataset."""
+    dims = np.array(dataset.GetDimensions()) - 1
+    dims[dims == 0] = 1
+    return tuple([dim if dim > 0 else 1 for dim in dims])

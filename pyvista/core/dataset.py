@@ -1915,6 +1915,17 @@ class DataSet(DataSetFilters, DataObject):
             self.point_data[name] = scalars
         elif scalars.shape[0] == self.n_cells:
             self.cell_data[name] = scalars
+        elif isinstance(self, (pyvista.StructuredGrid, pyvista.UniformGrid)):
+            if scalars.ndim == 2:
+                shp = (scalars.shape[0], scalars.shape[1], 1)
+            else:
+                shp = scalars.shape
+            if shp == self.dimensions:
+                self.point_data[name] = scalars
+            elif shp == self._cell_dimensions:
+                self.cell_data[name] = scalars
+            else:
+                raise_not_matching(scalars, self)
         else:
             # Field data must be set explicitly as it could be a point of
             # confusion for new users

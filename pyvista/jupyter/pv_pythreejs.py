@@ -234,9 +234,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
     tjs_texture = None
     if texture is not None:
         wrapped_tex = pv.wrap(texture.GetInput())
-        data = wrapped_tex.active_scalars
-        dim = (wrapped_tex.dimensions[0], wrapped_tex.dimensions[1], data.shape[1])
-        data = data.reshape(dim)
+        data = wrapped_tex.active_scalars.squeeze()
         # fmt = "RGBFormat" if data.shape[1] == 3 else "RGBAFormat"
 
         # Create data texture and catch invalid warning

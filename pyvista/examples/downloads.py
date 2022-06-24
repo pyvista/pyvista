@@ -2746,14 +2746,11 @@ def download_crater_imagery(load=True):  # pragma: no cover
     See :ref:`ref_topo_map_example` for an example using this dataset.
 
     """
-    texture_or_file = _download_and_read(
+    return _download_and_read(
         'BJ34_GeoTifv1-04_crater_clip.tif',
         texture=True,
         load=load,
     )
-    if load:
-        texture_or_file.flip(1)
-    return texture_or_file
 
 
 def download_dolfin(load=True):  # pragma: no cover
@@ -2976,7 +2973,7 @@ def download_rgba_texture(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_rgba_texture()
-    >>> dataset.plot(cpos="xy")
+    >>> dataset.plot()
 
     See :ref:`ref_texture_example` for an example using this dataset.
 

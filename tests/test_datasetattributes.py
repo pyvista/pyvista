@@ -12,6 +12,12 @@ from pyvista.utilities import FieldAssociation
 
 
 @fixture()
+def uniform_grid():
+    """Non-symmetric uniform grid for datasetattribute testing."""
+    return pyvista.UniformGrid(dims=(4, 8, 16))
+
+
+@fixture()
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_data
 
@@ -565,3 +571,31 @@ def test_complex(plane):
     assert plane.point_data[name].dtype == np.complex128
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, float)
+
+
+def test_uniform_grid_setter_point_data(uniform_grid):
+    data = np.linalg.norm(uniform_grid.points, axis=1)
+
+    uniform_grid['point_data_a'] = data
+    uniform_grid['point_data_b'] = data.reshape((uniform_grid.dimensions))
+    assert uniform_grid['point_data_a'].shape == uniform_grid.dimensions
+    np.allclose(uniform_grid['point_data_a'], uniform_grid['point_data_b'])
+
+    uniform_grid.point_data['point_data_a'] = data
+    uniform_grid.point_data['point_data_b'] = data.reshape((uniform_grid.dimensions))
+    assert uniform_grid.point_data['point_data_a'].shape == uniform_grid.dimensions
+    np.allclose(uniform_grid.point_data['point_data_a'], uniform_grid.point_data['point_data_b'])
+
+
+def test_uniform_grid_setter_cell_data(uniform_grid):
+    data = np.linalg.norm(uniform_grid.cell_centers().points, axis=1)
+
+    uniform_grid['cell_data_a'] = data
+    uniform_grid['cell_data_b'] = data.reshape((uniform_grid._cell_dimensions))
+    assert uniform_grid['cell_data_a'].shape == uniform_grid._cell_dimensions
+    np.allclose(uniform_grid['cell_data_a'], uniform_grid['cell_data_b'])
+
+    uniform_grid.cell_data['cell_data_c'] = data
+    uniform_grid.cell_data['cell_data_d'] = data.reshape((uniform_grid._cell_dimensions))
+    assert uniform_grid.cell_data['cell_data_c'].shape == uniform_grid._cell_dimensions
+    np.allclose(uniform_grid.cell_data['cell_data_c'], uniform_grid.cell_data['cell_data_d'])

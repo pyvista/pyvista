@@ -78,6 +78,20 @@ def make_mapper(mapper_class):
             show_scalar_bar,
         ):
             """Set the scalars on this mapper."""
+            if not isinstance(scalars, np.ndarray):
+                scalars = np.asarray(scalars)
+
+            from pyvista import Grid, StructuredGrid
+
+            if isinstance(mesh, (Grid, StructuredGrid)):
+                if scalars.ndim == 3:
+                    scalars = scalars.ravel(order='F')
+                elif scalars.ndim == 4:
+                    scalars = scalars.reshape((-1, scalars.shape[-1]), order='F')
+
+                if isinstance(opacity, np.ndarray):
+                    opacity = opacity.ravel(order='F')
+
             if cmap is None:  # Set default map if matplotlib is available
                 if _has_matplotlib():
                     cmap = theme.cmap
@@ -87,9 +101,6 @@ def make_mapper(mapper_class):
                 title = '__custom_rgba'
             else:
                 title = scalar_bar_args.get('title', 'Data')
-
-            if not isinstance(scalars, np.ndarray):
-                scalars = np.asarray(scalars)
 
             _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):
@@ -110,7 +121,7 @@ def make_mapper(mapper_class):
 
             if rgb:
                 show_scalar_bar = False
-                if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
+                if scalars.ndim == 1 or scalars.shape[-1] not in [3, 4]:
                     raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
             if scalars.ndim != 1:
@@ -205,8 +216,8 @@ def make_mapper(mapper_class):
                         hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
                         scalars = np.round(hue * n_colors) / n_colors
                         scalars = cmap(scalars) * 255
-                        scalars[:, -1] *= opacity
-                        scalars = scalars.astype(np.uint8)
+                        scalars[:, -1] *= opacity.ravel()
+                        scalars = scalars.astype(np.uint8, copy=False)
 
             else:  # no cmap specified
                 if flip_scalars:

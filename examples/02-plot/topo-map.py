@@ -31,6 +31,9 @@ topo_map.plot()
 # :class:`pyvista.Texture` object using the :func:`pyvista.read_texture`
 # method, then you can map that imagery to the surface mesh as follows:
 
+# flip the map to align it with our elevation map
+topo_map.flip_y(inplace=True)
+
 # Bounds of the aerial imagery - given to us
 bounds = (1818000, 1824500, 5645000, 5652500, 0, 3000)
 # Clip the elevation dataset to the map's extent
@@ -41,12 +44,12 @@ local.texture_map_to_plane(use_bounds=True, inplace=True)
 
 ###############################################################################
 # Now display it! Note that the imagery is aligned as we expect.
-local.plot(texture=topo_map, cpos="xy")
+local.plot(texture=topo_map, cpos="xy", smooth_shading=True)
 
 
 ###############################################################################
 # And here is a 3D perspective!
-local.plot(texture=topo_map)
+local.plot(texture=topo_map, smooth_shading=True)
 
 
 ###############################################################################
@@ -59,7 +62,7 @@ surrounding = elevation.clip_box(bounds, invert=True)
 # Display with a shading technique
 p = pv.Plotter()
 p.add_mesh(local, texture=topo_map)
-p.add_mesh(surrounding, color="white")
+p.add_mesh(surrounding, color="white", smooth_shading=True)
 p.enable_eye_dome_lighting()
 p.camera_position = [
     (1831100.0, 5642142.0, 8168.0),

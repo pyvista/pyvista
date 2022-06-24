@@ -214,8 +214,8 @@ def test_texture_empty_init():
     assert texture.n_components == 0
 
 
-def test_texture_greyscale():
-    # verify a greyscale image can be created
+def test_texture_grayscale():
+    # verify a grayscale image can be created
     texture = pyvista.Texture(np.zeros((10, 10, 1), dtype=np.uint8))
     assert texture.dimensions == (10, 10)
     assert texture.n_components == 1
@@ -247,30 +247,27 @@ def test_texture():
     assert texture is not None
 
 
-def test_texture_flip(texture):
-    with pytest.raises(ValueError, match="axis must be 0"):
-        texture.flip(2)
-
+@pytest.mark.parametrize('inplace', [True, False])
+def test_texture_flip(texture, inplace):
     orig_data = texture.image_data.copy()
 
-    texture.flip(0)
+    texture = texture.flip_x(inplace)
     assert not np.array_equal(orig_data, texture.image_data)
-    texture.flip(0)
+    texture = texture.flip_x(inplace)
     assert np.array_equal(orig_data, texture.image_data)
 
-    texture.flip(1)
+    texture = texture.flip_y(inplace)
     assert not np.array_equal(orig_data, texture.image_data)
-    texture.flip(1)
+    texture = texture.flip_y(inplace)
     assert np.array_equal(orig_data, texture.image_data)
 
 
-def test_texture_rotate(texture):
-    orig_data = texture.image_data.copy()
+@pytest.mark.parametrize('inplace', [True, False])
+def test_texture_rotate(texture, inplace):
+    orig_dim = texture.dimensions
 
-    texture.rotate_ccw()
-    assert orig_data.shape[:2] == texture.image_data.shape[:2][::-1]
-    texture.rotate_cw()
-    assert np.allclose(orig_data, texture.image_data)
+    texture_rot = texture.rotate_ccw(inplace)
+    assert texture_rot.dimensions == orig_dim[::-1]
 
 
 def test_image_data():
@@ -291,15 +288,14 @@ def test_texture_from_images(image):
     assert texture.cube_map
 
 
-def test_texture_to_greyscale(texture):
-    bw_texture = texture.to_greyscale()
+def test_texture_to_grayscale(texture):
+    bw_texture = texture.to_grayscale()
     assert bw_texture.n_components == 1
     assert bw_texture.dimensions == texture.dimensions
     assert bw_texture.image_data.dtype == np.uint8
-    assert bw_texture.image_data.shape == texture.dimensions
 
     # no change when already converted
-    assert bw_texture.to_greyscale() is bw_texture
+    assert bw_texture.to_grayscale() is bw_texture
 
 
 def test_skybox():

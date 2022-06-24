@@ -547,6 +547,33 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             # VTK arrays
             narray = narray.squeeze()
 
+        # import here to avoid circular import
+        from pyvista import Grid, StructuredGrid
+
+        # if structured, must reshape to match shape of array
+        if isinstance(self.dataset, (Grid, StructuredGrid)):
+            try:
+                # permit reshaping arrays with multiple components.
+                dim = list(self.dataset.dimensions)
+                dim.append(-1)
+                narray = narray.reshape(dim, order='F')
+                # however, we want to remove that extra dimension (and only
+                # that extra dimensions) if it's empty
+                if narray.shape[-1] == 1:
+                    narray = narray.squeeze(-1)
+            except ValueError:
+                try:
+                    dim = list(self.dataset._cell_dimensions)
+                    dim.append(-1)
+                    narray = np.atleast_3d(narray.reshape(dim, order='F'))
+                    if narray.shape[-1] == 1:
+                        narray = narray.squeeze(-1)
+                except ValueError:
+                    raise ValueError(
+                        f'Unable to reshape array to {self.dataset.dimensions} for '
+                        f'points or {self.dataset._cell_dimensions} for cells'
+                    ) from None
+
         return narray
 
     def set_array(
@@ -771,19 +798,21 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if data.VTKObject is not None:
                 # VTK doesn't support strides, therefore we can't directly
                 # point to the underlying object
-                if data.flags.c_contiguous:
+                if data.flags.c_contiguous or data.flags.f_contiguous:
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
                     if isinstance(name, str):
                         vtk_arr.SetName(name)
                     return vtk_arr
 
+            data = np.asarray(data)
+
         # convert to numpy type if necessary
         data = np.asanyarray(data)
 
         if self.association == FieldAssociation.POINT:
-            array_len = self.dataset.GetNumberOfPoints()
+            array_len = self.dataset.n_points
         elif self.association == FieldAssociation.CELL:
-            array_len = self.dataset.GetNumberOfCells()
+            array_len = self.dataset.n_cells
         else:
             array_len = data.shape[0] if isinstance(data, np.ndarray) else 1
 
@@ -792,6 +821,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             tmparray = np.empty(array_len)
             tmparray.fill(data)
             data = tmparray
+
+        # import here to avoid circular import
+        from pyvista import Grid, StructuredGrid
+
+        if isinstance(self.dataset, (Grid, StructuredGrid)):
+            data = helpers.ravel_grid_array(self.dataset, data)
+
         if data.shape[0] != array_len:
             raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
 
@@ -1103,11 +1139,22 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            Spatial Point Data      float64    (1000,)
-            foo                     int64      (1000,)
-            rand                    float64    (1000,)              SCALARS
+            Spatial Point Data      float64    (10, 10, 10)
+            foo                     int64      (10, 10, 10)
+            rand                    float64    (10, 10, 10)         SCALARS
 
         """
+        from pyvista import Grid, StructuredGrid
+
+        # allow mapping of Grid arrays to non-grid
+        if isinstance(array_dict, DataSetAttributes):
+            if isinstance(array_dict.dataset, (StructuredGrid, Grid)) and not isinstance(
+                self.dataset, (StructuredGrid, Grid)
+            ):
+                for name, array in array_dict.point_data.items():
+                    self[name] = helpers.ravel_grid_array(array_dict.dataset, array).copy()
+                return
+
         for name, array in array_dict.items():
             self[name] = array.copy()
 
