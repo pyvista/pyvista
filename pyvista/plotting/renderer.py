@@ -1088,7 +1088,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         axes_ranges : list, tuple, or numpy.ndarray, optional
             When set, these values override the values that are shown on the
-            axes. This can be useful when plotting scaled datasets or you wish
+            axes. This can be useful when plotting scaled datasets or if you wish
             to manually display different values. These values must be in the
             form:
 
