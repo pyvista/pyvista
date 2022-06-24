@@ -810,7 +810,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         if inplace:
-            self.to_image().flip_x(inplace)
+            self._from_image_data(self.to_image().flip_x(inplace))
             return self
         return Texture(self.to_image().flip_x(inplace))
 
@@ -826,6 +826,6 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         if inplace:
-            self.to_image().flip_y(inplace)
+            self._from_image_data(self.to_image().flip_y(inplace))
             return self
         return Texture(self.to_image().flip_y(inplace))
