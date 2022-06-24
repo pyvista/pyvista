@@ -220,4 +220,3 @@ def test_no_added_with_scalar_bar(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
     assert sphere.n_arrays == 1
-
