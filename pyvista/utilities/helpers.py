@@ -119,7 +119,7 @@ def convert_string_array(arr, name=None):
     if isinstance(arr, np.ndarray):
         vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
-        for val in arr:
+        for val in arr.ravel():
             vtkarr.InsertNextValue(val)
         ################################
         if isinstance(name, str):
@@ -1198,6 +1198,9 @@ def ravel_grid_array(dataset, data):
     """
     # here we allow either raveled data or data with the same shape as
     # the grid
+    while data.ndim < 3:
+        data = np.expand_dims(data, -1)
+
     if data.shape[:3] in [dataset.dimensions, dataset._cell_dimensions]:
         if data.ndim > 3:
             data = data.reshape((-1, data.shape[-1]), order="F")

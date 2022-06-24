@@ -2351,7 +2351,7 @@ class DataSetFilters:
             raise ValueError('No vectors present to warp by vector.')
 
         # check that this is indeed a vector field
-        if arr.ndim != 2 or arr.shape[1] != 3:
+        if arr.ndim < 2 or arr.shape[-1] != 3:
             raise ValueError(
                 'Dataset can only by warped by a 3D vector point data array. '
                 'The values you provided do not satisfy this requirement'

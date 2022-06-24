@@ -75,13 +75,12 @@ tp = path[:, 2][:, None] - tp
 points[:, -1] = tp.ravel()
 
 ###############################################################################
-# Make a StructuredGrid from the structured points
+# Make a StructuredGrid from the structured points and add the data to the
+# grid.
 grid = pv.StructuredGrid()
 grid.points = points
 grid.dimensions = nsamples, ntraces, 1
-
-# Add the data array - note the ordering!
-grid["values"] = data.ravel(order="F")
+grid["values"] = data
 
 ###############################################################################
 # And now we can plot it! or process or do anything, because it is a PyVista

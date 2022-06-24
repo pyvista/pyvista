@@ -1151,7 +1151,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if isinstance(array_dict.dataset, (StructuredGrid, Grid)) and not isinstance(
                 self.dataset, (StructuredGrid, Grid)
             ):
-                for name, array in array_dict.point_data.items():
+                for name, array in array_dict.items():
                     self[name] = helpers.ravel_grid_array(array_dict.dataset, array).copy()
                 return
 
