@@ -1,7 +1,7 @@
 name: "Pull Request Labeler"
 on:
   pull_request_target:
-    types: [opened, reopened]
+    types: [opened, labeled, unlabeled, synchronize]
 
 jobs:
   triage:
@@ -43,3 +43,24 @@ jobs:
       if: startsWith(github.event.pull_request.head.ref, 'release')
       with:
         labels: release
+
+  required-labels:
+    name: Required Labels
+    needs: Label based on changed files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mheap/github-action-required-labels@v2
+        with:
+          mode: exactly
+          count: 1
+          labels: "documentation, docker, maintenance, ignore-for-release, enhancement, bug, release"
+      - uses: mheap/github-action-required-labels@v2
+        with:
+          mode: exactly
+          count: 1
+          labels: "community-reviewed"
+      - uses: mheap/github-action-required-labels@v2
+        with:
+          mode: exactly
+          count: 0
+          labels: "do-not-merge"
