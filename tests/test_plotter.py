@@ -13,7 +13,7 @@ from pyvista.plotting import _plotting
 
 def test_plotter_image():
     plotter = pyvista.Plotter()
-    with pytest.raises(AttributeError, match='not yet been set up'):
+    with pytest.raises(AttributeError, match="not yet been set up"):
         plotter.image
 
 
@@ -70,19 +70,23 @@ def test_pickable_actors():
 
 def test_prepare_smooth_shading_texture(globe):
     """Test edge cases for smooth shading"""
-    mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        globe, None, True, True, False, None
+    )
     assert scalars is None
-    assert 'Normals' in mesh.point_data
-    assert 'Texture Coordinates' in mesh.point_data
+    assert "Normals" in mesh.point_data
+    assert "Texture Coordinates" in mesh.point_data
 
 
 def test_prepare_smooth_shading_not_poly(hexbeam):
     """Test edge cases for smooth shading"""
-    scalars_name = 'sample_point_scalars'
+    scalars_name = "sample_point_scalars"
     scalars = hexbeam.point_data[scalars_name]
-    mesh, scalars = _plotting.prepare_smooth_shading(hexbeam, scalars, False, True, True, None)
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        hexbeam, scalars, False, True, True, None
+    )
 
-    assert 'Normals' in mesh.point_data
+    assert "Normals" in mesh.point_data
 
     expected_mesh = hexbeam.extract_surface().compute_normals(
         cell_normals=False,
@@ -115,11 +119,11 @@ def test_remove_scalars_single(sphere, hexbeam):
 
     assert len(pl._added_scalars) == 2
     for mesh, (name, assoc) in pl._added_scalars:
-        assert name == 'Data'
+        assert name == "Data"
         if mesh is sphere:
-            assert assoc == 'point'
+            assert assoc == "point"
         else:
-            assert assoc == 'cell'
+            assert assoc == "cell"
 
     pl.close()
     assert pl._added_scalars == []
@@ -132,7 +136,7 @@ def test_remove_scalars_complex(sphere):
     """Test plotting complex data."""
     data = np.arange(sphere.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, sphere.n_points) * -1j
-    point_data_name = 'data'
+    point_data_name = "data"
     sphere[point_data_name] = data
 
     pl = pyvista.Plotter()
@@ -155,7 +159,7 @@ def test_remove_scalars_normalized(sphere):
     assert sphere.n_arrays == 0
 
     # test scalars are removed for normalized multi-component
-    point_data_name = 'data'
+    point_data_name = "data"
     sphere[point_data_name] = np.random.random((sphere.n_points, 3))
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=point_data_name)
@@ -165,7 +169,7 @@ def test_remove_scalars_normalized(sphere):
 
 
 def test_remove_scalars_component(sphere):
-    point_data_name = 'data'
+    point_data_name = "data"
     sphere[point_data_name] = np.random.random((sphere.n_points, 3))
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=point_data_name, component=0)
@@ -181,7 +185,7 @@ def test_remove_scalars_component(sphere):
 
 
 def test_remove_scalars_rgba(sphere):
-    point_data_name = 'data'
+    point_data_name = "data"
     sphere[point_data_name] = np.random.random(sphere.n_points)
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=point_data_name, opacity=point_data_name)
@@ -198,8 +202,8 @@ def test_remove_scalars_rgba(sphere):
 
 def test_active_scalars_remain(sphere, hexbeam):
     """Ensure active scalars remain active despite plotting different scalars."""
-    point_data_name = 'point_data'
-    cell_data_name = 'cell_data'
+    point_data_name = "point_data"
+    cell_data_name = "cell_data"
     sphere[point_data_name] = np.random.random(sphere.n_points)
     hexbeam[cell_data_name] = np.random.random(hexbeam.n_cells)
     assert sphere.point_data.active_scalars_name == point_data_name
@@ -215,7 +219,7 @@ def test_active_scalars_remain(sphere, hexbeam):
 
 
 def test_no_added_with_scalar_bar(sphere):
-    point_data_name = 'data'
+    point_data_name = "data"
     sphere[point_data_name] = np.random.random(sphere.n_points)
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
