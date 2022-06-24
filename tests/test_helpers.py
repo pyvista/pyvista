@@ -77,6 +77,11 @@ def test_make_tri_mesh(sphere):
     assert np.allclose(sphere.faces, mesh.faces)
 
 
+def test_wrap_invalid():
+    with pytest.raises(NotImplementedError):
+        pyvista.wrap(np.empty((1, 1, 1, 1)))
+
+
 def test_wrappers():
     vtk_data = vtk.vtkPolyData()
     pv_data = pyvista.wrap(vtk_data)

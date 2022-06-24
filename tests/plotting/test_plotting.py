@@ -1150,7 +1150,7 @@ def test_clear(sphere):
 def test_plot_texture():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
-    texture = examples.load_globe_texture()
+    texture = examples.load_globe_texture().flip_y()
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=texture)
     plotter.show(before_close_callback=verify_cache_image)
@@ -2220,7 +2220,7 @@ def test_chart_plot():
 
     # Chart 2 (bottom right)
     chart_br = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.55, 0.05))
-    chart_br.background_texture = examples.load_globe_texture()
+    chart_br.background_texture = examples.load_globe_texture().flip_y()
     chart_br.border_color = "r"
     chart_br.border_width = 5
     chart_br.border_style = "-."

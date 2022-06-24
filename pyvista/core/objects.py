@@ -445,11 +445,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             # add each image to the cubemap
             for i, image in enumerate(uinput):
-                flip = _vtk.vtkImageFlip()
-                flip.SetInputDataObject(image)
-                flip.SetFilteredAxis(1)  # flip y axis
-                flip.Update()
-                self.SetInputDataObject(i, flip.GetOutput())
+                self.SetInputDataObject(i, image.flip_y())
         elif uinput is None:
             pass
         else:
@@ -793,7 +789,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         if self.n_components == 1:
             return self
 
-        data = np.array(self.image_data)  # decouple VTK data
+        data = np.asarray(self.image_data)  # use asarray decouple VTK data
         r, g, b = data[..., 0], data[..., 1], data[..., 2]
         grayscale = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
         return Texture(grayscale.T)

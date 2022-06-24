@@ -197,7 +197,7 @@ curvsurf.active_t_coords = puppy_coords
 # Now display all the puppies!
 
 # use the puppy image
-tex = examples.download_puppy_texture()
+tex = examples.download_puppy_texture().flip_y()
 curvsurf.plot(texture=tex, cpos="xy")
 
 
@@ -236,5 +236,5 @@ for i in range(sphere.points.shape[0]):
     ]
 
 # And let's display it with a world map
-tex = examples.load_globe_texture()
+tex = examples.load_globe_texture().flip_y()
 sphere.plot(texture=tex)

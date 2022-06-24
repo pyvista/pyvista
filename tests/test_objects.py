@@ -262,12 +262,24 @@ def test_texture_flip(texture, inplace):
     assert np.array_equal(orig_data, texture.image_data)
 
 
-@pytest.mark.parametrize('inplace', [True, False])
-def test_texture_rotate(texture, inplace):
+@pytest.mark.parametrize('inplace', [False])
+def test_texture_rotate_cw(texture, inplace):
     orig_dim = texture.dimensions
+    orig_data = texture.image_data.copy()
+
+    texture_rot = texture.rotate_cw(inplace)
+    assert texture_rot.dimensions == orig_dim[::-1]
+    assert np.allclose(np.rot90(orig_data), texture_rot.image_data)
+
+
+@pytest.mark.parametrize('inplace', [False])
+def test_texture_rotate_ccw(texture, inplace):
+    orig_dim = texture.dimensions
+    orig_data = texture.image_data.copy()
 
     texture_rot = texture.rotate_ccw(inplace)
     assert texture_rot.dimensions == orig_dim[::-1]
+    assert np.allclose(np.rot90(orig_data, k=3), texture_rot.image_data)
 
 
 def test_image_data():

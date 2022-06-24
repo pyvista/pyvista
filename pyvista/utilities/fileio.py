@@ -257,20 +257,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
     <class 'pyvista.core.objects.Texture'>
 
     """
-    filename = os.path.abspath(os.path.expanduser(filename))
-    try:
-        # initialize the reader using the extension to find it
-
-        image = read(filename, attrs=attrs, progress_bar=progress_bar)
-        if image.n_points < 2:
-            raise ValueError("Problem reading the image with VTK.")
-        return pyvista.Texture(image)
-    except (KeyError, ValueError):
-        # Otherwise, use the imageio reader
-        pass
-    import imageio
-
-    return pyvista.Texture(imageio.imread(filename))
+    return pyvista.Texture(os.path.abspath(os.path.expanduser(filename)))
 
 
 def read_exodus(

@@ -1574,6 +1574,7 @@ def _cubemap_from_paths(image_paths):
         flip.SetFilteredAxis(1)  # flip y axis
         flip.Update()
         texture.SetInputDataObject(i, flip.GetOutput())
+        # texture.SetInputDataObject(i, pyvista.read(fn).flip_y())
 
     return texture
 
