@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.utilities import get_array
+from pyvista.utilities import get_array, ravel_grid_array
 
 from .tools import opacity_transfer_function
 
@@ -57,6 +57,9 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         Always a surface as we need to compute point normals.
 
     """
+    # keep reference to original mesh
+    orig_mesh = mesh
+
     is_polydata = isinstance(mesh, pyvista.PolyData)
     indices_array = None
 
@@ -65,6 +68,11 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     if has_scalars:
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
+
+        # flatten multi-dimensionsal scalars that may come from gridded DataSets
+        if scalars.ndim > 2:
+            scalars = ravel_grid_array(orig_mesh, scalars)
+
         if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
             use_points = preference == 'point'
         else:

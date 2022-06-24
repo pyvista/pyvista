@@ -1760,7 +1760,7 @@ class BMPReader(BaseReader):
     'masonry.bmp'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> mesh.plot(rgba=True)
 
     """
 

@@ -1708,10 +1708,11 @@ def test_opacity_mismatched_fail(uniform):
 
 
 def test_plot_uniform(uniform):
-    # Test with user defined transfer function
+    """Plot a gridded dataset with a multi-dimensional array."""
     data = np.arange(uniform.n_points).reshape(uniform.dimensions)
-    p = pyvista.Plotter()
-    p.add_mesh(uniform, scalars=data)
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform, scalars=data, smooth_shading=True, split_sharp_edges=True)
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_by_array_preference():
