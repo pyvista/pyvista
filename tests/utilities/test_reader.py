@@ -539,9 +539,15 @@ def test_openfoam_skip_zero_time():
     assert reader.skip_zero_time is True
     assert 0.0 not in reader.time_values
 
+    # Test from 'True' to 'False'
     reader.skip_zero_time = False
     assert reader.skip_zero_time is False
     assert 0.0 in reader.time_values
+
+    # Test from 'False' to 'True'
+    reader.skip_zero_time = True
+    assert reader.skip_zero_time is True
+    assert 0.0 not in reader.time_values
 
 
 def test_openfoam_cell_to_point_default():

@@ -836,7 +836,9 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             self.reader.SkipZeroTimeOn()
         else:
             self.reader.SkipZeroTimeOff()
+
         self._update_information()
+        self.reader.SetRefresh()
 
     @property
     def cell_to_point_creation(self):
