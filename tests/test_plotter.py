@@ -194,3 +194,11 @@ def test_remove_scalars_rgba(sphere):
 
     # TODO: we are not re-enabling the old scalars
     # assert sphere.point_data.active_scalars_name == point_data_name
+
+
+def test_no_added_with_scalar_bar(sphere):
+    point_data_name = 'data'
+    sphere[point_data_name] = np.random.random(sphere.n_points)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
+    assert sphere.n_arrays == 1
