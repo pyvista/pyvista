@@ -535,13 +535,13 @@ def test_openfoam_decompose_polyhedra():
 def test_openfoam_skip_zero_time():
     reader = get_cavity_reader()
 
-    reader.skip_zero_time = False
-    assert reader.skip_zero_time is False
-    assert 0.0 in reader.time_values
-
     reader.skip_zero_time = True
     assert reader.skip_zero_time is True
     assert 0.0 not in reader.time_values
+
+    reader.skip_zero_time = False
+    assert reader.skip_zero_time is False
+    assert 0.0 in reader.time_values
 
 
 def test_openfoam_cell_to_point_default():
