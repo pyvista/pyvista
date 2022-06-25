@@ -417,16 +417,16 @@ class UniformGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def fft(self, output_scalars_name=None, progress_bar=False):
-        """Apply the fast fourier transform to the active scalars.
+        """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
-        ``numpy.complex128``. The filter is fastest for images that have power
-        of two sizes.
+        :attr:`numpy.complex128`. The filter is fastest for images that have
+        power of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
         dimension. This makes images with prime number dimensions (i.e. 17x17)
-        much slower to compute. Multi dimensional (i.e volumes) FFT's are
-        decomposed so that each axis executes serially.
+        much slower to compute. FFTs of multidimensional meshes (i.e volumes)
+        are decomposed so that each axis executes serially.
 
         Parameters
         ----------
@@ -483,16 +483,16 @@ class UniformGridFilters(DataSetFilters):
         return output
 
     def rfft(self, output_scalars_name=None, progress_bar=False):
-        """Apply the reverse fast fourier transform (RFFT) to the active scalars.
+        """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
-        ``numpy.complex128``. The filter is fastest for images that have power
+        :attr:`numpy.complex128`. The filter is fastest for images that have power
         of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
         dimension. This makes images with prime number dimensions (i.e. 17x17)
-        much slower to compute. Multi dimensional (i.e volumes) FFT's are
-        decomposed so that each axis executes serially.
+        much slower to compute. FFTs of multidimensional meshes (i.e volumes)
+        are decomposed so that each axis executes serially.
 
         Parameters
         ----------
@@ -550,15 +550,15 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
-        This filter requires that the :class`UniformGrid` have complex point
+        This filter requires that the :class:`UniformGrid` have complex point
         scalars, usually generated after the :class:`UniformGrid` has been
         converted to frequency domain by a :func:`UniformGridFilters.fft`
         filter.
 
         A :func:`UniformGridFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates high
-        frequency components.  Input and output are complext arrays with
-        datatype ``numpy.complex128``.
+        frequency components.  Input and output are complex arrays with
+        datatype :attr:`numpy.complex128`.
 
         Parameters
         ----------
@@ -615,15 +615,15 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
-        This filter requires that the :class`UniformGrid` have complex point
+        This filter requires that the :class:`UniformGrid` have complex point
         scalars, usually generated after the :class:`UniformGrid` has been
         converted to frequency domain by a :func:`UniformGridFilters.fft`
         filter.
 
         A :func:`UniformGridFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates low
-        frequency components.  Input and output are complext arrays with
-        datatype ``numpy.complex128``.
+        frequency components.  Input and output are complex arrays with
+        datatype :attr:`numpy.complex128`.
 
         Parameters
         ----------
@@ -680,7 +680,7 @@ class UniformGridFilters(DataSetFilters):
         dataset._association_complex_names['POINT'].add(name)
 
     def _check_fft_scalars(self):
-        """Check for complext active scalars.
+        """Check for complex active scalars.
 
         This is necessary for rfft, low_pass, and high_pass filters.
 
@@ -692,7 +692,7 @@ class UniformGridFilters(DataSetFilters):
                 self.set_active_scalars(possible_scalars[0], preference='point')
             elif len(possible_scalars) > 1:
                 raise AmbiguousDataError(
-                    'There are multiple point scalars available. Set one to be active'
+                    'There are multiple point scalars available. Set one to be '
                     'active with `point_data.active_scalars_name = `'
                 )
             else:
