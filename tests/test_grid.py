@@ -9,7 +9,7 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9
-from pyvista.errors import AmbiguousDataError
+from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
@@ -923,11 +923,11 @@ def test_cast_uniform_to_rectilinear():
 
 def test_fft_and_rfft(noise_2d):
     grid = pyvista.UniformGrid(dims=(10, 10, 1))
-    with pytest.raises(ValueError, match='FFT'):
+    with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
         grid.fft()
 
     grid['cell_data'] = np.arange(grid.n_cells)
-    with pytest.raises(ValueError, match='FFT'):
+    with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
         grid.fft()
 
     name = noise_2d.active_scalars_name
@@ -952,7 +952,7 @@ def test_fft_low_pass(noise_2d):
     name = noise_2d.active_scalars_name
     noise_no_scalars = noise_2d.copy()
     noise_no_scalars.clear_data()
-    with pytest.raises(ValueError, match='FFT filters require'):
+    with pytest.raises(MissingDataError, match='FFT filters require point scalars'):
         noise_no_scalars.low_pass(1, 1, 1)
 
     noise_too_many_scalars = noise_no_scalars.copy()
