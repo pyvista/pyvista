@@ -302,6 +302,8 @@ class Report(scooby.Report):
             'itkwidgets',
             'tqdm',
             'meshio',
+            'jupyterlab',
+            'pythreejs',
         ]
 
         # Information about the GPU - bare except in case there is a rendering
