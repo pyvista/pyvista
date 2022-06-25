@@ -1047,6 +1047,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self,
         mesh=None,
         bounds=None,
+        axes_ranges=None,
         show_xaxis=True,
         show_yaxis=True,
         show_zaxis=True,
@@ -1084,6 +1085,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         bounds : list or tuple, optional
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
+
+        axes_ranges : list, tuple, or numpy.ndarray, optional
+            When set, these values override the values that are shown on the
+            axes. This can be useful when plotting scaled datasets or if you wish
+            to manually display different values. These values must be in the
+            form:
+
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
             Makes x axis visible.  Default ``True``.
@@ -1145,12 +1154,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``'frontface'``) of the axes actor.
 
         location : str, optional
-            Set how the axes are drawn: either static (``'all'``),
-            closest triad (``front``), furthest triad (``'back'``),
-            static closest to the origin (``'origin'``), or outer
-            edges (``'outer'``) in relation to the camera
-            position. Options include: ``'all', 'front', 'back',
-            'origin', 'outer'``.
+            Set how the axes are drawn: either static (``'all'``), closest
+            triad (``'front'``, ``'closest'``, ``'default'``), furthest triad
+            (``'back'``, ``'furthest'``), static closest to the origin
+            (``'origin'``), or outer edges (``'outer'``) in relation to the
+            camera position.
 
         ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
@@ -1192,8 +1200,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(grid='front', location='outer',
-        ...                             all_edges=True)
+        >>> actor = plotter.show_bounds(
+        ...     grid='front',
+        ...     location='outer',
+        ...     all_edges=True,
+        ... )
         >>> plotter.show()
 
         """
@@ -1208,9 +1219,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         color = Color(color, default_color=self._theme.font.color)
 
-        # Use the bounds of all data in the rendering window
         if mesh is None and bounds is None:
-            bounds = self.bounds
+            # Use the bounds of all data in the rendering window
+            bounds = np.array(self.bounds)
+        elif bounds is None:
+            # otherwise, use the bounds of the mesh (if available)
+            bounds = np.array(mesh.bounds)
+        else:
+            bounds = np.asanyarray(bounds, dtype=float)
 
         # create actor
         cube_axes_actor = _vtk.vtkCubeAxesActor()
@@ -1244,7 +1260,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             elif ticks in ('both'):
                 cube_axes_actor.SetTickLocationToBoth()
             else:
-                raise ValueError(f'Value of ticks ({ticks}) not understood.')
+                raise ValueError(
+                    f'Value of ticks ("{ticks}") should be either "inside", "outside", '
+                    'or "both".'
+                )
+        elif ticks is not None:
+            raise TypeError('ticks must be a string')
 
         if isinstance(location, str):
             location = location.lower()
@@ -1259,11 +1280,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             elif location in ('furthest', 'back'):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
-                raise ValueError(f'Value of location ({location}) not understood.')
+                raise ValueError(
+                    f'Value of location ("{location}") should be either "all", "origin",'
+                    ' "outer", "default", "closest", "front", "furthest", or "back".'
+                )
+        elif location is not None:
+            raise TypeError('location must be a string')
 
-        # set bounds
-        if bounds is None:
-            bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
                 cushion = (
@@ -1281,6 +1304,26 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         else:
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
+
+        # set axes ranges if input
+        if axes_ranges is not None:
+            if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
+                axes_ranges = np.asanyarray(axes_ranges)
+            else:
+                raise TypeError('Input axes_ranges must be a numeric sequence.')
+
+            if not np.issubdtype(axes_ranges.dtype, np.number):
+                raise TypeError('All of the elements of axes_ranges must be numbers.')
+
+            # set the axes ranges
+            if axes_ranges.shape != (6,):
+                raise ValueError(
+                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
+                )
+
+            cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
+            cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
+            cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
 
         # show or hide axes
         cube_axes_actor.SetXAxisVisibility(show_xaxis)
@@ -1375,7 +1418,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         vtk.vtkAxesActor
             Bounds actor.
 
-         Examples
+        Examples
         --------
         >>> import pyvista
         >>> from pyvista import examples
