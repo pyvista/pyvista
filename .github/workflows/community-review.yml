@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/stale@v4
         with:
-          stale-pr-message: "This PR is reviewd by community because it has been open 1 day with no activity."
+          stale-pr-message: "This PR has been approved by reviewers for 1 day with no activity."
           days-before-issue-stale: -1
           days-before-issue-close: -1
           days-before-pr-stale: 1
