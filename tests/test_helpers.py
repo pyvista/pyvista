@@ -8,6 +8,7 @@ import vtk
 
 import pyvista
 from pyvista import _vtk
+from pyvista.errors import AmbiguousDataError, MissingDataError
 
 
 def test_wrap_none():
@@ -133,15 +134,24 @@ def test_inheritance_no_wrappers():
 def test_skybox(tmpdir):
     path = str(tmpdir.mkdir("tmpdir"))
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    filenames = []
     for suffix in sets:
         image = Image.new('RGB', (10, 10))
-        image.save(os.path.join(path, suffix + '.jpg'))
+        filename = os.path.join(path, suffix + '.jpg')
+        image.save(filename)
+        filenames.append(filename)
 
     skybox = pyvista.cubemap(path)
     assert isinstance(skybox, pyvista.Texture)
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
         pyvista.cubemap('')
+
+    skybox = pyvista.cubemap_from_filenames(filenames)
+    assert isinstance(skybox, pyvista.Texture)
+
+    with pytest.raises(ValueError, match='must contain 6 paths'):
+        pyvista.cubemap_from_filenames(image_paths=['/path'])
 
 
 def test_array_association():
@@ -186,3 +196,121 @@ def test_array_association():
 
     with pytest.raises(ValueError, match='not supported.'):
         mesh.get_array_association('name', preference='row')
+
+
+def test_set_default_active_vectors():
+    mesh = pyvista.Sphere()
+    mesh.clear_data()  # make sure we have a clean mesh with no arrays to start
+
+    assert mesh.active_vectors_name is None
+
+    # Point data vectors
+    mesh["vec_point"] = np.ones((mesh.n_points, 3))
+    pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name == "vec_point"
+    mesh.clear_data()
+
+    # Cell data vectors
+    mesh["vec_cell"] = np.ones((mesh.n_cells, 3))
+    pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name == "vec_cell"
+    mesh.clear_data()
+
+    # Raises if no data is present
+    with pytest.raises(MissingDataError):
+        pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name is None
+
+    # Raises if no vector-like data is present
+    mesh["scalar_data"] = np.ones((mesh.n_points, 1))
+    with pytest.raises(MissingDataError):
+        pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name is None
+    mesh.clear_data()
+
+    # Raises if multiple vector-like data is present
+    mesh["vec_data1"] = np.ones((mesh.n_points, 3))
+    mesh["vec_data2"] = np.ones((mesh.n_points, 3))
+    with pytest.raises(AmbiguousDataError):
+        pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name is None
+    mesh.clear_data()
+
+    # Raises if multiple vector-like data in cell and point
+    mesh["vec_data1"] = np.ones((mesh.n_points, 3))
+    mesh["vec_data2"] = np.ones((mesh.n_cells, 3))
+    with pytest.raises(AmbiguousDataError):
+        pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name is None
+
+    # Raises if multiple vector-like data with same name
+    mesh["vec_data"] = np.ones((mesh.n_points, 3))
+    mesh["vec_data"] = np.ones((mesh.n_cells, 3))
+    with pytest.raises(AmbiguousDataError):
+        pyvista.set_default_active_vectors(mesh)
+    assert mesh.active_vectors_name is None
+
+
+def test_set_default_active_scalarrs():
+    mesh = pyvista.Sphere()
+    mesh.clear_data()  # make sure we have a clean mesh with no arrays to start
+
+    assert mesh.active_scalars_name is None
+
+    # Point data scalars
+    mesh["scalar_point"] = np.ones(mesh.n_points)
+    mesh.set_active_scalars(None)
+    pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name == "scalar_point"
+    mesh.clear_data()
+
+    # Cell data scalars
+    mesh["scalar_cell"] = np.ones(mesh.n_cells)
+    mesh.set_active_scalars(None)
+    pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name == "scalar_cell"
+    mesh.clear_data()
+
+    # Point data scalars multidimensional
+    mesh["scalar_point"] = np.ones((mesh.n_points, 3))
+    mesh.set_active_scalars(None)
+    pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name == "scalar_point"
+    mesh.clear_data()
+
+    # Cell data scalars multidimensional
+    mesh["scalar_cell"] = np.ones((mesh.n_cells, 3))
+    mesh.set_active_scalars(None)
+    pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name == "scalar_cell"
+    mesh.clear_data()
+
+    # Raises if no data is present
+    with pytest.raises(MissingDataError):
+        pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name is None
+
+    # Raises if multiple scalar-like data is present
+    mesh["scalar_data1"] = np.ones(mesh.n_points)
+    mesh["scalar_data2"] = np.ones(mesh.n_points)
+    mesh.set_active_scalars(None)
+    with pytest.raises(AmbiguousDataError):
+        pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name is None
+    mesh.clear_data()
+
+    # Raises if multiple scalar-like data in cell and point
+    mesh["scalar_data1"] = np.ones(mesh.n_points)
+    mesh["scalar_data2"] = np.ones(mesh.n_cells)
+    mesh.set_active_scalars(None)
+    with pytest.raises(AmbiguousDataError):
+        pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name is None
+
+    # Raises if multiple scalar-like data with same name
+    mesh["scalar_data"] = np.ones(mesh.n_points)
+    mesh["scalar_data"] = np.ones(mesh.n_cells)
+    mesh.set_active_scalars(None)
+    with pytest.raises(AmbiguousDataError):
+        pyvista.set_default_active_scalars(mesh)
+    assert mesh.active_scalars_name is None

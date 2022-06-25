@@ -1,14 +1,15 @@
 name: "Pull Request Labeler"
 on:
-  pull_request_target:
-    types: [opened, reopened]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
 
 jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
     - name: Label based on changed files
-      uses: actions/labeler@v3
+      uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         # https://github.com/actions/labeler/issues/112#issuecomment-1000491676
@@ -35,8 +36,16 @@ jobs:
       if: startsWith(github.event.pull_request.head.ref, 'feat')
       with:
         labels: enhancement
-
     - uses: actions-ecosystem/action-add-labels@v1
       if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch')
       with:
         labels: bug
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.event.pull_request.head.ref, 'release')
+      with:
+        labels: release
+    - uses: mheap/github-action-required-labels@v2
+      with:
+        mode: minimum
+        count: 1
+        labels: "documentation, docker, maintenance, ignore-for-release, enhancement, bug, release"

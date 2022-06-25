@@ -40,6 +40,7 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
+os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
 # SG warnings
 import warnings
@@ -49,6 +50,7 @@ warnings.filterwarnings(
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
+
 
 # -- General configuration ------------------------------------------------
 numfig = False
@@ -153,63 +155,56 @@ numpydoc_validation_checks = {
 }
 numpydoc_validation_exclude = {  # set of regex
     r'\.Plotter$',  # Issue with class parameter documentation
+    r'\.WidgetHelper$',
     r'\.from_dict$',
     r'\.to_dict$',
     r'\.__init__$',
+    r'\.__new__$',
     # parm of abstract classes
     r'\.CompositeFilters$',
-    r'\.PolyDataFilters$',
-    r'\.CompositeFilters$',
-    r'\.PolyDataFilters$',
-    r'\.UniformGridFilters$',
-    r'\.DataSetFilters$',
-    r'\.UnstructuredGridFilters$',
-    r'\.MultiBlock$',
+    r'\.DataObject$',
     r'\.DataSet$',
     r'\.DataSetFilters$',
-    r'\.PolyDataFilters$',
-    r'\.UnstructuredGridFilters$',
-    r'\.UniformGridFilters$',
-    r'\.CompositeFilters$',
-    r'\.Grid$',
-    r'\.RectilinearGrid$',
-    r'\.UniformGrid$',
-    r'\.DataObject$',
-    r'\.Table.save$',
-    r'\.Table$',
-    r'\.Table.save$',
-    r'\.UnstructuredGrid$',
     r'\.ExplicitStructuredGrid$',
-    r'\.StructuredGrid$',
+    r'\.Grid$',
+    r'\.MultiBlock$',
     r'\.PointGrid$',
+    r'\.PointSet$',
+    r'\.PolyDataFilters$',
+    r'\.RectilinearGrid$',
+    r'\.StructuredGrid$',
+    r'\.Table$',
+    r'\.Table\.save$',
+    r'\.UniformGrid$',
+    r'\.UniformGridFilters$',
+    r'\.UnstructuredGrid$',
+    r'\.UnstructuredGridFilters$',
     # classes inherit from BaseReader
-    r'\.*Reader$',
-    r'\.*Reader\.*',
+    r'.*Reader(\.|$)',
     # internal
     r'\.Renderer$',
     # deprecated
-    r'\.*boolean_add$',
-    r'\.*boolean_cut$',
-    r'\.*add_field_array$',
-    r'\.*add_field_array$',
-    r'DataSetAttributes.append$',
+    r'\.boolean_add$',
+    r'\.boolean_cut$',
+    r'\.add_field_array$',
+    r'\.DataSetAttributes\.append$',
     # methods we probably should make private
     r'\.store_click_position$',
     r'\.store_mouse_position$',
-    r'\.*fly_to_mouse_position$',
-    r'\.*key_press_event$',
-    r'\.*left_button_down$',
+    r'\.fly_to_mouse_position$',
+    r'\.key_press_event$',
+    r'\.left_button_down$',
     # MISC
-    r'\.*PlotterITK$',
-    r'\.*MultiBlock.copy_meta_from$',
-    r'\.DataObject.copy_meta_from$',
+    r'\.PlotterITK$',
+    r'\.MultiBlock\.copy_meta_from$',
+    r'\.DataObject\.copy_meta_from$',
     # wraps
-    r'\.*Plotter.enable_depth_peeling$',
-    r'\.*add_scalar_bar$',
+    r'\.Plotter\.enable_depth_peeling$',
+    r'\.add_scalar_bar$',
     # pending refactor
-    r'\.*MultiBlock.next$',
+    r'\.MultiBlock\.next$',
     # called from inherited
-    r'\.*Table.copy_meta_from$',
+    r'\.Table\.copy_meta_from$',
     # Type alias
     r'\.color_like$',
 }
@@ -223,7 +218,7 @@ add_module_names = False
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
-        'https://docs.scipy.org/doc/scipy/reference',
+        'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
     ),
     'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-objects.inv')),
@@ -328,7 +323,7 @@ sphinx_gallery_conf = {
     "examples_dirs": ["../examples/"],
     # path where to save gallery generated examples
     "gallery_dirs": ["examples"],
-    # Patter to search for example files
+    # Pattern to search for example files
     "filename_pattern": r"\.py" if has_osmnx else r"(?!osmnx-example)\.py",
     # Remove the "Download all examples" button from the top level gallery
     "download_all_examples": False,

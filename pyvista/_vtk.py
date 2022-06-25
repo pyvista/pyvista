@@ -24,6 +24,19 @@ except ImportError:  # pragma: no cover
 _has_vtkRenderingContextOpenGL2 = False
 
 if VTK9:
+    # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
+    # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
+    try:
+        from vtkmodules.vtkFiltersCore import vtkExtractEdges
+    except ImportError:
+        from vtkmodules.vtkFiltersExtraction import vtkExtractEdges
+
+    # vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
+    # VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
+    try:
+        from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
+    except ImportError:
+        from vtkmodules.vtkFiltersGeneral import vtkCellTreeLocator
 
     from vtkmodules.numpy_interface.dataset_adapter import (
         VTKArray,
@@ -143,6 +156,7 @@ if VTK9:
         vtkPlaneCollection,
         vtkPlanes,
         vtkPointLocator,
+        vtkPointSet,
         vtkPolyData,
         vtkPolyLine,
         vtkPolyPlane,
@@ -197,7 +211,6 @@ if VTK9:
         vtkUnstructuredGridToExplicitStructuredGrid,
     )
     from vtkmodules.vtkFiltersExtraction import (
-        vtkExtractEdges,
         vtkExtractGeometry,
         vtkExtractGrid,
         vtkExtractSelection,
@@ -207,7 +220,6 @@ if VTK9:
         vtkAxes,
         vtkBooleanOperationPolyDataFilter,
         vtkBoxClipDataSet,
-        vtkCellTreeLocator,
         vtkClipClosedSurface,
         vtkCursor3D,
         vtkCurvatures,
@@ -244,7 +256,9 @@ if VTK9:
         vtkRibbonFilter,
         vtkRotationalExtrusionFilter,
         vtkSelectEnclosedPoints,
+        vtkTrimmedExtrusionFilter,
     )
+    from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
@@ -306,6 +320,7 @@ if VTK9:
         vtkPolyDataWriter,
         vtkRectilinearGridReader,
         vtkRectilinearGridWriter,
+        vtkSimplePointsWriter,
         vtkStructuredGridReader,
         vtkStructuredGridWriter,
         vtkUnstructuredGridReader,
@@ -341,6 +356,7 @@ if VTK9:
     )
     from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
         vtkButtonWidget,
@@ -359,6 +375,7 @@ if VTK9:
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
+        vtkAxisActor2D,
         vtkCornerAnnotation,
         vtkCubeAxesActor,
         vtkLegendBoxActor,
@@ -386,6 +403,7 @@ if VTK9:
         vtkActor,
         vtkActor2D,
         vtkCamera,
+        vtkCellPicker,
         vtkColorTransferFunction,
         vtkCoordinate,
         vtkDataSetMapper,
@@ -399,6 +417,7 @@ if VTK9:
         vtkPolyDataMapper2D,
         vtkPropAssembly,
         vtkProperty,
+        vtkPropPicker,
         vtkRenderedAreaPicker,
         vtkRenderer,
         vtkRenderWindow,
@@ -479,6 +498,22 @@ if VTK9:
 
         return vtkHDFReader()
 
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        from vtkmodules.vtkIOCGNSReader import vtkCGNSReader
+
+        return vtkCGNSReader()
+
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+        from vtkmodules.vtkParallelCore import vtkDummyController
+
+        # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
+        reader = vtkPOpenFOAMReader()
+        reader.SetController(vtkDummyController())
+        return reader
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
@@ -520,6 +555,26 @@ else:  # pragma: no cover
     def lazy_vtkPlot3DMetaReader():
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
+
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
+
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        # Workaround to fix the following issue: https://gitlab.kitware.com/vtk/vtk/-/issues/18143
+        # Fixed in vtk > 9.1.0
+        reader = vtk.vtkPOpenFOAMReader()
+        reader.SetController(vtk.vtkDummyController())
+        return reader
+
+    def lazy_vtkHDFReader():
+        """Lazy import of the vtkHDFReader."""
+        raise VTKVersionError('vtk.HDFReader requires VTK v9.1.0 or newer')
+
+    def lazy_vtkSegYReader():
+        """Lazy import of the vtkSegYReader."""
+        return vtk.vtkSegYReader()
 
     class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""

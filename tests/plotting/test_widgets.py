@@ -2,113 +2,119 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista import examples
 from pyvista.plotting import system_supports_plotting
-
-mesh = examples.load_uniform()
 
 # skip all tests if unable to render
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
 
-def test_widget_box():
+def test_widget_box(uniform):
     p = pyvista.Plotter()
     func = lambda box: box  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_box_widget(callback=func)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda box, widget: box  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_box_widget(callback=func, pass_widget=True)
     p.close()
 
+    # clip box with and without crinkle
     p = pyvista.Plotter()
-    p.add_mesh_clip_box(mesh)
+    p.add_mesh_clip_box(uniform)
+    p.close()
+
+    p = pyvista.Plotter()
+    p.add_mesh_clip_box(uniform, crinkle=True)
     p.close()
 
     p = pyvista.Plotter()
     # merge_points=True is the default and is tested above
-    p.add_mesh_clip_box(mesh, merge_points=False)
+    p.add_mesh_clip_box(uniform, merge_points=False)
     p.close()
 
 
-def test_widget_plane():
+def test_widget_plane(uniform):
     p = pyvista.Plotter()
     func = lambda normal, origin: normal  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_plane_widget(callback=func, implicit=True)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda normal, origin, widget: normal  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=True)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda normal, origin: normal  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_plane_widget(callback=func, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda normal, origin, widget: normal  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda normal, origin: normal  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda normal, origin: normal  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_plane_widget(callback=func, normal_rotation=False, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_clip_plane(mesh)
+    p.add_mesh_clip_plane(uniform)
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_slice(mesh)
+    p.add_mesh_clip_plane(uniform, crinkle=True)
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_slice_orthogonal(mesh)
+    p.add_mesh_slice(uniform)
+    p.close()
+
+    p = pyvista.Plotter()
+    p.add_mesh_slice_orthogonal(uniform)
     p.close()
 
 
-def test_widget_line():
+def test_widget_line(uniform):
     p = pyvista.Plotter()
     func = lambda line: line  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_line_widget(callback=func)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda line, widget: line  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_line_widget(callback=func, pass_widget=True)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda a, b: (a, b)  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_line_widget(callback=func, use_vertices=True)
     p.close()
 
 
-def test_widget_text_slider():
+def test_widget_text_slider(uniform):
     p = pyvista.Plotter()
     func = lambda value: value  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     with pytest.raises(TypeError, match='must be a list'):
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
@@ -118,10 +124,10 @@ def test_widget_text_slider():
     p.close()
 
 
-def test_widget_slider():
+def test_widget_slider(uniform):
     p = pyvista.Plotter()
     func = lambda value: value  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_slider_widget(callback=func, rng=[0, 10], style="classic")
     p.close()
 
@@ -140,22 +146,22 @@ def test_widget_slider():
 
     p = pyvista.Plotter()
     func = lambda value, widget: value  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_threshold(mesh, invert=True)
-    p.add_mesh(mesh.outline())
+    p.add_mesh_threshold(uniform, invert=True)
+    p.add_mesh(uniform.outline())
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_threshold(mesh, invert=False)
-    p.add_mesh(mesh.outline())
+    p.add_mesh_threshold(uniform, invert=False)
+    p.add_mesh(uniform.outline())
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_isovalue(mesh)
+    p.add_mesh_isovalue(uniform)
     p.close()
 
     p = pyvista.Plotter()
@@ -185,25 +191,25 @@ def test_widget_slider():
     p.close()
 
 
-def test_widget_spline():
+def test_widget_spline(uniform):
     p = pyvista.Plotter()
     func = lambda spline: spline  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_spline_widget(callback=func)
     p.close()
 
     p = pyvista.Plotter()
     func = lambda spline, widget: spline  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_spline_widget(callback=func, pass_widget=True, color=None, show_ribbon=True)
     p.close()
 
     p = pyvista.Plotter()
-    p.add_mesh_slice_spline(mesh)
+    p.add_mesh_slice_spline(uniform)
     p.close()
 
 
-def test_widget_sphere():
+def test_widget_uniform(uniform):
     p = pyvista.Plotter()
     func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
@@ -216,18 +222,18 @@ def test_widget_sphere():
     p.close()
 
 
-def test_widget_checkbox_button():
+def test_widget_checkbox_button(uniform):
     p = pyvista.Plotter()
     func = lambda value: value  # Does nothing
-    p.add_mesh(mesh)
+    p.add_mesh(uniform)
     p.add_checkbox_button_widget(callback=func)
     p.close()
 
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires vtk>=9.1")
-def test_add_camera_orientation_widget():
+def test_add_camera_orientation_widget(uniform):
     p = pyvista.Plotter()
     p.add_camera_orientation_widget()
-    assert p._camera_widgets
+    assert p.camera_widgets
     p.close()
-    assert not p._camera_widgets
+    assert not p.camera_widgets

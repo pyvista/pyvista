@@ -16,31 +16,26 @@ from pyvista import examples
 ###############################################################################
 # Let's go ahead and download the sample dataset containing an
 # :class:`pyvista.UnstructuredGrid` broken up into several files.
-
-# Do not capture output because we'll demo how to read the file
-examples.download_blood_vessels()
-
-###############################################################################
-# The above code downloaded a dataset containing a set of parallel files for a
-# blood vessel mesh and returned an :class:`pyvista.UnstructuredGrid` - we did
-# not grab that UnstructuredGrid, so that we could demo how to use these types
-# of files.
 #
-# Let's inspect where this downloaded our dataset:
-path = os.path.join(pv.EXAMPLES_PATH, "blood_vessels")
+# Let's inspect where this downloaded our dataset by setting ``load=False`` and
+# looking at the directory containing the file we downloaded.
+filename = examples.download_blood_vessels(load=False)
+path = os.path.dirname(filename)
 os.listdir(path)
+
 
 ###############################################################################
 os.listdir(os.path.join(path, "T0000000500"))
 
+
 ###############################################################################
-# Note that a ``.pvtu`` file is available along side a directory. This
+# Note that a ``.pvtu`` file is available alongside a directory. This
 # directory contains all the parallel files or pieces that make the whole mesh.
 # We can simply read the ``.pvtu`` file and VTK will handle putting the mesh
 # together.
-filename = os.path.join(path, "T0000000500.pvtu")
 mesh = pv.read(filename)
 mesh
+
 
 ###############################################################################
 # Plot the pieced together mesh

@@ -193,21 +193,10 @@ Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 
    import this
 
-Please also use the linting and format checks through the ``Makefile``
-to make sure your code adheres to our standards regarding trailing white
-space, unused imports, and sorting of imports.
+PyVista uses `pre-commit`_ to enforce PEP8 and other styles
+automatically. Please see the `Style Checking section <#style-checking>`_ for
+further details.
 
-To test the format locally, run:
-
-.. code:: bash
-
-   make stylecheck
-
-To automatically fix style issues (including those found by ``black``), run:
-
-.. code:: bash
-
-   make format
 
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -239,17 +228,18 @@ track down any new issues from your changes.
 
 To run our comprehensive suite of unit tests, install all the
 dependencies listed in ``requirements_test.txt``,
-``requirements_docs.txt``, ``requirements_style.txt``:
+``requirements_docs.txt``
 
 .. code:: bash
 
    pip install -r requirements_test.txt
    pip install -r requirements_docs.txt
-   pip install -r requirements_style.txt
 
 Then, if you have everything installed, you can run the various test
 suites.
 
+Unit Testing
+~~~~~~~~~~~~
 Run the primary test suite and generate coverage report:
 
 .. code:: bash
@@ -264,40 +254,60 @@ leverage multiple processes. Example usage:
 
    python -m pytest -n <NUMCORE> --cov pyvista
 
-Run all code examples in the docstrings. Be sure to export the
-``PYVISTA_OFF_SCREEN`` environmental variable to enable off-screen
-plotting.
+Documentation Testing
+~~~~~~~~~~~~~~~~~~~~~
+Run all code examples in the docstrings with:
 
 .. code:: bash
 
-   export PYVISTA_OFF_SCREEN=True
    python -m pytest -v --doctest-modules pyvista
 
-Run documentation testing by running:
+Build the documentation on Linux or Mac OS with:
 
 .. code:: bash
 
-   make
+   make -C doc html
 
-If you are running windows and ``make`` is unavailable, then run:
-
-.. code:: bash
-
-   pydocstyle pyvista
-
-   codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*" -I "ignore_words.txt"
-
-And finally, test the documentation examples:
-
-.. code:: bash
+Build the documentation on Windows with:
 
    cd doc
-   make clean
-   make doctest
-   make html -b linkcheck
+   python -msphinx -M html . _build
 
-The finished documentation can be found in the ``doc/_build/html``
+The generated documentation can be found in the ``doc/_build/html``
 directory.
+
+Style Checking
+~~~~~~~~~~~~~~
+PyVista follows PEP8 standard as outlined in the `Coding Style section
+<#coding-style>`_ and implements style checking using `pre-commit`_.
+
+To ensure your code meets minimum code styling standards, run::
+
+  pip install pre-commit
+  pre-commit run --all-files
+
+If you have issues related to ``setuptools`` when installing ``pre-commit``, see 
+`pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
+for a potential resolution.
+
+You can also install this as a pre-commit hook by running::
+
+  pre-commit install
+
+This way, it's not possible for you to push code that fails the style
+checks. For example, each commit automatically checks that you meet the style
+requirements::
+
+  $ pre-commit install
+  $ git commit -m "added my cool feature"
+  black....................................................................Passed
+  isort....................................................................Passed
+  flake8...................................................................Passed
+  codespell................................................................Passed
+
+The actual installation of the environment happens before the first commit 
+following ``pre-commit install``. This will take a bit longer, but subsequent
+commits will only trigger the actual style checks.
 
 Notes Regarding Image Regression Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -511,3 +521,6 @@ should not wait until a minor release. The steps for a patch release
 4. If deemed necessary, create a release notes page. Also, open the PR
    from conda and follow the directions in step 10 in the minor release
    section.
+
+
+.. _pre-commit: https://pre-commit.com/

@@ -16,6 +16,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.errors import AmbiguousDataError, MissingDataError
 
 from . import transformations
 from .fileio import from_meshio
@@ -155,8 +156,10 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     """
     if arr is None:
         return
+    if isinstance(arr, (list, tuple)):
+        arr = np.array(arr)
     if isinstance(arr, np.ndarray):
-        if arr.dtype is np.dtype('O'):
+        if arr.dtype == np.dtype('O'):
             arr = arr.astype('|S')
         arr = np.ascontiguousarray(arr)
         if arr.dtype.type in (np.str_, np.bytes_):
@@ -199,6 +202,27 @@ def is_pyvista_dataset(obj):
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
+def _assoc_array(obj, name, association='point'):
+    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+
+    If the array or index doesn't exist, return nothing. This matches VTK's
+    behavior when using ``GetAbstractArray`` with an invalid key or index.
+
+    """
+    vtk_attr = f'Get{association.title()}Data'
+    python_attr = f'{association.lower()}_data'
+
+    if isinstance(obj, pyvista.DataSet):
+        try:
+            return getattr(obj, python_attr).get_array(name)
+        except KeyError:  # pragma: no cover
+            return None
+    abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
+    if abstract_array is not None:
+        return pyvista.pyvista_ndarray(abstract_array)
+    return None
+
+
 def point_array(obj, name):
     """Return point array of a pyvista or vtk object.
 
@@ -207,17 +231,16 @@ def point_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetPointData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'point')
 
 
 def field_array(obj, name):
@@ -228,17 +251,16 @@ def field_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetFieldData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'field')
 
 
 def cell_array(obj, name):
@@ -249,17 +271,16 @@ def cell_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetCellData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'cell')
 
 
 def row_array(obj, name):
@@ -313,7 +334,7 @@ def parse_field_choice(field):
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise ValueError(f'Data field ({field}) not supported.')
+        raise TypeError(f'Data field ({field}) not supported.')
     return field
 
 
@@ -1388,7 +1409,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
 
 def cubemap(path='', prefix='', ext='.jpg'):
-    """Construct a cubemap from 6 images.
+    """Construct a cubemap from 6 images from a directory.
 
     Each of the 6 images must be in the following format:
 
@@ -1428,12 +1449,62 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Examples
     --------
+    Load a skybox given a directory, prefix, and file extension.
+
     >>> import pyvista
     >>> skybox = pyvista.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
+    return _cubemap_from_paths(image_paths)
 
+
+def cubemap_from_filenames(image_paths):
+    """Construct a cubemap from 6 images.
+
+    Images must be in the following order:
+
+    - Positive X
+    - Negative X
+    - Positive Y
+    - Negative Y
+    - Positive Z
+    - Negative Z
+
+    Parameters
+    ----------
+    image_paths : list
+        Paths of the individual cubemap images.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture with cubemap.
+
+    Examples
+    --------
+    Load a skybox given a list of image paths.
+
+    >>> image_paths = [
+    ...     '/home/user/_px.jpg',
+    ...     '/home/user/_nx.jpg',
+    ...     '/home/user/_py.jpg',
+    ...     '/home/user/_ny.jpg',
+    ...     '/home/user/_pz.jpg',
+    ...     '/home/user/_nz.jpg',
+    ... ]
+    >>> skybox = pyvista.cubemap(image_paths=image_paths)  # doctest:+SKIP
+
+    """
+    if len(image_paths) != 6:
+        raise ValueError("image_paths must contain 6 paths")
+
+    return _cubemap_from_paths(image_paths)
+
+
+def _cubemap_from_paths(image_paths):
+    """Construct a cubemap from image paths."""
     for image_path in image_paths:
         if not os.path.isfile(image_path):
             file_str = '\n'.join(image_paths)
@@ -1458,3 +1529,111 @@ def cubemap(path='', prefix='', ext='.jpg'):
         texture.SetInputDataObject(i, flip.GetOutput())
 
     return texture
+
+
+def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
+    """Set a default vectors array on mesh, if not already set.
+
+    If an active vector already exists, no changes are made.
+
+    If an active vectors does not exist, it checks for possibly cell
+    or point arrays with shape ``(n, 3)``.  If only one exists, then
+    it is set as the active vectors.  Otherwise, an error is raised.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to set default active vectors.
+
+    Raises
+    ------
+    MissingDataError
+        If no vector-like arrays exist.
+
+    AmbiguousDataError
+        If more than one vector-like arrays exist.
+
+    """
+    if mesh.active_vectors_name is not None:
+        return
+
+    point_data = mesh.point_data
+    cell_data = mesh.cell_data
+
+    possible_vectors_point = [
+        name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+    possible_vectors_cell = [
+        name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+
+    possible_vectors = possible_vectors_point + possible_vectors_cell
+    n_possible_vectors = len(possible_vectors)
+
+    if n_possible_vectors == 1:
+        if len(possible_vectors_point) == 1:
+            preference = 'point'
+        else:
+            preference = 'cell'
+        mesh.set_active_vectors(possible_vectors[0], preference=preference)
+    elif n_possible_vectors < 1:
+        raise MissingDataError("No vector-like data available.")
+    elif n_possible_vectors > 1:
+        raise AmbiguousDataError(
+            "Multiple vector-like data available\n"
+            f"cell data: {possible_vectors_cell}.\n"
+            f"point data: {possible_vectors_point}.\n"
+            "Set one as active using DataSet.set_active_vectors(name, preference=type)"
+        )
+
+
+def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
+    """Set a default scalars array on mesh, if not already set.
+
+    If an active scalars already exists, no changes are made.
+
+    If an active scalars does not exist, it checks for point or cell
+    arrays.  If only one exists, then it is set as the active scalars.
+    Otherwise, an error is raised.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to set default active scalars.
+
+    Raises
+    ------
+    MissingDataError
+        If no arrays exist.
+
+    AmbiguousDataError
+        If more than one array exists.
+
+    """
+    if mesh.active_scalars_name is not None:
+        return
+
+    point_data = mesh.point_data
+    cell_data = mesh.cell_data
+
+    possible_scalars_point = point_data.keys()
+    possible_scalars_cell = cell_data.keys()
+
+    possible_scalars = possible_scalars_point + possible_scalars_cell
+    n_possible_scalars = len(possible_scalars)
+
+    if n_possible_scalars == 1:
+        if len(possible_scalars_point) == 1:
+            preference = 'point'
+        else:
+            preference = 'cell'
+        mesh.set_active_scalars(possible_scalars[0], preference=preference)
+    elif n_possible_scalars < 1:
+        raise MissingDataError("No data available.")
+    elif n_possible_scalars > 1:
+        raise AmbiguousDataError(
+            "Multiple data available\n"
+            f"cell data: {possible_scalars_cell}.\n"
+            f"point data: {possible_scalars_point}.\n"
+            "Set one as active using DataSet.set_active_scalars(name, preference=type)"
+        )

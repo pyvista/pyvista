@@ -70,6 +70,10 @@ doc/api/plotting/charts/scatter_marker_styles.rst
 doc/api/utilities/colors.rst
 **/grid.vtu
 
+# flask examples
+examples_flask/dynamic_image/static
+examples_flask/static_image/static
+
 # hypothesis
 .hypothesis
 

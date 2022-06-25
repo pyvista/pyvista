@@ -451,6 +451,14 @@ class Color:
 
     """
 
+    # Supported names for each color channel.
+    CHANNEL_NAMES = (
+        {'red', 'r'},  # 0
+        {'green', 'g'},  # 1
+        {'blue', 'b'},  # 2
+        {'alpha', 'a', 'opacity'},  # 3
+    )
+
     def __init__(
         self,
         color: Optional[color_like] = None,
@@ -588,11 +596,10 @@ class Color:
     def _from_dict(self, dct):
         """Construct color from an RGB(A) dictionary."""
         # Get any of the keys associated with each color channel (or None).
-        r = next((dct[key] for key in {'r', 'red'} if key in dct), None)
-        g = next((dct[key] for key in {'g', 'green'} if key in dct), None)
-        b = next((dct[key] for key in {'b', 'blue'} if key in dct), None)
-        a = next((dct[key] for key in {'a', 'alpha', 'opacity'} if key in dct), None)
-        self._from_rgba([r, g, b, a])
+        rgba = [
+            next((dct[key] for key in cnames if key in dct), None) for cnames in self.CHANNEL_NAMES
+        ]
+        self._from_rgba(rgba)
 
     def _from_hex(self, h):
         """Construct color from a hex string."""
@@ -875,6 +882,23 @@ class Color:
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
 
+    def __getitem__(self, item):
+        """Support indexing the float RGBA representation for backward compatibility."""
+        if not isinstance(item, (str, slice, int, np.integer)):
+            raise TypeError("Invalid index specified, only strings and integers are supported.")
+        if isinstance(item, str):
+            for i, cnames in enumerate(self.CHANNEL_NAMES):
+                if item in cnames:
+                    item = i
+                    break
+            else:
+                raise ValueError(f"Invalid string index {item!r}.")
+        return self.float_rgba[item]
+
+    def __iter__(self):
+        """Support iteration over the float RGBA representation for backward compatibility."""
+        return iter(self.float_rgba)
+
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
         kwargs = f"hex={self.hex_rgba!r}"
@@ -923,8 +947,11 @@ def get_cmap_safe(cmap):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
     try:
         from matplotlib.cm import get_cmap
-    except ImportError:
-        raise ImportError('cmap requires matplotlib')
+    except ImportError:  # pragma: no cover
+        raise ImportError(
+            'The use of custom colormaps requires the installation of matplotlib'
+        ) from None
+
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
@@ -950,6 +977,7 @@ def get_cmap_safe(cmap):
             return cmap
         # Else use Matplotlib
         cmap = get_cmap(cmap)
+
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):

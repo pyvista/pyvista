@@ -19,13 +19,13 @@ def segment_poly_cells(mesh):
     if not pv.is_pyvista_dataset(mesh):  # pragma: no cover
         mesh = pv.wrap(mesh)
     polylines = []
-    i, offset = 0, 0
+    offset = 0
     cc = mesh.lines  # fetch up front
-    while i < mesh.n_cells:
+    ncc = len(cc)
+    while offset < ncc:
         nn = cc[offset]
         polylines.append(cc[offset + 1 : offset + 1 + nn])
         offset += nn + 1
-        i += 1
 
     lines = []
     for poly in polylines:
@@ -457,7 +457,7 @@ def meshes_from_actors(actors, focal_point):
 
 
 def convert_renderer(pv_renderer):
-    """Convert a pyvista renderer to a pythreejs renderer."""
+    """Convert a pyvista renderer to a pythreejs widget."""
     # verify plotter hasn't been closed
 
     width, height = pv_renderer.width, pv_renderer.height
@@ -536,6 +536,18 @@ def convert_plotter(pl):
                 if i == 0:
                     width += pv_ren.width + pv_ren.border_width * 2
                 grid[i, j] = convert_renderer(pv_ren)
+
+        # check for linked cameras
+        cameras = [ren.camera for ren in pl.renderers]
+        for cc, camera_a in enumerate(cameras):
+            for dd, camera_b in enumerate(cameras[cc + 1 :], start=cc + 1):
+                if camera_a is camera_b:
+                    # flatten indices
+                    ii_source, jj_source = divmod(cc, n_col)
+                    ii_target, jj_target = divmod(dd, n_col)
+                    # Must link camera and controls
+                    grid[ii_target, jj_target].camera = grid[ii_source, jj_source].camera
+                    grid[ii_target, jj_target].controls = grid[ii_source, jj_source].controls
 
         # this is important to ignore when building the gallery
         if not pv.BUILDING_GALLERY:

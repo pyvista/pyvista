@@ -9,6 +9,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.plotting import system_supports_plotting
+from pyvista.utilities.misc import PyvistaFutureWarning
 
 radius = 0.5
 
@@ -520,12 +521,42 @@ def test_compute_normals(sphere):
     assert cell_normals.shape[0] == sphere.n_cells
 
 
+def test_compute_normals_split_vertices(cube):
+    # verify edge splitting occurs and point IDs are tracked
+    cube_split_norm = cube.compute_normals(split_vertices=True)
+    assert cube_split_norm.n_points == 24
+    assert 'pyvistaOriginalPointIds' in cube_split_norm.point_data
+    assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
+
+
 def test_point_normals(sphere):
-    assert sphere.point_normals.shape[0] == sphere.n_points
+    sphere = sphere.compute_normals(cell_normals=False, point_normals=True)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
+    assert np.all(normals == sphere.point_data['Normals'])
+    assert np.shares_memory(normals, sphere.point_data['Normals'])
+
+    # when they don't, compute them
+    sphere.point_data.pop('Normals')
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
 
 
 def test_cell_normals(sphere):
-    assert sphere.cell_normals.shape[0] == sphere.n_cells
+    sphere = sphere.compute_normals(cell_normals=True, point_normals=False)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
+    assert np.all(normals == sphere.cell_data['Normals'])
+    assert np.shares_memory(normals, sphere.cell_data['Normals'])
+
+    # when they don't, compute them
+    sphere.cell_data.pop('Normals')
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
 
 
 def test_face_normals(sphere):
@@ -768,13 +799,21 @@ def test_is_all_triangles():
 
 def test_extrude():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    poly = arc.extrude([0, 0, 1], progress_bar=True)
+    poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
 
     n_points_old = arc.n_points
-    arc.extrude([0, 0, 1], inplace=True)
+    arc.extrude([0, 0, 1], inplace=True, capping=True)
     assert arc.n_points != n_points_old
+
+
+def test_extrude_capping_warnings():
+    arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+        arc.extrude([0, 0, 1])
+    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+        arc.extrude_rotate()
 
 
 def test_flip_normals(sphere, plane):

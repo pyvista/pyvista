@@ -23,6 +23,7 @@ Object Conversions
    array_from_vtkmatrix
    vtkmatrix_from_array
    cubemap
+   cubemap_from_filenames
 
 
 File IO
@@ -80,7 +81,6 @@ Miscellaneous
    :toctree: _autosummary
 
    color_like
-   parse_color
    start_xvfb
 
 VTK Version Information

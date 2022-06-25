@@ -1,6 +1,8 @@
 """ test pyvista.utilities """
+import itertools
 import os
 import pathlib
+import pickle
 import shutil
 import unittest.mock as mock
 import warnings
@@ -11,6 +13,7 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
+from pyvista.plotting import system_supports_plotting
 from pyvista.utilities import (
     GPUInfo,
     Observer,
@@ -20,6 +23,11 @@ from pyvista.utilities import (
     fileio,
     helpers,
     transformations,
+)
+from pyvista.utilities.misc import PyvistaDeprecationWarning, has_duplicates, raise_has_duplicates
+
+skip_no_plotting = pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
 )
 
 
@@ -80,7 +88,8 @@ def test_read(tmpdir, use_pathlib):
     # Now test the standard_reader_routine
     for i, filename in enumerate(fnames):
         # Pass attrs to for the standard_reader_routine to be used
-        obj = fileio.read(filename, attrs={'DebugOn': None})
+        with pytest.warns(PyvistaDeprecationWarning):
+            obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
@@ -125,6 +134,29 @@ def test_read_force_ext(tmpdir):
         assert isinstance(data, type)
 
 
+@mock.patch('pyvista.BaseReader.read')
+@mock.patch('pyvista.BaseReader.reader')
+def test_read_attrs(mock_reader, mock_read):
+    """Test passing attrs in read."""
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read(ex.antfile, attrs={'test': 'test_arg'})
+    mock_reader.test.assert_called_once_with('test_arg')
+
+    mock_reader.reset_mock()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
+    mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
+
+
+@mock.patch('pyvista.BaseReader.read')
+@mock.patch('pyvista.BaseReader.reader')
+@mock.patch('pyvista.BaseReader.show_progress')
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
+    """Test passing attrs in read."""
+    pyvista.read(ex.antfile, progress_bar=True)
+    mock_show_progress.assert_called_once()
+
+
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -145,31 +177,16 @@ def test_read_force_ext_wrong_extension(tmpdir):
         data = fileio.read(fname, force_ext='.vtm')
     assert len(data) == 0
 
-
-@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
-def test_read_legacy(srr_mock):
-    srr_mock.return_value = pyvista.read(ex.planefile)
-    pyvista.read_legacy('legacy.vtk')
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkDataSetReader)
-    assert reader.GetFileName().endswith('legacy.vtk')
-
-    # check error is raised when no data returned
-    srr_mock.reset_mock()
-    srr_mock.return_value = None
-    with pytest.raises(RuntimeError):
-        pyvista.read_legacy('legacy.vtk')
+    fname = ex.planefile
+    with pytest.raises(IOError):
+        fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.utilities.fileio.read_legacy')
-def test_pyvista_read_legacy(read_legacy_mock):
-    # check that reading a file with extension .vtk calls `read_legacy`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pyvista.read(ex.globefile)
-    args, kwargs = read_legacy_mock.call_args
-    filename = args[0]
-    assert filename == ex.globefile
+@mock.patch('pyvista.utilities.fileio.read')
+def test_read_legacy(read_mock):
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_legacy(ex.globefile, progress_bar=False)
+    read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
 
 
 @mock.patch('pyvista.utilities.fileio.read_exodus')
@@ -183,28 +200,19 @@ def test_pyvista_read_exodus(read_exodus_mock):
 
 
 @pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
-def test_read_plot3d(srr_mock, auto_detect):
+@mock.patch('pyvista.utilities.reader.BaseReader.read')
+@mock.patch('pyvista.utilities.reader.BaseReader.path')
+def test_read_plot3d(path_mock, read_mock, auto_detect):
     # with grid only
-    pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
-    srr_mock.assert_called_once()
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
-    assert reader.GetFileName().endswith('grid.in')
-    assert kwargs['filename'] is None
-    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
+    read_mock.assert_called_once()
 
     # with grid and q
-    srr_mock.reset_mock()
-    pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
-    args, kwargs = srr_mock.call_args
-    reader = args[0]
-    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
-    assert reader.GetFileName().endswith('grid.in')
-    assert args[0].GetQFileName().endswith('q1.save')
-    assert kwargs['filename'] is None
-    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
+    read_mock.reset_mock()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
+    read_mock.assert_called_once()
 
 
 def test_get_array():
@@ -225,6 +233,18 @@ def test_get_array():
     assert helpers.get_array(grid, 'foo') is None
     assert helpers.get_array(grid, 'test_data', preference='field') is None
     assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
+    # invalid inputs
+    with pytest.raises(TypeError):
+        helpers.get_array(grid, 'test_data', preference={'invalid'})
+    with pytest.raises(ValueError):
+        helpers.get_array(grid, 'test_data', preference='invalid')
+    with pytest.raises(ValueError):
+        helpers.get_array(grid, 'test_data', preference='row')
+    # test raw VTK input
+    grid_vtk = vtk.vtkUnstructuredGrid()
+    grid_vtk.DeepCopy(grid)
+    helpers.get_array(grid_vtk, 'test_data')
+    helpers.get_array(grid_vtk, 'foo')
 
 
 def test_is_inside_bounds():
@@ -414,6 +434,7 @@ def test_observer():
         obs.observe(alg)
 
 
+@skip_no_plotting
 def test_gpuinfo():
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
@@ -446,9 +467,9 @@ def test_cells_dict_utils():
     cells_arr = np.array([3, 0, 1, 2, 3, 3, 4, 5])
     cells_types = np.array([vtk.VTK_TRIANGLE] * 2)
 
-    assert np.all(
-        cells.generate_cell_offsets(cells_arr, cells_types)
-        == cells.generate_cell_offsets(cells_arr, cells_types)
+    assert np.array_equal(
+        cells.generate_cell_offsets(cells_arr, cells_types),
+        cells.generate_cell_offsets_loop(cells_arr, cells_types),
     )
 
     # Non-integer type
@@ -678,6 +699,7 @@ def test_color():
         (0, 0),
         "#hh0000",
         "invalid_name",
+        {"invalid_name": 100},
     )
     invalid_opacities = (275, -50, 2.4, -1.2, "#zz")
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
@@ -702,6 +724,10 @@ def test_color():
     # Check hex
     for h_prefix in h_prefixes:
         assert pyvista.Color(h_prefix + h) == i_rgba
+    # Check dict
+    for channels in itertools.product(*pyvista.Color.CHANNEL_NAMES):
+        dct = dict(zip(channels, i_rgba))
+        assert pyvista.Color(dct) == i_rgba
     # Check opacity
     for opacity in (i_opacity, f_opacity, h_opacity):
         # No opacity in color provided => use opacity
@@ -730,3 +756,64 @@ def test_color():
     # Check sRGB conversion
     assert pyvista.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
     assert pyvista.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
+    # Check iteration and indexing
+    c = pyvista.Color(i_rgba)
+    assert all(ci == fi for ci, fi in zip(c, f_rgba))
+    for i, cnames in enumerate(pyvista.Color.CHANNEL_NAMES):
+        assert c[i] == f_rgba[i]
+        assert all(c[i] == c[cname] for cname in cnames)
+    assert c[-1] == f_rgba[-1]
+    assert c[1:3] == f_rgba[1:3]
+    with pytest.raises(TypeError):
+        c[None]  # Invalid index type
+    with pytest.raises(ValueError):
+        c["invalid_name"]  # Invalid string index
+    with pytest.raises(IndexError):
+        c[4]  # Invalid integer index
+
+
+def test_convert_array():
+    arr = np.arange(4).astype('O')
+    arr2 = pyvista.utilities.convert_array(arr, array_type=np.dtype('O'))
+    assert arr2.GetNumberOfValues() == 4
+
+    # https://github.com/pyvista/pyvista/issues/2370
+    arr3 = pyvista.utilities.convert_array(
+        pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
+    )
+    assert arr3.GetNumberOfValues() == 4
+
+    # check lists work
+    my_list = [1, 2, 3]
+    arr4 = pyvista.utilities.convert_array(my_list)
+    assert arr4.GetNumberOfValues() == len(my_list)
+
+
+def test_has_duplicates():
+    assert not has_duplicates(np.arange(100))
+    assert has_duplicates(np.array([0, 1, 2, 2]))
+    assert has_duplicates(np.array([[0, 1, 2], [0, 1, 2]]))
+
+    with pytest.raises(ValueError):
+        raise_has_duplicates(np.array([0, 1, 2, 2]))
+
+
+def test_copy_vtk_array():
+    with pytest.raises(TypeError, match='Invalid type'):
+        pyvista.utilities.misc.copy_vtk_array([1, 2, 3])
+
+    value_0 = 10
+    value_1 = 10
+    arr = vtk.vtkFloatArray()
+    arr.SetNumberOfValues(2)
+    arr.SetValue(0, value_0)
+    arr.SetValue(1, value_1)
+    arr_copy = pyvista.utilities.misc.copy_vtk_array(arr, deep=True)
+    assert arr_copy.GetNumberOfValues()
+    assert value_0 == arr_copy.GetValue(0)
+
+    arr_copy_shallow = pyvista.utilities.misc.copy_vtk_array(arr, deep=False)
+    new_value = 5
+    arr.SetValue(1, new_value)
+    assert value_1 == arr_copy.GetValue(1)
+    assert new_value == arr_copy_shallow.GetValue(1)

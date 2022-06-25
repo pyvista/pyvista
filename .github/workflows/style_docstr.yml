@@ -3,64 +3,48 @@ name: Style and Docstring Check
 
 on: [pull_request, workflow_dispatch]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   stylecheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
-      - name: Install style requirements
-        run: |
-          pip install -r requirements_style.txt --disable-pip-version-check
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      - name: Code Linting and Spelling Check
-        run: |
-          make stylecheck
-
-  staticcheck:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Install style requirements
-        run: |
-          pip install -r requirements_static.txt --disable-pip-version-check
-
-      - name: Static code check
-        run: |
-          make mypy
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 
   docstringcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.local/share/pyvista/examples
-          key: Examples-${{ hashFiles('*') }}
+          key: Examples-Data-${{ hashFiles('*') }}
           restore-keys: |
-            Examples-
+            Examples-Data-
 
       - name: Install PyVista
         run: |

@@ -1,6 +1,7 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
 import collections.abc
 import logging
+import warnings
 
 import numpy as np
 
@@ -17,6 +18,7 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.utilities.misc import PyvistaFutureWarning
 
 
 @abstract_class
@@ -1298,7 +1300,7 @@ class PolyDataFilters(DataSetFilters):
         The algorithm works by determining normals for each polygon
         and then averaging them at shared points. When sharp edges are
         present, the edges are split and new points generated to
-        prevent blurry edges (due to Gouraud shading).
+        prevent blurry edges (due to Phong shading).
 
         Parameters
         ----------
@@ -1309,7 +1311,9 @@ class PolyDataFilters(DataSetFilters):
             Calculation of point normals. Defaults to ``True``.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to ``False``.
+            Splitting of sharp edges. Defaults to ``False``. Indices to the
+            original points are tracked in the ``"pyvistaOriginalPointIds"``
+            array.
 
         flip_normals : bool, optional
             Set global flipping of normal orientation. Flipping
@@ -1395,6 +1399,12 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`surface_normal_example` for more examples using this filter.
 
         """
+        # track original point indices
+        if split_vertices:
+            self.point_data.set_array(
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
+            )
+
         normal = _vtk.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
         normal.SetComputePointNormals(point_normals)
@@ -2530,7 +2540,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Creating a Ribbon')
         return _get_output(alg)
 
-    def extrude(self, vector, capping=False, inplace=False, progress_bar=False):
+    def extrude(self, vector, capping=None, inplace=False, progress_bar=False):
         """Sweep polygonal data creating a "skirt" from free edges.
 
         This will create a line from vertices.
@@ -2551,6 +2561,8 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.32.0
            The ``capping`` keyword was added with a default of ``False``.
            The previously used VTK default corresponds to ``capping=True``.
+           In a future version the default will be changed to ``True`` to
+           match the behavior of the underlying VTK filter.
 
         Parameters
         ----------
@@ -2558,7 +2570,16 @@ class PolyDataFilters(DataSetFilters):
             Direction and length to extrude the mesh in.
 
         capping : bool, optional
-            Control if the sweep of a 2D object is capped.
+            Control if the sweep of a 2D object is capped. The default is
+            ``False``, which differs from VTK's default.
+
+            .. warning::
+               The ``capping`` keyword was added in version 0.32.0 with a
+               default value of ``False``. In a future version this default
+               will be changed to ``True`` to match the behavior of the
+               underlying VTK filter. It is recommended to explicitly pass
+               a value for this keyword argument to prevent future changes
+               in behavior and warnings.
 
         inplace : bool, optional
             Overwrites the original mesh in-place.
@@ -2577,7 +2598,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-        >>> mesh = arc.extrude([0, 0, 1])
+        >>> mesh = arc.extrude([0, 0, 1], capping=False)
         >>> mesh.plot(color='tan')
 
         Extrude and cap an 8 sided polygon.
@@ -2587,13 +2608,22 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh.plot(line_width=5, show_edges=True)
 
         """
+        if capping is None:
+            capping = False
+            warnings.warn(
+                'The default value of the ``capping`` keyword argument will change in '
+                'a future version to ``True`` to match the behavior of VTK. We recommend '
+                'passing the keyword explicitly to prevent future surprises.',
+                PyvistaFutureWarning,
+            )
+
         alg = _vtk.vtkLinearExtrusionFilter()
         alg.SetExtrusionTypeToVectorExtrusion()
         alg.SetVector(*vector)
         alg.SetInputData(self)
         alg.SetCapping(capping)
         _update_alg(alg, progress_bar, 'Extruding')
-        output = pyvista.wrap(alg.GetOutput())
+        output = _get_output(alg)
         if inplace:
             self.overwrite(output)
             return self
@@ -2606,13 +2636,14 @@ class PolyDataFilters(DataSetFilters):
         translation=0.0,
         dradius=0.0,
         angle=360.0,
-        capping=False,
+        capping=None,
+        rotation_axis=(0, 0, 1),
         progress_bar=False,
     ):
         """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
 
         This takes polygonal data as input and generates polygonal
-        data on output. The input dataset is swept around the z-axis
+        data on output. The input dataset is swept around the axis
         to create new polygonal primitives. These primitives form a
         "skirt" or swept surface. For example, sweeping a line results
         in a cylindrical shell, and sweeping a circle creates a torus.
@@ -2621,7 +2652,7 @@ class PolyDataFilters(DataSetFilters):
         can control whether the sweep of a 2D object (i.e., polygon or
         triangle strip) is capped with the generating geometry via the
         ``capping`` parameter. Also, you can control the angle of
-        rotation, and whether translation along the z-axis is
+        rotation, and whether translation along the axis is
         performed along with the rotation.  (Translation is useful for
         creating "springs".) You also can adjust the radius of the
         generating geometry with the ``dradius`` parameter.
@@ -2639,6 +2670,8 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.32.0
            The ``capping`` keyword was added with a default of ``False``.
            The previously used VTK default corresponds to ``capping=True``.
+           In a future version the default will be changed to ``True`` to
+           match the behavior of the underlying VTK filter.
 
         Parameters
         ----------
@@ -2649,7 +2682,7 @@ class PolyDataFilters(DataSetFilters):
             Overwrites the original mesh inplace.
 
         translation : float, optional
-            Total amount of translation along the z-axis.
+            Total amount of translation along the axis.
 
         dradius : float, optional
             Change in radius during sweep process.
@@ -2658,7 +2691,20 @@ class PolyDataFilters(DataSetFilters):
             The angle of rotation in degrees.
 
         capping : bool, optional
-            Control if the sweep of a 2D object is capped.
+            Control if the sweep of a 2D object is capped. The default is
+            ``False``, which differs from VTK's default.
+
+            .. warning::
+               The ``capping`` keyword was added in version 0.32.0 with a
+               default value of ``False``. In a future version this default
+               will be changed to ``True`` to match the behavior of the
+               underlying VTK filter. It is recommended to explicitly pass
+               a value for this keyword argument to prevent future changes
+               in behavior and warnings.
+
+        rotation_axis : numpy.ndarray or sequence, optional
+            The direction vector of the axis around which the rotation is done.
+            It requires vtk>=9.1.0.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -2676,7 +2722,8 @@ class PolyDataFilters(DataSetFilters):
         >>> profile = pyvista.Polygon(center=[1.25, 0.0, 0.0], radius=0.2,
         ...                           normal=(0, 1, 0), n_sides=30)
         >>> extruded = profile.extrude_rotate(resolution=360, translation=4.0,
-        ...                                   dradius=.5, angle=1500.0)
+        ...                                   dradius=0.5, angle=1500.0,
+        ...                                   capping=True)
         >>> extruded.plot(smooth_shading=True)
 
         Create a "wine glass" using the rotational extrusion filter.
@@ -2692,10 +2739,25 @@ class PolyDataFilters(DataSetFilters):
         ...                    [-0.1, 0, 0.8],
         ...                    [-0.2, 0, 1.0]])
         >>> spline = pyvista.Spline(points, 30)
-        >>> extruded = spline.extrude_rotate(resolution=20)
+        >>> extruded = spline.extrude_rotate(resolution=20, capping=False)
         >>> extruded.plot(color='tan')
 
         """
+        if capping is None:
+            capping = False
+            warnings.warn(
+                'The default value of the ``capping`` keyword argument will change in '
+                'a future version to ``True`` to match the behavior of VTK. We recommend '
+                'passing the keyword explicitly to prevent future surprises.',
+                PyvistaFutureWarning,
+            )
+
+        if (
+            not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
+            or len(rotation_axis) != 3
+        ):
+            raise ValueError('Vector must be a length three vector')
+
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
         alg = _vtk.vtkRotationalExtrusionFilter()
@@ -2705,7 +2767,122 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
+        if pyvista.vtk_version_info >= (9, 1, 0):
+            alg.SetRotationAxis(rotation_axis)
+        else:  # pragma: no cover
+            if rotation_axis != (0, 0, 1):
+                raise VTKVersionError(
+                    'The installed version of VTK does not support '
+                    'setting the direction vector of the axis around which the rotation is done.'
+                )
+
         _update_alg(alg, progress_bar, 'Extruding')
+        output = pyvista.wrap(alg.GetOutput())
+        if inplace:
+            self.overwrite(output)
+            return self
+        return output
+
+    def extrude_trim(
+        self,
+        direction,
+        trim_surface,
+        extrusion="boundary_edges",
+        capping="intersection",
+        inplace=False,
+        progress_bar=False,
+    ):
+        """Extrude polygonal data trimmed by a surface.
+
+        The input dataset is swept along a specified direction forming a
+        "skirt" from the boundary edges 2D primitives (i.e., edges used
+        by only one polygon); and/or from vertices and lines. The extent
+        of the sweeping is defined where the sweep intersects a
+        user-specified surface.
+
+        Parameters
+        ----------
+        direction : numpy.ndarray or sequence
+            Direction vector to extrude.
+
+        trim_surface : pyvista.PolyData
+            Surface which trims the surface.
+
+        extrusion : str or int, optional
+            Control the strategy of extrusion. One of the following:
+
+            * ``"boundary_edges"``
+            * ``"all_edges"``
+
+            The default is ``"boundary_edges"``, which only generates faces on
+            the boundary of the original input surface. When using
+            ``"all_edges"``, faces are created along interior points as well.
+
+        capping : str or int, optional
+            Control the strategy of capping. One of the following:
+
+            * ``"intersection"``
+            * ``"minimum_distance"``
+            * ``"maximum_distance"``
+            * ``"average_distance"``
+
+            The default is "intersection".
+
+        inplace : bool, optional
+            Overwrites the original mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Extruded mesh trimmed by a surface.
+
+        Examples
+        --------
+        Extrude a disc.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> plane = pyvista.Plane(i_size=2, j_size=2, direction=[0, 0.8, 1])
+        >>> disc = pyvista.Disc(center=(0, 0, -1), c_res=50)
+        >>> direction = [0, 0, 1]
+        >>> extruded_disc = disc.extrude_trim(direction, plane)
+        >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
+
+        """
+        if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
+            raise TypeError('Vector must be a length three vector')
+
+        extrusions = {"boundary_edges": 0, "all_edges": 1}
+        if isinstance(extrusion, str):
+            if extrusion not in extrusions:
+                raise ValueError(f'Invalid strategy of extrusion "{extrusion}".')
+            extrusion = extrusions[extrusion]
+        else:
+            raise TypeError('Invalid type given to `extrusion`. Must be a string.')
+
+        cappings = {
+            "intersection": 0,
+            "minimum_distance": 1,
+            "maximum_distance": 2,
+            "average_distance": 3,
+        }
+        if isinstance(capping, str):
+            if capping not in cappings:
+                raise ValueError(f'Invalid strategy of capping "{capping}".')
+            capping = cappings[capping]
+        else:
+            raise TypeError('Invalid type given to `capping`. Must be a string.')
+
+        alg = _vtk.vtkTrimmedExtrusionFilter()
+        alg.SetInputData(self)
+        alg.SetExtrusionDirection(*direction)
+        alg.SetTrimSurfaceData(trim_surface)
+        alg.SetExtrusionStrategy(extrusion)
+        alg.SetCappingStrategy(capping)
+        _update_alg(alg, progress_bar, 'Extruding with trimming')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
             self.overwrite(output)
@@ -2894,7 +3071,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        array([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
+        pyvista_ndarray([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data.  Cells with a collision are

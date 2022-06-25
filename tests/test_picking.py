@@ -1,13 +1,14 @@
 import pytest
-import vtk
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
-skip_no_vtk9 = pytest.mark.skipif(
-    not vtk.vtkVersion().GetVTKMajorVersion() >= 9, reason="Requires VTK9+"
-)
+skip_no_vtk9 = pytest.mark.skipif(pyvista.vtk_version_info < (9,), reason="Requires VTK v9+")
+
+# skip all tests if unable to render
+if not system_supports_plotting():
+    pytestmark = pytest.mark.skip
 
 
 @skip_no_vtk9
@@ -53,6 +54,99 @@ def test_cell_picking():
     plotter.add_mesh(multi)
     plotter.enable_cell_picking()
     plotter.close()
+
+
+@pytest.mark.parametrize('left_clicking', [False, True])
+def test_enable_mesh_picking(sphere, left_clicking):
+    picked = []
+
+    def callback(picked_mesh):
+        picked.append(picked_mesh)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.enable_mesh_picking(callback=callback, left_clicking=left_clicking)
+    pl.show(auto_close=False)
+
+    width, height = pl.window_size
+
+    # clicking is to "activate" the renderer
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width, height)
+    pl.iren._mouse_move(width // 2, height // 2)
+    if not left_clicking:
+        pl.iren._simulate_keypress('p')
+
+    assert sphere in picked
+    assert pl.picked_mesh == sphere
+
+    # invalid selection
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(0, 0)
+    pl.iren._mouse_move(0, 0)
+    if not left_clicking:
+        pl.iren._simulate_keypress('p')
+
+    assert pl.picked_mesh is None
+
+
+@pytest.mark.parametrize('left_clicking', [False, True])
+def test_enable_surface_picking(sphere, left_clicking):
+    picked = []
+
+    def callback(point):
+        picked.append(point)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.enable_surface_picking(callback=callback, left_clicking=left_clicking)
+    pl.show(auto_close=False)
+
+    width, height = pl.window_size
+
+    # clicking is to "activate" the renderer
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width, height)
+    pl.iren._mouse_move(width // 2, height // 2)
+    if not left_clicking:
+        pl.iren._simulate_keypress('p')
+
+    assert len(picked)
+    assert pl.picked_point is not None
+
+    # invalid selection
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(0, 0)
+    pl.iren._mouse_move(0, 0)
+    if not left_clicking:
+        pl.iren._simulate_keypress('p')
+
+    assert pl.picked_point is None
+
+
+@pytest.mark.parametrize('left_clicking', [False, True])
+def test_disable_picking(sphere, left_clicking):
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.enable_surface_picking(left_clicking=left_clicking)
+    pl.disable_picking()
+    pl.show(auto_close=False)
+
+    width, height = pl.window_size
+
+    # clicking is to "activate" the renderer
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width, height)
+    pl.iren._mouse_move(width // 2, height // 2)
+    if not left_clicking:
+        pl.iren._simulate_keypress('p')
+
+    assert pl.picked_point is None
+
+    # ensure it can safely be called twice
+    pl.disable_picking()
+    assert pl._picking_text not in pl.renderer.actors
 
 
 def test_enable_cell_picking_interactive():
@@ -102,8 +196,8 @@ def test_enable_cell_picking_interactive_two_ren_win():
 
 
 @skip_no_vtk9
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_point_picking():
+@pytest.mark.parametrize('left_clicking', [False, True])
+def test_point_picking(left_clicking):
     sphere = pyvista.Sphere()
     for use_mesh in (False, True):
         plotter = pyvista.Plotter(
@@ -113,17 +207,26 @@ def test_point_picking():
         plotter.enable_point_picking(
             show_message=True,
             use_mesh=use_mesh,
+            left_clicking=left_clicking,
             callback=lambda: None,
         )
+        # must show to activate the interactive renderer (for left_clicking)
+        plotter.show(auto_close=False)
+
         # simulate the pick
-        renderer = plotter.renderer
-        picker = plotter.iren.get_picker()
-        picker.Pick(50, 50, 0, renderer)
+        width, height = plotter.window_size
+        if left_clicking:
+            plotter.iren._mouse_left_button_press(width // 2, height // 2)
+            plotter.iren._mouse_left_button_release(width, height)
+            plotter.iren._mouse_move(width // 2, height // 2)
+        else:
+            renderer = plotter.renderer
+            picker = plotter.iren.get_picker()
+            picker.Pick(width // 2, height // 2, 0, renderer)
         plotter.close()
 
 
 @skip_no_vtk9
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_point_picking_window_not_pickable():
 
     plotter = pyvista.Plotter(
@@ -160,7 +263,6 @@ def test_point_picking_window_not_pickable():
 
 
 @skip_no_vtk9
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_path_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
@@ -184,7 +286,6 @@ def test_path_picking():
 
 
 @skip_no_vtk9
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_geodesic_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
@@ -197,6 +298,8 @@ def test_geodesic_picking():
         show_path=True,
         keep_order=True,
     )
+    plotter.show(auto_close=False)
+
     # simulate the pick
     renderer = plotter.renderer
     picker = plotter.iren.get_picker()
@@ -211,7 +314,6 @@ def test_geodesic_picking():
 
 
 @skip_no_vtk9
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_horizon_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(

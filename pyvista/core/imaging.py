@@ -38,7 +38,7 @@ def sample_function(
     ----------
     function : vtk.vtkImplicitFunction
         Implicit function to evaluate.  For example, the function
-        generated from ``perlin_noise``.
+        generated from :func:`pyvista.perlin_noise`.
 
     bounds : length 6 sequence
         Specify the bounds in the format of:
@@ -80,15 +80,20 @@ def sample_function(
 
     scalar_arr_name : str, optional
         Set the scalar array name for this data set.  Defaults to
-        ``"scalars"``
+        ``"scalars"``.
 
     normal_arr_name : str, optional
         Set the normal array name for this data set.  Defaults to
-        ``"normals"``
+        ``"normals"``.
 
     progress_bar : bool, optional
         Display a progress bar to indicate progress.  Default
         ``False``.
+
+    Returns
+    -------
+    pyvista.UniformGrid
+        Uniform grid with sampled data.
 
     Examples
     --------

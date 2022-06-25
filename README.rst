@@ -127,9 +127,9 @@ Overview of Features
 * Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
 .. _ipyvtklink: https://github.com/Kitware/ipyvtklink
-.. _Widgets: https://docs.pyvista.org/plotting/widgets.html
-.. _Filters: https://docs.pyvista.org/core/filters.html
-.. _Plotting: https://docs.pyvista.org/plotting/index.html
+.. _Widgets: https://docs.pyvista.org/api/plotting/index.html#widget-api
+.. _Filters: https://docs.pyvista.org/api/core/filters.html
+.. _Plotting: https://docs.pyvista.org/api/plotting/index.html
 .. _meshio: https://github.com/nschloe/meshio
 
 
@@ -163,7 +163,7 @@ You can also visit `PyPI <https://pypi.org/project/pyvista/>`_,
 `GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
 
 See the `Installation <http://docs.pyvista.org/getting-started/installation.html#install-ref.>`_
-for more details if the installation through pip doesn't work out.
+for more details regarding optional dependencies or if the installation through pip doesn't work out.
 
 
 Connections
@@ -171,26 +171,11 @@ Connections
 
 PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
-Here are a few open-source projects that leverage PyVista:
 
-* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
-* ansys-mapdl-reader_: Pythonic interface to ANSYS results, full, and archive files
-* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
-* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
-* pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
-* tetgen_: Python Interface to Hang Si's C++ TetGen Library
+Learn more about how PyVista is used across science and engineering disciplines
+by a diverse community of users on our `Connections page`_.
 
-
-.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
-.. _ansys-mapdl-reader: https://github.com/pyansys/pymapdl-reader
-.. _PVGeo: https://github.com/OpenGeoVis/PVGeo
-.. _omfvista: https://github.com/OpenGeoVis/omfvista
-.. _discretize: https://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: https://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtk_mod.InterfaceVTK.html
-.. _pymeshfix: https://github.com/pyvista/pymeshfix
-.. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
-.. _tetgen: https://github.com/pyvista/tetgen
+.. _Connections page: https://docs.pyvista.org/getting-started/connections.html
 
 
 Authors

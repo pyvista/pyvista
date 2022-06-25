@@ -1,6 +1,6 @@
 """Module containing geometry helper functions."""
 
-import collections
+import collections.abc
 import warnings
 
 import numpy as np
@@ -225,7 +225,7 @@ def merge(
     >>> mesh.plot()
 
     """
-    if not isinstance(datasets, collections.Sequence):
+    if not isinstance(datasets, collections.abc.Sequence):
         raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
 
     if len(datasets) < 1:
