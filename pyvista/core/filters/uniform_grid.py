@@ -449,6 +449,12 @@ class UniformGridFilters(DataSetFilters):
         pyvista.UniformGrid
             :class:`pyvista.UniformGrid` with applied FFT.
 
+        See Also
+        --------
+        rfft: The reverse transform.
+        low_pass: Low-pass filtering of FFT output.
+        high_pass: High-pass filtering of FFT output.
+
         Examples
         --------
         Apply FFT to an example image.
@@ -521,6 +527,12 @@ class UniformGridFilters(DataSetFilters):
         -------
         pyvista.UniformGrid
             :class:`pyvista.UniformGrid` with the applied reverse FFT.
+
+        See Also
+        --------
+        fft: The direct transform.
+        low_pass: Low-pass filtering of FFT output.
+        high_pass: High-pass filtering of FFT output.
 
         Examples
         --------
@@ -608,6 +620,12 @@ class UniformGridFilters(DataSetFilters):
         pyvista.UniformGrid
             :class:`pyvista.UniformGrid` with the applied low pass filter.
 
+        See Also
+        --------
+        fft: Direct fast Fourier transform.
+        rfft: Reverse fast Fourier transform.
+        high_pass: High-pass filtering of FFT output.
+
         Examples
         --------
         See :ref:`image_fft_perlin_example` for a full example using this filter.
@@ -678,7 +696,13 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            UniformGrid with the applied high pass filter.
+            :class:`pyvista.UniformGrid` with the applied high pass filter.
+
+        See Also
+        --------
+        fft: Direct fast Fourier transform.
+        rfft: Reverse fast Fourier transform.
+        low_pass: Low-pass filtering of FFT output.
 
         Examples
         --------
