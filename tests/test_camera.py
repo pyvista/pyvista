@@ -56,7 +56,9 @@ def test_distance(camera):
     assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2), rtol=1e-8)
     distance = np.random.random()
     camera.distance = distance
-    assert np.isclose(camera.distance, distance)
+    assert np.isclose(camera.distance, distance, atol=0.0002)
+    # large absolute tolerance because of
+    # https://github.com/Kitware/VTK/blob/5f855ff8f1237cbb5e5fa55a5ace48149237006e/Rendering/Core/vtkCamera.cxx#L563-L577
 
 
 def test_thickness(camera):
