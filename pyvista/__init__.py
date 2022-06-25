@@ -99,6 +99,11 @@ except Exception as e:
     )
     EXAMPLES_PATH = ''
 
+# verify example cache integrity
+from pyvista.examples.downloads import _verify_cache_integrity
+
+_verify_cache_integrity()
+
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 

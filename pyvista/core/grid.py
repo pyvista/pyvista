@@ -86,14 +86,14 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         Coordinates of the points in y direction. If this is passed, ``uinput``
         must be a :class:`numpy.ndarray`.
 
-    z : np.ndarray, optional
-        Coordinates of the points in z direction. If this is passed, ``uinput`` and ``y``
-        must be a :class:`numpy.ndarray`.
+    z : numpy.ndarray, optional
+        Coordinates of the points in z direction. If this is passed, ``uinput``
+        and ``y`` must be a :class:`numpy.ndarray`.
 
     check_duplicates : bool, optional
         Check for duplications in any arrays that are passed. Defaults to
-        ``False``. If ``True``, an error is raised if there are any duplicate values
-        in any of the array-valued input arguments.
+        ``False``. If ``True``, an error is raised if there are any duplicate
+        values in any of the array-valued input arguments.
 
     Examples
     --------
@@ -101,7 +101,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     >>> import vtk
     >>> import numpy as np
 
-    Create an empty grid
+    Create an empty grid.
 
     >>> grid = pyvista.RectilinearGrid()
 
@@ -110,7 +110,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     >>> vtkgrid = vtk.vtkRectilinearGrid()
     >>> grid = pyvista.RectilinearGrid(vtkgrid)
 
-    Create from NumPy arrays
+    Create from NumPy arrays.
 
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
@@ -762,5 +762,42 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
-        grid.copy_meta_from(self)
+        grid.copy_meta_from(self, deep=True)
         return grid
+
+    @property
+    def extent(self) -> tuple:
+        """Return or set the extent of the UniformGrid.
+
+        The extent is simply the first and last indices for each of the three axes.
+
+        Examples
+        --------
+        Create a ``UniformGrid`` and show its extent.
+
+        >>> import pyvista
+        >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
+        >>> grid.extent
+        (0, 9, 0, 9, 0, 9)
+
+        >>> grid.extent = (2, 5, 2, 5, 2, 5)
+        >>> grid.extent
+        (2, 5, 2, 5, 2, 5)
+
+        Note how this also modifies the grid bounds and dimensions. Since we
+        use default spacing of 1 here, the bounds match the extent exactly.
+
+        >>> grid.bounds
+        (2.0, 5.0, 2.0, 5.0, 2.0, 5.0)
+        >>> grid.dimensions
+        (4, 4, 4)
+
+        """
+        return self.GetExtent()
+
+    @extent.setter
+    def extent(self, new_extent: Sequence[int]):
+        """Set the extent of the UniformGrid."""
+        if len(new_extent) != 6:
+            raise ValueError('Extent must be a vector of 6 values.')
+        self.SetExtent(new_extent)

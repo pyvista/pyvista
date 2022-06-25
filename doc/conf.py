@@ -41,6 +41,7 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
+os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
 # ignore any EGLWarnings when building documentation with VTK compiled with OSMesa
 os.environ['PYTHONWARNINGS'] = 'EGLWarning'

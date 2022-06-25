@@ -13,6 +13,7 @@ from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
 from pyvista.errors import MissingDataError
+from pyvista.utilities.misc import can_create_mpl_figure
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -22,6 +23,9 @@ skip_py2_nobind = pytest.mark.skipif(
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
+)
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -1226,9 +1230,9 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@skip_no_mpl_figure
 def test_plot_over_line(tmpdir):
-    """this requires matplotlib"""
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
@@ -1350,10 +1354,9 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@skip_no_mpl_figure
 def test_plot_over_circular_arc(tmpdir):
-    """this requires matplotlib"""
-
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1395,10 +1398,9 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
+@skip_no_mpl_figure
 def test_plot_over_circular_arc_normal(tmpdir):
-    """this requires matplotlib"""
-
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -2375,6 +2377,20 @@ def test_extrude_rotate():
         and (ymax == line.bounds[1])
     )
 
+    rotation_axis = (0, 1, 0)
+    if not pyvista.vtk_version_info >= (9, 1, 0):
+        with pytest.raises(VTKVersionError):
+            poly = line.extrude_rotate(rotation_axis=rotation_axis)
+    else:
+        poly = line.extrude_rotate(
+            rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
+        )
+        assert poly.n_cells == line.n_points - 1
+        assert poly.n_points == (resolution + 1) * line.n_points
+
+    with pytest.raises(ValueError):
+        line.extrude_rotate(rotation_axis=[1, 2], capping=True)
+
 
 def test_extrude_rotate_inplace():
     resolution = 4
@@ -2383,6 +2399,66 @@ def test_extrude_rotate_inplace():
     poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True, capping=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
+
+
+def test_extrude_trim():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    poly = mesh.extrude_trim(direction, trim_surface)
+    assert np.isclose(poly.volume, 1.0)
+
+
+@pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
+@pytest.mark.parametrize(
+    'capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"]
+)
+def test_extrude_trim_strategy(extrusion, capping):
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    poly = mesh.extrude_trim(direction, trim_surface, extrusion=extrusion, capping=capping)
+    assert isinstance(poly, pyvista.PolyData)
+    assert poly.n_cells
+    assert poly.n_points
+
+
+def test_extrude_trim_catch():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane()
+    trim_surface = pyvista.Plane()
+    with pytest.raises(ValueError):
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion="Invalid strategy")
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
+    with pytest.raises(ValueError):
+        _ = mesh.extrude_trim(direction, trim_surface, capping="Invalid strategy")
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, capping=0)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim('foobar', trim_surface)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim([1, 2], trim_surface)
+
+
+def test_extrude_trim_inplace():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    mesh.extrude_trim(direction, trim_surface, inplace=True, progress_bar=True)
+    assert np.isclose(mesh.volume, 1.0)
 
 
 @pytest.mark.parametrize('inplace', [True, False])
@@ -2430,7 +2506,33 @@ def test_is_manifold(sphere, plane):
     assert not plane.is_manifold
 
 
-def test_reconstruct_surface_unstructured(datasets):
+def test_reconstruct_surface_unstructured():
     mesh = examples.load_hexbeam().reconstruct_surface()
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
+
+
+def test_integrate_data_datasets(datasets):
+    """Test multiple dataset types."""
+    for dataset in datasets:
+        integrated = dataset.integrate_data()
+        if "Area" in integrated.array_names:
+            assert integrated["Area"] > 0
+        elif "Volume" in integrated.array_names:
+            assert integrated["Volume"] > 0
+        else:
+            raise ValueError("Unexpected integration")
+
+
+def test_integrate_data():
+    """Test specific case."""
+    # sphere with radius = 0.5, area = pi
+    # increase resolution to increase precision
+    sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+    sphere.cell_data["cdata"] = 2 * np.ones(sphere.n_cells)
+    sphere.point_data["pdata"] = 3 * np.ones(sphere.n_points)
+
+    integrated = sphere.integrate_data()
+    assert np.isclose(integrated["Area"], np.pi, rtol=1e-3)
+    assert np.isclose(integrated["cdata"], 2 * np.pi, rtol=1e-3)
+    assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
