@@ -518,7 +518,7 @@ should not wait until a minor release. The steps for a patch release
 1. Push the necessary bugfix(es) to the applicable release branch. This
    will generally be the latest release branch (e.g. ``release/0.25``).
 
-2. Update ``__version__.py`` with the next patch increment (e.g.
+2. Update ``pyvista/_version.py`` with the next patch increment (e.g.
    ``0.25.1``), commit it, and open a PR that merge with the release
    branch. This gives the ``pyvista`` community a chance to validate and
    approve the bugfix release. Any additional hotfixes should be outside
