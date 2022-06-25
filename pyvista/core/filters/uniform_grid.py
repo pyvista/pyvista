@@ -428,6 +428,13 @@ class UniformGridFilters(DataSetFilters):
         much slower to compute. FFTs of multidimensional meshes (i.e volumes)
         are decomposed so that each axis executes serially.
 
+        The frequencies of the output assume standard order: along each axis
+        first positive frequencies are assumed from 0 to the maximum, then
+        negative frequencies are listed from largest absolute value to
+        smallest. This implies that the corners of the grid correspond to low
+        frequencies, while the center of the grid corresponds to high
+        frequencies.
+
         Parameters
         ----------
         output_scalars_name : str, optional
@@ -493,6 +500,13 @@ class UniformGridFilters(DataSetFilters):
         dimension. This makes images with prime number dimensions (i.e. 17x17)
         much slower to compute. FFTs of multidimensional meshes (i.e volumes)
         are decomposed so that each axis executes serially.
+
+        The frequencies of the input assume standard order: along each axis
+        first positive frequencies are assumed from 0 to the maximum, then
+        negative frequencies are listed from largest absolute value to
+        smallest. This implies that the corners of the grid correspond to low
+        frequencies, while the center of the grid corresponds to high
+        frequencies.
 
         Parameters
         ----------
@@ -560,6 +574,13 @@ class UniformGridFilters(DataSetFilters):
         frequency components.  Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
 
+        The frequencies of the input assume standard order: along each axis
+        first positive frequencies are assumed from 0 to the maximum, then
+        negative frequencies are listed from largest absolute value to
+        smallest. This implies that the corners of the grid correspond to low
+        frequencies, while the center of the grid corresponds to high
+        frequencies.
+
         Parameters
         ----------
         x_cutoff : double
@@ -624,6 +645,13 @@ class UniformGridFilters(DataSetFilters):
         output back into the spatial domain. This filter attenuates low
         frequency components.  Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
+
+        The frequencies of the input assume standard order: along each axis
+        first positive frequencies are assumed from 0 to the maximum, then
+        negative frequencies are listed from largest absolute value to
+        smallest. This implies that the corners of the grid correspond to low
+        frequencies, while the center of the grid corresponds to high
+        frequencies.
 
         Parameters
         ----------
