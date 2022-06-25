@@ -233,6 +233,18 @@ def test_get_array():
     assert helpers.get_array(grid, 'foo') is None
     assert helpers.get_array(grid, 'test_data', preference='field') is None
     assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
+    # invalid inputs
+    with pytest.raises(TypeError):
+        helpers.get_array(grid, 'test_data', preference={'invalid'})
+    with pytest.raises(ValueError):
+        helpers.get_array(grid, 'test_data', preference='invalid')
+    with pytest.raises(ValueError):
+        helpers.get_array(grid, 'test_data', preference='row')
+    # test raw VTK input
+    grid_vtk = vtk.vtkUnstructuredGrid()
+    grid_vtk.DeepCopy(grid)
+    helpers.get_array(grid_vtk, 'test_data')
+    helpers.get_array(grid_vtk, 'foo')
 
 
 def test_is_inside_bounds():
@@ -784,3 +796,24 @@ def test_has_duplicates():
 
     with pytest.raises(ValueError):
         raise_has_duplicates(np.array([0, 1, 2, 2]))
+
+
+def test_copy_vtk_array():
+    with pytest.raises(TypeError, match='Invalid type'):
+        pyvista.utilities.misc.copy_vtk_array([1, 2, 3])
+
+    value_0 = 10
+    value_1 = 10
+    arr = vtk.vtkFloatArray()
+    arr.SetNumberOfValues(2)
+    arr.SetValue(0, value_0)
+    arr.SetValue(1, value_1)
+    arr_copy = pyvista.utilities.misc.copy_vtk_array(arr, deep=True)
+    assert arr_copy.GetNumberOfValues()
+    assert value_0 == arr_copy.GetValue(0)
+
+    arr_copy_shallow = pyvista.utilities.misc.copy_vtk_array(arr, deep=False)
+    new_value = 5
+    arr.SetValue(1, new_value)
+    assert value_1 == arr_copy.GetValue(1)
+    assert new_value == arr_copy_shallow.GetValue(1)

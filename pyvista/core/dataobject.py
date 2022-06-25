@@ -333,7 +333,7 @@ class DataObject:
         >>> mesh = pyvista.Sphere()
         >>> mesh.add_field_data(np.arange(10), 'my-field-data')
         >>> mesh['my-field-data']
-        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         Add field data to a UniformGrid dataset.
 
@@ -341,7 +341,7 @@ class DataObject:
         >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
-        array(['I could', 'write', 'notes', 'here'], dtype='<U7')
+        pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
         Add field data to a MultiBlock dataset.
 

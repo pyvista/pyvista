@@ -13,6 +13,7 @@ from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
 from pyvista.errors import MissingDataError
+from pyvista.utilities.misc import can_create_mpl_figure
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -22,6 +23,9 @@ skip_py2_nobind = pytest.mark.skipif(
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
+)
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -1226,9 +1230,9 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@skip_no_mpl_figure
 def test_plot_over_line(tmpdir):
-    """this requires matplotlib"""
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
@@ -1350,10 +1354,9 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@skip_no_mpl_figure
 def test_plot_over_circular_arc(tmpdir):
-    """this requires matplotlib"""
-
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1395,10 +1398,9 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
+@skip_no_mpl_figure
 def test_plot_over_circular_arc_normal(tmpdir):
-    """this requires matplotlib"""
-
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -2374,6 +2376,20 @@ def test_extrude_rotate():
         and (ymin == line.bounds[0])
         and (ymax == line.bounds[1])
     )
+
+    rotation_axis = (0, 1, 0)
+    if not pyvista.vtk_version_info >= (9, 1, 0):
+        with pytest.raises(VTKVersionError):
+            poly = line.extrude_rotate(rotation_axis=rotation_axis)
+    else:
+        poly = line.extrude_rotate(
+            rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
+        )
+        assert poly.n_cells == line.n_points - 1
+        assert poly.n_points == (resolution + 1) * line.n_points
+
+    with pytest.raises(ValueError):
+        line.extrude_rotate(rotation_axis=[1, 2], capping=True)
 
 
 def test_extrude_rotate_inplace():

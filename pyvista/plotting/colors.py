@@ -947,8 +947,11 @@ def get_cmap_safe(cmap):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
     try:
         from matplotlib.cm import get_cmap
-    except ImportError:
-        raise ImportError('cmap requires matplotlib')
+    except ImportError:  # pragma: no cover
+        raise ImportError(
+            'The use of custom colormaps requires the installation of matplotlib'
+        ) from None
+
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
@@ -974,6 +977,7 @@ def get_cmap_safe(cmap):
             return cmap
         # Else use Matplotlib
         cmap = get_cmap(cmap)
+
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):

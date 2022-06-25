@@ -11,6 +11,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: 'errexit:pipefail'
@@ -24,14 +28,14 @@ jobs:
         python-version: ['3.7', '3.8']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/Library/Caches/pip
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
@@ -68,20 +72,20 @@ jobs:
       PYVISTA_OFF_SCREEN: True
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v1
 
       - name: Cache Conda
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/anaconda3/pkgs
           key: Conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
           restore-keys: |
             ${{ runner.os }}-conda-
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -146,23 +150,23 @@ jobs:
             vtk-version: "~=9.2.0rc1"
             allow-failure: 'true'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.vtk-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -197,7 +201,7 @@ jobs:
         run: |
           xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
 
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.8'
         name: 'Upload coverage to CodeCov'
 
@@ -226,10 +230,10 @@ jobs:
       matrix:
         python-version: [3.7, 3.8, 3.9]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -242,7 +246,7 @@ jobs:
           echo ("PIP_CACHE_DIR=" + $(pip cache dir)) >> $env:GITHUB_ENV
 
       - name: Restore pip cache dir
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
@@ -265,7 +269,7 @@ jobs:
           echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")) >> $env:GITHUB_ENV
 
       - name: Cache example data
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: Examples-1-${{ hashFiles('*') }}

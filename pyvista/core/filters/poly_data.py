@@ -2637,12 +2637,13 @@ class PolyDataFilters(DataSetFilters):
         dradius=0.0,
         angle=360.0,
         capping=None,
+        rotation_axis=(0, 0, 1),
         progress_bar=False,
     ):
         """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
 
         This takes polygonal data as input and generates polygonal
-        data on output. The input dataset is swept around the z-axis
+        data on output. The input dataset is swept around the axis
         to create new polygonal primitives. These primitives form a
         "skirt" or swept surface. For example, sweeping a line results
         in a cylindrical shell, and sweeping a circle creates a torus.
@@ -2651,7 +2652,7 @@ class PolyDataFilters(DataSetFilters):
         can control whether the sweep of a 2D object (i.e., polygon or
         triangle strip) is capped with the generating geometry via the
         ``capping`` parameter. Also, you can control the angle of
-        rotation, and whether translation along the z-axis is
+        rotation, and whether translation along the axis is
         performed along with the rotation.  (Translation is useful for
         creating "springs".) You also can adjust the radius of the
         generating geometry with the ``dradius`` parameter.
@@ -2681,7 +2682,7 @@ class PolyDataFilters(DataSetFilters):
             Overwrites the original mesh inplace.
 
         translation : float, optional
-            Total amount of translation along the z-axis.
+            Total amount of translation along the axis.
 
         dradius : float, optional
             Change in radius during sweep process.
@@ -2700,6 +2701,10 @@ class PolyDataFilters(DataSetFilters):
                underlying VTK filter. It is recommended to explicitly pass
                a value for this keyword argument to prevent future changes
                in behavior and warnings.
+
+        rotation_axis : numpy.ndarray or sequence, optional
+            The direction vector of the axis around which the rotation is done.
+            It requires vtk>=9.1.0.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -2747,6 +2752,12 @@ class PolyDataFilters(DataSetFilters):
                 PyvistaFutureWarning,
             )
 
+        if (
+            not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
+            or len(rotation_axis) != 3
+        ):
+            raise ValueError('Vector must be a length three vector')
+
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
         alg = _vtk.vtkRotationalExtrusionFilter()
@@ -2756,6 +2767,15 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
+        if pyvista.vtk_version_info >= (9, 1, 0):
+            alg.SetRotationAxis(rotation_axis)
+        else:  # pragma: no cover
+            if rotation_axis != (0, 0, 1):
+                raise VTKVersionError(
+                    'The installed version of VTK does not support '
+                    'setting the direction vector of the axis around which the rotation is done.'
+                )
+
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
@@ -3051,7 +3071,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        array([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
+        pyvista_ndarray([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data.  Cells with a collision are

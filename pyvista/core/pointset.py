@@ -1944,7 +1944,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         ):
             self._from_arrays(uinput, y, z, **kwargs)
         elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput
+            self.points = uinput  # type: ignore
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
@@ -2500,7 +2500,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         # K directions.
-        dims = self.extent
+        dims = self.GetExtent()
         dims = np.reshape(dims, (3, 2))
         dims = np.diff(dims, axis=1)
         dims = dims.flatten() + 1
