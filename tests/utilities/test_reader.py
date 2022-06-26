@@ -293,6 +293,16 @@ def test_stlreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+def test_tecplotreader():
+    filename = examples.download_tecplot_ascii(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.TecplotReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
 def test_vtkreader():
     filename = examples.hexbeamfile
     reader = pyvista.get_reader(filename)

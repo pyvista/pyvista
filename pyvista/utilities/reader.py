@@ -29,6 +29,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
+    | ``.dat``       | :class:`pyvista.TecplotReader`              |
+    +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
     | ``.dem``       | :class:`pyvista.DEMReader`                  |
@@ -1142,6 +1144,26 @@ class STLReader(BaseReader):
     _class_reader = _vtk.vtkSTLReader
 
 
+class TecplotReader(BaseReader):
+    """STL Reader for .stl files.
+
+    Examples
+    --------
+    Need example 
+    # >>> import pyvista
+    # >>> from pyvista import examples
+    # >>> filename = examples.download_cad_model(load=False)
+    # >>> filename.split("/")[-1]  # omit the path
+    # '42400-IDGH.stl'
+    # >>> reader = pyvista.get_reader(filename)
+    # >>> mesh = reader.read()
+    # >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkTecplotReader
+
+
 class VTKDataSetReader(BaseReader):
     """VTK Data Set Reader for .vtk files.
 
@@ -2044,6 +2066,7 @@ CLASS_READERS = {
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.dat': TecplotReader,    
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,

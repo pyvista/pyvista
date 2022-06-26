@@ -3939,6 +3939,41 @@ def download_cgns_structured(load=True):  # pragma: no cover
         return filename
     return pyvista.get_reader(filename).read()
 
+def download_tecplot_ascii(load=True):  # pragma: no cover
+    """Download the single block ascii Tecplot dataset.
+
+    Originally downloaded from Paul Bourke
+    <http://paulbourke.net/dataformats/tp/sample.tp>
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock 
+        Multiblock format with only 1 data block, simple geometric shape.
+        If ``load`` is ``False``, then the path of the example Tecplot file
+        is returned.
+
+    Examples
+    --------
+    Plot the example Tecplot dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_tecplot_ascii()
+    >>> dataset.plot()
+
+    """
+    filename, _ = _download_file('tecplot_ascii.dat')
+    if not load:
+        return filename
+    return pyvista.get_reader(filename).read()
+
+
 
 def download_cgns_multi(load=True):  # pragma: no cover
     """Download a multielement airfoil with a cell centered solution.
