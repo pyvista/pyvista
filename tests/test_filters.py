@@ -1002,12 +1002,31 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
-def test_smooth():
-    data = examples.load_uniform()
-    vol = data.threshold_percent(30)
-    surf = vol.extract_geometry(progress_bar=True)
-    smooth = surf.smooth()
-    assert np.any(smooth.points)
+def test_smooth(uniform):
+    surf = uniform.extract_surface().clean()
+    smoothed = surf.smooth()
+
+    # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
+    assert smoothed.triangulate().curvature().mean() > surf.triangulate().curvature().mean()
+
+    smooth_inplace = surf.smooth(inplace=True)
+    assert np.allclose(surf.points, smoothed.points)
+    assert np.allclose(smooth_inplace.points, smoothed.points)
+
+
+def test_smooth_taubin(uniform):
+    surf = uniform.extract_surface().clean()
+    smoothed = surf.smooth_taubin()
+
+    # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
+    assert smoothed.triangulate().curvature().mean() > surf.triangulate().curvature().mean()
+
+    # while volume is maintained
+    assert np.isclose(smoothed.volume, surf.volume, rtol=0.01)
+
+    smooth_inplace = surf.smooth_taubin(inplace=True)
+    assert np.allclose(surf.points, smoothed.points)
+    assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
 def test_resample():

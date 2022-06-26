@@ -209,6 +209,7 @@ if VTK9:
         vtkTriangleFilter,
         vtkTubeFilter,
         vtkUnstructuredGridToExplicitStructuredGrid,
+        vtkWindowedSincPolyDataFilter,
     )
     from vtkmodules.vtkFiltersExtraction import (
         vtkExtractGeometry,
