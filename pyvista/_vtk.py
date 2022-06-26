@@ -593,7 +593,7 @@ else:  # pragma: no cover
 
     def lazy_vtkXdmfReader():
         """Lazy import of the vtkXdmfReader."""
-        raise VTKVersionError('vtk. requires VTK v9.1.0 or newer')
+        raise VTKVersionError('vtkXdmfReader requires VTK v9.1.0 or newer')
 
     class vtkHDRReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
