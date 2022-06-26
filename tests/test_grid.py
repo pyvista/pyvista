@@ -947,6 +947,12 @@ def test_fft_and_rfft(noise_2d):
     noise_fft = noise_2d.fft(output_scalars_name=output_scalars_name)
     assert output_scalars_name in noise_fft.point_data
 
+    noise_fft = noise_2d.fft()
+    noise_fft_inactive_scalars = noise_fft.copy()
+    noise_fft_inactive_scalars.active_scalars_name = None
+    full_pass = noise_fft_inactive_scalars.rfft()
+    assert np.allclose(full_pass.active_scalars, noise_fft.rfft().active_scalars)
+
 
 def test_fft_low_pass(noise_2d):
     name = noise_2d.active_scalars_name
