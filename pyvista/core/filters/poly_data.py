@@ -882,6 +882,7 @@ class PolyDataFilters(DataSetFilters):
         pre_split_mesh=False,
         preserve_topology=False,
         boundary_vertex_deletion=True,
+        max_degree=None,
         inplace=False,
         progress_bar=False,
     ):
@@ -933,6 +934,13 @@ class PolyDataFilters(DataSetFilters):
             Defaults to ``True``. Turning this off may limit the
             maximum reduction that may be achieved.
 
+        max_degree : int, optional
+            The maximum vertex degree. If the number of triangles
+            connected to a vertex exceeds ``max_degree``, then the
+            vertex will be split. The complexity of the triangulation
+            algorithm is proportional to degree^2. Setting ``max_degree``
+            small can improve the performance of the algorithm.
+
         inplace : bool, optional
             Whether to update the mesh in-place.
 
@@ -969,6 +977,10 @@ class PolyDataFilters(DataSetFilters):
         alg.SetSplitAngle(split_angle)
         alg.SetPreSplitMesh(pre_split_mesh)
         alg.SetBoundaryVertexDeletion(boundary_vertex_deletion)
+
+        if max_degree is not None:
+            alg.SetDegree(max_degree)
+
         _update_alg(alg, progress_bar, 'Decimating Mesh')
 
         mesh = _get_output(alg)
