@@ -209,6 +209,7 @@ def test_set_tcoords_name():
     old_name = mesh.point_data.active_t_coords_name
     assert mesh.point_data.active_t_coords_name is not None
     mesh.point_data.active_t_coords_name = None
+    assert mesh.point_data.active_t_coords_name is None
 
     mesh.point_data.active_t_coords_name = old_name
     assert mesh.point_data.active_t_coords_name == old_name

@@ -756,6 +756,5 @@ class UniformGridFilters(DataSetFilters):
         if not meets_req:
             raise ValueError(
                 'Active scalars must be complex data for this filter, represented '
-                'either as a 2 component float array, or as an array with '
-                'dtype=numpy.complex128'
+                'as an array with `dtype=numpy.complex128`.'
             )
