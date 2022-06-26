@@ -44,6 +44,9 @@ jobs:
       if: startsWith(github.event.pull_request.head.ref, 'release')
       with:
         labels: release
+    - name: Wait until auto label is add
+      run: sleep 120s
+      shell: bash
     - uses: mheap/github-action-required-labels@v2
       with:
         mode: minimum
