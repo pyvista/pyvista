@@ -618,9 +618,9 @@ def test_openfoam_case_type():
         reader.case_type = 'wrong_value'
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
+@pytest.mark.skipif(pyvista.vtk_version_info != (9, 1), reason="Requires exactly VTK v9.1.0")
 def test_read_hdf():
-    can = examples.download_can(partial=True)
+    can = examples.download_can(partial=False)
     assert can.n_points == 6724
     assert 'VEL' in can.point_data
     assert can.n_cells == 4800
@@ -790,7 +790,7 @@ def test_avsucd_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
+@pytest.mark.skipif(pyvista.vtk_version_info != (9, 1), reason="Requires exactly VTK v9.1.0")
 def test_hdf_reader():
     filename = examples.download_can(partial=True, load=False)
     reader = pyvista.get_reader(filename)

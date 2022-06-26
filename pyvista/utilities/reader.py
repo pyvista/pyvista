@@ -294,6 +294,8 @@ class BaseReader:
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
+        if data is None:  # pragma: no cover
+            raise RuntimeError("Failed to read file.")
         data._post_file_load_processing()
         return data
 

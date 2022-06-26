@@ -4609,37 +4609,45 @@ class DataSetFilters:
 
         """
         alg = _vtk.vtkCellQuality()
-        measure_setters = {
-            'area': alg.SetQualityMeasureToArea,
-            'aspect_beta': alg.SetQualityMeasureToAspectBeta,
-            'aspect_frobenius': alg.SetQualityMeasureToAspectFrobenius,
-            'aspect_gamma': alg.SetQualityMeasureToAspectGamma,
-            'aspect_ratio': alg.SetQualityMeasureToAspectRatio,
-            'collapse_ratio': alg.SetQualityMeasureToCollapseRatio,
-            'condition': alg.SetQualityMeasureToCondition,
-            'diagonal': alg.SetQualityMeasureToDiagonal,
-            'dimension': alg.SetQualityMeasureToDimension,
-            'distortion': alg.SetQualityMeasureToDistortion,
-            'jacobian': alg.SetQualityMeasureToJacobian,
-            'max_angle': alg.SetQualityMeasureToMaxAngle,
-            'max_aspect_frobenius': alg.SetQualityMeasureToMaxAspectFrobenius,
-            'max_edge_ratio': alg.SetQualityMeasureToMaxEdgeRatio,
-            'med_aspect_frobenius': alg.SetQualityMeasureToMedAspectFrobenius,
-            'min_angle': alg.SetQualityMeasureToMinAngle,
-            'oddy': alg.SetQualityMeasureToOddy,
-            'radius_ratio': alg.SetQualityMeasureToRadiusRatio,
-            'relative_size_squared': alg.SetQualityMeasureToRelativeSizeSquared,
-            'scaled_jacobian': alg.SetQualityMeasureToScaledJacobian,
-            'shape': alg.SetQualityMeasureToShape,
-            'shape_and_size': alg.SetQualityMeasureToShapeAndSize,
-            'shear': alg.SetQualityMeasureToShear,
-            'shear_and_size': alg.SetQualityMeasureToShearAndSize,
-            'skew': alg.SetQualityMeasureToSkew,
-            'stretch': alg.SetQualityMeasureToStretch,
-            'taper': alg.SetQualityMeasureToTaper,
-            'volume': alg.SetQualityMeasureToVolume,
-            'warpage': alg.SetQualityMeasureToWarpage,
+        possible_measure_setters = {
+            'area': 'SetQualityMeasureToArea',
+            'aspect_beta': 'SetQualityMeasureToAspectBeta',
+            'aspect_frobenius': 'SetQualityMeasureToAspectFrobenius',
+            'aspect_gamma': 'SetQualityMeasureToAspectGamma',
+            'aspect_ratio': 'SetQualityMeasureToAspectRatio',
+            'collapse_ratio': 'SetQualityMeasureToCollapseRatio',
+            'condition': 'SetQualityMeasureToCondition',
+            'diagonal': 'SetQualityMeasureToDiagonal',
+            'dimension': 'SetQualityMeasureToDimension',
+            'distortion': 'SetQualityMeasureToDistortion',
+            'jacobian': 'SetQualityMeasureToJacobian',
+            'max_angle': 'SetQualityMeasureToMaxAngle',
+            'max_aspect_frobenius': 'SetQualityMeasureToMaxAspectFrobenius',
+            'max_edge_ratio': 'SetQualityMeasureToMaxEdgeRatio',
+            'med_aspect_frobenius': 'SetQualityMeasureToMedAspectFrobenius',
+            'min_angle': 'SetQualityMeasureToMinAngle',
+            'oddy': 'SetQualityMeasureToOddy',
+            'radius_ratio': 'SetQualityMeasureToRadiusRatio',
+            'relative_size_squared': 'SetQualityMeasureToRelativeSizeSquared',
+            'scaled_jacobian': 'SetQualityMeasureToScaledJacobian',
+            'shape': 'SetQualityMeasureToShape',
+            'shape_and_size': 'SetQualityMeasureToShapeAndSize',
+            'shear': 'SetQualityMeasureToShear',
+            'shear_and_size': 'SetQualityMeasureToShearAndSize',
+            'skew': 'SetQualityMeasureToSkew',
+            'stretch': 'SetQualityMeasureToStretch',
+            'taper': 'SetQualityMeasureToTaper',
+            'volume': 'SetQualityMeasureToVolume',
+            'warpage': 'SetQualityMeasureToWarpage',
         }
+
+        # we need to check if these quality measures exist as VTK API changes
+        avail_attrs = dir(alg)
+        measure_setters = {}
+        for name, attr in possible_measure_setters.items():
+            if attr in avail_attrs:
+                measure_setters[name] = getattr(alg, attr)
+
         try:
             # Set user specified quality measure
             measure_setters[quality_measure]()
