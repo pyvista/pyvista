@@ -18,19 +18,19 @@ The source code for the plot may be included in one of two ways:
 
 2. **A path to a source file** as the argument to the directive::
 
-     .. plot:: path/to/plot.py
+     .. pyvista-plot:: path/to/plot.py
 
    When a path to a source file is given, the content of the
    directive may optionally contain a caption for the plot::
 
-     .. plot:: path/to/plot.py
+     .. pyvista-plot:: path/to/plot.py
 
         The plot's caption.
 
    Additionally, one may specify the name of a function to call (with
    no arguments) immediately after importing the module::
 
-     .. plot:: path/to/plot.py plot_function1
+     .. pyvista-plot:: path/to/plot.py plot_function1
 
 .. note::
    Code blocks containing ``doctest:+SKIP`` will be skipped.
