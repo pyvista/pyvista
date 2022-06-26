@@ -881,6 +881,7 @@ class PolyDataFilters(DataSetFilters):
         splitting=True,
         pre_split_mesh=False,
         preserve_topology=False,
+        boundary_vertex_deletion=True,
         inplace=False,
         progress_bar=False,
     ):
@@ -927,6 +928,11 @@ class PolyDataFilters(DataSetFilters):
             hole elimination will not occur. This may limit the
             maximum reduction that may be achieved.
 
+        boundary_vertex_deletion : bool, optional
+            Allow deletion of vertices on the boundary of the mesh.
+            Defaults to ``True``. Turning this off may limit the
+            maximum reduction that may be achieved.
+
         inplace : bool, optional
             Whether to update the mesh in-place.
 
@@ -962,6 +968,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetSplitting(splitting)
         alg.SetSplitAngle(split_angle)
         alg.SetPreSplitMesh(pre_split_mesh)
+        alg.SetBoundaryVertexDeletion(boundary_vertex_deletion)
         _update_alg(alg, progress_bar, 'Decimating Mesh')
 
         mesh = _get_output(alg)
