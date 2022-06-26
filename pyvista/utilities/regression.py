@@ -118,7 +118,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
                 img.render()
             if not hasattr(img, 'ren_win'):
                 raise AttributeError(
-                    'Unable to extract image from Plotter as it has already been closed'
+                    'Unable to extract image from Plotter as it has already been closed.'
                 )
             return image_from_window(img.ren_win, True, ignore_alpha=True)
         else:
