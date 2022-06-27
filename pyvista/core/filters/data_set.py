@@ -4642,11 +4642,11 @@ class DataSetFilters:
         }
 
         # we need to check if these quality measures exist as VTK API changes
-        avail_attrs = dir(alg)
         measure_setters = {}
         for name, attr in possible_measure_setters.items():
-            if attr in avail_attrs:
-                measure_setters[name] = getattr(alg, attr)
+            setter_candidate = getattr(alg, attr, None)
+            if setter_candidate:
+                measure_setters[name] = setter_candidate
 
         try:
             # Set user specified quality measure
