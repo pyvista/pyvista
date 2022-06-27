@@ -399,7 +399,7 @@ class UniformGridFilters(DataSetFilters):
         elif isinstance(threshold, collections.abc.Iterable):
             raise TypeError('Threshold must either be a single scalar or a sequence.')
         else:
-            alg.SetUpperThreshold(threshold)
+            alg.ThresholdByUpper(threshold)
         # set the replacement values / modes
         if in_value is not None:
             alg.ReplaceInOn()
