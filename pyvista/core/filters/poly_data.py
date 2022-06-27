@@ -938,7 +938,7 @@ class PolyDataFilters(DataSetFilters):
             The maximum vertex degree. If the number of triangles
             connected to a vertex exceeds ``max_degree``, then the
             vertex will be split. The complexity of the triangulation
-            algorithm is proportional to degree^2. Setting ``max_degree``
+            algorithm is proportional to ``max_degree**2``. Setting ``max_degree``
             small can improve the performance of the algorithm.
 
         inplace : bool, optional
