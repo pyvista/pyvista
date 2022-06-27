@@ -3941,7 +3941,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
 
 
 def download_tecplot_ascii(load=True):  # pragma: no cover
-    """Download the single block ascii Tecplot dataset.
+    """Download the single block ASCII Tecplot dataset.
 
     Originally downloaded from Paul Bourke
     <http://paulbourke.net/dataformats/tp/sample.tp>
