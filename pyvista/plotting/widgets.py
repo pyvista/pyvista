@@ -1271,9 +1271,15 @@ class WidgetHelper:
 
         def callback(value):
             if invert:
-                alg.SetLowerThreshold(value)
+                if pyvista.vtk_version_info >= (9, 1):
+                    alg.SetLowerThreshold(value)
+                else:
+                    alg.ThresholdByLower(value)
             else:
-                alg.SetUpperThreshold(value)
+                if pyvista.vtk_version_info >= (9, 1):
+                    alg.SetUpperThreshold(value)
+                else:
+                    alg.ThresholdByUpper(value)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 
