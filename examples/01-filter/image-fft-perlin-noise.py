@@ -27,7 +27,7 @@ import pyvista as pv
 # :ref:`perlin_noise_2d_example` example.
 #
 # Note that we are generating it in a flat plane and using a frequency of 10 in
-# the x direction and 5 in the y direction. Units of the frequency is
+# the x direction and 5 in the y direction. Units of the frequency are
 # ``1/pixel``.
 #
 # Also note that the dimensions of the image are powers of 2. This is because
@@ -126,7 +126,7 @@ warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise
 ###############################################################################
 # Sum Low and High Pass
 # ~~~~~~~~~~~~~~~~~~~~~
-# Show that the sum of the low and high passes equal the original noise.
+# Show that the sum of the low and high passes equals the original noise.
 
 grid = pv.UniformGrid(dims=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
@@ -202,5 +202,5 @@ plotter.close()
 # In contrast, the right mesh is always warped to the same visible height,
 # irrespective of the cutoff frequency. This highlights how the typical
 # wavelength (size of the features) of the Perlin noise decreases as the
-# frequency cutoff is increased, since wavelength and frequency are inversely
+# frequency cutoff is increased since wavelength and frequency are inversely
 # proportional.

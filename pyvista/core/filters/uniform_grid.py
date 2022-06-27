@@ -421,7 +421,7 @@ class UniformGridFilters(DataSetFilters):
 
         The input can be real or complex data, but the output is always
         :attr:`numpy.complex128`. The filter is fastest for images that have
-        power of two sizes.
+        the power of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
         dimension. This makes images with prime number dimensions (i.e. 17x17)
@@ -430,7 +430,7 @@ class UniformGridFilters(DataSetFilters):
 
         The frequencies of the output assume standard order: along each axis
         first positive frequencies are assumed from 0 to the maximum, then
-        negative frequencies are listed from largest absolute value to
+        negative frequencies are listed from the largest absolute value to
         smallest. This implies that the corners of the grid correspond to low
         frequencies, while the center of the grid corresponds to high
         frequencies.
@@ -438,7 +438,7 @@ class UniformGridFilters(DataSetFilters):
         Parameters
         ----------
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is the same as the
+            The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
         progress_bar : bool, optional
@@ -499,7 +499,7 @@ class UniformGridFilters(DataSetFilters):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
-        :attr:`numpy.complex128`. The filter is fastest for images that have power
+        :attr:`numpy.complex128`. The filter is fastest for images that have the power
         of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
@@ -509,7 +509,7 @@ class UniformGridFilters(DataSetFilters):
 
         The frequencies of the input assume standard order: along each axis
         first positive frequencies are assumed from 0 to the maximum, then
-        negative frequencies are listed from largest absolute value to
+        negative frequencies are listed from the largest absolute value to
         smallest. This implies that the corners of the grid correspond to low
         frequencies, while the center of the grid corresponds to high
         frequencies.
@@ -517,7 +517,7 @@ class UniformGridFilters(DataSetFilters):
         Parameters
         ----------
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is the same as the
+            The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
         progress_bar : bool, optional
@@ -576,9 +576,9 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
-        This filter requires that the :class:`UniformGrid` have complex point
+        This filter requires that the :class:`UniformGrid` have a complex point
         scalars, usually generated after the :class:`UniformGrid` has been
-        converted to frequency domain by a :func:`UniformGridFilters.fft`
+        converted to the frequency domain by a :func:`UniformGridFilters.fft`
         filter.
 
         A :func:`UniformGridFilters.rfft` filter can be used to convert the
@@ -588,7 +588,7 @@ class UniformGridFilters(DataSetFilters):
 
         The frequencies of the input assume standard order: along each axis
         first positive frequencies are assumed from 0 to the maximum, then
-        negative frequencies are listed from largest absolute value to
+        negative frequencies are listed from the largest absolute value to
         smallest. This implies that the corners of the grid correspond to low
         frequencies, while the center of the grid corresponds to high
         frequencies.
@@ -609,7 +609,7 @@ class UniformGridFilters(DataSetFilters):
             ``1 + (cutoff/freq(i, j))**(2*order)``.
 
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is the same as the
+            The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
         progress_bar : bool, optional
@@ -654,9 +654,9 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
-        This filter requires that the :class:`UniformGrid` have complex point
+        This filter requires that the :class:`UniformGrid` have a complex point
         scalars, usually generated after the :class:`UniformGrid` has been
-        converted to frequency domain by a :func:`UniformGridFilters.fft`
+        converted to the frequency domain by a :func:`UniformGridFilters.fft`
         filter.
 
         A :func:`UniformGridFilters.rfft` filter can be used to convert the
@@ -666,7 +666,7 @@ class UniformGridFilters(DataSetFilters):
 
         The frequencies of the input assume standard order: along each axis
         first positive frequencies are assumed from 0 to the maximum, then
-        negative frequencies are listed from largest absolute value to
+        negative frequencies are listed from the largest absolute value to
         smallest. This implies that the corners of the grid correspond to low
         frequencies, while the center of the grid corresponds to high
         frequencies.
@@ -687,7 +687,7 @@ class UniformGridFilters(DataSetFilters):
             ``1/(1 + (cutoff/freq(i, j))**(2*order))``.
 
         output_scalars_name : str, optional
-            The name of the output scalars. By default this is the same as the
+            The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
         progress_bar : bool, optional
@@ -737,7 +737,7 @@ class UniformGridFilters(DataSetFilters):
         This is necessary for rfft, low_pass, and high_pass filters.
 
         """
-        # check for complex active point scalars, otherwise risk of segfault
+        # check for complex active point scalars, otherwise the risk of segfault
         if self.point_data.active_scalars_name is None:
             possible_scalars = self.point_data.keys()
             if len(possible_scalars) == 1:

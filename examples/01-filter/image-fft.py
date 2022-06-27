@@ -71,7 +71,7 @@ fft_image.plot(
 # Remove the noise from the ``fft_image``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
-# First, let's reshape by the size of the image.
+# First, let's reshape the size of the image.
 #
 # Next, perform a low pass filter by removing the middle 80% of the content of
 # the image. Note that the high frequency content is in the middle of the array.
