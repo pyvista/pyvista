@@ -536,7 +536,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        origin : tuple(float)
+        origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
         **kwargs : dict, optional
@@ -669,7 +669,7 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
-        origin : tuple(float)
+        origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
         **kwargs : dict, optional
