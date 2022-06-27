@@ -1145,19 +1145,16 @@ class STLReader(BaseReader):
 
 
 class TecplotReader(BaseReader):
-    """STL Reader for .stl files.
+    """Tecplot Reader for ascii .dat files.
 
     Examples
     --------
-    Need example
     # >>> import pyvista
     # >>> from pyvista import examples
-    # >>> filename = examples.download_cad_model(load=False)
-    # >>> filename.split("/")[-1]  # omit the path
-    # '42400-IDGH.stl'
+    # >>> filename = examples.download_tecplot_ascii(load=False)
     # >>> reader = pyvista.get_reader(filename)
     # >>> mesh = reader.read()
-    # >>> mesh.plot()
+    # >>> mesh[0].plot()
 
     """
 
