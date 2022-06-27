@@ -96,7 +96,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         Returns
@@ -208,7 +208,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
@@ -355,7 +355,7 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         Returns
@@ -549,7 +549,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
@@ -681,7 +681,7 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
@@ -771,7 +771,7 @@ class WidgetHelper:
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
@@ -849,7 +849,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         Returns
@@ -1531,7 +1531,7 @@ class WidgetHelper:
             last point are the same, this will be a closed loop
             spline.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         Returns
@@ -1662,7 +1662,7 @@ class WidgetHelper:
         closed : bool, optional
             Make the spline a closed loop.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
@@ -1789,7 +1789,7 @@ class WidgetHelper:
             If ``True``, run the callback function after the widget is
             created.
 
-        interaction_event : vtk.vtkCommand
+        interaction_event : vtk.vtkCommand, optional
             The VTK interaction event to use for triggering the callback.
 
         Returns
