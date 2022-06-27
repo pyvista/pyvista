@@ -1196,6 +1196,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if isinstance(xyz, (float, int, np.number)):
             xyz = [xyz] * 3
@@ -1247,6 +1248,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_x(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -1297,6 +1299,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_y(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -1347,6 +1350,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_z(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xz")
+
         """
         if point is None:
             point = self.center
@@ -1402,6 +1406,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
