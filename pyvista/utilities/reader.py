@@ -1149,7 +1149,7 @@ class TecplotReader(BaseReader):
 
     Examples
     --------
-    Need example 
+    Need example
     # >>> import pyvista
     # >>> from pyvista import examples
     # >>> filename = examples.download_cad_model(load=False)
@@ -2066,7 +2066,7 @@ CLASS_READERS = {
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
-    '.dat': TecplotReader,    
+    '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,

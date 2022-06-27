@@ -3939,6 +3939,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
         return filename
     return pyvista.get_reader(filename).read()
 
+
 def download_tecplot_ascii(load=True):  # pragma: no cover
     """Download the single block ascii Tecplot dataset.
 
@@ -3953,7 +3954,7 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.MultiBlock 
+    pyvista.MultiBlock
         Multiblock format with only 1 data block, simple geometric shape.
         If ``load`` is ``False``, then the path of the example Tecplot file
         is returned.
@@ -3972,7 +3973,6 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
-
 
 
 def download_cgns_multi(load=True):  # pragma: no cover

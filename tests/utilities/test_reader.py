@@ -300,7 +300,7 @@ def test_tecplotreader():
     assert reader.path == filename
 
     mesh = reader.read()
-    assert all([mesh.n_points, mesh.n_cells])
+    assert all([mesh[0].n_points, mesh[0].n_cells])
 
 
 def test_vtkreader():
