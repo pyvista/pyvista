@@ -4091,7 +4091,7 @@ def download_cells_nd(load=True):  # pragma: no cover
 
 
 def download_moonlanding_image(load=True):  # pragma: no cover
-    """Download the moon landing image.
+    """Download the Moon landing image.
 
     This is a noisy image originally obtained from `Scipy Lecture Notes
     <https://scipy-lectures.org/index.html>`_ and can be used to demonstrate a
