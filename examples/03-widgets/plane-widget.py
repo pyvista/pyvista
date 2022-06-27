@@ -104,7 +104,7 @@ p.show()
 # we can have continuous slicing by using the ``InteractionEvent`` observer.
 import vtk
 
-p = pv.Plotter(notebook=0)
+p = pv.Plotter()
 p.add_mesh_slice(vol, assign_to_axis='z', interaction_event=vtk.vtkCommand.InteractionEvent)
 p.show()
 
