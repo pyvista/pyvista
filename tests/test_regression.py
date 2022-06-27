@@ -29,7 +29,7 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
 
     # test that this fails when the plotter is closed
     pl1.close()
-    with pytest.raises(AttributeError, match='already been closed'):
+    with pytest.raises(RuntimeError, match='already been closed'):
         pv.compare_images(pl1, pl2)
 
 
