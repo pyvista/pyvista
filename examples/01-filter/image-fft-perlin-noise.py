@@ -150,11 +150,23 @@ pl.show()
 # Animate the variation of the cutoff frequency.
 
 
-def warp_low_pass_noise(cfreq):
+def warp_low_pass_noise(cfreq, scalar_ptp=abs(sampled['scalars']).ptp()):
     """Process the sampled FFT and warp by scalars."""
     output = sampled_fft.low_pass(cfreq, cfreq, cfreq).rfft()
+
+    # on the left: raw FFT magnitude
     output['scalars'] = output.active_scalars.real
-    return output.warp_by_scalar()
+    warped_raw = output.warp_by_scalar()
+
+    # on the right: scale to fixed warped height
+    output_scaled = output.translate((-11, 11, 0), inplace=False)
+    output_scaled['scalars_warp'] = output['scalars'] / abs(output['scalars']).ptp() * scalar_ptp
+    warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
+    warped_scaled.active_scalars_name = 'scalars'
+    # push center back to xy plane due to peaks near 0 frequency
+    warped_scaled.translate((0, 0, -warped_scaled.center[-1]), inplace=True)
+
+    return warped_raw + warped_scaled
 
 
 # Initialize the plotter and plot off-screen to save the animation as a GIF.
@@ -164,6 +176,7 @@ plotter.open_gif("low_pass.gif", fps=8)
 # add the initial mesh
 init_mesh = warp_low_pass_noise(1e-2)
 plotter.add_mesh(init_mesh, show_scalar_bar=False, lighting=False, n_colors=128)
+plotter.camera.zoom(1.3)
 
 for freq in np.geomspace(1e-2, 10, 25):
     plotter.clear()
@@ -177,3 +190,17 @@ for _ in range(10):
     plotter.write_frame()
 
 plotter.close()
+
+
+###############################################################################
+# The left mesh in the above animation warps based on the raw values of the FFT
+# amplitude. This emphasizes how taking into account more and more frequencies
+# as the animation progresses, we recover a gradually larger proportion of the
+# full noise sample. This is why the mesh starts "flat" and grows larger as the
+# frequency cutoff is increased.
+#
+# In contrast, the right mesh is always warped to the same visible height,
+# irrespective of the cutoff frequency. This highlights how the typical
+# wavelength (size of the features) of the Perlin noise decreases as the
+# frequency cutoff is increased, since wavelength and frequency are inversely
+# proportional.
