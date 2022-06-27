@@ -807,7 +807,7 @@ class PolyDataFilters(DataSetFilters):
 
         normalize_coordinates : bool, optional
             Flag to control coordinate normalization. To improve the
-            numerical stability of the solution and minimize the scaling the
+            numerical stability of the solution and minimize the scaling of the
             translation effects, the algorithm can translate and scale the
             position coordinates to within the unit cube ``[-1, 1]``, perform the
             smoothing, and translate and scale the position coordinates back to
