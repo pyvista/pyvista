@@ -550,7 +550,7 @@ class UniformGridFilters(DataSetFilters):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-        PNGImage                float64  (298620, 2)          SCALARS
+            PNGImage                complex128 (298620,)            SCALARS
 
         See :ref:`image_fft_example` for a full example using this filter.
 
