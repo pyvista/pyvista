@@ -1041,9 +1041,9 @@ class DataSetFilters:
         else:
             # just a single value
             if invert:
-                alg.ThresholdByLower(value)
+                alg.SetLowerThreshold(value)
             else:
-                alg.ThresholdByUpper(value)
+                alg.SetUpperThreshold(value)
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]

@@ -1271,9 +1271,9 @@ class WidgetHelper:
 
         def callback(value):
             if invert:
-                alg.ThresholdByLower(value)
+                alg.SetLowerThreshold(value)
             else:
-                alg.ThresholdByUpper(value)
+                alg.SetUpperThreshold(value)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 
