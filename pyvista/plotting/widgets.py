@@ -165,6 +165,7 @@ class WidgetHelper:
         outline_translation=True,
         merge_points=True,
         crinkle=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -206,6 +207,9 @@ class WidgetHelper:
 
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
+
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -262,6 +266,7 @@ class WidgetHelper:
             use_planes=True,
             color=widget_color,
             outline_translation=outline_translation,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(box_clipped_mesh, reset_camera=False, **kwargs)
@@ -484,6 +489,7 @@ class WidgetHelper:
         implicit=True,
         normal_rotation=True,
         crinkle=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -542,6 +548,9 @@ class WidgetHelper:
 
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
+
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -602,6 +611,7 @@ class WidgetHelper:
             implicit=implicit,
             origin=mesh.center,
             normal_rotation=normal_rotation,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(plane_clipped_mesh, **kwargs)
@@ -618,6 +628,7 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -670,6 +681,9 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -716,12 +730,19 @@ class WidgetHelper:
             implicit=implicit,
             origin=mesh.center,
             normal_rotation=normal_rotation,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(plane_sliced_mesh, **kwargs)
 
     def add_mesh_slice_orthogonal(
-        self, mesh, generate_triangles=False, widget_color=None, tubing=False, **kwargs
+        self,
+        mesh,
+        generate_triangles=False,
+        widget_color=None,
+        tubing=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        **kwargs,
     ):
         """Slice a mesh with three interactive planes.
 
@@ -750,6 +771,9 @@ class WidgetHelper:
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -771,6 +795,7 @@ class WidgetHelper:
                 generate_triangles=generate_triangles,
                 widget_color=widget_color,
                 tubing=tubing,
+                interaction_event=interaction_event,
                 **kwargs,
             )
             actors.append(a)
@@ -1582,6 +1607,7 @@ class WidgetHelper:
         ribbon_opacity=0.5,
         initial_points=None,
         closed=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Slice a mesh with a spline widget.
@@ -1636,6 +1662,9 @@ class WidgetHelper:
         closed : bool, optional
             Make the spline a closed loop.
 
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -1683,6 +1712,7 @@ class WidgetHelper:
             ribbon_opacity=ribbon_opacity,
             initial_points=initial_points,
             closed=closed,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(spline_sliced_mesh, **kwargs)
