@@ -934,7 +934,7 @@ class PolyDataFilters(DataSetFilters):
             Defaults to ``True``. Turning this off may limit the
             maximum reduction that may be achieved.
 
-        max_degree : int, optional
+        max_degree : float, optional
             The maximum vertex degree. If the number of triangles
             connected to a vertex exceeds ``max_degree``, then the
             vertex will be split. The complexity of the triangulation
