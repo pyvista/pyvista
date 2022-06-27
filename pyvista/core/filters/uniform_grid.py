@@ -421,7 +421,7 @@ class UniformGridFilters(DataSetFilters):
 
         The input can be real or complex data, but the output is always
         :attr:`numpy.complex128`. The filter is fastest for images that have
-        the power of two sizes.
+        power of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
         dimension. This makes images with prime number dimensions (i.e. 17x17)
@@ -499,7 +499,7 @@ class UniformGridFilters(DataSetFilters):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
-        :attr:`numpy.complex128`. The filter is fastest for images that have the power
+        :attr:`numpy.complex128`. The filter is fastest for images that have power
         of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the

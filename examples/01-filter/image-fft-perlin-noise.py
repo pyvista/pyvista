@@ -27,7 +27,7 @@ import pyvista as pv
 # :ref:`perlin_noise_2d_example` example.
 #
 # Note that we are generating it in a flat plane and using a frequency of 10 in
-# the x direction and 5 in the y direction. Units of the frequency are
+# the x direction and 5 in the y direction. The unit of frequency is
 # ``1/pixel``.
 #
 # Also note that the dimensions of the image are powers of 2. This is because
