@@ -50,6 +50,7 @@ class WidgetHelper:
         use_planes=False,
         outline_translation=True,
         pass_widget=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a box widget to the scene.
 
@@ -94,6 +95,9 @@ class WidgetHelper:
         pass_widget : bool, optional
             If ``True``, the widget will be passed as the last
             argument of the callback.
+
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
 
         Returns
         -------
@@ -142,7 +146,7 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        box_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
@@ -278,6 +282,7 @@ class WidgetHelper:
         pass_widget=False,
         test_callback=True,
         normal_rotation=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a plane widget to the scene.
 
@@ -345,6 +350,9 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
@@ -390,7 +398,7 @@ class WidgetHelper:
 
             plane_widget.SetDrawPlane(False)
             plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
-            plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+            plane_widget.AddObserver(interaction_event, _stop_interact)
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
@@ -451,7 +459,7 @@ class WidgetHelper:
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
         plane_widget.On()
-        plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        plane_widget.AddObserver(interaction_event, _the_callback)
         if test_callback:
             _the_callback(plane_widget, None)  # Trigger immediate update
 
@@ -778,6 +786,7 @@ class WidgetHelper:
         color=None,
         use_vertices=False,
         pass_widget=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a line widget to the scene.
 
@@ -815,6 +824,9 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkLineWidget
@@ -848,7 +860,7 @@ class WidgetHelper:
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
-        line_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        line_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(line_widget, None)
 
         self.line_widgets.append(line_widget)
@@ -1439,6 +1451,7 @@ class WidgetHelper:
         pass_widget=False,
         closed=False,
         initial_points=None,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Create and add a spline widget to the scene.
 
@@ -1493,6 +1506,9 @@ class WidgetHelper:
             last point are the same, this will be a closed loop
             spline.
 
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkSplineWidget
@@ -1541,7 +1557,7 @@ class WidgetHelper:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
-        spline_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        spline_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(spline_widget, None)
 
         if show_ribbon:
@@ -1684,6 +1700,7 @@ class WidgetHelper:
         indices=None,
         pass_widget=False,
         test_callback=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add one or many sphere widgets to a scene.
 
@@ -1741,6 +1758,9 @@ class WidgetHelper:
         test_callback : bool, optional
             If ``True``, run the callback function after the widget is
             created.
+
+        interaction_event : vtk.vtkCommand
+            The VTK interaction event to use for triggering the callback.
 
         Returns
         -------
@@ -1802,7 +1822,7 @@ class WidgetHelper:
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
             sphere_widget.On()
-            sphere_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            sphere_widget.AddObserver(interaction_event, _the_callback)
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
