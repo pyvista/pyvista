@@ -476,11 +476,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_t_coords_name.setter
     def active_t_coords_name(self, name: str) -> None:
+        if name is None:
+            self.SetActiveTCoords(None)
+            return
+
         self._raise_no_t_coords()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
         if np.issubdtype(dtype, np.number) or dtype == bool:
-            self.SetActiveScalars(name)
+            self.SetActiveTCoords(name)
 
     def get_array(self, key: Union[str, int]) -> pyvista_ndarray:
         """Get an array in this object.
@@ -772,6 +776,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 # VTK doesn't support strides, therefore we can't directly
                 # point to the underlying object
                 if data.flags.c_contiguous:
+                    # no reason to return a shallow copy if the array and name
+                    # are identical, just return the underlying array name
+                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
+                        return data.VTKObject
+
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
                     if isinstance(name, str):
                         vtk_arr.SetName(name)
@@ -1150,6 +1159,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_scalars_name.setter
     def active_scalars_name(self, name: str) -> None:
+        # permit setting no active scalars
+        if name is None:
+            self.SetActiveScalars(None)
+            return
         self._raise_field_data_no_scalars_vectors()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
@@ -1177,6 +1190,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_vectors_name.setter
     def active_vectors_name(self, name: str) -> None:
+        # permit setting no active
+        if name is None:
+            self.SetActiveVectors(None)
+            return
         self._raise_field_data_no_scalars_vectors()
         if name not in self:
             raise KeyError(f'DataSetAttribute does not contain "{name}"')
@@ -1313,6 +1330,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_normals_name.setter
     def active_normals_name(self, name: str) -> None:
+        # permit setting no active
+        if name is None:
+            self.SetActiveNormals(None)
+            return
         self._raise_no_normals()
         self.SetActiveNormals(name)
 

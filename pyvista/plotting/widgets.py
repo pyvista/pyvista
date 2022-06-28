@@ -307,7 +307,7 @@ class WidgetHelper:
             The starting normal vector of the plane.
 
         origin : tuple(float)
-            The starting coordinate of the center of the place.
+            The starting coordinate of the center of the plane.
 
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
@@ -490,6 +490,7 @@ class WidgetHelper:
         normal_rotation=True,
         crinkle=False,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        origin=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -552,6 +553,9 @@ class WidgetHelper:
         interaction_event : vtk.vtkCommand.EventIds, optional
             The VTK interaction event to use for triggering the callback.
 
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -569,6 +573,8 @@ class WidgetHelper:
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
@@ -589,8 +595,8 @@ class WidgetHelper:
         plane_clipped_mesh = _get_output(alg)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, origin):
-            function = generate_plane(normal, origin)
+        def callback(normal, loc):
+            function = generate_plane(normal, loc)
             alg.SetClipFunction(function)  # the implicit function
             alg.Update()  # Perform the Cut
             clipped = pyvista.wrap(alg.GetOutput())
@@ -609,7 +615,7 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
         )
@@ -629,6 +635,7 @@ class WidgetHelper:
         implicit=True,
         normal_rotation=True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        origin=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -684,6 +691,9 @@ class WidgetHelper:
         interaction_event : vtk.vtkCommand.EventIds, optional
             The VTK interaction event to use for triggering the callback.
 
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -699,6 +709,8 @@ class WidgetHelper:
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
@@ -728,7 +740,7 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
         )
