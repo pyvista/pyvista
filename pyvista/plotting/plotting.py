@@ -1810,6 +1810,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=0.5,
         render=True,
         component=None,
+        emissive=False,
+        gaussian_radius=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -1834,9 +1836,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         style : str, optional
             Visualization style of the mesh.  One of the following:
-            ``style='surface'``, ``style='wireframe'``, ``style='points'``.
-            Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
-            wireframe of the outer geometry.
+            ``style='surface'``, ``style='wireframe'``, ``style='points'``,
+            ``style='points_gaussian'``. Defaults to ``'surface'``. Note that
+            ``'wireframe'`` only shows a wireframe of the outer geometry.
+            ``'points_gaussian'`` can be improved with the ``emissive``,
+            ``gaussian_radius``, and ``render_points_as_spheres`` options.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name
@@ -2078,6 +2082,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
+        gaussian_radius : float, optional
+            The radius of the gaussian blur for each point when using a ``style='points_gaussian'`` representation. A scale factor of
+            ``0.0`` indicates that the splats should be rendered as simple
+            points.
+
+        emissive : bool, optional
+            Treat the points/splats as emissive light sources. The default is
+            False. Only valid for ``style='points_gaussian'`` representation.
+
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
@@ -2136,8 +2149,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...            show_edges=True)
 
         """
-        self.mapper = make_mapper(_vtk.vtkDataSetMapper)
-
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
@@ -2181,7 +2192,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling = kwargs.pop("backface_culling", culling)
 
         if render_points_as_spheres is None:
-            render_points_as_spheres = self._theme.render_points_as_spheres
+            if style == 'points_gaussian':
+                render_points_as_spheres = True
+            else:
+                render_points_as_spheres = self._theme.render_points_as_spheres
 
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
@@ -2291,6 +2305,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return actors
 
         ##### Plot a single PyVista mesh #####
+
+        self.mapper = make_mapper(
+            _vtk.vtkPointGaussianMapper if style == 'points_gaussian' else _vtk.vtkDataSetMapper
+        )
 
         if silhouette:
             if isinstance(silhouette, dict):
@@ -2434,7 +2452,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             prop.SetRepresentationToWireframe()
             if color is None:
                 color = self._theme.outline_color
-        elif style == 'points':
+        elif style == 'points' or style == 'points_gaussian':
             prop.SetRepresentationToPoints()
         elif style == 'surface':
             prop.SetRepresentationToSurface()
@@ -2445,6 +2463,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 '\t"wireframe"\n'
                 '\t"points"\n'
             )
+
+        if style == 'points_gaussian':
+            self.mapper.SetEmissive(emissive)
+            if gaussian_radius is None:
+                gaussian_radius = 0.7 / mesh.length
+            self.mapper.SetScaleFactor(gaussian_radius)
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
@@ -2473,7 +2497,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
 
         if render_points_as_spheres:
-            prop.SetRenderPointsAsSpheres(render_points_as_spheres)
+            if style == 'points_gaussian':
+                self.mapper.SetSplatShaderCode(
+                    "//VTK::Color::Impl\n"
+                    "float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n"
+                    "if (dist > 1.0) {\n"
+                    "  discard;\n"
+                    "} else {\n"
+                    "  float scale = (1.0 - dist);\n"
+                    "  ambientColor *= scale;\n"
+                    "  diffuseColor *= scale;\n"
+                    "}\n"
+                )
+            else:
+                prop.SetRenderPointsAsSpheres(render_points_as_spheres)
         if render_lines_as_tubes:
             prop.SetRenderLinesAsTubes(render_lines_as_tubes)
 
