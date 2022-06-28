@@ -1102,6 +1102,13 @@ def test_cell_points(grid):
     assert points.shape[1] == 3
 
 
+def test_cell_point_ids(grid):
+    point_ids = grid.cell_point_ids(0)
+    assert isinstance(point_ids, list)
+    assert len(point_ids) == grid.cell_n_points(0)
+    assert all([isinstance(id, int) for id in point_ids])
+
+
 def test_cell_bounds(grid):
     bounds = grid.cell_bounds(0)
     assert isinstance(bounds, tuple)

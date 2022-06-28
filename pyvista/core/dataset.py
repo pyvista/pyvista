@@ -2552,3 +2552,33 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.GetCellType(ind)
+
+    def cell_point_ids(self, ind: int) -> List[int]:
+        """Return the point ids in a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        list[int]
+            Point Ids that are associated with the cell.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell_type(0)
+        5
+
+        Cell type of 5 is a triangular cell with three points.
+
+        >>> mesh.cell_point_ids(0)
+        [0, 1, 2]
+
+        """
+        cell = self.GetCell(ind)
+        point_ids = cell.GetPointIds()
+        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
