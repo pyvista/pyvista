@@ -807,7 +807,7 @@ class PolyDataFilters(DataSetFilters):
 
         normalize_coordinates : bool, optional
             Flag to control coordinate normalization. To improve the
-            numerical stability of the solution and minimize the scaling the
+            numerical stability of the solution and minimize the scaling of the
             translation effects, the algorithm can translate and scale the
             position coordinates to within the unit cube ``[-1, 1]``, perform the
             smoothing, and translate and scale the position coordinates back to
@@ -881,6 +881,8 @@ class PolyDataFilters(DataSetFilters):
         splitting=True,
         pre_split_mesh=False,
         preserve_topology=False,
+        boundary_vertex_deletion=True,
+        max_degree=None,
         inplace=False,
         progress_bar=False,
     ):
@@ -927,6 +929,18 @@ class PolyDataFilters(DataSetFilters):
             hole elimination will not occur. This may limit the
             maximum reduction that may be achieved.
 
+        boundary_vertex_deletion : bool, optional
+            Allow deletion of vertices on the boundary of the mesh.
+            Defaults to ``True``. Turning this off may limit the
+            maximum reduction that may be achieved.
+
+        max_degree : float, optional
+            The maximum vertex degree. If the number of triangles
+            connected to a vertex exceeds ``max_degree``, then the
+            vertex will be split. The complexity of the triangulation
+            algorithm is proportional to ``max_degree**2``. Setting ``max_degree``
+            small can improve the performance of the algorithm.
+
         inplace : bool, optional
             Whether to update the mesh in-place.
 
@@ -962,6 +976,11 @@ class PolyDataFilters(DataSetFilters):
         alg.SetSplitting(splitting)
         alg.SetSplitAngle(split_angle)
         alg.SetPreSplitMesh(pre_split_mesh)
+        alg.SetBoundaryVertexDeletion(boundary_vertex_deletion)
+
+        if max_degree is not None:
+            alg.SetDegree(max_degree)
+
         _update_alg(alg, progress_bar, 'Decimating Mesh')
 
         mesh = _get_output(alg)
