@@ -29,6 +29,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
+    | ``.dat``       | :class:`pyvista.TecplotReader`              |
+    +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
     | ``.dem``       | :class:`pyvista.DEMReader`                  |
@@ -809,6 +811,38 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             self.reader.DecomposePolyhedraOff()
 
     @property
+    def skip_zero_time(self):
+        """Indicate whether or not to ignore the '/0' time directory.
+
+        Returns
+        -------
+        bool
+            If ``True``, ignore the '/0' time directory.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.skip_zero_time = False
+        >>> reader.skip_zero_time
+        False
+
+        """
+        return bool(self.reader.GetSkipZeroTime())
+
+    @skip_zero_time.setter
+    def skip_zero_time(self, value):
+        if value:
+            self.reader.SkipZeroTimeOn()
+        else:
+            self.reader.SkipZeroTimeOff()
+
+        self._update_information()
+        self.reader.SetRefresh()
+
+    @property
     def cell_to_point_creation(self):
         """Whether cell data is translated to point data when read.
 
@@ -1108,6 +1142,23 @@ class STLReader(BaseReader):
     """
 
     _class_reader = _vtk.vtkSTLReader
+
+
+class TecplotReader(BaseReader):
+    """Tecplot Reader for ascii .dat files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_tecplot_ascii(load=False)
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh[0].plot()
+
+    """
+
+    _class_reader = _vtk.vtkTecplotReader
 
 
 class VTKDataSetReader(BaseReader):
@@ -2012,6 +2063,7 @@ CLASS_READERS = {
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,
