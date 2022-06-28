@@ -22,6 +22,11 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
     with pytest.raises(TypeError):
         pv.compare_images(im1, pl1.ren_win)
 
+    # test that this fails when the plotter is closed
+    pl1.close()
+    with pytest.raises(RuntimeError, match='already been closed'):
+        pv.compare_images(pl1, pl2)
+
 
 def test_compare_images_two_plotter_different(sphere, airplane, tmpdir):
     tmppath = tmpdir.mkdir("tmpdir")
