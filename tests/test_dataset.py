@@ -1107,6 +1107,7 @@ def test_cell_point_ids(grid):
     assert isinstance(point_ids, list)
     assert len(point_ids) == grid.cell_n_points(0)
     assert all([isinstance(id, int) for id in point_ids])
+    assert all([0 <= id < grid.n_points for id in point_ids])
 
 
 def test_cell_bounds(grid):
