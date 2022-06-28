@@ -369,9 +369,19 @@ def _str_examples(self):
     elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
         out = []
         out += self._str_header('Examples')
+        # inject hack to reset theme before every example block
+        out += ['.. pyvista-plot::', '   :include-source: False', '']
+        out += self._str_indent(
+            ['>>> import pyvista; pyvista.set_plot_theme("document"); del pyvista', '']
+        )
         out += ['.. pyvista-plot::', '']
         out += self._str_indent(self['Examples'])
         out += ['']
+        # inject same hack after every example block
+        out += ['.. pyvista-plot::', '   :include-source: False', '']
+        out += self._str_indent(
+            ['>>> import pyvista; pyvista.set_plot_theme("document"); del pyvista', '']
+        )
         return out
     else:
         return self._str_section('Examples')
