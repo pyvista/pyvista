@@ -2573,7 +2573,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.cell_type(0)
         5
 
-        Cell type of 5 is a triangular cell with three points.
+        Cell type 5 is a triangular cell with three points.
 
         >>> mesh.cell_point_ids(0)
         [0, 1, 2]
