@@ -474,7 +474,7 @@ created the following will occur:
 
     .. code:: bash
 
-       git tag v`python -c "import pyvista as pv; print(pv.__version__)"`
+       git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
        git push origin --tags
 
 8.  Create a list of all changes for the release. It is often helpful to
