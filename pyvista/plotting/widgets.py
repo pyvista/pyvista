@@ -297,7 +297,7 @@ class WidgetHelper:
             The starting normal vector of the plane.
 
         origin : tuple(float)
-            The starting coordinate of the center of the place.
+            The starting coordinate of the center of the plane.
 
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
@@ -476,6 +476,7 @@ class WidgetHelper:
         implicit=True,
         normal_rotation=True,
         crinkle=False,
+        origin=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -535,6 +536,9 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -552,6 +556,8 @@ class WidgetHelper:
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
@@ -572,8 +578,8 @@ class WidgetHelper:
         plane_clipped_mesh = _get_output(alg)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, origin):
-            function = generate_plane(normal, origin)
+        def callback(normal, loc):
+            function = generate_plane(normal, loc)
             alg.SetClipFunction(function)  # the implicit function
             alg.Update()  # Perform the Cut
             clipped = pyvista.wrap(alg.GetOutput())
@@ -592,7 +598,7 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
         )
 
@@ -610,6 +616,7 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
+        origin=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -662,6 +669,9 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -677,6 +687,8 @@ class WidgetHelper:
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
@@ -706,7 +718,7 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
         )
 
