@@ -202,3 +202,22 @@ def test_no_added_with_scalar_bar(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
     assert sphere.n_arrays == 1
+
+
+def test_plotter_remains_shallow():
+    sphere = pyvista.Sphere()
+    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere2 = sphere.copy(deep=False)
+
+    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere, scalars=None)
+
+    sphere['numbers'] *= -1
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
