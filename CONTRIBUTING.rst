@@ -473,7 +473,6 @@ created the following will occur:
     Tag the release with:
 
     .. code:: bash
-       cd path/to/pyvista/repository
        git tag v`python -c "import pyvista as pv; print(pv.__version__)"`
        git push origin --tags
 
