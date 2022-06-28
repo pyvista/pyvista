@@ -23,6 +23,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.core.errors import VTKVersionError
 
 CACHE_VERSION = 2
 
@@ -3886,10 +3887,16 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> import pyvista
-    >>> dataset = examples.download_can()
-    >>> dataset.plot(scalars='VEL', smooth_shading=True)
+    >>> dataset = examples.download_can()  # doctest:+SKIP
+    >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
 
     """
+    if pyvista.vtk_version_info > (9, 1):
+        raise VTKVersionError(
+            'This example file is deprecated for VTK v9.2.0 and newer. '
+            'Use `download_can_crushed_hdf` instead.'
+        )
+
     can_0 = _download_and_read('hdf/can_0.hdf', load=load)
     if partial:
         return can_0
@@ -3903,6 +3910,40 @@ def download_can(partial=False, load=True):  # pragma: no cover
     if load:
         return pyvista.merge(cans)
     return cans
+
+
+def download_can_crushed_hdf(load=True):  # pragma: no cover
+    """Download the crushed can dataset.
+
+    File obtained from `Kitware <https://www.kitware.com/>`_. Used
+    for testing hdf files.
+
+    Originally built using VTK v9.2.0rc from:
+
+    ``VTK/build/ExternalData/Testing/Data/can-vtu.hdf``
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        Crushed can dataset or path depending on the value of ``load``.
+
+    Examples
+    --------
+    Plot the crushed can dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_can_crushed_hdf()
+    >>> dataset.plot(smooth_shading=True)
+
+    """
+    return _download_and_read('hdf/can-vtu.hdf', load=load)
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
