@@ -676,7 +676,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        n_iter : int
+        n_iter : int, optional
             Number of iterations for Laplacian smoothing.
 
         relaxation_factor : float, optional
@@ -695,10 +695,13 @@ class PolyDataFilters(DataSetFilters):
             Feature angle for sharp edge identification.
 
         boundary_smoothing : bool, optional
-            Boolean flag to control smoothing of boundary edges.
+            Flag to control smoothing of boundary edges. When ``True``,
+            boundary edges remain fixed. Default ``True``.
 
         feature_smoothing : bool, optional
-            Boolean flag to control smoothing of feature edges.
+            Flag to control smoothing of feature edges.  When ``True``,
+            boundary edges remain fixed as defined by ``feature_angle`` and
+            ``edge_angle``. Default ``False``.
 
         inplace : bool, optional
             Updates mesh in-place.
@@ -744,7 +747,130 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             self.overwrite(mesh)
             return self
+        return mesh
 
+    def smooth_taubin(
+        self,
+        n_iter=20,
+        pass_band=0.1,
+        edge_angle=15,
+        feature_angle=45,
+        boundary_smoothing=True,
+        feature_smoothing=False,
+        non_manifold_smoothing=False,
+        normalize_coordinates=False,
+        inplace=False,
+        progress_bar=False,
+    ):
+        """Smooth a PolyData DataSet with Taubin smoothing.
+
+        This filter allows you to smooth the mesh as in the Laplacian smoothing
+        implementation in :func:`smooth() <PolyDataFilters.smooth>`. However,
+        unlike Laplacian smoothing the surface does not "shrink" since this
+        filter relies on an alternative approach to smoothing. This filter is
+        more akin to a low pass filter where undesirable high frequency features
+        are removed.
+
+        This PyVista filter uses the VTK `vtkWindowedSincPolyDataFilter
+        <https://vtk.org/doc/nightly/html/classvtkWindowedSincPolyDataFilter.html>`_
+        filter.
+
+        Parameters
+        ----------
+        n_iter : int, optional
+            This is the degree of the polynomial used to approximate the
+            windowed sync function. This is generally much less than the number
+            needed by :func:`smooth() <PolyDataFilters.smooth>`.
+
+        pass_band : float, optional
+            The passband value for the windowed sinc filter. This should be
+            between 0 and 2, where lower values cause more smoothing.
+
+        edge_angle : float, optional
+            Edge angle to control smoothing along edges (either interior or
+            boundary).
+
+        feature_angle : float, optional
+            Feature angle for sharp edge identification.
+
+        boundary_smoothing : bool, optional
+            Flag to control smoothing of boundary edges. When ``True``,
+            boundary edges remain fixed. Default ``True``.
+
+        feature_smoothing : bool, optional
+            Flag to control smoothing of feature edges.  When ``True``,
+            boundary edges remain fixed as defined by ``feature_angle`` and
+            ``edge_angle``. Default ``False``.
+
+        non_manifold_smoothing : bool, optional
+            Smooth non-manifold points, default ``False``.
+
+        normalize_coordinates : bool, optional
+            Flag to control coordinate normalization. To improve the
+            numerical stability of the solution and minimize the scaling of the
+            translation effects, the algorithm can translate and scale the
+            position coordinates to within the unit cube ``[-1, 1]``, perform the
+            smoothing, and translate and scale the position coordinates back to
+            the original coordinate frame. This defaults to ``False``.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Smoothed mesh.
+
+        Notes
+        -----
+        For maximum performance, do not enable ``feature_smoothing`` or
+        ``boundary_smoothing``. ``feature_smoothing`` is especially expensive.
+
+        References
+        ----------
+        See `Optimal Surface Smoothing as Filter Design
+        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>` for details
+        regarding the implementation of Taubin smoothing.
+
+        Examples
+        --------
+        Smooth the example bone mesh. Here, it's necessary to subdivide the
+        mesh to increase the number of faces as the original mesh is so coarse.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_foot_bones().subdivide(2)
+        >>> smoothed_mesh = mesh.smooth_taubin()
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_text('Original Mesh')
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(smoothed_mesh)
+        >>> _ = pl.add_text('Smoothed Mesh')
+        >>> pl.show()
+
+        See :ref:`surface_smoothing_example` for more examples using this filter.
+
+        """
+        alg = _vtk.vtkWindowedSincPolyDataFilter()
+        alg.SetInputData(self)
+        alg.SetNumberOfIterations(n_iter)
+        alg.SetFeatureEdgeSmoothing(feature_smoothing)
+        alg.SetNonManifoldSmoothing(non_manifold_smoothing)
+        alg.SetFeatureAngle(feature_angle)
+        alg.SetEdgeAngle(edge_angle)
+        alg.SetBoundarySmoothing(boundary_smoothing)
+        alg.SetPassBand(pass_band)
+        alg.SetNormalizeCoordinates(normalize_coordinates)
+        _update_alg(alg, progress_bar, 'Smoothing Mesh using Taubin Smoothing')
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.overwrite(mesh)
+            return self
         return mesh
 
     def decimate_pro(
