@@ -3,7 +3,7 @@
 A directive for including a PyVista plot in a Sphinx document
 =============================================================
 
-The `.. pyvista-plot::` sphinx directive will include an inline
+The ``.. pyvista-plot::`` sphinx directive will include an inline
 ``.png`` image.
 
 The source code for the plot may be included in one of two ways:
