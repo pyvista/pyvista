@@ -192,8 +192,8 @@ def setup(app):
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
     app.add_config_value('plot_template', None, True)
-    app.add_config_value('plot_setup', '', True)
-    app.add_config_value('plot_cleanup', '', True)
+    app.add_config_value('plot_setup', None, True)
+    app.add_config_value('plot_cleanup', None, True)
     return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
