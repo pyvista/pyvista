@@ -1,5 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
+import collections
 import collections.abc
 import logging
 import sys
@@ -2523,3 +2524,49 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.GetCellType(ind)
+
+    def cell_is_point_inside(self, ind: int, point: Vector) -> bool:
+        """Return whether a point is inside a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell type ID.
+
+        point : Sequence[float] or numpy.ndarray
+           Length 3 sequence defining a point in space.
+
+        Returns
+        -------
+        bool
+            Whether point is inside cell.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> mesh.cell_bounds(0)
+        (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+        >>> mesh.cell_is_point_inside(0, [0.2, 0.2, 0.2])
+        True
+
+        """
+        if ind < 0 or ind >= self.n_cells:
+            raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
+
+        if not isinstance(point, (collections.Sequence, np.ndarray)):
+            raise ValueError(f"point must be a Sequence or ndarray, got {point}")
+
+        if len(point) != 3:
+            raise ValueError(f"point must have length 3, got {len(point)}")
+
+        cell = self.GetCell(ind)
+        npoints = cell.GetPoints().GetNumberOfPoints()
+
+        closest_point = [0.0, 0.0, 0.0]
+        sub_id = _vtk.mutable(0)
+        pcoords = [0.0, 0.0, 0.0]
+        dist2 = _vtk.mutable(0.0)
+        weights = [0.0] * npoints
+
+        return bool(cell.EvaluatePosition(point, closest_point, sub_id, pcoords, dist2, weights))
