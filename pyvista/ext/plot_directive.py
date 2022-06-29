@@ -380,7 +380,7 @@ def render_figures(
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
                     try:
                         plotter.screenshot(image_file.filename)
-                    except RuntimeError:
+                    except RuntimeError:  # pragma no cover
                         # ignore closed, unrendered plotters
                         continue
                 images.append(image_file)
