@@ -342,7 +342,8 @@ def render_figures(
     """Run a pyplot script and save the images in *output_dir*.
 
     Save the images under *output_dir* with file names derived from
-    *output_base*
+    *output_base*. Closed plotters are ignored if they were never
+    rendered.
     """
     # Try to determine if all images already exist
     is_doctest, code_pieces = _split_code_at_show(code)
@@ -377,7 +378,11 @@ def render_figures(
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-                    plotter.screenshot(image_file.filename)
+                    try:
+                        plotter.screenshot(image_file.filename)
+                    except RuntimeError:
+                        # ignore closed, unrendered plotters
+                        continue
                 images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
