@@ -3830,6 +3830,17 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         Label for each drawn boxplot, as shown in the chart's
         legend. Defaults to ``[]``.
 
+    size : list or tuple, optional
+        Size of the chart in normalized coordinates. A size of ``(0,
+        0)`` is invisible, a size of ``(1, 1)`` occupies the whole
+        renderer's width and height.
+
+    loc : list or tuple, optional
+        Location of the chart (its bottom left corner) in normalized
+        coordinates. A location of ``(0, 0)`` corresponds to the
+        renderer's bottom left corner, a location of ``(1, 1)``
+        corresponds to the renderer's top right corner.
+
     Examples
     --------
     Create boxplots for datasets sampled from shifted normal distributions.
@@ -3850,9 +3861,15 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         "chart_set_labels": 'chart.plot.label = "Data label"',
     }
 
-    def __init__(self, data, colors=None, labels=None):
+    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
         """Initialize a new chart containing box plots."""
-        super().__init__(None, None)
+        if vtk_version_info >= (9, 2, 0):
+            self.SetAutoSize(False)  # We manually set the appropriate size
+            if size is None:
+                size = (1, 1)
+            if loc is None:
+                loc = (0, 0)
+        super().__init__(size, loc)
         self._plot = BoxPlot(data, colors, labels)
         self.SetPlot(self._plot)
         self.SetColumnVisibilityAll(True)
@@ -3968,7 +3985,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):
             return (0, 0)
         else:
-            return _Chart.size.fget(self)
+            return _Chart.loc.fget(self)
 
     @loc.setter
     def loc(self, val):
@@ -3978,7 +3995,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
                 "Upgrade to VTK v9.2 or newer."
             )
         else:
-            _Chart.size.fset(self, val)
+            _Chart.loc.fset(self, val)
 
 
 class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
@@ -4096,6 +4113,17 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         Label for each pie segment drawn in this plot, as shown in the
         chart's legend. Defaults to ``[]``.
 
+    size : list or tuple, optional
+        Size of the chart in normalized coordinates. A size of ``(0,
+        0)`` is invisible, a size of ``(1, 1)`` occupies the whole
+        renderer's width and height.
+
+    loc : list or tuple, optional
+        Location of the chart (its bottom left corner) in normalized
+        coordinates. A location of ``(0, 0)`` corresponds to the
+        renderer's bottom left corner, a location of ``(1, 1)``
+        corresponds to the renderer's top right corner.
+
     Examples
     --------
     Create a pie plot showing the usage of tax money.
@@ -4115,9 +4143,15 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    def __init__(self, data, colors=None, labels=None):
+    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
         """Initialize a new chart containing a pie plot."""
-        super().__init__(None, None)
+        if vtk_version_info >= (9, 2, 0):
+            self.SetAutoSize(False)  # We manually set the appropriate size
+            if size is None:
+                size = (1, 1)
+            if loc is None:
+                loc = (0, 0)
+        super().__init__(size, loc)
         if vtk_version_info < (9, 2, 0):
             # SetPlot method is not available for older VTK versions,
             # so fallback to using a wrapper object.
@@ -4236,7 +4270,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):
             return (0, 0)
         else:
-            return _Chart.size.fget(self)
+            return _Chart.loc.fget(self)
 
     @loc.setter
     def loc(self, val):
@@ -4246,7 +4280,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
                 "Upgrade to VTK v9.2 or newer."
             )
         else:
-            _Chart.size.fset(self, val)
+            _Chart.loc.fset(self, val)
 
 
 # region 3D charts
