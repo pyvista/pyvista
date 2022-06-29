@@ -75,19 +75,28 @@ Configuration options
 ---------------------
 The plot directive has the following configuration options:
 
-    plot_include_source
-        Default value for the include-source option.
+    plot_include_source : bool
+        Default value for the include-source option. Default is ``True``.
 
-    plot_basedir
+    plot_basedir : str
         Base directory, to which ``plot::`` file names are relative
-        to.  (If ``None`` or empty, file names are relative to the
-        directory where the file containing the directive is.)
+        to.  If ``None`` or unset, file names are relative to the
+        directory where the file containing the directive is.
 
-    plot_html_show_formats
-        Whether to show links to the files in HTML.
+    plot_html_show_formats : bool
+        Whether to show links to the files in HTML. Default ``True``.
 
-    plot_template
-        Provide a customized template for preparing restructured text.
+    plot_template : str
+        Provide a customized Jinja2 template for preparing restructured text.
+
+    plot_setup : str
+        Python code to be run before every plot directive block.
+
+    plot_cleanup : str
+        Python code to be run after every plot directive block.
+
+These options can be set by defining global variables of the same name in
+:file:`conf.py`.
 
 """
 
