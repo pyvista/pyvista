@@ -16,6 +16,7 @@ from pyvista.utilities.misc import uses_egl
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
+from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 
 ACTOR_LOC_MAP = [
@@ -220,6 +221,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
+        self._render_passes = RenderPasses(self)
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -2744,6 +2746,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if self.__charts is not None:
             self.__charts.deep_clean()
 
+        self._render_passes.deep_clean()
         self.remove_floors(render=render)
         self.remove_legend(render=render)
         self.RemoveAllViewProps()

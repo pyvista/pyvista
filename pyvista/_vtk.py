@@ -436,7 +436,12 @@ if VTK9:
     from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
+        vtkDefaultPass,
+        vtkDepthOfFieldPass,
         vtkEDLShading,
+        vtkGaussianBlurPass,
+        vtkLightsPass,
+        vtkOpaquePass,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,
         vtkOpenGLTexture,
@@ -444,6 +449,7 @@ if VTK9:
         vtkRenderStepsPass,
         vtkSequencePass,
         vtkShadowMapPass,
+        vtkSSAAPass,
     )
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingVolume import (
