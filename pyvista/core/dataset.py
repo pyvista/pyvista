@@ -2531,7 +2531,7 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         ind : int
-            Cell type ID.
+            Cell ID.
 
         point : Sequence[float] or numpy.ndarray
            Length 3 sequence defining a point in space.
