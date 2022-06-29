@@ -58,6 +58,9 @@ setup(
     url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
     package_data={
+        'pyvista': [
+            'py.typed',
+        ],
         'pyvista.examples': [
             'airplane.ply',
             'ant.ply',
