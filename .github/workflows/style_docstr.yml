@@ -35,13 +35,6 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
 
-      - uses: actions/cache@v2
-        with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-
-
       - name: Install PyVista
         run: |
           pip install .
