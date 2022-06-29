@@ -2525,7 +2525,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         return self.GetCellType(ind)
 
-    def cell_is_point_inside(self, ind: int, point: Vector) -> bool:
+    def point_is_inside_cell(self, ind: int, point: Vector) -> bool:
         """Return whether a point is inside a cell.
 
         Parameters
