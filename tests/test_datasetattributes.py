@@ -128,6 +128,9 @@ def test_active_scalars_name(sphere):
     sphere.point_data[key] = range(sphere.n_points)
     assert sphere.point_data.active_scalars_name == key
 
+    sphere.point_data.active_scalars_name = None
+    assert sphere.point_data.active_scalars_name is None
+
 
 def test_set_scalars(sphere):
     scalars = np.array(sphere.n_points)
@@ -189,12 +192,27 @@ def test_set_vectors(hexbeam):
     hexbeam.point_data.set_vectors(vectors, 'my-vectors')
     assert np.allclose(hexbeam.point_data.active_vectors, vectors)
 
+    # check clearing
+    hexbeam.point_data.active_vectors_name = None
+    assert hexbeam.point_data.active_vectors_name is None
+
 
 def test_set_invalid_vectors(hexbeam):
     # verify non-vector data does not become active vectors
     not_vectors = np.random.random(hexbeam.n_points)
     with raises(ValueError):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
+
+
+def test_set_tcoords_name():
+    mesh = pyvista.Cube()
+    old_name = mesh.point_data.active_t_coords_name
+    assert mesh.point_data.active_t_coords_name is not None
+    mesh.point_data.active_t_coords_name = None
+    assert mesh.point_data.active_t_coords_name is None
+
+    mesh.point_data.active_t_coords_name = old_name
+    assert mesh.point_data.active_t_coords_name == old_name
 
 
 def test_set_bitarray(hexbeam):
@@ -458,6 +476,9 @@ def test_normals_get(plane):
 
     plane_w_normals = plane.compute_normals()
     assert np.array_equal(plane_w_normals.point_data.active_normals, plane_w_normals.point_normals)
+
+    plane.point_data.active_normals_name = None
+    assert plane.point_data.active_normals_name is None
 
 
 def test_normals_set():

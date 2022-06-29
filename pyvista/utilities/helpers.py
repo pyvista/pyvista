@@ -1447,6 +1447,11 @@ def cubemap(path='', prefix='', ext='.jpg'):
     pyvista.Texture
         Texture with cubemap.
 
+    Notes
+    -----
+    Cubemap will appear flipped relative to the XY plane between VTK v9.1 and
+    VTK v9.2.
+
     Examples
     --------
     Load a skybox given a directory, prefix, and file extension.

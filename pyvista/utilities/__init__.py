@@ -53,6 +53,7 @@ from .reader import (
     SegYReader,
     SLCReader,
     STLReader,
+    TecplotReader,
     TIFFReader,
     TimeReader,
     VTKDataSetReader,

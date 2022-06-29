@@ -95,3 +95,21 @@ p.show()
 p = pv.Plotter()
 p.add_mesh_slice(vol, assign_to_axis='z')
 p.show()
+
+
+###############################################################################
+# Additionally, users can modify the interaction event that triggers the
+# callback functions handled by the different plane widget helpers through the
+# ``interaction_event`` keyword argument when available. For example,
+# we can have continuous slicing by using the ``InteractionEvent`` observer.
+import vtk
+
+p = pv.Plotter()
+p.add_mesh_slice(vol, assign_to_axis='z', interaction_event=vtk.vtkCommand.InteractionEvent)
+p.show()
+
+###############################################################################
+# And here is a screen capture of a user interacting with this continuously via
+# the ``InteractionEvent`` observer:
+#
+# .. image:: ../../images/gifs/plane-slice-continuous.gif

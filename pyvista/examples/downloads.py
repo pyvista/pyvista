@@ -23,6 +23,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.core.errors import VTKVersionError
 
 CACHE_VERSION = 2
 
@@ -3886,10 +3887,16 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> import pyvista
-    >>> dataset = examples.download_can()
-    >>> dataset.plot(scalars='VEL', smooth_shading=True)
+    >>> dataset = examples.download_can()  # doctest:+SKIP
+    >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
 
     """
+    if pyvista.vtk_version_info > (9, 1):
+        raise VTKVersionError(
+            'This example file is deprecated for VTK v9.2.0 and newer. '
+            'Use `download_can_crushed_hdf` instead.'
+        )
+
     can_0 = _download_and_read('hdf/can_0.hdf', load=load)
     if partial:
         return can_0
@@ -3903,6 +3910,40 @@ def download_can(partial=False, load=True):  # pragma: no cover
     if load:
         return pyvista.merge(cans)
     return cans
+
+
+def download_can_crushed_hdf(load=True):  # pragma: no cover
+    """Download the crushed can dataset.
+
+    File obtained from `Kitware <https://www.kitware.com/>`_. Used
+    for testing hdf files.
+
+    Originally built using VTK v9.2.0rc from:
+
+    ``VTK/build/ExternalData/Testing/Data/can-vtu.hdf``
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        Crushed can dataset or path depending on the value of ``load``.
+
+    Examples
+    --------
+    Plot the crushed can dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_can_crushed_hdf()
+    >>> dataset.plot(smooth_shading=True)
+
+    """
+    return _download_and_read('hdf/can-vtu.hdf', load=load)
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
@@ -3935,6 +3976,41 @@ def download_cgns_structured(load=True):  # pragma: no cover
 
     """
     filename, _ = _download_file('cgns/sqnz_s.adf.cgns')
+    if not load:
+        return filename
+    return pyvista.get_reader(filename).read()
+
+
+def download_tecplot_ascii(load=True):  # pragma: no cover
+    """Download the single block ASCII Tecplot dataset.
+
+    Originally downloaded from Paul Bourke's
+    `Sample file <http://paulbourke.net/dataformats/tp/sample.tp>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock
+        Multiblock format with only 1 data block, simple geometric shape.
+        If ``load`` is ``False``, then the path of the example Tecplot file
+        is returned.
+
+    Examples
+    --------
+    Plot the example Tecplot dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_tecplot_ascii()
+    >>> dataset.plot()
+
+    """
+    filename, _ = _download_file('tecplot_ascii.dat')
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
@@ -4088,3 +4164,37 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     """
     return _download_and_read("cellsnd.ascii.inp", load=load)
+
+
+def download_moonlanding_image(load=True):  # pragma: no cover
+    """Download the Moon landing image.
+
+    This is a noisy image originally obtained from `Scipy Lecture Notes
+    <https://scipy-lectures.org/index.html>`_ and can be used to demonstrate a
+    low pass filter.
+
+    See the `scipy-lectures license
+    <http://scipy-lectures.org/preface.html#license>`_ for more details
+    regarding this image's use and distribution.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        ``DataSet`` or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_moonlanding_image()
+    >>> dataset.plot(cpos='xy', cmap='gray', background='w', show_scalar_bar=False)
+
+    See :ref:`image_fft_example` for a full example using this dataset.
+
+    """
+    return _download_and_read('moonlanding.png', load=load)
