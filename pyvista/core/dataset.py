@@ -1,8 +1,4 @@
 """Attributes common to PolyData and Grid Objects."""
-try:
-    from collections import Sequence as CollectionsSequence
-except ImportError:  # python 3.10
-    from collections.abc import Sequence as CollectionsSequence
 import collections.abc
 import logging
 import sys
@@ -2556,7 +2552,7 @@ class DataSet(DataSetFilters, DataObject):
         if ind < 0 or ind >= self.n_cells:
             raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
 
-        if not isinstance(point, (CollectionsSequence, np.ndarray)):
+        if not isinstance(point, (collections.abc.Sequence, np.ndarray)):
             raise ValueError(f"point must be a Sequence or ndarray, got {point}")
 
         if len(point) != 3:
