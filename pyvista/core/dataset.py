@@ -2549,7 +2549,7 @@ class DataSet(DataSetFilters, DataObject):
         True
 
         """
-        if ind < 0 or ind >= self.n_cells:
+        if not 0 <= ind < self.n_cells:
             raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
 
         if not isinstance(point, (collections.abc.Sequence, np.ndarray)):
