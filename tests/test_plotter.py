@@ -217,7 +217,9 @@ def test_plotter_remains_shallow():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere, scalars=None)
 
-    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified after adding to Plotter.  (See  issue #2461)
+    sphere[
+        'numbers'
+    ] *= -1  # sphere2 'numbers' are also modified after adding to Plotter.  (See  issue #2461)
 
     assert np.array_equal(sphere['numbers'], sphere2['numbers'])
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
