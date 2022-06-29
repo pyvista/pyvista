@@ -183,6 +183,8 @@ def setup(app):
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
     app.add_config_value('plot_template', None, True)
+    app.add_config_value('plot_setup', '', True)
+    app.add_config_value('plot_cleanup', '', True)
     return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
@@ -340,30 +342,41 @@ def render_figures(
     results = []
     ns = plot_context if context else {}
 
-    for i, code_piece in enumerate(code_pieces):
-        # generate the plot
-        _run_code(
-            doctest.script_from_examples(code_piece) if is_doctest else code_piece,
-            code_path,
-            ns,
-            function_name,
-        )
+    # Check for setup and teardown code for plots
+    code_setup = config.plot_setup
+    code_cleanup = config.plot_cleanup
 
-        images = []
-        figures = pyvista.plotting._ALL_PLOTTERS
+    if code_setup:
+        _run_code(code_setup, code_path, ns, function_name)
 
-        for j, (_, plotter) in enumerate(figures.items()):
-            if hasattr(plotter, '_gif_filename'):
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
-                shutil.move(plotter._gif_filename, image_file.filename)
-            else:
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-                plotter.screenshot(image_file.filename)
-            images.append(image_file)
+    try:
+        for i, code_piece in enumerate(code_pieces):
+            # generate the plot
+            _run_code(
+                doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code_path,
+                ns,
+                function_name,
+            )
 
-        pyvista.close_all()  # close and clear all plotters
+            images = []
+            figures = pyvista.plotting._ALL_PLOTTERS
 
-        results.append((code_piece, images))
+            for j, (_, plotter) in enumerate(figures.items()):
+                if hasattr(plotter, '_gif_filename'):
+                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
+                    shutil.move(plotter._gif_filename, image_file.filename)
+                else:
+                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+                    plotter.screenshot(image_file.filename)
+                images.append(image_file)
+
+            pyvista.close_all()  # close and clear all plotters
+
+            results.append((code_piece, images))
+    finally:
+        if code_cleanup:
+            _run_code(code_cleanup, code_path, ns, function_name)
 
     return results
 
