@@ -1,6 +1,7 @@
 """Fine-grained control of reading data files."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import wraps
 import os
 import pathlib
 from typing import Any, List
@@ -11,6 +12,8 @@ from pyvista import _vtk
 from pyvista.utilities import abstract_class, wrap
 
 from .fileio import _get_ext_force, _process_filename
+
+HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
 
 
 def get_reader(filename, force_ext=None):
@@ -28,6 +31,8 @@ def get_reader(filename, force_ext=None):
     | ``.case``      | :class:`pyvista.EnSightReader`              |
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.dat``       | :class:`pyvista.TecplotReader`              |
     +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
@@ -294,6 +299,8 @@ class BaseReader:
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
+        if data is None:  # pragma: no cover
+            raise RuntimeError("Failed to read file.")
         data._post_file_load_processing()
         return data
 
@@ -809,6 +816,38 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             self.reader.DecomposePolyhedraOff()
 
     @property
+    def skip_zero_time(self):
+        """Indicate whether or not to ignore the '/0' time directory.
+
+        Returns
+        -------
+        bool
+            If ``True``, ignore the '/0' time directory.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.skip_zero_time = False
+        >>> reader.skip_zero_time
+        False
+
+        """
+        return bool(self.reader.GetSkipZeroTime())
+
+    @skip_zero_time.setter
+    def skip_zero_time(self, value):
+        if value:
+            self.reader.SkipZeroTimeOn()
+        else:
+            self.reader.SkipZeroTimeOff()
+
+        self._update_information()
+        self.reader.SetRefresh()
+
+    @property
     def cell_to_point_creation(self):
         """Whether cell data is translated to point data when read.
 
@@ -1108,6 +1147,23 @@ class STLReader(BaseReader):
     """
 
     _class_reader = _vtk.vtkSTLReader
+
+
+class TecplotReader(BaseReader):
+    """Tecplot Reader for ascii .dat files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_tecplot_ascii(load=False)
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh[0].plot()
+
+    """
+
+    _class_reader = _vtk.vtkTecplotReader
 
 
 class VTKDataSetReader(BaseReader):
@@ -1970,9 +2026,9 @@ class HDFReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_can(partial=True, load=False)
+    >>> filename = examples.download_can_crushed_hdf(load=False)
     >>> filename.split("/")[-1]  # omit the path
-    'can_0.hdf'
+    'can-vtu.hdf'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -1980,6 +2036,22 @@ class HDFReader(BaseReader):
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkHDFReader)
+
+    @wraps(BaseReader.read)
+    def read(self):
+        """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
+        try:
+            with pyvista.VtkErrorCatcher(raise_errors=True):
+                return super().read()
+        except RuntimeError as err:  # pragma: no cover
+            if "Can't find the `Type` attribute." in str(err):
+                raise RuntimeError(
+                    f'{self.path} is missing the Type attribute. '
+                    'The VTKHDF format has changed as of 9.2.0, '
+                    f'see {HDF_HELP} for more details.'
+                )
+            else:
+                raise err
 
 
 class GLTFReader(BaseReader):
@@ -2012,6 +2084,7 @@ CLASS_READERS = {
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,

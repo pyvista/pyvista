@@ -293,6 +293,16 @@ def test_stlreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+def test_tecplotreader():
+    filename = examples.download_tecplot_ascii(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.TecplotReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh[0].n_points, mesh[0].n_cells])
+
+
 def test_vtkreader():
     filename = examples.hexbeamfile
     reader = pyvista.get_reader(filename)
@@ -532,6 +542,24 @@ def test_openfoam_decompose_polyhedra():
     assert reader.decompose_polyhedra is True
 
 
+def test_openfoam_skip_zero_time():
+    reader = get_cavity_reader()
+
+    reader.skip_zero_time = True
+    assert reader.skip_zero_time is True
+    assert 0.0 not in reader.time_values
+
+    # Test from 'True' to 'False'
+    reader.skip_zero_time = False
+    assert reader.skip_zero_time is False
+    assert 0.0 in reader.time_values
+
+    # Test from 'False' to 'True'
+    reader.skip_zero_time = True
+    assert reader.skip_zero_time is True
+    assert 0.0 not in reader.time_values
+
+
 def test_openfoam_cell_to_point_default():
     reader = get_cavity_reader()
     mesh = reader.read()
@@ -616,14 +644,6 @@ def test_openfoam_case_type():
     assert reader.case_type == 'reconstructed'
     with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
         reader.case_type = 'wrong_value'
-
-
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
-def test_read_hdf():
-    can = examples.download_can(partial=True)
-    assert can.n_points == 6724
-    assert 'VEL' in can.point_data
-    assert can.n_cells == 4800
 
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
@@ -792,10 +812,13 @@ def test_avsucd_reader():
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_hdf_reader():
-    filename = examples.download_can(partial=True, load=False)
+    filename = examples.download_can_crushed_hdf(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.HDFReader)
     assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+    assert mesh.n_points == 6724
+    assert 'VEL' in mesh.point_data
+    assert mesh.n_cells == 4800
