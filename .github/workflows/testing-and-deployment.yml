@@ -81,13 +81,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-conda-
 
-      - uses: actions/cache@v2
-        with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-
-
       - name: Create Anaconda environment
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
@@ -156,13 +149,6 @@ jobs:
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.vtk-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
-
-      - uses: actions/cache@v2
-        with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-
 
       - name: Build wheel and install pyvista
         run: |
@@ -257,14 +243,6 @@ jobs:
         run: |
           chcp 65001 #set code page to utf-8
           echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")) >> $env:GITHUB_ENV
-
-      - name: Cache example data
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: Examples-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-
 
       - name: Install test dependencies
         run: pip install -r requirements_test.txt
