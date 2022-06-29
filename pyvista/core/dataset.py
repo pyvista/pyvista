@@ -2547,7 +2547,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = examples.load_hexbeam()
         >>> mesh.cell_bounds(0)
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
-        >>> mesh.cell_is_point_inside(0, [0.2, 0.2, 0.2])
+        >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True
 
         """
