@@ -293,6 +293,8 @@ def test_axis_tick_count(axis):
 def test_axis_tick_locations(chart_2d, axis):
     tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
     tlabels = ["Foo", "Blub", "Spam"]
+    tlocs0 = axis.tick_locations
+    tlabels0 = axis.tick_labels
 
     axis.tick_locations = tlocs
     axis.tick_labels = tlabels
@@ -316,6 +318,13 @@ def test_axis_tick_locations(chart_2d, axis):
     )
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
+    axis.tick_locations = None
+    axis.tick_labels = None
+    chart_2d.show()
+    assert np.allclose(axis.tick_locations, tlocs0)
+    assert np.allclose(axis.GetTickPositions(), tlocs0)
+    assert tuple(axis.tick_labels) == tuple(tlabels0)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels0)
 
 
 def test_axis_tick_size(axis):
