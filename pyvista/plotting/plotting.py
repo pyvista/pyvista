@@ -2512,6 +2512,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
             pickable=pickable,
             render=render,
+            remove_existing_actor=False,  # actor will always be new
         )
 
         # hide scalar bar if using special scalars

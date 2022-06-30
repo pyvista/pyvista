@@ -1,6 +1,7 @@
 """An internal module for wrapping the use of mappers."""
 import logging
 import sys
+from typing import Dict
 
 import numpy as np
 
@@ -11,14 +12,14 @@ from ._plotting import _has_matplotlib
 from .colors import Color, get_cmap_safe
 from .tools import normalize
 
+CACHED_CTABLE: Dict[str, np.ndarray] = {}
 
-def make_mapper(mapper_class):
-    """Wrap a mapper.
+# keep a cache of the mapper cache classes
+MAPPER_CLASS_CACHE = {}
 
-    This makes a mapper wrapped with a few convenient tools for managing
-    mappers with scalar bars in a consistent way since not all mapper classes
-    have scalar ranges and lookup tables.
-    """
+
+def class_factory(mapper_class):
+    """Create a MapperHelper class."""
 
     class MapperHelper(mapper_class):
         """A helper that dynamically inherits the mapper's class."""
@@ -79,7 +80,8 @@ def make_mapper(mapper_class):
             show_scalar_bar,
         ):
             """Set the scalars on this mapper."""
-            if cmap is None:  # Set default map if matplotlib is available
+            if cmap is None and not rgb:
+                # Set default map if matplotlib is available
                 if _has_matplotlib():
                     cmap = theme.cmap
 
@@ -134,84 +136,88 @@ def make_mapper(mapper_class):
                 else:
                     scalars = scalars.ravel()
 
-            if scalars.dtype == np.bool_:
-                scalars = scalars.astype(np.float_)
+            if not rgb:
+                if scalars.dtype == np.bool_:
+                    scalars = scalars.astype(np.float_)
 
-            table = self.GetLookupTable()
+                table = self.GetLookupTable()
 
-            if _using_labels:
-                table.SetAnnotations(convert_array(values), convert_string_array(cats))
+                if _using_labels:
+                    table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
-            if isinstance(annotations, dict):
-                for val, anno in annotations.items():
-                    table.SetAnnotation(float(val), str(anno))
+                if isinstance(annotations, dict):
+                    for val, anno in annotations.items():
+                        table.SetAnnotation(float(val), str(anno))
 
-            # Set scalars range
-            if clim is None:
-                clim = [np.nanmin(scalars), np.nanmax(scalars)]
-            elif isinstance(clim, (int, float)):
-                clim = [-clim, clim]
+                # Set scalars range
+                if clim is None:
+                    clim = [np.nanmin(scalars), np.nanmax(scalars)]
+                elif isinstance(clim, (int, float)):
+                    clim = [-clim, clim]
 
-            if log_scale:
-                if clim[0] <= 0:
-                    clim = [sys.float_info.min, clim[1]]
-                table.SetScaleToLog10()
+                if log_scale:
+                    if clim[0] <= 0:
+                        clim = [sys.float_info.min, clim[1]]
+                    table.SetScaleToLog10()
 
-            if np.any(clim) and not rgb:
-                self.scalar_range = clim[0], clim[1]
+                if np.any(clim):
+                    self.scalar_range = clim[0], clim[1]
 
-            table.SetNanColor(Color(nan_color).float_rgba)
-            if above_color:
-                table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*Color(above_color).float_rgba)
-                scalar_bar_args.setdefault('above_label', 'Above')
-            if below_color:
-                table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*Color(below_color).float_rgba)
-                scalar_bar_args.setdefault('below_label', 'Below')
+                table.SetNanColor(Color(nan_color).float_rgba)
 
-            if cmap is not None:
-                # have to add the attribute to pass it onward to some classes
-                if isinstance(cmap, str):
-                    self.cmap = cmap
-                # ipygany uses different colormaps
-                if theme.jupyter_backend == 'ipygany':
-                    from ..jupyter.pv_ipygany import check_colormap
+                if above_color:
+                    table.SetUseAboveRangeColor(True)
+                    table.SetAboveRangeColor(*Color(above_color).float_rgba)
+                    scalar_bar_args.setdefault('above_label', 'Above')
+                if below_color:
+                    table.SetUseBelowRangeColor(True)
+                    table.SetBelowRangeColor(*Color(below_color).float_rgba)
+                    scalar_bar_args.setdefault('below_label', 'Below')
 
-                    check_colormap(cmap)
-                else:
-                    if not _has_matplotlib():
-                        cmap = None
-                        logging.warning('Please install matplotlib for color maps.')
+                if cmap is not None:
+                    # have to add the attribute to pass it onward to some classes
+                    if isinstance(cmap, str):
+                        self.cmap = cmap
+                    # ipygany uses different colormaps
+                    if theme.jupyter_backend == 'ipygany':
+                        from ..jupyter.pv_ipygany import check_colormap
 
-                    cmap = get_cmap_safe(cmap)
-                    if categories:
-                        if categories is True:
-                            n_colors = len(np.unique(scalars))
-                        elif isinstance(categories, int):
-                            n_colors = categories
-                    ctable = cmap(np.linspace(0, 1, n_colors)) * 255
-                    ctable = ctable.astype(np.uint8)
-                    # Set opactities
-                    if isinstance(opacity, np.ndarray) and not _custom_opac:
-                        ctable[:, -1] = opacity
+                        check_colormap(cmap)
+                    else:
+                        if not _has_matplotlib():
+                            cmap = None
+                            logging.warning('Please install matplotlib for color maps.')
+
+                        cmap = get_cmap_safe(cmap)
+                        if categories:
+                            if categories is True:
+                                n_colors = len(np.unique(scalars))
+                            elif isinstance(categories, int):
+                                n_colors = categories
+                        ctable = cmap(np.linspace(0, 1, n_colors)) * 255
+                        ctable = ctable.astype(np.uint8)
+
+                        # Set opactities
+                        if isinstance(opacity, np.ndarray) and not _custom_opac:
+                            ctable[:, -1] = opacity
+
+                        if flip_scalars:
+                            ctable = np.ascontiguousarray(ctable[::-1])
+                        table.SetTable(_vtk.numpy_to_vtk(ctable))
+                        if _custom_opac:
+                            # need to round the colors here since we're
+                            # directly displaying the colors
+                            hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
+                            scalars = np.round(hue * n_colors) / n_colors
+                            scalars = cmap(scalars) * 255
+                            scalars[:, -1] *= opacity
+                            scalars = scalars.astype(np.uint8)
+
+                else:  # no cmap specified
                     if flip_scalars:
-                        ctable = np.ascontiguousarray(ctable[::-1])
-                    table.SetTable(_vtk.numpy_to_vtk(ctable))
-                    if _custom_opac:
-                        # need to round the colors here since we're
-                        # directly displaying the colors
-                        hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                        scalars = np.round(hue * n_colors) / n_colors
-                        scalars = cmap(scalars) * 255
-                        scalars[:, -1] *= opacity
-                        scalars = scalars.astype(np.uint8)
-
-            else:  # no cmap specified
-                if flip_scalars:
-                    table.SetHueRange(0.0, 0.66667)
-                else:
-                    table.SetHueRange(0.66667, 0.0)
+                        table.SetHueRange(0.0, 0.66667)
+                    else:
+                        table.SetHueRange(0.66667, 0.0)
 
             added_scalar_info = self.configure_scalars_mode(
                 scalars,
@@ -348,4 +354,18 @@ def make_mapper(mapper_class):
                 rgba, mesh, '', n_colors, preference, interpolate_before_map, True
             )
 
-    return MapperHelper()
+    return MapperHelper
+
+
+def make_mapper(mapper_class):
+    """Wrap a mapper.
+
+    This makes a mapper wrapped with a few convenient tools for managing
+    mappers with scalar bars in a consistent way since not all mapper classes
+    have scalar ranges and lookup tables.
+    """
+    class_name = str(mapper_class)
+    if class_name not in MAPPER_CLASS_CACHE:
+        MAPPER_CLASS_CACHE[class_name] = class_factory(mapper_class)
+
+    return MAPPER_CLASS_CACHE[class_name]()

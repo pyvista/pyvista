@@ -178,6 +178,36 @@ import pyvista
 from pyvista import _vtk
 from pyvista._typing import color_like
 from pyvista.utilities import PyvistaDeprecationWarning
+from pyvista.utilities.misc import static_vars
+
+
+@static_vars(_imported=None)
+def _has_colormap():
+    """Check if colormap can be imported."""
+    if _has_colormap._imported is None:
+        try:
+            import colormap  # noqa
+
+            _has_colormap._imported = True
+        except ImportError:  # pragma: no cover
+            _has_colormap._imported = False
+
+    return _has_colormap._imported
+
+
+@static_vars(_imported=None)
+def _has_cmocean():
+    """Check if colormap can be imported."""
+    if _has_cmocean._imported is None:
+        try:
+            import colormap  # noqa
+
+            _has_cmocean._imported = True
+        except ImportError:  # pragma: no cover
+            _has_cmocean._imported = False
+
+    return _has_cmocean._imported
+
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -945,36 +975,40 @@ def string_to_rgb(string):  # pragma: no cover
 
 def get_cmap_safe(cmap):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
-    try:
-        from matplotlib.cm import get_cmap
-    except ImportError:  # pragma: no cover
-        raise ImportError(
-            'The use of custom colormaps requires the installation of matplotlib'
-        ) from None
-
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        try:
+        if _has_colormap():
             import colorcet
 
-            cmap = colorcet.cm[cmap]
-        except (ImportError, KeyError):
-            pass
-        else:
-            return cmap
+            try:
+                cmap = colorcet.cm[cmap]
+            except KeyError:
+                pass
+            else:
+                return cmap
+
         # Try cmocean second
-        try:
+        if _has_cmocean():
             import cmocean
 
-            cmap = getattr(cmocean.cm, cmap)
-        except (ImportError, AttributeError):
-            pass
-        else:
-            return cmap
+            try:
+                cmap = getattr(cmocean.cm, cmap)
+            except AttributeError:
+                pass
+            else:
+                return cmap
+
+        try:
+            from matplotlib.cm import get_cmap
+        except ImportError:  # pragma: no cover
+            raise ImportError(
+                'The use of custom colormaps requires the installation of matplotlib'
+            ) from None
+
         # Else use Matplotlib
         cmap = get_cmap(cmap)
 

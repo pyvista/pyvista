@@ -7,6 +7,18 @@ import numpy as np
 from pyvista import _vtk
 
 
+def static_vars(**kwargs):
+    """Add static variables to a function."""
+
+    def decorate(func):
+        """Add static variables."""
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+
+    return decorate
+
+
 def raise_has_duplicates(arr):
     """Raise a ValueError if an array is not unique."""
     if has_duplicates(arr):

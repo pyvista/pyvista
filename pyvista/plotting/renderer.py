@@ -621,7 +621,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._actors
 
     def add_actor(
-        self, uinput, reset_camera=False, name=None, culling=False, pickable=True, render=True
+        self,
+        uinput,
+        reset_camera=False,
+        name=None,
+        culling=False,
+        pickable=True,
+        render=True,
+        remove_existing_actor=True,
     ):
         """Add an actor to render window.
 
@@ -653,6 +660,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the render window is being shown, trigger a render
             after adding the actor.
 
+        remove_existing_actor : bool, optional
+            Removes any existing actor if the named actor ``name`` is already
+            present.
+
         Returns
         -------
         actor : vtk.vtkActor
@@ -662,7 +673,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Actor properties.
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False, render=False)
+        if name and remove_existing_actor:
+            self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
             actor = _vtk.vtkActor()
@@ -679,8 +691,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._actors[name] = actor
 
         if reset_camera:
-            self.reset_camera(render)
-        elif not self.camera_set and reset_camera is None and not rv:
             self.reset_camera(render)
         elif render:
             self.parent.render()
@@ -705,7 +715,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
-        self.ResetCameraClippingRange()
+        if reset_camera:
+            self.ResetCameraClippingRange()
         self.Modified()
 
         prop = None
@@ -1893,11 +1904,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.camera  # this initializes the camera
         >>> pl.set_focus(mesh.points[1])
         >>> pl.show()
-
         """
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
+        self.ResetCamera()
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
         self.camera_set = True
         self.Modified()
@@ -1957,6 +1968,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
+        self.ResetCamera()
         self.camera.up = vector
         self.camera_set = True
         self.Modified()
