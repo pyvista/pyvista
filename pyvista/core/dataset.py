@@ -2523,7 +2523,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         return self.GetCellType(ind)
 
-    def point_is_inside_cell(self, ind: int, point: Vector) -> bool:
+    def point_is_inside_cell(
+        self, ind: int, point: Union[VectorArray, NumericArray]
+    ) -> Union[int, np.ndarray]:
         """Return whether a point is inside a cell.
 
         Parameters
@@ -2531,13 +2533,14 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Sequence[float] or numpy.ndarray
-           Length 3 sequence defining a point in space.
+        point : Sequence(float) or np.ndarray
+            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
+            points with shape ``(n, 3)``.
 
         Returns
         -------
-        bool
-            Whether point is inside cell.
+        bool or numpy.ndarray
+            Whether point(s) is/are inside cell.
 
         Examples
         --------
@@ -2552,11 +2555,7 @@ class DataSet(DataSetFilters, DataObject):
         if not 0 <= ind < self.n_cells:
             raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
 
-        if not isinstance(point, (collections.abc.Sequence, np.ndarray)):
-            raise ValueError(f"point must be a Sequence or ndarray, got {point}")
-
-        if len(point) != 3:
-            raise ValueError(f"point must have length 3, got {len(point)}")
+        point = _coerce_pointslike_arg(point, copy=False)
 
         cell = self.GetCell(ind)
         npoints = cell.GetPoints().GetNumberOfPoints()
@@ -2567,4 +2566,10 @@ class DataSet(DataSetFilters, DataObject):
         dist2 = _vtk.mutable(0.0)
         weights = [0.0] * npoints
 
-        return bool(cell.EvaluatePosition(point, closest_point, sub_id, pcoords, dist2, weights))
+        in_cell = [
+            bool(cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights))
+            for node in point
+        ]
+        if len(in_cell) == 1:
+            return in_cell[0]
+        return in_cell

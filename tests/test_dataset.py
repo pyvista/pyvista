@@ -1086,10 +1086,14 @@ def test_point_is_inside_cell():
         grid.point_is_inside_cell(-1, [0.5, 0.5, 0.5])
 
     # point not well formed
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         grid.point_is_inside_cell(0, 0.5)
     with pytest.raises(ValueError):
         grid.point_is_inside_cell(0, [0.5, 0.5])
+
+    # multi-dimensional
+    in_cell = grid.point_is_inside_cell(0, [[0.5, 0.5, 0.5], [-0.5, -0.5, -0.5]])
+    assert np.array_equal(in_cell, np.array([True, False]))
 
 
 def test_serialize_deserialize(datasets):
