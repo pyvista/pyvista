@@ -1,10 +1,26 @@
 """Miscellaneous pyvista functions."""
 from collections import namedtuple
+import os
 import warnings
 
 import numpy as np
 
 from pyvista import _vtk
+
+
+def _set_plot_theme_from_env():
+    from pyvista.themes import _ALLOWED_THEMES, set_plot_theme
+
+    if 'PYVISTA_PLOT_THEME' in os.environ:
+        try:
+            theme = os.environ['PYVISTA_PLOT_THEME']
+            set_plot_theme(theme.lower())
+        except KeyError:
+            allowed = ', '.join([item.name for item in _ALLOWED_THEMES])
+            warnings.warn(
+                f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
+                f'Should be one of the following: {allowed}'
+            )
 
 
 def raise_has_duplicates(arr):

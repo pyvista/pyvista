@@ -12,7 +12,7 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
-from pyvista.utilities.misc import _get_vtk_id_type, vtk_version_info
+from pyvista.utilities.misc import _get_vtk_id_type, vtk_version_info, _set_plot_theme_from_env
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
@@ -27,8 +27,7 @@ global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
 
 # Set preferred plot theme
-if 'PYVISTA_PLOT_THEME' in os.environ:
-    set_plot_theme(os.environ['PYVISTA_PLOT_THEME'].lower())
+_set_plot_theme_from_env()
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
