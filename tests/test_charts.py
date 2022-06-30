@@ -101,6 +101,14 @@ def pie_plot(chart_pie):
     return chart_pie.plot
 
 
+@pytest.fixture
+def axis(chart_2d):
+    # Test properties, using the y axis of a 2D chart
+    chart_2d.line([0, 1], [1, 10])
+    chart_2d.show()
+    return chart_2d.y_axis
+
+
 def test_pen():
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     w_thin, w_thick = 2, 10
@@ -179,36 +187,30 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
-@skip_no_plotting
-def test_axis(chart_2d):
-    l = "Y axis"
-    r_fix, r_auto = [2, 5], None
-    m = 50
-    tc = 10
-    tlabels = ["Foo", "Blub", "Spam"]
-    tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
-    ts = 5
-    tlo = 10
+def test_axis_init(chart_2d):
+    label = "Y axis"
+    r_fix = [2, 5]
 
     # Test constructor arguments
-    axis = charts.Axis(label=l, range=r_fix, grid=True)
-    assert axis.label == l
+    axis = charts.Axis(label=label, range=r_fix, grid=True)
+    assert axis.label == label
     assert np.allclose(axis.range, r_fix) and axis.behavior == "fixed"
     assert axis.grid
 
-    # Test properties, using the y axis of a 2D chart
-    chart_2d.line([0, 1], [1, 10])
-    chart_2d.show()
-    axis = chart_2d.y_axis
 
-    axis.label = l
-    assert axis.label == l
-    assert axis.GetTitle() == l
+def test_axis_label(axis):
+    label = "Y axis"
+    axis.label = label
+    assert axis.label == label
+    assert axis.GetTitle() == label
 
     axis.label_visible = False
     assert not axis.label_visible
     assert not axis.GetTitleVisible()
 
+
+def test_axis_range(axis):
+    r_fix, r_auto = [2, 5], None
     axis.range = r_auto
     assert axis.behavior == "auto"
     axis.range = r_fix
@@ -225,30 +227,42 @@ def test_axis(chart_2d):
     with pytest.raises(ValueError):
         axis.behavior = "invalid"
 
-    axis.margin = m
-    assert axis.margin == m
-    assert axis.GetMargins()[0] == m
 
+def test_axis_margin(axis):
+    margin = 50
+    axis.margin = margin
+    assert axis.margin == margin
+    assert axis.GetMargins()[0] == margin
+
+
+@skip_no_plotting
+def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
     chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
     assert axis.log_scale
     assert axis.GetLogScaleActive()
+
     axis.log_scale = False
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
     # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
     #  This is a VTK issue that will be fixed once PR (!8618) is merged.
+
     chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
 
+
+def test_axis_grid(axis):
     axis.grid = False
     assert not axis.grid
     assert not axis.GetGridVisible()
 
+
+def test_axis_visible(axis):
     axis.visible = False
     assert not axis.visible
     assert not axis.GetAxisVisible()
@@ -256,6 +270,9 @@ def test_axis(chart_2d):
     assert axis.visible
     assert axis.GetAxisVisible()
 
+
+def test_axis_tick_count(axis):
+    tc = 10
     tc0 = axis.tick_count
     axis.tick_count = tc
     assert axis.tick_count == tc
@@ -267,8 +284,11 @@ def test_axis(chart_2d):
     assert axis.tick_count == tc0
     assert axis.GetNumberOfTicks() == tc0
 
-    tlocs0 = axis.tick_locations
-    tlabels0 = axis.tick_labels
+
+def test_axis_tick_locations(chart_2d, axis):
+    tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
+    tlabels = ["Foo", "Blub", "Spam"]
+
     axis.tick_locations = tlocs
     axis.tick_labels = tlabels
     assert np.allclose(axis.tick_locations, tlocs)
@@ -284,33 +304,37 @@ def test_axis(chart_2d):
     axis.tick_labels = "4e"
     axis.tick_locations = tlocs_large  # Add some more variety to labels
     chart_2d.show()
+
     assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(
         to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large
     )
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
-    axis.tick_locations = None
-    axis.tick_labels = None
-    chart_2d.show()
-    assert np.allclose(axis.tick_locations, tlocs0)
-    assert np.allclose(axis.GetTickPositions(), tlocs0)
-    assert tuple(axis.tick_labels) == tuple(tlabels0)
-    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels0)
 
+
+def test_axis_tick_size(axis):
+    ts = 5
     axis.tick_size = ts
     assert axis.tick_size == ts
     assert axis.GetTickLength() == ts
 
+
+def test_axis_tick_offset(axis):
+    tlo = 10
     axis.tick_labels_offset = tlo
     assert axis.tick_labels_offset == tlo
     assert axis.GetLabelOffset() == tlo
 
+
+def test_axis_tick_labels_visible(axis):
     axis.tick_labels_visible = False
     assert not axis.tick_labels_visible
     assert not axis.GetLabelsVisible()
     assert not axis.GetRangeLabelsVisible()
 
+
+def test_axis_tick_visible(axis):
     axis.ticks_visible = False
     assert not axis.ticks_visible
     assert not axis.GetTicksVisible()

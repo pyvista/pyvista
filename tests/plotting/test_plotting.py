@@ -2068,7 +2068,7 @@ def test_collision_plot():
 
 
 @skip_mac
-@skip_9_1_0
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 2, 0), reason="Requires VTK>=9.2.0")
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)

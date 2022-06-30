@@ -9,6 +9,8 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import get_ext, wrap
 
+HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
+
 
 def get_reader(filename):
     """Get a reader for fine-grained control of reading data files.
@@ -180,6 +182,8 @@ class BaseReader:
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
+        if data is None:  # pragma: no cover
+            raise RuntimeError("Failed to read file.")
         data._post_file_load_processing()
         return data
 

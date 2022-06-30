@@ -189,6 +189,12 @@ if TEST_DOWNLOADS:
         data = examples.download_cake_easy_texture()
         assert isinstance(data, vtk.vtkTexture)
 
+    def test_download_can_crushed_hdf():
+        path = examples.download_can_crushed_hdf(load=False)
+        assert os.path.isfile(path)
+        dataset = examples.download_can_crushed_hdf()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
     def test_download_rectilinear_grid():
         data = examples.download_rectilinear_grid()
         assert data.n_cells
