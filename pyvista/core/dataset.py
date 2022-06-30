@@ -1,4 +1,5 @@
 """Attributes common to PolyData and Grid Objects."""
+
 import collections.abc
 import logging
 import sys
