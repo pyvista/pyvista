@@ -182,25 +182,25 @@ from pyvista.utilities.misc import static_vars
 
 
 @static_vars(_imported=None)
-def _has_colormap():
-    """Check if colormap can be imported."""
-    if _has_colormap._imported is None:
+def _has_colorcet():
+    """Check if colorcet can be imported."""
+    if _has_colorcet._imported is None:
         try:
-            import colormap  # noqa
+            import colorcet  # noqa
 
-            _has_colormap._imported = True
+            _has_colorcet._imported = True
         except ImportError:  # pragma: no cover
-            _has_colormap._imported = False
+            _has_colorcet._imported = False
 
-    return _has_colormap._imported
+    return _has_colorcet._imported
 
 
 @static_vars(_imported=None)
 def _has_cmocean():
-    """Check if colormap can be imported."""
+    """Check if cmocean can be imported."""
     if _has_cmocean._imported is None:
         try:
-            import colormap  # noqa
+            import cmocean  # noqa
 
             _has_cmocean._imported = True
         except ImportError:  # pragma: no cover
@@ -981,7 +981,7 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        if _has_colormap():
+        if _has_colorcet():
             import colorcet
 
             try:
