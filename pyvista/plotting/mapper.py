@@ -142,7 +142,23 @@ def class_factory(mapper_class):
                     else:
                         scalars = scalars.ravel()
 
-                scalars = self.update_lookup_table(table, n_colors, scalars, clim, log_scale, nan_color, above_color, below_color, scalar_bar_args, cmap, categories, theme, opacity, _custom_opac, flip_scalars)
+                scalars = self.update_lookup_table(
+                    table,
+                    n_colors,
+                    scalars,
+                    clim,
+                    log_scale,
+                    nan_color,
+                    above_color,
+                    below_color,
+                    scalar_bar_args,
+                    cmap,
+                    categories,
+                    theme,
+                    opacity,
+                    _custom_opac,
+                    flip_scalars,
+                )
 
             added_scalar_info = self.configure_scalars_mode(
                 scalars,
@@ -156,7 +172,24 @@ def class_factory(mapper_class):
 
             return show_scalar_bar, n_colors, clim, added_scalar_info
 
-        def update_lookup_table(self, table, n_colors, scalars, clim, log_scale, nan_color, above_color, below_color, scalar_bar_args, cmap, categories, theme, opacity, _custom_opac, flip_scalars):
+        def update_lookup_table(
+            self,
+            table,
+            n_colors,
+            scalars,
+            clim,
+            log_scale,
+            nan_color,
+            above_color,
+            below_color,
+            scalar_bar_args,
+            cmap,
+            categories,
+            theme,
+            opacity,
+            _custom_opac,
+            flip_scalars,
+        ):
             """Update the mapper's lookup table."""
             # Set scalars range
             if clim is None:
