@@ -12,22 +12,22 @@ def _coerce_pointslike_arg(
 ) -> Tuple[np.ndarray, bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
-        Parameters
-        ----------
-        points : Sequence(float) or np.ndarray
-            Argument to coerce into (n, 3) ``np.ndarray``.
+    Parameters
+    ----------
+    points : Sequence(float) or np.ndarray
+        Argument to coerce into (n, 3) ``np.ndarray``.
 
-        copy : bool, optional
-            Whether to copy the ``points`` array.  Copying always occurs if ``points``
-            is not ``np.ndarray``.
+    copy : bool, optional
+        Whether to copy the ``points`` array.  Copying always occurs if ``points``
+        is not ``np.ndarray``.
 
-        Returns
-        -------
-        points : np.ndarray
-            Size (n, 3) array.
-        singular : bool
-            Whether the input array was a single point. This excludes an array with
-            length 1.
+    Returns
+    -------
+    points : np.ndarray
+        Size (n, 3) array.
+    singular : bool
+        Whether the input array was a single point. This excludes an array with
+        length 1.
     """
     if isinstance(points, collections.abc.Sequence):
         points = np.asarray(points)
