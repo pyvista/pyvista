@@ -28,7 +28,6 @@ def _coerce_pointslike_arg(
         singular : bool
             Whether the input array was a single point. This excludes an array with
             length 1.
-    x
     """
     if isinstance(points, collections.abc.Sequence):
         points = np.asarray(points)
