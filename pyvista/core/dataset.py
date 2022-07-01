@@ -2188,7 +2188,7 @@ class DataSet(DataSetFilters, DataObject):
             to the given point(s).
 
             .. versionchanged:: 0.35.0
-            Inputs of shape (1, 3) now return a numpy.ndarray
+               Inputs of shape (1, 3) now return a numpy.ndarray
 
         numpy.ndarray
             Point or points inside a cell of the mesh that is/are closest
@@ -2196,7 +2196,7 @@ class DataSet(DataSetFilters, DataObject):
             ``return_closest_point=True``.
 
             .. versionchanged:: 0.35.0
-            Inputs of shape (1, 3) now return a numpy.ndarray
+               Inputs of shape (1, 3) now return a numpy.ndarray
 
         Warnings
         --------
@@ -2314,7 +2314,7 @@ class DataSet(DataSetFilters, DataObject):
             the given point.
 
             .. versionchanged:: 0.35.0
-            Inputs of shape (1, 3) now return a numpy.ndarray
+               Inputs of shape (1, 3) now return a numpy.ndarray
 
         See Also
         --------
