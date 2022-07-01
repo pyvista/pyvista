@@ -2580,10 +2580,12 @@ class DataSet(DataSetFilters, DataObject):
         dist2 = _vtk.mutable(0.0)
         weights = [0.0] * npoints
 
-        in_cell = [
-            bool(cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights))
-            for node in point
-        ]
+        in_cell = np.array(
+            [
+                bool(cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights))
+                for node in point
+            ]
+        )
         if singular:
             return in_cell[0]
         return in_cell
