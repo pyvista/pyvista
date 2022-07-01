@@ -134,7 +134,9 @@ def class_factory(mapper_class):
                                 'Component must be nonnegative and less than the '
                                 f'dimensionality of the scalars array: {scalars.shape[1]}'
                             )
-                    else:  # pragma: no cover
+                    else:
+                        # this should only be reached when adding (n x m)
+                        # scalars which match the shape of gridded datasets
                         scalars = scalars.ravel()
 
                 scalars = self.update_lookup_table(

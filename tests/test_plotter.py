@@ -253,3 +253,14 @@ def test_add_multiple(sphere):
     pl.add_mesh(sphere, scalars='data')
     pl.show()
     assert sphere.n_arrays == 1
+
+
+def test_add_scalars_image(noise_2d):
+    """Test edge case where dimensions of scalars matches a uniform grid."""
+    noise_2d.clear_data()
+    scalars = np.random.random(noise_2d.dimensions)
+    pl = pyvista.Plotter()
+    pl.add_mesh(noise_2d, scalars=scalars)
+    assert noise_2d.n_arrays == 1
+    pl.close()
+    assert noise_2d.n_arrays == 0
