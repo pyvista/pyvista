@@ -2553,6 +2553,9 @@ class DataSet(DataSetFilters, DataObject):
         True
 
         """
+        if not isinstance(ind, int):
+            raise TypeError(f"ind must be an int, got {type(ind)}")
+
         if not 0 <= ind < self.n_cells:
             raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
 

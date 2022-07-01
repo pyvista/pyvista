@@ -1085,6 +1085,10 @@ def test_point_is_inside_cell():
     with pytest.raises(ValueError):
         grid.point_is_inside_cell(-1, [0.5, 0.5, 0.5])
 
+    # cell ind wrong type
+    with pytest.raises(TypeError):
+        grid.point_is_inside_cell(0.1, [0.5, 0.5, 0.5])
+
     # point not well formed
     with pytest.raises(TypeError):
         grid.point_is_inside_cell(0, 0.5)
