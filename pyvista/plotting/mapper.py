@@ -80,6 +80,8 @@ def class_factory(mapper_class):
             show_scalar_bar,
         ):
             """Set the scalars on this mapper."""
+            table = self.GetLookupTable()
+
             if cmap is None and not rgb:
                 # Set default map if matplotlib is available
                 if _has_matplotlib():
@@ -92,7 +94,14 @@ def class_factory(mapper_class):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
-            _using_labels = False
+            if scalars.dtype == np.bool_:
+                scalars = scalars.astype(np.float_)
+            elif np.issubdtype(scalars.dtype, np.complexfloating):
+                # Use only the real component if an array is complex
+                scalars = scalars.astype(float)
+                scalars_name = f'{scalars_name}-real'
+
+            # use annotations if scalars are strings
             if not np.issubdtype(scalars.dtype, np.number):
                 # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
                 # TODO: If str array, digitive and annotate
@@ -102,122 +111,38 @@ def class_factory(mapper_class):
                 scalars_name = f'{scalars_name}-digitized'
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
-                _using_labels = True
+                table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
-            # Use only the real component if an array is complex
-            if np.issubdtype(scalars.dtype, np.complexfloating):
-                scalars = scalars.astype(float)
-                scalars_name = f'{scalars_name}-real'
+            if isinstance(annotations, dict):
+                for val, anno in annotations.items():
+                    table.SetAnnotation(float(val), str(anno))
 
             if rgb:
-                show_scalar_bar = False
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                     raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
-
-            if scalars.ndim != 1:
-                if rgb:
-                    pass
-                elif scalars.ndim == 2 and (
-                    scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells
-                ):
-                    if not isinstance(component, (int, type(None))):
-                        raise TypeError('component must be either None or an integer')
-                    if component is None:
-                        scalars = np.linalg.norm(scalars.copy(), axis=1)
-                        scalars_name = f'{scalars_name}-normed'
-                    elif component < scalars.shape[1] and component >= 0:
-                        scalars = scalars[:, component].copy()
-                        scalars_name = f'{scalars_name}-{component}'
+                show_scalar_bar = False
+            else:
+                if scalars.ndim != 1:
+                    if scalars.ndim == 2 and (
+                        scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells
+                    ):
+                        if not isinstance(component, (int, type(None))):
+                            raise TypeError('component must be either None or an integer')
+                        if component is None:
+                            scalars = np.linalg.norm(scalars.copy(), axis=1)
+                            scalars_name = f'{scalars_name}-normed'
+                        elif component < scalars.shape[1] and component >= 0:
+                            scalars = scalars[:, component].copy()
+                            scalars_name = f'{scalars_name}-{component}'
+                        else:
+                            raise ValueError(
+                                'Component must be nonnegative and less than the '
+                                f'dimensionality of the scalars array: {scalars.shape[1]}'
+                            )
                     else:
-                        raise ValueError(
-                            'Component must be nonnegative and less than the '
-                            f'dimensionality of the scalars array: {scalars.shape[1]}'
-                        )
-                else:
-                    scalars = scalars.ravel()
+                        scalars = scalars.ravel()
 
-            if not rgb:
-                if scalars.dtype == np.bool_:
-                    scalars = scalars.astype(np.float_)
-
-                table = self.GetLookupTable()
-
-                if _using_labels:
-                    table.SetAnnotations(convert_array(values), convert_string_array(cats))
-
-                if isinstance(annotations, dict):
-                    for val, anno in annotations.items():
-                        table.SetAnnotation(float(val), str(anno))
-
-                # Set scalars range
-                if clim is None:
-                    clim = [np.nanmin(scalars), np.nanmax(scalars)]
-                elif isinstance(clim, (int, float)):
-                    clim = [-clim, clim]
-
-                if log_scale:
-                    if clim[0] <= 0:
-                        clim = [sys.float_info.min, clim[1]]
-                    table.SetScaleToLog10()
-
-                if np.any(clim):
-                    self.scalar_range = clim[0], clim[1]
-
-                table.SetNanColor(Color(nan_color).float_rgba)
-
-                if above_color:
-                    table.SetUseAboveRangeColor(True)
-                    table.SetAboveRangeColor(*Color(above_color).float_rgba)
-                    scalar_bar_args.setdefault('above_label', 'Above')
-                if below_color:
-                    table.SetUseBelowRangeColor(True)
-                    table.SetBelowRangeColor(*Color(below_color).float_rgba)
-                    scalar_bar_args.setdefault('below_label', 'Below')
-
-                if cmap is not None:
-                    # have to add the attribute to pass it onward to some classes
-                    if isinstance(cmap, str):
-                        self.cmap = cmap
-                    # ipygany uses different colormaps
-                    if theme.jupyter_backend == 'ipygany':
-                        from ..jupyter.pv_ipygany import check_colormap
-
-                        check_colormap(cmap)
-                    else:
-                        if not _has_matplotlib():
-                            cmap = None
-                            logging.warning('Please install matplotlib for color maps.')
-
-                        cmap = get_cmap_safe(cmap)
-                        if categories:
-                            if categories is True:
-                                n_colors = len(np.unique(scalars))
-                            elif isinstance(categories, int):
-                                n_colors = categories
-                        ctable = cmap(np.linspace(0, 1, n_colors)) * 255
-                        ctable = ctable.astype(np.uint8)
-
-                        # Set opactities
-                        if isinstance(opacity, np.ndarray) and not _custom_opac:
-                            ctable[:, -1] = opacity
-
-                        if flip_scalars:
-                            ctable = np.ascontiguousarray(ctable[::-1])
-                        table.SetTable(_vtk.numpy_to_vtk(ctable))
-                        if _custom_opac:
-                            # need to round the colors here since we're
-                            # directly displaying the colors
-                            hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                            scalars = np.round(hue * n_colors) / n_colors
-                            scalars = cmap(scalars) * 255
-                            scalars[:, -1] *= opacity
-                            scalars = scalars.astype(np.uint8)
-
-                else:  # no cmap specified
-                    if flip_scalars:
-                        table.SetHueRange(0.0, 0.66667)
-                    else:
-                        table.SetHueRange(0.66667, 0.0)
+                scalars = self.update_lookup_table(table, n_colors, scalars, clim, log_scale, nan_color, above_color, below_color, scalar_bar_args, cmap, categories, theme, opacity, _custom_opac, flip_scalars)
 
             added_scalar_info = self.configure_scalars_mode(
                 scalars,
@@ -230,6 +155,80 @@ def class_factory(mapper_class):
             )
 
             return show_scalar_bar, n_colors, clim, added_scalar_info
+
+        def update_lookup_table(self, table, n_colors, scalars, clim, log_scale, nan_color, above_color, below_color, scalar_bar_args, cmap, categories, theme, opacity, _custom_opac, flip_scalars):
+            """Update the mapper's lookup table."""
+            # Set scalars range
+            if clim is None:
+                clim = [np.nanmin(scalars), np.nanmax(scalars)]
+            elif isinstance(clim, (int, float)):
+                clim = [-clim, clim]
+
+            if log_scale:
+                if clim[0] <= 0:
+                    clim = [sys.float_info.min, clim[1]]
+                table.SetScaleToLog10()
+
+            if np.any(clim):
+                self.scalar_range = clim[0], clim[1]
+
+            table.SetNanColor(Color(nan_color).float_rgba)
+
+            if above_color:
+                table.SetUseAboveRangeColor(True)
+                table.SetAboveRangeColor(*Color(above_color).float_rgba)
+                scalar_bar_args.setdefault('above_label', 'Above')
+            if below_color:
+                table.SetUseBelowRangeColor(True)
+                table.SetBelowRangeColor(*Color(below_color).float_rgba)
+                scalar_bar_args.setdefault('below_label', 'Below')
+
+            if cmap is not None:
+                # have to add the attribute to pass it onward to some classes
+                if isinstance(cmap, str):
+                    self.cmap = cmap
+                # ipygany uses different colormaps
+                if theme.jupyter_backend == 'ipygany':
+                    from ..jupyter.pv_ipygany import check_colormap
+
+                    check_colormap(cmap)
+                else:
+                    if not _has_matplotlib():
+                        cmap = None
+                        logging.warning('Please install matplotlib for color maps.')
+
+                    cmap = get_cmap_safe(cmap)
+                    if categories:
+                        if categories is True:
+                            n_colors = len(np.unique(scalars))
+                        elif isinstance(categories, int):
+                            n_colors = categories
+                    ctable = cmap(np.linspace(0, 1, n_colors)) * 255
+                    ctable = ctable.astype(np.uint8)
+
+                    # Set opactities
+                    if isinstance(opacity, np.ndarray) and not _custom_opac:
+                        ctable[:, -1] = opacity
+
+                    if flip_scalars:
+                        ctable = np.ascontiguousarray(ctable[::-1])
+                    table.SetTable(_vtk.numpy_to_vtk(ctable))
+                    if _custom_opac:
+                        # need to round the colors here since we're
+                        # directly displaying the colors
+                        hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
+                        scalars = np.round(hue * n_colors) / n_colors
+                        scalars = cmap(scalars) * 255
+                        scalars[:, -1] *= opacity
+                        scalars = scalars.astype(np.uint8)
+
+            else:  # no cmap specified
+                if flip_scalars:
+                    table.SetHueRange(0.0, 0.66667)
+                else:
+                    table.SetHueRange(0.66667, 0.0)
+
+            return scalars
 
         def configure_scalars_mode(
             self,
