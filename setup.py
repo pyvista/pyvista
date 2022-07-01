@@ -87,4 +87,5 @@ setup(
         'io': ['meshio>=5.2'],
         'jupyter': ['ipyvtklink', 'pythreejs'],
     },
+    zip_safe=False,
 )
