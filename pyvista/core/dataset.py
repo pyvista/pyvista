@@ -411,7 +411,7 @@ class DataSet(DataSetFilters, DataObject):
             self.Modified()
             return
         # otherwise, wrap and use the array
-        points = _coerce_pointslike_arg(points, copy=False)
+        points, _ = _coerce_pointslike_arg(points, copy=False)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
@@ -2172,10 +2172,16 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that is/are closest
             to the given point(s).
 
+            .. versionchanged:: 0.35.0
+            Inputs of shape (1, 3) now return a numpy.ndarray
+
         numpy.ndarray
             Point or points inside a cell of the mesh that is/are closest
             to the given point(s).  Only returned if
             ``return_closest_point=True``.
+
+            .. versionchanged:: 0.35.0
+            Inputs of shape (1, 3) now return a numpy.ndarray
 
         Warnings
         --------
@@ -2245,7 +2251,7 @@ class DataSet(DataSetFilters, DataObject):
         array([1., 1., 0.])
 
         """
-        point = _coerce_pointslike_arg(point, copy=False)
+        point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
@@ -2267,11 +2273,9 @@ class DataSet(DataSetFilters, DataObject):
             closest_points.append(closest_point)
 
         out_cells: Union[int, np.ndarray] = (
-            closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+            closest_cells[0] if singular else np.array(closest_cells)
         )
-        out_points = (
-            np.array(closest_points[0]) if len(closest_points) == 1 else np.array(closest_points)
-        )
+        out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
 
         if return_closest_point:
             return out_cells, out_points
@@ -2293,6 +2297,10 @@ class DataSet(DataSetFilters, DataObject):
         int or numpy.ndarray
             Index or indices of the cell in this mesh that contains
             the given point.
+
+            .. versionchanged:: 0.35.0
+            Inputs of shape (1, 3) now return a numpy.ndarray
+
 
         See Also
         --------
@@ -2327,14 +2335,14 @@ class DataSet(DataSetFilters, DataObject):
         (1000,)
 
         """
-        point = _coerce_pointslike_arg(point, copy=False)
+        point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
 
         containing_cells = [locator.FindCell(node) for node in point]
-        return containing_cells[0] if len(containing_cells) == 1 else np.array(containing_cells)
+        return containing_cells[0] if singular else np.array(containing_cells)
 
     def find_cells_along_line(
         self,
@@ -2529,6 +2537,8 @@ class DataSet(DataSetFilters, DataObject):
     ) -> Union[int, np.ndarray]:
         """Return whether a point is inside a cell.
 
+        .. versionadded:: 0.35.0
+
         Parameters
         ----------
         ind : int
@@ -2559,7 +2569,7 @@ class DataSet(DataSetFilters, DataObject):
         if not 0 <= ind < self.n_cells:
             raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
 
-        point = _coerce_pointslike_arg(point, copy=False)
+        point, singular = _coerce_pointslike_arg(point, copy=False)
 
         cell = self.GetCell(ind)
         npoints = cell.GetPoints().GetNumberOfPoints()
@@ -2574,6 +2584,6 @@ class DataSet(DataSetFilters, DataObject):
             bool(cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights))
             for node in point
         ]
-        if len(in_cell) == 1:
+        if singular:
             return in_cell[0]
         return in_cell

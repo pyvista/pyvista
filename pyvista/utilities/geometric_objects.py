@@ -487,7 +487,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> mesh = pyvista.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
     >>> mesh.plot(color='k', line_width=10)
     """
-    points = _coerce_pointslike_arg(points)
+    points, _ = _coerce_pointslike_arg(points)
     src = _vtk.vtkLineSource()
     if not (len(points) >= 2):
         raise ValueError('>=2 points need to define multiple lines.')
