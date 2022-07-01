@@ -2301,7 +2301,6 @@ class DataSet(DataSetFilters, DataObject):
             .. versionchanged:: 0.35.0
             Inputs of shape (1, 3) now return a numpy.ndarray
 
-
         See Also
         --------
         DataSet.find_closest_point
