@@ -15,7 +15,7 @@ except:
 try:
     import cmocean  # noqa: F401
 
-    COLORMAPS.append('blues')
+    COLORMAPS.append('algae')
 except ImportError:
     pass
 

@@ -100,11 +100,8 @@ def class_factory(mapper_class):
                 # Use only the real component if an array is complex
                 scalars = scalars.astype(float)
                 scalars_name = f'{scalars_name}-real'
-
-            # use annotations if scalars are strings
-            if not np.issubdtype(scalars.dtype, np.number):
-                # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
-                # TODO: If str array, digitive and annotate
+            elif not np.issubdtype(scalars.dtype, np.number):
+                # use annotations if scalars are strings
                 cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
