@@ -1196,6 +1196,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if isinstance(xyz, (float, int, np.number)):
             xyz = [xyz] * 3
@@ -1247,6 +1248,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_x(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -1297,6 +1299,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_y(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -1340,13 +1343,14 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> pl.show_axes()
-        >>> mesh1 = examples.download_teapot()
+        >>> mesh1 = examples.download_teapot().rotate_x(90, inplace=False)
         >>> _ = pl.add_mesh(mesh1)
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
         >>> mesh2 = mesh1.flip_z(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos="xz")
+
         """
         if point is None:
             point = self.center
@@ -1402,6 +1406,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -2533,3 +2538,33 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.GetCellType(ind)
+
+    def cell_point_ids(self, ind: int) -> List[int]:
+        """Return the point ids in a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        list[int]
+            Point Ids that are associated with the cell.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell_type(0)
+        5
+
+        Cell type 5 is a triangular cell with three points.
+
+        >>> mesh.cell_point_ids(0)
+        [0, 1, 2]
+
+        """
+        cell = self.GetCell(ind)
+        point_ids = cell.GetPointIds()
+        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]

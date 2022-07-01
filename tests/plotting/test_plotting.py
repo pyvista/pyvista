@@ -295,7 +295,12 @@ def test_set_environment_texture_cubemap(sphere):
     pl = pyvista.Plotter(lighting=None)
     pl.set_environment_texture(texture)
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
-    pl.show(before_close_callback=verify_cache_image)
+
+    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
+    if pyvista.vtk_version_info <= (9, 1):
+        pl.show(before_close_callback=verify_cache_image)
+    else:
+        pl.show()
 
 
 def test_plot_pyvista_ndarray(sphere):
@@ -2190,7 +2195,7 @@ def test_collision_plot():
 
 
 @skip_mac
-@skip_9_1_0
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 2, 0), reason="Requires VTK>=9.2.0")
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)

@@ -297,6 +297,7 @@ if VTK9:
         vtkPTSReader,
         vtkSTLReader,
         vtkSTLWriter,
+        vtkTecplotReader,
     )
     from vtkmodules.vtkIOImage import (
         vtkBMPReader,
