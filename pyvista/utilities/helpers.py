@@ -202,6 +202,27 @@ def is_pyvista_dataset(obj):
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
+def _assoc_array(obj, name, association='point'):
+    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+
+    If the array or index doesn't exist, return nothing. This matches VTK's
+    behavior when using ``GetAbstractArray`` with an invalid key or index.
+
+    """
+    vtk_attr = f'Get{association.title()}Data'
+    python_attr = f'{association.lower()}_data'
+
+    if isinstance(obj, pyvista.DataSet):
+        try:
+            return getattr(obj, python_attr).get_array(name)
+        except KeyError:  # pragma: no cover
+            return None
+    abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
+    if abstract_array is not None:
+        return pyvista.pyvista_ndarray(abstract_array)
+    return None
+
+
 def point_array(obj, name):
     """Return point array of a pyvista or vtk object.
 
@@ -210,17 +231,16 @@ def point_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetPointData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'point')
 
 
 def field_array(obj, name):
@@ -231,17 +251,16 @@ def field_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetFieldData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'field')
 
 
 def cell_array(obj, name):
@@ -252,17 +271,16 @@ def cell_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str
-        Name of the array.
+    name : str or int
+        Name or index of the array.
 
     Returns
     -------
-    numpy.ndarray
-        Wrapped array.
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    vtkarr = obj.GetCellData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    return _assoc_array(obj, name, 'cell')
 
 
 def row_array(obj, name):
@@ -316,7 +334,7 @@ def parse_field_choice(field):
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise ValueError(f'Data field ({field}) not supported.')
+        raise TypeError(f'Data field ({field}) not supported.')
     return field
 
 
@@ -1391,7 +1409,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
 
 def cubemap(path='', prefix='', ext='.jpg'):
-    """Construct a cubemap from 6 images.
+    """Construct a cubemap from 6 images from a directory.
 
     Each of the 6 images must be in the following format:
 
@@ -1429,14 +1447,69 @@ def cubemap(path='', prefix='', ext='.jpg'):
     pyvista.Texture
         Texture with cubemap.
 
+    Notes
+    -----
+    Cubemap will appear flipped relative to the XY plane between VTK v9.1 and
+    VTK v9.2.
+
     Examples
     --------
+    Load a skybox given a directory, prefix, and file extension.
+
     >>> import pyvista
     >>> skybox = pyvista.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
+    return _cubemap_from_paths(image_paths)
 
+
+def cubemap_from_filenames(image_paths):
+    """Construct a cubemap from 6 images.
+
+    Images must be in the following order:
+
+    - Positive X
+    - Negative X
+    - Positive Y
+    - Negative Y
+    - Positive Z
+    - Negative Z
+
+    Parameters
+    ----------
+    image_paths : list
+        Paths of the individual cubemap images.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture with cubemap.
+
+    Examples
+    --------
+    Load a skybox given a list of image paths.
+
+    >>> image_paths = [
+    ...     '/home/user/_px.jpg',
+    ...     '/home/user/_nx.jpg',
+    ...     '/home/user/_py.jpg',
+    ...     '/home/user/_ny.jpg',
+    ...     '/home/user/_pz.jpg',
+    ...     '/home/user/_nz.jpg',
+    ... ]
+    >>> skybox = pyvista.cubemap(image_paths=image_paths)  # doctest:+SKIP
+
+    """
+    if len(image_paths) != 6:
+        raise ValueError("image_paths must contain 6 paths")
+
+    return _cubemap_from_paths(image_paths)
+
+
+def _cubemap_from_paths(image_paths):
+    """Construct a cubemap from image paths."""
     for image_path in image_paths:
         if not os.path.isfile(image_path):
             file_str = '\n'.join(image_paths)

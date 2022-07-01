@@ -415,7 +415,7 @@ The main features of our branching model are:
    version of the code base that is also reflected on PyPI/. Hotfixes
    from ``fix/`` branches should be merged both to main and to these
    branches. When necessary to create a new patch release these release
-   branches will have their ``__version__.py`` updated and be tagged
+   branches will have their ``pyvista/_version.py`` updated and be tagged
    with a patched semantic version (e.g. ``0.24.1``). This triggers CI
    to push to PyPI, and allow us to rapidly push hotfixes for past
    versions of ``pyvista`` without having to worry about untested
@@ -474,7 +474,7 @@ created the following will occur:
 
     .. code:: bash
 
-       git tag MAJOR.MINOR.0
+       git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
        git push origin --tags
 
 8.  Create a list of all changes for the release. It is often helpful to
@@ -507,7 +507,7 @@ should not wait until a minor release. The steps for a patch release
 1. Push the necessary bugfix(es) to the applicable release branch. This
    will generally be the latest release branch (e.g. ``release/0.25``).
 
-2. Update ``__version__.py`` with the next patch increment (e.g.
+2. Update ``pyvista/_version.py`` with the next patch increment (e.g.
    ``0.25.1``), commit it, and open a PR that merge with the release
    branch. This gives the ``pyvista`` community a chance to validate and
    approve the bugfix release. Any additional hotfixes should be outside

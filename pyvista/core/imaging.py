@@ -111,6 +111,8 @@ def sample_function(
     >>> surf = pyvista.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
+    See :ref:`perlin_noise_2d_example` for a full example using this function.
+
     """
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)

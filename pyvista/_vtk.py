@@ -209,6 +209,7 @@ if VTK9:
         vtkTriangleFilter,
         vtkTubeFilter,
         vtkUnstructuredGridToExplicitStructuredGrid,
+        vtkWindowedSincPolyDataFilter,
     )
     from vtkmodules.vtkFiltersExtraction import (
         vtkExtractGeometry,
@@ -256,7 +257,9 @@ if VTK9:
         vtkRibbonFilter,
         vtkRotationalExtrusionFilter,
         vtkSelectEnclosedPoints,
+        vtkTrimmedExtrusionFilter,
     )
+    from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
@@ -294,6 +297,7 @@ if VTK9:
         vtkPTSReader,
         vtkSTLReader,
         vtkSTLWriter,
+        vtkTecplotReader,
     )
     from vtkmodules.vtkIOImage import (
         vtkBMPReader,
@@ -397,6 +401,12 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
+    from vtkmodules.vtkImagingFourier import (
+        vtkImageButterworthHighPass,
+        vtkImageButterworthLowPass,
+        vtkImageFFT,
+        vtkImageRFFT,
+    )
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,

@@ -502,7 +502,7 @@ def test_decimate(sphere):
 
 
 def test_decimate_pro(sphere):
-    mesh = sphere.decimate_pro(0.5, progress_bar=True)
+    mesh = sphere.decimate_pro(0.5, progress_bar=True, max_degree=10)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 

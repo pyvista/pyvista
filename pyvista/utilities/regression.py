@@ -116,6 +116,10 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
             if img._first_time:  # must be rendered first else segfault
                 img._on_first_render_request()
                 img.render()
+            if not hasattr(img, 'ren_win'):
+                raise RuntimeError(
+                    'Unable to extract image from Plotter as it has already been closed.'
+                )
             return image_from_window(img.ren_win, True, ignore_alpha=True)
         else:
             raise TypeError(
@@ -137,7 +141,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         img_diff.AllowShiftOff()  # vastly increases compute time when enabled
         # img_diff.AveragingOff()  # increases compute time
         img_diff.Update()
-        return img_diff.GetError()
+        return img_diff.GetThresholdedError()
 
     # otherwise, simply compute the mean pixel difference
     diff = np.abs(im1.point_data[0] - im2.point_data[0])

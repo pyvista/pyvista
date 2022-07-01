@@ -68,6 +68,10 @@ def test_load_random_hills():
 
 if TEST_DOWNLOADS:
 
+    def test_download_single_sphere_animation():
+        data = examples.download_single_sphere_animation()
+        assert data.n_blocks
+
     def test_download_masonry_texture():
         data = examples.download_masonry_texture()
         assert isinstance(data, vtk.vtkTexture)
@@ -141,6 +145,10 @@ if TEST_DOWNLOADS:
         data = examples.download_iron_protein()
         assert data.n_cells
 
+    def test_download_tetra_dc_mesh():
+        data = examples.download_tetra_dc_mesh()
+        assert data.n_blocks
+
     def test_download_tetrahedron():
         data = examples.download_tetrahedron()
         assert data.n_cells
@@ -188,6 +196,12 @@ if TEST_DOWNLOADS:
     def test_download_cake_easy_texture():
         data = examples.download_cake_easy_texture()
         assert isinstance(data, vtk.vtkTexture)
+
+    def test_download_can_crushed_hdf():
+        path = examples.download_can_crushed_hdf(load=False)
+        assert os.path.isfile(path)
+        dataset = examples.download_can_crushed_hdf()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
 
     def test_download_rectilinear_grid():
         data = examples.download_rectilinear_grid()
@@ -357,6 +371,10 @@ if TEST_DOWNLOADS:
         data = examples.download_kitchen(split=True)
         assert data.n_blocks
 
+    def test_download_backward_facing_step():
+        data = examples.download_backward_facing_step()
+        assert data.n_blocks
+
     # def test_download_topo_global():
     #     data = examples.download_topo_global()
     #     assert data.n_cells
@@ -387,12 +405,26 @@ if TEST_DOWNLOADS:
         assert all([data.n_points, data.n_cells])
 
     def test_vrml_download_teapot():
-        data = examples.vrml.download_teapot()
-        assert data.n_cells
+        filename = examples.vrml.download_teapot()
+        assert os.path.isfile(filename)
 
     def test_vrml_download_sextant():
-        data = examples.vrml.download_sextant()
-        assert data.n_cells
+        filename = examples.vrml.download_sextant()
+        assert os.path.isfile(filename)
+
+    def test_download_cavity():
+        filename = examples.download_cavity(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_cavity(load=True)
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_download_lucy():
+        filename = examples.download_lucy(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_lucy(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
 
 
 # End of download tests
