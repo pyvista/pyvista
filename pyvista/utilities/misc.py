@@ -9,6 +9,7 @@ from pyvista import _vtk
 
 
 def _set_plot_theme_from_env():
+    """Set plot theme from an enviroment variable."""
     from pyvista.themes import _ALLOWED_THEMES, set_plot_theme
 
     if 'PYVISTA_PLOT_THEME' in os.environ:
