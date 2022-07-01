@@ -94,9 +94,7 @@ def class_factory(mapper_class):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
-            if scalars.dtype == np.bool_:
-                scalars = scalars.astype(np.float_)
-            elif np.issubdtype(scalars.dtype, np.complexfloating):
+            if np.issubdtype(scalars.dtype, np.complexfloating):
                 # Use only the real component if an array is complex
                 scalars = scalars.astype(float)
                 scalars_name = f'{scalars_name}-real'
@@ -136,7 +134,7 @@ def class_factory(mapper_class):
                                 'Component must be nonnegative and less than the '
                                 f'dimensionality of the scalars array: {scalars.shape[1]}'
                             )
-                    else:
+                    else:  # pragma: no cover
                         scalars = scalars.ravel()
 
                 scalars = self.update_lookup_table(

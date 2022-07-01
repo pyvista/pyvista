@@ -2430,3 +2430,11 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_bool_scalars(sphere):
+    sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
+    sphere['scalars'][::2] = 1
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
