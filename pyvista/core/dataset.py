@@ -2591,7 +2591,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Sequence(float) or np.ndarray
+        point : Sequence[float] or np.ndarray
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
             points with shape ``(n, 3)``.
 
