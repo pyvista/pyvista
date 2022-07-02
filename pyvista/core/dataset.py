@@ -2188,7 +2188,8 @@ class DataSet(DataSetFilters, DataObject):
             to the given point(s).
 
             .. versionchanged:: 0.35.0
-               Inputs of shape (1, 3) now return a numpy.ndarray
+               Inputs of shape ``(1, 3)`` now return a :class:`numpy.ndarray`
+               of shape ``(1,)``.
 
         numpy.ndarray
             Point or points inside a cell of the mesh that is/are closest
@@ -2196,7 +2197,8 @@ class DataSet(DataSetFilters, DataObject):
             ``return_closest_point=True``.
 
             .. versionchanged:: 0.35.0
-               Inputs of shape (1, 3) now return a numpy.ndarray
+               Inputs of shape ``(1, 3)`` now return a :class:`numpy.ndarray`
+               of the same shape.
 
         Warnings
         --------
@@ -2314,7 +2316,8 @@ class DataSet(DataSetFilters, DataObject):
             the given point.
 
             .. versionchanged:: 0.35.0
-               Inputs of shape (1, 3) now return a numpy.ndarray
+               Inputs of shape ``(1, 3)`` now return a :class:`numpy.ndarray`
+               of shape ``(1,)``.
 
         See Also
         --------
@@ -2579,7 +2582,7 @@ class DataSet(DataSetFilters, DataObject):
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
     ) -> Union[int, np.ndarray]:
-        """Return whether a point is inside a cell.
+        """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0
 
@@ -2595,7 +2598,8 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         bool or numpy.ndarray
-            Whether point(s) is/are inside cell.
+            Whether point(s) is/are inside cell. A scalar bool is only returned if
+            the input point has shape ``(3,)``.
 
         Examples
         --------
