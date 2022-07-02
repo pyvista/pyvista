@@ -23,11 +23,11 @@ def _coerce_pointslike_arg(
 
     Returns
     -------
-    points : np.ndarray
+    np.ndarray
         Size (n, 3) array.
-    singular : bool
-        Whether the input array was a single point. This excludes an array with
-        length 1.
+    bool
+        Whether the input was a single point in an array-like with shape (3,).
+    
     """
     if isinstance(points, collections.abc.Sequence):
         points = np.asarray(points)
