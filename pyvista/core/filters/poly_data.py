@@ -1159,6 +1159,9 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True, line_width=3)
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+
         subfilter = subfilter.lower()
         if subfilter == 'linear':
             sfilter = _vtk.vtkLinearSubdivisionFilter()
@@ -1265,6 +1268,9 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True)
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
         if max_edge_len:
             sfilter.SetMaximumEdgeLength(max_edge_len)
