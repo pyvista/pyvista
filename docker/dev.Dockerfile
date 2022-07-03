@@ -2,7 +2,7 @@ FROM gitpod/workspace-full
 LABEL maintainer="PyVista Developers"
 LABEL repo="https://github.com/pyvista/pyvista"
 
-RUN apt-get install  -yq --no-install-recommends \
+RUN sudo apt-get install  -yq --no-install-recommends \
     libosmesa6
 
 RUN pip install --no-cache-dir https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
