@@ -1,4 +1,4 @@
-FROM gitpod/workspace-full:2022-05-08-14-31-53
+FROM gitpod/workspace-full
 LABEL maintainer="PyVista Developers"
 LABEL repo="https://github.com/pyvista/pyvista"
 
