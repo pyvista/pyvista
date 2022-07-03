@@ -968,6 +968,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`decimate_example` for more examples using this filter.
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+
         alg = _vtk.vtkDecimatePro()
         alg.SetInputData(self)
         alg.SetTargetReduction(reduction)
@@ -1400,6 +1403,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`decimate_example` for more examples using this filter.
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
 
@@ -2092,7 +2098,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError
+            raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
             import pyembree  # noqa
