@@ -413,6 +413,8 @@ if VTK9:
         vtkCamera,
         vtkCellPicker,
         vtkColorTransferFunction,
+        vtkCompositeDataDisplayAttributes,
+        vtkCompositePolyDataMapper,
         vtkCoordinate,
         vtkDataSetMapper,
         vtkImageActor,
@@ -443,6 +445,7 @@ if VTK9:
     from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
+        vtkCompositePolyDataMapper2,
         vtkEDLShading,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,

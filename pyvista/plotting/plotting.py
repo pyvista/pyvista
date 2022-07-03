@@ -33,7 +33,9 @@ from pyvista.utilities import (
 from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
+from ._property import Property
 from .colors import Color, get_cmap_safe
+from .composite_mapper import CompositeMapper
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
@@ -1760,6 +1762,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if force_redraw:
             self.render()
 
+    def add_composite(self, dataset, color=None):
+        """Add a composite dataset to the plotter."""
+        if not isinstance(dataset, _vtk.vtkCompositeDataSet):
+            raise TypeError(f'Invalid type ({type(dataset)}). Must be a Composite dataset.')
+        self.mapper = CompositeMapper(dataset)
+        actor, prop = self.add_actor(self.mapper)
+
+        if color is True:
+            color = self._theme.color
+
+        return actor, prop, self.mapper
+
     def add_mesh(
         self,
         mesh,
@@ -2159,14 +2173,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = scalar_bar_args.copy()
 
         # theme based parameters
-        if show_edges is None:
-            show_edges = self._theme.show_edges
         if split_sharp_edges is None:
             split_sharp_edges = self._theme.split_sharp_edges
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar
-        if lighting is None:
-            lighting = self._theme.lighting
         feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
 
         if smooth_shading is None:
@@ -2346,9 +2356,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.InterpolateScalarsBeforeMappingOn()
 
         actor = _vtk.vtkActor()
-        prop = _vtk.vtkProperty()
         actor.SetMapper(self.mapper)
-        actor.SetProperty(prop)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -2433,57 +2441,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._added_scalars.append((mesh, added_scalar_info))
 
         # Set actor properties ================================================
-
-        # select view style
-        if not style:
-            style = 'surface'
-        style = style.lower()
-        if style == 'wireframe':
-            prop.SetRepresentationToWireframe()
-            if color is None:
-                color = self._theme.outline_color
-        elif style == 'points':
-            prop.SetRepresentationToPoints()
-        elif style == 'surface':
-            prop.SetRepresentationToSurface()
-        else:
-            raise ValueError(
-                'Invalid style.  Must be one of the following:\n'
-                '\t"surface"\n'
-                '\t"wireframe"\n'
-                '\t"points"\n'
-            )
-
-        prop.SetPointSize(point_size)
-        prop.SetAmbient(ambient)
-        prop.SetDiffuse(diffuse)
-        prop.SetSpecular(specular)
-        prop.SetSpecularPower(specular_power)
-
         if pbr:
-            if not _vtk.VTK9:  # pragma: no cover
-                raise RuntimeError('Physically based rendering requires VTK 9 ' 'or newer')
-            prop.SetInterpolationToPBR()
-            prop.SetMetallic(metallic)
-            prop.SetRoughness(roughness)
+            interpolation = 'Physically based rendering'
         elif smooth_shading:
-            prop.SetInterpolationToPhong()
+            interpolation = 'Phong'
         else:
-            prop.SetInterpolationToFlat()
-        # edge display style
-        if show_edges:
-            prop.EdgeVisibilityOn()
+            interpolation = 'Flat'
 
-        rgb_color = Color(color, default_color=self._theme.color)
-        prop.SetColor(rgb_color.float_rgb)
+        prop = Property(
+            self._theme,
+            interpolation=interpolation,
+            metallic=metallic,
+            roughness=roughness,
+            point_size=point_size,
+            ambient=ambient,
+            diffuse=diffuse,
+            specular=specular,
+            specular_power=specular_power,
+            show_edges=show_edges,
+            color=color,
+            style=style,
+            edge_color=edge_color,
+            render_points_as_spheres=render_points_as_spheres,
+            render_lines_as_tubes=render_lines_as_tubes,
+            lighting=lighting,
+            line_width=line_width,
+        )
         if isinstance(opacity, (float, int)):
-            prop.SetOpacity(opacity)
-        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
-
-        if render_points_as_spheres:
-            prop.SetRenderPointsAsSpheres(render_points_as_spheres)
-        if render_lines_as_tubes:
-            prop.SetRenderLinesAsTubes(render_lines_as_tubes)
+            prop.opacity = opacity
+        actor.SetProperty(prop)
 
         # legend label
         if label:
@@ -2495,15 +2481,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 rgb_color = Color('black')
             geom.points -= geom.center
             addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [geom, label, rgb_color]
-
-        # lighting display style
-        if not lighting:
-            prop.LightingOff()
-
-        # set line thickness
-        if line_width:
-            prop.SetLineWidth(line_width)
+            self.renderer._labels[addr] = [geom, label, prop.color]
 
         self.add_actor(
             actor,

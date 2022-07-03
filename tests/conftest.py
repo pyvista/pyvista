@@ -97,6 +97,16 @@ def datasets():
 
 
 @fixture()
+def multiblock(airplane, sphere, cube):
+    """Return a multiblock with three polydata."""
+    mblock = pyvista.MultiBlock()
+    mblock.append(airplane)
+    mblock.append(sphere)
+    mblock.append(cube)
+    return mblock
+
+
+@fixture()
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
