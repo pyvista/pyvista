@@ -1,0 +1,44 @@
+image:
+  file: docker/dev-gitpod.Dockerfile
+
+# --------------------------------------------------------
+# exposing ports for liveserve
+ports:
+  - port: 5500
+    onOpen: notify
+
+vscode:
+  extensions:
+    - ms-python.python
+    - ritwickdey.liveserver
+
+tasks:
+  - init: |
+      # this needs to be a proj var
+      export PRE_COMMIT_HOME=/workspace/.precommit
+      [ ! -d venv ] && python -m venv venv
+      source venv/bin/activate
+      pip install --no-cache-dir https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
+      pip install --no-cache-dir -r requirements_test.txt
+      pip install --no-cache-dir -r requirements_docs.txt
+      pip install --no-cache-dir pre-commit
+      pre-commit install --install-hooks
+      pip install -e .
+      make -C doc html
+
+github:
+  prebuilds:
+    # enable for the default branch (defaults to true)
+    master: true
+    # enable for all branches in this repo (defaults to false)
+    branches: true
+    # enable for pull requests coming from this repo (defaults to true)
+    pullRequests: true
+    # enable for pull requests coming from forks (defaults to false)
+    pullRequestsFromForks: false
+    # add a check to pull requests (defaults to true)
+    addCheck: false
+    # add a "Review in Gitpod" button as a comment to pull requests (defaults to false)
+    addComment: false
+    # add a "Review in Gitpod" button to the pull request's description (defaults to false)
+    addBadge: false
