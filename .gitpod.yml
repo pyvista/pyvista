@@ -5,5 +5,6 @@ tasks:
   - init: |
       pip install -e .
       pip install -r requirements_test.txt
+      pip install -r requirements_docs.txt
       pip install pre-commit
       pre-commit install --install-hooks
