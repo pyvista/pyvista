@@ -5,6 +5,7 @@ image:
   file: docker/dev.Dockerfile
 
 tasks:
-  - init: pip install -e .
-
+  - init: |
+    pip install -e .
+    pip install -r requirements.txt
 
