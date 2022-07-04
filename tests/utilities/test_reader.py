@@ -818,6 +818,7 @@ def test_hdf_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
     assert mesh.n_points == 6724
     assert 'VEL' in mesh.point_data
     assert mesh.n_cells == 4800
