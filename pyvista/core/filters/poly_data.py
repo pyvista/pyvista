@@ -2097,7 +2097,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not self.is_all_triangles:
+        if not self.is_all_triangles:  # pragma: no cover
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
