@@ -2617,7 +2617,7 @@ class DataSet(DataSetFilters, DataObject):
         if not 0 <= ind < self.n_cells:
             raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
 
-        point, singular = _coerce_pointslike_arg(point, copy=False)
+        co_point, singular = _coerce_pointslike_arg(point, copy=False)
 
         cell = self.GetCell(ind)
         npoints = cell.GetPoints().GetNumberOfPoints()
@@ -2628,12 +2628,15 @@ class DataSet(DataSetFilters, DataObject):
         dist2 = _vtk.mutable(0.0)
         weights = [0.0] * npoints
 
-        in_cell = np.array(
-            [
-                bool(cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights))
-                for node in point
-            ]
-        )
+        in_cell = np.empty(shape=co_point.shape[0], dtype=np.bool_)
+        for i, node in enumerate(co_point):
+            is_inside = cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights)
+            if not 0 <= is_inside <= 1:
+                raise RuntimeError(
+                    f"Computational difficulty encountered for point {node} in cell {ind}"
+                )
+            in_cell[i] = bool(is_inside)
+
         if singular:
             return in_cell[0]
         return in_cell
