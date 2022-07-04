@@ -2040,7 +2040,9 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection_points, intersection_cells
 
-    def multi_ray_trace(self, origins, directions, first_point=False, retry=False):
+    def multi_ray_trace(
+        self, origins, directions, first_point=False, retry=False
+    ):  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -2097,7 +2099,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not self.is_all_triangles:  # pragma: no cover
+        if not self.is_all_triangles:
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
