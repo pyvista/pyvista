@@ -1,13 +1,13 @@
 import pytest
 
 import pyvista
-from pyvista.plotting.composite_mapper import CompositeMapper
+from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 
 
 @pytest.fixture()
 def composite_mapper(multiblock):
     pl = pyvista.Plotter()
-    actor, prop, mapper = pl.add_composite(multiblock)
+    actor, mapper = pl.add_composite(multiblock)
     return mapper
 
 
@@ -22,7 +22,7 @@ def block_attr(block_attributes):
 
 
 def test_basic_mapper(composite_mapper):
-    assert isinstance(composite_mapper, CompositeMapper)
+    assert isinstance(composite_mapper, CompositePolyDataMapper)
 
 
 def test_block_attr(block_attributes):
@@ -84,3 +84,31 @@ def test_attr_repr(block_attr):
     assert 'False' in repr_
     assert '1.0' in repr_
     assert '0.9' in repr_
+
+
+def test_block_attributes(block_attributes):
+    color = (1.0, 1.0, 1.0)
+    pickable = False
+    opacity = 0.5
+    visible = False
+    block_attributes[0].color = color
+    block_attributes[0].pickable = pickable
+    block_attributes[0].opacity = opacity
+    block_attributes[0].visible = visible
+
+    assert block_attributes[0].color == color
+    assert block_attributes[0].pickable == pickable
+    assert block_attributes[0].opacity == opacity
+    assert block_attributes[0].visible == visible
+
+    block_attributes.reset_colors()
+    assert block_attributes[0].color is None
+
+    block_attributes.reset_pickability()
+    assert block_attributes[0].pickable is None
+
+    block_attributes.reset_opacities()
+    assert block_attributes[0].opacity is None
+
+    block_attributes.reset_visibilities()
+    assert block_attributes[0].visible is None

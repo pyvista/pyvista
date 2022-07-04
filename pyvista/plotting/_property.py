@@ -1,4 +1,5 @@
 """This module contains the Property class."""
+import pyvista
 from pyvista import _vtk
 
 from .colors import Color
@@ -9,7 +10,7 @@ class Property(_vtk.vtkProperty):
 
     def __init__(
         self,
-        theme,
+        theme=None,
         interpolation=None,
         color=None,
         style=None,
@@ -27,26 +28,49 @@ class Property(_vtk.vtkProperty):
         render_lines_as_tubes=None,
         lighting=None,
         line_width=None,
+        culling=None,
     ):
         """Initialize this property."""
-        self._theme = theme
+        self._theme = pyvista.themes.DefaultTheme()
+        if theme is None:
+            # copy global theme to ensure local property theme is fixed
+            # after creation.
+            self._theme.load_theme(pyvista.global_theme)
+        else:
+            if not isinstance(theme, pyvista.themes.DefaultTheme):
+                raise TypeError(
+                    'Expected ``pyvista.themes.DefaultTheme`` for '
+                    f'``theme``, not {type(theme).__name__}.'
+                )
+            self._theme.load_theme(theme)
+
         self.interpolation = interpolation
         self.color = color
         self.style = style
-        self.metallic = metallic
-        self.roughness = roughness
+        if metallic is not None:
+            self.metallic = metallic
+        if roughness is not None:
+            self.roughness = roughness
         self.point_size = point_size
-        self.opacity = opacity
-        self.ambient = ambient
-        self.diffuse = diffuse
-        self.specular = specular
-        self.specular_power = specular_power
+        if opacity is not None:
+            self.opacity = opacity
+        if ambient is not None:
+            self.ambient = ambient
+        if diffuse is not None:
+            self.diffuse = diffuse
+        if specular is not None:
+            self.specular = specular
+        if specular_power is not None:
+            self.specular_power = specular_power
         self.show_edges = show_edges
         self.edge_color = edge_color
         self.render_points_as_spheres = render_points_as_spheres
         self.render_lines_as_tubes = render_lines_as_tubes
         self.lighting = lighting
         self.line_width = line_width
+
+        if culling is not None:
+            self.culling = culling
 
     @property
     def style(self) -> str:
@@ -200,7 +224,7 @@ class Property(_vtk.vtkProperty):
             self.SetInterpolationToPhong()
         elif new_interpolation == 'Gouraud':
             self.SetInterpolationToGouraud()
-        elif new_interpolation == 'Flat':
+        elif new_interpolation == 'Flat' or new_interpolation is None:
             self.SetInterpolationToFlat()
         else:
             raise ValueError(f'Invalid interpolation "{new_interpolation}"')
@@ -248,3 +272,33 @@ class Property(_vtk.vtkProperty):
         if new_size is None:
             return
         self.SetPointSize(new_size)
+
+    @property
+    def culling(self):
+        """Return or set face culling."""
+        if self.BackfaceCullingOn():
+            return 'back'
+        elif self.FrontfaceCullingOn():
+            return 'front'
+        return
+
+    @culling.setter
+    def culling(self, value):
+        if isinstance(value, str):
+            value = value.lower()
+
+        if value in [True, 'back', 'backface', 'b']:
+            try:
+                self.BackfaceCullingOn()
+            except AttributeError:  # pragma: no cover
+                pass
+        elif value in ['front', 'frontface', 'f']:
+            try:
+                self.FrontfaceCullingOn()
+            except AttributeError:  # pragma: no cover
+                pass
+        else:
+            raise ValueError(
+                f'Culling option ({value}) not understood. Should be either:\n'
+                'True, "back", "backface", "b", "front", "frontface", or "f"'
+            )

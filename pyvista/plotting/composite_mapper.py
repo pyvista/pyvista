@@ -12,13 +12,8 @@ class _BlockAttributes:
 
     def __init__(self, block, attr):
         """Initialize the block attributes class."""
-        self.__block = weakref.ref(block)
+        self._block = block
         self.__attr = weakref.ref(attr)
-
-    @property
-    def _block(self):
-        """Return the block."""
-        return self.__block()
 
     @property
     def _attr(self):
@@ -134,10 +129,9 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         """Initialize CompositeAttributes."""
         super().__init__()
         mapper.SetCompositeDataDisplayAttributes(self)
-        # self._mapper = weakref.proxy(mapper)
         self._dataset = dataset
 
-    def reset_visibility(self):
+    def reset_visibilities(self):
         """Reset the visibility of all blocks."""
         self.RemoveBlockVisibilities()
 
@@ -145,10 +139,18 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         """Reset the pickability of all blocks."""
         self.RemoveBlockPickabilities()
 
+    def reset_colors(self):
+        """Reset the color of all blocks."""
+        self.RemoveBlockColors()
+
+    def reset_opacities(self):
+        """Reset the opacities of all blocks."""
+        self.RemoveBlockOpacities()
+
     def __getitem__(self, index):
         """Return a block by its flat index."""
         try:
-            block = self._dataset.GetBlock(index)
+            block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
         if block is None:
@@ -162,7 +164,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         return len(self._dataset)
 
 
-class CompositeMapper(_vtk.vtkCompositePolyDataMapper2):
+class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     """Wrap vtkCompositePolyDataMapper2."""
 
     def __init__(self, dataset):
@@ -178,3 +180,17 @@ class CompositeMapper(_vtk.vtkCompositePolyDataMapper2):
     def block_attr(self):
         """Return the block attributes."""
         return self._attr
+
+    @property
+    def color_missing_with_nan(self) -> bool:
+        """Color missing arrays with the NaN color."""
+        return self.GetColorMissingArraysWithNanColor()
+
+    @color_missing_with_nan.setter
+    def color_missing_with_nan(self, value: bool):
+        self.SetColorMissingArraysWithNanColor(value)
+
+    @property
+    def lookup_table(self):
+        """Return the lookup table."""
+        return self.GetLookupTable()

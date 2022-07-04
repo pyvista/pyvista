@@ -35,7 +35,7 @@ from ..utilities.regression import image_from_window
 from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
 from ._property import Property
 from .colors import Color, get_cmap_safe
-from .composite_mapper import CompositeMapper
+from .composite_mapper import CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
@@ -1762,17 +1762,137 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if force_redraw:
             self.render()
 
-    def add_composite(self, dataset, color=None):
+    def add_composite(
+        self,
+        dataset,
+        color=None,
+        style=None,
+        scalars=None,
+        clim=None,
+        show_edges=None,
+        edge_color=None,
+        point_size=5.0,
+        line_width=None,
+        opacity=1.0,
+        # flip_scalars=False,
+        lighting=None,
+        n_colors=16,
+        interpolate_before_map=True,
+        cmap=None,
+        # label=None,
+        reset_camera=None,
+        # scalar_bar_args=None,
+        # show_scalar_bar=None,
+        # multi_colors=False,
+        name=None,
+        # texture=None,
+        render_points_as_spheres=None,
+        render_lines_as_tubes=False,
+        smooth_shading=None,
+        # split_sharp_edges=None,
+        ambient=0.0,
+        diffuse=1.0,
+        specular=0.0,
+        specular_power=100.0,
+        nan_color=None,
+        nan_opacity=1.0,
+        culling=None,
+        rgb=None,
+        # categories=False,
+        # silhouette=False,
+        # use_transparency=False,
+        below_color=None,
+        above_color=None,
+        # annotations=None,
+        pickable=True,
+        # preference="point",
+        # log_scale=False,
+        pbr=False,
+        metallic=0.0,
+        roughness=0.5,
+        render=True,
+        # component=None,
+        color_missing_with_nan=False,
+    ):
         """Add a composite dataset to the plotter."""
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
             raise TypeError(f'Invalid type ({type(dataset)}). Must be a Composite dataset.')
-        self.mapper = CompositeMapper(dataset)
-        actor, prop = self.add_actor(self.mapper)
+        self.mapper = CompositePolyDataMapper(dataset)
+        self.mapper.color_missing_with_nan = True
 
-        if color is True:
-            color = self._theme.color
+        actor, _ = self.add_actor(self.mapper)
 
-        return actor, prop, self.mapper
+        if pbr:
+            interpolation = 'Physically based rendering'
+        elif smooth_shading:
+            interpolation = 'Phong'
+        else:
+            interpolation = 'Flat'
+
+        prop = Property(
+            self._theme,
+            interpolation=interpolation,
+            metallic=metallic,
+            roughness=roughness,
+            point_size=point_size,
+            ambient=ambient,
+            diffuse=diffuse,
+            specular=specular,
+            specular_power=specular_power,
+            show_edges=show_edges,
+            color=color,
+            style=style,
+            edge_color=edge_color,
+            render_points_as_spheres=render_points_as_spheres,
+            render_lines_as_tubes=render_lines_as_tubes,
+            lighting=lighting,
+            line_width=line_width,
+            opacity=opacity,
+            culling=culling,
+        )
+        actor.SetProperty(prop)
+
+        if name is None:
+            name = f'{type(dataset).__name__}({dataset.memory_address})'
+
+        table = self.mapper.lookup_table
+        nan_color = Color(
+            nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
+        )
+        table.SetNanColor(nan_color.float_rgba)
+
+        if color is not None:
+            self.mapper.SetScalarModeToUseFieldData()
+        elif rgb:
+            self.mapper.SetColorModeToDirectScalars()
+        else:
+            if interpolate_before_map:
+                self.mapper.InterpolateScalarsBeforeMappingOn()
+
+            table.SetNumberOfTableValues(n_colors)
+            if above_color:
+                table.SetUseAboveRangeColor(True)
+                table.SetAboveRangeColor(*Color(above_color).float_rgba)
+                # scalar_bar_args.setdefault('above_label', 'Above')
+            if below_color:
+                table.SetUseBelowRangeColor(True)
+                table.SetBelowRangeColor(*Color(below_color).float_rgba)
+                # scalar_bar_args.setdefault('below_label', 'Below')
+
+            if clim is None:
+                clim = dataset.get_data_range(scalars)
+            if clim is not None:
+                self.mapper.SetScalarRange(*clim)
+
+        self.add_actor(
+            actor,
+            reset_camera=reset_camera,
+            name=name,
+            pickable=pickable,
+            render=render,
+        )
+
+        return actor, self.mapper
 
     def add_mesh(
         self,
@@ -2206,9 +2326,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if texture is False:
             texture = None
 
-        if culling is True:
-            culling = 'backface'
-
         rgb = kwargs.pop('rgba', rgb)
 
         # account for legacy behavior
@@ -2466,6 +2583,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             render_lines_as_tubes=render_lines_as_tubes,
             lighting=lighting,
             line_width=line_width,
+            culling=culling,
         )
         if isinstance(opacity, (float, int)):
             prop.opacity = opacity
@@ -2487,7 +2605,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             actor,
             reset_camera=reset_camera,
             name=name,
-            culling=culling,
             pickable=pickable,
             render=render,
         )
