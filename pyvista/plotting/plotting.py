@@ -30,9 +30,15 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, PyvistaEfficiencyWarning, uses_egl
+from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
 from ..utilities.regression import image_from_window
-from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
+from ._plotting import (
+    USE_SCALAR_BAR_ARGS,
+    _common_arg_parser,
+    _has_matplotlib,
+    prepare_smooth_shading,
+    process_opacity,
+)
 from ._property import Property
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
@@ -120,16 +126,6 @@ def _warn_xserver():  # pragma: no cover
             'Try starting a virtual frame buffer with xvfb, or using\n '
             ' ``pyvista.start_xvfb()``\n'
         )
-
-
-USE_SCALAR_BAR_ARGS = """
-"stitle" is a depreciated keyword and will be removed in a future
-release.
-
-Use ``scalar_bar_args`` instead.  For example:
-
-scalar_bar_args={'title': 'Scalar Bar Title'}
-"""
 
 
 @abstract_class
@@ -1788,7 +1784,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render_points_as_spheres=None,
         render_lines_as_tubes=False,
         smooth_shading=None,
-        # split_sharp_edges=None,
+        split_sharp_edges=None,
         ambient=0.0,
         diffuse=1.0,
         specular=0.0,
@@ -1808,43 +1804,51 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color_missing_with_nan=False,
         **kwargs,
     ):
-        """Add a composite dataset to the plotter.
-
-        Notes
-        -----
-        If any of the datasets within the composite dataset are not
-        :class:`pyvista.PolyData`, the external surface will be extracted and
-        used instead of the non-surface dataset. This will emit a
-        ``PyvistaEfficiencyWarning``.
-
-        """
-        # optional
-        feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
-        # supported aliases
-        clim = kwargs.pop('rng', clim)
-        cmap = kwargs.pop('colormap', cmap)
-        culling = kwargs.pop("backface_culling", culling)
-        assert_empty_kwargs(**kwargs)
-
+        """Add a composite dataset to the plotter."""
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
             raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
+        # always convert
+        dataset = dataset.as_polydata()
+        self.mesh = dataset  # legacy
 
-        # we make a shallow copy here to avoid modifying the original dataset
-        # in the case of non-polydata datasets
-        dataset = dataset.copy(deep=False)
-
-        for i, block in enumerate(dataset):
-            if not isinstance(block, pyvista.PolyData):
-                warnings.warn(
-                    'Non-PolyData datasets found within the composite dataset. '
-                    'The external surface has been extracted from these datasets and '
-                    'this is inefficient.',
-                    PyvistaEfficiencyWarning,
-                )
-                if block is not None:
-                    dataset[i] = block.extract_surface()
-                else:
-                    dataset[i] = pyvista.PolyData()
+        # Parse arguments
+        (
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            feature_angle,
+            render_points_as_spheres,
+            smooth_shading,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            color,
+            texture,
+            rgb,
+            interpolation,
+        ) = _common_arg_parser(
+            dataset,
+            self._theme,
+            n_colors,
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            render_points_as_spheres,
+            smooth_shading,
+            pbr,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            nan_opacity,
+            color,
+            None,
+            rgb,
+            **kwargs,
+        )
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -1860,13 +1864,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         actor, _ = self.add_actor(self.mapper)
-
-        if pbr:
-            interpolation = 'Physically based rendering'
-        elif smooth_shading:
-            interpolation = 'Phong'
-        else:
-            interpolation = 'Flat'
 
         prop = Property(
             self._theme,
@@ -1891,17 +1888,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
         actor.SetProperty(prop)
 
-        # Avoid mutating input
-        if scalar_bar_args is None:
-            scalar_bar_args = {'n_colors': n_colors}
-        else:
-            scalar_bar_args = scalar_bar_args.copy()
-
         if label is not None:
             self._add_legend_label(actor, label, None, prop.color)
-
-        if name is None:
-            name = f'{type(dataset).__name__}({dataset.memory_address})'
 
         if color is not None:
             self.mapper.ScalarVisibilityOff()
@@ -1927,9 +1915,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetColorModeToDirectScalars()
         else:
             table = self.mapper.lookup_table
-            nan_color = Color(
-                nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
-            )
             table.SetNanColor(nan_color.float_rgba)
 
             if interpolate_before_map:
@@ -1950,7 +1935,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise TypeError(
                         '`scalars` must be a string for `add_composite`, not ' f'({type(scalars)})'
                     )
-                dataset.set_active_scalars(scalars, preference, allow_missing=True)
+                field = dataset.set_active_scalars(scalars, preference, allow_missing=True)
+                if field.name == "POINT":
+                    self.mapper.SetScalarModeToUsePointData()
+                else:
+                    self.mapper.SetScalarModeToUseCellData()
+                scalar_bar_args.setdefault('title', scalars)
 
             if clim is None:
                 clim = dataset.get_data_range(scalars, allow_missing=True)
@@ -1967,6 +1957,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(_vtk.numpy_to_vtk(ctable))
+
+            # Only show scalar bar if there are scalars
+            if show_scalar_bar and scalars is not None:
+                self.add_scalar_bar(**scalar_bar_args)
 
         self.add_actor(
             actor,
@@ -2367,141 +2361,90 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # cast to PointSet to PolyData
         if isinstance(mesh, pyvista.PointSet):
             mesh = mesh.cast_to_polydata(deep=False)
-
-        ##### Parse arguments to be used for all meshes #####
-
-        # Avoid mutating input
-        if scalar_bar_args is None:
-            scalar_bar_args = {'n_colors': n_colors}
-        else:
-            scalar_bar_args = scalar_bar_args.copy()
-
-        # theme based parameters
-        if split_sharp_edges is None:
-            split_sharp_edges = self._theme.split_sharp_edges
-        if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar
-        feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
-
-        if smooth_shading is None:
-            if pbr:
-                smooth_shading = True
-            else:
-                smooth_shading = self._theme.smooth_shading
-
-        # supported aliases
-        clim = kwargs.pop('rng', clim)
-        cmap = kwargs.pop('colormap', cmap)
-        culling = kwargs.pop("backface_culling", culling)
-
-        if render_points_as_spheres is None:
-            render_points_as_spheres = self._theme.render_points_as_spheres
-
-        if name is None:
-            name = f'{type(mesh).__name__}({mesh.memory_address})'
-
-        nan_color = Color(
-            nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
-        )
-
-        if color is True:
-            color = self._theme.color
-
-        if texture is False:
-            texture = None
-
-        rgb = kwargs.pop('rgba', rgb)
-
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
-        if "scalar" in kwargs:
-            raise TypeError(
-                "`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?"
+        elif isinstance(mesh, pyvista.MultiBlock):
+            return self.add_composite(
+                mesh,
+                color=color,
+                style=style,
+                scalars=scalars,
+                clim=clim,
+                show_edges=show_edges,
+                edge_color=edge_color,
+                point_size=point_size,
+                line_width=line_width,
+                opacity=opacity,
+                flip_scalars=flip_scalars,
+                lighting=lighting,
+                n_colors=n_colors,
+                interpolate_before_map=interpolate_before_map,
+                cmap=cmap,
+                label=label,
+                reset_camera=reset_camera,
+                scalar_bar_args=scalar_bar_args,
+                show_scalar_bar=show_scalar_bar,
+                multi_colors=multi_colors,
+                name=name,
+                render_points_as_spheres=render_points_as_spheres,
+                render_lines_as_tubes=render_lines_as_tubes,
+                smooth_shading=smooth_shading,
+                split_sharp_edges=split_sharp_edges,
+                ambient=ambient,
+                diffuse=diffuse,
+                specular=specular,
+                specular_power=specular_power,
+                nan_color=nan_color,
+                nan_opacity=nan_opacity,
+                culling=culling,
+                rgb=rgb,
+                below_color=below_color,
+                above_color=above_color,
+                pickable=pickable,
+                preference=preference,
+                pbr=pbr,
+                metallic=metallic,
+                roughness=roughness,
+                render=render,
+                **kwargs,
             )
-        assert_empty_kwargs(**kwargs)
 
-        ##### Handle composite datasets #####
-
-        if isinstance(mesh, pyvista.MultiBlock):
-            # first check the scalars
-            if clim is None and scalars is not None:
-                # Get the data range across the array for all blocks
-                # if scalars specified
-                if isinstance(scalars, str):
-                    clim = mesh.get_data_range(scalars)
-                else:
-                    # TODO: an array was given... how do we deal with
-                    #       that? Possibly a 2D arrays or list of
-                    #       arrays where first index corresponds to
-                    #       the block? This could get complicated real
-                    #       quick.
-                    raise TypeError(
-                        'scalars array must be given as a string name for multiblock datasets.'
-                    )
-
-            the_arguments = locals()
-            the_arguments.pop('self')
-            the_arguments.pop('mesh')
-            the_arguments.pop('kwargs')
-
-            if multi_colors:
-                # Compute unique colors for each index of the block
-                if _has_matplotlib():
-                    from itertools import cycle
-
-                    import matplotlib
-
-                    cycler = matplotlib.rcParams['axes.prop_cycle']
-                    colors = cycle(cycler)
-                else:
-                    multi_colors = False
-                    logging.warning('Please install matplotlib for color cycles')
-
-            # Now iteratively plot each element of the multiblock dataset
-            actors = []
-            for idx in range(mesh.GetNumberOfBlocks()):
-                if mesh[idx] is None:
-                    continue
-                # Get a good name to use
-                next_name = f'{name}-{idx}'
-                # Get the data object
-                if not is_pyvista_dataset(mesh[idx]):
-                    data = wrap(mesh.GetBlock(idx))
-                    if not is_pyvista_dataset(mesh[idx]):
-                        continue  # move on if we can't plot it
-                else:
-                    data = mesh.GetBlock(idx)
-                if data is None or (not isinstance(data, pyvista.MultiBlock) and data.n_points < 1):
-                    # Note that a block can exist but be None type
-                    # or it could have zeros points (be empty) after filtering
-                    continue
-                # Now check that scalars is available for this dataset
-                if isinstance(data, _vtk.vtkMultiBlockDataSet) or get_array(data, scalars) is None:
-                    ts = None
-                else:
-                    ts = scalars
-                if multi_colors:
-                    color = next(colors)['color']
-
-                ## Add to the scene
-                the_arguments['color'] = color
-                the_arguments['scalars'] = ts
-                the_arguments['name'] = next_name
-                the_arguments['texture'] = None
-                a = self.add_mesh(data, **the_arguments)
-                actors.append(a)
-
-                if (reset_camera is None and not self.camera_set) or reset_camera:
-                    cpos = self.get_default_cam_pos()
-                    self.camera_position = cpos
-                    self.camera_set = False
-                    self.reset_camera()
-            return actors
-
-        ##### Plot a single PyVista mesh #####
+        # Parse arguments
+        (
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            feature_angle,
+            render_points_as_spheres,
+            smooth_shading,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            color,
+            texture,
+            rgb,
+            interpolation,
+        ) = _common_arg_parser(
+            mesh,
+            self._theme,
+            n_colors,
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            render_points_as_spheres,
+            smooth_shading,
+            pbr,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            nan_opacity,
+            color,
+            texture,
+            rgb,
+            **kwargs,
+        )
 
         if silhouette:
             if isinstance(silhouette, dict):
@@ -2642,13 +2585,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._added_scalars.append((mesh, added_scalar_info))
 
         # Set actor properties ================================================
-        if pbr:
-            interpolation = 'Physically based rendering'
-        elif smooth_shading:
-            interpolation = 'Phong'
-        else:
-            interpolation = 'Flat'
-
         prop = Property(
             self._theme,
             interpolation=interpolation,

@@ -550,3 +550,50 @@ def test_set_active_scalars(multiblock_all):
 
     with pytest.raises(KeyError, match='is missing from all'):
         multiblock_all.set_active_scalars('does not exist', allow_missing=True)
+
+
+def test_set_active_scalars_multi(multiblock_poly):
+    multiblock_poly.set_active_scalars(None)
+
+    block = multiblock_poly[0]
+    block.point_data.set_array(range(block.n_points), 'data')
+    block.cell_data.set_array(range(block.n_cells), 'data')
+
+    block = multiblock_poly[1]
+    block.point_data.set_array(range(block.n_points), 'data')
+
+    multiblock_poly.set_active_scalars('data', preference='point', allow_missing=True)
+    for block in multiblock_poly:
+        if 'data' in block.point_data:
+            assert block.point_data.active_scalars_name == 'data'
+        else:
+            assert block.point_data.active_scalars_name is None
+
+    multiblock_poly.set_active_scalars('data', preference='cell', allow_missing=True)
+    for block in multiblock_poly:
+        if 'data' in block.cell_data:
+            assert block.cell_data.active_scalars_name == 'data'
+        else:
+            assert block.cell_data.active_scalars_name is None
+
+
+def test_to_polydata(multiblock_all):
+    assert not multiblock_all.is_all_polydata()
+
+    dataset_a = multiblock_all.as_polydata()
+    assert dataset_a.is_all_polydata()
+
+    # verify nested works
+    nested_mblock = pyvista.MultiBlock([multiblock_all, multiblock_all])
+    dataset_b = nested_mblock.as_polydata()
+    assert dataset_b.is_all_polydata()
+
+
+def test_compute_normals(multiblock_poly):
+    for block in multiblock_poly:
+        block.clear_data()
+        block['point_data'] = range(block.n_points)
+    mblock = multiblock_poly._compute_normals(cell_normals=False)
+    for block in mblock:
+        assert 'Normals' in block.point_data
+        assert 'point_data' in block.point_data

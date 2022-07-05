@@ -215,3 +215,22 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     @lookup_table.setter
     def lookup_table(self, table):
         return self.SetLookupTable(table)
+
+    @property
+    def scalar_range(self):
+        """Return or set the scalar range."""
+        return self.GetScalarRange()
+
+    @scalar_range.setter
+    def scalar_range(self, clim):
+        self.SetScalarRange(*clim)
+        if self.lookup_table is not None:
+            self.lookup_table.SetRange(*clim)
+        self._scalar_range = clim
+
+    def scalar_visibility(self):
+        """Return or set the scalar visibility."""
+
+    def set_scalars(self):
+        """Set the scalars of the mapper."""
+        pass

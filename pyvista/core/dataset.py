@@ -641,6 +641,11 @@ class DataSet(DataSetFilters, DataObject):
             points or cells, it will prioritize an array matching this
             type.  Can be either ``'cell'`` or ``'point'``.
 
+        Returns
+        -------
+        pyvista.FieldAssociation
+            Association of the scalars matching ``name``.
+
         """
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
@@ -668,6 +673,8 @@ class DataSet(DataSetFilters, DataObject):
             )
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
+
+        return field
 
     def set_active_vectors(self, name: Optional[str], preference='point'):
         """Find the vectors by name and appropriately sets it as active.

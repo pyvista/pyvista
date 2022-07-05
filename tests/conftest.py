@@ -102,9 +102,11 @@ def multiblock_poly():
     mesh_a = pyvista.Sphere(center=(0, 0, 0))
     mesh_a['data_a'] = mesh_a.points[:, 0] * 10
     mesh_a['data_b'] = mesh_a.points[:, 1] * 10
+    mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
     mesh_b = pyvista.Sphere(center=(1, 0, 0))
     mesh_b['data_a'] = mesh_b.points[:, 0] * 10
     mesh_b['data_b'] = mesh_b.points[:, 1] * 10
+    mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
     mesh_c = pyvista.Sphere(center=(2, 0, 0))
 
     mblock = pyvista.MultiBlock()

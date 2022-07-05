@@ -83,12 +83,12 @@ def make_mapper(mapper_class):
                 if _has_matplotlib():
                     cmap = theme.cmap
 
+            if not isinstance(scalars, np.ndarray):
+                scalars = np.asarray(scalars)
+
             # Set the array title for when it is added back to the mesh
             if _custom_opac:
                 scalars_name = '__custom_rgba'
-
-            if not isinstance(scalars, np.ndarray):
-                scalars = np.asarray(scalars)
 
             _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):

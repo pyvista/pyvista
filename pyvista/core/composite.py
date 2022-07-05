@@ -12,7 +12,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import is_pyvista_dataset, wrap
+from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
@@ -724,14 +724,82 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             blocks are missing the array, it will raise a ``KeyError``.
 
         """
+        fields = []
         success = False
         for block in self:
+            if not block:
+                continue
+
             try:
-                block.set_active_scalars(name, preference)  # type: ignore
+                fields.append((block.set_active_scalars(name, preference), block))
                 success = True
             except KeyError:
                 if not allow_missing:
                     raise
+                block.set_active_scalars(None, preference)
+
+        if name is None:
+            return
 
         if not success:
             raise KeyError(f'"{name}" is missing from all the blocks of this composite dataset.')
+
+        # Edge case: some or all of the blocks contain the named field, but not
+        # all of them carry the same association
+        if not any([fields[0][0] == field for field, block in fields]):
+            for field, block in fields:
+                if field.name.lower() != preference:
+                    block.set_active_scalars(None)
+            if preference == 'point':
+                field_asc = FieldAssociation.POINT
+            else:
+                field_asc = FieldAssociation.CELL
+        else:
+            field_asc = fields[0][0]
+
+        return field_asc
+
+    def as_polydata(self):
+        """Convert all the datasets in this MultiBlock to PolyData.
+
+        This will return a new `pyvista.MultiBlock` dataset.
+
+        Returns
+        --------
+        pyvista.MultiBlock
+            MultiBlock containing only PolyData datasets.
+
+        """
+        # we make a shallow copy here to avoid modifying the original dataset
+        # in the case of non-polydata datasets
+        dataset = self.copy(deep=False)
+
+        # always convert to polydata
+        for i, block in enumerate(dataset):
+            if block is not None:
+                if isinstance(block, MultiBlock):
+                    dataset[i] = block.as_polydata()
+                else:
+                    dataset[i] = block.extract_surface()
+            else:
+                # must have empty polydata within these datasets to ensure
+                # downstream filters don't work on null pointers
+                dataset[i] = pyvista.PolyData()
+
+        return dataset
+
+    def is_all_polydata(self):
+        """Return ``True`` when all the blocks are PolyData.
+
+        This method will recursively check if any internal blocks are also PolyData.
+
+        """
+        for block in self:
+            if isinstance(block, MultiBlock):
+                if not block.is_all_polydata():
+                    return False
+            else:
+                if not isinstance(block, pyvista.PolyData):
+                    return False
+
+        return True
