@@ -237,6 +237,8 @@ def plot(
     else:
         if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
             plotter.add_volume(var_item, **kwargs)
+        elif isinstance(var_item, pyvista.MultiBlock):
+            plotter.add_composite(var_item, **kwargs)
         else:
             plotter.add_mesh(var_item, **kwargs)
 

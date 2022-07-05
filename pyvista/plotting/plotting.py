@@ -1774,18 +1774,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_size=5.0,
         line_width=None,
         opacity=1.0,
-        # flip_scalars=False,
+        flip_scalars=False,
         lighting=None,
         n_colors=16,
         interpolate_before_map=True,
         cmap=None,
-        # label=None,
+        label=None,
         reset_camera=None,
-        # scalar_bar_args=None,
-        # show_scalar_bar=None,
-        # multi_colors=False,
+        scalar_bar_args=None,
+        show_scalar_bar=None,
         name=None,
-        # texture=None,
         render_points_as_spheres=None,
         render_lines_as_tubes=False,
         smooth_shading=None,
@@ -1798,27 +1796,30 @@ class BasePlotter(PickingHelper, WidgetHelper):
         nan_opacity=1.0,
         culling=None,
         rgb=None,
-        # categories=False,
-        # silhouette=False,
-        # use_transparency=False,
         below_color=None,
         above_color=None,
-        # annotations=None,
         pickable=True,
-        # preference="point",
-        # log_scale=False,
+        preference="point",
         pbr=False,
         metallic=0.0,
         roughness=0.5,
         render=True,
-        # component=None,
         color_missing_with_nan=False,
     ):
-        """Add a composite dataset to the plotter."""
-        if not isinstance(dataset, _vtk.vtkCompositeDataSet):
-            raise TypeError(f'Invalid type ({type(dataset)}). Must be a Composite dataset.')
-        self.mapper = CompositePolyDataMapper(dataset)
-        self.mapper.color_missing_with_nan = True
+        """Add a composite dataset to the plotter.
+
+        Notes
+        -----
+        If any of the datasets within the composite dataset are not
+        :class:`pyvista.PolyData`, the external surface will be extracted and
+        used instead of the non-surface dataset. This will emit a
+        ``PyvistaEfficiencyWarning``.
+
+        """
+        self.mapper = CompositePolyDataMapper(
+            dataset,
+            color_missing_with_nan=color_missing_with_nan,
+        )
 
         actor, _ = self.add_actor(self.mapper)
 
@@ -1852,20 +1853,33 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
         actor.SetProperty(prop)
 
+        # Compute surface normals if using smooth shading
+        if smooth_shading:
+            pass
+
+        # Avoid mutating input
+        if scalar_bar_args is None:
+            scalar_bar_args = {'n_colors': n_colors}
+        else:
+            scalar_bar_args = scalar_bar_args.copy()
+
+        if label is not None:
+            self._add_legend_label(actor, label, None, prop.color)
+
         if name is None:
             name = f'{type(dataset).__name__}({dataset.memory_address})'
 
-        table = self.mapper.lookup_table
-        nan_color = Color(
-            nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
-        )
-        table.SetNanColor(nan_color.float_rgba)
-
         if color is not None:
-            self.mapper.SetScalarModeToUseFieldData()
+            self.mapper.ScalarVisibilityOff()
         elif rgb:
             self.mapper.SetColorModeToDirectScalars()
         else:
+            table = self.mapper.lookup_table
+            nan_color = Color(
+                nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
+            )
+            table.SetNanColor(nan_color.float_rgba)
+
             if interpolate_before_map:
                 self.mapper.InterpolateScalarsBeforeMappingOn()
 
@@ -1873,16 +1887,34 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if above_color:
                 table.SetUseAboveRangeColor(True)
                 table.SetAboveRangeColor(*Color(above_color).float_rgba)
-                # scalar_bar_args.setdefault('above_label', 'Above')
+                scalar_bar_args.setdefault('above_label', 'Above')
             if below_color:
                 table.SetUseBelowRangeColor(True)
                 table.SetBelowRangeColor(*Color(below_color).float_rgba)
-                # scalar_bar_args.setdefault('below_label', 'Below')
+                scalar_bar_args.setdefault('below_label', 'Below')
+
+            if scalars is not None:
+                if not isinstance(scalars, str):
+                    raise TypeError(
+                        '`scalars` must be a string for `add_composite`, not ' f'({type(scalars)})'
+                    )
+                dataset.set_active_scalars(scalars, preference, allow_missing=True)
 
             if clim is None:
-                clim = dataset.get_data_range(scalars)
+                clim = dataset.get_data_range(scalars, allow_missing=True)
             if clim is not None:
                 self.mapper.SetScalarRange(*clim)
+
+            if cmap is None:  # Set default map if matplotlib is available
+                if _has_matplotlib():
+                    cmap = self._theme.cmap
+            if cmap is not None:
+                cmap = get_cmap_safe(cmap)
+                ctable = cmap(np.linspace(0, 1, n_colors)) * 255
+                ctable = ctable.astype(np.uint8)
+                if flip_scalars:
+                    ctable = np.ascontiguousarray(ctable[::-1])
+                table.SetTable(_vtk.numpy_to_vtk(ctable))
 
         self.add_actor(
             actor,
@@ -2590,16 +2622,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         actor.SetProperty(prop)
 
         # legend label
-        if label:
-            if not isinstance(label, str):
-                raise TypeError('Label must be a string')
-            geom = pyvista.Triangle()
-            if scalars is not None:
-                geom = pyvista.Box()
-                rgb_color = Color('black')
-            geom.points -= geom.center
-            addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [geom, label, prop.color]
+        if label is not None:
+            self._add_legend_label(actor, label, scalars, prop.color)
 
         self.add_actor(
             actor,
@@ -2619,6 +2643,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.renderer.Modified()
         return actor
+
+    def _add_legend_label(self, actor, label, scalars, color):
+        """Add a legend label based on an actor and its scalars."""
+        if not isinstance(label, str):
+            raise TypeError('Label must be a string')
+        geom = pyvista.Triangle()
+        if scalars is not None:
+            geom = pyvista.Box()
+            color = Color('black')
+        geom.points -= geom.center
+        addr = actor.GetAddressAsString("")
+        self.renderer._labels[addr] = [geom, label, color]
 
     def add_volume(
         self,

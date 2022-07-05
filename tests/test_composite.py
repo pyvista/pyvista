@@ -494,3 +494,59 @@ def test_multiblock_ref():
     del cube
     block[0] = None
     assert wref_cube() is None
+
+
+def test_set_active_scalars(multiblock_all):
+    for block in multiblock_all:
+        block.clear_data()
+        block.point_data['data'] = range(block.n_points)
+        block.point_data['point_data_a'] = range(block.n_points)
+        block.point_data['point_data_b'] = range(block.n_points)
+
+        block.cell_data['data'] = range(block.n_cells)
+        block.cell_data['cell_data_a'] = range(block.n_cells)
+        block.cell_data['cell_data_b'] = range(block.n_cells)
+
+    # test none
+    multiblock_all.set_active_scalars(None)
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name is None
+        assert block.cell_data.active_scalars_name is None
+
+    # test set point_data
+    active_scalars_name = 'point_data_a'
+    multiblock_all.set_active_scalars(active_scalars_name)
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name == active_scalars_name
+
+    # test set point_data
+    active_scalars_name = 'cell_data_a'
+    multiblock_all.set_active_scalars(active_scalars_name)
+    for block in multiblock_all:
+        assert block.cell_data.active_scalars_name == active_scalars_name
+
+    # test set point_data
+    multiblock_all.set_active_scalars(None)
+    active_scalars_name = 'data'
+    multiblock_all.set_active_scalars(active_scalars_name, preference='point')
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name == active_scalars_name
+        assert block.cell_data.active_scalars_name is None
+
+    multiblock_all.set_active_scalars(None)
+    active_scalars_name = 'data'
+    multiblock_all.set_active_scalars(active_scalars_name, preference='cell')
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name is None
+        assert block.cell_data.active_scalars_name == active_scalars_name
+
+    # test partial
+    multiblock_all[0].clear_data()
+    multiblock_all.set_active_scalars(None)
+    with pytest.raises(KeyError, match='does not exist'):
+        multiblock_all.set_active_scalars('point_data_a')
+    multiblock_all.set_active_scalars('point_data_a', allow_missing=True)
+    multiblock_all[1].point_data.active_scalars_name == 'point_data_a'
+
+    with pytest.raises(KeyError, match='is missing from all'):
+        multiblock_all.set_active_scalars('does not exist', allow_missing=True)

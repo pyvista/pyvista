@@ -2,12 +2,13 @@ import pytest
 
 import pyvista
 from pyvista.plotting.composite_mapper import CompositePolyDataMapper
+from pyvista.utilities.misc import PyvistaEfficiencyWarning
 
 
 @pytest.fixture()
-def composite_mapper(multiblock):
+def composite_mapper(multiblock_poly):
     pl = pyvista.Plotter()
-    actor, mapper = pl.add_composite(multiblock)
+    actor, mapper = pl.add_composite(multiblock_poly)
     return mapper
 
 
@@ -23,6 +24,12 @@ def block_attr(block_attributes):
 
 def test_basic_mapper(composite_mapper):
     assert isinstance(composite_mapper, CompositePolyDataMapper)
+
+
+def test_composite_mapper_non_poly(multiblock_all):
+    pl = pyvista.Plotter()
+    with pytest.warns(PyvistaEfficiencyWarning):
+        actor, mapper = pl.add_composite(multiblock_all)
 
 
 def test_block_attr(block_attributes):

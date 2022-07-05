@@ -229,13 +229,16 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str) -> Tuple[float, float]:  # type: ignore
+    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
         ----------
         name : str
             Name of the array.
+
+        allow_missing : bool, optional
+            Allow a block to be missing the named array.
 
         Returns
         -------
@@ -249,7 +252,13 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             if data is None:
                 continue
             # get the scalars if available - recursive
-            tmi, tma = data.get_data_range(name)
+            try:
+                tmi, tma = data.get_data_range(name)
+            except KeyError:
+                if allow_missing:
+                    continue
+                else:
+                    raise
             if not np.isnan(tmi) and tmi < mini:
                 mini = tmi
             if not np.isnan(tma) and tma > maxi:
@@ -690,3 +699,39 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         newobject.copy_meta_from(self, deep)
         newobject.wrap_nested()
         return newobject
+
+    def set_active_scalars(
+        self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
+    ):  # type: ignore
+        """Find the scalars by name and appropriately set it as active.
+
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str or None
+            Name of the scalars array to assign as active.  If
+            ``None``, deactivates active scalars for both point and
+            cell data.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points or cells, it will prioritize an array matching this
+            type.  Can be either ``'cell'`` or ``'point'``.
+
+        allow_missing : bool, optional
+            Allow missing scalars in part of the composite dataset. If all
+            blocks are missing the array, it will raise a ``KeyError``.
+
+        """
+        success = False
+        for block in self:
+            try:
+                block.set_active_scalars(name, preference)  # type: ignore
+                success = True
+            except KeyError:
+                if not allow_missing:
+                    raise
+
+        if not success:
+            raise KeyError(f'"{name}" is missing from all the blocks of this composite dataset.')

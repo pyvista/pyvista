@@ -97,12 +97,20 @@ def datasets():
 
 
 @fixture()
-def multiblock(airplane, sphere, cube):
-    """Return a multiblock with three polydata."""
+def multiblock_poly():
+    # format and order of data (including missing) is intentional
+    mesh_a = pyvista.Sphere(center=(0, 0, 0))
+    mesh_a['data_a'] = mesh_a.points[:, 0] * 10
+    mesh_a['data_b'] = mesh_a.points[:, 1] * 10
+    mesh_b = pyvista.Sphere(center=(1, 0, 0))
+    mesh_b['data_a'] = mesh_b.points[:, 0] * 10
+    mesh_b['data_b'] = mesh_b.points[:, 1] * 10
+    mesh_c = pyvista.Sphere(center=(2, 0, 0))
+
     mblock = pyvista.MultiBlock()
-    mblock.append(airplane)
-    mblock.append(sphere)
-    mblock.append(cube)
+    mblock.append(mesh_a)
+    mblock.append(mesh_b)
+    mblock.append(mesh_c)
     return mblock
 
 
@@ -111,6 +119,12 @@ def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
+
+
+@fixture()
+def multiblock_all(datasets):
+    """Return pyvista multiblock composed of any number of datasets."""
+    return pyvista.MultiBlock(datasets)
 
 
 @fixture()

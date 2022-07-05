@@ -20,10 +20,17 @@ def _is_vtk(obj):
 
 
 @pytest.fixture(autouse=True)
-def check_gc():
+def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
     before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
     yield
+
+    # Do not check for collection if the test failed. Tests that fail also fail
+    # to cleanup their resources and this makes reading the unit test output more
+    # difficult.
+    if request.session.testsfailed:
+        return
+
     pyvista.close_all()
 
     gc.collect()

@@ -1,8 +1,10 @@
 """Module containing composite data mapper."""
 from typing import Optional
+import warnings
 import weakref
 
 from pyvista import _vtk
+from pyvista.utilities.misc import PyvistaEfficiencyWarning
 
 from .colors import Color
 
@@ -167,14 +169,37 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     """Wrap vtkCompositePolyDataMapper2."""
 
-    def __init__(self, dataset):
+    def __init__(self, dataset, color_missing_with_nan=None):
         """Initialize this composite mapper."""
+        from pyvista import PolyData  # avoid circular import
+
         super().__init__()
+
+        if not isinstance(dataset, _vtk.vtkCompositeDataSet):
+            raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
+
+        # we make a shallow copy here to avoid modifying the original dataset
+        # in the case of non-polydata datasets
+        dataset = dataset.copy(deep=False)
+
+        for i, block in enumerate(dataset):
+            if not isinstance(block, PolyData):
+                warnings.warn(
+                    'Non-PolyData datasets found within the composite dataset. '
+                    'The external surface has been extracted from these datasets and '
+                    'this is inefficient.',
+                    PyvistaEfficiencyWarning,
+                )
+                dataset[i] = block.extract_surface()
+
         self.SetInputDataObject(dataset)
 
         # this must be added to set the color, opacity, and visibility of
         # individual blocks
         self._attr = CompositeAttributes(self, dataset)
+
+        if color_missing_with_nan is not None:
+            self.color_missing_with_nan = color_missing_with_nan
 
     @property
     def block_attr(self):
@@ -192,5 +217,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def lookup_table(self):
-        """Return the lookup table."""
+        """Return or set the lookup table."""
         return self.GetLookupTable()
+
+    @lookup_table.setter
+    def lookup_table(self, table):
+        return self.SetLookupTable(table)

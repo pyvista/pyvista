@@ -2430,3 +2430,37 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_scalars(multiblock_poly):
+    pl = pyvista.Plotter()
+
+    actor, mapper = pl.add_composite(
+        multiblock_poly,
+        scalars='data_a',
+        nan_color='green',
+        color_missing_with_nan=True,
+        smooth_shading=True,
+        show_edges=True,
+        cmap='bwr',
+    )
+    mapper.block_attr[1].color = 'blue'
+    mapper.block_attr[1].opacity = 0.5
+
+    pl.camera_position = 'xy'
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_no_scalars(multiblock_poly):
+    pl = pyvista.Plotter()
+
+    actor, mapper = pl.add_composite(
+        multiblock_poly,
+        color='red',
+        lighting=False,
+    )
+    mapper.block_attr[2].color = 'blue'
+    mapper.block_attr[3].visible = False
+
+    pl.camera_position = 'xy'
+    pl.show(before_close_callback=verify_cache_image)
