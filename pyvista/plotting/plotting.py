@@ -1818,7 +1818,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ``PyvistaEfficiencyWarning``.
 
         """
+        # optional
         feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
+        # supported aliases
+        clim = kwargs.pop('rng', clim)
+        cmap = kwargs.pop('colormap', cmap)
+        culling = kwargs.pop("backface_culling", culling)
         assert_empty_kwargs(**kwargs)
 
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
