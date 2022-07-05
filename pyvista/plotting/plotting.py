@@ -30,7 +30,7 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
+from ..utilities.misc import PyvistaDeprecationWarning, PyvistaEfficiencyWarning, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
 from ._property import Property
@@ -1783,6 +1783,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
+        multi_colors=False,
         name=None,
         render_points_as_spheres=None,
         render_lines_as_tubes=False,
@@ -1805,6 +1806,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=0.5,
         render=True,
         color_missing_with_nan=False,
+        **kwargs,
     ):
         """Add a composite dataset to the plotter.
 
@@ -1816,6 +1818,37 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ``PyvistaEfficiencyWarning``.
 
         """
+        feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
+        assert_empty_kwargs(**kwargs)
+
+        if not isinstance(dataset, _vtk.vtkCompositeDataSet):
+            raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
+
+        # we make a shallow copy here to avoid modifying the original dataset
+        # in the case of non-polydata datasets
+        dataset = dataset.copy(deep=False)
+
+        for i, block in enumerate(dataset):
+            if not isinstance(block, pyvista.PolyData):
+                warnings.warn(
+                    'Non-PolyData datasets found within the composite dataset. '
+                    'The external surface has been extracted from these datasets and '
+                    'this is inefficient.',
+                    PyvistaEfficiencyWarning,
+                )
+                if block is not None:
+                    dataset[i] = block.extract_surface()
+                else:
+                    dataset[i] = pyvista.PolyData()
+
+        # Compute surface normals if using smooth shading
+        if smooth_shading:
+            dataset = dataset._compute_normals(
+                cell_normals=False,
+                split_vertices=True,
+                feature_angle=feature_angle,
+            )
+
         self.mapper = CompositePolyDataMapper(
             dataset,
             color_missing_with_nan=color_missing_with_nan,
@@ -1853,10 +1886,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
         actor.SetProperty(prop)
 
-        # Compute surface normals if using smooth shading
-        if smooth_shading:
-            pass
-
         # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {'n_colors': n_colors}
@@ -1871,6 +1900,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if color is not None:
             self.mapper.ScalarVisibilityOff()
+        elif multi_colors:
+            self.mapper.ScalarVisibilityOff()
+
+            # Compute unique colors for each index of the block
+            if _has_matplotlib():
+                from itertools import cycle
+
+                import matplotlib
+
+                cycler = matplotlib.rcParams['axes.prop_cycle']
+                colors = cycle(cycler)
+
+                for attr in self.mapper.block_attr:
+                    attr.color = next(colors)['color']
+
+            else:
+                logging.warning('Please install matplotlib for color cycles')
+
         elif rgb:
             self.mapper.SetColorModeToDirectScalars()
         else:

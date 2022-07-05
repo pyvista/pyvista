@@ -1,6 +1,10 @@
 """Filters module with a class to manage filters/algorithms for composite datasets."""
+
+import numpy as np
+
 import pyvista
 from pyvista import _vtk, abstract_class, wrap
+from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
 
@@ -154,3 +158,42 @@ class CompositeFilters:
             return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
         box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
+
+    def _compute_normals(
+        self,
+        cell_normals=True,
+        point_normals=True,
+        split_vertices=False,
+        flip_normals=False,
+        consistent_normals=True,
+        auto_orient_normals=False,
+        non_manifold_traversal=True,
+        feature_angle=30.0,
+        track_vertices=False,
+        progress_bar=False,
+    ):
+        """Compute point and/or cell normals for a multi-block dataset.
+
+        Warnings
+        --------
+        This will segmentation fault if a single block is non-polydata.
+
+        """
+        # track original point indices
+        if split_vertices and track_vertices:
+            self.point_data.set_array(
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
+            )
+
+        alg = _vtk.vtkPolyDataNormals()
+        alg.SetComputeCellNormals(cell_normals)
+        alg.SetComputePointNormals(point_normals)
+        alg.SetSplitting(split_vertices)
+        alg.SetFlipNormals(flip_normals)
+        alg.SetConsistency(consistent_normals)
+        alg.SetAutoOrientNormals(auto_orient_normals)
+        alg.SetNonManifoldTraversal(non_manifold_traversal)
+        alg.SetFeatureAngle(feature_angle)
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, 'Computing Normals')
+        return _get_output(alg)

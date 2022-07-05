@@ -1,10 +1,8 @@
 """Module containing composite data mapper."""
 from typing import Optional
-import warnings
 import weakref
 
 from pyvista import _vtk
-from pyvista.utilities.misc import PyvistaEfficiencyWarning
 
 from .colors import Color
 
@@ -58,6 +56,7 @@ class _BlockAttributes:
         """Get or set the color of a block."""
         if new_color is None:
             self._attr.RemoveBlockColor(self._block)
+            self._attr.Modified()
             return
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
@@ -73,6 +72,7 @@ class _BlockAttributes:
         """Get or set the visibility of a block."""
         if new_visible is None:
             self._attr.RemoveBlockVisibility(self._block)
+            self._attr.Modified()
             return
         self._attr.SetBlockVisibility(self._block, new_visible)
 
@@ -92,6 +92,7 @@ class _BlockAttributes:
         """Get or set the visibility of a block."""
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
+            self._attr.Modified()
             return
 
         self._attr.SetBlockOpacity(self._block, new_opacity)
@@ -108,6 +109,7 @@ class _BlockAttributes:
         """Get or set the visibility of a block."""
         if new_pickable is None:
             self._attr.RemoveBlockPickability(self._block)
+            self._attr.Modified()
             return
         self._attr.SetBlockPickability(self._block, new_pickable)
 
@@ -149,21 +151,31 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         """Reset the opacities of all blocks."""
         self.RemoveBlockOpacities()
 
-    def __getitem__(self, index):
+    def get_block(self, index):
         """Return a block by its flat index."""
         try:
             block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
         if block is None:
-            raise KeyError(
-                f'index {index} is out of bounds. There are only {len(self)} blocks.'
-            ) from None
-        return _BlockAttributes(block, self)
+            if index > len(self):
+                raise KeyError(
+                    f'index {index} is out of bounds. There are only {len(self)} blocks.'
+                ) from None
+        return block
+
+    def __getitem__(self, index):
+        """Return a block attribute by its flat index."""
+        return _BlockAttributes(self.get_block(index), self)
 
     def __len__(self):
         """Return the number of blocks."""
         return len(self._dataset)
+
+    def __iter__(self):
+        """Return an iterator of all the block attributes."""
+        for ii in range(len(self)):
+            yield self[ii]
 
 
 class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
@@ -171,27 +183,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     def __init__(self, dataset, color_missing_with_nan=None):
         """Initialize this composite mapper."""
-        from pyvista import PolyData  # avoid circular import
-
         super().__init__()
-
-        if not isinstance(dataset, _vtk.vtkCompositeDataSet):
-            raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
-
-        # we make a shallow copy here to avoid modifying the original dataset
-        # in the case of non-polydata datasets
-        dataset = dataset.copy(deep=False)
-
-        for i, block in enumerate(dataset):
-            if not isinstance(block, PolyData):
-                warnings.warn(
-                    'Non-PolyData datasets found within the composite dataset. '
-                    'The external surface has been extracted from these datasets and '
-                    'this is inefficient.',
-                    PyvistaEfficiencyWarning,
-                )
-                dataset[i] = block.extract_surface()
-
         self.SetInputDataObject(dataset)
 
         # this must be added to set the color, opacity, and visibility of

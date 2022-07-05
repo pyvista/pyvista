@@ -24,7 +24,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.utilities.misc import can_create_mpl_figure
+from pyvista.utilities.misc import PyvistaEfficiencyWarning, can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -1139,10 +1139,13 @@ def test_multi_block_plot():
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
-    with pytest.raises(KeyError):
-        # The scalars are not available in all datasets so raises KeyError
-        multi.plot(scalars='Random Data', multi_colors=True)
-    multi.plot(multi_colors=True, before_close_callback=verify_cache_image)
+
+    # missing data should still plot
+    with pytest.warns(PyvistaEfficiencyWarning):
+        multi.plot(scalars='Random Data')
+
+    with pytest.warns(PyvistaEfficiencyWarning):
+        multi.plot(multi_colors=True, before_close_callback=verify_cache_image)
 
 
 def test_clear(sphere):

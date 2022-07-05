@@ -377,3 +377,8 @@ def test_enable_fly_to_right_click_multi_render(sphere):
     # ensure callback was called and camera position changes due to "fly"
     assert cpos_before != pl.camera_position
     assert point
+
+
+def test_block_picking(multiblock_poly):
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly)

@@ -10,6 +10,8 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import try_callback
 
+from .composite_mapper import CompositePolyDataMapper
+
 
 def _launch_pick_event(interactor, event):
     """Create a Pick event based on coordinate or left-click."""
@@ -36,6 +38,7 @@ class PickingHelper:
         self._picking_left_clicking_observer = None
         self._picking_text = None
         self._picker = None
+        self._picked_block_index = None
 
     def get_pick_position(self):
         """Get the pick position or area.
@@ -132,7 +135,6 @@ class PickingHelper:
         def end_pick_call_back(picked, event):
             is_valid_selection = False
             self_ = weakref.ref(self)
-
             actor = picked.GetActor()
             if actor:
                 mesh = actor.GetMapper().GetInput()
@@ -467,6 +469,22 @@ class PickingHelper:
         """
         return self._picked_point
 
+    @property
+    def picked_block_index(self):
+        """Return the picked block index.
+
+        This returns the picked block index after selecting a point with
+        :func:`<enable_point_picking> pyvista.Plotter.enable_point_picking`.
+
+        Returns
+        -------
+        int or None
+            Picked block if available. If ``-1``, then a non-composite dataset
+            was selected.
+
+        """
+        return self._picked_block_index
+
     def enable_surface_picking(
         self,
         callback=None,
@@ -663,7 +681,7 @@ class PickingHelper:
             When ``True``, points in the 3D window are pickable. Default to ``False``.
 
         left_clicking : bool, optional
-            When ``True``, points can be picked by clicking the left mousebutton.
+            When ``True``, points can be picked by clicking the left mouse button.
             Default to ``False``. Note, if enabled, left-clicking will **not**
             display the bounding box around the picked mesh.
 
@@ -693,6 +711,8 @@ class PickingHelper:
 
             self._picked_point = np.array(picker.GetPickPosition())
             self._picked_mesh = picker.GetDataSet()
+            self._picked_block_index = picker.GetFlatBlockIndex()
+
             self.picked_point_id = picked_point_id
             if show_point:
                 self.add_mesh(
@@ -1076,6 +1096,62 @@ class PickingHelper:
             show_path=show_path,
             **kwargs,
         )
+
+    def enable_block_picking(
+        self,
+        callback=None,
+        side='left',
+    ):
+        """Enable composite block picking.
+
+        Use this picker to return the index of a DataSet when using composite
+        dataset like :class:`pyvista.MultiBlock` and pass it to a callback.
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, this picker calls this function after a selection is
+            made. The composite index is passed to ``callback`` as the first argument
+
+        Notes
+        -----
+        The picked block index can be accessed from :attr:`picked_block_index
+        <PickingHelper.picked_block_index>` attribute.
+
+        """
+        # use a weak reference to enable garbage collection
+        renderer_ = weakref.ref(self.renderer)
+
+        sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
+        sel_prop = _vtk.vtkSelectionNode.PROP()
+
+        def get_picked_block(*args, **kwargs):
+            """Get the picked block and pass it to the user callback."""
+            x, y = self.mouse_position
+            selector = _vtk.vtkOpenGLHardwareSelector()
+            selector.SetRenderer(renderer_())
+            selector.SetArea(x, y, x, y)  # single pixel
+            selection = selector.Select()
+
+            for ii in range(selection.GetNumberOfNodes()):
+                node = selection.GetNode(ii)
+                if node is None:
+                    continue
+                node_prop = node.GetProperties()
+                self._picked_block_index = node_prop.Get(sel_index)
+
+                # Safely return the dataset as it's possible a non pyvista
+                # mapper was added
+                mapper = node_prop.Get(sel_prop).GetMapper()
+                if isinstance(mapper, CompositePolyDataMapper):
+                    dataset = mapper.block_attr.get_block(self._picked_block_index)
+                else:
+                    dataset = None
+
+                if callable(callback):
+                    try_callback(callback, self._picked_block_index, dataset)
+
+        self.track_click_position(callback=get_picked_block, viewport=True, side=side)
 
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot.
