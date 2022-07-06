@@ -3029,16 +3029,16 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.SetAutoSize(False)  # We manually set the appropriate size
-        if vtk_version_info < (9, 2, 0):
-            # Overwrite custom X and Y axis using a wrapper object for older VTK versions, as using the
-            # SetAxis method causes a crash at the end of the script's execution (nonzero exit code).
-            self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))
-            self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
-        else:
-            self.SetAxis(_vtk.vtkAxis.BOTTOM, self._x_axis)
-            self.SetAxis(_vtk.vtkAxis.LEFT, self._y_axis)
-            self.Register(self._x_axis)
-            self.Register(self._y_axis)
+        # Overwrite custom X and Y axis using a wrapper object, as using the
+        # SetAxis method causes a crash at the end of the script's execution (nonzero exit code).
+        self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))
+        self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
+        # Note: registering the axis prevents the nonzero exit code at the end, however
+        # this results in memory leaks in the plotting tests.
+        # self.SetAxis(_vtk.vtkAxis.BOTTOM, self._x_axis)
+        # self.SetAxis(_vtk.vtkAxis.LEFT, self._y_axis)
+        # self.Register(self._x_axis)
+        # self.Register(self._y_axis)
         self.x_label = x_label
         self.y_label = y_label
         self.grid = grid
