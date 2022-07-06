@@ -17,6 +17,9 @@ release = '0.1'
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 
+# -- Plot directive specific configuration --------------------------------
+plot_setup = plot_cleanup = 'import pyvista'
+
 # -- Options for HTML output ----------------------------------------------
 
 if parse_version(sphinx.__version__) >= parse_version('1.3'):

@@ -351,6 +351,13 @@ from numpydoc.docscrape_sphinx import SphinxDocString
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
+plot_setup = """
+from pyvista import set_plot_theme as __s_p_t
+__s_p_t('document')
+del __s_p_t
+"""
+plot_cleanup = plot_setup
+
 
 def _str_examples(self):
     examples_str = "\n".join(self['Examples'])
