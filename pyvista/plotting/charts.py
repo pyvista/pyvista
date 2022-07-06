@@ -1061,6 +1061,12 @@ class _Chart(DocSubs):
 
         Resize this chart such that it always occupies the specified
         geometry (matching the specified location and size).
+
+        Returns
+        -------
+        bool
+            ``True`` if the chart was resized, ``False`` otherwise.
+
         """
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
@@ -1068,9 +1074,11 @@ class _Chart(DocSubs):
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
-        if c_w != t_w or c_h != t_h:
+        resize = c_w != t_w or c_h != t_h
+        if resize:
             # Mismatch between current size and target size, so resize chart:
             self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+        return resize
 
     @property
     def _geometry(self):
@@ -4220,12 +4228,14 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         # Calculate target size from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
-        if c_w != t_w or c_h != t_h:
+        resize = c_w != t_w or c_h != t_h
+        if resize:
             # Mismatch between canvas size and target size, so resize figure:
             f_w = t_w / self._fig.dpi
             f_h = t_h / self._fig.dpi
             self._fig.set_size_inches(f_w, f_h)
             self.position = (self._loc[0] * r_w, self._loc[1] * r_h)
+        return resize
 
     def _redraw(self, event=None):
         """Redraw the chart."""
@@ -4243,8 +4253,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self.SetImage(img_data)
 
     def _render_event(self, *args, **kwargs):
-        self._resize()  # Update figure dimensions if needed
-        self._redraw()  # Redraw figure
+        if self._resize():  # Update figure dimensions if needed
+            self._redraw()  # Redraw figure when geometry has changed
 
     @property
     def _geometry(self):
