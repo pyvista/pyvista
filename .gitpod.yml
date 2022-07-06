@@ -3,6 +3,4 @@ image:
 
 tasks:
   - init: |
-      pip install -r requirements_test.txt
-      pip install -r requirements_docs.txt
       pre-commit install --install-hooks
