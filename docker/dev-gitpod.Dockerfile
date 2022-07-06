@@ -14,7 +14,5 @@ RUN pip install --no-cache-dir -r requirements_test.txt
 RUN pip install --no-cache-dir -r requirements_docs.txt
 RUN pip install --no-cache-dir pre-commit
 
-RUN pre-commit install --install-hooks
-
 WORKDIR $HOME
 ENV PYVISTA_OFF_SCREEN=true
