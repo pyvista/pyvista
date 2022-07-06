@@ -9,10 +9,12 @@ RUN pip install --no-cache-dir https://github.com/pyvista/pyvista-wheels/raw/mai
 
 COPY  requirements_test.txt requirements_test.txt
 COPY requirements_docs.txt requirements_docs.txt
+COPY setup.py ./setup.py
 
 RUN pip install --no-cache-dir -r requirements_test.txt
 RUN pip install --no-cache-dir -r requirements_docs.txt
 RUN pip install --no-cache-dir pre-commit
+RUN pip install -e .
 
 WORKDIR $HOME
 ENV PYVISTA_OFF_SCREEN=true
