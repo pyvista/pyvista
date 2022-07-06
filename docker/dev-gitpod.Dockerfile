@@ -7,7 +7,7 @@ RUN sudo apt-get install  -yq --no-install-recommends \
 
 RUN pip install --no-cache-dir https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
 
-COPY  requirements_test.txt requirements_test.txt
+COPY requirements_test.txt requirements_test.txt
 COPY requirements_docs.txt requirements_docs.txt
 
 RUN pip install --no-cache-dir -r requirements_test.txt
