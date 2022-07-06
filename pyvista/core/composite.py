@@ -723,6 +723,10 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             Allow missing scalars in part of the composite dataset. If all
             blocks are missing the array, it will raise a ``KeyError``.
 
+        Notes
+        -----
+        The number of components of the data must match.
+
         """
         fields = []
         success = False
@@ -757,12 +761,32 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         else:
             field_asc = fields[0][0]
 
+        # verify consistency
+        data_attr = f'{field_asc.name.lower()}_data'
+        dims = set()
+        dtypes = set()
+        for block in self:
+            if block:
+                scalars = getattr(block, data_attr).active_scalars
+                if scalars is not None:
+                    dims.add(scalars.ndim)
+                    dtypes.add(scalars.dtype)
+
+        if len(dims) > 1:
+            raise ValueError(f'Inconsistent dimensions {dims} in active scalars.')
+
+        # check complex mismatch
+        is_complex = [np.issubdtype(dtype, np.complexfloating) for dtype in dtypes]
+        if any(is_complex) and not all(is_complex):
+            raise ValueError('Inconsistent complex and real data types in active scalars.')
+
         return field_asc
 
     def as_polydata(self):
-        """Convert all the datasets in this MultiBlock to PolyData.
+        """Convert all the datasets in this MultiBlock to :class:`pyvista.PolyData`.
 
-        This will return a new `pyvista.MultiBlock` dataset.
+        This will return a new `pyvista.MultiBlock` dataset. Blocks that are
+        already :class:`pyvista.PolyData` will not be copied.
 
         Returns
         --------
@@ -771,7 +795,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         """
         # we make a shallow copy here to avoid modifying the original dataset
-        # in the case of non-polydata datasets
         dataset = self.copy(deep=False)
 
         # always convert to polydata
@@ -779,7 +802,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             if block is not None:
                 if isinstance(block, MultiBlock):
                     dataset[i] = block.as_polydata()
-                else:
+                elif not isinstance(block, pyvista.PolyData):
                     dataset[i] = block.extract_surface()
             else:
                 # must have empty polydata within these datasets to ensure
@@ -789,9 +812,10 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         return dataset
 
     def is_all_polydata(self):
-        """Return ``True`` when all the blocks are PolyData.
+        """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
 
-        This method will recursively check if any internal blocks are also PolyData.
+        This method will recursively check if any internal blocks are also
+        :class:`pyvista.PolyData`.
 
         """
         for block in self:

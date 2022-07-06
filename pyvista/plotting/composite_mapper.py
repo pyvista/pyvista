@@ -1,10 +1,15 @@
 """Module containing composite data mapper."""
+from itertools import cycle
+import logging
 from typing import Optional
 import weakref
 
+import numpy as np
+
 from pyvista import _vtk
 
-from .colors import Color
+from ._plotting import _has_matplotlib
+from .colors import Color, get_cmap_safe
 
 
 class _BlockAttributes:
@@ -181,7 +186,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     """Wrap vtkCompositePolyDataMapper2."""
 
-    def __init__(self, dataset, color_missing_with_nan=None):
+    def __init__(self, dataset, color_missing_with_nan=None, interpolate_before_map=None):
         """Initialize this composite mapper."""
         super().__init__()
         self.SetInputDataObject(dataset)
@@ -189,9 +194,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         # this must be added to set the color, opacity, and visibility of
         # individual blocks
         self._attr = CompositeAttributes(self, dataset)
+        self._dataset = dataset
 
         if color_missing_with_nan is not None:
             self.color_missing_with_nan = color_missing_with_nan
+        if interpolate_before_map is not None:
+            self.interpolate_before_map = interpolate_before_map
+
+    @property
+    def interpolate_before_map(self):
+        """Return or set the interpolation of scalars before mapping."""
+        return self.GetInterpolateScalarsBeforeMapping()
+
+    @interpolate_before_map.setter
+    def interpolate_before_map(self, value: bool):
+        self.SetInterpolateScalarsBeforeMapping(value)
 
     @property
     def block_attr(self):
@@ -228,9 +245,176 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             self.lookup_table.SetRange(*clim)
         self._scalar_range = clim
 
-    def scalar_visibility(self):
+    @property
+    def scalar_visibility(self) -> bool:
         """Return or set the scalar visibility."""
+        return self.GetScalarVisibility()
 
-    def set_scalars(self):
+    @scalar_visibility.setter
+    def scalar_visibility(self, value: bool):
+        return self.SetScalarVisibility(value)
+
+    def set_unique_colors(self):
+        """Compute unique colors for each block of the dataset."""
+        self.scalar_visibility = False
+        if _has_matplotlib():
+            import matplotlib
+
+            colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+            for attr in self.block_attr:
+                attr.color = next(colors)['color']
+
+        else:
+            logging.warning('Please install matplotlib for color cycles.')
+
+    @property
+    def scalar_map_mode(self) -> str:
+        """Return or set the scalar map mode."""
+        return self.GetScalarModeAsString()
+
+    @scalar_map_mode.setter
+    def scalar_map_mode(self, scalar_mode: str):
+        """Return or set the scalar map mode."""
+        if scalar_mode == 'default':
+            self.SetScalarModeToDefault()
+        elif scalar_mode == 'point':
+            self.SetScalarModeToUsePointData()
+        elif scalar_mode == 'cell':
+            self.SetScalarModeToUseCellData()
+        elif scalar_mode == 'point_field':
+            self.SetScalarModeToUsePointFieldData()
+        elif scalar_mode == 'cell_field':
+            self.SetScalarModeToUseCellFieldData()
+        elif scalar_mode == 'field':
+            self.SetScalarModeToUseFieldData()
+        else:
+            raise ValueError(
+                f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
+                '"default", "point", "cell", "point_field", "cell_field" or "field".'
+            )
+
+    def set_scalars(
+        self,
+        scalars,
+        preference,
+        component,
+        annotations,
+        rgb,
+        scalar_bar_args,
+        n_colors,
+        nan_color,
+        above_color,
+        below_color,
+        clim,
+        cmap,
+        flip_scalars,
+        theme,
+    ):
         """Set the scalars of the mapper."""
-        pass
+        if not isinstance(component, (int, type(None))):
+            raise TypeError('`component` must be either None or an integer')
+
+        # set the active scalars
+        field = self._dataset.set_active_scalars(
+            scalars,
+            preference,
+            allow_missing=True,
+        )
+        self.scalar_map_mode = field.name.lower()
+        data_attr = f'{field.name.lower()}_data'
+        first_scalars = None
+        for block in self._dataset:
+            if block is not None:
+                first_scalars = getattr(block, data_attr).active_scalars
+                if first_scalars is not None:
+                    break
+
+        if first_scalars is None:  # pragma: no cover
+            raise RuntimeError('Unable to set scalars')
+
+        if not np.issubdtype(first_scalars.dtype, np.number):
+            raise TypeError('Non-numeric scalars are not supported for composite datesets.')
+
+        if rgb:
+            if first_scalars.ndim != 2 or first_scalars.scalars.shape[1] not in (3, 4):
+                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+            self.mapper.SetColorModeToDirectScalars()
+            return scalar_bar_args
+
+        # Use only the real component if an array is complex
+        elif np.issubdtype(first_scalars.dtype, np.complexfloating):
+            scalars_name = f'{scalars}-real'
+            for block in self._dataset:
+                if block is not None:
+                    block_scalars = getattr(block, data_attr).active_scalars
+                    if block_scalars is not None:
+                        block_scalars = scalars.astype(float)
+                        getattr(block, data_attr)[scalars_name] = block_scalars
+
+        # multi-component
+        elif first_scalars.ndim > 1:
+            if component is None:
+                scalars_name = f'{scalars}-normed'
+                for block in self._dataset:
+                    if block is not None:
+                        block_scalars = getattr(block, data_attr).active_scalars
+                        if block_scalars is not None:
+                            block_scalars = np.linalg.norm(block_scalars, axis=1)
+                            getattr(block, data_attr)[scalars_name] = block_scalars
+
+            elif component < scalars.shape[1] and component >= 0:
+                scalars_name = f'{scalars}-{component}'
+                for block in self._dataset:
+                    if block is not None:
+                        block_scalars = getattr(block, data_attr).active_scalars
+                        if block_scalars is not None:
+                            block_scalars = block_scalars[:, component]
+                            getattr(block, data_attr)[scalars_name] = block_scalars
+
+            else:
+                raise ValueError(
+                    'Component must be nonnegative and less than the '
+                    f'dimensionality of the scalars array: {scalars.shape[1]}'
+                )
+
+        else:
+            scalars_name = scalars
+
+        scalar_bar_args.setdefault('title', scalars_name)
+
+        if isinstance(annotations, dict):
+            for val, anno in annotations.items():
+                self.lookup_table.SetAnnotation(float(val), str(anno))
+
+        self.lookup_table.SetNanColor(nan_color.float_rgba)
+        self.lookup_table.SetNumberOfTableValues(n_colors)
+        if above_color:
+            self.lookup_table.SetUseAboveRangeColor(True)
+            self.lookup_table.SetAboveRangeColor(*Color(above_color).float_rgba)
+            scalar_bar_args.setdefault('above_label', 'Above')
+        if below_color:
+            self.lookup_table.SetUseBelowRangeColor(True)
+            self.lookup_table.SetBelowRangeColor(*Color(below_color).float_rgba)
+            scalar_bar_args.setdefault('below_label', 'Below')
+
+        if clim is None:
+            clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
+        self.scalar_range = clim
+
+        if cmap is None:  # Set default map if matplotlib is available
+            if _has_matplotlib():
+                cmap = theme.cmap
+        if cmap is not None:
+            cmap = get_cmap_safe(cmap)
+            ctable = cmap(np.linspace(0, 1, n_colors)) * 255
+            ctable = ctable.astype(np.uint8)
+            if flip_scalars:
+                ctable = np.ascontiguousarray(ctable[::-1])
+            self.lookup_table.SetTable(_vtk.numpy_to_vtk(ctable))
+        else:  # no cmap specified
+            if flip_scalars:
+                self.lookup_table.SetHueRange(0.0, 0.66667)
+            else:
+                self.lookup_table.SetHueRange(0.66667, 0.0)
+
+        return scalar_bar_args

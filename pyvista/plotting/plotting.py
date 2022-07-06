@@ -1772,7 +1772,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=1.0,
         flip_scalars=False,
         lighting=None,
-        n_colors=16,
+        n_colors=256,
         interpolate_before_map=True,
         cmap=None,
         label=None,
@@ -1795,12 +1795,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         rgb=None,
         below_color=None,
         above_color=None,
+        annotations=None,
         pickable=True,
         preference="point",
         pbr=False,
         metallic=0.0,
         roughness=0.5,
         render=True,
+        component=None,
         color_missing_with_nan=False,
         **kwargs,
     ):
@@ -1861,6 +1863,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper = CompositePolyDataMapper(
             dataset,
             color_missing_with_nan=color_missing_with_nan,
+            interpolate_before_map=interpolate_before_map,
         )
 
         actor, _ = self.add_actor(self.mapper)
@@ -1892,75 +1895,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._add_legend_label(actor, label, None, prop.color)
 
         if color is not None:
-            self.mapper.ScalarVisibilityOff()
+            self.mapper.scalar_visibility = False
         elif multi_colors:
-            self.mapper.ScalarVisibilityOff()
+            self.mapper.set_unique_colors()
+        elif scalars is not None:
+            if not isinstance(scalars, str):
+                raise TypeError(
+                    '`scalars` must be a string for `add_composite`, not ' f'({type(scalars)})'
+                )
 
-            # Compute unique colors for each index of the block
-            if _has_matplotlib():
-                from itertools import cycle
+            scalar_bar_args = self.mapper.set_scalars(
+                scalars,
+                preference,
+                component,
+                annotations,
+                rgb,
+                scalar_bar_args,
+                n_colors,
+                nan_color,
+                above_color,
+                below_color,
+                clim,
+                cmap,
+                flip_scalars,
+                self._theme,
+            )
 
-                import matplotlib
-
-                cycler = matplotlib.rcParams['axes.prop_cycle']
-                colors = cycle(cycler)
-
-                for attr in self.mapper.block_attr:
-                    attr.color = next(colors)['color']
-
-            else:
-                logging.warning('Please install matplotlib for color cycles')
-
-        elif rgb:
-            self.mapper.SetColorModeToDirectScalars()
-        else:
-            table = self.mapper.lookup_table
-            table.SetNanColor(nan_color.float_rgba)
-
-            if interpolate_before_map:
-                self.mapper.InterpolateScalarsBeforeMappingOn()
-
-            table.SetNumberOfTableValues(n_colors)
-            if above_color:
-                table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*Color(above_color).float_rgba)
-                scalar_bar_args.setdefault('above_label', 'Above')
-            if below_color:
-                table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*Color(below_color).float_rgba)
-                scalar_bar_args.setdefault('below_label', 'Below')
-
-            if scalars is not None:
-                if not isinstance(scalars, str):
-                    raise TypeError(
-                        '`scalars` must be a string for `add_composite`, not ' f'({type(scalars)})'
-                    )
-                field = dataset.set_active_scalars(scalars, preference, allow_missing=True)
-                if field.name == "POINT":
-                    self.mapper.SetScalarModeToUsePointData()
-                else:
-                    self.mapper.SetScalarModeToUseCellData()
-                scalar_bar_args.setdefault('title', scalars)
-
-            if clim is None:
-                clim = dataset.get_data_range(scalars, allow_missing=True)
-            if clim is not None:
-                self.mapper.SetScalarRange(*clim)
-
-            if cmap is None:  # Set default map if matplotlib is available
-                if _has_matplotlib():
-                    cmap = self._theme.cmap
-            if cmap is not None:
-                cmap = get_cmap_safe(cmap)
-                ctable = cmap(np.linspace(0, 1, n_colors)) * 255
-                ctable = ctable.astype(np.uint8)
-                if flip_scalars:
-                    ctable = np.ascontiguousarray(ctable[::-1])
-                table.SetTable(_vtk.numpy_to_vtk(ctable))
-
-            # Only show scalar bar if there are scalars
-            if show_scalar_bar and scalars is not None:
-                self.add_scalar_bar(**scalar_bar_args)
+        # Only show scalar bar if there are scalars
+        if show_scalar_bar and scalars is not None:
+            self.add_scalar_bar(**scalar_bar_args)
 
         self.add_actor(
             actor,

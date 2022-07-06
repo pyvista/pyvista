@@ -2468,3 +2468,23 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
 
     pl.camera_position = 'xy'
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_component_norm(multiblock_poly):
+    for block in multiblock_poly:
+        data = block.compute_normals().point_data['Normals']
+        block['data'] = data
+
+    pl = pyvista.Plotter(off_screen=False)
+    pl.add_composite(multiblock_poly, scalars='data', clim=[0.9, 1.1], n_colors=5, cmap='bwr')
+    pl.show()
+
+
+# def test_plot_composite_poly_component_norm(multiblock_poly):
+#     for block in multiblock_poly:
+#         data = block.compute_normals().point_data['Normals']
+#         block['data'] = data
+
+#     pl = pyvista.Plotter(off_screen=False)
+#     pl.add_composite(multiblock_poly, scalars='data', clim=[0.9, 1.1], n_colors=4)
+#     pl.show()

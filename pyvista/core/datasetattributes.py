@@ -277,9 +277,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
-            return pyvista_ndarray(
+            array = pyvista_ndarray(
                 self.GetScalars(), dataset=self.dataset, association=self.association
             )
+            return self._patch_type(array)
         return None
 
     @active_scalars.setter
@@ -540,9 +541,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if vtk_arr is None:
                 raise KeyError(f'{key}')
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
+        return self._patch_type(narray)
 
-        # check if array needs to be represented as a different type
-        name = vtk_arr.GetName()
+    def _patch_type(self, narray):
+        """Check if array needs to be represented as a different type."""
+        name = narray.VTKObject.GetName()
         if name in self.dataset._association_bitarray_names[self.association.name]:
             narray = narray.view(np.bool_)  # type: ignore
         elif name in self.dataset._association_complex_names[self.association.name]:
@@ -550,7 +553,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             # remove singleton dimensions to match the behavior of the rest of 1D
             # VTK arrays
             narray = narray.squeeze()
-
         return narray
 
     def set_array(

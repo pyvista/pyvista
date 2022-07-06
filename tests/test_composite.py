@@ -577,6 +577,27 @@ def test_set_active_scalars_multi(multiblock_poly):
             assert block.cell_data.active_scalars_name is None
 
 
+def test_set_active_scalars_components(multiblock_poly):
+    multiblock_poly[0].point_data['data'] = range(multiblock_poly[0].n_points)
+    multiblock_poly[1].point_data['data'] = range(multiblock_poly[1].n_points)
+    multiblock_poly[2].point_data['data'] = range(multiblock_poly[2].n_points)
+
+    multiblock_poly.set_active_scalars(None)
+    multiblock_poly.set_active_scalars('data')
+    for block in multiblock_poly:
+        assert multiblock_poly[0].point_data.active_scalars_name == 'data'
+
+    data = np.zeros((multiblock_poly[2].n_points, 3))
+    multiblock_poly[2].point_data['data'] = data
+    with pytest.raises(ValueError, match='Inconsistent dimensions'):
+        multiblock_poly.set_active_scalars('data')
+
+    data = np.arange(multiblock_poly[2].n_points, dtype=np.complex128)
+    multiblock_poly[2].point_data['data'] = data
+    with pytest.raises(ValueError, match='Inconsistent complex and real'):
+        multiblock_poly.set_active_scalars('data')
+
+
 def test_to_polydata(multiblock_all):
     assert not multiblock_all.is_all_polydata()
 
