@@ -11,7 +11,7 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
-from pyvista.core.errors import VTKVersionError
+from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
 from pyvista.utilities.misc import can_create_mpl_figure
 
@@ -2487,6 +2487,12 @@ def test_subdivide_adaptive(sphere, inplace):
     assert sub.n_faces > orig_n_faces
     if inplace:
         assert sphere.n_faces == sub.n_faces
+
+
+def test_invalid_subdivide_adaptive(cube):
+    # check non-triangulated
+    with pytest.raises(NotAllTrianglesError):
+        cube.subdivide_adaptive()
 
 
 @pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
