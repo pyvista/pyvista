@@ -863,6 +863,9 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
+        elif scalars.dtype in (np.bool_, np.uint8):
+            # bool and uint8 do not display properly, must convert to float
+            scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
@@ -921,3 +924,20 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 block._remove_scalars(scalars_name, field)
             elif block is not None:
                 getattr(block, data_attr).pop(scalars_name, None)
+
+    def _get_consistent_active_scalars(self):
+        """Check if there are any consistent active scalars."""
+        point_names = set()
+        cell_names = set()
+        for block in self:
+            if isinstance(block, MultiBlock):
+                point_name, cell_name = block._check_consistent_active_scalars()
+            elif block is not None:
+                point_name = block.point_data.active_scalars_name
+                cell_name = block.cell_data.active_scalars_name
+            point_names.add(point_name)
+            cell_names.add(cell_name)
+
+        point_name = point_names.pop() if len(point_names) == 1 else None
+        cell_name = cell_names.pop() if len(cell_names) == 1 else None
+        return point_name, cell_name

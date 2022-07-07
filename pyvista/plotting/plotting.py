@@ -1793,6 +1793,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         nan_opacity=1.0,
         culling=None,
         rgb=None,
+        categories=None,
         below_color=None,
         above_color=None,
         annotations=None,
@@ -1894,32 +1895,50 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if label is not None:
             self._add_legend_label(actor, label, None, prop.color)
 
+        # check if there are any consistent active scalars
         if color is not None:
             self.mapper.scalar_visibility = False
         elif multi_colors:
             self.mapper.set_unique_colors()
-        elif scalars is not None:
-            if not isinstance(scalars, str):
+        else:
+            if scalars is None:
+                point_name, cell_name = dataset._get_consistent_active_scalars()
+                if point_name and cell_name:
+                    if preference == 'point':
+                        scalars = point_name
+                    else:
+                        scalars = cell_name
+                else:
+                    scalars = point_name if point_name is not None else cell_name
+
+            elif not isinstance(scalars, str):
                 raise TypeError(
                     '`scalars` must be a string for `add_composite`, not ' f'({type(scalars)})'
                 )
 
-            scalar_bar_args = self.mapper.set_scalars(
-                scalars,
-                preference,
-                component,
-                annotations,
-                rgb,
-                scalar_bar_args,
-                n_colors,
-                nan_color,
-                above_color,
-                below_color,
-                clim,
-                cmap,
-                flip_scalars,
-                self._theme,
-            )
+            if categories:
+                if not isinstance(categories, int):
+                    raise ValueError("Categories must be an integer for a composite dataset.")
+                n_colors = categories
+
+            if scalars is not None:
+                scalar_bar_args = self.mapper.set_scalars(
+                    scalars,
+                    preference,
+                    component,
+                    annotations,
+                    rgb,
+                    scalar_bar_args,
+                    n_colors,
+                    nan_color,
+                    above_color,
+                    below_color,
+                    clim,
+                    cmap,
+                    flip_scalars,
+                    categories,
+                    self._theme,
+                )
 
         # Only show scalar bar if there are scalars
         if show_scalar_bar and scalars is not None:
@@ -2359,6 +2378,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 nan_opacity=nan_opacity,
                 culling=culling,
                 rgb=rgb,
+                categories=categories,
                 below_color=below_color,
                 above_color=above_color,
                 pickable=pickable,

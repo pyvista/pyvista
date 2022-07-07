@@ -309,6 +309,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         clim,
         cmap,
         flip_scalars,
+        categories,
         theme,
     ):
         """Set the scalars of the mapper."""
@@ -318,6 +319,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             scalars_name, preference, component, rgb
         )
 
+        self.scalar_visibility = True
         if rgb:
             self.mapper.SetColorModeToDirectScalars()
             return scalar_bar_args
@@ -334,16 +336,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             for val, anno in annotations.items():
                 self.lookup_table.SetAnnotation(float(val), str(anno))
 
-        self.lookup_table.SetNanColor(nan_color.float_rgba)
         self.lookup_table.SetNumberOfTableValues(n_colors)
+        self.nan_color = nan_color.float_rgba
         if above_color:
-            self.lookup_table.SetUseAboveRangeColor(True)
-            self.lookup_table.SetAboveRangeColor(*Color(above_color).float_rgba)
+            self.above_range_color = above_color.float_rgba
             scalar_bar_args.setdefault('above_label', 'Above')
         if below_color:
-            self.lookup_table.SetUseBelowRangeColor(True)
-            self.lookup_table.SetBelowRangeColor(*Color(below_color).float_rgba)
-            scalar_bar_args.setdefault('below_label', 'Below')
+            self.below_range_color = below_color.float_rgba
+            scalar_bar_args.setdefault('below_label', 'Above')
 
         if clim is None:
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
@@ -352,12 +352,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         if cmap is None:  # Set default map if matplotlib is available
             if _has_matplotlib():
                 cmap = theme.cmap
+
         if cmap is not None:
             cmap = get_cmap_safe(cmap)
             ctable = cmap(np.linspace(0, 1, n_colors)) * 255
             ctable = ctable.astype(np.uint8)
             if flip_scalars:
                 ctable = np.ascontiguousarray(ctable[::-1])
+
             self.lookup_table.SetTable(_vtk.numpy_to_vtk(ctable))
         else:  # no cmap specified
             if flip_scalars:
@@ -366,6 +368,35 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
                 self.lookup_table.SetHueRange(0.66667, 0.0)
 
         return scalar_bar_args
+
+    @property
+    def nan_color(self):
+        """Return or set the NaN color."""
+        return self.lookup_table.GetNanColor()
+
+    @nan_color.setter
+    def nan_color(self, color):
+        self.lookup_table.SetNanColor(color)
+
+    @property
+    def above_range_color(self):
+        """Return or set the above range color."""
+        return self.lookup_table.GetAboveRangeColor()
+
+    @above_range_color.setter
+    def above_range_color(self, color):
+        self.lookup_table.SetUseAboveRangeColor(True)
+        self.lookup_table.SetAboveRangeColor(color)
+
+    @property
+    def below_range_color(self):
+        """Return or set the below range color."""
+        return self.lookup_table.GetBelowRangeColor()
+
+    @below_range_color.setter
+    def below_range_color(self, color):
+        self.lookup_table.SetUseBelowRangeColor(True)
+        self.lookup_table.SetBelowRangeColor(color)
 
     def __del__(self):
         """Remove scalars added by this mapper."""
