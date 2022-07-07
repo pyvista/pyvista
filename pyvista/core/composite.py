@@ -931,7 +931,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         cell_names = set()
         for block in self:
             if isinstance(block, MultiBlock):
-                point_name, cell_name = block._check_consistent_active_scalars()
+                point_name, cell_name = block._get_consistent_active_scalars()
             elif block is not None:
                 point_name = block.point_data.active_scalars_name
                 cell_name = block.cell_data.active_scalars_name
