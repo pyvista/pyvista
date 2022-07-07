@@ -1559,8 +1559,8 @@ class DataSetFilters:
             self[scalars_name] = scalars
         elif scalars is not None:
             raise TypeError(
-                f'Invalid type ({type(scalars)}) for `scalars`. Should be either '
-                'a numpy.ndarray or a string.'
+                f'Invalid type for `scalars` ({type(scalars)}). Should be either '
+                'a numpy.ndarray, a string, or None.'
             )
 
         # Make sure the input has scalars to contour on
