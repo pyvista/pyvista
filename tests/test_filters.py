@@ -11,7 +11,7 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
-from pyvista.core.errors import VTKVersionError
+from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
 from pyvista.utilities.misc import can_create_mpl_figure
 
@@ -525,6 +525,15 @@ def test_contour(uniform, method):
     iso = uniform.contour(isosurfaces=[100, 300, 500], method=method, progress_bar=True)
     assert iso is not None
 
+    # ensure filter can work with non-string inputs
+    iso_new_scalars = uniform.contour(
+        isosurfaces=[100, 300, 500],
+        scalars=range(uniform.n_points),
+        method=method,
+    )
+
+    assert 'Contour Data' in iso_new_scalars.point_data
+
 
 def test_contour_errors(uniform):
     with pytest.raises(TypeError):
@@ -538,6 +547,8 @@ def test_contour_errors(uniform):
         uniform.contour()
     with pytest.raises(ValueError):
         uniform.contour(method='invalid method')
+    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
+        uniform.contour(scalars=1)
 
 
 def test_elevation():
@@ -2487,6 +2498,12 @@ def test_subdivide_adaptive(sphere, inplace):
     assert sub.n_faces > orig_n_faces
     if inplace:
         assert sphere.n_faces == sub.n_faces
+
+
+def test_invalid_subdivide_adaptive(cube):
+    # check non-triangulated
+    with pytest.raises(NotAllTrianglesError):
+        cube.subdivide_adaptive()
 
 
 @pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
