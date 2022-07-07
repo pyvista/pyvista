@@ -196,6 +196,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         self._attr = CompositeAttributes(self, dataset)
         self._dataset = dataset
         self._added_scalars = None
+        self._orig_scalars_name = None
 
         if color_missing_with_nan is not None:
             self.color_missing_with_nan = color_missing_with_nan
@@ -313,7 +314,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         theme,
     ):
         """Set the scalars of the mapper."""
-        orig_scalars_name = scalars_name
+        self._orig_scalars_name = scalars_name
 
         field, scalars_name = self._dataset._activate_plotting_scalars(
             scalars_name, preference, component, rgb
@@ -327,7 +328,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             self.scalar_map_mode = field.name.lower()
 
         # track if any scalars have been added
-        if orig_scalars_name != scalars_name:
+        if self._orig_scalars_name != scalars_name:
             self._added_scalars = (scalars_name, field)
 
         scalar_bar_args.setdefault('title', scalars_name)
@@ -402,3 +403,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         """Remove scalars added by this mapper."""
         if self._added_scalars is not None:
             self._dataset._remove_scalars(*self._added_scalars)
+
+        # revert previous active scalars
+        try:
+            field, scalars = self._dataset.set_active_scalars(
+                self._orig_scalars_name,
+                allow_missing=True,
+            )
+        except KeyError:  # pragma: no cover
+            pass
