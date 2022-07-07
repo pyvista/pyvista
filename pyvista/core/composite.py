@@ -6,7 +6,7 @@ to VTK algorithms and PyVista filtering/plotting routines.
 import collections.abc
 import logging
 import pathlib
-from typing import Any, List, Optional, Tuple, Union, cast
+from typing import Any, List, Optional, Set, Tuple, Union, cast
 
 import numpy as np
 
@@ -341,6 +341,10 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         3
 
         """
+        # do not allow to add self
+        if dataset is self:
+            raise ValueError("Cannot a composite dataset to itself.")
+
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
         if not pyvista.is_pyvista_dataset(dataset):
@@ -702,7 +706,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def set_active_scalars(
         self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
-    ):  # type: ignore
+    ) -> Tuple[FieldAssociation, np.ndarray]:  # type: ignore
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -723,54 +727,66 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             Allow missing scalars in part of the composite dataset. If all
             blocks are missing the array, it will raise a ``KeyError``.
 
+        Returns
+        -------
+        pyvista.FieldAssociation
+            Field association of the scalars activated.
+
+        numpy.ndarray
+            An array from the dataset matching ``name``.
+
         Notes
         -----
         The number of components of the data must match.
 
         """
-        fields = []
-        success = False
+        data_assoc: List[Tuple[FieldAssociation, np.ndarray, MultiBlock]] = []
         for block in self:
-            if not block:
-                continue
+            if block is not None:
+                if isinstance(block, MultiBlock):
+                    field, scalars = block.set_active_scalars(name, preference, allow_missing=True)
+                else:
+                    try:
+                        field, scalars = block.set_active_scalars(name, preference)
+                    except KeyError:
+                        if not allow_missing:
+                            raise
+                        block.set_active_scalars(None, preference)
+                        field, scalars = FieldAssociation.NONE, np.array([])
 
-            try:
-                fields.append((block.set_active_scalars(name, preference), block))
-                success = True
-            except KeyError:
-                if not allow_missing:
-                    raise
-                block.set_active_scalars(None, preference)
+                if field != FieldAssociation.NONE:
+                    data_assoc.append((field, scalars, block))
 
         if name is None:
-            return
+            return FieldAssociation.NONE, np.array([])
 
-        if not success:
+        if not data_assoc:
             raise KeyError(f'"{name}" is missing from all the blocks of this composite dataset.')
 
-        # Edge case: some or all of the blocks contain the named field, but not
-        # all of them carry the same association
-        if not any([fields[0][0] == field for field, block in fields]):
-            for field, block in fields:
+        # Verify that all the data has identical field association
+        first_field = data_assoc[0][0]
+        if not any([first_field == field for field, _, _ in data_assoc]):
+            # remove any data not matching the preference
+            for field, scalars, block in list(data_assoc):
                 if field.name.lower() != preference:
                     block.set_active_scalars(None)
+                    data_assoc.remove((field, scalars, block))
+
             if preference == 'point':
                 field_asc = FieldAssociation.POINT
             else:
                 field_asc = FieldAssociation.CELL
-        else:
-            field_asc = fields[0][0]
 
-        # verify consistency
-        data_attr = f'{field_asc.name.lower()}_data'
-        dims = set()
-        dtypes = set()
+        else:
+            field_asc = first_field
+
+        # Verify array consistency
+        dims: Set[int] = set()
+        dtypes: Set[np.dtype] = set()
         for block in self:
-            if block:
-                scalars = getattr(block, data_attr).active_scalars
-                if scalars is not None:
-                    dims.add(scalars.ndim)
-                    dtypes.add(scalars.dtype)
+            for _, scalars, _ in data_assoc:
+                dims.add(scalars.ndim)
+                dtypes.add(scalars.dtype)
 
         if len(dims) > 1:
             raise ValueError(f'Inconsistent dimensions {dims} in active scalars.')
@@ -780,7 +796,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if any(is_complex) and not all(is_complex):
             raise ValueError('Inconsistent complex and real data types in active scalars.')
 
-        return field_asc
+        return field_asc, scalars
 
     def as_polydata(self):
         """Convert all the datasets in this MultiBlock to :class:`pyvista.PolyData`.
@@ -827,3 +843,81 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                     return False
 
         return True
+
+    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):
+        """Active a scalars for an instance of :class:`pyvista.Plotter`."""
+        # set the active scalars
+        field, scalars = self.set_active_scalars(
+            scalars_name,
+            preference,
+            allow_missing=True,
+        )
+
+        if not np.issubdtype(scalars.dtype, np.number):
+            raise TypeError('Non-numeric scalars are not supported for composite datesets.')
+
+        data_attr = f'{field.name.lower()}_data'
+        if rgb:
+            if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
+                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+        elif np.issubdtype(scalars.dtype, np.complexfloating):
+            # Use only the real component if an array is complex
+            scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
+        elif scalars.ndim > 1:
+            # multi-component
+            if not isinstance(component, (int, type(None))):
+                raise TypeError('`component` must be either None or an integer')
+            if component is not None:
+                if component >= scalars.shape[1] or component < 0:
+                    raise ValueError(
+                        'Component must be nonnegative and less than the '
+                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                    )
+            scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
+
+        return field, scalars_name
+
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
+        """Extract the real component of the active scalars of this dataset."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._convert_to_real_scalars(self, data_attr)
+            elif block is not None:
+                scalars = getattr(block, data_attr).get(scalars_name, None)
+                if scalars is not None:
+                    scalars = np.array(scalars.astype(float))
+                    getattr(block, data_attr)[f'{scalars_name}-real'] = scalars
+        return f'{scalars_name}-real'
+
+    def _convert_to_single_component(
+        self, data_attr: str, scalars_name: str, component: Union[None, str]
+    ) -> str:
+        """Convert multi-component scalars to a single component."""
+        if component is None:
+            for block in self:
+                if isinstance(block, MultiBlock):
+                    block._convert_to_single_component(data_attr, scalars_name, component)
+                elif block is not None:
+                    scalars = getattr(block, data_attr).get(scalars_name, None)
+                    if scalars is not None:
+                        scalars = np.linalg.norm(scalars, axis=1)
+                        getattr(block, data_attr)[f'{scalars_name}-normed'] = scalars
+            return f'{scalars_name}-normed'
+
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._convert_to_single_component(data_attr, scalars_name, component)
+            elif block is not None:
+                scalars = getattr(block, data_attr).get(scalars_name, None)
+                if scalars is not None:
+                    getattr(block, data_attr)[f'{scalars_name}-{component}'] = scalars[:, component]
+        return f'{scalars_name}-{component}'
+
+    def _remove_scalars(self, scalars_name: str, field: FieldAssociation):
+        """Remove scalars from all blocks where it exists."""
+        data_attr = f'{field.name.lower()}_data'
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._remove_scalars(scalars_name, field)
+            elif block is not None:
+                getattr(block, data_attr).pop(scalars_name, None)

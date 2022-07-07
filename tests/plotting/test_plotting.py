@@ -1042,8 +1042,8 @@ def test_plot_clim(sphere):
         clim=10,
         show_scalar_bar=False,
     )
-    plotter.show(before_close_callback=verify_cache_image)
     assert plotter.mapper.GetScalarRange() == (-10, 10)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_invalid_n_arrays(sphere):
@@ -2475,16 +2475,28 @@ def test_plot_composite_poly_component_norm(multiblock_poly):
         data = block.compute_normals().point_data['Normals']
         block['data'] = data
 
-    pl = pyvista.Plotter(off_screen=False)
-    pl.add_composite(multiblock_poly, scalars='data', clim=[0.9, 1.1], n_colors=5, cmap='bwr')
-    pl.show()
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data', clim=[0.9, 1.1], cmap='bwr')
+    pl.show(before_close_callback=verify_cache_image)
 
 
-# def test_plot_composite_poly_component_norm(multiblock_poly):
-#     for block in multiblock_poly:
-#         data = block.compute_normals().point_data['Normals']
-#         block['data'] = data
+def test_plot_composite_poly_component_single(multiblock_poly):
+    for block in multiblock_poly:
+        data = block.compute_normals().point_data['Normals']
+        block['data'] = data
 
-#     pl = pyvista.Plotter(off_screen=False)
-#     pl.add_composite(multiblock_poly, scalars='data', clim=[0.9, 1.1], n_colors=4)
-#     pl.show()
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data', component=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_complex(multiblock_poly):
+    # add composite data
+    for block in multiblock_poly:
+        data = np.arange(block.n_points) + np.arange(block.n_points) * 1j
+        block['data'] = data
+
+    pl = pyvista.Plotter()
+    with pytest.warns(np.ComplexWarning, match='Casting complex'):
+        pl.add_composite(multiblock_poly, scalars='data')
+    pl.show(before_close_callback=verify_cache_image)

@@ -753,5 +753,6 @@ class UniformGridFilters(DataSetFilters):
         if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
             raise ValueError(
                 'Active scalars must be complex data for this filter, represented '
-                'as an array with `dtype=numpy.complex128`.'
+                'as an array with a datatype of `numpy.complex64` or '
+                '`numpy.complex128`.'
             )

@@ -3213,6 +3213,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
+        self.mapper = None
 
     def link_views(self, views=0):
         """Link the views' cameras.

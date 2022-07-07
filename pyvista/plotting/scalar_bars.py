@@ -3,7 +3,7 @@
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista import MAX_N_COLOR_BARS, _vtk
 
 from .colors import Color
 from .tools import parse_font_family
@@ -362,12 +362,13 @@ class ScalarBars:
 
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
-            try:
-                slot = min(self._plotter._scalar_bar_slots)
-                self._plotter._scalar_bar_slots.remove(slot)
-                self._plotter._scalar_bar_slot_lookup[title] = slot
-            except:
-                raise RuntimeError('Maximum number of color bars reached.')
+            if not self._plotter._scalar_bar_slots:
+                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+
+            slot = min(self._plotter._scalar_bar_slots)
+            self._plotter._scalar_bar_slots.remove(slot)
+            self._plotter._scalar_bar_slot_lookup[title] = slot
+
             if position_x is None:
                 if vertical:
                     position_x = theme.colorbar_vertical.position_x

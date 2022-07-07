@@ -646,13 +646,16 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.FieldAssociation
             Association of the scalars matching ``name``.
 
+        numpy.ndarray
+            An array from the dataset matching ``name``.
+
         """
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
         if name is None:
             self.GetCellData().SetActiveScalars(None)
             self.GetPointData().SetActiveScalars(None)
-            return
+            return FieldAssociation.NONE, np.array([])
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
             if name in self.field_data:
@@ -674,7 +677,10 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
-        return field
+        if field == FieldAssociation.POINT:
+            return field, self.point_data.active_scalars
+        else:  # must be cell
+            return field, self.cell_data.active_scalars
 
     def set_active_vectors(self, name: Optional[str], preference='point'):
         """Find the vectors by name and appropriately sets it as active.

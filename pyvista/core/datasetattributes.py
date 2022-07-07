@@ -549,7 +549,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if name in self.dataset._association_bitarray_names[self.association.name]:
             narray = narray.view(np.bool_)  # type: ignore
         elif name in self.dataset._association_complex_names[self.association.name]:
-            narray = narray.view(np.complex128)  # type: ignore
+            if narray.dtype == np.float32:
+                narray = narray.view(np.complex64)  # type: ignore
+            if narray.dtype == np.float64:
+                narray = narray.view(np.complex128)  # type: ignore
             # remove singleton dimensions to match the behavior of the rest of 1D
             # VTK arrays
             narray = narray.squeeze()
@@ -816,9 +819,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.dataset._association_bitarray_names[self.association.name].add(name)
             data = data.view(np.uint8)
         elif np.issubdtype(data.dtype, np.complexfloating):
-            if data.dtype != np.complex128:
+            if data.dtype not in (np.complex64, np.complex128):
                 raise ValueError(
-                    'Only numpy.complex128 is supported when setting dataset attributes'
+                    'Only numpy.complex64 or numpy.complex128 is supported when '
+                    'setting dataset attributes'
                 )
 
             if data.ndim != 1:
@@ -827,8 +831,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.dataset._association_complex_names[self.association.name].add(name)
 
             # complex data is stored internally as a contiguous 2 component
-            # float64 array
-            data = data.view(np.float64).reshape(-1, 2)
+            # float arrays
+            if data.dtype == np.complex64:
+                data = data.view(np.float32).reshape(-1, 2)
+            else:
+                data = data.view(np.float64).reshape(-1, 2)
 
         shape = data.shape
         if data.ndim == 3:

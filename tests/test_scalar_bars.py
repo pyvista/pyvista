@@ -85,3 +85,15 @@ def test_add_remove_bar(sphere):
     pl.add_scalar_bar()
     pl.remove_scalar_bar()
     assert len(pl._scalar_bar_slots) == init_slots
+
+
+def test_too_many_scalar_bars(sphere):
+    pl = pv.Plotter()
+
+    with pytest.raises(RuntimeError, match='Maximum number of color'):
+        for i in range(100):
+            mesh = pv.Sphere()
+            mesh[f'{i}'] = range(mesh.n_points)
+            pl.add_mesh(mesh)
+
+    pl.show()

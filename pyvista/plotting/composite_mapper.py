@@ -195,6 +195,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         # individual blocks
         self._attr = CompositeAttributes(self, dataset)
         self._dataset = dataset
+        self._added_scalars = None
 
         if color_missing_with_nan is not None:
             self.color_missing_with_nan = color_missing_with_nan
@@ -295,7 +296,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     def set_scalars(
         self,
-        scalars,
+        scalars_name,
         preference,
         component,
         annotations,
@@ -311,74 +312,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         theme,
     ):
         """Set the scalars of the mapper."""
-        if not isinstance(component, (int, type(None))):
-            raise TypeError('`component` must be either None or an integer')
+        orig_scalars_name = scalars_name
 
-        # set the active scalars
-        field = self._dataset.set_active_scalars(
-            scalars,
-            preference,
-            allow_missing=True,
+        field, scalars_name = self._dataset._activate_plotting_scalars(
+            scalars_name, preference, component, rgb
         )
-        self.scalar_map_mode = field.name.lower()
-        data_attr = f'{field.name.lower()}_data'
-        first_scalars = None
-        for block in self._dataset:
-            if block is not None:
-                first_scalars = getattr(block, data_attr).active_scalars
-                if first_scalars is not None:
-                    break
-
-        if first_scalars is None:  # pragma: no cover
-            raise RuntimeError('Unable to set scalars')
-
-        if not np.issubdtype(first_scalars.dtype, np.number):
-            raise TypeError('Non-numeric scalars are not supported for composite datesets.')
 
         if rgb:
-            if first_scalars.ndim != 2 or first_scalars.scalars.shape[1] not in (3, 4):
-                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
             self.mapper.SetColorModeToDirectScalars()
             return scalar_bar_args
-
-        # Use only the real component if an array is complex
-        elif np.issubdtype(first_scalars.dtype, np.complexfloating):
-            scalars_name = f'{scalars}-real'
-            for block in self._dataset:
-                if block is not None:
-                    block_scalars = getattr(block, data_attr).active_scalars
-                    if block_scalars is not None:
-                        block_scalars = scalars.astype(float)
-                        getattr(block, data_attr)[scalars_name] = block_scalars
-
-        # multi-component
-        elif first_scalars.ndim > 1:
-            if component is None:
-                scalars_name = f'{scalars}-normed'
-                for block in self._dataset:
-                    if block is not None:
-                        block_scalars = getattr(block, data_attr).active_scalars
-                        if block_scalars is not None:
-                            block_scalars = np.linalg.norm(block_scalars, axis=1)
-                            getattr(block, data_attr)[scalars_name] = block_scalars
-
-            elif component < scalars.shape[1] and component >= 0:
-                scalars_name = f'{scalars}-{component}'
-                for block in self._dataset:
-                    if block is not None:
-                        block_scalars = getattr(block, data_attr).active_scalars
-                        if block_scalars is not None:
-                            block_scalars = block_scalars[:, component]
-                            getattr(block, data_attr)[scalars_name] = block_scalars
-
-            else:
-                raise ValueError(
-                    'Component must be nonnegative and less than the '
-                    f'dimensionality of the scalars array: {scalars.shape[1]}'
-                )
-
         else:
-            scalars_name = scalars
+            self.scalar_map_mode = field.name.lower()
+
+        # track if any scalars have been added
+        if orig_scalars_name != scalars_name:
+            self._added_scalars = (scalars_name, field)
 
         scalar_bar_args.setdefault('title', scalars_name)
 
@@ -418,3 +366,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
                 self.lookup_table.SetHueRange(0.66667, 0.0)
 
         return scalar_bar_args
+
+    def __del__(self):
+        """Remove scalars added by this mapper."""
+        if self._added_scalars is not None:
+            self._dataset._remove_scalars(*self._added_scalars)

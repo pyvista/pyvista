@@ -1,12 +1,12 @@
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 
 
 @pytest.fixture()
 def composite_mapper(multiblock_poly):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     actor, mapper = pl.add_composite(multiblock_poly)
     return mapper
 
@@ -27,7 +27,7 @@ def test_basic_mapper(composite_mapper):
 
 def test_composite_mapper_non_poly(multiblock_all):
     # should run without raising
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     actor, mapper = pl.add_composite(multiblock_all)
 
 
@@ -69,11 +69,11 @@ def test_color(block_attr):
 
     color = 'red'
     block_attr.color = color
-    assert block_attr.color == pyvista.Color(color).float_rgb
+    assert block_attr.color == pv.Color(color).float_rgb
 
     color = (1, 1, 0)
     block_attr.color = color
-    assert block_attr.color == pyvista.Color(color).float_rgb
+    assert block_attr.color == pv.Color(color).float_rgb
 
     block_attr.color = None
     assert block_attr.color is None
@@ -118,3 +118,12 @@ def test_block_attributes(block_attributes):
 
     block_attributes.reset_visibilities()
     assert block_attributes[0].visible is None
+
+
+def test_remove_scalars_on_collection(multiblock_poly):
+    multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
+    pl = pv.Plotter()
+    pl.add_composite(multi_multi, scalars='multi-comp')
+    assert 'multi-comp-normed' in multiblock_poly[2].point_data
+    pl.close()
+    assert 'multi-comp-normed' not in multiblock_poly[2].point_data

@@ -564,25 +564,28 @@ def test_active_t_coords_name(plane):
         plane.field_data.active_t_coords_name = 'arr'
 
 
-def test_complex(plane):
+@mark.parametrize('dtype_str', ['complex64', 'complex128'])
+def test_complex(plane, dtype_str):
     """Test if complex data can be properly represented in datasetattributes."""
+    dtype = np.dtype(dtype_str)
     name = 'my_data'
-    with raises(ValueError, match='Only numpy.complex128'):
-        plane.point_data[name] = np.empty(plane.n_points, dtype=np.complex64)
+    with raises(ValueError, match='Only numpy.complex64'):
+        plane.point_data[name] = np.empty(plane.n_points, dtype=np.complex256)
 
     with raises(ValueError, match='Complex data must be single dimensional'):
-        plane.point_data[name] = np.empty((plane.n_points, 2), dtype=np.complex128)
+        plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
-    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
+    real_type = np.float32 if dtype == np.complex64 else np.float64
+    data = np.random.random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
     plane.point_data[name] = data
     assert np.allclose(plane.point_data[name], data)
 
-    assert 'complex128' in str(plane.point_data)
+    assert dtype_str in str(plane.point_data)
 
     # test setter
     plane.active_scalars_name = name
 
     # ensure that association is removed when changing datatype
-    assert plane.point_data[name].dtype == np.complex128
+    assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
-    assert np.issubdtype(plane.point_data[name].dtype, float)
+    assert np.issubdtype(plane.point_data[name].dtype, real_type)

@@ -113,6 +113,9 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     multi[4] = vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pyvista.UnstructuredGrid)
 
+    with pytest.raises(ValueError, match="Cannot a composite dataset to itself."):
+        multi.append(multi)
+
 
 def test_multi_block_set_get_ers():
     """This puts all of the example data objects into a a MultiBlock container"""
@@ -596,6 +599,13 @@ def test_set_active_scalars_components(multiblock_poly):
     multiblock_poly[2].point_data['data'] = data
     with pytest.raises(ValueError, match='Inconsistent complex and real'):
         multiblock_poly.set_active_scalars('data')
+
+
+def test_set_active_multi_multi(multiblock_poly):
+    multi_multi = MultiBlock([multiblock_poly, multiblock_poly])
+    with pytest.raises(KeyError, match='missing from all'):
+        multi_multi.set_active_scalars('does-not-exist')
+    multi_multi.set_active_scalars('multi-comp')
 
 
 def test_to_polydata(multiblock_all):
