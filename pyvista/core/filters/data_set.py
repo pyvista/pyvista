@@ -1585,9 +1585,7 @@ class DataSetFilters:
             field = get_array_association(self, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
-            )
+            raise TypeError('Contour filter only works on point data.')
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
