@@ -525,6 +525,15 @@ def test_contour(uniform, method):
     iso = uniform.contour(isosurfaces=[100, 300, 500], method=method, progress_bar=True)
     assert iso is not None
 
+    # ensure filter can work with non-string inputs
+    iso_new_scalars = uniform.contour(
+        isosurfaces=[100, 300, 500],
+        scalars=range(uniform.n_points),
+        method=method,
+    )
+
+    assert 'Contour Data' in iso_new_scalars.point_data
+
 
 def test_contour_errors(uniform):
     with pytest.raises(TypeError):
@@ -538,6 +547,8 @@ def test_contour_errors(uniform):
         uniform.contour()
     with pytest.raises(ValueError):
         uniform.contour(method='invalid method')
+    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
+        uniform.contour(scalars=1)
 
 
 def test_elevation():
