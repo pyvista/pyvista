@@ -1554,6 +1554,9 @@ class DataSetFilters:
         if rng is not None:
             if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
                 raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
+            rng_shape = np.shape(rng)
+            if rng_shape != (2,):
+                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
             if rng[0] > rng[1]:
                 raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
 
