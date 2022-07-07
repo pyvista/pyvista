@@ -88,7 +88,7 @@ x, y, z = grid.points.T
 
 # sample and plot
 values = barth_sextic(x, y, z)
-mesh = grid.contour([1], values, method='flying_edges')
+mesh = grid.contour([0], values, method='flying_edges')
 dist = np.linalg.norm(mesh.points, axis=1)
 mesh.plot(scalars=dist, smooth_shading=True, specular=5, cmap="plasma", show_scalar_bar=False)
 
