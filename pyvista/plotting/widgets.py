@@ -798,6 +798,7 @@ class WidgetHelper:
 
         """
         actors = []
+        name = kwargs.pop("name", mesh.memory_address)
         for ax in ["x", "y", "z"]:
             a = self.add_mesh_slice(
                 mesh,
@@ -808,6 +809,7 @@ class WidgetHelper:
                 widget_color=widget_color,
                 tubing=tubing,
                 interaction_event=interaction_event,
+                name=f"{name}-{ax}" if name else None,
                 **kwargs,
             )
             actors.append(a)
