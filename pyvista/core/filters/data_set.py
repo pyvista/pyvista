@@ -1460,9 +1460,10 @@ class DataSetFilters:
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str, numpy.ndarray, optional
-            Name or array of scalars to threshold on. Defaults to
-            currently active scalars.
+        scalars : str, collections.abc.Sequence, numpy.ndarray, optional
+            Name or array of scalars to threshold on. If this is an array, the
+            output of this filter will save them as ``"Contour Data"``.
+            Defaults to currently active scalars.
 
         compute_normals : bool, optional
             Compute normals for the dataset.
@@ -1533,7 +1534,7 @@ class DataSetFilters:
         >>> x, y, z = grid.points.T
         >>> values = f(x, y, z)
         >>> out = grid.contour(
-        ...     1, scalars=values, rng=[0, 0], method='flying_edges'
+        ...     1, scalars=values, rng=[0, 0], method='flying_edges',
         ... )
         >>> out.plot(color='tan', smooth_shading=True)
 
@@ -1560,16 +1561,15 @@ class DataSetFilters:
             if rng[0] > rng[1]:
                 raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
 
-        if scalars is None or isinstance(scalars, str):
-            pass
-        elif isinstance(scalars, (np.ndarray, collections.abc.Sequence)):
-            scalars_name = 'Contour Input'
+        if isinstance(scalars, str):
+            scalars_name = scalars
+        elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
+            scalars_name = 'Contour Data'
             self[scalars_name] = scalars
-            scalars = scalars_name
-        else:
+        elif scalars is not None:
             raise TypeError(
-                f'Invalid scalars of type {type(scalars).__name__}, '
-                'expected array-like or string.'
+                f'Invalid type for `scalars` ({type(scalars)}). Should be either '
+                'a numpy.ndarray, a string, or None.'
             )
 
         # Make sure the input has scalars to contour on
@@ -1583,20 +1583,24 @@ class DataSetFilters:
         # set the array to contour on
         if scalars is None:
             pyvista.set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            field, scalars_name = self.active_scalars_info
         else:
-            field = get_array_association(self, scalars, preference=preference)
+            field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
             raise TypeError('Contour filter only works on point data.')
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars_name,
         )  # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars)
+                rng = self.get_data_range(scalars_name)
             alg.GenerateValues(isosurfaces, rng)
         elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
@@ -1605,7 +1609,14 @@ class DataSetFilters:
         else:
             raise TypeError('isosurfaces not understood.')
         _update_alg(alg, progress_bar, 'Computing Contour')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # some of these filters fail to correctly name the array
+        if scalars_name not in output.point_data:
+            if 'Unnamed_0' in output.point_data:
+                output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
+
+        return output
 
     def texture_map_to_plane(
         self,
