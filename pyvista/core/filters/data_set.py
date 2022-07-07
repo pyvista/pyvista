@@ -1557,10 +1557,17 @@ class DataSetFilters:
             if rng[0] > rng[1]:
                 raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
 
-        if isinstance(scalars, np.ndarray):
+        if scalars is None or isinstance(scalars, str):
+            pass
+        elif isinstance(scalars, (np.ndarray, collections.abc.Sequence)):
             scalars_name = 'Contour Input'
             self[scalars_name] = scalars
             scalars = scalars_name
+        else:
+            raise TypeError(
+                f'Invalid scalars of type {type(scalars).__name__}, '
+                'expected array-like or string.'
+            )
 
         # Make sure the input has scalars to contour on
         if self.n_arrays < 1:
