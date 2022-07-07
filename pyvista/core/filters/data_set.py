@@ -1551,6 +1551,12 @@ class DataSetFilters:
         else:
             raise ValueError(f"Method '{method}' is not supported")
 
+        if rng is not None:
+            if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
+                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
+            if rng[0] > rng[1]:
+                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
+
         if isinstance(scalars, np.ndarray):
             scalars_name = 'Contour Input'
             self[scalars_name] = scalars
