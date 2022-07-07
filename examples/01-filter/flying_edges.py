@@ -46,7 +46,7 @@ x, y, z = grid.points.T
 
 # sample and plot
 values = spider_cage(x, y, z)
-mesh = grid.contour(1, values, method='marching_cubes', rng=[1, 0])
+mesh = grid.contour(1, values, method='marching_cubes', rng=[1, 1])
 dist = np.linalg.norm(mesh.points, axis=1)
 mesh.plot(scalars=dist, smooth_shading=True, specular=5, cmap="plasma", show_scalar_bar=False)
 
@@ -88,7 +88,7 @@ x, y, z = grid.points.T
 
 # sample and plot
 values = barth_sextic(x, y, z)
-mesh = grid.contour(1, values, method='flying_edges', rng=[-0.0, 0])
+mesh = grid.contour([1], values, method='flying_edges')
 dist = np.linalg.norm(mesh.points, axis=1)
 mesh.plot(scalars=dist, smooth_shading=True, specular=5, cmap="plasma", show_scalar_bar=False)
 
@@ -104,7 +104,7 @@ def angle_to_range(angle):
     return -2 * np.sin(angle)
 
 
-mesh = grid.contour(1, values, method='flying_edges', rng=[angle_to_range(0), 0])
+mesh = grid.contour([angle_to_range(0)], values, method='flying_edges')
 dist = np.linalg.norm(mesh.points, axis=1)
 
 pl = pv.Plotter()
@@ -120,7 +120,7 @@ pl.add_mesh(
 pl.open_gif('barth_sextic.gif')
 
 for angle in np.linspace(0, np.pi, 15)[:-1]:
-    new_mesh = grid.contour(1, values, method='flying_edges', rng=[angle_to_range(angle), 0])
+    new_mesh = grid.contour([angle_to_range(angle)], values, method='flying_edges')
     mesh.overwrite(new_mesh)
     pl.update_scalars(np.linalg.norm(new_mesh.points, axis=1), render=False)
     pl.write_frame()
