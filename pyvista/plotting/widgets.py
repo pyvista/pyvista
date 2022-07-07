@@ -227,7 +227,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -576,7 +576,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         if crinkle:
             mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
@@ -712,7 +712,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
@@ -798,7 +798,11 @@ class WidgetHelper:
 
         """
         actors = []
+        name = kwargs.pop("name", None)
         for ax in ["x", "y", "z"]:
+            axkwargs = kwargs.copy()
+            if name:
+                axkwargs["name"] = f"{name}-{ax}"
             a = self.add_mesh_slice(
                 mesh,
                 assign_to_axis=ax,
@@ -808,7 +812,7 @@ class WidgetHelper:
                 widget_color=widget_color,
                 tubing=tubing,
                 interaction_event=interaction_event,
-                **kwargs,
+                **axkwargs,
             )
             actors.append(a)
 
@@ -1306,7 +1310,7 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
@@ -1452,7 +1456,7 @@ class WidgetHelper:
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
@@ -1688,12 +1692,14 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
-        name = kwargs.get('name', mesh.memory_address)
+        name = kwargs.get('name', None)
+        if name is None:
+            name = mesh.memory_address
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
