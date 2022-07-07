@@ -66,7 +66,7 @@ def read_legacy(filename, progress_bar=False):
 
     >>> import pyvista
     >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)
+    >>> mesh = pyvista.read_legacy(examples.uniformfile)  # doctest:+SKIP
 
     """
     warnings.warn(
