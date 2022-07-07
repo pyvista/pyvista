@@ -46,7 +46,7 @@ x, y, z = grid.points.T
 
 # sample and plot
 values = spider_cage(x, y, z)
-mesh = grid.contour(1, values, method='marching_cubes', rng=[1, 1])
+mesh = grid.contour([1], values, method='marching_cubes')
 dist = np.linalg.norm(mesh.points, axis=1)
 mesh.plot(scalars=dist, smooth_shading=True, specular=5, cmap="plasma", show_scalar_bar=False)
 
