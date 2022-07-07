@@ -1552,6 +1552,15 @@ class DataSetFilters:
         else:
             raise ValueError(f"Method '{method}' is not supported")
 
+        if rng is not None:
+            if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
+                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
+            rng_shape = np.shape(rng)
+            if rng_shape != (2,):
+                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
+            if rng[0] > rng[1]:
+                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
+
         if isinstance(scalars, str):
             scalars_name = scalars
         elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
@@ -1579,9 +1588,7 @@ class DataSetFilters:
             field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
-            )
+            raise TypeError('Contour filter only works on point data.')
         alg.SetInputArrayToProcess(
             0,
             0,

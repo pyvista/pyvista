@@ -549,6 +549,12 @@ def test_contour_errors(uniform):
         uniform.contour(method='invalid method')
     with pytest.raises(TypeError, match='Invalid type for `scalars`'):
         uniform.contour(scalars=1)
+    with pytest.raises(TypeError):
+        uniform.contour(rng={})
+    with pytest.raises(ValueError, match='rng must be a two-length'):
+        uniform.contour(rng=[1])
+    with pytest.raises(ValueError, match='rng must be a sorted'):
+        uniform.contour(rng=[2, 1])
 
 
 def test_elevation():
