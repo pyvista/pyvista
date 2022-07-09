@@ -3316,15 +3316,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image = self.screenshot(None, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
-        # reset scalar bars
+        # reset scalar bars and clear the render window
         self.clear()
-
-        # grab the display id before clearing the window
-        # this is an experimental feature
-        # if KILL_DISPLAY:  # pragma: no cover
-        #     disp_id = None
-        #     if hasattr(self, 'ren_win'):
-        #         disp_id = self.ren_win.GetGenericDisplayId()
         self._clear_ren_win()
 
         if hasattr(self, 'iren') and self.iren is not None:
