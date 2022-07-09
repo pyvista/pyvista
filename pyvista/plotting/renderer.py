@@ -216,8 +216,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._floor_kwargs = []
         # this keeps track of lights added manually to prevent garbage collection
         self._lights = []
-        self._camera = Camera(self)
-        self.SetActiveCamera(self._camera)
+        self.SetActiveCamera(Camera(self))
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
 
@@ -305,13 +304,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @property
     def camera(self):
         """Return the active camera for the rendering scene."""
-        return self._camera
+        return self.GetActiveCamera()
 
     @camera.setter
     def camera(self, source):
         """Set the active camera for the rendering scene."""
-        self._camera = source
-        self.SetActiveCamera(self._camera)
+        self.SetActiveCamera(source)
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
@@ -2763,7 +2761,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
-        self._camera = None
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
