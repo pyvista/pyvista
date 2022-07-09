@@ -472,7 +472,7 @@ if VTK9:
 
     def lazy_vtkVRMLExporter():
         """Lazy import of the vtkVRMLImporter."""
-        from vtkmodules.vtkIOImport import vtkVRMLExporter
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
 
         return vtkVRMLExporter()
 
