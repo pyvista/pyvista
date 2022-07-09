@@ -37,6 +37,7 @@ from .colors import Color, get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
+from .render_window import RenderWindow
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
@@ -237,10 +238,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bars = ScalarBars(self)
-
-        # track if the camera has been set up
-        self._first_time = True
-        # Keep track of the scale
 
         # track if render window has ever been rendered
         self._rendered = False
@@ -489,7 +486,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Widget containing pythreejs renderer.
 
         """
-        self._on_first_render_request()  # set up camera
+        self.ren_win.setup_camera()  # set up camera
         from pyvista.jupyter.pv_pythreejs import convert_plotter
 
         return convert_plotter(self)
@@ -1407,12 +1404,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def render(self):
         """Render the main window.
 
-        Does nothing until ``show`` has been called.
+        This does nothing until ``show`` has been called.
         """
-        if hasattr(self, 'ren_win') and not self._first_time:
-            log.debug('Rendering')
-            self.ren_win.Render()
-            self._rendered = True
+        if hasattr(self, 'ren_win'):
+            self.ren_win.render()
 
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs):
@@ -2748,7 +2743,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # only render when the plotter has already been shown
         if render is None:
-            render = not self._first_time
+            render = self.ren_win.rendered
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
@@ -3182,10 +3177,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(self, *args, **kwargs):
         """Wrap for ``ScalarBars.add_scalar_bar``."""
-        # only render when the plotter has already been shown
+        # only render when the render_window has already been shown
         render = kwargs.get('render', None)
         if render is None:
-            kwargs['render'] = not self._first_time
+            kwargs['render'] = self.ren_win.rendered
 
         # check if maper exists
         mapper = kwargs.get('mapper', None)
@@ -3294,7 +3289,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # only render when the plotter has already been shown
         if render is None:
-            render = not self._first_time
+            render = self.ren_win.rendered
 
         if render:
             self.render()
@@ -3646,9 +3641,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # if off screen, show has not been called and we must render
         # before extracting an image
-        if self._first_time:
-            self._on_first_render_request()
-            self.render()
+        self.ren_win.show()
 
         if not hasattr(self, 'mwriter'):
             raise RuntimeError('This plotter has not opened a movie or GIF file.')
@@ -4353,16 +4346,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Plotter hasn't been rendered or was improperly closed
             raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
-        if self._first_time and not self.off_screen:
+        if not self.ren_win.rendered and not self.off_screen:
             raise RuntimeError(
                 "Nothing to screenshot - call .show first or use the off_screen argument"
             )
 
         # if off screen, show has not been called and we must render
         # before extracting an image
-        if self._first_time:
-            self._on_first_render_request()
-            self.render()
+        self.ren_win.show()
 
         return self._save_image(self.image, filename, return_img)
 
@@ -4724,21 +4715,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # return the active renderer to the top, otherwise flat background
         # will not be rendered
         self.renderer.layer = 0
-
-    def _on_first_render_request(self, cpos=None):
-        """Once an image or render is officially requested, run this routine.
-
-        For example on the show call or any screenshot producing code.
-        """
-        # reset unless camera for the first render unless camera is set
-        if self._first_time:  # and not self.camera_set:
-            for renderer in self.renderers:
-                if not renderer.camera_set and cpos is None:
-                    renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
-                elif cpos is not None:
-                    renderer.camera_position = cpos
-            self._first_time = False
 
     def reset_camera_clipping_range(self):
         """Reset camera clipping planes."""
@@ -5135,7 +5111,7 @@ class Plotter(BasePlotter):
             multi_samples = self._theme.multi_samples
 
         # initialize render window
-        self.ren_win = _vtk.vtkRenderWindow()
+        self.ren_win = RenderWindow()
         self.ren_win.SetMultiSamples(multi_samples)
         self.ren_win.SetBorders(True)
         if line_smoothing:
@@ -5404,8 +5380,8 @@ class Plotter(BasePlotter):
                 self._window_size_unset = False
             self.ren_win.SetSize(window_size[0], window_size[1])
 
-        # reset unless camera for the first render unless camera is set
-        self._on_first_render_request(cpos)
+        # setup camera first if not rendering due to jupyter
+        self.ren_win.setup_camera()
 
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
@@ -5431,7 +5407,7 @@ class Plotter(BasePlotter):
                 )
                 return disp
 
-        self.render()
+        self.ren_win.show()
 
         # This has to be after the first render for some reason
         if title is None:
