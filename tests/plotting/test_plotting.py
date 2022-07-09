@@ -1026,8 +1026,8 @@ def test_plot_clim(sphere):
         clim=10,
         show_scalar_bar=False,
     )
-    plotter.show(before_close_callback=verify_cache_image)
     assert plotter.mapper.GetScalarRange() == (-10, 10)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_invalid_n_arrays(sphere):

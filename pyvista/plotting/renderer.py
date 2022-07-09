@@ -203,7 +203,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
-        self.parent = parent  # the plotter
+        self.parent = proxy(parent)  # the plotter
         self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
@@ -2114,7 +2114,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        if self.parent is not None:
+            self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
 
         if name is None:
@@ -2127,7 +2128,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.reset_camera()
         elif not self.camera_set and reset_camera is None:
             self.reset_camera()
-        elif render:
+        elif render and self.parent is not None:
             self.parent.render()
 
         self.Modified()

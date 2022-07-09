@@ -8,9 +8,24 @@ import weakref
 from pyvista import _vtk
 from pyvista.utilities import try_callback
 
+# import warnings
+
+
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
+
+
+# EXPERIMENTAL: permit pyvista to kill the render window
+# KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
+# if KILL_DISPLAY:  # pragma: no cover
+#     # this won't work under wayland
+#     try:
+#         X11 = ctypes.CDLL("libX11.so")
+#         X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+#     except OSError:
+#         warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
+#         KILL_DISPLAY = False
 
 
 class RenderWindowInteractor:
@@ -45,7 +60,7 @@ class RenderWindowInteractor:
         # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
-        self._plotter = plotter
+        self._plotter = weakref.proxy(plotter)
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
@@ -782,6 +797,20 @@ class RenderWindowInteractor:
         """Initialize the interactor."""
         self.interactor.Initialize()
 
+    def close(self):
+        """Close out the render window interactor.
+
+        This will terminate the render window.
+
+        """
+        self.remove_observers()
+        if self._style_class is not None:
+            self._style_class.remove_observers()
+
+        self.terminate_app()
+        # if KILL_DISPLAY:  # pragma: no cover
+        #     _kill_display(disp_id)
+
     def set_render_window(self, ren_win):
         """Set the render window."""
         self.interactor.SetRenderWindow(ren_win)
@@ -847,8 +876,14 @@ def _style_factory(klass):
         def __init__(self, parent):
             super().__init__()
             self._parent = weakref.ref(parent)
-            self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
-            self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+
+            self._observers = []
+            self._observers.append(
+                self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+            )
+            self._observers.append(
+                self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+            )
 
         def _press(self, obj, event):
             # Figure out which renderer has the event and disable the
@@ -868,4 +903,33 @@ def _style_factory(klass):
                 for renderer in parent._plotter.renderers:
                     renderer.SetInteractive(True)
 
+        def remove_observers(self):
+            for obs in self._observers:
+                self.RemoveObserver(obs)
+
     return CustomStyle
+
+
+# def _kill_display(disp_id):  # pragma: no cover
+#     """Forcibly close the display on Linux.
+
+#     See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
+
+#     And more details into why...
+#     https://stackoverflow.com/questions/64811503
+
+#     Notes
+#     -----
+#     This is to be used experimentally and is known to cause issues
+#     on `pyvistaqt`
+
+#     """
+#     if platform.system() != 'Linux':
+#         raise OSError('This method only works on Linux')
+
+#     if disp_id:
+#         cdisp_id = int(disp_id[1:].split('_')[0], 16)
+
+#         # this is unsafe as events might be queued, but sometimes the
+#         # window fails to close if we don't just close it
+#         Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()

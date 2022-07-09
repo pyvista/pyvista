@@ -1,12 +1,10 @@
 """PyVista plotting module."""
 import collections.abc
-import ctypes
 from functools import wraps
 import io
 import logging
 import os
 import pathlib
-import platform
 import textwrap
 from threading import Thread
 import time
@@ -48,18 +46,6 @@ SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
 
 
-# EXPERIMENTAL: permit pyvista to kill the render window
-KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
-if KILL_DISPLAY:  # pragma: no cover
-    # this won't work under wayland
-    try:
-        X11 = ctypes.CDLL("libX11.so")
-        X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
-    except OSError:
-        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
-        KILL_DISPLAY = False
-
-
 def close_all():
     """Close all open/active plotters and clean up memory.
 
@@ -69,7 +55,7 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
+    for _, p in list(_ALL_PLOTTERS.items()):
         if not p._closed:
             p.close()
         p.deep_clean()
@@ -3335,17 +3321,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # grab the display id before clearing the window
         # this is an experimental feature
-        if KILL_DISPLAY:  # pragma: no cover
-            disp_id = None
-            if hasattr(self, 'ren_win'):
-                disp_id = self.ren_win.GetGenericDisplayId()
+        # if KILL_DISPLAY:  # pragma: no cover
+        #     disp_id = None
+        #     if hasattr(self, 'ren_win'):
+        #         disp_id = self.ren_win.GetGenericDisplayId()
         self._clear_ren_win()
 
-        if self.iren is not None:
-            self.iren.remove_observers()
-            self.iren.terminate_app()
-            if KILL_DISPLAY:  # pragma: no cover
-                _kill_display(disp_id)
+        if hasattr(self, 'iren') and self.iren is not None:
+            self.iren.close()
             self.iren = None
 
         if hasattr(self, 'textActor'):
@@ -3364,14 +3347,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # remove any added scalars
         self._remove_added_scalars()
 
+        # remove the reference if not actively building a gallery
+        self.renderers.deep_clean()
+        if not pyvista.BUILDING_GALLERY:
+            # check if failed init
+            if hasattr(self, '_id_name'):
+                pyvista.plotting._ALL_PLOTTERS.pop(self._id_name, None)
+
     def deep_clean(self):
         """Clean the plotter of the memory."""
         self.disable_picking()
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
-        if getattr(self, 'mesh', None) is not None:
-            self.mesh.point_data = None
-            self.mesh.cell_data = None
+        # if getattr(self, 'mesh', None) is not None:
+        #     self.mesh.point_data = None
+        #     self.mesh.cell_data = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None
@@ -4640,6 +4630,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         as active scalars.
 
         """
+        if not hasattr(self, '_added_scalars'):
+            # failed init
+            return
+
         # remove the added scalars
         for mesh, (name, assoc) in self._added_scalars:
             dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
@@ -5625,28 +5619,3 @@ class Plotter(BasePlotter):
 # Tracks created plotters.  At the end of the file as we need to
 # define ``BasePlotter`` before including it in the type definition.
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
-
-
-def _kill_display(disp_id):  # pragma: no cover
-    """Forcibly close the display on Linux.
-
-    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
-
-    And more details into why...
-    https://stackoverflow.com/questions/64811503
-
-    Notes
-    -----
-    This is to be used experimentally and is known to cause issues
-    on `pyvistaqt`
-
-    """
-    if platform.system() != 'Linux':
-        raise OSError('This method only works on Linux')
-
-    if disp_id:
-        cdisp_id = int(disp_id[1:].split('_')[0], 16)
-
-        # this is unsafe as events might be queued, but sometimes the
-        # window fails to close if we don't just close it
-        Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()
