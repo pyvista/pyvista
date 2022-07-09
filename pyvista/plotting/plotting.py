@@ -1363,7 +1363,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_rendered(self):
         """Check if the render window has been shown and raise an exception if not."""
-        if not self._rendered:
+        self._check_has_ren_win()
+        if not self.ren_win.rendered:
             raise AttributeError(
                 '\nThis plotter has not yet been set up and rendered '
                 'with ``show()``.\n'
@@ -1585,6 +1586,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not self.ren_win.GetOffScreenFramebuffer().GetFBOIndex():
                 # must raise a runtime error as this causes a segfault on VTK9
                 raise ValueError('Invoking helper with no framebuffer')
+
         # Get 2D click location on window
         click_pos = self.iren.get_event_position()
 
@@ -3297,7 +3299,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def _clear_ren_win(self):
         """Clear the render window."""
         if hasattr(self, 'ren_win'):
-            self.ren_win.Finalize()
+            self.ren_win.finalize()
             del self.ren_win
 
     def close(self, render=False):
@@ -5111,7 +5113,7 @@ class Plotter(BasePlotter):
             multi_samples = self._theme.multi_samples
 
         # initialize render window
-        self.ren_win = RenderWindow()
+        self.ren_win = RenderWindow(self.renderers)
         self.ren_win.SetMultiSamples(multi_samples)
         self.ren_win.SetBorders(True)
         if line_smoothing:
@@ -5120,9 +5122,6 @@ class Plotter(BasePlotter):
             self.ren_win.PointSmoothingOn()
         if polygon_smoothing:
             self.ren_win.PolygonSmoothingOn()
-
-        for renderer in self.renderers:
-            self.ren_win.AddRenderer(renderer)
 
         # Add the shadow renderer to allow us to capture interactions within
         # a given viewport

@@ -334,7 +334,7 @@ def test_plot_update(sphere):
     pl.close()
 
 
-def test_plot(sphere, tmpdir):
+def test_plot_basic(sphere, tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
     scalars = np.arange(sphere.n_points)
@@ -987,11 +987,7 @@ def test_enable_picking_gc():
 
 def test_left_button_down():
     plotter = pyvista.Plotter()
-    if VTK9:
-        with pytest.raises(ValueError):
-            plotter.left_button_down(None, None)
-    else:
-        plotter.left_button_down(None, None)
+    plotter.left_button_down(None, None)
     plotter.close()
 
 
