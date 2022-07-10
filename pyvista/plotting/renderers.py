@@ -10,7 +10,7 @@ from .renderer import Renderer
 
 
 class Renderers:
-    """Organize Renderers for ``pyvista.Plotter``."""
+    """Organize Renderers for ``RenderWindow``."""
 
     def __init__(
         self,

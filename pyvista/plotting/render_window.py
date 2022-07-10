@@ -2,29 +2,146 @@
 
 import pyvista
 
+from .renderers import Renderers
 
-class RenderWindow(pyvista._vtk.vtkRenderWindow):
+
+class RenderWindow:
     """Wrap vtkOpenGLRenderer."""
 
-    def __init__(self, renderers):
+    def __init__(
+        self,
+        plotter,
+        shape=(1, 1),
+        splitting_position=None,
+        row_weights=None,
+        col_weights=None,
+        groups=None,
+        border=None,
+        border_color='k',
+        border_width=2.0,
+    ):
         """Initialize the render window."""
         super().__init__()
+        self._ren_win = None
         self._camera_setup = False
         self._rendered = False
-        self._renderers = renderers
-        for renderer in renderers:
-            self.AddRenderer(renderer)
+        self._renderers = Renderers(
+            plotter,
+            shape,
+            splitting_position,
+            row_weights,
+            col_weights,
+            groups,
+            border,
+            border_color,
+            border_width,
+        )
+
+    def attach_render_window(self, ren_win=None):
+        """Attach an existing or new render window."""
+        if self._ren_win is not None:
+            raise RuntimeError('Render window already attached')
+        if ren_win is None:
+            ren_win = pyvista._vtk.vtkRenderWindow()
+        else:
+            if not isinstance(ren_win, pyvista._vtk.vtkRenderWindow):
+                raise TypeError(
+                    '`ren_win` Must be a vtk.vtkRenderWindow or None, not ' '{type(ren_win)}'
+                )
+        self._ren_win = ren_win
+
+        for renderer in self._renderers:
+            self.add_renderer(renderer)
+
+    def __getattribute__(self, name):
+        """Allow getting attributes of the underlying VTK object."""
+        try:
+            return super().__getattribute__(name)
+        except:
+            return getattr(self.__dict__['_ren_win'], name)
+
+    @property
+    def borders(self):
+        """Return or set borders."""
+        return bool(self._ren_win.GetBorders())
+
+    @borders.setter
+    def borders(self, value):
+        """Return or set borders."""
+        self._ren_win.SetBorders(value)
+
+    @property
+    def off_screen(self):
+        """Return or set off_screen rendering."""
+        return bool(self._ren_win.GetOffScreenRendering())
+
+    @off_screen.setter
+    def off_screen(self, value):
+        """Return or set off_screen."""
+        self._ren_win.SetOffScreenRendering(value)
+
+    def add_renderer(self, renderer):
+        """Add a renderer to the render window."""
+        self._ren_win.AddRenderer(renderer)
+
+    @property
+    def n_layers(self):
+        """Return or set the number of layers."""
+        return self._ren_win.GetNumberOfLayers()
+
+    @n_layers.setter
+    def n_layers(self, value):
+        return self._ren_win.SetNumberOfLayers(value)
+
+    @property
+    def polygon_smoothing(self):
+        """Return or set polygon smoothing."""
+        return self._ren_win.GetPolygonSmoothing()
+
+    @polygon_smoothing.setter
+    def polygon_smoothing(self, value):
+        return self._ren_win.SetPolygonSmoothing(value)
+
+    @property
+    def line_smoothing(self):
+        """Return or set line smoothing."""
+        return self._ren_win.GetLineSmoothing()
+
+    @line_smoothing.setter
+    def line_smoothing(self, value):
+        return self._ren_win.SetLineSmoothing(value)
+
+    @property
+    def point_smoothing(self):
+        """Return or set point smoothing."""
+        return self._ren_win.GetPointSmoothing()
+
+    @point_smoothing.setter
+    def point_smoothing(self, value):
+        return self._ren_win.SetPointSmoothing(value)
+
+    @property
+    def multi_samples(self):
+        """Return or set the number of multi-samples."""
+        return self._ren_win.GetMultiSamples()
+
+    @multi_samples.setter
+    def multi_samples(self, value):
+        return self._ren_win.SetMultiSamples(value)
 
     def render(self):
         """Render this render window.
 
-        This does nothing until the cameras have been setup.
+        This does nothing until the camera(s) have been set-up.
         """
+        if self._ren_win is None:
+            return
+
         # do not render until the camera has been setup
         if not self._camera_setup:
             return
 
-        self.Render()
+        self._ren_win.Render()
         self._rendered = True
 
     @property
@@ -34,15 +151,17 @@ class RenderWindow(pyvista._vtk.vtkRenderWindow):
 
     @property
     def renderers(self):
-        """Return the renderers of this plotter."""
+        """Return the renderers of this render window."""
         return self._renderers
 
     def finalize(self):
         """Finalize and clear out the render window."""
         self._renderers = None
-        self.Finalize()
+        if self._ren_win is not None:
+            self._ren_win.Finalize()
+            self._ren_win = None
 
-    def setup_camera(self, cpos=None):
+    def _set_up_camera(self, cpos=None):
         """Set up the camera on the very first render request.
 
         For example on the show call or any screenshot producing code.
@@ -61,5 +180,15 @@ class RenderWindow(pyvista._vtk.vtkRenderWindow):
 
     def show(self):
         """Set up the cameras if needed and render."""
-        self.setup_camera()
+        self._set_up_camera()
         self.render()
+
+    def _check_has_ren_win(self):
+        """Check if render window attribute exists and raise an exception if not."""
+        if self._ren_win is None:
+            raise AttributeError(
+                '\n\nTo retrieve an image after the render window '
+                'has been closed, set:\n\n'
+                ' ``plotter.store_image = True``\n\n'
+                'before closing the plotter.'
+            )

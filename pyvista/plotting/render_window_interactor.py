@@ -784,6 +784,9 @@ class RenderWindowInteractor:
 
     def set_render_window(self, ren_win):
         """Set the render window."""
+        # accept pyvista.RenderWindow
+        if hasattr(ren_win, '_ren_win'):
+            ren_win = ren_win._ren_win
         self.interactor.SetRenderWindow(ren_win)
 
     def process_events(self):

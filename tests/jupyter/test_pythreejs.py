@@ -202,7 +202,7 @@ def test_export_after_show():
     pl = pyvista.Plotter(shape=(2, 2))
 
     # deleting rather than showing to save time
-    del pl.ren_win
+    pl.show()
 
     with pytest.raises(AttributeError):
         pv_pythreejs.convert_plotter(pl)
