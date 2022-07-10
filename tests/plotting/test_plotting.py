@@ -370,6 +370,31 @@ def test_plot(sphere, tmpdir):
         pyvista.plot(sphere, screenshot=filename)
 
 
+def test_plot_helper_volume(uniform):
+    uniform.plot(
+        volume=True,
+        parallel_projection=True,
+        show_scalar_bar=False,
+        show_grid=True,
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_plot_helper_two_datasets(sphere, airplane):
+    pyvista.plot([sphere, airplane], before_close_callback=verify_cache_image)
+
+
+def test_plot_helper_two_volumes(uniform):
+    grid = uniform.copy()
+    grid.origin = (0, 0, 10)
+    pyvista.plot(
+        [uniform, grid],
+        volume=True,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
+
+
 def test_plot_return_cpos(sphere):
     cpos = sphere.plot(return_cpos=True)
     assert isinstance(cpos, pyvista.CameraPosition)
