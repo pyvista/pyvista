@@ -4,7 +4,7 @@ import collections.abc
 from functools import partial
 from typing import Sequence
 import warnings
-from weakref import proxy
+import weakref
 
 import numpy as np
 
@@ -199,12 +199,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         'iso': 'view_isometric',
     }
 
-    def __init__(self, parent, border=True, border_color='w', border_width=2.0):
+    def __init__(self, render_window=None, border=True, border_color='w', border_width=2.0):
         """Initialize the renderer."""
         super().__init__()
+        self._render_window = None
+        if render_window is not None:
+            self._render_window = weakref.ref(render_window)
         self._actors = {}
-        self.parent = parent  # the plotter
-        self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
@@ -230,6 +231,26 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._border_actor = None
         if border:
             self.add_border(border_color, border_width)
+
+    @property
+    def plotter(self):
+        if self.render_window is not None:
+            return self.render_window.plotter
+
+    @property
+    def _theme(self):
+        if self.render_window is not None:
+            return self.render_window.theme
+
+    def render(self):
+        """Call the render windows's render method."""
+        self.render_window.render()
+
+    @property
+    def render_window(self):
+        """Return the render window object."""
+        if self._render_window is not None:
+            return self._render_window()
 
     @property
     def _charts(self):
@@ -671,7 +692,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             actor = uinput
 
         self.AddActor(actor)
-        actor.renderer = proxy(self)
+        actor.renderer = weakref.proxy(self)
 
         if name is None:
             name = actor.GetAddressAsString("")
@@ -683,7 +704,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif not self.camera_set and reset_camera is None and not rv:
             self.reset_camera(render)
         elif render:
-            self.parent.render()
+            self.render()
 
         self.update_bounds_axes()
 
@@ -844,8 +865,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(actor)
-        if hasattr(self.parent, 'iren'):
-            self.axes_widget.SetInteractor(self.parent.iren.interactor)
+        interactor = self.render_window.interactor
+        if self.render_window.interactor:
+            self.axes_widget.SetInteractor(interactor)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         self.axes_widget.SetCurrentRenderer(self)
@@ -2116,7 +2138,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        if self.plotter is not None:
+            self.plotter.scalar_bars._remove_mapper_from_plotter(actor)
+
         self.RemoveActor(actor)
 
         if name is None:
@@ -2130,7 +2154,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif not self.camera_set and reset_camera is None:
             self.reset_camera()
         elif render:
-            self.parent.render()
+            self.render()
 
         self.Modified()
         return True
@@ -2181,7 +2205,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # Update the camera's coordinate system
         transform = np.diag([xscale, yscale, zscale, 1.0])
         self.camera.model_transform_matrix = transform
-        self.parent.render()
+        self.render()
         if reset_camera:
             self.update_bounds_axes()
             self.reset_camera()
@@ -2272,7 +2296,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         else:
             self.ResetCamera()
         if render:
-            self.parent.render()
+            self.render()
         self.Modified()
 
     def isometric_view(self):
@@ -2547,7 +2571,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if not hasattr(self, 'edl_pass'):
             return
         self.SetPass(None)
-        self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
+        if self.render_window.vtk_obj is not None:
+            self.edl_pass.ReleaseGraphicsResources(self.render_window.vtk_obj)
         del self.edl_pass
         self.Modified()
 
@@ -2616,8 +2641,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             return
 
         self.SetPass(None)
-        if hasattr(self.parent, 'ren_win'):
-            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
+        if self.render_window.vtk_obj is not None:
+            self._shadow_pass.ReleaseGraphicsResources(self.render_window.vtk_obj)
         self._shadow_pass = None
         self.Modified()
 
@@ -2768,7 +2793,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._marker_actor = None
         self._border_actor = None
         # remove reference to parent last
-        self.parent = None
 
     def __del__(self):
         """Delete the renderer."""
@@ -2825,13 +2849,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def width(self):
         """Width of the renderer."""
         xmin, _, xmax, _ = self.viewport
-        return self.parent.window_size[0] * (xmax - xmin)
+        return self.render_window.size[0] * (xmax - xmin)
 
     @property
     def height(self):
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
-        return self.parent.window_size[1] * (ymax - ymin)
+        return self.render_window.size[1] * (ymax - ymin)
 
     def add_legend(
         self,

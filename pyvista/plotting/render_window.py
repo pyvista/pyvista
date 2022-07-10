@@ -1,5 +1,7 @@
 """Module to wrap vtkOpenGLRenderer."""
 
+import weakref
+
 import pyvista
 
 from .renderers import Renderers
@@ -10,7 +12,6 @@ class RenderWindow:
 
     def __init__(
         self,
-        plotter,
         shape=(1, 1),
         splitting_position=None,
         row_weights=None,
@@ -19,14 +20,22 @@ class RenderWindow:
         border=None,
         border_color='k',
         border_width=2.0,
+        plotter=None,
     ):
         """Initialize the render window."""
         super().__init__()
+
+        self._plotter = None
+        if plotter is not None:
+            if not isinstance(plotter, (weakref.ref, type(None))):
+                raise TypeError('`plotter` must be a weak reference.')
+            self._plotter = plotter
+
         self._ren_win = None
         self._camera_setup = False
         self._rendered = False
         self._renderers = Renderers(
-            plotter,
+            self,
             shape,
             splitting_position,
             row_weights,
@@ -36,6 +45,18 @@ class RenderWindow:
             border_color,
             border_width,
         )
+
+    @property
+    def plotter(self):
+        if self._plotter is not None:
+            return self._plotter()
+
+    @property
+    def theme(self):
+        if self._plotter is None or self._plotter() is None:
+            return pyvista.global_theme
+        else:
+            return self._plotter()._theme
 
     def attach_render_window(self, ren_win=None):
         """Attach an existing or new render window."""
@@ -192,3 +213,40 @@ class RenderWindow:
                 ' ``plotter.store_image = True``\n\n'
                 'before closing the plotter.'
             )
+
+    @property
+    def vtk_obj(self):
+        """Return the vtk render window."""
+        return self._ren_win
+
+    @property
+    def size(self):
+        """Return the render window size in ``(width, height)``.
+
+        Examples
+        --------
+        Change the window size from ``200 x 200`` to ``400 x 400``.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(window_size=[200, 200])
+        >>> pl.window_size
+        [200, 200]
+        >>> pl.window_size = [400, 400]
+        >>> pl.window_size
+        [400, 400]
+
+        """
+        return self._ren_win.GetSize()
+
+    @size.setter
+    def size(self, value):
+        self._ren_win.SetSize(value[0], value[1])
+
+    @property
+    def interactor(self):
+        if self._ren_win is not None:
+            return self._ren_win.GetInteractor()
+
+    @interactor.setter
+    def interactor(self, obj):
+        self._ren_win.SetInteractor(obj)

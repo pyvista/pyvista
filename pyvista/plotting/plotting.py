@@ -70,10 +70,11 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
-        if not p._closed:
-            p.close()
-        p.deep_clean()
+    for pl_ref in _ALL_PLOTTERS.values():
+        pl = pl_ref()
+        if pl is not None and not pl._closed:
+            pl.close()
+            pl.deep_clean()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -225,7 +226,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # add renderers
         self._window = RenderWindow(
-            self,
             shape,
             splitting_position,
             row_weights,
@@ -234,6 +234,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             border,
             border_color,
             border_width,
+            plotter=weakref.ref(self),
         )
         self.renderers = self._window._renderers
 
@@ -255,7 +256,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Add self to open plotters
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
-        _ALL_PLOTTERS[self._id_name] = self
+        _ALL_PLOTTERS[self._id_name] = weakref.ref(self)
 
         # Key bindings
         self.reset_key_events()
@@ -3334,8 +3335,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 disp_id = self.ren_win.GetGenericDisplayId()
         self._clear_ren_win()
 
-        if self.iren is not None:
-            self.iren.remove_observers()
+        if hasattr(self, 'iren') and self.iren is not None:
             self.iren.terminate_app()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
@@ -5138,7 +5138,7 @@ class Plotter(BasePlotter):
 
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
-        self.iren.set_render_window(self.ren_win)
+        # self.iren.set_render_window(self.ren_win)
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 

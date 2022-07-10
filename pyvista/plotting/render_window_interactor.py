@@ -24,9 +24,12 @@ class RenderWindowInteractor:
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
         """Initialize."""
+        self._plotter = weakref.ref(plotter)
+
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
-        self.interactor = interactor
+        # self.interactor = interactor
+        plotter._window.interactor = interactor
         self.interactor.SetDesiredUpdateRate(desired_update_rate)
         if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
@@ -45,7 +48,6 @@ class RenderWindowInteractor:
         # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
-        self._plotter = plotter
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
@@ -53,6 +55,16 @@ class RenderWindowInteractor:
         self.track_click_position(
             self._toggle_context_style, side="left", double=True, viewport=True
         )
+
+    @property
+    def interactor(self):
+        if self.plotter is not None:
+            if self.plotter._window is not None:
+                return self.plotter._window.interactor
+
+    @property
+    def plotter(self):
+        return self._plotter()
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -193,18 +205,18 @@ class RenderWindowInteractor:
     def _click_event(self, obj, event):
         t = time.time()
         dt = t - self._click_time
-        last_pos = self._plotter.click_position or (0, 0)
+        last_pos = self.plotter.click_position or (0, 0)
 
-        self._plotter.store_click_position()
+        self.plotter.store_click_position()
         self._click_time = t
-        dp = (self._plotter.click_position[0] - last_pos[0]) ** 2
-        dp += (self._plotter.click_position[1] - last_pos[1]) ** 2
+        dp = (self.plotter.click_position[0] - last_pos[0]) ** 2
+        dp += (self.plotter.click_position[1] - last_pos[1]) ** 2
         double = dp < self._MAX_CLICK_DELTA and dt < self._MAX_CLICK_DELAY
 
         for callback in self._click_event_callbacks[event][double, False]:
-            callback(self._plotter.pick_click_position())
+            callback(self.plotter.pick_click_position())
         for callback in self._click_event_callbacks[event][double, True]:
-            callback(self._plotter.click_position)
+            callback(self.plotter.click_position)
 
     def track_click_position(self, callback=None, side="right", double=False, viewport=False):
         """Keep track of the click position.
@@ -287,7 +299,7 @@ class RenderWindowInteractor:
 
     def _toggle_context_style(self, mouse_pos):
         scene = None
-        for renderer in self._plotter.renderers:
+        for renderer in self.plotter.renderers:
             if scene is None and renderer.IsInViewport(*mouse_pos):
                 scene = renderer._charts.toggle_interaction(mouse_pos)
             else:
@@ -579,8 +591,8 @@ class RenderWindowInteractor:
                 elif event == 'MouseWheelBackwardEvent':
                     # zoom out
                     zoom_factor = 1 / 1.1
-                self._plotter.camera.zoom(zoom_factor)
-                self._plotter.render()
+                self.plotter.camera.zoom(zoom_factor)
+                self.plotter.render()
 
             callback = partial(try_callback, wheel_zoom_callback)
 
@@ -823,6 +835,9 @@ class RenderWindowInteractor:
 
     def terminate_app(self):
         """Terminate the app."""
+        if self.interactor is None:
+            return
+        # self.remove_observers()
         if self.initialized:
 
             # #################################################################
@@ -858,17 +873,17 @@ def _style_factory(klass):
             # others
             super().OnLeftButtonDown()
             parent = self._parent()
-            if len(parent._plotter.renderers) > 1:
+            if len(parent.plotter.renderers) > 1:
                 click_pos = parent.get_event_position()
-                for renderer in parent._plotter.renderers:
+                for renderer in parent.plotter.renderers:
                     interact = renderer.IsInViewport(*click_pos)
                     renderer.SetInteractive(interact)
 
         def _release(self, obj, event):
             super().OnLeftButtonUp()
             parent = self._parent()
-            if len(parent._plotter.renderers) > 1:
-                for renderer in parent._plotter.renderers:
+            if len(parent.plotter.renderers) > 1:
+                for renderer in parent.plotter.renderers:
                     renderer.SetInteractive(True)
 
     return CustomStyle
