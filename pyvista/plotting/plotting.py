@@ -3315,6 +3315,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # must close out widgets first
         super().close()
+
         # Renderer has an axes widget, so close it
         self.renderers.close()
         self.renderers.remove_all_lights()
@@ -3326,19 +3327,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # reset scalar bars
         self.clear()
-
-        # grab the display id before clearing the window
-        # this is an experimental feature
-        if KILL_DISPLAY:  # pragma: no cover
-            disp_id = None
-            if hasattr(self, 'ren_win'):
-                disp_id = self.ren_win.GetGenericDisplayId()
         self._clear_ren_win()
 
         if hasattr(self, 'iren') and self.iren is not None:
-            self.iren.terminate_app()
-            if KILL_DISPLAY:  # pragma: no cover
-                _kill_display(disp_id)
+            self.iren.close()
             self.iren = None
 
         if hasattr(self, 'textActor'):
@@ -5138,7 +5130,6 @@ class Plotter(BasePlotter):
 
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
-        # self.iren.set_render_window(self.ren_win)
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 

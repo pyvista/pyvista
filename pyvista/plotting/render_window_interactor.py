@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
+_CLASSES = {}
+
 
 class RenderWindowInteractor:
     """Wrap vtk.vtkRenderWindowInteractor.
@@ -28,13 +30,14 @@ class RenderWindowInteractor:
 
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
-        # self.interactor = interactor
+
         plotter._window.interactor = interactor
+        self.interactor = interactor
         self.interactor.SetDesiredUpdateRate(desired_update_rate)
         if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
 
-        # Map of observers to events
+        # # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = collections.defaultdict(list)
         self._click_event_callbacks = {
@@ -45,7 +48,7 @@ class RenderWindowInteractor:
         self._MAX_CLICK_DELAY = 0.8  # seconds
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
 
-        # Set default style
+        # # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
 
@@ -55,12 +58,6 @@ class RenderWindowInteractor:
         self.track_click_position(
             self._toggle_context_style, side="left", double=True, viewport=True
         )
-
-    @property
-    def interactor(self):
-        if self.plotter is not None:
-            if self.plotter._window is not None:
-                return self.plotter._window.interactor
 
     @property
     def plotter(self):
@@ -835,9 +832,6 @@ class RenderWindowInteractor:
 
     def terminate_app(self):
         """Terminate the app."""
-        if self.interactor is None:
-            return
-        # self.remove_observers()
         if self.initialized:
 
             # #################################################################
@@ -848,6 +842,20 @@ class RenderWindowInteractor:
             # #################################################################
 
             self.interactor.TerminateApp()
+            self.interactor = None
+
+    def close(self):
+        """Close out the render window interactor.
+
+        This will terminate the render window if it is not already closed.
+        """
+        self.remove_observers()
+        if self._style_class is not None:
+            self._style_class.remove_observers()
+            self._style_class = None
+
+        self.terminate_app()
+        self._click_event_callbacks = None
 
 
 def _style_factory(klass):
@@ -856,34 +864,52 @@ def _style_factory(klass):
     # swallow the release events
     # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
 
-    try:
-        from vtkmodules import vtkInteractionStyle
-    except ImportError:  # pragma: no cover
-        import vtk as vtkInteractionStyle
+    def _make_class(klass):
+        """Make the class."""
 
-    class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-        def __init__(self, parent):
-            super().__init__()
-            self._parent = weakref.ref(parent)
-            self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
-            self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+        try:
+            from vtkmodules import vtkInteractionStyle
+        except ImportError:  # pragma: no cover
+            import vtk as vtkInteractionStyle
 
-        def _press(self, obj, event):
-            # Figure out which renderer has the event and disable the
-            # others
-            super().OnLeftButtonDown()
-            parent = self._parent()
-            if len(parent.plotter.renderers) > 1:
-                click_pos = parent.get_event_position()
-                for renderer in parent.plotter.renderers:
-                    interact = renderer.IsInViewport(*click_pos)
-                    renderer.SetInteractive(interact)
+        class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
+            def __init__(self, parent):
+                super().__init__()
+                self._parent = weakref.ref(parent)
 
-        def _release(self, obj, event):
-            super().OnLeftButtonUp()
-            parent = self._parent()
-            if len(parent.plotter.renderers) > 1:
-                for renderer in parent.plotter.renderers:
-                    renderer.SetInteractive(True)
+                self._observers = []
+                self._observers.append(
+                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+                )
+                self._observers.append(
+                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+                )
 
-    return CustomStyle
+            def _press(self, obj, event):
+                # Figure out which renderer has the event and disable the
+                # others
+                super().OnLeftButtonDown()
+                parent = self._parent()
+                if len(parent.plotter.renderers) > 1:
+                    click_pos = parent.get_event_position()
+                    for renderer in parent.plotter.renderers:
+                        interact = renderer.IsInViewport(*click_pos)
+                        renderer.SetInteractive(interact)
+
+            def _release(self, obj, event):
+                super().OnLeftButtonUp()
+                parent = self._parent()
+                if len(parent.plotter.renderers) > 1:
+                    for renderer in parent.plotter.renderers:
+                        renderer.SetInteractive(True)
+
+            def remove_observers(self):
+                for obs in self._observers:
+                    self.RemoveObserver(obs)
+
+        return CustomStyle
+
+    # cache classes
+    if klass not in _CLASSES:
+        _CLASSES[klass] = _make_class(klass)
+    return _CLASSES[klass]

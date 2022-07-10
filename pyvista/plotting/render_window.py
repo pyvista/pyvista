@@ -31,6 +31,7 @@ class RenderWindow:
                 raise TypeError('`plotter` must be a weak reference.')
             self._plotter = plotter
 
+        self._interactor_ref = None
         self._ren_win = None
         self._camera_setup = False
         self._rendered = False
@@ -246,7 +247,10 @@ class RenderWindow:
     def interactor(self):
         if self._ren_win is not None:
             return self._ren_win.GetInteractor()
+        elif self._interactor_ref is not None:
+            return self._interactor_ref()
 
     @interactor.setter
     def interactor(self, obj):
         self._ren_win.SetInteractor(obj)
+        self._interactor_ref = weakref.ref(obj)
