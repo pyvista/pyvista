@@ -426,5 +426,16 @@ if TEST_DOWNLOADS:
         dataset = examples.download_lucy(load=True)
         assert isinstance(dataset, pyvista.PolyData)
 
+    def test_angular_sector():
+        filename = examples.download_angular_sector(load=False)
+        assert os.path.isfile(filename)
 
-# End of download tests
+        dataset = examples.download_angular_sector(load=True)
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_mount_damavand():
+        filename = examples.download_mount_damavand(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_mount_damavand(load=True)
+        assert isinstance(dataset, pyvista.PolyData)

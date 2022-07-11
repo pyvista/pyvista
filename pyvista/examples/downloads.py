@@ -2802,7 +2802,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
     ...     [ 4.10000000e-01, -2.90000000e-01, -8.60000000e-01]
     ... ]
     >>> dataset = examples.download_damavand_volcano()
-    >>> dataset.plot(cpos=cpos, cmap="reds", show_scalar_bar=False)
+    >>> dataset.plot(cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True)
 
     See :ref:`volume_rendering_example` for an example using this dataset.
 
@@ -4198,3 +4198,62 @@ def download_moonlanding_image(load=True):  # pragma: no cover
 
     """
     return _download_and_read('moonlanding.png', load=load)
+
+
+def download_angular_sector(load=True):  # pragma: no cover
+    """Download the angular sector dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_angular_sector()
+    >>> dataset.plot(scalars='PointId')
+
+    """
+    return _download_and_read('AngularSector.vtk', load=load)
+
+
+def download_mount_damavand(load=True):  # pragma: no cover
+    """Download the Mount Damavand dataset.
+
+    Visualize 3D models of Damavand Volcano, Alborz, Iran. This is a 2D map
+    with the altitude embedded as ``'z'`` cell data within the
+    :class:`pyvista.Polydata`.
+
+    Originally posted at `banesullivan/damavand-volcano
+    <https://github.com/banesullivan/damavand-volcano>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the Damavand dataset and plot it after warping it by its altitude.
+
+    >>> from pyvista import examples
+    >>> dataset = download_mount_damavand()
+    >>> dataset = dataset.cell_data_to_point_data()
+    >>> dataset = dataset.warp_by_scalar('z', factor=2)
+    >>> dataset.plot(cmap='gist_earth', show_scalar_bar=False)
+
+    """
+    return _download_and_read('AOI.Damavand.32639.vtp', load=load)
