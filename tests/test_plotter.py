@@ -255,11 +255,13 @@ def test_add_multiple(sphere):
     assert sphere.n_arrays == 1
 
 
-def test_deep_clean(sphere):
+def test_deep_clean(cube):
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere)
+    cube_orig = cube.copy()
+    pl.add_mesh(cube)
     pl.deep_clean()
     assert pl.mesh is None
     assert pl.mapper is None
     assert pl.volume is None
     assert pl.textActor is None
+    assert cube == cube_orig
