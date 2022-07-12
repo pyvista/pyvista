@@ -253,3 +253,13 @@ def test_add_multiple(sphere):
     pl.add_mesh(sphere, scalars='data')
     pl.show()
     assert sphere.n_arrays == 1
+
+
+def test_deep_clean(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.deep_clean()
+    assert pl.mesh is None
+    assert pl.mapper is None
+    assert pl.volume is None
+    assert pl.textActor is None
