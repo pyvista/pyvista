@@ -4229,10 +4229,10 @@ def download_mount_damavand(load=True):  # pragma: no cover
 
     Visualize 3D models of Damavand Volcano, Alborz, Iran. This is a 2D map
     with the altitude embedded as ``'z'`` cell data within the
-    :class:`pyvista.Polydata`.
+    :class:`pyvista.PolyData`.
 
     Originally posted at `banesullivan/damavand-volcano
-    <https://github.com/banesullivan/damavand-volcano>`_
+    <https://github.com/banesullivan/damavand-volcano>`_.
 
     Parameters
     ----------
