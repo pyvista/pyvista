@@ -30,9 +30,9 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
+from ..utilities.misc import PyvistaDeprecationWarning, _has_matplotlib, uses_egl
 from ..utilities.regression import image_from_window
-from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
+from ._plotting import prepare_smooth_shading, process_opacity
 from .colors import Color, get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper

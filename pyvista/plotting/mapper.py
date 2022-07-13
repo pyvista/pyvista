@@ -8,7 +8,7 @@ import numpy as np
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array, raise_not_matching
 
-from ._plotting import _has_matplotlib
+from ..utilities.misc import _has_matplotlib
 from .colors import Color, get_cmap_safe
 from .tools import normalize
 

@@ -178,36 +178,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista._typing import color_like
 from pyvista.utilities import PyvistaDeprecationWarning
-from pyvista.utilities.misc import static_vars
-
-
-@static_vars(_imported=None)
-def _has_colorcet():
-    """Check if colorcet can be imported."""
-    if _has_colorcet._imported is None:
-        try:
-            import colorcet  # noqa
-
-            _has_colorcet._imported = True
-        except ImportError:  # pragma: no cover
-            _has_colorcet._imported = False
-
-    return _has_colorcet._imported
-
-
-@static_vars(_imported=None)
-def _has_cmocean():
-    """Check if cmocean can be imported."""
-    if _has_cmocean._imported is None:
-        try:
-            import cmocean  # noqa
-
-            _has_cmocean._imported = True
-        except ImportError:  # pragma: no cover
-            _has_cmocean._imported = False
-
-    return _has_cmocean._imported
-
+from pyvista.utilities.misc import _has_cmocean, _has_colorcet, _has_matplotlib
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -1002,20 +973,23 @@ def get_cmap_safe(cmap):
             else:
                 return cmap
 
-        try:
-            from matplotlib.cm import get_cmap
-        except ImportError:  # pragma: no cover
-            raise ImportError(
-                'The use of custom colormaps requires the installation of matplotlib'
-            ) from None
-
         # Else use Matplotlib
+        if not _has_matplotlib:
+            raise ImportError('Custom colormaps require `matplotlib`')
+
+        from matplotlib.cm import get_cmap
+
         cmap = get_cmap(cmap)
 
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
                 raise TypeError('When inputting a list as a cmap, each item should be a string.')
+
+        # Else use Matplotlib
+        if not _has_matplotlib:
+            raise ImportError('Custom colormaps require `matplotlib`')
+
         from matplotlib.colors import ListedColormap
 
         cmap = ListedColormap(cmap)

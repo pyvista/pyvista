@@ -1,5 +1,6 @@
 """Miscellaneous pyvista functions."""
 from collections import namedtuple
+from functools import lru_cache  # replace with cache when Py38 is dropped
 import warnings
 
 import numpy as np
@@ -7,16 +8,36 @@ import numpy as np
 from pyvista import _vtk
 
 
-def static_vars(**kwargs):
-    """Add static variables to a function."""
+@lru_cache(maxsize=None)
+def _has_colorcet():
+    """Check if colorcet can be imported."""
+    try:
+        import colorcet  # noqa
 
-    def decorate(func):
-        """Add static variables."""
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
+        return True
+    except ImportError:  # pragma: no cover
+        return False
 
-    return decorate
+
+@lru_cache(maxsize=None)
+def _has_cmocean():
+    """Check if cmocean can be imported."""
+    try:
+        import cmocean  # noqa
+
+        return True
+    except ImportError:  # pragma: no cover
+        return False
+
+
+@lru_cache(maxsize=None)
+def _has_matplotlib():
+    try:
+        import matplotlib  # noqa
+
+        return True
+    except ImportError:  # pragma: no cover
+        return False
 
 
 def raise_has_duplicates(arr):

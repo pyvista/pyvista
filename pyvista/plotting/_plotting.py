@@ -5,22 +5,8 @@ import numpy as np
 
 import pyvista
 from pyvista.utilities import get_array
-from pyvista.utilities.misc import static_vars
 
 from .tools import opacity_transfer_function
-
-
-@static_vars(_imported=None)
-def _has_matplotlib():
-    if _has_matplotlib._imported is None:
-        try:
-            import matplotlib  # noqa
-
-            _has_matplotlib._imported = True
-        except ImportError:  # pragma: no cover
-            _has_matplotlib._imported = False
-
-    return _has_matplotlib._imported
 
 
 def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
