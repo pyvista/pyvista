@@ -11,7 +11,7 @@ Create an animated MP4 movie of a rendering scene.
     rendered on a sphinx gallery example.
 
 """
-
+# sphinx_gallery_thumbnail_number = 1
 
 import numpy as np
 
