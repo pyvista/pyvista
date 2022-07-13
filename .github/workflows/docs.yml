@@ -45,10 +45,10 @@ jobs:
         with:
           requirement_files: requirements_docs.txt
 
-      - name: Install OS Packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+      - uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+          version: 1.0
 
       - name: Install OSMesa VTK
         run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
