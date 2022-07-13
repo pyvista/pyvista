@@ -1,5 +1,5 @@
 """
-.. _movie_example:
+.. _movie_glyph_example:
 
 Save a Movie Using Glyphs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
