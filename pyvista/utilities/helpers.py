@@ -375,6 +375,14 @@ def get_array(
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return arr
 
+    if not isinstance(preference, str):
+        raise TypeError('`preference` must be a string')
+    if preference not in ['cell', 'point', 'field']:
+        raise ValueError(
+            f'`preference` must be either "cell", "point", "field" for a '
+            f'{type(mesh)}, not "{preference}".'
+        )
+
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
@@ -384,10 +392,8 @@ def get_array(
             return carr, FieldAssociation.CELL
         elif preference == FieldAssociation.POINT:
             return parr, FieldAssociation.POINT
-        elif preference == FieldAssociation.NONE:
+        else:  # must be field
             return farr, FieldAssociation.NONE
-        else:
-            raise ValueError(f'Data field ({preference}) not supported.')
 
     if parr is not None:
         return parr, FieldAssociation.POINT

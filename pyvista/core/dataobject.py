@@ -259,7 +259,7 @@ class DataObject:
             newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self, deep)
+        # newobject.copy_meta_from(self, deep)
         return newobject
 
     def __eq__(self, other):

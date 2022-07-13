@@ -260,8 +260,8 @@ def test_get_array_error(hexbeam):
         helpers.get_array(hexbeam, 'test_data', preference={'invalid'})
     with pytest.raises(ValueError):
         helpers.get_array(hexbeam, 'test_data', preference='invalid')
-    with pytest.raises(ValueError):
-        helpers.get_array(hexbeam, 'test_data', preference='row', err=True)
+    with pytest.raises(ValueError, match='`preference` must be'):
+        helpers.get_array(hexbeam, 'test_data', preference='row')
 
 
 def test_get_array_none(hexbeam):
