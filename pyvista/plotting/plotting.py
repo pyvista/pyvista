@@ -2212,6 +2212,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time
+
         ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
@@ -2283,7 +2287,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 a = self.add_mesh(data, **the_arguments)
                 actors.append(a)
 
-                if (reset_camera is None and not self.camera_set) or reset_camera:
+                if reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
                     self.camera_set = False
