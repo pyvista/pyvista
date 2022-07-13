@@ -1089,8 +1089,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Parameters
         ----------
         array_dict : dict, DataSetAttributes
-            A dictionary of ``(array name, :class:`numpy.ndarray`)`` or
-            :class:`pyvista.DataSetAttributes`
+            A dictionary of ``(array name, :class:`numpy.ndarray`)`` or a
+            :class:`pyvista.DataSetAttributes`.
 
         Examples
         --------
