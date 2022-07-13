@@ -1,6 +1,7 @@
 """Miscellaneous pyvista functions."""
 from collections import namedtuple
 from functools import lru_cache  # replace with cache when Py38 is dropped
+import os
 import warnings
 
 import numpy as np
@@ -38,6 +39,22 @@ def _has_matplotlib():
         return True
     except ImportError:  # pragma: no cover
         return False
+
+
+def _set_plot_theme_from_env():
+    """Set plot theme from an environment variable."""
+    from pyvista.themes import _ALLOWED_THEMES, set_plot_theme
+
+    if 'PYVISTA_PLOT_THEME' in os.environ:
+        try:
+            theme = os.environ['PYVISTA_PLOT_THEME']
+            set_plot_theme(theme.lower())
+        except KeyError:
+            allowed = ', '.join([item.name for item in _ALLOWED_THEMES])
+            warnings.warn(
+                f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
+                f'Should be one of the following: {allowed}'
+            )
 
 
 def raise_has_duplicates(arr):

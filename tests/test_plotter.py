@@ -264,3 +264,15 @@ def test_add_scalars_image(noise_2d):
     assert noise_2d.n_arrays == 1
     pl.close()
     assert noise_2d.n_arrays == 0
+
+
+def test_deep_clean(cube):
+    pl = pyvista.Plotter()
+    cube_orig = cube.copy()
+    pl.add_mesh(cube)
+    pl.deep_clean()
+    assert pl.mesh is None
+    assert pl.mapper is None
+    assert pl.volume is None
+    assert pl.textActor is None
+    assert cube == cube_orig
