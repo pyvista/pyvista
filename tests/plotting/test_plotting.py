@@ -104,6 +104,8 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
+    'test_plot_helper_volume',
+    'test_plot_helper_two_volumes',
 }
 
 # these images vary between Linux/Windows and MacOS
