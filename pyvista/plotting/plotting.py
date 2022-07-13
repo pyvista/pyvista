@@ -3370,11 +3370,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         if getattr(self, 'mesh', None) is not None:
-            self.mesh.point_data = None
-            self.mesh.cell_data = None
+            try:
+                self.mesh.point_data = None
+            except AttributeError:
+                pass
+            try:
+                self.mesh.cell_data = None
+            except AttributeError:
+                pass
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
-            self.mapper.lookup_table = None
+            try:
+                self.mapper.lookup_table = None
+            except AttributeError:
+                pass
         self.mapper = None
         self.volume = None
         self.textActor = None
