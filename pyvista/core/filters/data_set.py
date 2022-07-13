@@ -986,7 +986,7 @@ class DataSetFilters:
         if scalars is None:
             pyvista.set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
-        arr = get_array(self, scalars, preference=preference, err=False)
+        arr, _ = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
@@ -2369,7 +2369,7 @@ class DataSetFilters:
         if vectors is None:
             pyvista.set_default_active_vectors(self)
             field, vectors = self.active_vectors_info
-        arr = get_array(self, vectors, preference='point')
+        arr, _ = get_array(self, vectors, preference='point')
         field = get_array_association(self, vectors, preference='point')
         if arr is None:
             raise ValueError('No vectors present to warp by vector.')

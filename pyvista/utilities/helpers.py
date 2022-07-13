@@ -9,7 +9,7 @@ import sys
 import threading
 from threading import Thread
 import traceback
-from typing import Optional
+from typing import Optional, Tuple
 import warnings
 
 import numpy as np
@@ -338,7 +338,9 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(
+    mesh, name, preference='cell', err=False
+) -> Tuple[Optional[np.ndarray], FieldAssociation]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -363,6 +365,9 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
+    pyvista.FieldAssociation
+        Association of the scalars matching ``name``.
+
     """
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
@@ -376,23 +381,23 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     preference = parse_field_choice(preference)
     if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference == FieldAssociation.CELL:
-            return carr
+            return carr, FieldAssociation.CELL
         elif preference == FieldAssociation.POINT:
-            return parr
+            return parr, FieldAssociation.POINT
         elif preference == FieldAssociation.NONE:
-            return farr
+            return farr, FieldAssociation.NONE
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
 
     if parr is not None:
-        return parr
+        return parr, FieldAssociation.POINT
     elif carr is not None:
-        return carr
+        return carr, FieldAssociation.CELL
     elif farr is not None:
-        return farr
+        return farr, FieldAssociation.NONE
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
-    return None
+    return None, FieldAssociation.NONE
 
 
 def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:

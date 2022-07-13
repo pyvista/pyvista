@@ -20,6 +20,7 @@ import scooby
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (
+    FieldAssociation,
     abstract_class,
     assert_empty_kwargs,
     convert_array,
@@ -270,8 +271,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
         self._has_background_layer = False
-        self._added_scalars = []
-        self._prev_active_scalars = {}
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -2145,10 +2144,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
-
-        # cast to PointSet to PolyData
-        if isinstance(mesh, pyvista.PointSet):
+        elif isinstance(mesh, pyvista.PointSet):
+            # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
+        else:
+            # we have to make a shallow copy here so when we set scalars to be
+            # active, it doesn't modify the underlying mesh
+            mesh = mesh.copy(deep=False)
 
         ##### Parse arguments to be used for all meshes #####
 
@@ -2325,9 +2327,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     rgb = True
 
             original_scalar_name = scalars
-            scalars = get_array(mesh, scalars, preference=preference, err=True)
+            scalars, field = get_array(mesh, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', original_scalar_name)
             scalars_name = original_scalar_name
+
+            if field == FieldAssociation.POINT:
+                mesh.point_data.active_scalars_name = original_scalar_name
+                self.mapper.SetScalarModeToUsePointData()
+            elif field == FieldAssociation.CELL:
+                mesh.cell_data.active_scalars_name = original_scalar_name
+                self.mapper.SetScalarModeToUseCellData()
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2380,17 +2389,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         # Scalars formatting ==================================================
-        added_scalar_info = None
         if scalars is not None:
-            # track the previous active scalars
-            if mesh.memory_address not in self._prev_active_scalars:
-                self._prev_active_scalars[mesh.memory_address] = (
-                    mesh,
-                    mesh.point_data.active_scalars_name,
-                    mesh.cell_data.active_scalars_name,
-                )
-
-            show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
+            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
                 mesh,
                 scalars,
                 scalars_name,
@@ -2415,7 +2415,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_scalar_bar,
             )
         elif custom_opac:  # no scalars but custom opacity
-            added_scalar_info = self.mapper.set_custom_opacity(
+            self.mapper.set_custom_opacity(
                 opacity,
                 color,
                 mesh,
@@ -2427,10 +2427,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         else:
             self.mapper.SetScalarModeToUseFieldData()
-
-        # track if any data arrays have been added
-        if added_scalar_info is not None and added_scalar_info[0] is not None:
-            self._added_scalars.append((mesh, added_scalar_info))
 
         # Set actor properties ================================================
 
@@ -2849,7 +2845,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         title = 'Data'
         if isinstance(scalars, str):
             title = scalars
-            scalars = get_array(volume, scalars, preference=preference, err=True)
+            scalars, _ = get_array(volume, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', title)
 
         if not isinstance(scalars, np.ndarray):
@@ -3360,9 +3356,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
-
-        # remove any added scalars
-        self._remove_added_scalars()
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -4619,41 +4612,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     datasets.append(mapper.GetInputAsDataSet())
 
         return datasets
-
-    def _remove_added_scalars(self):
-        """Remove any scalars added to this plotter's datasets by this plotter.
-
-        Additional point or cell data may be added to be able to correctly plot
-        scalars. This usually occurs in one of the following cases:
-
-        * ``<scalar-name>-real`` for complex data
-        * ``<scalar-name>-normed`` for normalized multi-component arrays.
-        * ``<scalars-name>-<index>`` when setting ``component=<index>`` in
-          ``add_mesh`` when plotting multi-component arrays.
-        * ``Data`` when passing an array as ``scalars`` with ``add_mesh`` rather than
-          selecting an existing array using a string.
-        * ``__custom_rgba`` when the color mode is set to map directly to the
-          scalars (an RGBA array).
-
-        This method removes those arrays, which are tracked in
-        ``self._added_scalars``. It also tries to restore the original scalars
-        as active scalars.
-
-        """
-        # remove the added scalars
-        for mesh, (name, assoc) in self._added_scalars:
-            dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
-            dsattr.pop(name, None)
-
-        # reactivate prior active scalars
-        for mesh, point_name, cell_name in self._prev_active_scalars.values():
-            if point_name is not None and mesh.point_data.active_scalars_name != point_name:
-                mesh.point_data.active_scalars_name = point_name
-            if cell_name is not None and mesh.cell_data.active_scalars_name != cell_name:
-                mesh.cell_data.active_scalars_name = cell_name
-
-        self._added_scalars = []
-        self._prev_active_scalars = {}
 
     def __del__(self):
         """Delete the plotter."""

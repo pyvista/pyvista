@@ -863,7 +863,7 @@ class DataSet(DataSetFilters, DataObject):
 
         if isinstance(arr_var, str):
             name = arr_var
-            arr = get_array(self, name, preference=preference, err=True)
+            arr, _ = get_array(self, name, preference=preference, err=True)
         else:
             arr = arr_var
 
@@ -1810,7 +1810,7 @@ class DataSet(DataSetFilters, DataObject):
         pyvista_ndarray(['a', 'b', 'c'], dtype='<U1')
 
         """
-        arr = get_array(self, name, preference=preference, err=True)
+        arr, _ = get_array(self, name, preference=preference, err=True)
         if arr is None:  # pragma: no cover
             raise RuntimeError  # this should never be reached with err=True
         return arr

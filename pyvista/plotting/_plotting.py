@@ -150,7 +150,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     if isinstance(opacity, str):
         try:
             # Get array from mesh
-            opacity = get_array(mesh, opacity, preference=preference, err=True)
+            opacity, _ = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
                 warnings.warn("Opacity scalars contain values over 1")
             if np.any(opacity < 0):
