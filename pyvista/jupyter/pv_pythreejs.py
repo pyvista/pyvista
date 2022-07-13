@@ -289,6 +289,31 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
     return tjs.Mesh(geometry=surf_geo, material=material)
 
 
+def point_labels_to_sprites(dataset):
+    for point, label in zip(dataset.points, dataset.point_data['labels']):
+        text = tjs.TextTexture(
+            string=label,
+            color='green',  # face color
+            size=18,
+            fontFace='Arial',
+        )
+        material = tjs.SpriteMaterial(
+            map=text,
+            sizeAttenuation=True,  # Change size when zooming in/out
+            rotation=0,  # in radians
+            color='black',  # font face color
+            opacity=1,  # face opacity (doesn't affect background)
+            transparent=True,  # True to hide background
+            depthTest=False,  # False for "always visible" behavior
+        )
+        sprite = tjs.Sprite(
+            material=material,
+            center=[.5, .5],  # Anchor point; [.5, .5] is the middle, [0, 0] bottom-left
+            position=point.tolist(),
+        )
+        yield sprite
+
+
 def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
     """Convert a pyvista surface to a three.js edge mesh."""
     # extract all edges from the surface.  Should not use triangular
@@ -432,6 +457,8 @@ def actor_to_mesh(actor, focal_point):
         elif np.any(dataset.lines):
             mesh = to_edge_mesh(dataset, mapper, prop, use_edge_coloring=False, use_lines=True)
             meshes.append(mesh)
+        elif 'labels' in dataset.point_data:
+            meshes.extend(point_labels_to_sprites(dataset))
         else:  # pragma: no cover
             warnings.warn('Empty or unsupported dataset attached to actor')
 
@@ -439,9 +466,10 @@ def actor_to_mesh(actor, focal_point):
     # three.js, the scene is always centered at the origin, which
     # serves as the focal point of the camera.  Therefore, we need to
     # shift the entire scene by the focal point of the pyvista camera
+    fx, fy, fz = focal_point
     for mesh in meshes:
-        mesh.position = -focal_point[0], -focal_point[1], -focal_point[2]
-
+        x, y, z = mesh.position
+        mesh.position = x - fx, y - fy, z - fz
     return meshes
 
 
@@ -452,7 +480,6 @@ def meshes_from_actors(actors, focal_point):
         mesh = actor_to_mesh(actor, focal_point)
         if mesh is not None:
             meshes.extend(mesh)
-
     return meshes
 
 
