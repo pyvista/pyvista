@@ -259,7 +259,12 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
     else:
-        shared_attr['side'] = 'DoubleSide'
+        if prop.GetBackfaceCulling():
+            shared_attr['side'] = 'FrontSide'
+        elif prop.GetFrontfaceCulling():
+            shared_attr['side'] = 'BackSide'
+        else:
+            shared_attr['side'] = 'DoubleSide'
 
     if prop.GetOpacity() < 1.0:
         shared_attr['transparent'] = True
