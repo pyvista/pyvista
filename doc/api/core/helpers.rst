@@ -23,7 +23,7 @@ Lines from Points
 Line Segments from Points
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automethod:: pyvista.helpers.line_segments_from_points
-             
+
 
 Convert to and from VTK Datatypes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
