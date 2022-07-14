@@ -28,7 +28,7 @@ z = (np.sin(r) + 1) / 2
 grid = pv.StructuredGrid(x, y, z)
 grid.point_data['size'] = z.ravel()
 
-# generate glyphs based on the size of the
+# generate glyphs with varying size
 sphere = pv.Sphere()
 spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 
