@@ -977,38 +977,38 @@ def test_charts(pl):
 
     # Test add_chart
     pl.add_chart(top_left)
-    assert pl.renderers[0].__this__ == top_left._renderer.__this__
-    assert pl.renderers[0]._charts._scene.__this__ == top_left._scene.__this__
+    assert pl.renderer.__this__ == top_left._renderer.__this__
+    assert pl.renderer._charts._scene.__this__ == top_left._scene.__this__
     pl.add_chart(bottom_right)
-    assert len(pl.renderers[0]._charts) == 2
+    assert len(pl.renderer._charts) == 2
 
     # Test toggle_interaction
     pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
     assert not top_left.GetInteractive()
     assert not bottom_right.GetInteractive()
     assert (
-        pl.renderers[0]._charts.toggle_interaction((0.75 * win_size[0], 0.25 * win_size[1]))
+        pl.renderer._charts.toggle_interaction((0.75 * win_size[0], 0.25 * win_size[1]))
         is bottom_right._scene
     )
     assert not top_left.GetInteractive()
     assert bottom_right.GetInteractive()
-    assert pl.renderers[0]._charts.toggle_interaction((0, 0)) is None
+    assert pl.renderer._charts.toggle_interaction((0, 0)) is None
     assert not top_left.GetInteractive()
     assert not bottom_right.GetInteractive()
 
     # Test remove_chart
     pl.remove_chart(1)
-    assert len(pl.renderers[0]._charts) == 1
-    assert pl.renderers[0]._charts[0] == top_left
-    assert top_left in pl.renderers[0]._charts
+    assert len(pl.renderer._charts) == 1
+    assert pl.renderer._charts[0] == top_left
+    assert top_left in pl.renderer._charts
     pl.remove_chart(top_left)
-    assert len(pl.renderers[0]._charts) == 0
+    assert len(pl.renderer._charts) == 0
 
     # Test deep_clean
     pl.add_chart(top_left, bottom_right)
     pl.deep_clean()
-    assert len(pl.renderers[0]._charts) == 0
-    assert pl.renderers[0]._charts._scene is None
+    assert len(pl.renderer._charts) == 0
+    assert pl.renderer._charts._scene is None
 
     pl.add_chart(top_left, bottom_right)
     pl.clear()  # also calls deep_clean()
