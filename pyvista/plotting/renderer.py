@@ -1868,6 +1868,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 except KeyError:
                     pass
 
+        self._charts.deep_clean()
         self.remove_all_lights()
         self.RemoveAllViewProps()
         self.Modified()
