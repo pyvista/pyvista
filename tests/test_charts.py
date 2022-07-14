@@ -1010,6 +1010,11 @@ def test_charts(pl):
     assert len(pl.renderers[0]._charts) == 0
     assert pl.renderers[0]._charts._scene is None
 
+    pl.add_chart(top_left, bottom_right)
+    pl.clear()  # also calls deep_clean()
+    assert len(pl.renderer._charts) == 0
+    assert pl.renderer._charts._scene is None
+
 
 @skip_no_plotting
 def test_iren_context_style(pl):
