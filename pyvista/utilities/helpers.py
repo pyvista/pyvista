@@ -398,7 +398,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
         return farr
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
-    return None, FieldAssociation.NONE
+    return None
 
 
 def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:

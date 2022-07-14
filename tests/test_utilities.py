@@ -12,7 +12,7 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import FieldAssociation, examples as ex
+from pyvista import examples as ex
 from pyvista.plotting import system_supports_plotting
 from pyvista.utilities import (
     GPUInfo,
@@ -266,9 +266,8 @@ def test_get_array_error(hexbeam):
 
 
 def test_get_array_none(hexbeam):
-    arr, field = helpers.get_array(hexbeam, 'foo')
+    arr = helpers.get_array(hexbeam, 'foo')
     assert arr is None
-    assert field is FieldAssociation.NONE
 
 
 def get_array_vtk(hexbeam):
