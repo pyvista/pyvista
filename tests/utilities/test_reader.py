@@ -293,6 +293,16 @@ def test_stlreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+def test_tecplotreader():
+    filename = examples.download_tecplot_ascii(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.TecplotReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh[0].n_points, mesh[0].n_cells])
+
+
 def test_vtkreader():
     filename = examples.hexbeamfile
     reader = pyvista.get_reader(filename)
@@ -637,14 +647,6 @@ def test_openfoam_case_type():
 
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
-def test_read_hdf():
-    can = examples.download_can(partial=True)
-    assert can.n_points == 6724
-    assert 'VEL' in can.point_data
-    assert can.n_cells == 4800
-
-
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pyvista.get_reader(filename)
@@ -788,6 +790,7 @@ def test_tiff_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 0), reason="Requires VTK v9.0.0 or newer")
 def test_hdr_reader():
     filename = examples.download_parched_canal_4k(load=False)
     reader = pyvista.get_reader(filename)
@@ -810,10 +813,13 @@ def test_avsucd_reader():
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_hdf_reader():
-    filename = examples.download_can(partial=True, load=False)
+    filename = examples.download_can_crushed_hdf(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.HDFReader)
     assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+    assert mesh.n_points == 6724
+    assert 'VEL' in mesh.point_data
+    assert mesh.n_cells == 4800

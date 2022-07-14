@@ -6,12 +6,12 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from vtk import VTK_QUADRATIC_HEXAHEDRON
+from vtk import VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_TRIANGLE
 
 import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
-from pyvista.core.errors import VTKVersionError
+from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
 from pyvista.utilities.misc import can_create_mpl_figure
 
@@ -525,6 +525,15 @@ def test_contour(uniform, method):
     iso = uniform.contour(isosurfaces=[100, 300, 500], method=method, progress_bar=True)
     assert iso is not None
 
+    # ensure filter can work with non-string inputs
+    iso_new_scalars = uniform.contour(
+        isosurfaces=[100, 300, 500],
+        scalars=range(uniform.n_points),
+        method=method,
+    )
+
+    assert 'Contour Data' in iso_new_scalars.point_data
+
 
 def test_contour_errors(uniform):
     with pytest.raises(TypeError):
@@ -538,6 +547,14 @@ def test_contour_errors(uniform):
         uniform.contour()
     with pytest.raises(ValueError):
         uniform.contour(method='invalid method')
+    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
+        uniform.contour(scalars=1)
+    with pytest.raises(TypeError):
+        uniform.contour(rng={})
+    with pytest.raises(ValueError, match='rng must be a two-length'):
+        uniform.contour(rng=[1])
+    with pytest.raises(ValueError, match='rng must be a sorted'):
+        uniform.contour(rng=[2, 1])
 
 
 def test_elevation():
@@ -1704,7 +1721,7 @@ def test_iadd_general(uniform, hexbeam, sphere):
 
 
 def test_compute_cell_quality():
-    mesh = pyvista.ParametricEllipsoid().decimate(0.8)
+    mesh = pyvista.ParametricEllipsoid().triangulate().decimate(0.8)
     qual = mesh.compute_cell_quality(progress_bar=True)
     assert 'CellQuality' in qual.array_names
     with pytest.raises(KeyError):
@@ -2132,7 +2149,7 @@ def test_tessellate():
         ]
     )
     cells = np.array([6, 0, 1, 2, 3, 4, 5])
-    cell_types = np.array([69])
+    cell_types = np.array([VTK_QUADRATIC_TRIANGLE])
     ugrid = pyvista.UnstructuredGrid(cells, cell_types, points)
     tessellated = ugrid.tessellate(progress_bar=True)
     assert tessellated.n_cells > ugrid.n_cells
@@ -2240,6 +2257,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
             )
 
 
+@skip_not_vtk9
 @pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
@@ -2399,7 +2417,7 @@ def test_extrude_rotate():
     rotation_axis = (0, 1, 0)
     if not pyvista.vtk_version_info >= (9, 1, 0):
         with pytest.raises(VTKVersionError):
-            poly = line.extrude_rotate(rotation_axis=rotation_axis)
+            poly = line.extrude_rotate(rotation_axis=rotation_axis, capping=True)
     else:
         poly = line.extrude_rotate(
             rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
@@ -2420,6 +2438,7 @@ def test_extrude_rotate_inplace():
     assert poly.n_points == (resolution + 1) * old_line.n_points
 
 
+@skip_not_vtk9
 def test_extrude_trim():
     direction = (0, 0, 1)
     mesh = pyvista.Plane(
@@ -2432,6 +2451,7 @@ def test_extrude_trim():
     assert np.isclose(poly.volume, 1.0)
 
 
+@skip_not_vtk9
 @pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
 @pytest.mark.parametrize(
     'capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"]
@@ -2468,6 +2488,7 @@ def test_extrude_trim_catch():
         _ = mesh.extrude_trim([1, 2], trim_surface)
 
 
+@skip_not_vtk9
 def test_extrude_trim_inplace():
     direction = (0, 0, 1)
     mesh = pyvista.Plane(
@@ -2487,6 +2508,12 @@ def test_subdivide_adaptive(sphere, inplace):
     assert sub.n_faces > orig_n_faces
     if inplace:
         assert sphere.n_faces == sub.n_faces
+
+
+def test_invalid_subdivide_adaptive(cube):
+    # check non-triangulated
+    with pytest.raises(NotAllTrianglesError):
+        cube.subdivide_adaptive()
 
 
 @pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
@@ -2531,6 +2558,7 @@ def test_reconstruct_surface_unstructured():
     assert mesh.n_points
 
 
+@skip_not_vtk9
 def test_integrate_data_datasets(datasets):
     """Test multiple dataset types."""
     for dataset in datasets:
@@ -2543,6 +2571,7 @@ def test_integrate_data_datasets(datasets):
             raise ValueError("Unexpected integration")
 
 
+@skip_not_vtk9
 def test_integrate_data():
     """Test specific case."""
     # sphere with radius = 0.5, area = pi

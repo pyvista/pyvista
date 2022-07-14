@@ -9,6 +9,8 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9
+from pyvista.core.errors import VTKVersionError
+from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
@@ -147,7 +149,7 @@ def test_init_from_arrays(specify_offset):
     if VTK9:
         assert np.allclose(grid.cell_connectivity, np.arange(16))
     else:
-        with pytest.raises(AttributeError):
+        with pytest.raises(VTKVersionError):
             grid.cell_connectivity
 
 
@@ -193,7 +195,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
             grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16))
         )
     else:
-        with pytest.raises(AttributeError):
+        with pytest.raises(VTKVersionError):
             grid.cell_connectivity
 
     # Now fetch the arrays
@@ -918,6 +920,71 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.n_points == grid.n_points
     assert rectilinear.n_arrays == grid.n_arrays
     assert rectilinear.bounds == grid.bounds
+
+
+def test_fft_and_rfft(noise_2d):
+    grid = pyvista.UniformGrid(dims=(10, 10, 1))
+    with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
+        grid.fft()
+
+    grid['cell_data'] = np.arange(grid.n_cells)
+    with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
+        grid.fft()
+
+    name = noise_2d.active_scalars_name
+    noise_fft = noise_2d.fft()
+    assert noise_fft[name].dtype == np.complex128
+
+    full_pass = noise_2d.fft().rfft()
+    assert full_pass[name].dtype == np.complex128
+
+    # expect FFT and and RFFT to transform from time --> freq --> time domain
+    assert np.allclose(noise_2d['scalars'], full_pass[name].real)
+    assert np.allclose(full_pass[name].imag, 0)
+
+    output_scalars_name = 'out_scalars'
+    # also, disable active scalars to check if it will be automatically set
+    noise_2d.active_scalars_name = None
+    noise_fft = noise_2d.fft(output_scalars_name=output_scalars_name)
+    assert output_scalars_name in noise_fft.point_data
+
+    noise_fft = noise_2d.fft()
+    noise_fft_inactive_scalars = noise_fft.copy()
+    noise_fft_inactive_scalars.active_scalars_name = None
+    full_pass = noise_fft_inactive_scalars.rfft()
+    assert np.allclose(full_pass.active_scalars, noise_fft.rfft().active_scalars)
+
+
+def test_fft_low_pass(noise_2d):
+    name = noise_2d.active_scalars_name
+    noise_no_scalars = noise_2d.copy()
+    noise_no_scalars.clear_data()
+    with pytest.raises(MissingDataError, match='FFT filters require point scalars'):
+        noise_no_scalars.low_pass(1, 1, 1)
+
+    noise_too_many_scalars = noise_no_scalars.copy()
+    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), 'a')
+    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), 'b')
+    with pytest.raises(AmbiguousDataError, match='There are multiple point scalars available'):
+        noise_too_many_scalars.low_pass(1, 1, 1)
+
+    with pytest.raises(ValueError, match='must be complex data'):
+        noise_2d.low_pass(1, 1, 1)
+
+    out_zeros = noise_2d.fft().low_pass(0, 0, 0)
+    assert np.allclose(out_zeros[name][1:], 0)
+
+    out = noise_2d.fft().low_pass(1, 1, 1)
+    assert not np.allclose(out[name][1:], 0)
+
+
+def test_fft_high_pass(noise_2d):
+    name = noise_2d.active_scalars_name
+    out_zeros = noise_2d.fft().high_pass(100000, 100000, 100000)
+    assert np.allclose(out_zeros[name], 0)
+
+    out = noise_2d.fft().high_pass(10, 10, 10)
+    assert not np.allclose(out[name], 0)
 
 
 @pytest.mark.parametrize('binary', [True, False])

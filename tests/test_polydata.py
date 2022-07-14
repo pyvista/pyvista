@@ -249,6 +249,11 @@ def test_multi_ray_trace(sphere):
     assert np.any(ind_r)
     assert np.any(ind_t)
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.multi_ray_trace(origins, directions)
+
 
 @skip_plotting
 def test_plot_curvature(sphere):
@@ -480,6 +485,11 @@ def test_invalid_subdivision(sphere):
     with pytest.raises(ValueError):
         sphere.subdivide(1, 'not valid')
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.subdivide(1)
+
 
 def test_extract_feature_edges(sphere):
     # Test extraction of NO edges
@@ -500,15 +510,25 @@ def test_decimate(sphere):
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.decimate(0.5)
+
 
 def test_decimate_pro(sphere):
-    mesh = sphere.decimate_pro(0.5, progress_bar=True)
+    mesh = sphere.decimate_pro(0.5, progress_bar=True, max_degree=10)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
     mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
+
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.decimate_pro(0.5)
 
 
 def test_compute_normals(sphere):

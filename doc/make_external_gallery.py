@@ -60,7 +60,7 @@ articles = dict(
     discretize=Example(
         title="3D Rendering with Discretize",
         description="3D Rendering with Discretize",
-        link="http://discretize.simpeg.xyz/en/master/examples/plot_pyvista_laguna.html",
+        link="http://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html",
         image="discretize.png",
     ),
     open_foam=Example(

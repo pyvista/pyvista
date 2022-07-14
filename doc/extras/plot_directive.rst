@@ -3,7 +3,7 @@
 Sphinx PyVista Plot Directive
 =============================
 You can generate static images of pyvista plots using the
-``.. pyvista-plot`` directive by adding the following to your
+``.. pyvista-plot::`` directive by adding the following to your
 ``conf.py`` when building your documentation using Sphinx.
 
 .. code:: python
@@ -14,7 +14,7 @@ You can generate static images of pyvista plots using the
    ]
 
 You can then issue the plotting directive within your sphinx
-documentation files:
+documentation files::
 
    .. pyvista-plot::
       :caption: A sphere

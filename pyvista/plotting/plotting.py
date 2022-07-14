@@ -7,7 +7,6 @@ import logging
 import os
 import pathlib
 import platform
-import re
 import textwrap
 from threading import Thread
 import time
@@ -272,6 +271,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image = None
         self._has_background_layer = False
         self._added_scalars = []
+        self._prev_active_scalars = {}
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -389,9 +389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkVRMLImporter
-
-        importer = vtkVRMLImporter()
+        importer = _vtk.lazy_vtkVRMLImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.ren_win)
         importer.Update()
@@ -644,10 +642,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOExport import vtkVRMLExporter
-
-        exporter = vtkVRMLExporter()
+        exporter = _vtk.lazy_vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.ren_win)
         exporter.Write()
@@ -2382,6 +2377,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Scalars formatting ==================================================
         added_scalar_info = None
         if scalars is not None:
+            # track the previous active scalars
+            if mesh.memory_address not in self._prev_active_scalars:
+                self._prev_active_scalars[mesh.memory_address] = (
+                    mesh,
+                    mesh.point_data.active_scalars_name,
+                    mesh.cell_data.active_scalars_name,
+                )
+
             show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
                 mesh,
                 scalars,
@@ -3361,9 +3364,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.disable_picking()
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
-        if getattr(self, 'mesh', None) is not None:
-            self.mesh.point_data = None
-            self.mesh.cell_data = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None
@@ -4632,30 +4632,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         as active scalars.
 
         """
-
-        def remove_and_reactivate_prior_scalars(dsattr, name):
-            """Remove ``name`` and reactivate prior scalars if applicable."""
-            # reactivate prior active scalars
-            if name.endswith('-normed'):
-                orig_name = name[:-7]
-                if orig_name in dsattr:
-                    dsattr.active_scalars_name = orig_name
-            elif name.endswith('-real'):
-                orig_name = name[:-5]
-                if orig_name in dsattr:
-                    dsattr.active_scalars_name = orig_name
-            elif re.findall('-[0-9]+$', name):
-                # component
-                orig_scalars = re.sub('-[0-9]+$', '', name)
-                if orig_scalars in dsattr:
-                    dsattr.active_scalars_name = orig_scalars
-
-            dsattr.pop(name, None)
-
+        # remove the added scalars
         for mesh, (name, assoc) in self._added_scalars:
             dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
-            remove_and_reactivate_prior_scalars(dsattr, name)
+            dsattr.pop(name, None)
+
+        # reactivate prior active scalars
+        for mesh, point_name, cell_name in self._prev_active_scalars.values():
+            if point_name is not None and mesh.point_data.active_scalars_name != point_name:
+                mesh.point_data.active_scalars_name = point_name
+            if cell_name is not None and mesh.cell_data.active_scalars_name != cell_name:
+                mesh.cell_data.active_scalars_name = cell_name
+
         self._added_scalars = []
+        self._prev_active_scalars = {}
 
     def __del__(self):
         """Delete the plotter."""

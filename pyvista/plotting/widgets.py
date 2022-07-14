@@ -50,6 +50,7 @@ class WidgetHelper:
         use_planes=False,
         outline_translation=True,
         pass_widget=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a box widget to the scene.
 
@@ -94,6 +95,9 @@ class WidgetHelper:
         pass_widget : bool, optional
             If ``True``, the widget will be passed as the last
             argument of the callback.
+
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
 
         Returns
         -------
@@ -142,7 +146,7 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        box_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
@@ -161,6 +165,7 @@ class WidgetHelper:
         outline_translation=True,
         merge_points=True,
         crinkle=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -203,6 +208,9 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -219,7 +227,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -258,6 +266,7 @@ class WidgetHelper:
             use_planes=True,
             color=widget_color,
             outline_translation=outline_translation,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(box_clipped_mesh, reset_camera=False, **kwargs)
@@ -278,6 +287,7 @@ class WidgetHelper:
         pass_widget=False,
         test_callback=True,
         normal_rotation=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a plane widget to the scene.
 
@@ -297,7 +307,7 @@ class WidgetHelper:
             The starting normal vector of the plane.
 
         origin : tuple(float)
-            The starting coordinate of the center of the place.
+            The starting coordinate of the center of the plane.
 
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
@@ -345,6 +355,9 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
@@ -390,7 +403,7 @@ class WidgetHelper:
 
             plane_widget.SetDrawPlane(False)
             plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
-            plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+            plane_widget.AddObserver(interaction_event, _stop_interact)
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
@@ -451,7 +464,7 @@ class WidgetHelper:
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
         plane_widget.On()
-        plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        plane_widget.AddObserver(interaction_event, _the_callback)
         if test_callback:
             _the_callback(plane_widget, None)  # Trigger immediate update
 
@@ -476,6 +489,8 @@ class WidgetHelper:
         implicit=True,
         normal_rotation=True,
         crinkle=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        origin=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -535,6 +550,12 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -552,8 +573,10 @@ class WidgetHelper:
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         if crinkle:
             mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
@@ -572,8 +595,8 @@ class WidgetHelper:
         plane_clipped_mesh = _get_output(alg)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, origin):
-            function = generate_plane(normal, origin)
+        def callback(normal, loc):
+            function = generate_plane(normal, loc)
             alg.SetClipFunction(function)  # the implicit function
             alg.Update()  # Perform the Cut
             clipped = pyvista.wrap(alg.GetOutput())
@@ -592,8 +615,9 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(plane_clipped_mesh, **kwargs)
@@ -610,6 +634,8 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        origin=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -662,6 +688,12 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -677,8 +709,10 @@ class WidgetHelper:
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
@@ -706,14 +740,21 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(plane_sliced_mesh, **kwargs)
 
     def add_mesh_slice_orthogonal(
-        self, mesh, generate_triangles=False, widget_color=None, tubing=False, **kwargs
+        self,
+        mesh,
+        generate_triangles=False,
+        widget_color=None,
+        tubing=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        **kwargs,
     ):
         """Slice a mesh with three interactive planes.
 
@@ -742,6 +783,9 @@ class WidgetHelper:
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -754,7 +798,11 @@ class WidgetHelper:
 
         """
         actors = []
+        name = kwargs.pop("name", None)
         for ax in ["x", "y", "z"]:
+            axkwargs = kwargs.copy()
+            if name:
+                axkwargs["name"] = f"{name}-{ax}"
             a = self.add_mesh_slice(
                 mesh,
                 assign_to_axis=ax,
@@ -763,7 +811,8 @@ class WidgetHelper:
                 generate_triangles=generate_triangles,
                 widget_color=widget_color,
                 tubing=tubing,
-                **kwargs,
+                interaction_event=interaction_event,
+                **axkwargs,
             )
             actors.append(a)
 
@@ -778,6 +827,7 @@ class WidgetHelper:
         color=None,
         use_vertices=False,
         pass_widget=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a line widget to the scene.
 
@@ -815,6 +865,9 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkLineWidget
@@ -848,7 +901,7 @@ class WidgetHelper:
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
-        line_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        line_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(line_widget, None)
 
         self.line_widgets.append(line_widget)
@@ -1257,7 +1310,7 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
@@ -1403,7 +1456,7 @@ class WidgetHelper:
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
@@ -1439,6 +1492,7 @@ class WidgetHelper:
         pass_widget=False,
         closed=False,
         initial_points=None,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Create and add a spline widget to the scene.
 
@@ -1493,6 +1547,9 @@ class WidgetHelper:
             last point are the same, this will be a closed loop
             spline.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkSplineWidget
@@ -1541,7 +1598,7 @@ class WidgetHelper:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
-        spline_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        spline_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(spline_widget, None)
 
         if show_ribbon:
@@ -1566,6 +1623,7 @@ class WidgetHelper:
         ribbon_opacity=0.5,
         initial_points=None,
         closed=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Slice a mesh with a spline widget.
@@ -1620,6 +1678,9 @@ class WidgetHelper:
         closed : bool, optional
             Make the spline a closed loop.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -1631,12 +1692,14 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
-        name = kwargs.get('name', mesh.memory_address)
+        name = kwargs.get('name', None)
+        if name is None:
+            name = mesh.memory_address
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
@@ -1667,6 +1730,7 @@ class WidgetHelper:
             ribbon_opacity=ribbon_opacity,
             initial_points=initial_points,
             closed=closed,
+            interaction_event=interaction_event,
         )
 
         return self.add_mesh(spline_sliced_mesh, **kwargs)
@@ -1684,6 +1748,7 @@ class WidgetHelper:
         indices=None,
         pass_widget=False,
         test_callback=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add one or many sphere widgets to a scene.
 
@@ -1741,6 +1806,9 @@ class WidgetHelper:
         test_callback : bool, optional
             If ``True``, run the callback function after the widget is
             created.
+
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
 
         Returns
         -------
@@ -1802,7 +1870,7 @@ class WidgetHelper:
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
             sphere_widget.On()
-            sphere_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            sphere_widget.AddObserver(interaction_event, _the_callback)
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
