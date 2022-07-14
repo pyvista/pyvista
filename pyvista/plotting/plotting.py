@@ -2148,8 +2148,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
         else:
-            # we have to make a shallow copy here so when we set scalars to be
-            # active, it doesn't modify the underlying mesh
+            # A shallow copy of `mesh` is here so when we set (or add) scalars
+            # active, it doesn't modify the original input mesh.
             mesh = mesh.copy(deep=False)
 
         ##### Parse arguments to be used for all meshes #####
@@ -2331,6 +2331,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args.setdefault('title', original_scalar_name)
             scalars_name = original_scalar_name
 
+            # Set the active scalars name here. If the name already exists in
+            # the input mesh, it may not be set as the active scalars within
+            # the mapper. This should be refactored by 0.36.0
             if field == FieldAssociation.POINT:
                 mesh.point_data.active_scalars_name = original_scalar_name
                 self.mapper.SetScalarModeToUsePointData()
