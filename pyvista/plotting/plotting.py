@@ -25,6 +25,7 @@ from pyvista.utilities import (
     assert_empty_kwargs,
     convert_array,
     get_array,
+    get_array_association,
     is_pyvista_dataset,
     numpy_to_texture,
     raise_not_matching,
@@ -2327,13 +2328,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     rgb = True
 
             original_scalar_name = scalars
-            scalars, field = get_array(mesh, scalars, preference=preference, err=True)
+            scalars = get_array(mesh, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', original_scalar_name)
             scalars_name = original_scalar_name
 
             # Set the active scalars name here. If the name already exists in
             # the input mesh, it may not be set as the active scalars within
             # the mapper. This should be refactored by 0.36.0
+            field = get_array_association(mesh, original_scalar_name, preference=preference)
             if field == FieldAssociation.POINT:
                 mesh.point_data.active_scalars_name = original_scalar_name
                 self.mapper.SetScalarModeToUsePointData()
@@ -2848,7 +2850,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         title = 'Data'
         if isinstance(scalars, str):
             title = scalars
-            scalars, _ = get_array(volume, scalars, preference=preference, err=True)
+            scalars = get_array(volume, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', title)
 
         if not isinstance(scalars, np.ndarray):

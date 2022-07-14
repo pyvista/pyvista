@@ -219,34 +219,37 @@ def test_get_array_cell(hexbeam):
     carr = np.random.rand(hexbeam.n_cells)
     hexbeam.cell_data.set_array(carr, 'test_data')
 
-    data, field = helpers.get_array(hexbeam, 'test_data', preference='cell')
+    data = helpers.get_array(hexbeam, 'test_data', preference='cell')
     assert np.allclose(carr, data)
-    assert field == FieldAssociation.CELL
 
 
 def test_get_array_point(hexbeam):
     parr = np.random.rand(hexbeam.n_points)
     hexbeam.point_data.set_array(parr, 'test_data')
 
-    data, field = helpers.get_array(hexbeam, 'test_data', preference='point')
+    data = helpers.get_array(hexbeam, 'test_data', preference='point')
     assert np.allclose(parr, data)
-    assert field == FieldAssociation.POINT
 
     oarr = np.random.rand(hexbeam.n_points)
     hexbeam.point_data.set_array(oarr, 'other')
 
-    data, field = helpers.get_array(hexbeam, 'other')
+    data = helpers.get_array(hexbeam, 'other')
     assert np.allclose(oarr, data)
-    assert field == FieldAssociation.POINT
 
 
 def test_get_array_field(hexbeam):
+    hexbeam.clear_data()
+    # no preference
     farr = np.random.rand(hexbeam.n_points * hexbeam.n_cells)
-    hexbeam.field_data.set_array(farr, 'field_data')
-
-    data, field = helpers.get_array(hexbeam, 'field_data', preference='field')
+    hexbeam.field_data.set_array(farr, 'data')
+    data = helpers.get_array(hexbeam, 'data')
     assert np.allclose(farr, data)
-    assert field == FieldAssociation.NONE
+
+    # preference and multiple data
+    hexbeam.point_data.set_array(np.random.rand(hexbeam.n_points), 'data')
+
+    data = helpers.get_array(hexbeam, 'data', preference='field')
+    assert np.allclose(farr, data)
 
 
 def test_get_array_error(hexbeam):

@@ -9,7 +9,7 @@ import sys
 import threading
 from threading import Thread
 import traceback
-from typing import Optional, Tuple
+from typing import Optional
 import warnings
 
 import numpy as np
@@ -338,9 +338,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(
-    mesh, name, preference='cell', err=False
-) -> Tuple[Optional[np.ndarray], FieldAssociation]:
+def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -365,9 +363,6 @@ def get_array(
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
-    pyvista.FieldAssociation
-        Association of the scalars matching ``name``.
-
     """
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
@@ -389,18 +384,18 @@ def get_array(
     preference = parse_field_choice(preference)
     if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference == FieldAssociation.CELL:
-            return carr, FieldAssociation.CELL
+            return carr
         elif preference == FieldAssociation.POINT:
-            return parr, FieldAssociation.POINT
+            return parr
         else:  # must be field
-            return farr, FieldAssociation.NONE
+            return farr
 
     if parr is not None:
-        return parr, FieldAssociation.POINT
+        return parr
     elif carr is not None:
-        return carr, FieldAssociation.CELL
+        return carr
     elif farr is not None:
-        return farr, FieldAssociation.NONE
+        return farr
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
     return None, FieldAssociation.NONE
