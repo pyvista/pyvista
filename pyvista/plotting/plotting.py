@@ -389,9 +389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkVRMLImporter
-
-        importer = vtkVRMLImporter()
+        importer = _vtk.lazy_vtkVRMLImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.ren_win)
         importer.Update()
@@ -644,10 +642,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOExport import vtkVRMLExporter
-
-        exporter = vtkVRMLExporter()
+        exporter = _vtk.lazy_vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.ren_win)
         exporter.Write()

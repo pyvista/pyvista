@@ -5172,7 +5172,8 @@ class DataSetFilters:
         Area or volume is also provided in point data.
 
         This filter uses the VTK `vtkIntegrateAttributes
-        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_.
+        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_
+        and requires VTK v9.1.0 or newer.
 
         Parameters
         ----------
@@ -5182,7 +5183,8 @@ class DataSetFilters:
         Returns
         -------
         pyvista.UnstructuredGird
-            Mesh with 1 point and 1 vertex cell with integrated data in point and cell data.
+            Mesh with 1 point and 1 vertex cell with integrated data in point
+            and cell data.
 
         Examples
         --------
@@ -5204,8 +5206,11 @@ class DataSetFilters:
         See the :ref:`integrate_example` for more examples using this filter.
 
         """
-        filter = _vtk.vtkIntegrateAttributes()
-        filter.SetInputData(self)
-        filter.SetDivideAllCellDataByVolume(False)
-        _update_alg(filter, progress_bar, 'Integrating Variables')
-        return _get_output(filter)
+        if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover
+            raise VTKVersionError('`integrate_data` requires VTK 9.1.0 or newer.')
+
+        alg = _vtk.vtkIntegrateAttributes()
+        alg.SetInputData(self)
+        alg.SetDivideAllCellDataByVolume(False)
+        _update_alg(alg, progress_bar, 'Integrating Variables')
+        return _get_output(alg)
