@@ -221,7 +221,7 @@ def load_saturn_ring_alpha():
 
     """
     # https://tamaskis.github.io/files/Visualizing_Celestial_Bodies_in_3D.pdf
-    # Saturn’s rings range from 7000.0 km to 80000.0 km from the surface of the planet
+    # Saturn's rings range from 7000.0 km to 80000.0 km from the surface of the planet
     inner = 60268.0 + 7000.0
     outer = 60268.0 + 80000.0
     disc = pyvista.Disc(inner=inner, outer=outer, c_res=50)
