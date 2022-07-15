@@ -220,7 +220,7 @@ of a PyVista geometry class. Here, we create a simple point mesh
 containing just the three points:
 
 .. jupyter-execute::
-   
+
    >>> from_vtk = pyvista.PolyData(vtk_array)
    >>> from_np = pyvista.PolyData(np_points)
    >>> from_list = pyvista.PolyData(points)
@@ -308,7 +308,7 @@ While we're at it, let's annotate this plot to describe this mesh.
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
    >>> label_coords = mesh.points + [0, 0, 0.01]
-   >>> pl.add_point_labels(label_coords, [f'Point {i}' for i in range(3)], 
+   >>> pl.add_point_labels(label_coords, [f'Point {i}' for i in range(3)],
    ...                     font_size=20, point_size=20)
    >>> pl.add_point_labels([0.43, 0.2, 0], ['Cell 0'], font_size=20)
    >>> pl.camera_position = 'xy'

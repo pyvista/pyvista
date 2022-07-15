@@ -9,6 +9,7 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9
+from pyvista.core.errors import VTKVersionError
 from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
 from pyvista.utilities.misc import PyvistaDeprecationWarning
@@ -148,7 +149,7 @@ def test_init_from_arrays(specify_offset):
     if VTK9:
         assert np.allclose(grid.cell_connectivity, np.arange(16))
     else:
-        with pytest.raises(AttributeError):
+        with pytest.raises(VTKVersionError):
             grid.cell_connectivity
 
 
@@ -194,7 +195,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
             grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16))
         )
     else:
-        with pytest.raises(AttributeError):
+        with pytest.raises(VTKVersionError):
             grid.cell_connectivity
 
     # Now fetch the arrays
