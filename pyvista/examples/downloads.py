@@ -3595,6 +3595,28 @@ def download_stars_jpg():  # pragma: no cover
     return _download_file('stars.jpg')[0]
 
 
+def download_milkyway_jpg():  # pragma: no cover
+    """Download and return the path of ``'milkyway.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
+    >>> dataset = examples.download_milkyway_jpg()
+    >>> pl.add_background_image(dataset)
+    >>> pl.show()
+
+    """
+    return _download_file('milkyway.jpg')[0]
+
+
+
 def download_notch_stress(load=True):  # pragma: no cover
     """Download the FEA stress result from a notched beam.
 
