@@ -500,3 +500,10 @@ if TEST_DOWNLOADS:
 
         dataset = examples.download_mount_damavand(load=True)
         assert isinstance(dataset, pyvista.PolyData)
+
+    def test_particles_lethe():
+        filename = examples.download_particles_lethe(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_particles_lethe(load=True)
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
