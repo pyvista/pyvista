@@ -66,6 +66,67 @@ def test_load_random_hills():
     assert mesh.n_cells
 
 
+def test_load_sun():
+    mesh = examples.load_sun()
+    assert mesh.n_cells
+    assert mesh.textures["atmosphere"]
+
+
+def test_load_moon():
+    mesh = examples.load_moon()
+    assert mesh.n_cells
+    assert mesh.textures["surface"]
+
+
+def test_load_mercury():
+    mesh = examples.load_mercury()
+    assert mesh.n_cells
+    assert mesh.textures["surface"]
+
+
+def test_load_venus():
+    mesh = examples.load_venus()
+    assert mesh.n_cells
+    assert mesh.textures["surface"]
+    assert mesh.textures["atmosphere"]
+
+
+def test_load_mars():
+    mesh = examples.load_mars()
+    assert mesh.n_cells
+    assert mesh.textures["surface"]
+
+
+def test_load_jupiter():
+    mesh = examples.load_jupiter()
+    assert mesh.n_cells
+    assert mesh.textures["atmosphere"]
+
+
+def test_load_saturn():
+    mesh = examples.load_saturn()
+    assert mesh.n_cells
+    assert mesh.textures["atmosphere"]
+
+
+def test_load_saturn_ring_alpha():
+    mesh = examples.load_saturn_ring_alpha()
+    assert mesh.n_cells
+    assert mesh.textures["atmosphere"]
+
+
+def test_load_uranus():
+    mesh = examples.load_uranus()
+    assert mesh.n_cells
+    assert mesh.textures["atmosphere"]
+
+
+def test_load_neptune():
+    mesh = examples.load_neptune()
+    assert mesh.n_cells
+    assert mesh.textures["atmosphere"]
+
+
 if TEST_DOWNLOADS:
 
     def test_download_single_sphere_animation():

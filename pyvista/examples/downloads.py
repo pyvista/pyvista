@@ -214,7 +214,7 @@ def _retrieve_zip(retriever, filename):
 
 
 def _download_file(filename):
-    """Download a file from https://github.com/pyvista/vtk-data/master/Data.
+    """Download a file from https://github.com/pyvista/vtk-data/tree/master/Data.
 
     If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
     to be a local git repository.
@@ -222,7 +222,7 @@ def _download_file(filename):
     Parameters
     ----------
     filename : str
-        Path within https://github.com/pyvista/vtk-data/master/Data to download
+        Path within https://github.com/pyvista/vtk-data/tree/master/Data to download
         the file from.
 
     Examples
@@ -3364,6 +3364,94 @@ def download_action_figure(load=True):  # pragma: no cover
     return _download_and_read('tigerfighter.obj', load=load)
 
 
+def download_sun_jpg():  # pragma: no cover
+    """Download and return the path of ``'sun.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_sun()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('sun.jpg')[0]
+
+
+def download_moon_jpg():  # pragma: no cover
+    """Download and return the path of ``'moon.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_moon()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('moon.jpg')[0]
+
+
+def download_mercury_jpg():  # pragma: no cover
+    """Download and return the path of ``'mercury.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_mercury()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('mercury.jpg')[0]
+
+
+def download_venus_jpg(atmosphere=True):  # pragma: no cover
+    """Download and return the path of ``'venus.jpg'``.
+
+    Parameters
+    ----------
+    atmosphere : bool, optional
+        Load the atmosphere texture when ``True``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_venus_jpg()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    if atmosphere:
+        return _download_file('venus_atmosphere.jpg')[0]
+    else:
+        return _download_file('venus_surface.jpg')[0]
+
+
 def download_mars_jpg():  # pragma: no cover
     """Download and return the path of ``'mars.jpg'``.
 
@@ -3374,48 +3462,114 @@ def download_mars_jpg():  # pragma: no cover
 
     Examples
     --------
-    Download the Mars JPEG and map it to spherical coordinates on a sphere.
-
-    >>> import math
-    >>> import numpy
-    >>> import numpy as np
     >>> from pyvista import examples
     >>> import pyvista
-
-    Download the JPEGs and convert the Mars JPEG to a texture.
-
-    >>> mars_jpg = examples.download_mars_jpg()
-    >>> mars_tex = pyvista.read_texture(mars_jpg)
-    >>> stars_jpg = examples.download_stars_jpg()
-
-    Create a sphere mesh and compute the texture coordinates.
-
-    >>> sphere = pyvista.Sphere(radius=1, theta_resolution=120, phi_resolution=120,
-    ...                         start_theta=270.001, end_theta=270)
-    >>> sphere.active_t_coords = numpy.zeros((sphere.points.shape[0], 2))
-    >>> sphere.active_t_coords[:, 0] = 0.5 + np.arctan2(-sphere.points[:, 0],
-    ...                                                 sphere.points[:, 1])/(2 * math.pi)
-    >>> sphere.active_t_coords[:, 1] = 0.5 + np.arcsin(sphere.points[:, 2]) / math.pi
-    >>> sphere.point_data
-    pyvista DataSetAttributes
-    Association     : POINT
-    Active Scalars  : None
-    Active Vectors  : None
-    Active Texture  : Texture Coordinates
-    Active Normals  : Normals
-    Contains arrays :
-        Normals                 float32    (14280, 3)           NORMALS
-        Texture Coordinates     float64    (14280, 2)           TCOORDS
-
-    Plot with stars in the background.
-
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(stars_jpg)
-    >>> _ = pl.add_mesh(sphere, texture=mars_tex)
-    >>> pl.show()
+    >>> surface_jpg = examples.download_mars()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
 
     """
     return _download_file('mars.jpg')[0]
+
+
+def download_jupiter_jpg():  # pragma: no cover
+    """Download and return the path of ``'jupiter.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_jupiter()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('jupiter.jpg')[0]
+
+
+def download_saturn_jpg():  # pragma: no cover
+    """Download and return the path of ``'saturn.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_saturn()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('saturn.jpg')[0]
+
+
+def download_saturn_ring_alpha_png():  # pragma: no cover
+    """Download and return the path of ``'saturn_ring_alpha.png'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_png = examples.download_saturn_ring_alpha()
+    >>> surface_tex = pyvista.read_texture(surface_png)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('saturn_ring_alpha.png')[0]
+
+
+def download_uranus_jpg():  # pragma: no cover
+    """Download and return the path of ``'uranus.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_uranus()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('uranus.jpg')[0]
+
+
+def download_neptune_jpg():  # pragma: no cover
+    """Download and return the path of ``'neptune.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface_jpg = examples.download_neptune()
+    >>> surface_tex = pyvista.read_texture(surface_jpg)
+    >>> surface_tex.plot(cpos="xy")
+
+    """
+    return _download_file('neptune.jpg')[0]
 
 
 def download_stars_jpg():  # pragma: no cover
@@ -3855,7 +4009,7 @@ def download_lucy(load=True):  # pragma: no cover
     >>> pl.background_color = 'k'
     >>> pl.show()
 
-    See :ref:`jupyter_plotting` for another example using this dataset.
+    See :ref:`jupiter_plotting` for another example using this dataset.
 
     """
     return _download_and_read('lucy.ply', load=load)
