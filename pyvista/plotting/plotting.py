@@ -4576,8 +4576,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtkOBJExporter
-            Object exporter.
+        None
 
         """
         # lazy import vtkOBJExporter here as it takes a long time to
