@@ -33,7 +33,7 @@ pyvista.
 from enum import Enum
 import json
 import os
-from typing import List, Union
+from typing import List, Optional, Union
 import warnings
 
 from ._typing import color_like
@@ -1212,7 +1212,7 @@ class DefaultTheme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._antialiasing = False
+        self._antialiasing = None
         self._enable_camera_orientation_widget = False
 
     @property
@@ -1857,23 +1857,45 @@ class DefaultTheme(_ThemeConfig):
         self._title = title
 
     @property
-    def antialiasing(self) -> bool:
+    def antialiasing(self) -> Optional[str]:
         """Enable or disable anti-aliasing.
 
         Examples
         --------
-        Enable anti-aliasing in the global theme.
+        Use super-sampling anti-aliasing in the global theme.
 
         >>> import pyvista
-        >>> pyvista.global_theme.antialiasing = True
+        >>> pyvista.global_theme.antialiasing = 'ssaa'
         >>> pyvista.global_theme.antialiasing
         True
+
+        Use disable anti-aliasing in the global theme.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.antialiasing = None
+
+        See :ref:`antialiasing_example` for more information regarding
+        anti-aliasing.
 
         """
         return self._antialiasing
 
     @antialiasing.setter
-    def antialiasing(self, antialiasing: bool):
+    def antialiasing(self, antialiasing: Union[str, None]):
+        if isinstance(antialiasing, bool):
+            warnings.warn(
+                '`antialiasing` is now a string or None and must be either "ssaa", '
+                '"mxaa", "fxaa", or None',
+                PyvistaDeprecationWarning,
+            )
+            antialiasing = 'fxaa'
+
+        if isinstance(antialiasing, str):
+            if antialiasing not in ['ssaa', 'mxaa', 'fxaa']:
+                raise ValueError('antialiasing must be either "ssaa", "mxaa", or "fxaa"')
+        elif antialiasing is not None:
+            raise ValueError('`anti-aliasing` must be either a string or None')
+
         self._antialiasing = antialiasing
 
     @property

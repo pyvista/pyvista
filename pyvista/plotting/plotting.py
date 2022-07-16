@@ -279,7 +279,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set antialiasing based on theme
         if self.theme.antialiasing:
-            self.enable_anti_aliasing()
+            self.enable_anti_aliasing(self.theme.antialiasing)
 
     @property
     def theme(self):
@@ -1027,7 +1027,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # apply MXAA to entire render window
         if aa_type == 'mxaa':
-            self.ren_win.SetMultiSamples(multi_samples)
+            if hasattr(self, 'ren_win'):
+                self.ren_win.SetMultiSamples(multi_samples)
+            else:
+                self.theme.multi_samples = multi_samples
             return
 
         if all_renderers:

@@ -434,8 +434,16 @@ def test_load_theme(tmpdir, default_theme):
 
 
 def test_antialiasing(default_theme):
-    for value in [True, False]:
+    for value in ['mxaa', 'fxaa', 'ssaa']:
         default_theme.antialiasing = value
         assert default_theme.antialiasing is value
         pl = pyvista.Plotter(theme=default_theme)
-        assert pl.renderer.GetUseFXAA() is value
+        if value == 'fxaa':
+            assert pl.renderer.GetUseFXAA()
+        else:
+            assert not pl.renderer.GetUseFXAA()
+
+        if value == 'ssaa':
+            assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
+        else:
+            assert 'vtkSSAAPass' not in pl.renderer._render_passes._passes
