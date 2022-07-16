@@ -52,8 +52,7 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
-        if return_clipped:
-            alg.GenerateClippedOutputOn()
+        alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
         if return_clipped:
