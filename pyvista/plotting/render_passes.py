@@ -107,8 +107,8 @@ class RenderPasses:
         if self._renderer is not None:
             self._renderer.SetPass(None)
         self._renderer_ref = None
-        if self._seq_pass is not None:
-            self._seq_pass.SetPasses(None)
+        if self.__seq_pass is not None:
+            self.__seq_pass.SetPasses(None)
         self.__seq_pass = None
         self.__pass_collection = None
         self.__camera_pass = None
