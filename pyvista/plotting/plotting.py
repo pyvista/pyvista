@@ -4574,11 +4574,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Filename to export the scene to.  Should end in ``'.obj'``.
 
-        Returns
-        -------
-        vtkOBJExporter
-            Object exporter.
-
         """
         # lazy import vtkOBJExporter here as it takes a long time to
         # load and is not always used
@@ -4596,7 +4591,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter = vtkOBJExporter()
         exporter.SetFilePrefix(filename)
         exporter.SetRenderWindow(self.ren_win)
-        return exporter.Write()
+        exporter.Write()
 
     @property
     def _datasets(self):
