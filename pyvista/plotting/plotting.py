@@ -4580,12 +4580,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(pv.Sphere())
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        # lazy import vtkOBJExporter here as it takes a long time to
-        # load and is not always used
+        if pyvista.vtk_version_info <= (8, 1, 2):
+            raise pyvista.core.errors.VTKVersionError()
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter must still have a render window open.")

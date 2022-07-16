@@ -2438,6 +2438,11 @@ def test_export_obj(tmpdir, sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
 
+    if pyvista.vtk_version_info <= (8, 1, 2):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.export_obj(filename)
+        return
+
     with pytest.raises(ValueError, match='end with ".obj"'):
         pl.export_obj('badfilename')
 
