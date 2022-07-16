@@ -2675,8 +2675,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if use_gradient:
             self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
-         else:
-           self.SetGradientBackground(False)
+        else:
+            self.SetGradientBackground(False)
         self.Modified()
 
     def set_environment_texture(self, texture, is_srgb=False):
