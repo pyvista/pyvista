@@ -16,7 +16,7 @@ def load_sun():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_sun())
     >>> pl.show()
 
@@ -44,7 +44,7 @@ def load_moon():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_moon())
     >>> pl.show()
 
@@ -72,7 +72,7 @@ def load_mercury():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_mercury())
     >>> pl.show()
 
@@ -100,7 +100,7 @@ def load_venus():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_venus())
     >>> pl.show()
 
@@ -131,7 +131,7 @@ def load_mars():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_mars())
     >>> pl.show()
 
@@ -159,7 +159,7 @@ def load_jupiter():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_jupiter())
     >>> pl.show()
 
@@ -187,7 +187,7 @@ def load_saturn():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_saturn())
     >>> pl.show()
 
@@ -215,7 +215,7 @@ def load_saturn_ring_alpha():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_saturn_ring_alpha())
     >>> pl.show()
 
@@ -247,7 +247,7 @@ def load_uranus():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_uranus())
     >>> pl.show()
 
@@ -275,7 +275,7 @@ def load_neptune():
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_png())
+    >>> pl.add_background_image(examples.download_stars_jpg())
     >>> pl.add_mesh(examples.load_neptune())
     >>> pl.show()
 
