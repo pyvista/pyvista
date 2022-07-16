@@ -849,9 +849,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @wraps(Renderer.remove_legend)
     def remove_legend(self, *args, **kwargs):
-        """Wrap ``Renderer.remove_legend``."""
+        """Wrap ``Renderer.remove_legend``.
         return self.renderer.remove_legend(*args, **kwargs)
+        
+        Examples
+        --------
+        Add a legend and then remove it.
+        
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sphere = pyvista.Sphere(center=(0, 0, 1))
+        >>> cube = pyvista.Cube()
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
+        >>> _ = pl.add_mesh(cube, 'r', label='Cube')
+        >>> _ = pl.add_legend(bcolor='w', face=None)
+        >>> pl.show()
 
+        >>> pl.remove_legend()
+        >>> pl.show()
+        
+        """
+        
     @property
     def legend(self):
         """Legend actor.
