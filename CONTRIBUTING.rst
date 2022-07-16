@@ -189,26 +189,6 @@ directive:
 Outside of PEP 8, when coding please consider `PEP 20 – The Zen of
 Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 
-Docstrings
-^^^^^^^^^^^^
-
-When using Sphinx in combination with the NumPy conventions, you should 
-use the numpydoc extension so that your docstrings will be handled 
-correctly. For example, Sphinx will extract the Parameters section from 
-your docstring and convert it into a field list. Using numpydoc will also 
-avoid the reStructuredText errors produced by plain Sphinx when it 
-encounters NumPy docstring conventions like section headers 
-(e.g. -------------) that sphinx does not expect to find in docstrings.
-
-It is available from:
-
--  numpydoc on PyPI
-
--  numpydoc on GitHub
-
-Note that for documentation within NumPy, it is not necessary to do import numpy as np at the beginning of an example.
-
-Please use the numpydoc formatting standard as shown in their example.
 .. code:: python
 
    import this
@@ -216,6 +196,23 @@ Please use the numpydoc formatting standard as shown in their example.
 PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
+
+
+Docstrings
+^^^^^^^^^^
+
+PyVista uses Python docstrings to create reference documentation for our Python
+APIs. Docstrings are read by developers, interactive Python users, and readers
+of our online documentation. This page describes how to write these docstrings
+for PyVista.
+
+* PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
+  `numpydoc Style Guide`_.
+* Be sure to describe all ``Parameters`` and ``Returns`` for all public
+  methods.
+* We strongly encourage you to add an example section. PyVista is a visual
+  library, so adding examples that show a plot will really help users figure
+  out what individual methods do.
 
 
 Branch Naming Conventions
@@ -546,3 +543,4 @@ should not wait until a minor release. The steps for a patch release
 
 
 .. _pre-commit: https://pre-commit.com/
+.. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
