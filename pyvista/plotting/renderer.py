@@ -2979,10 +2979,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend.SetPosition(x, y)
             self._legend.SetPosition2(size[0], size[1])
 
-        if bcolor is not None:
-            self._legend.SetUseBackground(True)
-        else:
+        if bcolor is None:
             self._legend.SetUseBackground(False)
+        else:
+            self._legend.SetUseBackground(True)
             self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)
