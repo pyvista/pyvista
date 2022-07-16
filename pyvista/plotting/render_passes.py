@@ -86,32 +86,15 @@ class RenderPasses:
     def _init_passes(self):
         """Initialize the renderer's standard passes."""
         # simulate the standard VTK rendering passes and put them in a sequence
-
-        lights_pass = _vtk.vtkLightsPass()
-        translucent_pass = _vtk.vtkTranslucentPass()
-        volume_pass = _vtk.vtkVolumetricPass()
-
-        # opaque passes
-        self._opaque_cam_pass = _vtk.vtkCameraPass()
-        opaque_pass = _vtk.vtkOpaquePass()
-        self._opaque_cam_pass.SetDelegatePass(opaque_pass)
-
         self.__pass_collection = _vtk.vtkRenderPassCollection()
-        self.__pass_collection.AddItem(lights_pass)
-        self.__pass_collection.AddItem(self._opaque_cam_pass)
-
-        # translucent and volumic passes
-        ddp_pass = _vtk.vtkDualDepthPeelingPass()
-        ddp_pass.SetTranslucentPass(translucent_pass)
-        ddp_pass.SetVolumetricPass(volume_pass)
-        self.__pass_collection.AddItem(ddp_pass)
+        self.__pass_collection.AddItem(_vtk.vtkRenderStepsPass())
 
         self.__seq_pass = _vtk.vtkSequencePass()
         self.__seq_pass.SetPasses(self._pass_collection)
 
         # Make the sequence the delegate of a camera pass.
         self.__camera_pass = _vtk.vtkCameraPass()
-        self.__camera_pass.SetDelegatePass(self.__seq_pass)
+        self.__camera_pass.SetDelegatePass(self._seq_pass)
 
     @property
     def _renderer(self):

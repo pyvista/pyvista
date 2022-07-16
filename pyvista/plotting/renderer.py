@@ -453,8 +453,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         "VTK compiled with OSMesa does not properly support "
                         "FXAA anti-aliasing and SXAA will be used instead."
                     )
+                self._render_passes.enable_ssaa_pass()
+            self._enable_fxaa()
+
         elif aa_type == 'ssaa':
             self._render_passes.enable_ssaa_pass()
+
         else:
             raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
 

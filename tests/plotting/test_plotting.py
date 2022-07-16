@@ -2456,3 +2456,16 @@ def test_blurring():
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
     with pytest.raises(RuntimeError, match='Exceeded image regression'):
         pl.show(before_close_callback=verify_cache_image)
+
+
+def test_ssaa_pass():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.enable_anti_aliasing('ssaa')
+    pl.show(before_close_callback=verify_cache_image)
+
+    # verify we would catch an invalid plot
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    with pytest.raises(RuntimeError, match='Exceeded image regression'):
+        pl.show(before_close_callback=verify_cache_image)
