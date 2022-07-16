@@ -2040,7 +2040,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        texture : vtk.vtkTexture or np.ndarray or bool, optional
+        texture : vtk.vtkTexture or np.ndarray or bool or str, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
             datasets. If set to ``True``, the first available texture
