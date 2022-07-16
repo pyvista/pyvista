@@ -405,9 +405,13 @@ class UniformGridFilters(DataSetFilters):
         if in_value is not None:
             alg.SetReplaceIn(True)
             alg.SetInValue(in_value)
+        else:
+            alg.SetReplaceIn(False)
         if out_value is not None:
             alg.SetReplaceOut(True)
             alg.SetOutValue(out_value)
+        else:
+            alg.SetReplaceOut(False)
         # run the algorithm
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         return _get_output(alg)

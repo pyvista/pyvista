@@ -2675,7 +2675,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if use_gradient:
             self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
-
+         else:
+           self.SetGradientBackground(False)
         self.Modified()
 
     def set_environment_texture(self, texture, is_srgb=False):
@@ -2980,6 +2981,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         if bcolor is not None:
             self._legend.SetUseBackground(True)
+        else:
+            self._legend.SetUseBackground(False)
             self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)
