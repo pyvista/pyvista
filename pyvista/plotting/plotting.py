@@ -4574,11 +4574,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Filename to export the scene to.  Should end in ``'.obj'``.
 
-        Returns
-        -------
-        vtkOBJExporter
-            Object exporter.
-
         """
         # lazy import vtkOBJExporter here as it takes a long time to
         # load and is not always used
