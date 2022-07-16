@@ -68,13 +68,13 @@ def test_buffer_normals(sphere):
 def test_get_coloring(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_points))
-    assert pv_pythreejs.get_coloring(pl.mapper, sphere) == 'VertexColors'
+    assert pv_pythreejs.get_coloring(pl.mapper, pl.mesh) == 'VertexColors'
 
     sphere.clear_data()
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_cells))
-    assert pv_pythreejs.get_coloring(pl.mapper, sphere) == 'FaceColors'
+    assert pv_pythreejs.get_coloring(pl.mapper, pl.mesh) == 'FaceColors'
 
 
 def test_output_point_cloud(sphere):
