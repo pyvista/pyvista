@@ -445,10 +445,12 @@ if VTK9:
         vtkCameraPass,
         vtkDefaultPass,
         vtkDepthOfFieldPass,
+        vtkDualDepthPeelingPass,
         vtkEDLShading,
         vtkGaussianBlurPass,
         vtkLightsPass,
         vtkOpaquePass,
+        vtkOpenGLFXAAPass,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,
         vtkOpenGLTexture,
@@ -457,6 +459,8 @@ if VTK9:
         vtkSequencePass,
         vtkShadowMapPass,
         vtkSSAAPass,
+        vtkTranslucentPass,
+        vtkVolumetricPass,
     )
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingVolume import (

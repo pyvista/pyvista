@@ -1,8 +1,8 @@
 """
 .. _depth_of_field_example:
 
-Depth of Field Plotting and Blur
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Depth of Field Plotting
+~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how you can use :func:`enable_depth_of_field
 <pyvista.Plotting.enable_depth_of_field>` to highlight part of your plot.
@@ -20,38 +20,52 @@ from pyvista import examples
 # Create many bunnies using the :func:`glyph <pyvista.DataSetFilters.glyph>`
 # filter.
 
+# download the stanford bunny and rotate it into a good position
 mesh = examples.download_bunny()
 mesh = mesh.rotate_x(90, inplace=False).rotate_z(90, inplace=False).scale(4, 4, 4)
 
-grid = pyvista.UniformGrid(dims=(3, 3, 3), spacing=(4, 1, 1))
+# We use a uniform grid here simply to create equidistantly spaced points for
+# our glyph filter
+grid = pyvista.UniformGrid(dims=(4, 3, 3), spacing=(3, 1, 1))
 
 bunnies = grid.glyph(geom=mesh, scale=False, orient=False)
 bunnies
+
 
 ###############################################################################
 # Show the plot without enabling depth of field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # convert points into rgba colors
-colors = bunnies.points - bunnies.points.min(axis=0)
+colors = bunnies.points - np.array(bunnies.bounds)[::2]
 colors /= colors.max(axis=0)
 colors *= 255
 colors = colors.astype(np.uint8)
 
 # obtained camera position with `cpos = pl.show(return_cpos)`
-cpos = None
+cpos = [(11.6159, -1.2803, 1.5338), (4.1354, 1.4796, 1.2711), (-0.0352, -0.0004, 1.0)]
+
+# since we're using physically based rendering, let's also download a skybox
+# cubemap
+cubemap = examples.download_sky_box_cube_map()
 
 pl = pyvista.Plotter()
+pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
-pl.camera.zoom(1.5)
 pl.camera_position = cpos
+pl.set_environment_texture(cubemap)
 pl.show()
+
 
 ###############################################################################
 # Show the plot while enabling depth of field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 pl = pyvista.Plotter()
+pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
-pl.enable_depth_of_field()
 pl.camera_position = cpos
-cpos = pl.show(return_cpos=True)
+pl.enable_depth_of_field()
+pl.enable_anti_aliasing('ssaa')
+pl.set_environment_texture(cubemap)
+pl.show()

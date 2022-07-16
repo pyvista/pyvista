@@ -968,16 +968,93 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    @wraps(Renderer.enable_anti_aliasing)
-    def enable_anti_aliasing(self, *args, **kwargs):
-        """Wrap ``Renderer.enable_anti_aliasing``."""
-        for renderer in self.renderers:
-            renderer.enable_anti_aliasing(*args, **kwargs)
+    def enable_anti_aliasing(self, aa_type='fxaa', multi_samples=8, all_renderers=True):
+        """Enable anti-aliasing.
 
-    @wraps(Renderer.disable_anti_aliasing)
-    def disable_anti_aliasing(self, *args, **kwargs):
-        """Wrap ``Renderer.disable_anti_aliasing``."""
-        self.renderer.disable_anti_aliasing(*args, **kwargs)
+        This tends to make edges appear softer and less pixelated.
+
+        Parameters
+        ----------
+        aa_type : str, optional
+            Anti-aliasing type. See the notes below. One of the following:
+
+            * ``"ssaa"`` - Super-Sample Anti-Aliasing
+            * ``"mxaa"`` - Multi-Sample Anti-Aliasing
+            * ``"fxaa"`` - Fast Approximate Anti-Aliasing
+
+        multi_samples : int, optional
+            The number of multi-samples when ``aa_type`` is ``"mxaa"``. Note
+            that using this setting automatically enables this for all
+            renderers.
+
+        Notes
+        -----
+        SSAA, or Super-Sample Anti-Aliasing is a brute force method of
+        anti-aliasing. It results in the best image quality but comes at a
+        tremendous resource cost. SSAA works by rendering the scene at a higher
+        resolution. The final image is produced by downsampling the
+        massive source image using an averaging filter. This acts as a low pass
+        filter which removes the high frequency components that caused the
+        jaggedness.
+
+        MSAA, or Multi-Sample Anti-Aliasing is an optimization of SSAA that
+        reduces the amount of pixel shader evaluations that need to be computed
+        by focusing on overlapping regions of the scene. The result is
+        antialiasing along edges that is on par with SSAA and less
+        anti-aliasing along surfaces as these make up the bulk of SSAA
+        computations. MSAA is substantially less computationally expensive than
+        SSAA and results in comparable image quality.
+
+        FXAA, or Fast Approximate Anti-Aliasing is an Anti-Aliasing technique
+        that is performed entirely in post processing. FXAA operates on the
+        rasterized image rather than the scene geometry. As a consequence,
+        forcing FXAA or using FXAA incorrectly can result in the FXAA filter
+        smoothing out parts of the visual overlay that are usually kept sharp
+        for reasons of clarity as well as smoothing out textures. FXAA is
+        inferior to MSAA but is almost free computationally and is thus
+        desirable on low end platforms.
+
+        Examples
+        --------
+        Enable super-sample anti-aliasing (SSAA)
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_anti_aliasing('ssaa')
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        # apply MXAA to entire render window
+        if aa_type == 'mxaa':
+            self.ren_win.SetMultiSamples(multi_samples)
+            return
+
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.enable_anti_aliasing(aa_type)
+        else:
+            self.renderer.enable_anti_aliasing(aa_type)
+
+    def disable_anti_aliasing(self, all_renderers=True):
+        """Disable anti-aliasing.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_anti_aliasing()
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        self.ren_win.SetMultiSamples(0)
+
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.disable_anti_aliasing()
+        else:
+            self.renderer.disable_anti_aliasing()
 
     @wraps(Renderer.set_focus)
     def set_focus(self, *args, render=True, **kwargs):

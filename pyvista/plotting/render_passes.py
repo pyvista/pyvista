@@ -37,6 +37,7 @@ class RenderPasses:
         self._renderer_ref = weakref.ref(renderer)
 
         self._passes = {}
+        self._fxaa_pass = None
         self._shadow_map_pass = None
         self._edl_pass = None
         self._dof_pass = None
@@ -85,15 +86,32 @@ class RenderPasses:
     def _init_passes(self):
         """Initialize the renderer's standard passes."""
         # simulate the standard VTK rendering passes and put them in a sequence
+
+        lights_pass = _vtk.vtkLightsPass()
+        translucent_pass = _vtk.vtkTranslucentPass()
+        volume_pass = _vtk.vtkVolumetricPass()
+
+        # opaque passes
+        self._opaque_cam_pass = _vtk.vtkCameraPass()
+        opaque_pass = _vtk.vtkOpaquePass()
+        self._opaque_cam_pass.SetDelegatePass(opaque_pass)
+
         self.__pass_collection = _vtk.vtkRenderPassCollection()
-        self.__pass_collection.AddItem(_vtk.vtkRenderStepsPass())
+        self.__pass_collection.AddItem(lights_pass)
+        self.__pass_collection.AddItem(self._opaque_cam_pass)
+
+        # translucent and volumic passes
+        ddp_pass = _vtk.vtkDualDepthPeelingPass()
+        ddp_pass.SetTranslucentPass(translucent_pass)
+        ddp_pass.SetVolumetricPass(volume_pass)
+        self.__pass_collection.AddItem(ddp_pass)
 
         self.__seq_pass = _vtk.vtkSequencePass()
         self.__seq_pass.SetPasses(self._pass_collection)
 
         # Make the sequence the delegate of a camera pass.
         self.__camera_pass = _vtk.vtkCameraPass()
-        self.__camera_pass.SetDelegatePass(self._seq_pass)
+        self.__camera_pass.SetDelegatePass(self.__seq_pass)
 
     @property
     def _renderer(self):
@@ -185,7 +203,7 @@ class RenderPasses:
         self._dof_pass = None
 
     def enable_ssaa_pass(self):
-        """Enable screen space anti-aliasing pass."""
+        """Enable super space anti-aliasing pass."""
         if self._ssaa_pass is not None:
             return
         self._ssaa_pass = _vtk.vtkSSAAPass()
@@ -193,7 +211,7 @@ class RenderPasses:
         return self._ssaa_pass
 
     def disable_ssaa_pass(self):
-        """Disable screen space anti-aliasing pass."""
+        """Disable super space anti-aliasing pass."""
         if self._ssaa_pass is None:
             return
         self._remove_pass(self._ssaa_pass)

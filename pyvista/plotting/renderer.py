@@ -439,48 +439,38 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self):
-        """Enable anti-aliasing using FXAA.
+    def enable_anti_aliasing(self, aa_type):
+        """Enable anti-aliasing."""
+        if not isinstance(aa_type, str):
+            raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
+        aa_type = aa_type.lower()
 
-        This tends to make edges appear softer and less pixelated.
+        if aa_type == 'fxaa':
+            if uses_egl():  # pragma: no cover
+                # only display the warning when not building documentation
+                if not pyvista.BUILDING_GALLERY:
+                    warnings.warn(
+                        "VTK compiled with OSMesa does not properly support "
+                        "FXAA anti-aliasing and SXAA will be used instead."
+                    )
+        elif aa_type == 'ssaa':
+            self._render_passes.enable_ssaa_pass()
+        else:
+            raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
 
-        Warnings
-        --------
-        Enabling this causes screenshots with vtk compiled with OSMesa to be
-        all black. This cannot be enabled when compiled with OSMesa (EGL). See
-        https://github.com/pyvista/pyvista/issues/2686 for more details.
+    def disable_anti_aliasing(self):
+        """Disable all anti-aliasing."""
+        self._render_passes.disable_ssaa_pass()
+        self.SetUseFXAA(False)
+        self.Modified()
 
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.enable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
-
-        """
-        if uses_egl():  # pragma: no cover
-            # only display the warning when not building documentation
-            if not pyvista.BUILDING_GALLERY:
-                warnings.warn(
-                    "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
-                )
-            return
+    def _enable_fxaa(self):
+        """Enable FXAA anti-aliasing."""
         self.SetUseFXAA(True)
         self.Modified()
 
-    def disable_anti_aliasing(self):
-        """Disable anti-aliasing.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.disable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
-
-        """
+    def _disable_fxaa(self):
+        """Disable FXAA anti-aliasing."""
         self.SetUseFXAA(False)
         self.Modified()
 
