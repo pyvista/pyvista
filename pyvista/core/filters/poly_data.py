@@ -523,10 +523,10 @@ class PolyDataFilters(DataSetFilters):
         curv_type : str, optional
             Curvature type.  One of the following:
 
-            * ``"Mean"``
-            * ``"Gaussian"``
-            * ``"Maximum"``
-            * ``"Minimum"``
+            * ``"mean"``
+            * ``"gaussian"``
+            * ``"maximum"``
+            * ``"minimum"``
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress. Default
@@ -3034,6 +3034,9 @@ class PolyDataFilters(DataSetFilters):
             capping = cappings[capping]
         else:
             raise TypeError('Invalid type given to `capping`. Must be a string.')
+
+        if not hasattr(_vtk, 'vtkTrimmedExtrusionFilter'):  # pragma: no cover
+            raise VTKVersionError('extrude_trim requires VTK 9.0.0 or newer.')
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)

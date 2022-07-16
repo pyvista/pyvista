@@ -10,11 +10,16 @@ skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"
 )
 
+skip_needs_vtk_9 = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0"
+)
+
 
 def empty_callback():
     return
 
 
+@skip_needs_vtk_9
 def test_observers():
     pl = pyvista.Plotter()
 

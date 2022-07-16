@@ -1081,19 +1081,20 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.remove(key=array_name)
 
     def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):
-        """Update arrays in this object.
+        """Update arrays in this object from another dictionary or dataset attributes.
 
-        For each key, value given, add the pair. If it already exists,
-        update it.
+        For each key, value given, add the pair. If it already exists, replace
+        it with the new array. These arrays will be copied.
 
         Parameters
         ----------
-        array_dict : dict
-            A dictionary of ``(array name, numpy.ndarray)``.
+        array_dict : dict, DataSetAttributes
+            A dictionary of ``(array name, :class:`numpy.ndarray`)`` or a
+            :class:`pyvista.DataSetAttributes`.
 
         Examples
         --------
-        Add two arrays using ``update``.
+        Add two arrays to ``point_data`` using ``update``.
 
         >>> import numpy as np
         >>> from pyvista import examples
