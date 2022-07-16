@@ -987,6 +987,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that using this setting automatically enables this for all
             renderers.
 
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
         Notes
         -----
         SSAA, or Super-Sample Anti-Aliasing is a brute force method of
@@ -1041,6 +1045,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def disable_anti_aliasing(self, all_renderers=True):
         """Disable anti-aliasing.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
 
         Examples
         --------

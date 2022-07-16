@@ -440,7 +440,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     def enable_anti_aliasing(self, aa_type):
-        """Enable anti-aliasing."""
+        """Enable anti-aliasing.
+
+        Parameters
+        ----------
+        aa_type : str
+            Anti-aliasing type. Either ``"fxaa"``, ``"mxaa"``, or ``"ssaa"``.
+
+        """
         if not isinstance(aa_type, str):
             raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
         aa_type = aa_type.lower()
@@ -2510,8 +2517,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Add two blurring passes to the plotter and show it.
 
         >>> import pyvista as pv
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
         >>> pl.add_blurring()
         >>> pl.add_blurring()
         >>> pl.show()
@@ -2551,7 +2558,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl = pv.Plotter(lighting="three lights")
         >>> pl.background_color = "w"
         >>> for i in range(5):
-        ...     mesh = pyvista.Sphere(center=(-i * 4, 0, 0))
+        ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
         ...     color = [0, 255 - i*20, 30 + i*50]
         ...     _ = pl.add_mesh(
         ...         mesh,

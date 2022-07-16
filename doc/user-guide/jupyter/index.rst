@@ -15,7 +15,7 @@ Create interactive physically based rendering using `pythreejs`_.
 
    import pyvista
    pyvista.global_theme.background = 'white'
-   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.antialiasing = 'fxaa'
    pyvista.global_theme.window_size = [600, 600]
 
 .. jupyter-execute::
