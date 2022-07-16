@@ -47,6 +47,10 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 skip_9_1_0 = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
 
+skip_9_0_X = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1) and pyvista.vtk_version_info > (8, 2), reason="Flaky on 9.0.X"
+)
+
 skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
@@ -2433,6 +2437,7 @@ def test_add_text():
 
 
 @skip_windows
+@skip_9_0_X
 def test_depth_of_field():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
@@ -2440,6 +2445,7 @@ def test_depth_of_field():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_9_0_X
 def test_blurring():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
