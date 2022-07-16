@@ -444,7 +444,7 @@ class ScalarBars:
             scalar_bar.SetUnconstrainedFontSize(True)
             scalar_bar.SetAnnotationTextScaling(False)
         else:
-            scalar_bar.AnnotationTextScaling(True)
+            scalar_bar.SetAnnotationTextScaling(True)
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
