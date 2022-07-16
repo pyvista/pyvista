@@ -864,8 +864,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
         >>> _ = pl.add_mesh(cube, 'r', label='Cube')
         >>> _ = pl.add_legend(bcolor='w', face=None)
-        >>> pl.show()
-
         >>> pl.remove_legend()
         >>> pl.show()
         
