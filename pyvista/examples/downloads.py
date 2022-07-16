@@ -4031,7 +4031,7 @@ def download_lucy(load=True):  # pragma: no cover
     >>> pl.background_color = 'k'
     >>> pl.show()
 
-    See :ref:`jupiter_plotting` for another example using this dataset.
+    See :ref:`jupyter_plotting` for another example using this dataset.
 
     """
     return _download_and_read('lucy.ply', load=load)
