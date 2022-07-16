@@ -2437,6 +2437,10 @@ def test_export_obj(tmpdir, sphere):
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
+
+    with pytest.raises(ValueError, match='end with ".obj"'):
+        pl.export_obj('badfilename')
+
     pl.export_obj(filename)
 
     # Check that the object file has been written
