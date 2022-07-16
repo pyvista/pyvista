@@ -197,26 +197,6 @@ PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
 
-Docstrings
-^^^^^^^^^^^^
-
-When using Sphinx in combination with the NumPy conventions, you should 
-use the numpydoc extension so that your docstrings will be handled 
-correctly. For example, Sphinx will extract the Parameters section from 
-your docstring and convert it into a field list. Using numpydoc will also 
-avoid the reStructuredText errors produced by plain Sphinx when it 
-encounters NumPy docstring conventions like section headers 
-(e.g. -------------) that sphinx does not expect to find in docstrings.
-
-It is available from:
-
--  numpydoc on PyPI
-
--  numpydoc on GitHub
-
-Note that for documentation within NumPy, it is not necessary to do import numpy as np at the beginning of an example.
-
-Please use the numpydoc formatting standard as shown in their example.
 
 Docstrings
 ^^^^^^^^^^
