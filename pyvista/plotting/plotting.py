@@ -3809,19 +3809,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @wraps(ScalarBars.remove_scalar_bar)
     def remove_scalar_bar(self, *args, **kwargs):
-        """Remove the active scalar bar.
+        """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
-        
-        Examples
-        --------
-        
-        Remove scalar bar from a plotter.
-        >>> p = pv.Plotter()
-        >>> p.add_mesh(mesh, cmap='coolwarm')
-        >>> p.remove_scalar_bar()
-        >>> p.show()
-        """
-     
+
     def add_point_labels(
         self,
         points,
