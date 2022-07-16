@@ -265,3 +265,19 @@ def test_deep_clean(cube):
     assert pl.volume is None
     assert pl.textActor is None
     assert cube == cube_orig
+
+
+def test_disable_depth_of_field(sphere):
+    pl = pyvista.Plotter()
+    pl.enable_depth_of_field()
+    assert pl.renderer.GetPass() is not None
+    pl.disable_depth_of_field()
+    assert pl.renderer.GetPass() is None
+
+
+def test_remove_blurring(sphere):
+    pl = pyvista.Plotter()
+    pl.add_blurring()
+    assert pl.renderer.GetPass() is not None
+    pl.remove_blurring()
+    assert pl.renderer.GetPass() is None

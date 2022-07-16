@@ -2430,3 +2430,29 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_depth_of_field():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.enable_depth_of_field()
+    pl.show(before_close_callback=verify_cache_image)
+
+    # verify that we would catch an invalid plot
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    with pytest.raises(RuntimeError, match='Exceeded image regression'):
+        pl.show(before_close_callback=verify_cache_image)
+
+
+def test_blurring():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.add_blurring()
+    pl.show(before_close_callback=verify_cache_image)
+
+    # verify we would catch an invalid plot
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    with pytest.raises(RuntimeError, match='Exceeded image regression'):
+        pl.show(before_close_callback=verify_cache_image)

@@ -36,26 +36,64 @@ class RenderPasses:
         """Initialize render passes."""
         self._renderer_ref = weakref.ref(renderer)
 
-        self._pass_collection = _vtk.vtkRenderPassCollection()
-        self._pass_collection.AddItem(_vtk.vtkLightsPass())
-        self._pass_collection.AddItem(_vtk.vtkDefaultPass())
-
-        self._seq_pass = _vtk.vtkSequencePass()
-        self._seq_pass.SetPasses(self._pass_collection)
-
-        # Tell the renderer to use our render pass pipeline
-        camera_pass = _vtk.vtkCameraPass()
-        camera_pass.SetDelegatePass(self._seq_pass)
-
-        self._base_pass = camera_pass
-        renderer.SetPass(self._base_pass)
-
         self._passes = {}
         self._shadow_map_pass = None
         self._edl_pass = None
         self._dof_pass = None
         self._ssaa_pass = None
         self._blur_passes = []
+        self.__pass_collection = None
+        self.__seq_pass = None
+        self.__camera_pass = None
+
+    @property
+    def _pass_collection(self):
+        """Initialize (when necessary the pass collection and return it.
+
+        This lets us lazily generate the pass collection only when we need it
+        rather than at initialization of the class.
+
+        """
+        if self.__pass_collection is None:
+            self._init_passes()
+        return self.__pass_collection
+
+    @property
+    def _seq_pass(self):
+        """Initialize (when necessary the pass collection and return it.
+
+        This lets us lazily generate the pass collection only when we need it
+        rather than at initialization of the class.
+
+        """
+        if self.__seq_pass is None:
+            self._init_passes()
+        return self.__seq_pass
+
+    @property
+    def _camera_pass(self):
+        """Initialize (when necessary the pass collection and return it.
+
+        This lets us lazily generate the pass collection only when we need it
+        rather than at initialization of the class.
+
+        """
+        if self.__camera_pass is None:
+            self._init_passes()
+        return self.__camera_pass
+
+    def _init_passes(self):
+        """Initialize the renderer's standard passes."""
+        # simulate the standard VTK rendering passes and put them in a sequence
+        self.__pass_collection = _vtk.vtkRenderPassCollection()
+        self.__pass_collection.AddItem(_vtk.vtkRenderStepsPass())
+
+        self.__seq_pass = _vtk.vtkSequencePass()
+        self.__seq_pass.SetPasses(self._pass_collection)
+
+        # Make the sequence the delegate of a camera pass.
+        self.__camera_pass = _vtk.vtkCameraPass()
+        self.__camera_pass.SetDelegatePass(self._seq_pass)
 
     @property
     def _renderer(self):
@@ -70,9 +108,9 @@ class RenderPasses:
         self._renderer_ref = None
         if self._seq_pass is not None:
             self._seq_pass.SetPasses(None)
-        self._seq_pass = None
-        self._pass_collection = None
-        self._base_pass = None
+        self.__seq_pass = None
+        self.__pass_collection = None
+        self.__camera_pass = None
         self._passes = {}
         self._shadow_map_pass = None
         self._edl_pass = None
@@ -119,6 +157,7 @@ class RenderPasses:
         self._shadow_map_pass = _vtk.vtkShadowMapPass()
         self._pass_collection.AddItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.AddItem(self._shadow_map_pass)
+        self._update_passes()
         return self._shadow_map_pass
 
     def disable_shadow_pass(self):
@@ -127,6 +166,7 @@ class RenderPasses:
             return
         self._pass_collection.RemoveItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.RemoveItem(self._shadow_map_pass)
+        self._update_passes()
 
     def enable_depth_of_field_pass(self, automatic_focal_distance=True):
         """Enable the depth of field pass."""
@@ -164,14 +204,18 @@ class RenderPasses:
         if self._renderer is None:
             raise RuntimeError('The renderer has been closed.')
 
-        current_pass = self._base_pass
+        current_pass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:
             if class_name in self._passes:
                 for render_pass in self._passes[class_name]:
                     render_pass.SetDelegatePass(current_pass)
                     current_pass = render_pass
 
-        self._renderer.SetPass(current_pass)
+        # reset to the default rendering if no special passes have been added
+        if isinstance(current_pass, _vtk.vtkCameraPass) and self._shadow_map_pass is None:
+            self._renderer.SetPass(None)
+        else:
+            self._renderer.SetPass(current_pass)
 
     @staticmethod
     def _class_name_from_vtk_obj(obj):

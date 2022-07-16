@@ -2506,6 +2506,91 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Enable this renderer's camera to be interactive."""
         self.SetInteractive(1)
 
+    def add_blurring(self):
+        """Add blurring.
+
+        This can be added several times to increase the degree of blurring.
+
+        Examples
+        --------
+        Add two blurring passes to the plotter and show it.
+
+        >>> import pyvista as pv
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.add_blurring()
+        >>> pl.add_blurring()
+        >>> pl.show()
+
+        """
+        self._render_passes.add_blur_pass()
+
+    def remove_blurring(self):
+        """Remove blurring.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.add_blurring()
+        >>> pl.remove_blurring()
+
+        """
+        self._render_passes.remove_blur_pass()
+
+    def enable_depth_of_field(self, automatic_focal_distance=True):
+        """Enable depth of field plotting.
+
+        Parameters
+        ----------
+        automatic_focal_distance : bool, optional
+            Use automatic focal distance calculation. When enabled, the center
+            of the viewport will always be in focus regardless of where the
+            focal point is. Default ``True``.
+
+        Examples
+        --------
+        Create five spheres and demonstrate the effect of depth of field.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.background_color = "w"
+        >>> for i in range(5):
+        ...     mesh = pyvista.Sphere(center=(-i * 4, 0, 0))
+        ...     color = [0, 255 - i*20, 30 + i*50]
+        ...     _ = pl.add_mesh(
+        ...         mesh,
+        ...         show_edges=False,
+        ...         pbr=True,
+        ...         metallic=1.0,
+        ...         color=color
+        ...     )
+        >>> pl.camera.zoom(1.8)
+        >>> pl.camera_position = [
+        ...     (4.74, 0.959, 0.525),
+        ...     (0.363, 0.3116, 0.132),
+        ...     (-0.088, -0.0075, 0.996),
+        ... ]
+        >>> pl.enable_depth_of_field()
+        >>> pl.show()
+
+        """
+        self._render_passes.enable_depth_of_field_pass()
+
+    def disable_depth_of_field(self):
+        """Disable depth of field plotting.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.enable_depth_of_field()
+        >>> pl.disable_depth_of_field()
+
+        """
+        self._render_passes.disable_depth_of_field_pass()
+
     def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL).
 
@@ -2521,20 +2606,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.enable_eye_dome_lighting()
 
         """
-        if hasattr(self, 'edl_pass'):
-            return self
-        # create the basic VTK render steps
-        basic_passes = _vtk.vtkRenderStepsPass()
-        # blur the resulting image
-        # The blur delegates rendering the unblured image to the basic_passes
-        self.edl_pass = _vtk.vtkEDLShading()
-        self.edl_pass.SetDelegatePass(basic_passes)
-
-        # tell the renderer to use our render pass pipeline
-        self.glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
-        self.glrenderer.SetPass(self.edl_pass)
-        self.Modified()
-        return self.glrenderer
+        self._render_passes.enable_edl_pass()
 
     def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL).
@@ -2546,12 +2618,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.disable_eye_dome_lighting()
 
         """
-        if not hasattr(self, 'edl_pass'):
-            return
-        self.SetPass(None)
-        self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        del self.edl_pass
-        self.Modified()
+        self._render_passes.disable_edl_pass()
 
     def enable_shadows(self):
         """Enable shadows.
@@ -2584,24 +2651,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if self._shadow_pass is not None:
-            # shadows are already enabled for this renderer
-            return
-
-        shadows = _vtk.vtkShadowMapPass()
-
-        passes = _vtk.vtkRenderPassCollection()
-        passes.AddItem(shadows.GetShadowMapBakerPass())
-        passes.AddItem(shadows)
-
-        seq = _vtk.vtkSequencePass()
-        seq.SetPasses(passes)
-
-        # Tell the renderer to use our render pass pipeline
-        self._shadow_pass = _vtk.vtkCameraPass()
-        self._shadow_pass.SetDelegatePass(seq)
-        self.SetPass(self._shadow_pass)
-        self.Modified()
+        self._render_passes.enable_shadow_pass()
 
     def disable_shadows(self):
         """Disable shadows.
@@ -2613,15 +2663,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.disable_shadows()
 
         """
-        if self._shadow_pass is None:
-            # shadows are already disabled
-            return
-
-        self.SetPass(None)
-        if hasattr(self.parent, 'ren_win'):
-            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        self._shadow_pass = None
-        self.Modified()
+        self._render_passes.disable_shadow_pass()
 
     def get_pick_position(self):
         """Get the pick position/area as ``x0, y0, x1, y1``.

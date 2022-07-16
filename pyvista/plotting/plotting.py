@@ -1116,6 +1116,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.set_scale``."""
         return self.renderer.set_scale(*args, **kwargs)
 
+    @wraps(Renderer.enable_depth_of_field)
+    def enable_depth_of_field(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_depth_of_field``."""
+        return self.renderer.enable_depth_of_field(*args, **kwargs)
+
+    @wraps(Renderer.disable_depth_of_field)
+    def disable_depth_of_field(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_depth_of_field``."""
+        return self.renderer.disable_depth_of_field(*args, **kwargs)
+
+    @wraps(Renderer.add_blurring)
+    def add_blurring(self, *args, **kwargs):
+        """Wrap ``Renderer.add_blurring``."""
+        return self.renderer.add_blurring(*args, **kwargs)
+
+    @wraps(Renderer.remove_blurring)
+    def remove_blurring(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_blurring``."""
+        return self.renderer.remove_blurring(*args, **kwargs)
+
     @wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs):
         """Wrap ``Renderer.enable_eye_dome_lighting``."""
@@ -5425,6 +5445,10 @@ class Plotter(BasePlotter):
 
         self.render()
 
+        # initial double render needed for certain passes when offscreen
+        if 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes and self.off_screen:
+            self.render()
+
         # This has to be after the first render for some reason
         if title is None:
             title = self.title
@@ -5435,6 +5459,7 @@ class Plotter(BasePlotter):
         # Keep track of image for sphinx-gallery
         if pyvista.BUILDING_GALLERY or screenshot:
             # always save screenshots for sphinx_gallery
+
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
 

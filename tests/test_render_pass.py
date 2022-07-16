@@ -89,9 +89,9 @@ def test_render_passes_deep_clean():
     del ren
     assert passes._renderer is None
 
-    assert passes._seq_pass is None
-    assert passes._pass_collection is None
-    assert passes._base_pass is None
+    assert passes._RenderPasses__seq_pass is None
+    assert passes._RenderPasses__pass_collection is None
+    assert passes._RenderPasses__camera_pass is None
     assert passes._passes == {}
     assert passes._shadow_map_pass is None
     assert passes._edl_pass is None
