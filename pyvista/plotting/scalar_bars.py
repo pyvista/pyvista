@@ -80,8 +80,6 @@ class ScalarBars:
             Render upon scalar bar removal.  Set this to ``False`` to
             stop the render window from rendering when an scalar bar
             is removed.
-
-
         Examples
         --------
         Remove a scalar bar from a plotter.
