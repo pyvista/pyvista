@@ -3616,7 +3616,6 @@ def download_milkyway_jpg():  # pragma: no cover
     return _download_file('milkyway.jpg')[0]
 
 
-
 def download_notch_stress(load=True):  # pragma: no cover
     """Download the FEA stress result from a notched beam.
 

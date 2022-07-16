@@ -15,11 +15,11 @@ inspiration only.
 
 """
 import pyvista
+from pyvista import examples
 
 ###############################################################################
 # Celestial bodies with the Milky Way in the background.
 
-from pyvista import examples
 
 light = pyvista.Light()
 light.set_direction_angle(30, -20)
