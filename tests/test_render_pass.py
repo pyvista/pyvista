@@ -29,15 +29,24 @@ def test_blur_pass():
     passes.remove_blur_pass()
     assert not passes._blur_passes
 
+    # double pass should work
+    blur_pass = passes.add_blur_pass()
+    blur_pass = passes.add_blur_pass()
+    assert len(passes._blur_passes) == 2
+
 
 def test_ssaa_pass():
     ren, passes = make_passes()
     assert not passes._passes
     ssaa_pass = passes.enable_ssaa_pass()
     assert isinstance(ssaa_pass, _vtk.vtkSSAAPass)
-
     assert 'vtkSSAAPass' in passes._passes
 
+    # enabling again should just do nothing
+    ssaa_pass = passes.enable_ssaa_pass()
+    assert 'vtkSSAAPass' in passes._passes
+
+    # disabling again should just do nothing
     passes.disable_ssaa_pass()
     assert not passes._passes
 
@@ -47,9 +56,16 @@ def test_depth_of_field_pass():
     assert not passes._passes
     ren_pass = passes.enable_depth_of_field_pass()
     assert isinstance(ren_pass, _vtk.vtkDepthOfFieldPass)
-
     assert 'vtkDepthOfFieldPass' in passes._passes
 
+    # enabling again should just do nothing
+    ren_pass = passes.enable_depth_of_field_pass()
+    assert 'vtkDepthOfFieldPass' in passes._passes
+
+    passes.disable_depth_of_field_pass()
+    assert not passes._passes
+
+    # disabling again should just do nothing
     passes.disable_depth_of_field_pass()
     assert not passes._passes
 
@@ -73,6 +89,14 @@ def test_edl_pass():
 
     assert 'vtkEDLShading' in passes._passes
 
+    # enabling again should just do nothing
+    ren_pass = passes.enable_edl_pass()
+    assert 'vtkEDLShading' in passes._passes
+
+    passes.disable_edl_pass()
+    assert not passes._passes
+
+    # disabling again should just do nothing
     passes.disable_edl_pass()
     assert not passes._passes
 

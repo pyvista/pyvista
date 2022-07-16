@@ -281,3 +281,27 @@ def test_remove_blurring(sphere):
     assert pl.renderer.GetPass() is not None
     pl.remove_blurring()
     assert pl.renderer.GetPass() is None
+
+
+def test_anti_aliasing_multiplot(sphere):
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.enable_anti_aliasing('fxaa', all_renderers=False)
+    assert pl.renderers[0].GetUseFXAA()
+    assert not pl.renderers[1].GetUseFXAA()
+
+    pl.enable_anti_aliasing('fxaa', all_renderers=True)
+    assert pl.renderers[1].GetUseFXAA()
+
+    pl.disable_anti_aliasing(all_renderers=False)
+    assert not pl.renderers[0].GetUseFXAA()
+    assert pl.renderers[1].GetUseFXAA()
+
+    pl.disable_anti_aliasing(all_renderers=True)
+    assert not pl.renderers[0].GetUseFXAA()
+    assert not pl.renderers[1].GetUseFXAA()
+
+
+def test_anti_aliasing_invalid():
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError, match='Should be either "fxaa" or "ssaa"'):
+        pl.renderer.enable_anti_aliasing('invalid')

@@ -3,6 +3,7 @@ import vtk
 
 import pyvista
 from pyvista import colors
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 @pytest.fixture
@@ -447,3 +448,15 @@ def test_antialiasing(default_theme):
             assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
         else:
             assert 'vtkSSAAPass' not in pl.renderer._render_passes._passes
+
+    with pytest.warns(PyvistaDeprecationWarning, match='is now a string'):
+        default_theme.antialiasing = True
+        pl = pyvista.Plotter(theme=default_theme)
+        if value == 'fxaa':
+            assert pl.renderer.GetUseFXAA()
+
+    with pytest.raises(ValueError, match='antialiasing must be either'):
+        default_theme.antialiasing = 'invalid value'
+
+    with pytest.raises(TypeError, match='must be either a string or'):
+        default_theme.antialiasing = 42

@@ -2432,6 +2432,7 @@ def test_add_text():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows
 def test_depth_of_field():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
@@ -2450,4 +2451,17 @@ def test_ssaa_pass():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
     pl.enable_anti_aliasing('ssaa')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_windows
+def test_many_multi_pass():
+    pl = pyvista.Plotter(lighting=None)
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.add_light(pyvista.Light(position=(0, 0, 10)))
+    pl.enable_anti_aliasing('ssaa')
+    pl.enable_depth_of_field()
+    pl.add_blurring()
+    pl.enable_shadows()
+    pl.enable_eye_dome_lighting()
     pl.show(before_close_callback=verify_cache_image)

@@ -245,7 +245,7 @@ class RenderPasses:
         """
         class_name = RenderPasses._class_name_from_vtk_obj(render_pass)
 
-        if class_name not in self._passes:
+        if class_name not in self._passes:  # pragma: no cover
             return
         else:
             self._passes[class_name].remove(render_pass)

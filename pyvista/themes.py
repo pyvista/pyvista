@@ -1894,7 +1894,7 @@ class DefaultTheme(_ThemeConfig):
             if antialiasing not in ['ssaa', 'mxaa', 'fxaa']:
                 raise ValueError('antialiasing must be either "ssaa", "mxaa", or "fxaa"')
         elif antialiasing is not None:
-            raise ValueError('`anti-aliasing` must be either a string or None')
+            raise TypeError('`anti-aliasing` must be either a string or None')
 
         self._antialiasing = antialiasing
 
