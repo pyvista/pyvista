@@ -11,7 +11,7 @@ This example shows how you can use :func:`enable_depth_of_field
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
@@ -26,7 +26,7 @@ mesh = mesh.rotate_x(90, inplace=False).rotate_z(90, inplace=False).scale(4, 4, 
 
 # We use a uniform grid here simply to create equidistantly spaced points for
 # our glyph filter
-grid = pyvista.UniformGrid(dims=(4, 3, 3), spacing=(3, 1, 1))
+grid = pv.UniformGrid(dims=(4, 3, 3), spacing=(3, 1, 1))
 
 bunnies = grid.glyph(geom=mesh, scale=False, orient=False)
 bunnies
@@ -49,7 +49,7 @@ cpos = [(11.6159, -1.2803, 1.5338), (4.1354, 1.4796, 1.2711), (-0.0352, -0.0004,
 # cubemap
 cubemap = examples.download_sky_box_cube_map()
 
-pl = pyvista.Plotter()
+pl = pv.Plotter()
 pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
 pl.camera_position = cpos
@@ -61,7 +61,7 @@ pl.show()
 # Show the plot while enabling depth of field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-pl = pyvista.Plotter()
+pl = pv.Plotter()
 pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
 pl.camera_position = cpos

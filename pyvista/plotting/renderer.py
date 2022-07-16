@@ -2523,6 +2523,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.add_blurring()
         >>> pl.show()
 
+        See :ref:`blur_example` for a full example using this method.
+
         """
         self._render_passes.add_blur_pass()
 
@@ -2575,6 +2577,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ... ]
         >>> pl.enable_depth_of_field()
         >>> pl.show()
+
+        See :ref:`depth_of_field_example` for a full example using this method.
 
         """
         self._render_passes.enable_depth_of_field_pass()
