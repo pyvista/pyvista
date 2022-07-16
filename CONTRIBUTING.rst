@@ -416,7 +416,7 @@ The main features of our branching model are:
    from ``fix/`` branches should be merged both to main and to these
    branches. When necessary to create a new patch release these release
    branches will have their ``pyvista/_version.py`` updated and be tagged
-   with a patched semantic version (e.g. ``0.24.1``). This triggers CI
+   with a semantic version (e.g. ``v0.24.1``). This triggers CI
    to push to PyPI, and allow us to rapidly push hotfixes for past
    versions of ``pyvista`` without having to worry about untested
    features.
@@ -424,7 +424,7 @@ The main features of our branching model are:
    will be created from ``main`` with the next incremented minor version
    (e.g. ``release/0.25``), which will be thoroughly tested. When deemed
    stable, the release branch will be tagged with the version
-   (``0.25.0`` in this case), and if necessary merged with main if any
+   (``v0.25.0`` in this case), and if necessary merged with main if any
    changes were pushed to it. Feature development then continues on
    ``main`` and any hotfixes will now be merged with this release. Older
    release branches should not be deleted so they can be patched as
@@ -457,10 +457,11 @@ created the following will occur:
 4.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
 
-5.  Update the version numbers in ``pyvista/_version.py`` and commit it.
-    Push the branch to GitHub and create a new PR for this release that
-    merges it to main. Development to main should be limited at this
-    point while effort is focused on the release.
+5.  Update the development version numbers in ``pyvista/_version.py``
+    and commit it (e.g. ``0, 26, 'dev0'``). Push the branch to GitHub
+    and create a new PR for this release that merges it to main.
+    Development to main should be limited at this point while effort
+    is focused on the release.
 
 6.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install
@@ -468,9 +469,10 @@ created the following will occur:
     have their hotfixes pushed to this release branch.
 
 7.  When the branch is deemed as stable for public release, the PR will
-    be merged to main and the ``main`` branch will be tagged with a
-    ``MAJOR.MINOR.0`` release. The release branch will not be deleted.
-    Tag the release with:
+    be merged to main. After update the version number in
+    ``release/MAJOR.MINOR`` branch, the ``release/MAJOR.MINOR`` branch
+    will be tagged with a ``vMAJOR.MINOR.0`` release. The release branch
+    will not be deleted. Tag the release with:
 
     .. code:: bash
 
@@ -508,7 +510,7 @@ should not wait until a minor release. The steps for a patch release
    will generally be the latest release branch (e.g. ``release/0.25``).
 
 2. Update ``pyvista/_version.py`` with the next patch increment (e.g.
-   ``0.25.1``), commit it, and open a PR that merge with the release
+   ``v0.25.1``), commit it, and open a PR that merge with the release
    branch. This gives the ``pyvista`` community a chance to validate and
    approve the bugfix release. Any additional hotfixes should be outside
    of this PR.

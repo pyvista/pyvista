@@ -1102,6 +1102,34 @@ def test_cell_type(grid):
     assert isinstance(ctype, int)
 
 
+def test_point_is_inside_cell():
+    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
+    assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
+
+    assert grid.point_is_inside_cell(0, np.array([0.5, 0.5, 0.5]))
+
+    # cell ind out of range
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(100000, [0.5, 0.5, 0.5])
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(-1, [0.5, 0.5, 0.5])
+
+    # cell ind wrong type
+    with pytest.raises(TypeError):
+        grid.point_is_inside_cell(0.1, [0.5, 0.5, 0.5])
+
+    # point not well formed
+    with pytest.raises(TypeError):
+        grid.point_is_inside_cell(0, 0.5)
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(0, [0.5, 0.5])
+
+    # multi-dimensional
+    in_cell = grid.point_is_inside_cell(0, [[0.5, 0.5, 0.5], [-0.5, -0.5, -0.5]])
+    assert np.array_equal(in_cell, np.array([True, False]))
+
+
 def test_serialize_deserialize(datasets):
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))

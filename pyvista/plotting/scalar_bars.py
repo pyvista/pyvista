@@ -413,9 +413,9 @@ class ScalarBars:
             scalar_bar.SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
-            scalar_bar.DrawTickLabelsOff()
+            scalar_bar.SetDrawTickLabels(False)
         else:
-            scalar_bar.DrawTickLabelsOn()
+            scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetNumberOfLabels(n_labels)
 
         if nan_annotation:
@@ -442,10 +442,10 @@ class ScalarBars:
             scalar_bar.SetOrientationToHorizontal()
 
         if label_font_size is not None or title_font_size is not None:
-            scalar_bar.UnconstrainedFontSizeOn()
-            scalar_bar.AnnotationTextScalingOff()
+            scalar_bar.SetUnconstrainedFontSize(True)
+            scalar_bar.SetAnnotationTextScaling(False)
         else:
-            scalar_bar.AnnotationTextScalingOn()
+            scalar_bar.SetAnnotationTextScaling(True)
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()

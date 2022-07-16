@@ -387,9 +387,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkVRMLImporter
-
-        importer = vtkVRMLImporter()
+        importer = _vtk.lazy_vtkVRMLImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.ren_win)
         importer.Update()
@@ -642,10 +640,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOExport import vtkVRMLExporter
-
-        exporter = vtkVRMLExporter()
+        exporter = _vtk.lazy_vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.ren_win)
         exporter.Write()
@@ -2129,7 +2124,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        texture : vtk.vtkTexture or np.ndarray or bool, optional
+        texture : vtk.vtkTexture or np.ndarray or bool or str, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
             datasets. If set to ``True``, the first available texture
@@ -3472,9 +3467,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.disable_picking()
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
-        if getattr(self, 'mesh', None) is not None:
-            self.mesh.point_data = None
-            self.mesh.cell_data = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None

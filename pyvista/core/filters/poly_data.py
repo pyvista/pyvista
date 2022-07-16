@@ -523,10 +523,10 @@ class PolyDataFilters(DataSetFilters):
         curv_type : str, optional
             Curvature type.  One of the following:
 
-            * ``"Mean"``
-            * ``"Gaussian"``
-            * ``"Maximum"``
-            * ``"Minimum"``
+            * ``"mean"``
+            * ``"gaussian"``
+            * ``"maximum"``
+            * ``"minimum"``
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress. Default
@@ -968,6 +968,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`decimate_example` for more examples using this filter.
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+
         alg = _vtk.vtkDecimatePro()
         alg.SetInputData(self)
         alg.SetTargetReduction(reduction)
@@ -1159,6 +1162,9 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True, line_width=3)
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+
         subfilter = subfilter.lower()
         if subfilter == 'linear':
             sfilter = _vtk.vtkLinearSubdivisionFilter()
@@ -1265,6 +1271,9 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True)
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
         if max_edge_len:
             sfilter.SetMaximumEdgeLength(max_edge_len)
@@ -1394,6 +1403,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`decimate_example` for more examples using this filter.
 
         """
+        if not self.is_all_triangles:
+            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
 
@@ -2028,7 +2040,9 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection_points, intersection_cells
 
-    def multi_ray_trace(self, origins, directions, first_point=False, retry=False):
+    def multi_ray_trace(
+        self, origins, directions, first_point=False, retry=False
+    ):  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -2086,7 +2100,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError
+            raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
             import pyembree  # noqa
@@ -3020,6 +3034,9 @@ class PolyDataFilters(DataSetFilters):
             capping = cappings[capping]
         else:
             raise TypeError('Invalid type given to `capping`. Must be a string.')
+
+        if not hasattr(_vtk, 'vtkTrimmedExtrusionFilter'):  # pragma: no cover
+            raise VTKVersionError('extrude_trim requires VTK 9.0.0 or newer.')
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)

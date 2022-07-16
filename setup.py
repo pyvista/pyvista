@@ -18,7 +18,8 @@ install_requires = [
     'pillow',
     'appdirs',
     'scooby>=0.5.1',
-    'vtk',
+    'vtk>=8.1.2, <=9.2.0; python_version < "3.10"',
+    'vtk~=9.2.0rc1; python_version == "3.10"',
 ]
 
 readme_file = os.path.join(filepath, 'README.rst')
@@ -54,10 +55,14 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
     package_data={
+        'pyvista': [
+            'py.typed',
+        ],
         'pyvista.examples': [
             'airplane.ply',
             'ant.ply',
@@ -84,4 +89,5 @@ setup(
         'io': ['meshio>=5.2'],
         'jupyter': ['ipyvtklink', 'pythreejs'],
     },
+    zip_safe=False,
 )
