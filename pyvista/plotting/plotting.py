@@ -1308,9 +1308,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def camera_position(self):
-        """Return camera position of the active render window."""
+        """Return camera position of the active render window.
         return self.renderer.camera_position
+        
+        Examples
+        --------
+        Return camera's position and then reposition it.
+        
+        >>> mesh = examples.download_bunny_coarse()
 
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(mesh, show_edges=True, color="white")
+        >>> pl.add_points(mesh.points, color="red", point_size=10)
+        >>> print(pl.camera_position)
+        >>> pl.camera_position = [(0.02, 0.30, 0.73), (0.02, 0.03, -0.022), (-0.03, 0.94, -0.34)]
+        >>> print(pl.camera_position)
+        """
+        
     @camera_position.setter
     def camera_position(self, camera_location):
         """Set camera position of the active render window."""
