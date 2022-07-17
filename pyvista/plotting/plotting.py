@@ -2484,11 +2484,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
-            geom = pyvista.Triangle()
-            if scalars is not None:
-                geom = pyvista.Box()
-                rgb_color = Color('black')
+
+            if hasattr(mesh, '_glyph_geom'):
+                geom = pyvista.PolyData(mesh._glyph_geom[0])  # Using only the first geometry
+            else:
+                geom = pyvista.Triangle()
+                if scalars is not None:
+                    geom = pyvista.Box()
+                    rgb_color = Color('black')
+
             geom.points -= geom.center
+
             addr = actor.GetAddressAsString("")
             self.renderer._labels[addr] = [geom, label, rgb_color]
 
