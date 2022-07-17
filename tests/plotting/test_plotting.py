@@ -2457,3 +2457,50 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_export_obj(tmpdir, sphere):
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.obj"))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+
+    if pyvista.vtk_version_info <= (8, 1, 2):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.export_obj(filename)
+        return
+
+    with pytest.raises(ValueError, match='end with ".obj"'):
+        pl.export_obj('badfilename')
+
+    pl.export_obj(filename)
+
+    # Check that the object file has been written
+    assert os.path.exists(filename)
+
+    # Check that when we close the plotter, the adequate error is raised
+    pl.close()
+    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+        pl.export_obj(filename)
+
+
+def test_multi_plot_scalars():
+    res = 5
+    plane = pyvista.Plane(j_resolution=res, i_resolution=res)
+    plane.clear_data()
+    kek = np.arange(res + 1)
+    kek = np.tile(kek, (res + 1, 1))
+    u = kek.flatten().copy()
+    v = kek.T.flatten().copy()
+
+    plane.point_data['u'] = u
+    plane.point_data['v'] = v
+
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_text('"u" point scalars')
+    pl.add_mesh(plane, scalars='u')
+    pl.subplot(0, 1)
+    pl.add_text('"v" point scalars')
+    pl.add_mesh(plane, scalars='v')
+    pl.show(before_close_callback=verify_cache_image)

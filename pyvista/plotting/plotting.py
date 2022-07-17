@@ -4683,20 +4683,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str
-            Filename to export the scene to.  Should end in ``'.obj'``.
+            Filename to export the scene to.  Must end in ``'.obj'``.
 
-        Returns
-        -------
-        vtkOBJExporter
-            Object exporter.
+        Examples
+        --------
+        Export the scene to "scene.obj"
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        # lazy import vtkOBJExporter here as it takes a long time to
-        # load and is not always used
-        try:
-            from vtkmodules.vtkIOExport import vtkOBJExporter
-        except:  # noqa: E722
-            from vtk import vtkOBJExporter
+        if pyvista.vtk_version_info <= (8, 1, 2):
+            raise pyvista.core.errors.VTKVersionError()
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter must still have a render window open.")
@@ -4704,10 +4704,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
-        exporter = vtkOBJExporter()
-        exporter.SetFilePrefix(filename)
+
+        if not filename.endswith('.obj'):
+            raise ValueError('`filename` must end with ".obj"')
+
+        exporter = _vtk.lazy_vtkOBJExporter()
+        # remove the extension as VTK always adds it in
+        exporter.SetFilePrefix(filename[:-4])
         exporter.SetRenderWindow(self.ren_win)
-        return exporter.Write()
+        exporter.Write()
 
     @property
     def _datasets(self):
