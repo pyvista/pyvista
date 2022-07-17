@@ -1326,6 +1326,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         (0.0, 1.0, 0.0)]
         >>> pl.camera_position = [(0.02, 0.30, 0.73), (0.02, 0.03, -0.022), (-0.03, 0.94, -0.34)]
         >>> print(pl.camera_position)
+        [(0.02, 0.3, 0.73),
+         (0.02, 0.03, -0.022),
+         (-0.02999850011249063, 0.9399530035247063, -0.33998300127489384)]
         """
         return self.renderer.camera_position
 
