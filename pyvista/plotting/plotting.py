@@ -1321,6 +1321,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(mesh, show_edges=True, color="white")
         >>> _ = pl.add_points(mesh.points, color="red", point_size=10)
         >>> print(pl.camera_position)
+        [(0.02430187165737152, 0.033604808151721954, 0.9445935746397425),
+        (0.02430187165737152, 0.033604808151721954, -0.022251706570386887),
+        (0.0, 1.0, 0.0)]
         >>> pl.camera_position = [(0.02, 0.30, 0.73), (0.02, 0.03, -0.022), (-0.03, 0.94, -0.34)]
         >>> print(pl.camera_position)
         """
