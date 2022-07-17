@@ -3137,6 +3137,30 @@ class BasePlotter(PickingHelper, WidgetHelper):
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
 
+        Examples
+        --------
+        >>> import numpy as np
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+
+        >>> pv.set_plot_theme("document")
+
+        >>> # download mesh
+        >>> mesh = examples.download_cow()
+
+        >>> decimated = mesh.decimate_boundary(target_reduction=0.75)
+
+        >>> p = pv.Plotter(shape=(1, 2), border=False)
+        >>> p.subplot(0, 0)
+        >>> p.add_text("Original mesh", font_size=24)
+        >>> p.add_mesh(mesh, show_edges=True, color=True)
+        >>> p.subplot(0, 1)
+        >>> p.add_text("Decimated version", font_size=24)
+        >>> p.add_mesh(decimated, color=True, show_edges=True)
+
+        >>> p.link_views()  # link all the views
+
         """
         if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
