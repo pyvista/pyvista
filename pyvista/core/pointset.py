@@ -1312,11 +1312,13 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
-    >>> # from arrays (vtk9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, celltypes, points)
+    From arrays (vtk9)
 
-    >>> # from arrays (vtk<9)
-    >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
+    >>> grid = pyvista.UnstructuredGrid(cells, celltypes, points)
+
+    From arrays (vtk<9)
+
+    >>> grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
 
     From a string filename
 
