@@ -1314,6 +1314,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         Return camera's position and then reposition it.
 
+        >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
 
         >>> pl = pv.Plotter()
