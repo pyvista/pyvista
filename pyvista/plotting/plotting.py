@@ -3165,7 +3165,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show_axes()
         >>> pl.show()
 
-        2) Linked view case.
+        Linked view case.
 
 
         >>> pl = pyvista.Plotter(shape=(1, 2))
