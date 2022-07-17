@@ -2432,6 +2432,31 @@ def test_add_text():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_export_obj(tmpdir, sphere):
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.obj"))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+
+    if pyvista.vtk_version_info <= (8, 1, 2):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.export_obj(filename)
+        return
+
+    with pytest.raises(ValueError, match='end with ".obj"'):
+        pl.export_obj('badfilename')
+
+    pl.export_obj(filename)
+
+    # Check that the object file has been written
+    assert os.path.exists(filename)
+
+    # Check that when we close the plotter, the adequate error is raised
+    pl.close()
+    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+        pl.export_obj(filename)
+
+
 def test_multi_plot_scalars():
     res = 5
     plane = pyvista.Plane(j_resolution=res, i_resolution=res)
