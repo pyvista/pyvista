@@ -672,10 +672,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
         )
     src = _vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
-    if quads:
-        src.QuadsOn()
-    else:
-        src.QuadsOff()
+    src.SetQuads(quads)
     src.SetBounds(bounds)
     src.Update()
     return pyvista.wrap(src.GetOutput())
