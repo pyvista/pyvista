@@ -2895,7 +2895,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
-
         if scalars.ndim != 1:
             scalars = scalars.ravel()
 
