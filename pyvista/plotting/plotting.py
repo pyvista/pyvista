@@ -3136,22 +3136,55 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
-
         Examples
-        --------
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> # download mesh
-        >>> mesh = examples.download_cow()
-        >>> decimated = mesh.decimate_boundary(target_reduction=0.75)
-        >>> p = pv.Plotter(shape=(1, 2), border=False)
-        >>> p.subplot(0, 0)
-        >>> p.add_text("Original mesh", font_size=24)
-        >>> p.add_mesh(mesh, show_edges=True, color=True)
-        >>> p.subplot(0, 1)
-        >>> p.add_text("Decimated version", font_size=24)
-        >>> p.add_mesh(decimated, color=True, show_edges=True)
-        >>> p.link_views()  # link all the views
+        ---------
+        1) Not linked view case.
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> ocube = demos.orientation_cube()
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        2) Linked view case.
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.link_views()
+        >>> pl.show()
         """
         if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
