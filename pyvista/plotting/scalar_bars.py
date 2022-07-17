@@ -81,6 +81,18 @@ class ScalarBars:
             stop the render window from rendering when an scalar bar
             is removed.
 
+        Examples
+        --------
+        Remove a scalar bar from a plotter.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['data'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, cmap='coolwarm')
+        >>> pl.remove_scalar_bar()
+        >>> pl.show()
+
         """
         if title is None:
             if len(self) > 1:
@@ -412,9 +424,9 @@ class ScalarBars:
             scalar_bar.SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
-            scalar_bar.DrawTickLabelsOff()
+            scalar_bar.SetDrawTickLabels(False)
         else:
-            scalar_bar.DrawTickLabelsOn()
+            scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetNumberOfLabels(n_labels)
 
         if nan_annotation:
@@ -441,10 +453,10 @@ class ScalarBars:
             scalar_bar.SetOrientationToHorizontal()
 
         if label_font_size is not None or title_font_size is not None:
-            scalar_bar.UnconstrainedFontSizeOn()
-            scalar_bar.AnnotationTextScalingOff()
+            scalar_bar.SetUnconstrainedFontSize(True)
+            scalar_bar.SetAnnotationTextScaling(False)
         else:
-            scalar_bar.AnnotationTextScalingOn()
+            scalar_bar.SetAnnotationTextScaling(True)
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()

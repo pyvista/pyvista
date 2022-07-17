@@ -523,10 +523,10 @@ class PolyDataFilters(DataSetFilters):
         curv_type : str, optional
             Curvature type.  One of the following:
 
-            * ``"Mean"``
-            * ``"Gaussian"``
-            * ``"Maximum"``
-            * ``"Minimum"``
+            * ``"mean"``
+            * ``"gaussian"``
+            * ``"maximum"``
+            * ``"minimum"``
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress. Default
