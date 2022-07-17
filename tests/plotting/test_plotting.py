@@ -104,6 +104,8 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
+    'test_plot_helper_volume',
+    'test_plot_helper_two_volumes',
 }
 
 # these images vary between Linux/Windows and MacOS
@@ -368,6 +370,31 @@ def test_plot(sphere, tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+def test_plot_helper_volume(uniform):
+    uniform.plot(
+        volume=True,
+        parallel_projection=True,
+        show_scalar_bar=False,
+        show_grid=True,
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_plot_helper_two_datasets(sphere, airplane):
+    pyvista.plot([sphere, airplane], before_close_callback=verify_cache_image)
+
+
+def test_plot_helper_two_volumes(uniform):
+    grid = uniform.copy()
+    grid.origin = (0, 0, 10)
+    pyvista.plot(
+        [uniform, grid],
+        volume=True,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
 
 
 def test_plot_return_cpos(sphere):
