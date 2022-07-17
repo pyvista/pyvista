@@ -1339,7 +1339,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the active render window."""
+        """Return the background color of the active render window.
+        
+        Examples
+        --------
+        Return camera's position and then reposition it.
+        
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True, color="white")
+        >>> _ = pl.add_points(mesh.points, color="red", point_size=10)
+        >>> pl.camera_position = [(0.02, 0.30, 0.73), (0.02, 0.03, -0.022), (-0.03, 0.94, -0.34)]
+        >>> print(pl.background_color)
+        Color(name='white', hex='#ffffffff')
+        >>> pl.background_color = "pink"
+        >>> print(pl.background_color)
+        Color(name='pink', hex='#ffc0cbff')
+        >>> pl.show()
+        """
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
