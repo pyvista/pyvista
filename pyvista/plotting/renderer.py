@@ -2836,12 +2836,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_legend(
         self,
         labels=None,
-        bcolor=(0.5, 0.5, 0.5),
+        bcolor=None,
         border=False,
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
-        face='triangle',
+        face=None,
     ):
         """Add a legend to render window.
 
@@ -2853,9 +2853,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels : list, optional
             When set to ``None``, uses existing labels as specified by
 
-            - :func:`add_mesh <BasePlotter.add_mesh>`
-            - :func:`add_lines <BasePlotter.add_lines>`
-            - :func:`add_points <BasePlotter.add_points>`
+            - :func:`add_mesh <Plotter.add_mesh>`
+            - :func:`add_lines <Plotter.add_lines>`
+            - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
             legend.  Each entry must contain two strings, [label,
@@ -2959,15 +2959,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
 
                 if face is None:
-                    # dummy vtk object
-                    vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
+                    if hasattr(vtk_object, '_glyph_geom'):  # it should not happen
+                        vtk_object = vtk_object._glyph_geom[0]  # using only the first one
+                else:
+                    vtk_object = make_legend_face(face)
 
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
+            if face is None:
+                face = "triangle"
+
             legend_face = make_legend_face(face)
+
             for i, (text, color) in enumerate(labels):
                 self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
