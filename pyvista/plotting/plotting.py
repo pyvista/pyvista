@@ -1314,7 +1314,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the active render window."""
+        """Return the background color of the active render window.
+
+        Examples
+        --------
+        Set the background color to ``"pink"`` and plot it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
+        >>> pl.background_color = "pink"
+        >>> pl.background_color
+        Color(name='pink', hex='#ffc0cbff')
+        >>> pl.show()
+
+        """
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
@@ -2848,7 +2862,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
-
         if scalars.ndim != 1:
             scalars = scalars.ravel()
 
@@ -3133,6 +3146,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
 
+        Examples
+        ---------
+        Not linked view case.
+
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> ocube = demos.orientation_cube()
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        Linked view case.
+
+
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.link_views()
+        >>> pl.show()
         """
         if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
@@ -4551,20 +4616,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str
-            Filename to export the scene to.  Should end in ``'.obj'``.
+            Filename to export the scene to.  Must end in ``'.obj'``.
 
-        Returns
-        -------
-        vtkOBJExporter
-            Object exporter.
+        Examples
+        --------
+        Export the scene to "scene.obj"
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        # lazy import vtkOBJExporter here as it takes a long time to
-        # load and is not always used
-        try:
-            from vtkmodules.vtkIOExport import vtkOBJExporter
-        except:  # noqa: E722
-            from vtk import vtkOBJExporter
+        if pyvista.vtk_version_info <= (8, 1, 2):
+            raise pyvista.core.errors.VTKVersionError()
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter must still have a render window open.")
@@ -4572,10 +4637,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
-        exporter = vtkOBJExporter()
-        exporter.SetFilePrefix(filename)
+
+        if not filename.endswith('.obj'):
+            raise ValueError('`filename` must end with ".obj"')
+
+        exporter = _vtk.lazy_vtkOBJExporter()
+        # remove the extension as VTK always adds it in
+        exporter.SetFilePrefix(filename[:-4])
         exporter.SetRenderWindow(self.ren_win)
-        return exporter.Write()
+        exporter.Write()
 
     @property
     def _datasets(self):

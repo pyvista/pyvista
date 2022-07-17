@@ -1,7 +1,6 @@
 """This module contains some convenience helper functions."""
 
 import numpy as np
-import scooby
 
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
@@ -37,12 +36,12 @@ def plot(
     zoom=None,
     **kwargs,
 ):
-    """Plot a vtk or numpy object.
+    """Plot a PyVista, numpy, or vtk object.
 
     Parameters
     ----------
     var_item : pyvista.DataSet, vtk, or numpy object
-        VTK object or ``numpy`` array to be plotted.
+        PyVista, VTK, or ``numpy`` object to be plotted.
 
     off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving
@@ -181,90 +180,91 @@ def plot(
     --------
     Plot a simple sphere while showing its edges.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Sphere()
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
     >>> mesh.plot(show_edges=True)
 
+    Plot a volume mesh. Color by distance from the center of the
+    UniformGrid. Note ``volume=True`` is passed.
+
+    >>> import numpy as np
+    >>> grid = pv.UniformGrid(dims=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
+    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
+    >>> grid.plot(volume=True)
+
     """
-    if notebook is None:
-        notebook = scooby.in_ipykernel()
-
-    if theme is None:
-        theme = pyvista.global_theme
-
-    if anti_aliasing is not None:
-        theme.antialiasing = anti_aliasing
-
     if jupyter_kwargs is None:
         jupyter_kwargs = {}
 
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
 
+    # pop from kwargs here to avoid including them in add_mesh or add_volumex
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    auto_close = kwargs.get('auto_close', theme.auto_close)
+    auto_close = kwargs.get('auto_close')
 
-    if notebook:
-        off_screen = notebook
-    plotter = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
+    pl = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
 
     if show_axes is None:
-        show_axes = theme.axes.show
+        show_axes = pl.theme.axes.show
     if show_axes:
-        plotter.add_axes()
+        pl.add_axes()
+    if anti_aliasing:
+        pl.enable_anti_aliasing()
 
-    plotter.set_background(background)
+    pl.set_background(background)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
             isarr_0 = isinstance(var_item[0], np.ndarray)
             isarr_1 = isinstance(var_item[1], np.ndarray)
             if isarr_0 and isarr_1:
-                plotter.add_arrows(var_item[0], var_item[1])
+                pl.add_arrows(var_item[0], var_item[1])
             else:
                 for item in var_item:
                     if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                        plotter.add_volume(item, **kwargs)
+                        pl.add_volume(item, **kwargs)
                     else:
-                        plotter.add_mesh(item, **kwargs)
+                        pl.add_mesh(item, **kwargs)
         else:
             for item in var_item:
                 if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                    plotter.add_volume(item, **kwargs)
+                    pl.add_volume(item, **kwargs)
                 else:
-                    plotter.add_mesh(item, **kwargs)
+                    pl.add_mesh(item, **kwargs)
     else:
         if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
-            plotter.add_volume(var_item, **kwargs)
+            pl.add_volume(var_item, **kwargs)
         else:
-            plotter.add_mesh(var_item, **kwargs)
+            pl.add_mesh(var_item, **kwargs)
 
     if text:
-        plotter.add_text(text)
+        pl.add_text(text)
 
     if show_grid:
-        plotter.show_grid()
+        pl.show_grid()
     elif show_bounds:
-        plotter.show_bounds()
+        pl.show_bounds()
 
     if cpos is None:
-        cpos = plotter.get_default_cam_pos()
-        plotter.camera_position = cpos
-        plotter.camera_set = False
+        cpos = pl.get_default_cam_pos()
+        pl.camera_position = cpos
+        pl.camera_set = False
     else:
-        plotter.camera_position = cpos
+        pl.camera_position = cpos
 
     if zoom is not None:
-        plotter.camera.zoom(zoom)
+        pl.camera.zoom(zoom)
 
     if eye_dome_lighting:
-        plotter.enable_eye_dome_lighting()
+        pl.enable_eye_dome_lighting()
 
     if parallel_projection:
-        plotter.enable_parallel_projection()
+        pl.enable_parallel_projection()
 
-    return plotter.show(
+    return pl.show(
         window_size=window_size,
         auto_close=auto_close,
         interactive=interactive,

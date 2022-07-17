@@ -81,6 +81,18 @@ class ScalarBars:
             stop the render window from rendering when an scalar bar
             is removed.
 
+        Examples
+        --------
+        Remove a scalar bar from a plotter.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['data'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, cmap='coolwarm')
+        >>> pl.remove_scalar_bar()
+        >>> pl.show()
+
         """
         if title is None:
             if len(self) > 1:

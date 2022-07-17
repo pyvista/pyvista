@@ -4384,7 +4384,7 @@ class Charts:
     def deep_clean(self):
         """Remove all references to the chart objects and internal objects."""
         if self._scene is not None:
-            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_plot
+            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
                 self.remove_chart(chart)
             self._renderer.RemoveActor(self._actor)
@@ -4458,3 +4458,7 @@ class Charts:
         """Return an iterable of charts."""
         for chart in self._charts:
             yield chart
+
+    def __del__(self):  # pragma: no cover
+        """Clean up before being destroyed."""
+        self.deep_clean()
