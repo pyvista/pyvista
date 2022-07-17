@@ -1317,7 +1317,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
-
         >>> pl = pv.Plotter()
         >>> pl.add_mesh(mesh, show_edges=True, color="white")
         >>> pl.add_points(mesh.points, color="red", point_size=10)
