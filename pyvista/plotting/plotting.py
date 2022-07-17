@@ -1312,23 +1312,40 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
-        Return camera's position and then reposition it.
+        Return camera's position and then reposition it via a list of tuples.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, show_edges=True, color="white")
-        >>> _ = pl.add_points(mesh.points, color="red", point_size=10)
-        >>> print(pl.camera_position)
-        [(0.02430187165737152, 0.033604808151721954, 0.9445935746397425),
-        (0.02430187165737152, 0.033604808151721954, -0.022251706570386887),
-        (0.0, 1.0, 0.0)]
-        >>> pl.camera_position = [(0.02, 0.30, 0.73), (0.02, 0.03, -0.022), (-0.03, 0.94, -0.34)]
-        >>> print(pl.camera_position)
-        [(0.02, 0.3, 0.73),
-         (0.02, 0.03, -0.022),
-         (-0.02999850011249063, 0.9399530035247063, -0.33998300127489384)]
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position
+        [(0.02430, 0.0336, 0.9446),
+         (0.02430, 0.0336, -0.02225),
+         (0.0, 1.0, 0.0)]
+        >>> pl.camera_position = [
+        ...     (0.3914, 0.4542, 0.7670),
+        ...     (0.0243, 0.0336, -0.0222),
+        ...     (-0.2148, 0.8998, -0.3796),
+        ... ]
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'xy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'xy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'zy'
+        >>> pl.show()
+
+        For more examples, see :ref:`cameras_api`.
+
         """
         return self.renderer.camera_position
 
@@ -1339,26 +1356,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the active render window.
-        
-        Examples
-        --------
-        Return camera's position and then reposition it.
-        
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = examples.download_bunny_coarse()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, show_edges=True, color="white")
-        >>> _ = pl.add_points(mesh.points, color="red", point_size=10)
-        >>> pl.camera_position = [(0.02, 0.30, 0.73), (0.02, 0.03, -0.022), (-0.03, 0.94, -0.34)]
-        >>> print(pl.background_color)
-        Color(name='white', hex='#ffffffff')
-        >>> pl.background_color = "pink"
-        >>> print(pl.background_color)
-        Color(name='pink', hex='#ffc0cbff')
-        >>> pl.show()
-        """
+        """Return the background color of the active render window."""
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
