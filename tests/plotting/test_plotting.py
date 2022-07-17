@@ -2504,3 +2504,11 @@ def test_multi_plot_scalars():
     pl.add_text('"v" point scalars')
     pl.add_mesh(plane, scalars='v')
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_bool_scalars(sphere):
+    sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
+    sphere['scalars'][::2] = 1
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
