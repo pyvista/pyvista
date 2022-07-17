@@ -108,7 +108,7 @@ pl = pv.Plotter(window_size=[800, 800], off_screen=True)
 
 pl.open_gif('barth_sextic.gif')
 
-for angle in np.linspace(0, np.pi, 20)[:-1]:
+for angle in np.linspace(0, np.pi, 20, endpoint=False):
     # clear the plotter before adding each frame's mesh
     pl.clear()
     pl.enable_lightkit()
