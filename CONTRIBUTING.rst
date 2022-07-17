@@ -198,6 +198,23 @@ automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
 
 
+Docstrings
+^^^^^^^^^^
+
+PyVista uses Python docstrings to create reference documentation for our Python
+APIs. Docstrings are read by developers, interactive Python users, and readers
+of our online documentation. This page describes how to write these docstrings
+for PyVista.
+
+* PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
+  `numpydoc Style Guide`_.
+* Be sure to describe all ``Parameters`` and ``Returns`` for all public
+  methods.
+* We strongly encourage you to add an example section. PyVista is a visual
+  library, so adding examples that show a plot will really help users figure
+  out what individual methods do.
+
+
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -526,3 +543,4 @@ should not wait until a minor release. The steps for a patch release
 
 
 .. _pre-commit: https://pre-commit.com/
+.. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
