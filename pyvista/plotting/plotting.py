@@ -32,9 +32,9 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
+from ..utilities.misc import PyvistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
-from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
+from ._plotting import prepare_smooth_shading, process_opacity
 from .colors import Color, get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
@@ -2250,7 +2250,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             if multi_colors:
                 # Compute unique colors for each index of the block
-                if _has_matplotlib():
+                if has_module('matplotlib'):
                     from itertools import cycle
 
                     import matplotlib
@@ -2926,11 +2926,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 table.SetAnnotation(float(val), str(anno))
 
         if cmap is None:  # Set default map if matplotlib is available
-            if _has_matplotlib():
+            if has_module('matplotlib'):
                 cmap = self._theme.cmap
 
         if cmap is not None:
-            if not _has_matplotlib():
+            if not has_module('matplotlib'):
                 raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
