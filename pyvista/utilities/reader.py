@@ -810,10 +810,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @decompose_polyhedra.setter
     def decompose_polyhedra(self, value):
-        if value:
-            self.reader.DecomposePolyhedraOn()
-        else:
-            self.reader.DecomposePolyhedraOff()
+        self.reader.SetDecomposePolyhedra(value)
 
     @property
     def skip_zero_time(self):
@@ -839,11 +836,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @skip_zero_time.setter
     def skip_zero_time(self, value):
-        if value:
-            self.reader.SkipZeroTimeOn()
-        else:
-            self.reader.SkipZeroTimeOff()
-
+        self.reader.SetSkipZeroTime(value)
         self._update_information()
         self.reader.SetRefresh()
 
@@ -876,10 +869,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @cell_to_point_creation.setter
     def cell_to_point_creation(self, value):
-        if value:
-            self.reader.CreateCellToPointOn()
-        else:
-            self.reader.CreateCellToPointOff()
+        self.reader.SetCreateCellToPoint(value)
 
     @property
     def number_patch_arrays(self):

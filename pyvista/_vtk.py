@@ -474,6 +474,12 @@ if VTK9:
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
     # lazy import for some of the less used readers
+    def lazy_vtkOBJExporter():
+        """Lazy import of the vtkOBJExporter."""
+        from vtkmodules.vtkIOExport import vtkOBJExporter
+
+        return vtkOBJExporter()
+
     def lazy_vtkVRMLImporter():
         """Lazy import of the vtkVRMLImporter."""
         from vtkmodules.vtkIOImport import vtkVRMLImporter
@@ -481,7 +487,7 @@ if VTK9:
         return vtkVRMLImporter()
 
     def lazy_vtkVRMLExporter():
-        """Lazy import of the vtkVRMLImporter."""
+        """Lazy import of the vtkVRMLExporter."""
         from vtkmodules.vtkIOExport import vtkVRMLExporter
 
         return vtkVRMLExporter()
@@ -566,6 +572,10 @@ else:  # pragma: no cover
     )
 
     # match the imports for VTK9
+    def lazy_vtkOBJExporter():
+        """Lazy import of the vtkOBJExporter."""
+        return vtk.vtkOBJExporter()
+
     def lazy_vtkVRMLImporter():
         """Lazy import of the vtkVRMLImporter."""
         return vtk.vtkVRMLImporter()
