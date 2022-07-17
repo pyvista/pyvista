@@ -4370,7 +4370,7 @@ class Charts:
         # needed.
         self._scene = None
         self._actor = None
-        self._renderer = renderer
+        self._renderer = weakref.proxy(renderer)
 
     def _setup_scene(self):
         """Set up a new context scene and actor for these charts."""
