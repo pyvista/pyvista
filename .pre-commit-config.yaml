@@ -57,6 +57,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.17.0
+  rev: 0.17.1
   hooks:
     - id: check-github-workflows
