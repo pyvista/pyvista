@@ -1337,7 +1337,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
-        Set the camera position using a string and look at the ``'xy'`` plane.
+        Set the camera position using a string and look at the ``'zy'`` plane.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True)
