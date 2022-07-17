@@ -1985,8 +1985,10 @@ class DataSetFilters:
             geom = [geom]
         if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom):
             raise TypeError('Only PolyData objects can be used as glyphs.')
+
         # Run the algorithm
         alg = _vtk.vtkGlyph3D()
+
         if len(geom) == 1:
             # use a single glyph, ignore indices
             alg.SetSourceData(geom[0])
@@ -2088,7 +2090,13 @@ class DataSetFilters:
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar, 'Computing Glyphs')
-        return _get_output(alg)
+        
+        output = _get_output(alg)
+
+        # Storing geom on the algorithm, for later use in legends.
+        output._glyph_geom = geom
+
+        return output
 
     def connectivity(self, largest=False, progress_bar=False):
         """Find and label connected bodies/volumes.
