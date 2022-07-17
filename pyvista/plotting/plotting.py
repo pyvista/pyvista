@@ -1332,9 +1332,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the active render window."""
+        """Return the background color of the active render window.
         return self.renderers.active_renderer.background_color
+    
+        Examples
+        --------
+    
+         >>> mesh = examples.download_bunny_coarse()
 
+         >>> pl = pv.Plotter()
+         >>> pl.add_mesh(mesh, show_edges=True, color="white")
+         >>> print(pl.background_color)
+         >>> pl.add_points(mesh.points, color="red", point_size=10)
+         >>> pl.background_color = "pink"
+         >>> print(pl.background_color)
+         >>> pl.show()
+        """
+        
     @background_color.setter
     def background_color(self, color):
         """Set the background color of all the render windows."""
