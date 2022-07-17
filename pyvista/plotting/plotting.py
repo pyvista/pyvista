@@ -1309,11 +1309,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera_position(self):
         """Return camera position of the active render window.
-        
+
         Examples
         --------
         Return camera's position and then reposition it.
-        
+
         >>> mesh = examples.download_bunny_coarse()
 
         >>> pl = pv.Plotter()
@@ -1324,6 +1324,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> print(pl.camera_position)
         """
         return self.renderer.camera_position
+
     @camera_position.setter
     def camera_position(self, camera_location):
         """Set camera position of the active render window."""
@@ -1333,6 +1334,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def background_color(self):
         """Return the background color of the active render window."""
         return self.renderers.active_renderer.background_color
+
     @background_color.setter
     def background_color(self, color):
         """Set the background color of all the render windows."""
