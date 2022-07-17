@@ -3136,9 +3136,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
+
         Examples
         ---------
-        1) Not linked view case.
+        Not linked view case.
+
         >>> import pyvista
         >>> from pyvista import demos
         >>> ocube = demos.orientation_cube()
@@ -3164,6 +3166,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         2) Linked view case.
+
+
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
