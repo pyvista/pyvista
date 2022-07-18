@@ -3190,7 +3190,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             views cameras.
 
         Examples
-        ---------
+        --------
         Not linked view case.
 
         >>> import pyvista
@@ -3219,7 +3219,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Linked view case.
 
-
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
@@ -3241,6 +3240,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show_axes()
         >>> pl.link_views()
         >>> pl.show()
+
         """
         if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
