@@ -1308,7 +1308,45 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def camera_position(self):
-        """Return camera position of the active render window."""
+        """Return camera position of the active render window.
+
+        Examples
+        --------
+        Return camera's position and then reposition it via a list of tuples.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position
+        [(0.02430, 0.0336, 0.9446),
+         (0.02430, 0.0336, -0.02225),
+         (0.0, 1.0, 0.0)]
+        >>> pl.camera_position = [
+        ...     (0.3914, 0.4542, 0.7670),
+        ...     (0.0243, 0.0336, -0.0222),
+        ...     (-0.2148, 0.8998, -0.3796),
+        ... ]
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'xy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'zy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'zy'
+        >>> pl.show()
+
+        For more examples, see :ref:`cameras_api`.
+
+        """
         return self.renderer.camera_position
 
     @camera_position.setter
@@ -1318,7 +1356,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the active render window."""
+        """Return the background color of the active render window.
+
+        Examples
+        --------
+        Set the background color to ``"pink"`` and plot it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
+        >>> pl.background_color = "pink"
+        >>> pl.background_color
+        Color(name='pink', hex='#ffc0cbff')
+        >>> pl.show()
+
+        """
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
@@ -3137,6 +3189,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
 
+        Examples
+        ---------
+        Not linked view case.
+
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> ocube = demos.orientation_cube()
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        Linked view case.
+
+
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.link_views()
+        >>> pl.show()
         """
         if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
