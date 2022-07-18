@@ -132,11 +132,17 @@ class LineStyleTable(DocTable):
         chart.line([0, 1], [0, 0], color="b", width=3.0, style=line_style)
         chart.hide_axes()
         p.add_chart(chart)
+
+        # Generate and crop the image
         _, img = p.show(screenshot=True, return_cpos=True)
-        # Crop the image and save it
-        # determine if it's necessary to save the image
-        if pv.compare_images(img[18:25, 22:85, :], img_path):
-            p._save_image(img[18:25, 22:85, :], img_path, False)
+        img = img[18:25, 22:85, :]
+
+        # exit early if the image already exists and is the same
+        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+            return
+
+        # save it
+        p._save_image(img, img_path, False)
 
 
 class MarkerStyleTable(DocTable):
@@ -192,10 +198,17 @@ class MarkerStyleTable(DocTable):
         chart.scatter([0], [0], color="b", size=9, style=marker_style)
         chart.hide_axes()
         p.add_chart(chart)
+
+        # generate and crop the image
         _, img = p.show(screenshot=True, return_cpos=True)
-        # Crop the image and save it if it is changed
-        if pv.compare_images(img[40:53, 47:60, :], img_path):
-            p._save_image(img[40:53, 47:60, :], img_path, False)
+        img = img[40:53, 47:60, :]
+
+        # exit early if the image already exists and is the same
+        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+            return
+
+        # save it
+        p._save_image(img, img_path, False)
 
 
 class ColorSchemeTable(DocTable):
@@ -261,10 +274,18 @@ class ColorSchemeTable(DocTable):
         chart.x_range = [0, n_colors]
         chart.hide_axes()
         p.add_chart(chart)
+
+        # Generate and crop the image
         _, img = p.show(screenshot=True, return_cpos=True)
-        # Crop the image and save it
-        if pv.compare_images(img[34:78, 22:225, :], img_path):
-            p._save_image(img[34:78, 22:225, :], img_path, False)
+        img = img[34:78, 22:225, :]
+
+        # exit early if the image already exists and is the same
+        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+            return n_colors
+
+        # save it
+        p._save_image(img, img_path, False)
+
         return n_colors
 
 
