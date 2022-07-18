@@ -41,6 +41,7 @@ log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+ActiveArrayInfoTuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
 
 
 class ActiveArrayInfo:
@@ -69,8 +70,7 @@ class ActiveArrayInfo:
     @property
     def _namedtuple(self):
         """Build a namedtuple on the fly to provide legacy support."""
-        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
-        return named_tuple(self.association, self.name)
+        return ActiveArrayInfoTuple(self.association, self.name)
 
     def __iter__(self):
         """Provide namedtuple-like __iter__."""
