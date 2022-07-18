@@ -3364,9 +3364,15 @@ def download_action_figure(load=True):  # pragma: no cover
     return _download_and_read('tigerfighter.obj', load=load)
 
 
-def download_sun_jpg():  # pragma: no cover
+def download_sun_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'sun.jpg'``.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
     Returns
     -------
     str
@@ -3376,17 +3382,22 @@ def download_sun_jpg():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_sun()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_sun()
+    >>> surface.plot(cpos="xy")
 
     """
-    return _download_file('sun.jpg')[0]
+    return _download_and_read('sun.jpg', texture=True, load=load)
 
 
-def download_moon_jpg():  # pragma: no cover
+def download_moon_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'moon.jpg'``.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
     Returns
     -------
     str
@@ -3396,16 +3407,21 @@ def download_moon_jpg():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_moon()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_moon()
+    >>> surface.plot(cpos="xy")
 
     """
-    return _download_file('moon.jpg')[0]
+    return _download_and_read('moon.jpg', texture=True, load=load)
 
 
-def download_mercury_jpg():  # pragma: no cover
+def download_mercury_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'mercury.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
 
     Returns
     -------
@@ -3421,16 +3437,20 @@ def download_mercury_jpg():  # pragma: no cover
     >>> surface_tex.plot(cpos="xy")
 
     """
-    return _download_file('mercury.jpg')[0]
+    return _download_and_read('mercury.jpg', texture=True, load=load)
 
 
-def download_venus_jpg(atmosphere=True):  # pragma: no cover
+def download_venus_jpg(atmosphere=True, load=True):  # pragma: no cover
     """Download and return the path of ``'venus.jpg'``.
 
     Parameters
     ----------
     atmosphere : bool, optional
         Load the atmosphere texture when ``True``.
+
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
 
     Returns
     -------
@@ -3447,14 +3467,20 @@ def download_venus_jpg(atmosphere=True):  # pragma: no cover
 
     """
     if atmosphere:
-        return _download_file('venus_atmosphere.jpg')[0]
+        return _download_and_read('venus_atmosphere.jpg', texture=True, load=load)
     else:
-        return _download_file('venus_surface.jpg')[0]
+        return _download_and_read('venus_surface.jpg', texture=True, load=load)
 
 
-def download_mars_jpg():  # pragma: no cover
+def download_mars_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'mars.jpg'``.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
     Returns
     -------
     str
@@ -3464,17 +3490,22 @@ def download_mars_jpg():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_mars()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_mars()
+    >>> surface.plot(cpos="xy")
 
     """
-    return _download_file('mars.jpg')[0]
+    return _download_and_read('mars.jpg', texture=True, load=load)
 
 
-def download_jupiter_jpg():  # pragma: no cover
+def download_jupiter_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'jupiter.jpg'``.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
     Returns
     -------
     str
@@ -3484,17 +3515,22 @@ def download_jupiter_jpg():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_jupiter()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_jupiter()
+    >>> surface.plot(cpos="xy")
 
     """
-    return _download_file('jupiter.jpg')[0]
+    return _download_and_read('jupiter.jpg', texture=True, load=load)
 
 
-def download_saturn_jpg():  # pragma: no cover
+def download_saturn_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'saturn.jpg'``.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
     Returns
     -------
     str
@@ -3504,17 +3540,22 @@ def download_saturn_jpg():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_saturn()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_saturn()
+    >>> surface.plot(cpos="xy")
 
     """
-    return _download_file('saturn.jpg')[0]
+    return _download_and_read('saturn.jpg', texture=True, load=load)
 
 
-def download_saturn_ring_alpha_png():  # pragma: no cover
+def download_saturn_ring_alpha_png(load=True):  # pragma: no cover
     """Download and return the path of ``'saturn_ring_alpha.png'``.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
     Returns
     -------
     str
@@ -3524,17 +3565,22 @@ def download_saturn_ring_alpha_png():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_png = examples.download_saturn_ring_alpha()
-    >>> surface_tex = pyvista.read_texture(surface_png)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_saturn_ring_alpha()
+    >>> surface.plot(cpos="xy")
 
     """
-    return _download_file('saturn_ring_alpha.png')[0]
+    return _download_and_read('saturn_ring_alpha.png', texture=True, load=load)
 
 
-def download_uranus_jpg():  # pragma: no cover
+def download_uranus_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'uranus.jpg'``.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
     Returns
     -------
     str
@@ -3544,16 +3590,21 @@ def download_uranus_jpg():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_uranus()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_uranus()
+    >>> surface.plot(cpos="xy")
 
     """
-    return _download_file('uranus.jpg')[0]
+    return _download_and_read('uranus.jpg', texture=True, load=load)
 
 
-def download_neptune_jpg():  # pragma: no cover
+def download_neptune_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'neptune.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
 
     Returns
     -------
@@ -3569,11 +3620,17 @@ def download_neptune_jpg():  # pragma: no cover
     >>> surface_tex.plot(cpos="xy")
 
     """
-    return _download_file('neptune.jpg')[0]
+    return _download_and_read('neptune.jpg', texture=True, load=load)
 
 
-def download_stars_jpg():  # pragma: no cover
+def download_stars_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'stars.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
 
     Returns
     -------
@@ -3592,11 +3649,17 @@ def download_stars_jpg():  # pragma: no cover
     See :func:`download_mars_jpg` for another example using this dataset.
 
     """
-    return _download_file('stars.jpg')[0]
+    return _download_and_read('stars.jpg', load=load)
 
 
-def download_milkyway_jpg():  # pragma: no cover
+def download_milkyway_jpg(load=True):  # pragma: no cover
     """Download and return the path of ``'milkyway.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
 
     Returns
     -------
@@ -3613,7 +3676,7 @@ def download_milkyway_jpg():  # pragma: no cover
     >>> pl.show()
 
     """
-    return _download_file('milkyway.jpg')[0]
+    return _download_and_read('milkyway.jpg', load=load)
 
 
 def download_notch_stress(load=True):  # pragma: no cover
