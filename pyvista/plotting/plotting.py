@@ -2099,7 +2099,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
-            positive float. Default: ``True``.
+            positive float. Default: ``False``.
 
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
