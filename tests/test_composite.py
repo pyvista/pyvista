@@ -123,7 +123,7 @@ def test_multi_block_set_get_ers():
     assert multi.n_blocks == 6  # Check pyvista side registered it
     # Add data to the MultiBlock
     data = ex.load_rectilinear()
-    multi[1, 'rect'] = data
+    multi[1] = ('rect', data)
     # Make sure number of blocks is constant
     assert multi.n_blocks == 6
     # Check content
@@ -164,10 +164,11 @@ def test_multi_block_set_get_ers():
 def test_multi_block_clean(rectilinear, uniform, ant):
     # now test a clean of the null values
     multi = MultiBlock()
-    multi[1, 'rect'] = rectilinear
-    multi[2, 'empty'] = PolyData()
-    multi[3, 'mempty'] = MultiBlock()
-    multi[5, 'uni'] = uniform
+    multi.n_blocks = 6
+    multi[1] = ('rect', rectilinear)
+    multi[2] = ('empty', PolyData())
+    multi[3] = ('mempty', MultiBlock())
+    multi[5] = ('uni', uniform)
     # perform the clean to remove all Null elements
     multi.clean()
     assert multi.n_blocks == 2
@@ -178,11 +179,13 @@ def test_multi_block_clean(rectilinear, uniform, ant):
     assert multi.get_block_name(1) == 'uni'
     # Test a nested data struct
     foo = MultiBlock()
+    foo.n_blocks = 4
     foo[3] = ant
     assert foo.n_blocks == 4
     multi = MultiBlock()
-    multi[1, 'rect'] = rectilinear
-    multi[5, 'multi'] = foo
+    multi.n_blocks = 6
+    multi[1] = ('rect', rectilinear)
+    multi[5] = ('multi', foo)
     # perform the clean to remove all Null elements
     assert multi.n_blocks == 6
     multi.clean()
@@ -344,6 +347,14 @@ def test_multi_block_negative_index(ant, sphere, uniform, airplane, globe):
     with pytest.raises(IndexError):
         _ = multi[-6]
 
+    multi[-1] = ant
+    assert multi[4] == ant
+    multi[-5] = globe
+    assert multi[0] == globe
+
+    with pytest.raises(IndexError):
+        multi[-6] = uniform
+
 
 def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
@@ -365,6 +376,11 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
         assert sub[i] is multi[j]
         assert sub.get_block_name(i) == multi.get_block_name(j)
 
+    sub = [airplane, globe]
+    multi[0:2] = sub
+    assert multi[0] is airplane
+    assert multi[1] is globe
+
 
 def test_slice_defaults(ant, sphere, uniform, airplane, globe):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
@@ -384,26 +400,6 @@ def test_slice_negatives(ant, sphere, uniform, airplane, globe):
 
     test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-1:-4:-2]})
     assert multi[-1:-4:-2] == test_multi
-
-
-def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
-    # Now check everything
-    indices = [0, 3, 4]
-    sub = multi[indices]
-    assert len(sub) == len(indices)
-    for i, j in enumerate(indices):
-        assert id(sub[i]) == id(multi[j])
-        assert sub.get_block_name(i) == multi.get_block_name(j)
-    # check list of key names
-    multi = MultiBlock()
-    multi["foo"] = pyvista.Sphere()
-    multi["goo"] = pyvista.Box()
-    multi["soo"] = pyvista.Cone()
-    indices = ["goo", "foo"]
-    sub = multi[indices]
-    assert len(sub) == len(indices)
-    assert isinstance(sub["foo"], PolyData)
 
 
 def test_multi_block_volume(ant, airplane, sphere, uniform):

@@ -6,7 +6,7 @@ to VTK algorithms and PyVista filtering/plotting routines.
 import collections.abc
 import logging
 import pathlib
-from typing import Any, List, Optional, Tuple, Union, cast
+from typing import Any, List, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 
@@ -99,10 +99,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
-                idx = 0
                 for key, block in args[0].items():
-                    self[idx, key] = block
-                    idx += 1
+                    self.append(block, key)
             else:
                 raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
 
@@ -292,21 +290,16 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if isinstance(index, slice):
             multi = MultiBlock()
             for i in range(self.n_blocks)[index]:
-                multi[-1, self.get_block_name(i)] = self[i]
-            return multi
-        elif isinstance(index, (list, tuple, np.ndarray)):
-            multi = MultiBlock()
-            for i in index:
-                name = i if isinstance(i, str) else self.get_block_name(i)
-                multi[-1, name] = self[i]  # type: ignore
+                multi.append(self[i], self.get_block_name(i))
             return multi
         elif isinstance(index, str):
             index = self.get_index_by_name(index)
         ############################
+        if index < -self.n_blocks or index >= self.n_blocks:
+            raise IndexError(f'index ({index}) out of range for this dataset.')
         if index < 0:
             index = self.n_blocks + index
-        if index < 0 or index >= self.n_blocks:
-            raise IndexError(f'index ({index}) out of range for this dataset.')
+
         data = self.GetBlock(index)
         if data is None:
             return data
@@ -314,7 +307,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             data = wrap(data)
         return data
 
-    def append(self, dataset: DataSet):
+    def append(self, dataset: DataSet, name: Optional[str] = None):
         """Add a data set to the next block index.
 
         Parameters
@@ -322,21 +315,32 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         dataset : pyvista.DataSet
             Dataset to append to this multi-block.
 
+        name : str, optional
+            Block name to give to dataset.  A default name is given
+            depending on the block index.
+
         Examples
         --------
         >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.append(pv.Cone())
         >>> len(blocks)
         3
+        >>> blocks.append(examples.load_uniform(), "uniform")
+        >>> blocks.keys()
+        ['cube', 'sphere', 'Block-02', 'uniform']
 
         """
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
         if not pyvista.is_pyvista_dataset(dataset):
             dataset = pyvista.wrap(dataset)
+        self.n_blocks += 1
         self[index] = dataset
+        # No overwrite if name is None
+        self.set_block_name(index, name)
 
     def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
@@ -356,7 +360,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """
         return self[index]
 
-    def set_block_name(self, index: int, name: str):
+    def set_block_name(self, index: int, name: Optional[str]):
         """Set a block's string name at the specified index.
 
         Parameters
@@ -432,7 +436,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
-    def __setitem__(self, index: Union[Tuple[int, Optional[str]], int, str], data: DataSet):
+    def __setitem__(
+        self,
+        index: Union[int, str, slice],
+        data: Union[DataSet, Sequence[DataSet], Tuple[str, DataSet]],
+    ):
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -441,43 +449,67 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         -------
         >>> import pyvista
         >>> multi = pyvista.MultiBlock()
-        >>> multi[0] = pyvista.PolyData()
-        >>> multi[1, 'foo'] = pyvista.UnstructuredGrid()
+        >>> multi.append(pyvista.PolyData())
+        >>> multi[0] = pyvista.UnstructuredGrid()
+        >>> multi.append(pyvista.PolyData(), 'poly')
+        >>> multi[1] = ('foo', pyvista.UnstructuredGrid())
+        >>> multi.keys()
+        ['Block-00', 'foo']
         >>> multi['bar'] = pyvista.PolyData()
         >>> multi.n_blocks
         3
 
         """
+        if isinstance(index, str) and isinstance(data, tuple):
+            raise TypeError(f"Cannot set key {index} with a different string key from {data}")
+
         i: int = 0
         name: Optional[str] = None
-        if isinstance(index, (np.ndarray, collections.abc.Sequence)) and not isinstance(index, str):
-            i, name = index[0], index[1]
-        elif isinstance(index, str):
+        if isinstance(index, str):
             try:
                 i = self.get_index_by_name(index)
             except KeyError:
-                i = -1
+                # data cannot be a tuple here
+                if isinstance(data, collections.abc.Sequence):
+                    raise TypeError(f"Cannot set key {index} with the sequence {data}")
+                self.append(data, index)
+                return
             name = index
-        else:
-            i, name = cast(int, index), None
+        elif isinstance(index, slice):
+            if isinstance(data, tuple):
+                raise TypeError(f"Cannot set the slice {slice} with a tuple {tuple}")
+            for i, d in zip(range(self.n_blocks)[index], data):
+                self[i] = d
+            return
+
+        # data, i, and name are a single value now
+        i = cast(int, index)
+
+        if isinstance(data, tuple):
+            if not len(data) == 2:
+                raise ValueError(f"Data {data} must be a length 2 tuple of form (DataSet, str)")
+            name, data = data
+
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
+        data = cast(pyvista.DataSet, data)
 
-        if i == -1:
-            self.append(data)
-            i = self.n_blocks - 1
-        else:
-            # this is the only spot in the class where we actually add
-            # data to the MultiBlock
+        if i < -self.n_blocks or i >= self.n_blocks:
+            raise IndexError(f'index ({i}) out of range for this dataset.')
+        if i < 0:
+            i = self.n_blocks + i
 
-            # check if we are overwriting a block
-            existing_dataset = self.GetBlock(i)
-            if existing_dataset is not None:
-                self._remove_ref(i)
+        # this is the only spot in the class where we actually add
+        # data to the MultiBlock
 
-            self.SetBlock(i, data)
-            if data is not None:
-                self._refs[data.memory_address] = data
+        # check if we are overwriting a block
+        existing_dataset = self.GetBlock(i)
+        if existing_dataset is not None:
+            self._remove_ref(i)
+
+        self.SetBlock(i, data)
+        if data is not None:
+            self._refs[data.memory_address] = data
 
         if name is None:
             name = f'Block-{i:02}'

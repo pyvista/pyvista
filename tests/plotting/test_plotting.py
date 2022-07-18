@@ -1165,7 +1165,7 @@ def test_multi_block_plot():
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
-    multi[3] = examples.load_airplane()
+    multi.append(examples.load_airplane())
     with pytest.raises(KeyError):
         # The scalars are not available in all datasets so raises KeyError
         multi.plot(scalars='Random Data', multi_colors=True)

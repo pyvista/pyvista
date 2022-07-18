@@ -641,27 +641,38 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
-                output[i] = self[i].slice_orthogonal(
-                    x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour
+                output.append(
+                    self[i].slice_orthogonal(
+                        x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour
+                    )
                 )
             return output
-        output[0, 'YZ'] = self.slice(
-            normal='x',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='x',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'YZ',
         )
-        output[1, 'XZ'] = self.slice(
-            normal='y',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='y',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'XZ',
         )
-        output[2, 'XY'] = self.slice(
-            normal='z',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='z',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'XY',
         )
         return output
 
@@ -767,14 +778,16 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
-                output[i] = self[i].slice_along_axis(
-                    n=n,
-                    axis=ax_label,
-                    tolerance=tolerance,
-                    generate_triangles=generate_triangles,
-                    contour=contour,
-                    bounds=bounds,
-                    center=center,
+                output.append(
+                    self[i].slice_along_axis(
+                        n=n,
+                        axis=ax_label,
+                        tolerance=tolerance,
+                        generate_triangles=generate_triangles,
+                        contour=contour,
+                        bounds=bounds,
+                        center=center,
+                    )
                 )
             return output
         for i in range(n):
@@ -787,7 +800,7 @@ class DataSetFilters:
                 contour=contour,
                 progress_bar=progress_bar,
             )
-            output[i, f'slice{i}'] = slc
+            output.append(slc, f'slice{i}')
         return output
 
     def slice_along_line(self, line, generate_triangles=False, contour=False, progress_bar=False):
