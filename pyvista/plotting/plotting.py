@@ -1318,7 +1318,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
         >>> pl.camera_position
         [(0.02430, 0.0336, 0.9446),
          (0.02430, 0.0336, -0.02225),
