@@ -973,7 +973,7 @@ def get_cmap_safe(cmap):
         if not has_module('matplotlib'):
             raise ImportError(
                 'The use of custom colormaps requires the installation of matplotlib.'
-            )
+            )  # pragma: no cover
 
         from matplotlib.cm import get_cmap
 
@@ -987,7 +987,7 @@ def get_cmap_safe(cmap):
         if not has_module('matplotlib'):
             raise ImportError(
                 'The use of custom colormaps requires the installation of matplotlib.'
-            )
+            )  # pragma: no cover
 
         from matplotlib.colors import ListedColormap
 
