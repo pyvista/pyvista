@@ -41,6 +41,7 @@ log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+ActiveArrayInfoTuple = collections.namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
 
 
 class ActiveArrayInfo:
@@ -69,8 +70,7 @@ class ActiveArrayInfo:
     @property
     def _namedtuple(self):
         """Build a namedtuple on the fly to provide legacy support."""
-        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
-        return named_tuple(self.association, self.name)
+        return ActiveArrayInfoTuple(self.association, self.name)
 
     def __iter__(self):
         """Provide namedtuple-like __iter__."""
@@ -147,7 +147,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pyvista.Sphere()
         >>> mesh['Z Height'] = mesh.points[:, 2]
         >>> mesh.active_scalars_info
-        ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Z Height')
+        ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Z Height')
 
         """
         field, name = self._active_scalars_info
@@ -206,7 +206,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = mesh.compute_normals(inplace=True)
         >>> mesh.active_vectors_name = 'Normals'
         >>> mesh.active_vectors_info
-        ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
+        ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Normals')
 
         """
         field, name = self._active_vectors_info

@@ -820,6 +820,9 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                     dataset[i] = block.as_polydata()
                 elif not isinstance(block, pyvista.PolyData):
                     dataset[i] = block.extract_surface()
+                else:
+                    # guarantee that the new instance is a shallow copy
+                    dataset[i] = block.copy(deep=False)
             else:
                 # must have empty polydata within these datasets to ensure
                 # downstream filters don't work on null pointers
@@ -915,15 +918,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 if scalars is not None:
                     getattr(block, data_attr)[f'{scalars_name}-{component}'] = scalars[:, component]
         return f'{scalars_name}-{component}'
-
-    def _remove_scalars(self, scalars_name: str, field: FieldAssociation):
-        """Remove scalars from all blocks where it exists."""
-        data_attr = f'{field.name.lower()}_data'
-        for block in self:
-            if isinstance(block, MultiBlock):
-                block._remove_scalars(scalars_name, field)
-            elif block is not None:
-                getattr(block, data_attr).pop(scalars_name, None)
 
     def _get_consistent_active_scalars(self):
         """Check if there are any consistent active scalars."""

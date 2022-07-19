@@ -3,6 +3,8 @@ import weakref
 
 import numpy as np
 
+import pyvista as pv
+
 
 def test_pyvistandarray_assign(sphere):
     sphere.point_data['data'] = range(sphere.n_points)
@@ -32,3 +34,9 @@ def test_complex_collection(plane):
     assert np.allclose(plane.point_data[name], data_copy)
 
     assert ref() is None
+
+
+def test_add_array(sphere):
+    """Ensure data added dynamically to a plotter is collected."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=range(sphere.n_points))

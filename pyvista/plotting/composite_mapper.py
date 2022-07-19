@@ -398,17 +398,3 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     def below_range_color(self, color):
         self.lookup_table.SetUseBelowRangeColor(True)
         self.lookup_table.SetBelowRangeColor(color)
-
-    def __del__(self):
-        """Remove scalars added by this mapper."""
-        if self._added_scalars is not None:
-            self._dataset._remove_scalars(*self._added_scalars)
-
-        # revert previous active scalars
-        try:
-            field, scalars = self._dataset.set_active_scalars(
-                self._orig_scalars_name,
-                allow_missing=True,
-            )
-        except KeyError:  # pragma: no cover
-            pass

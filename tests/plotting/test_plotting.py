@@ -104,6 +104,8 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
+    'test_plot_helper_volume',
+    'test_plot_helper_two_volumes',
 }
 
 # these images vary between Linux/Windows and MacOS
@@ -384,6 +386,31 @@ def test_plot(sphere, tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+def test_plot_helper_volume(uniform):
+    uniform.plot(
+        volume=True,
+        parallel_projection=True,
+        show_scalar_bar=False,
+        show_grid=True,
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_plot_helper_two_datasets(sphere, airplane):
+    pyvista.plot([sphere, airplane], before_close_callback=verify_cache_image)
+
+
+def test_plot_helper_two_volumes(uniform):
+    grid = uniform.copy()
+    grid.origin = (0, 0, 10)
+    pyvista.plot(
+        [uniform, grid],
+        volume=True,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
 
 
 def test_plot_return_cpos(sphere):
@@ -2500,3 +2527,58 @@ def test_plot_composite_poly_complex(multiblock_poly):
     with pytest.warns(np.ComplexWarning, match='Casting complex'):
         pl.add_composite(multiblock_poly, scalars='data')
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_export_obj(tmpdir, sphere):
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.obj"))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+
+    if pyvista.vtk_version_info <= (8, 1, 2):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.export_obj(filename)
+        return
+
+    with pytest.raises(ValueError, match='end with ".obj"'):
+        pl.export_obj('badfilename')
+
+    pl.export_obj(filename)
+
+    # Check that the object file has been written
+    assert os.path.exists(filename)
+
+    # Check that when we close the plotter, the adequate error is raised
+    pl.close()
+    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+        pl.export_obj(filename)
+
+
+def test_multi_plot_scalars():
+    res = 5
+    plane = pyvista.Plane(j_resolution=res, i_resolution=res)
+    plane.clear_data()
+    kek = np.arange(res + 1)
+    kek = np.tile(kek, (res + 1, 1))
+    u = kek.flatten().copy()
+    v = kek.T.flatten().copy()
+
+    plane.point_data['u'] = u
+    plane.point_data['v'] = v
+
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_text('"u" point scalars')
+    pl.add_mesh(plane, scalars='u')
+    pl.subplot(0, 1)
+    pl.add_text('"v" point scalars')
+    pl.add_mesh(plane, scalars='v')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_bool_scalars(sphere):
+    sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
+    sphere['scalars'][::2] = 1
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
