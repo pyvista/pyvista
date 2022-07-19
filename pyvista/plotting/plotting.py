@@ -2086,6 +2086,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the composite dataset.
+
+        pyvista.CompositePolyDataMapper  # need to document
+            
+
         """
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
             raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
@@ -3527,7 +3535,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             views cameras.
 
         Examples
-        ---------
+        --------
         Not linked view case.
 
         >>> import pyvista

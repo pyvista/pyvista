@@ -805,7 +805,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         already :class:`pyvista.PolyData` will not be copied.
 
         Returns
-        --------
+        -------
         pyvista.MultiBlock
             MultiBlock containing only PolyData datasets.
 
