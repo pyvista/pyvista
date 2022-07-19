@@ -1,6 +1,7 @@
 """Module containing composite data mapper."""
 from itertools import cycle
 import logging
+import sys
 from typing import Optional
 import weakref
 
@@ -312,6 +313,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         flip_scalars,
         categories,
         theme,
+        log_scale,
     ):
         """Set the scalars of the mapper."""
         self._orig_scalars_name = scalars_name
@@ -349,6 +351,11 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         if clim is None:
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
         self.scalar_range = clim
+
+        if log_scale:
+            if clim[0] <= 0:
+                clim = [sys.float_info.min, clim[1]]
+            self.lookup_table.SetScaleToLog10()
 
         if cmap is None:  # Set default map if matplotlib is available
             if _has_matplotlib():

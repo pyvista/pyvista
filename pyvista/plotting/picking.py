@@ -1111,7 +1111,12 @@ class PickingHelper:
         ----------
         callback : callable, optional
             When input, this picker calls this function after a selection is
-            made. The composite index is passed to ``callback`` as the first argument
+            made. The composite index is passed to ``callback`` as the first
+            argument.
+
+        side : str, optional
+            The mouse button to track (either ``'left'`` or ``'right'``).
+            Default is ``'right'``. Also accepts ``'r'`` or ``'l'``.
 
         Notes
         -----

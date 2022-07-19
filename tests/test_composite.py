@@ -609,15 +609,16 @@ def test_set_active_multi_multi(multiblock_poly):
 
 
 def test_to_polydata(multiblock_all):
-    assert not multiblock_all.is_all_polydata()
+    assert not multiblock_all.is_all_polydata
 
     dataset_a = multiblock_all.as_polydata()
-    assert dataset_a.is_all_polydata()
+    assert dataset_a.is_all_polydata
 
     # verify nested works
     nested_mblock = pyvista.MultiBlock([multiblock_all, multiblock_all])
+    assert not nested_mblock.is_all_polydata
     dataset_b = nested_mblock.as_polydata()
-    assert dataset_b.is_all_polydata()
+    assert dataset_b.is_all_polydata
 
 
 def test_compute_normals(multiblock_poly):

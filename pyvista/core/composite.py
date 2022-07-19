@@ -830,16 +830,22 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         return dataset
 
-    def is_all_polydata(self):
+    @property
+    def is_all_polydata(self) -> bool:
         """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
 
         This method will recursively check if any internal blocks are also
         :class:`pyvista.PolyData`.
 
+        Returns
+        -------
+        bool
+            Return ``True`` when all blocks are :class:`pyvista.PolyData`.
+
         """
         for block in self:
             if isinstance(block, MultiBlock):
-                if not block.is_all_polydata():
+                if not block.is_all_polydata:
                     return False
             else:
                 if not isinstance(block, pyvista.PolyData):

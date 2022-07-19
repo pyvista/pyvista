@@ -118,12 +118,3 @@ def test_block_attributes(block_attributes):
 
     block_attributes.reset_visibilities()
     assert block_attributes[0].visible is None
-
-
-def test_remove_scalars_on_collection(multiblock_poly):
-    multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
-    pl = pv.Plotter()
-    pl.add_composite(multi_multi, scalars='multi-comp')
-    assert 'multi-comp-normed' in multiblock_poly[2].point_data
-    pl.close()
-    assert 'multi-comp-normed' not in multiblock_poly[2].point_data
