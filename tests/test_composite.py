@@ -160,6 +160,9 @@ def test_multi_block_set_get_ers():
     with pytest.raises(KeyError):
         _ = multi.get_index_by_name('foo')
 
+    with pytest.raises(IndexError):
+        multi[3] = UniformGrid()
+
     with pytest.raises(KeyError):
         multi["not a key"]
     with pytest.raises(TypeError):
