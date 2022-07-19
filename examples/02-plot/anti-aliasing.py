@@ -49,9 +49,9 @@ pl.show()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Also known as Fast Approximate Anti-Aliasing, FXAA was crafted by
 # Nvidia. When it comes to anti-aliasing on low-end devices/PCs, FXAA is the
-# best technique. It’s because, in terms of hardware or GPU, FXAA is not that
-# demanding. It directly smoothens the 2D image as soon as it appears on the
-# screen. This reduces the strain over GPU, making it best for low-end PCs.
+# best technique. This is because, in terms of hardware or GPU, FXAA is not
+# that demanding. It directly smoothens the 2D image as soon as it appears on
+# the screen. This reduces the strain over GPU, making it best for low-end PCs.
 
 pl = pv.Plotter()
 pl.add_mesh(bunny, show_edges=True)
@@ -65,7 +65,7 @@ pl.show()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MSAA, or Multi-Sample Anti-Aliasing is an optimization of SSAA that reduces
 # the amount of pixel shader evaluations that need to be computed by focusing
-# on overlapping regions of the scene. The result is antialiasing along edges
+# on overlapping regions of the scene. The result is anti-aliasing along edges
 # that is on par with SSAA and less anti-aliasing along surfaces as these make
 # up the bulk of SSAA computations. MSAA is substantially less computationally
 # expensive than SSAA and results in comparable image quality.
@@ -86,7 +86,7 @@ pl.show()
 # resource cost. SSAA works by rendering the scene at a higher resolution. The
 # final image is produced by downsampling the massive source image using an
 # averaging filter. This acts as a low pass filter which removes the high
-# frequency components that caused the jaggedness.
+# frequency components that would cause jaggedness.
 
 pl = pv.Plotter()
 pl.add_mesh(bunny, show_edges=True, line_width=2)  # lines are thinner in SSAA

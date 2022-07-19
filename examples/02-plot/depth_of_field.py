@@ -5,7 +5,7 @@ Depth of Field Plotting
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how you can use :func:`enable_depth_of_field
-<pyvista.Plotting.enable_depth_of_field>` to highlight part of your plot.
+<pyvista.Plotter.enable_depth_of_field>` to highlight part of your plot.
 
 """
 
@@ -37,7 +37,7 @@ bunnies
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # convert points into rgba colors
-colors = bunnies.points - np.array(bunnies.bounds)[::2]
+colors = bunnies.points - bunnies.bounds[::2]
 colors /= colors.max(axis=0)
 colors *= 255
 colors = colors.astype(np.uint8)

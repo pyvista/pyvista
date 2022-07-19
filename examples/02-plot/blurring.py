@@ -4,16 +4,17 @@
 Blurring
 ~~~~~~~~
 This example shows how you can use :func:`add_blurring
-<pyvista.Plotting.add_blurring>` to blur a plot, or use
-<pyvista.Plotting.enable_depth_of_field>` to highlight part of your plot.
+<pyvista.Plotter.add_blurring>` to blur a plot, or use
+:func:`enable_depth_of_field <pyvista.Plotter.enable_depth_of_field>`
+to highlight part of your plot.
 
 """
 
 import pyvista as pv
 
 ###############################################################################
-# Create several sphere
-# ~~~~~~~~~~~~~~~~~~~~~
+# Create several spheres
+# ~~~~~~~~~~~~~~~~~~~~~~
 
 # We use a uniform grid here simply to create equidistantly spaced points for
 # our glyph filter
