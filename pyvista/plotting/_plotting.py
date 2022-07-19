@@ -214,6 +214,12 @@ def _common_arg_parser(
     **kwargs,
 ):
     """Parse arguments in common between add_volume, composite, and mesh."""
+    # supported aliases
+    clim = kwargs.pop('rng', clim)
+    cmap = kwargs.pop('colormap', cmap)
+    culling = kwargs.pop("backface_culling", culling)
+    rgb = kwargs.pop('rgba', rgb)
+
     # Avoid mutating input
     if scalar_bar_args is None:
         scalar_bar_args = {'n_colors': n_colors}
@@ -224,7 +230,8 @@ def _common_arg_parser(
     if split_sharp_edges is None:
         split_sharp_edges = theme.split_sharp_edges
     if show_scalar_bar is None:
-        show_scalar_bar = theme.show_scalar_bar
+        # use theme unless plotting RGB
+        show_scalar_bar = False if rgb else theme.show_scalar_bar
     feature_angle = kwargs.pop('feature_angle', theme.sharp_edges_feature_angle)
     if render_points_as_spheres is None:
         render_points_as_spheres = theme.render_points_as_spheres
@@ -234,11 +241,6 @@ def _common_arg_parser(
             smooth_shading = True
         else:
             smooth_shading = theme.smooth_shading
-
-    # supported aliases
-    clim = kwargs.pop('rng', clim)
-    cmap = kwargs.pop('colormap', cmap)
-    culling = kwargs.pop("backface_culling", culling)
 
     if render_points_as_spheres is None:
         render_points_as_spheres = theme.render_points_as_spheres
@@ -253,8 +255,6 @@ def _common_arg_parser(
 
     if texture is False:
         texture = None
-
-    rgb = kwargs.pop('rgba', rgb)
 
     if 'interpolation' in kwargs:
         interpolation = kwargs.pop('interpolation')

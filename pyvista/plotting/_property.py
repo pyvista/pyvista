@@ -1,8 +1,19 @@
 """This module contains the Property class."""
+from functools import lru_cache
+
 import pyvista
 from pyvista import _vtk
 
 from .colors import Color
+
+
+@lru_cache(maxsize=None)
+def _check_supports_pbr():
+    """Check if VTK supports physically based rendering."""
+    if not _vtk.VTK9:  # pragma: no cover
+        from pyvista.core.errors import VTKVersionError
+
+        raise VTKVersionError('Physically based rendering requires VTK 9 or newer.')
 
 
 class Property(_vtk.vtkProperty):
@@ -47,10 +58,11 @@ class Property(_vtk.vtkProperty):
         self.interpolation = interpolation
         self.color = color
         self.style = style
-        if metallic is not None:
-            self.metallic = metallic
-        if roughness is not None:
-            self.roughness = roughness
+        if interpolation == 'Physically based rendering':
+            if metallic is not None:
+                self.metallic = metallic
+            if roughness is not None:
+                self.roughness = roughness
         self.point_size = point_size
         if opacity is not None:
             self.opacity = opacity
@@ -192,19 +204,23 @@ class Property(_vtk.vtkProperty):
     @property
     def metallic(self):
         """Return or set metallic."""
+        _check_supports_pbr()
         return self.GetMetallic()
 
     @metallic.setter
     def metallic(self, new_metallic):
+        _check_supports_pbr()
         self.SetMetallic(new_metallic)
 
     @property
     def roughness(self):
         """Return or set roughness."""
+        _check_supports_pbr()
         return self.GetRoughness()
 
     @roughness.setter
     def roughness(self, new_roughness):
+        _check_supports_pbr()
         self.SetRoughness(new_roughness)
 
     @property
@@ -215,10 +231,8 @@ class Property(_vtk.vtkProperty):
     @interpolation.setter
     def interpolation(self, new_interpolation):
         if new_interpolation == 'Physically based rendering':
-            if not _vtk.VTK9:  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
+            _check_supports_pbr()
 
-                raise VTKVersionError('Physically based rendering requires VTK 9 or newer.')
             self.SetInterpolationToPBR()
         elif new_interpolation == 'Phong':
             self.SetInterpolationToPhong()

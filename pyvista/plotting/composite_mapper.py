@@ -160,7 +160,8 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     def get_block(self, index):
         """Return a block by its flat index."""
         try:
-            block = self.DataObjectFromIndex(index, self._dataset)
+            vtk_ref = _vtk.reference(0)  # needed for <9.0
+            block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
         if block is None:
@@ -324,7 +325,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
         self.scalar_visibility = True
         if rgb:
-            self.mapper.SetColorModeToDirectScalars()
+            self.SetColorModeToDirectScalars()
             return scalar_bar_args
         else:
             self.scalar_map_mode = field.name.lower()

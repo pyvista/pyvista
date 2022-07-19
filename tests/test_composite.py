@@ -608,6 +608,29 @@ def test_set_active_multi_multi(multiblock_poly):
     multi_multi.set_active_scalars('multi-comp')
 
 
+def test_set_active_scalars_mixed(multiblock_poly):
+    for block in multiblock_poly:
+        block.clear_data()
+        block.point_data.set_array(range(block.n_points), 'data')
+        block.cell_data.set_array(range(block.n_cells), 'data')
+
+    # remove data from the last block
+    del multiblock_poly[-1].point_data['data']
+    del multiblock_poly[-1].cell_data['data']
+
+    multiblock_poly.set_active_scalars('data', preference='cell', allow_missing=True)
+
+    for block in multiblock_poly:
+        if 'data' in block.cell_data:
+            assert block.cell_data.active_scalars_name == 'data'
+
+    multiblock_poly.set_active_scalars('data', preference='point', allow_missing=True)
+
+    for block in multiblock_poly:
+        if 'data' in block.point_data:
+            assert block.point_data.active_scalars_name == 'data'
+
+
 def test_to_polydata(multiblock_all):
     assert not multiblock_all.is_all_polydata
 
@@ -625,7 +648,16 @@ def test_compute_normals(multiblock_poly):
     for block in multiblock_poly:
         block.clear_data()
         block['point_data'] = range(block.n_points)
-    mblock = multiblock_poly._compute_normals(cell_normals=False)
+    mblock = multiblock_poly._compute_normals(
+        cell_normals=False, split_vertices=True, track_vertices=True
+    )
     for block in mblock:
         assert 'Normals' in block.point_data
         assert 'point_data' in block.point_data
+        assert 'pyvistaOriginalPointIds' in block.point_data
+
+
+def test_activate_plotting_scalars(multiblock_poly):
+    for block in multiblock_poly:
+        data = np.array(['a'] * block.n_points)
+        block.point_data.set_array(data, 'data')

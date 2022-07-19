@@ -765,7 +765,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         # Verify that all the data has identical field association
         first_field = data_assoc[0][0]
-        if not any([first_field == field for field, _, _ in data_assoc]):
+        if any([first_field != field for field, _, _ in data_assoc]):
             # remove any data not matching the preference
             for field, scalars, block in list(data_assoc):
                 if field.name.lower() != preference:
@@ -861,9 +861,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             preference,
             allow_missing=True,
         )
-
-        if not np.issubdtype(scalars.dtype, np.number):
-            raise TypeError('Non-numeric scalars are not supported for composite datesets.')
 
         data_attr = f'{field.name.lower()}_data'
         if rgb:

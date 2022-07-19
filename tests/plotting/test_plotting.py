@@ -2529,6 +2529,18 @@ def test_plot_composite_poly_complex(multiblock_poly):
     pl.show(before_close_callback=verify_cache_image)
 
 
+def test_plot_composite_rgba(multiblock_poly):
+    # add composite data
+    for i, block in enumerate(multiblock_poly):
+        rgba_value = np.zeros((block.n_points, 3), dtype=np.uint8)
+        rgba_value[:, i] = np.linspace(0, 255, block.n_points)
+        block['data'] = rgba_value
+
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data', rgba=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_export_obj(tmpdir, sphere):
     filename = str(tmpdir.mkdir("tmpdir").join("tmp.obj"))
 

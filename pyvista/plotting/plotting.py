@@ -1950,7 +1950,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
-            scene. Defaults to ``True``.
+            scene. Defaults to ``True`` unless ``rgba=True``.
 
         multi_colors : bool, optional
             Color each block by a solid color using matplotlib's color cycler.

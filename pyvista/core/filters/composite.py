@@ -181,9 +181,11 @@ class CompositeFilters:
         """
         # track original point indices
         if split_vertices and track_vertices:
-            self.point_data.set_array(
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
-            )
+            for block in self:
+                if not block:
+                    continue
+                ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
+                block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 
         alg = _vtk.vtkPolyDataNormals()
         alg.SetComputeCellNormals(cell_normals)
