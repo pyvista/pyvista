@@ -1,4 +1,4 @@
-"""Render classes module for PyVista."""
+"""Render passes module for PyVista."""
 import weakref
 
 from pyvista import _vtk
@@ -22,7 +22,7 @@ class RenderPasses:
 
     Notes
     -----
-    Passes are organized here as "Primary" (vtkOpenGLRenderPass) that act
+    Passes are organized here as "primary" (vtkOpenGLRenderPass) that act
     within the renderer and "post-processing" (vtkImageProcessingPass) passes,
     which act on the image generated from the renderer.
 
@@ -49,7 +49,7 @@ class RenderPasses:
 
     @property
     def _pass_collection(self):
-        """Initialize (when necessary the pass collection and return it.
+        """Initialize (when necessary) the pass collection and return it.
 
         This lets us lazily generate the pass collection only when we need it
         rather than at initialization of the class.
@@ -61,7 +61,7 @@ class RenderPasses:
 
     @property
     def _seq_pass(self):
-        """Initialize (when necessary the pass collection and return it.
+        """Initialize (when necessary) the pass collection and return it.
 
         This lets us lazily generate the pass collection only when we need it
         rather than at initialization of the class.
@@ -73,9 +73,9 @@ class RenderPasses:
 
     @property
     def _camera_pass(self):
-        """Initialize (when necessary the pass collection and return it.
+        """Initialize (when necessary) the camera pass and return it.
 
-        This lets us lazily generate the pass collection only when we need it
+        This lets us lazily generate the camera pass only when we need it
         rather than at initialization of the class.
 
         """
@@ -137,7 +137,7 @@ class RenderPasses:
     def add_blur_pass(self):
         """Add a vtkGaussianBlurPass pass.
 
-        This is an vtkImageProcessingPass and delegates to the last pass.
+        This is a vtkImageProcessingPass and delegates to the last pass.
 
         """
         blur_pass = _vtk.vtkGaussianBlurPass()
@@ -146,7 +146,7 @@ class RenderPasses:
         return blur_pass
 
     def remove_blur_pass(self):
-        """Add a vtkGaussianBlurPass pass."""
+        """Remove a vtkGaussianBlurPass pass."""
         if self._blur_passes:
             self._remove_pass(self._blur_passes.pop(0))
 
@@ -186,7 +186,7 @@ class RenderPasses:
         self._dof_pass = None
 
     def enable_ssaa_pass(self):
-        """Enable super space anti-aliasing pass."""
+        """Enable super-sample anti-aliasing pass."""
         if self._ssaa_pass is not None:
             return
         self._ssaa_pass = _vtk.vtkSSAAPass()
@@ -194,7 +194,7 @@ class RenderPasses:
         return self._ssaa_pass
 
     def disable_ssaa_pass(self):
-        """Disable super space anti-aliasing pass."""
+        """Disable super-sample anti-aliasing pass."""
         if self._ssaa_pass is None:
             return
         self._remove_pass(self._ssaa_pass)
@@ -202,7 +202,7 @@ class RenderPasses:
 
     def _update_passes(self):
         """Reassemble pass delegation."""
-        if self._renderer is None:
+        if self._renderer is None:  # pragma: no cover
             raise RuntimeError('The renderer has been closed.')
 
         current_pass = self._camera_pass
@@ -240,7 +240,7 @@ class RenderPasses:
     def _remove_pass(self, render_pass):
         """Remove a pass.
 
-        Remove a pass and reassembles the pass ordering
+        Remove a pass and reassemble the pass ordering.
 
         """
         class_name = RenderPasses._class_name_from_vtk_obj(render_pass)

@@ -458,7 +458,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if not pyvista.BUILDING_GALLERY:
                     warnings.warn(
                         "VTK compiled with OSMesa does not properly support "
-                        "FXAA anti-aliasing and SXAA will be used instead."
+                        "FXAA anti-aliasing and SSAA will be used instead."
                     )
                 self._render_passes.enable_ssaa_pass()
             self._enable_fxaa()

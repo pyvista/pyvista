@@ -998,13 +998,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         tremendous resource cost. SSAA works by rendering the scene at a higher
         resolution. The final image is produced by downsampling the
         massive source image using an averaging filter. This acts as a low pass
-        filter which removes the high frequency components that caused the
+        filter which removes the high frequency components that would cause
         jaggedness.
 
         MSAA, or Multi-Sample Anti-Aliasing is an optimization of SSAA that
         reduces the amount of pixel shader evaluations that need to be computed
         by focusing on overlapping regions of the scene. The result is
-        antialiasing along edges that is on par with SSAA and less
+        anti-aliasing along edges that is on par with SSAA and less
         anti-aliasing along surfaces as these make up the bulk of SSAA
         computations. MSAA is substantially less computationally expensive than
         SSAA and results in comparable image quality.
@@ -5517,7 +5517,7 @@ class Plotter(BasePlotter):
         self.render()
 
         # initial double render needed for certain passes when offscreen
-        if 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes and self.off_screen:
+        if self.off_screen and 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes:
             self.render()
 
         # This has to be after the first render for some reason
