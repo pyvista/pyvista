@@ -342,23 +342,40 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # No overwrite if name is None
         self.set_block_name(index, name)
 
-    def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
+    def get(self, index: str, default: Optional[DataSet] = None) -> Optional[DataSet]:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
+        Returns ``default`` if name isn't in the dataset.
 
         Parameters
         ----------
-        index : int or str
+        index : str
             Index or name of the dataset within the multiblock.
+
+        default : pyvista.DataSet, optional
+            Default to return if index is not in the multiblock.
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset from the given index.
+        pyvista.DataSet or None
+            Dataset from the given index if it exists.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> data = {"poly": pv.PolyData(), "uni": pv.UniformGrid()}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.get("poly")
+        PolyData ...
+        >>> blocks.get("cone")
 
         """
-        return self[index]
+        try:
+            return self[index]
+        except KeyError:
+            return default
 
     def set_block_name(self, index: int, name: Optional[str]):
         """Set a block's string name at the specified index.

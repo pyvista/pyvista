@@ -139,6 +139,9 @@ def test_multi_block_set_get_ers():
     # Test get by name
     assert isinstance(multi['uni'], UniformGrid)
     assert isinstance(multi['rect'], RectilinearGrid)
+    assert isinstance(multi.get('uni'), UniformGrid)
+    assert multi.get('no key') is None
+    assert multi.get('no key', default=pyvista.Sphere()) == pyvista.Sphere()
     # Test the del operator
     del multi[0]
     assert multi.n_blocks == 5
