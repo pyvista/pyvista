@@ -1869,7 +1869,7 @@ class DefaultTheme(_ThemeConfig):
         >>> pyvista.global_theme.antialiasing
         'ssaa'
 
-        Use disable anti-aliasing in the global theme.
+        Disable anti-aliasing in the global theme.
 
         >>> import pyvista
         >>> pyvista.global_theme.antialiasing = None
