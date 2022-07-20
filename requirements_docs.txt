@@ -11,7 +11,7 @@ lxml==4.9.1
 matplotlib==3.5.2
 meshio==5.3.4
 mypy-extensions==0.4.3
-mypy==0.961
+mypy==0.971
 numpydoc==1.4.0
 osmnx==1.2.1
 panel==0.13.1
