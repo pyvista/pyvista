@@ -266,3 +266,315 @@ def load_neptune(*args, **kwargs):
     atmosphere = examples.download_neptune_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
+
+
+def download_sun_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'sun.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_sun_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('sun.jpg', texture=True, load=load)
+
+
+def download_moon_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'moon.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_moon_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('moon.jpg', texture=True, load=load)
+
+
+def download_mercury_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'mercury.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_mercury_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('mercury.jpg', texture=True, load=load)
+
+
+def download_venus_jpg(atmosphere=True, load=True):  # pragma: no cover
+    """Download and return the path of ``'venus.jpg'``.
+
+    Parameters
+    ----------
+    atmosphere : bool, optional
+        Load the atmosphere texture when ``True``.
+
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_venus_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    if atmosphere:
+        return _download_and_read('venus_atmosphere.jpg', texture=True, load=load)
+    else:
+        return _download_and_read('venus_surface.jpg', texture=True, load=load)
+
+
+def download_mars_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'mars.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_mars_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('mars.jpg', texture=True, load=load)
+
+
+def download_jupiter_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'jupiter.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_jupiter_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('jupiter.jpg', texture=True, load=load)
+
+
+def download_saturn_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'saturn.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_saturn_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('saturn.jpg', texture=True, load=load)
+
+
+def download_saturn_ring_alpha_png(load=True):  # pragma: no cover
+    """Download and return the path of ``'saturn_ring_alpha.png'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_saturn_ring_alpha_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('saturn_ring_alpha.png', texture=True, load=load)
+
+
+def download_uranus_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'uranus.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_uranus_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('uranus.jpg', texture=True, load=load)
+
+
+def download_neptune_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'neptune.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.download_neptune_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('neptune.jpg', texture=True, load=load)
+
+
+def download_stars_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'stars.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
+    >>> dataset = examples.download_stars_jpg()
+    >>> pl.add_background_image(dataset)
+    >>> pl.show()
+
+    See :func:`download_mars_jpg` for another example using this dataset.
+
+    """
+    return _download_and_read('stars.jpg', load=load)
+
+
+def download_milkyway_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'milkyway.jpg'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
+    >>> dataset = examples.download_milkyway_jpg()
+    >>> pl.add_background_image(dataset)
+    >>> pl.show()
+
+    """
+    return _download_and_read('milkyway.jpg', load=load)
