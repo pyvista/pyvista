@@ -5568,49 +5568,6 @@ class Plotter(BasePlotter):
         if return_cpos:
             return self.camera_position
 
-    def animate(self, scalars, scale_values, framerate=30, loop=True, mag=1.0, displace=True):
-        scalars = self.mesh[scalars].copy()
-
-        if displace:
-            orig_points = self.mesh.points.copy()
-
-        # reset the active scalars to avoid the plot flashing initially
-        values = scalars * scale_values[0]
-        self.mesh.point_data.active_scalars[:] = np.linalg.norm(values, axis=1)
-
-        # start plotting
-        self.show(auto_close=False, interactive_update=True, interactive=False)
-
-        animating = [True]
-
-        def q_callback():
-            """Exit when user wants to leave"""
-            animating[0] = False
-
-        def exit_callback(*args):
-            """Exit when user wants to leave"""
-            animating[0] = False
-            self.close()
-
-        self.iren.add_observer(
-            _vtk.vtkCommand.ExitEvent, lambda render, event: exit_callback(render, event)
-        )
-
-        while animating[0]:
-            for scale in scale_values:
-                if self._closed or not animating[0]:
-                    break
-                disp = scalars * scale
-                if displace:
-                    self.mesh.points[:] = orig_points + disp * mag
-                self.mesh.point_data.active_scalars[:] = np.linalg.norm(disp, axis=1)
-                self.update(1, force_redraw=True)
-
-            if not loop:
-                break
-
-        self.close()
-
     def add_title(self, title, font_size=18, color=None, font=None, shadow=False):
         """Add text to the top center of the plot.
 

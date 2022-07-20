@@ -1,8 +1,10 @@
 """This module contains some convenience helper functions."""
-
+import time
+from inspect import signature
 import numpy as np
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import is_pyvista_dataset
 
 from .plotting import Plotter
@@ -428,3 +430,162 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
     else:
         pl.add_mesh(mesh, color, scalars, opacity, smooth_shading)
     return pl.show()
+
+
+def _scalars_from_disp(values, scalar_axis):
+    """Get scalars from values based on an axis."""
+
+    if scalar_axis == 'norm':
+        return np.linalg.norm(values, axis=1)
+    elif scalar_axis == 'x':
+        return values[:, 0]
+    elif scalar_axis == 'y':
+        return values[:, 0]
+    elif scalar_axis == 'z':
+        return values[:, 0]
+    elif scalar_axis is not None:
+        raise ValueError(
+            f'invalid `scalar_axis` "{scalar_axis}". Should be "x", "y", "z", "norm"'
+            ' or None'
+        )
+
+
+def animate_displacement(
+        mesh, displacements, values='cyclic', n_values=360, func=None,
+        scalar_axis='norm', fps=30, loop=None, mag=1.0,
+        displace=True, filename=None, **kwargs
+):
+    """Animate the displacement of a dataset."""
+    if isinstance(displacements, str):
+        if displacements in mesh.point_data:
+            displacements = mesh.point_data[displacements]
+    elif isinstance(displacements, np.ndarray):
+        if displacements.shape[0] != mesh.n_points:
+            raise ValueError('Number of displacements must match the number of points')
+    else:
+        raise TypeError('`displacements` must be either a string or a numpy array')
+
+    # verify displacements are 3D...    
+
+    if isinstance(values, str):
+        if values == 'cyclic':
+            values = np.sin(np.linspace(0, 2*np.pi, n_values, endpoint=False))
+        elif values == 'linear':
+            values = np.linspace(0, 1, n_values)
+        else:
+            raise ValueError(
+                'If `values` is a string, it should be either "cyclic" or "linear"'
+            )
+    elif isinstance(values, np.ndarray):
+        if values.ndim != 1:
+            raise ValueError('`values` parameter should be a single dimension')
+    else:
+        raise TypeError('`values` must be either a string or a sequence.')
+
+    if func is not None:
+        if not callable(func):
+            raise TypeError('`func` must be callable')
+
+        if len(signature(func).parameters) != 2:
+            raise ValueError(
+                '`func` must contain exactly two parameters: `displacements` and `value`'
+            )
+
+        disp_modifier = func
+    else:
+        def disp_modifier(displacements, value):
+            return displacements*value
+
+    # Check mesh datatype and extract exterior surface to improve plotting
+    # performance
+    if not isinstance(mesh, pyvista.DataSet):
+        raise TypeError('`mesh` must be a pyvista.DataSet')
+    elif not isinstance(mesh, pyvista.PolyData):
+        mesh = mesh.extract_surface(pass_cellid=False)
+        displacements = displacements[mesh['vtkOriginalPointIds']]
+
+    if displace:
+        orig_points = mesh.points.copy()
+
+    # reset the active displacements to avoid the plot flashing initially
+    init_values = disp_modifier(displacements, values[0])
+    scalars = _scalars_from_disp(init_values, scalar_axis)
+    use_scalars = scalars is not None
+
+    # start plotting
+    theme = kwargs.pop('theme', pyvista.global_theme)
+    off_screen = kwargs.pop('off_screen', None)
+    lighting = kwargs.pop('lighting', 'light kit')
+    n_colors = kwargs.pop('n_colors', 256)
+    pl = pyvista.Plotter(
+        off_screen=off_screen,
+        theme=theme,
+        lighting=lighting,
+    )
+    off_screen = pl.off_screen
+    pl.add_mesh(mesh, scalars=scalars, n_colors=n_colors, **kwargs)
+
+    if filename:
+        if filename.endswith('gif'):
+            palettesize = 256 if n_colors > 256 else n_colors
+            pl.open_gif(filename, fps=fps, palettesize=palettesize)
+        else:
+            pl.open_movie(filename, framerage=fps)
+        loop = False
+
+    pl.show(auto_close=False, interactive_update=True, interactive=False)
+
+    animating = [True]
+
+    def q_callback():
+        """Exit when user wants to leave"""
+        animating[0] = False
+
+    def exit_callback(*args):
+        """Exit when user wants to leave"""
+        animating[0] = False
+        pl.close()
+
+    pl.iren.add_observer(
+        _vtk.vtkCommand.ExitEvent, lambda render, event: exit_callback(render, event)
+    )
+
+    mesh_scalars = pl.mesh.point_data.active_scalars
+
+    # ideal render time
+    ren_time_ide = 1/fps
+
+    while animating[0]:
+        for value in values:
+            if pl._closed or not animating[0]:
+                break
+
+            if not off_screen:
+                tstart = time.time()
+
+            # displace the scalars and update the active scalars
+            disp = disp_modifier(displacements, value)
+            if displace:
+                pl.mesh.points[:] = orig_points + disp * mag
+
+            if use_scalars:
+                mesh_scalars[:] = _scalars_from_disp(disp, scalar_axis)
+
+            if filename:
+                pl.write_frame()
+
+            if not off_screen:
+                # render and allow interaction
+                pl.update(1, force_redraw=filename is None)
+
+                # wait to start next render based on the last render time
+                ren_time_act = time.time() - tstart
+                sleeptime = ren_time_ide - ren_time_act
+                if sleeptime > 0:
+                    time.sleep(sleeptime)
+
+        if not loop:
+            break
+
+    pl.close()
+

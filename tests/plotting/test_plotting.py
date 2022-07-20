@@ -2504,3 +2504,21 @@ def test_multi_plot_scalars():
     pl.add_text('"v" point scalars')
     pl.add_mesh(plane, scalars='v')
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_animation(sphere, tmpdir):
+    filename = str(tmpdir.join("tmp.gif"))
+    disp = sphere.point_normals
+    pyvista.animate_displacement(
+        sphere,
+        disp,
+        lighting=None,
+        n_colors=16,
+        mag=10,
+        n_values=25,
+        fps=10,
+        filename=filename,
+        show_scalar_bar=False,
+        # off_screen=False, loop=False,
+    )
+    breakpoint()

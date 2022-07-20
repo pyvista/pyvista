@@ -13,7 +13,7 @@ from .colors import (
     PARAVIEW_BACKGROUND,
 )
 from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
-from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
+from .helpers import plot, plot_arrows, plot_compare_four, plot_itk, animate_displacement
 from .plotting import BasePlotter, Plotter, close_all
 from .renderer import CameraPosition, Renderer, scale_point
 from .tools import (
