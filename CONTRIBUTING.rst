@@ -468,7 +468,7 @@ created the following will occur:
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest
+       make doctest-modules
        make html -b linkcheck
 
 4.  After building the documentation, open the local build and examine
