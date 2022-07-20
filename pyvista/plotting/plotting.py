@@ -201,6 +201,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
+        self._initialized = False
+
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
@@ -280,6 +282,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set antialiasing based on theme
         if self.theme.antialiasing:
             self.enable_anti_aliasing()
+
+        self._initialized = True
 
     @property
     def theme(self):
@@ -4720,13 +4724,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        # We have to check here if it has the closed attribute as it
-        # may not exist should the plotter have failed to initialize.
-        if hasattr(self, '_closed'):
+        # We have to check here if the plotter was only partially initialized
+        if self._initialized:
             if not self._closed:
                 self.close()
         self.deep_clean()
-        if hasattr(self, 'renderers'):
+        if self._initialized:
             del self.renderers
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
@@ -5163,6 +5166,8 @@ class Plotter(BasePlotter):
             lighting=lighting,
             theme=theme,
         )
+        # reset partial initialization flag
+        self._initialized = False
 
         log.debug('Plotter init start')
 
@@ -5256,6 +5261,9 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # some cleanup only necessary for fully initialized plotters
+        self._initialized = True
         log.debug('Plotter init stop')
 
     def show(
