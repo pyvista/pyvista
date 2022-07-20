@@ -4468,6 +4468,6 @@ class Charts:
         for chart in self._charts:
             yield chart
 
-    def __del__(self):  # pragma: no cover
+    def __del__(self):
         """Clean up before being destroyed."""
         self.deep_clean()
