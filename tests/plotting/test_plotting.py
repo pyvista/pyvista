@@ -2512,3 +2512,19 @@ def test_bool_scalars(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_square(noise_2d):
+    pl = pyvista.Plotter(window_size=[800, 200])
+    pl.add_mesh(noise_2d, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(adjust_render_window=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+# def test_tight_2d(noise_2d):
+#     pl = pyvista.Plotter(off_screen=False, window_size=[800, 200])
+#     pl.add_mesh(noise_2d, show_scalar_bar=False)
+#     pl.camera_position = 'xy'
+#     pl.camera.tight(adjust_render_window=True)
+#     plotter.show(before_close_callback=verify_cache_image)

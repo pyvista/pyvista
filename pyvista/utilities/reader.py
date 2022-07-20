@@ -7,6 +7,8 @@ import pathlib
 from typing import Any, List
 from xml.etree import ElementTree
 
+import numpy as np
+
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class, wrap
@@ -43,6 +45,8 @@ def get_reader(filename, force_ext=None):
     | ``.foam``      | :class:`pyvista.POpenFOAMReader`            |
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.gif``       | :class:`pyvista.GIFReader`                  |
     +----------------+---------------------------------------------+
     | ``.glb``       | :class:`pyvista.GLTFReader`                 |
     +----------------+---------------------------------------------+
@@ -2068,6 +2072,57 @@ class SegYReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
 
+class _GIFReader():
+    """Simulate a VTK reader for GIF files."""
+
+    _data_object = None
+
+    def SetFileName(self, filename):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._filename = filename
+
+    def UpdateInformation(self):
+        """Needed for VTK-like compatibility with BaseReader."""
+        pass
+
+    def AddObserver(self, *args):
+        """Needed for VTK-like compatibility with BaseReader."""
+        pass
+
+    def Update(self):
+        """Read the GIF and store internally to `_data_object`."""
+        from PIL import Image, ImageSequence
+
+        img = Image.open(self._filename)
+        self._data_object = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+
+        # load each frame to the grid
+        for i, frame in enumerate(ImageSequence.Iterator(img)):
+            data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
+            self._data_object.point_data.set_array(data, f'frame{i}')
+
+    def GetOutputDataObject(self, *args):
+        """Needed for VTK-like compatibility with BaseReader."""
+        return self._data_object
+
+
+class GIFReader(BaseReader):
+    """
+    
+    Parameters
+    ----------
+    path : str
+        Path of the GIF to read.
+
+    Examples
+    --------
+    >>> 
+
+    """
+
+    _class_reader = _GIFReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2080,6 +2135,7 @@ CLASS_READERS = {
     '.facet': FacetReader,
     '.foam': POpenFOAMReader,
     '.g': BYUReader,
+    '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
     '.img': DICOMReader,

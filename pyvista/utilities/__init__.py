@@ -31,6 +31,7 @@ from .reader import (
     EnSightReader,
     FacetReader,
     FluentReader,
+    GIFReader,
     GLTFReader,
     HDFReader,
     HDRReader,

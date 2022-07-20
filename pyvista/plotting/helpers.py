@@ -147,9 +147,9 @@ def plot(
         setting :attr:`pyvista.global_theme.antialiasing
         <pyvista.themes.DefaultTheme.antialiasing>`.
 
-    zoom : float, optional
-        Camera zoom.  A value greater than 1 is a zoom-in, a value
-        less than 1 is a zoom-out.  Must be greater than 0.
+    zoom : float, str, optional
+        Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
+        a zoom-in, a value less than 1 is a zoom-out.  Must be greater than 0.
 
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.

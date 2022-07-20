@@ -283,16 +283,42 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        value : float
-            Zoom of the camera.  Must be greater than 0.
+        value : float or str
+            Zoom of the camera. If a float, must be greater than 0. Otherwise,
+            if a string, must be ``"tight"``. If tight, the plot will be zoomed
+            such that the actors fill the entire viewport.
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        Show the Default zoom.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere()
+        >>> pl.camera.zoom(1.0)
+        >>> pl.show()
+
+        Show 2x zoom.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere()
         >>> pl.camera.zoom(2.0)
+        >>> pl.show()
+
+        Zoom so the actor fills the entire render window.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere()
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
 
         """
+        if isinstance(value, str):
+            if not value == 'tight':
+                raise ValueError('If a string, ``zoom`` can only be "tight"')
+            self.tight()
+            return
+
         self.Zoom(value)
 
     @property
@@ -618,3 +644,45 @@ class Camera(_vtk.vtkCamera):
             setattr(new_camera, attr, value)
 
         return new_camera
+
+    def tight(self, padding=0, adjust_render_window=False):
+        """Adjust the camera position so that the actors fits in to the renderer.
+
+        Examples
+        --------
+        >>> 
+
+        """
+
+        # inspired by vedo resetCamera. Thanks @marcomusy!
+        
+        x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+
+        self.enable_parallel_projection()
+
+        self._renderer.ComputeAspect()
+        aspect = self._renderer.GetAspect()
+        angle = np.pi*self.view_angle/180.
+        dx, dy = (x1-x0)*0.999, (y1-y0)*0.999
+        dist = max(dx/aspect[0], dy) / np.sin(angle/2) / 2
+
+        ps = max(dx/aspect[0], dy) / 2
+        self.parallel_scale = ps*(1+padding)
+        self._renderer.ResetCameraClippingRange(x0, x1, y0, y1, z0, z1)
+
+        if adjust_render_window:
+            ren_win = self._renderer.GetRenderWindow()
+            size = list(ren_win.GetSize())
+            size_ratio = size[0]/size[1]
+            tight_ratio = dx/dy
+            if tight_ratio > size_ratio:
+                resize_ratio = 
+                size[0] = size[0]*tight_ratio
+            else:
+                size[1] = round(size[1]/tight_ratio)
+
+            ren_win.SetSize(size)
+
+            # simply call tight again to reset the parallel scale due to the
+            # resized window
+            self.tight()
