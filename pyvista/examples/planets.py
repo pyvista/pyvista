@@ -28,7 +28,7 @@ def load_sun(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_sun())
     >>> pl.show()
 
@@ -53,7 +53,7 @@ def load_moon(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_moon())
     >>> pl.show()
 
@@ -78,7 +78,7 @@ def load_mercury(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_mercury())
     >>> pl.show()
 
@@ -103,7 +103,7 @@ def load_venus(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_venus())
     >>> pl.show()
 
@@ -130,7 +130,7 @@ def load_mars(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_mars())
     >>> pl.show()
 
@@ -155,7 +155,7 @@ def load_jupiter(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_jupiter())
     >>> pl.show()
 
@@ -180,7 +180,7 @@ def load_saturn(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_saturn())
     >>> pl.show()
 
@@ -205,7 +205,7 @@ def load_saturn_ring_alpha(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_saturn_ring_alpha())
     >>> pl.show()
 
@@ -233,7 +233,7 @@ def load_uranus(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_uranus())
     >>> pl.show()
 
@@ -258,7 +258,7 @@ def load_neptune(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.download_stars_jpg())
+    >>> pl.add_background_image(examples.planets.download_stars_jpg())
     >>> _ = pl.add_mesh(examples.planets.load_neptune())
     >>> pl.show()
 
@@ -288,7 +288,7 @@ def download_sun_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_sun_jpg()
+    >>> surface = examples.planets.download_sun_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -313,7 +313,7 @@ def download_moon_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_moon_jpg()
+    >>> surface = examples.planets.download_moon_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -338,7 +338,7 @@ def download_mercury_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_mercury_jpg()
+    >>> surface = examples.planets.download_mercury_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -366,7 +366,7 @@ def download_venus_jpg(atmosphere=True, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_venus_jpg()
+    >>> surface = examples.planets.download_venus_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -394,7 +394,7 @@ def download_mars_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_mars_jpg()
+    >>> surface = examples.planets.download_mars_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -419,7 +419,7 @@ def download_jupiter_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_jupiter_jpg()
+    >>> surface = examples.planets.download_jupiter_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -444,7 +444,7 @@ def download_saturn_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_saturn_jpg()
+    >>> surface = examples.planets.download_saturn_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -469,7 +469,7 @@ def download_saturn_ring_alpha_png(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_saturn_ring_alpha_jpg()
+    >>> surface = examples.planets.download_saturn_ring_alpha_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -494,7 +494,7 @@ def download_uranus_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_uranus_jpg()
+    >>> surface = examples.planets.download_uranus_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -519,7 +519,7 @@ def download_neptune_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_neptune_jpg()
+    >>> surface = examples.planets.download_neptune_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -545,7 +545,7 @@ def download_stars_jpg(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> dataset = examples.download_stars_jpg()
+    >>> dataset = examples.planets.download_stars_jpg()
     >>> pl.add_background_image(dataset)
     >>> pl.show()
 
@@ -574,7 +574,7 @@ def download_milkyway_jpg(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> dataset = examples.download_milkyway_jpg()
+    >>> dataset = examples.planets.download_milkyway_jpg()
     >>> pl.add_background_image(dataset)
     >>> pl.show()
 
