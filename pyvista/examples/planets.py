@@ -12,6 +12,8 @@ import numpy as np
 import pyvista
 from pyvista import examples
 
+from .downloads import _download_and_read
+
 
 def load_sun(*args, **kwargs):
     """Load a sun source.
