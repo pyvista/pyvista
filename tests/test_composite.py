@@ -157,11 +157,20 @@ def test_multi_block_set_get_ers():
     assert isinstance(pop, RectilinearGrid)
     assert multi.n_blocks == 3
     assert multi.get_block_name(10) is None
+
+    multi["new key"] = pyvista.Sphere()
+    assert multi.n_blocks == 4
+    assert multi[3] == pyvista.Sphere()
+
+    multi["new key"] = pyvista.Cube()
+    assert multi.n_blocks == 4
+    assert multi[3] == pyvista.Cube()
+
     with pytest.raises(KeyError):
         _ = multi.get_index_by_name('foo')
 
     with pytest.raises(IndexError):
-        multi[3] = UniformGrid()
+        multi[4] = UniformGrid()
 
     with pytest.raises(KeyError):
         multi["not a key"]

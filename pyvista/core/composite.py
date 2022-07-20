@@ -498,10 +498,10 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             for i, d in zip(range(self.n_blocks)[index], data):
                 self[i] = d
             return
+        else:
+            i = index
 
         # data, i, and name are a single value now
-        i = cast(int, index)
-
         if isinstance(data, tuple):
             if not len(data) == 2:
                 raise ValueError(f"Data {data} must be a length 2 tuple of form (DataSet, str)")
