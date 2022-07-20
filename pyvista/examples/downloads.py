@@ -3382,7 +3382,7 @@ def download_sun_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_sun()
+    >>> surface = examples.download_sun_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -3407,7 +3407,7 @@ def download_moon_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_moon()
+    >>> surface = examples.download_moon_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -3432,9 +3432,8 @@ def download_mercury_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_mercury()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_mercury_jpg()
+    >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('mercury.jpg', texture=True, load=load)
@@ -3461,9 +3460,8 @@ def download_venus_jpg(atmosphere=True, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_venus_jpg()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_venus_jpg()
+    >>> surface.plot(cpos="xy")
 
     """
     if atmosphere:
@@ -3490,7 +3488,7 @@ def download_mars_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_mars()
+    >>> surface = examples.download_mars_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -3515,7 +3513,7 @@ def download_jupiter_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_jupiter()
+    >>> surface = examples.download_jupiter_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -3540,7 +3538,7 @@ def download_saturn_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_saturn()
+    >>> surface = examples.download_saturn_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -3565,7 +3563,7 @@ def download_saturn_ring_alpha_png(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_saturn_ring_alpha()
+    >>> surface = examples.download_saturn_ring_alpha_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -3590,7 +3588,7 @@ def download_uranus_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.download_uranus()
+    >>> surface = examples.download_uranus_jpg()
     >>> surface.plot(cpos="xy")
 
     """
@@ -3615,9 +3613,8 @@ def download_neptune_jpg(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface_jpg = examples.download_neptune()
-    >>> surface_tex = pyvista.read_texture(surface_jpg)
-    >>> surface_tex.plot(cpos="xy")
+    >>> surface = examples.download_neptune_jpg()
+    >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('neptune.jpg', texture=True, load=load)
