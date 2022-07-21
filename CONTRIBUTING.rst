@@ -234,7 +234,7 @@ changes any given branch is introducing before looking at the code.
    routines
 -  ``testing/``: improvements or changes to testing
 -  ``release/``: releases (see below)
--  ``breaking-change/``: Changes to destroy backward compatibility
+-  ``breaking-change/``: Changes that break backward compatibility
 
 Testing
 ^^^^^^^
