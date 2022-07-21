@@ -2450,6 +2450,7 @@ def test_add_text():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows  # because of opacity
 def test_plot_composite_poly_scalars(multiblock_poly):
     pl = pyvista.Plotter()
 
