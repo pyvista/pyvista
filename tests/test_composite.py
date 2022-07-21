@@ -604,8 +604,9 @@ def test_set_active_scalars_components(multiblock_poly):
 def test_set_active_multi_multi(multiblock_poly):
     multi_multi = MultiBlock([multiblock_poly, multiblock_poly])
     with pytest.raises(KeyError, match='missing from all'):
-        multi_multi.set_active_scalars('does-not-exist')
-    multi_multi.set_active_scalars('multi-comp')
+        multi_multi.set_active_scalars('does-not-exist', allow_missing=True)
+
+    multi_multi.set_active_scalars('multi-comp', allow_missing=True)
 
 
 def test_set_active_scalars_mixed(multiblock_poly):
@@ -655,6 +656,11 @@ def test_compute_normals(multiblock_poly):
         assert 'Normals' in block.point_data
         assert 'point_data' in block.point_data
         assert 'pyvistaOriginalPointIds' in block.point_data
+
+    # test non-poly raises
+    multiblock_poly.append(pyvista.UnstructuredGrid())
+    with pytest.raises(RuntimeError, match='This multiblock contains non-PolyData'):
+        multiblock_poly._compute_normals()
 
 
 def test_activate_plotting_scalars(multiblock_poly):

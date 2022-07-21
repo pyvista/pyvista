@@ -172,13 +172,13 @@ class CompositeFilters:
         track_vertices=False,
         progress_bar=False,
     ):
-        """Compute point and/or cell normals for a multi-block dataset.
+        """Compute point and/or cell normals for a multi-block dataset."""
+        if not self.is_all_polydata:
+            raise RuntimeError(
+                'This multiblock contains non-PolyData datasets. Convert all the '
+                'datasets to PolyData with `as_polydata`'
+            )
 
-        Warnings
-        --------
-        This will segmentation fault if a single block is non-polydata.
-
-        """
         # track original point indices
         if split_vertices and track_vertices:
             for block in self:

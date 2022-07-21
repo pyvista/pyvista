@@ -254,11 +254,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             # get the scalars if available - recursive
             try:
                 tmi, tma = data.get_data_range(name)
-            except KeyError:
+            except KeyError as err:
                 if allow_missing:
                     continue
                 else:
-                    raise
+                    raise err
             if not np.isnan(tmi) and tmi < mini:
                 mini = tmi
             if not np.isnan(tma) and tma > maxi:
@@ -744,13 +744,15 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):
-                    field, scalars = block.set_active_scalars(name, preference, allow_missing=True)
+                    field, scalars = block.set_active_scalars(
+                        name, preference, allow_missing=allow_missing
+                    )
                 else:
                     try:
                         field, scalars = block.set_active_scalars(name, preference)
-                    except KeyError:
+                    except KeyError as err:
                         if not allow_missing:
-                            raise
+                            raise err
                         block.set_active_scalars(None, preference)
                         field, scalars = FieldAssociation.NONE, np.array([])
 
@@ -763,28 +765,23 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if not data_assoc:
             raise KeyError(f'"{name}" is missing from all the blocks of this composite dataset.')
 
-        # Verify that all the data has identical field association
-        first_field = data_assoc[0][0]
-        if any([first_field != field for field, _, _ in data_assoc]):
-            # remove any data not matching the preference
-            for field, scalars, block in list(data_assoc):
-                if field.name.lower() != preference:
-                    block.set_active_scalars(None)
-                    data_assoc.remove((field, scalars, block))
-
-            if preference == 'point':
-                field_asc = FieldAssociation.POINT
-            else:
-                field_asc = FieldAssociation.CELL
-
-        else:
-            field_asc = first_field
+        field_asc = data_assoc[0][0]
+        # set the field association to the preference if at least one occurrence
+        # of it exists
+        if field_asc.name.lower() != preference:
+            for field, _, _ in data_assoc:
+                if field.name.lower() == preference:
+                    field_asc = getattr(FieldAssociation, preference.upper())
+                    break
 
         # Verify array consistency
         dims: Set[int] = set()
         dtypes: Set[np.dtype] = set()
         for block in self:
-            for _, scalars, _ in data_assoc:
+            for field, scalars, _ in data_assoc:
+                # only check for the active field association
+                if field != field_asc:
+                    continue
                 dims.add(scalars.ndim)
                 dtypes.add(scalars.dtype)
 
@@ -808,6 +805,12 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         -------
         pyvista.MultiBlock
             MultiBlock containing only PolyData datasets.
+
+        Notes
+        -----
+        Null blocks are converted to empty :class:`pyvista.PolyData`
+        objects. Downstream filters that operate on PolyData cannot accept
+        MultiBlocks with null blocks.
 
         """
         # we make a shallow copy here to avoid modifying the original dataset

@@ -160,8 +160,11 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     def get_block(self, index):
         """Return a block by its flat index."""
         try:
-            vtk_ref = _vtk.reference(0)  # needed for <9.0
-            block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)
+            if _vtk.VTK9:
+                block = self.DataObjectFromIndex(index, self._dataset)
+            else:
+                vtk_ref = _vtk.reference(0)  # needed for <9.0
+                block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
         if block is None:

@@ -2092,7 +2092,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             VTK actor of the composite dataset.
 
         pyvista.CompositePolyDataMapper  # need to document
-            
+
 
         """
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
