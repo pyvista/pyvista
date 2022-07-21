@@ -4335,4 +4335,3 @@ def download_gif_simple(load=True):  # pragma: no cover
 
     """
     return _download_and_read('gifs/sample.gif', load=load)
-

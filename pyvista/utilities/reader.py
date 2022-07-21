@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import wraps
 import os
 import pathlib
-from typing import Any, List
+from typing import Any, Callable, List, Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -2072,10 +2072,13 @@ class SegYReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
 
-class _GIFReader():
+class _GIFReader:
     """Simulate a VTK reader for GIF files."""
 
     _data_object = None
+    _observers: List[Union[int, Callable]] = []
+    _n_frames = 0
+    _current_frame = 0
 
     def SetFileName(self, filename):
         """Needed for VTK-like compatibility with BaseReader."""
@@ -2085,9 +2088,21 @@ class _GIFReader():
         """Needed for VTK-like compatibility with BaseReader."""
         pass
 
-    def AddObserver(self, *args):
+    def AddObserver(self, event_type, callback):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._observers.append([event_type, callback])
+
+    def RemoveObservers(self, *args):
         """Needed for VTK-like compatibility with BaseReader."""
         pass
+
+    def GetProgress(self):
+        return self._current_frame / self._n_frames
+
+    def UpdateObservers(self, event_type):
+        for event_type_allowed, observer in self._observers:
+            if event_type_allowed == event_type:
+                observer(self, event_type)
 
     def Update(self):
         """Read the GIF and store internally to `_data_object`."""
@@ -2096,10 +2111,16 @@ class _GIFReader():
         img = Image.open(self._filename)
         self._data_object = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
 
-        # load each frame to the grid
+        # load each frame to the grid (RGB since gifs do not support transparency
+        self._n_frames = img.n_frames
         for i, frame in enumerate(ImageSequence.Iterator(img)):
+            self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
             self._data_object.point_data.set_array(data, f'frame{i}')
+            self.UpdateObservers(6)
+
+        if 'frame0' in self._data_object.point_data:
+            self._data_object.point_data.active_scalars_name = 'frame0'
 
     def GetOutputDataObject(self, *args):
         """Needed for VTK-like compatibility with BaseReader."""
@@ -2107,8 +2128,8 @@ class _GIFReader():
 
 
 class GIFReader(BaseReader):
-    """
-    
+    """GIFReader for .gif files.
+
     Parameters
     ----------
     path : str
@@ -2116,7 +2137,14 @@ class GIFReader(BaseReader):
 
     Examples
     --------
-    >>> 
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_gif_simple(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'sample.gif'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(rgba=True, zoom='tight', border=True, border_width=2)
 
     """
 

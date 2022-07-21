@@ -1,7 +1,7 @@
 import os
 import platform
-from PIL import Image, ImageSequence
 
+from PIL import Image, ImageSequence
 import numpy as np
 import pytest
 
@@ -852,6 +852,7 @@ def test_gif_reader(gif_file):
     reader = pyvista.get_reader(gif_file)
     assert isinstance(reader, pyvista.GIFReader)
     assert reader.path == gif_file
+    reader.show_progress()
 
     grid = reader.read()
     assert grid.n_arrays == 3

@@ -645,8 +645,17 @@ class Camera(_vtk.vtkCamera):
 
         return new_camera
 
-    def tight(self, padding=0, adjust_render_window=False):
+    def tight(self, padding=0, adjust_render_window=True):
         """Adjust the camera position so that the actors fill the entire renderer.
+
+        Parameters
+        ----------
+        padding : int, optional
+            Additional padding around the actors.
+
+        adjust_render_window : bool, optional
+            Adjust the size of the render window as to match the dimensions of
+            the visible actors.
 
         Notes
         -----
@@ -701,4 +710,4 @@ class Camera(_vtk.vtkCamera):
 
             # simply call tight again to reset the parallel scale due to the
             # resized window
-            self.tight()
+            self.tight(adjust_render_window=False)
