@@ -6,8 +6,8 @@ import numpy as np
 
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array, raise_not_matching
+from pyvista.utilities.misc import has_module
 
-from ._plotting import _has_matplotlib
 from .colors import Color, get_cmap_safe
 from .tools import normalize
 
@@ -80,7 +80,7 @@ def make_mapper(mapper_class):
         ):
             """Set the scalars on this mapper."""
             if cmap is None:  # Set default map if matplotlib is available
-                if _has_matplotlib():
+                if has_module('matplotlib'):
                     cmap = theme.cmap
 
             if not isinstance(scalars, np.ndarray):
@@ -180,7 +180,7 @@ def make_mapper(mapper_class):
 
                     check_colormap(cmap)
                 else:
-                    if not _has_matplotlib():
+                    if not has_module('matplotlib'):
                         cmap = None
                         logging.warning('Please install matplotlib for color maps.')
 

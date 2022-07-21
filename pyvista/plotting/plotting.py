@@ -32,12 +32,11 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
+from ..utilities.misc import PyvistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import (
     USE_SCALAR_BAR_ARGS,
     _common_arg_parser,
-    _has_matplotlib,
     prepare_smooth_shading,
     process_opacity,
 )
@@ -3308,11 +3307,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 table.SetAnnotation(float(val), str(anno))
 
         if cmap is None:  # Set default map if matplotlib is available
-            if _has_matplotlib():
+            if has_module('matplotlib'):
                 cmap = self._theme.cmap
 
         if cmap is not None:
-            if not _has_matplotlib():
+            if not has_module('matplotlib'):
                 raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
@@ -3564,7 +3563,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Linked view case.
 
-
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
@@ -3586,6 +3584,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show_axes()
         >>> pl.link_views()
         >>> pl.show()
+
         """
         if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:

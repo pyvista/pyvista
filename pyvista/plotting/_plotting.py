@@ -20,15 +20,6 @@ scalar_bar_args={'title': 'Scalar Bar Title'}
 """
 
 
-def _has_matplotlib():
-    try:
-        import matplotlib  # noqa
-
-        return True
-    except ImportError:  # pragma: no cover
-        return False
-
-
 def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
     """Prepare a dataset for smooth shading.
 

@@ -9,8 +9,7 @@ import numpy as np
 
 from pyvista import _vtk
 
-from ..utilities.misc import vtk_version_info
-from ._plotting import _has_matplotlib
+from ..utilities.misc import has_module, vtk_version_info
 from .colors import Color, get_cmap_safe
 
 
@@ -270,7 +269,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     def set_unique_colors(self):
         """Compute unique colors for each block of the dataset."""
         self.scalar_visibility = False
-        if _has_matplotlib():
+        if has_module('matplotlib'):
             import matplotlib
 
             colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
@@ -368,7 +367,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             self.lookup_table.SetScaleToLog10()
 
         if cmap is None:  # Set default map if matplotlib is available
-            if _has_matplotlib():
+            if has_module('matplotlib'):
                 cmap = theme.cmap
 
         if cmap is not None:
