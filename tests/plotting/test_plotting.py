@@ -2519,12 +2519,29 @@ def test_tight_square(noise_2d):
     pl.add_mesh(noise_2d, show_scalar_bar=False)
     pl.camera_position = 'xy'
     pl.camera.tight(adjust_render_window=True)
+    assert pl.window_size == [200, 200]
     pl.show(before_close_callback=verify_cache_image)
 
 
-# def test_tight_2d(noise_2d):
-#     pl = pyvista.Plotter(off_screen=False, window_size=[800, 200])
-#     pl.add_mesh(noise_2d, show_scalar_bar=False)
-#     pl.camera_position = 'xy'
-#     pl.camera.tight(adjust_render_window=True)
-#     plotter.show(before_close_callback=verify_cache_image)
+def test_tight_tall():
+    grid = pyvista.UniformGrid(dims=(100, 200, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(adjust_render_window=True)
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [75, 150], rtol=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_wide():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(adjust_render_window=True)
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)

@@ -294,21 +294,21 @@ class Camera(_vtk.vtkCamera):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Sphere()
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.camera.zoom(1.0)
         >>> pl.show()
 
         Show 2x zoom.
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Sphere()
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.camera.zoom(2.0)
         >>> pl.show()
 
         Zoom so the actor fills the entire render window.
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Sphere()
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.camera.zoom('tight')
         >>> pl.show()
 
@@ -646,40 +646,56 @@ class Camera(_vtk.vtkCamera):
         return new_camera
 
     def tight(self, padding=0, adjust_render_window=False):
-        """Adjust the camera position so that the actors fits in to the renderer.
+        """Adjust the camera position so that the actors fill the entire renderer.
+
+        Notes
+        -----
+        This only works with 2D images exposed in the XY plane.
 
         Examples
         --------
-        >>> 
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> puppy = examples.download_puppy()
+        >>> pl = pv.Plotter(border=True, border_width=5)
+        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> pl.camera.tight(adjust_render_window=True)
+        >>> pl.show()
 
         """
-
         # inspired by vedo resetCamera. Thanks @marcomusy!
-        
         x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+        if z1 - z0 > 1e-5:
+            warnings.warn(
+                '`tight` should only be used with actors that lie only on the ' 'XY plane'
+            )
 
         self.enable_parallel_projection()
 
         self._renderer.ComputeAspect()
         aspect = self._renderer.GetAspect()
-        angle = np.pi*self.view_angle/180.
-        dx, dy = (x1-x0)*0.999, (y1-y0)*0.999
-        dist = max(dx/aspect[0], dy) / np.sin(angle/2) / 2
+        angle = np.pi * self.view_angle / 180.0
+        dx, dy = (x1 - x0) * 0.999, (y1 - y0) * 0.999
+        dist = max(dx / aspect[0], dy) / np.sin(angle / 2) / 2
 
-        ps = max(dx/aspect[0], dy) / 2
-        self.parallel_scale = ps*(1+padding)
+        self.SetViewUp(0, 1, 0)
+        self.SetPosition(x0 + dx / 2, y0 + dy / 2, dist * (1 + padding))
+        self.SetFocalPoint(x0 + dx / 2, y0 + dy / 2, 0)
+
+        ps = max(dx / aspect[0], dy) / 2
+        self.parallel_scale = ps * (1 + padding)
         self._renderer.ResetCameraClippingRange(x0, x1, y0, y1, z0, z1)
 
         if adjust_render_window:
             ren_win = self._renderer.GetRenderWindow()
             size = list(ren_win.GetSize())
-            size_ratio = size[0]/size[1]
-            tight_ratio = dx/dy
-            if tight_ratio > size_ratio:
-                resize_ratio = 
-                size[0] = size[0]*tight_ratio
+            size_ratio = size[0] / size[1]
+            tight_ratio = dx / dy
+            resize_ratio = tight_ratio / size_ratio
+            if resize_ratio < 1:
+                size[0] = round(size[0] * resize_ratio)
             else:
-                size[1] = round(size[1]/tight_ratio)
+                size[1] = round(size[1] / resize_ratio)
 
             ren_win.SetSize(size)
 
