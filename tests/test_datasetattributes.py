@@ -1,3 +1,4 @@
+import os
 from string import ascii_letters, digits, whitespace
 import sys
 
@@ -9,6 +10,8 @@ from pytest import fixture, mark, raises
 
 import pyvista
 from pyvista.utilities import FieldAssociation
+
+skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
 @fixture()
@@ -564,13 +567,17 @@ def test_active_t_coords_name(plane):
         plane.field_data.active_t_coords_name = 'arr'
 
 
+@skip_windows  # windows doesn't support np.complex256
+def test_complex_raises(plane):
+    with raises(ValueError, match='Only numpy.complex64'):
+        plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
+
+
 @mark.parametrize('dtype_str', ['complex64', 'complex128'])
 def test_complex(plane, dtype_str):
     """Test if complex data can be properly represented in datasetattributes."""
     dtype = np.dtype(dtype_str)
     name = 'my_data'
-    with raises(ValueError, match='Only numpy.complex64'):
-        plane.point_data[name] = np.empty(plane.n_points, dtype=np.complex256)
 
     with raises(ValueError, match='Complex data must be single dimensional'):
         plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
