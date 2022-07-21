@@ -223,6 +223,7 @@ def plot(
     auto_close = kwargs.get('auto_close')
 
     pl = Plotter(
+        window_size=window_size,
         off_screen=off_screen,
         notebook=notebook,
         theme=theme,
@@ -279,17 +280,16 @@ def plot(
     else:
         pl.camera_position = cpos
 
-    if zoom is not None:
-        pl.camera.zoom(zoom)
-
     if eye_dome_lighting:
         pl.enable_eye_dome_lighting()
 
     if parallel_projection:
         pl.enable_parallel_projection()
 
+    if zoom is not None:
+        pl.camera.zoom(zoom)
+
     return pl.show(
-        window_size=window_size,
         auto_close=auto_close,
         interactive=interactive,
         full_screen=full_screen,

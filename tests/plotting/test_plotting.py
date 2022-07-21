@@ -2515,12 +2515,13 @@ def test_bool_scalars(sphere):
 
 
 def test_tight_square(noise_2d):
-    pl = pyvista.Plotter(window_size=[800, 200])
-    pl.add_mesh(noise_2d, show_scalar_bar=False)
-    pl.camera_position = 'xy'
-    pl.camera.tight(adjust_render_window=True)
-    assert pl.window_size == [200, 200]
-    pl.show(before_close_callback=verify_cache_image)
+    noise_2d.plot(
+        window_size=[800, 200],
+        show_scalar_bar=False,
+        cpos='xy',
+        zoom='tight',
+        before_close_callback=verify_cache_image,
+    )
 
 
 def test_tight_tall():
@@ -2529,7 +2530,9 @@ def test_tight_tall():
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
     pl.camera_position = 'xy'
-    pl.camera.tight(adjust_render_window=True)
+    with pytest.raises(ValueError, match='can only be "tight"'):
+        pl.camera.zoom('invalid')
+    pl.camera.tight()
     # limit to widest dimension
     assert np.allclose(pl.window_size, [75, 150], rtol=1)
     pl.show(before_close_callback=verify_cache_image)
@@ -2541,7 +2544,7 @@ def test_tight_wide():
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
     pl.camera_position = 'xy'
-    pl.camera.tight(adjust_render_window=True)
+    pl.camera.tight()
     # limit to widest dimension
     assert np.allclose(pl.window_size, [150, 75])
     pl.show(before_close_callback=verify_cache_image)
