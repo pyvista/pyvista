@@ -89,6 +89,11 @@ class _BlockAttributes:
 
         If opacity has not been set this will be ``None``.
 
+        Warnings
+        --------
+        VTK 9.0.3 has a bug where changing the opacity to less than 1.0 also
+        changes the edge visibility on the block that is partially opacity.
+
         """
         if not self._has_opacity:
             return None

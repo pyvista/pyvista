@@ -2451,7 +2451,7 @@ def test_add_text():
 
 
 @skip_windows  # because of opacity
-def test_plot_composite_poly_scalars(multiblock_poly):
+def test_plot_composite_poly_scalars_opacity(multiblock_poly):
     pl = pyvista.Plotter()
 
     actor, mapper = pl.add_composite(
@@ -2467,7 +2467,13 @@ def test_plot_composite_poly_scalars(multiblock_poly):
     mapper.block_attr[1].opacity = 0.5
 
     pl.camera_position = 'xy'
-    pl.show(before_close_callback=verify_cache_image)
+
+    # 9.0.3 has a bug where VTK changes the edge visibility on blocks that are
+    # also opaque. Don't verify the image of that version.
+    if pyvista.vtk_version_info == (9, 0, 3):
+        pl.show()
+    else:
+        pl.show(before_close_callback=verify_cache_image)
 
 
 def test_plot_composite_poly_scalars_cell(multiblock_poly):
@@ -2486,15 +2492,18 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly):
 def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl = pyvista.Plotter()
 
+    # Note: set the camera position before making the blocks invisible. VTK
+    # 9.0.3 still considers invisible blocks when determining camera bounds.
     actor, mapper = pl.add_composite(
         multiblock_poly,
         color='red',
         lighting=False,
     )
+
+    pl.camera_position = 'xy'
     mapper.block_attr[2].color = 'blue'
     mapper.block_attr[3].visible = False
 
-    pl.camera_position = 'xy'
     pl.show(before_close_callback=verify_cache_image)
 
 
