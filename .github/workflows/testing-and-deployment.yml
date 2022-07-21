@@ -178,11 +178,13 @@ jobs:
         if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
 
+      - uses: awalsh128/cache-apt-pkgs-action@v1.0.3
+        with:
+          packages: libgl1-mesa-glx xvfb python-tk
+          version: 1.0
+
       - name: Install Testing Requirements
-        run: |
-          sudo apt-get update
-          sudo apt-get install libgl1-mesa-glx xvfb python-tk -y
-          pip install -r requirements_test.txt
+        run: pip install -r requirements_test.txt
 
       - name: Software Report
         run: |
