@@ -101,6 +101,7 @@ if VTK9:
         VTK_UNSIGNED_CHAR,
         buffer_shared,
         mutable,
+        reference,
         vtkAbstractArray,
         vtkBitArray,
         vtkCharArray,

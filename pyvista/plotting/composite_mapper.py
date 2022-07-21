@@ -9,6 +9,7 @@ import numpy as np
 
 from pyvista import _vtk
 
+from ..utilities.misc import vtk_version_info
 from ._plotting import _has_matplotlib
 from .colors import Color, get_cmap_safe
 
@@ -160,11 +161,11 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     def get_block(self, index):
         """Return a block by its flat index."""
         try:
-            if _vtk.VTK9:
-                block = self.DataObjectFromIndex(index, self._dataset)
-            else:
-                vtk_ref = _vtk.reference(0)  # needed for <9.0
+            if vtk_version_info <= (9, 0, 3):
+                vtk_ref = _vtk.reference(0)  # needed for <=9.0.3
                 block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)
+            else:
+                block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
         if block is None:
