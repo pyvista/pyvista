@@ -45,7 +45,7 @@ jobs:
         with:
           requirement_files: requirements_docs.txt
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.03
+      - uses: awalsh128/cache-apt-pkgs-action@v1.0.3
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 1.0
