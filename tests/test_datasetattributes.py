@@ -308,6 +308,11 @@ def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
+    if not str(arr).isascii():
+        with raises(ValueError, match='non-ASCII'):
+            hexbeam_field_attributes['string_arr'] = arr
+        return
+
     hexbeam_field_attributes['string_arr'] = arr
     assert np.array_equiv(arr, hexbeam_field_attributes['string_arr'])
 

@@ -117,6 +117,11 @@ def convert_string_array(arr, name=None):
 
     """
     if isinstance(arr, np.ndarray):
+        if not str(arr).isascii():  # avoids segfault
+            raise ValueError(
+                'Character "String array contains non-ASCII characters that are '
+                'not supported by VTK.'
+            )
         vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
         for val in arr:
