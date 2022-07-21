@@ -1,16 +1,22 @@
 """Fine-grained control of reading data files."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import wraps
 import os
+import pathlib
 from typing import Any, List
 from xml.etree import ElementTree
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import abstract_class, get_ext, wrap
+from pyvista.utilities import abstract_class, wrap
+
+from .fileio import _get_ext_force, _process_filename
+
+HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
 
 
-def get_reader(filename):
+def get_reader(filename, force_ext=None):
     """Get a reader for fine-grained control of reading data files.
 
     Supported file types and Readers:
@@ -26,13 +32,15 @@ def get_reader(filename):
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
+    | ``.dat``       | :class:`pyvista.TecplotReader`              |
+    +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
     | ``.dem``       | :class:`pyvista.DEMReader`                  |
     +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
-    | ``.foam``      | :class:`pyvista.OpenFOAMReader`             |
+    | ``.foam``      | :class:`pyvista.POpenFOAMReader`            |
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
@@ -41,6 +49,8 @@ def get_reader(filename):
     | ``.gltf``      | :class:`pyvista.GLTFReader`                 |
     +----------------+---------------------------------------------+
     | ``.hdf``       | :class:`pyvista.HDFReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.img``       | :class:`pyvista.DICOMReader`                |
     +----------------+---------------------------------------------+
     | ``.inp``       | :class:`pyvista.AVSucdReader`               |
     +----------------+---------------------------------------------+
@@ -118,6 +128,9 @@ def get_reader(filename):
     filename : str
         The string path to the file to read.
 
+    force_ext : str, optional
+        An extension to force a specific reader to be chosen.
+
     Returns
     -------
     pyvista.BaseReader
@@ -139,7 +152,7 @@ def get_reader(filename):
     >>> mesh.plot(color='tan')
 
     """
-    ext = get_ext(filename)
+    ext = _get_ext_force(filename, force_ext)
 
     try:
         Reader = CLASS_READERS[ext]
@@ -173,7 +186,9 @@ class BaseReader:
         self._progress_bar = False
         self._progress_msg = None
         self.__directory = None
+        self._set_defaults()
         self.path = path
+        self._set_defaults_post()
 
     def __repr__(self):
         """Representation of a Reader object."""
@@ -284,11 +299,21 @@ class BaseReader:
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
+        if data is None:  # pragma: no cover
+            raise RuntimeError("Failed to read file.")
         data._post_file_load_processing()
         return data
 
     def _update_information(self):
         self.reader.UpdateInformation()
+
+    def _set_defaults(self):
+        """Set defaults on reader, if needed."""
+        pass
+
+    def _set_defaults_post(self):
+        """Set defaults on reader post setting file, if needed."""
+        pass
 
 
 class PointCellDataSelection:
@@ -722,18 +747,16 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
-    """OpenFOAM Reader for .foam files."""
+    """OpenFOAM Reader for .foam files.
+
+    By default, pyvista enables all patch arrays.  This is a deviation
+    from the vtk default.
+
+    """
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
-    def __init__(self, path):
-        """Initialize OpenFOAMReader.
-
-        By default, pyvista enables all patch arrays.  This is a deviation
-        from the vtk default.
-
-        """
-        super().__init__(path)
+    def _set_defaults_post(self):
         self.enable_all_patch_arrays()
 
     @property
@@ -756,7 +779,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
             )
         self.reader.UpdateTimeStep(time_value)
 
@@ -787,10 +810,35 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @decompose_polyhedra.setter
     def decompose_polyhedra(self, value):
-        if value:
-            self.reader.DecomposePolyhedraOn()
-        else:
-            self.reader.DecomposePolyhedraOff()
+        self.reader.SetDecomposePolyhedra(value)
+
+    @property
+    def skip_zero_time(self):
+        """Indicate whether or not to ignore the '/0' time directory.
+
+        Returns
+        -------
+        bool
+            If ``True``, ignore the '/0' time directory.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.skip_zero_time = False
+        >>> reader.skip_zero_time
+        False
+
+        """
+        return bool(self.reader.GetSkipZeroTime())
+
+    @skip_zero_time.setter
+    def skip_zero_time(self, value):
+        self.reader.SetSkipZeroTime(value)
+        self._update_information()
+        self.reader.SetRefresh()
 
     @property
     def cell_to_point_creation(self):
@@ -821,10 +869,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @cell_to_point_creation.setter
     def cell_to_point_creation(self, value):
-        if value:
-            self.reader.CreateCellToPointOn()
-        else:
-            self.reader.CreateCellToPointOff()
+        self.reader.SetCreateCellToPoint(value)
 
     @property
     def number_patch_arrays(self):
@@ -988,6 +1033,55 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return {name: self.patch_array_status(name) for name in self.patch_array_names}
 
 
+class POpenFOAMReader(OpenFOAMReader):
+    """Parallel OpenFOAM Reader for .foam files.
+
+    Can read parallel-decomposed mesh information and time dependent data.
+    This reader can be used for serial generated data,
+    parallel reconstructed data, and decomposed data.
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
+
+    @property
+    def case_type(self):
+        """Indicate whether decomposed mesh or reconstructed mesh should be read.
+
+        Returns
+        -------
+        str
+            If ``'reconstructed'``, reconstructed mesh should be read.
+            If ``'decomposed'``, decomposed mesh should be read.
+
+        Raises
+        ------
+        ValueError
+            If the value is not in ['reconstructed', 'decomposed']
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.POpenFOAMReader(filename)
+        >>> reader.case_type = 'reconstructed'
+        >>> reader.case_type
+        'reconstructed'
+        """
+        return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
+
+    @case_type.setter
+    def case_type(self, value):
+        if value == 'reconstructed':
+            self.reader.SetCaseType(1)
+        elif value == 'decomposed':
+            self.reader.SetCaseType(0)
+        else:
+            raise ValueError(f"Unknown case type '{value}'.")
+
+        self._update_information()
+
+
 class PLYReader(BaseReader):
     """PLY Reader for reading .ply files.
 
@@ -1045,6 +1139,23 @@ class STLReader(BaseReader):
     _class_reader = _vtk.vtkSTLReader
 
 
+class TecplotReader(BaseReader):
+    """Tecplot Reader for ascii .dat files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_tecplot_ascii(load=False)
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh[0].plot()
+
+    """
+
+    _class_reader = _vtk.vtkTecplotReader
+
+
 class VTKDataSetReader(BaseReader):
     """VTK Data Set Reader for .vtk files.
 
@@ -1070,10 +1181,7 @@ class VTKDataSetReader(BaseReader):
 
     _class_reader = _vtk.vtkDataSetReader
 
-    def __init__(self, path):
-        """Initialize VTKDataSetReader with filename."""
-        super().__init__(path)
-        # Provide consistency with defaults in pyvista.read
+    def _set_defaults_post(self):
         self.reader.ReadAllScalarsOn()
         self.reader.ReadAllColorScalarsOn()
         self.reader.ReadAllNormalsOn()
@@ -1133,6 +1241,54 @@ class Plot3DMetaReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
+class MultiBlockPlot3DReader(BaseReader):
+    """MultiBlock Plot3D Reader."""
+
+    _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+
+    def _set_defaults(self):
+        self.auto_detect_format = True
+
+    def add_q_files(self, files):
+        """Add q file(s).
+
+        Parameters
+        ----------
+        files : str or Iterable(str)
+            Solution file or files to add.
+
+        """
+        # files may be a list or a single filename
+        if files:
+            if isinstance(files, (str, pathlib.Path)):
+                files = [files]
+        files = [_process_filename(f) for f in files]
+
+        if hasattr(self.reader, 'AddFileName'):
+            # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
+            # VTK 8.2. This method supports reading multiple q files.
+            for q_filename in files:
+                self.reader.AddFileName(q_filename)
+        else:
+            # SetQFileName is used to add a single q file to be read, and is still
+            # supported in VTK9.
+            if len(files) > 0:
+                if len(files) > 1:
+                    raise RuntimeError(
+                        'Reading of multiple q files is not supported with this version of VTK.'
+                    )
+                self.reader.SetQFileName(files[0])
+
+    @property
+    def auto_detect_format(self):
+        """Whether to try to automatically detect format such as byte order, etc."""
+        return bool(self.reader.GetAutoDetectFormat())
+
+    @auto_detect_format.setter
+    def auto_detect_format(self, value):
+        self.reader.SetAutoDetectFormat(value)
+
+
 class CGNSReader(BaseReader, PointCellDataSelection):
     """CGNS Reader for .cgns files.
 
@@ -1162,20 +1318,18 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     Active Texture  : None
     Active Normals  : None
     Contains arrays :
-        Density                 float64  (2928,)
-        Momentum                float64  (2928, 3)            VECTORS
-        EnergyStagnationDensity float64  (2928,)
-        ViscosityEddy           float64  (2928,)
-        TurbulentDistance       float64  (2928,)
-        TurbulentSANuTilde      float64  (2928,)
+        Density                 float64    (2928,)
+        Momentum                float64    (2928, 3)            VECTORS
+        EnergyStagnationDensity float64    (2928,)
+        ViscosityEddy           float64    (2928,)
+        TurbulentDistance       float64    (2928,)
+        TurbulentSANuTilde      float64    (2928,)
 
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
 
-    def __init__(self, filename: str):
-        """Initialize CGNSReader with filename."""
-        super().__init__(filename)
+    def _set_defaults_post(self):
         self.enable_all_point_arrays()
         self.enable_all_cell_arrays()
         self.load_boundary_patch = True
@@ -1862,9 +2016,9 @@ class HDFReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_can(partial=True, load=False)
+    >>> filename = examples.download_can_crushed_hdf(load=False)
     >>> filename.split("/")[-1]  # omit the path
-    'can_0.hdf'
+    'can-vtu.hdf'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -1872,6 +2026,22 @@ class HDFReader(BaseReader):
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkHDFReader)
+
+    @wraps(BaseReader.read)
+    def read(self):
+        """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
+        try:
+            with pyvista.VtkErrorCatcher(raise_errors=True):
+                return super().read()
+        except RuntimeError as err:  # pragma: no cover
+            if "Can't find the `Type` attribute." in str(err):
+                raise RuntimeError(
+                    f'{self.path} is missing the Type attribute. '
+                    'The VTKHDF format has changed as of 9.2.0, '
+                    f'see {HDF_HELP} for more details.'
+                )
+            else:
+                raise err
 
 
 class GLTFReader(BaseReader):
@@ -1904,13 +2074,15 @@ CLASS_READERS = {
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.facet': FacetReader,
-    '.foam': OpenFOAMReader,
+    '.foam': POpenFOAMReader,
     '.g': BYUReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
+    '.img': DICOMReader,
     '.inp': AVSucdReader,
     '.jpg': JPEGReader,
     '.jpeg': JPEGReader,

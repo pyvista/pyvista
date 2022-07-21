@@ -18,7 +18,8 @@ install_requires = [
     'pillow',
     'appdirs',
     'scooby>=0.5.1',
-    'vtk',
+    'vtk>=8.1.2, <=9.2.0; python_version < "3.10"',
+    'vtk~=9.2.0rc1; python_version == "3.10"',
 ]
 
 readme_file = os.path.join(filepath, 'README.rst')
@@ -54,10 +55,14 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
     package_data={
+        'pyvista': [
+            'py.typed',
+        ],
         'pyvista.examples': [
             'airplane.ply',
             'ant.ply',
@@ -71,11 +76,18 @@ setup(
             '2k_earth_daymap.jpg',
         ],
     },
+    project_urls={
+        "Documentation": "https://docs.pyvista.org/",
+        "Bug Tracker": "https://github.com/pyvista/pyvista/issues",
+        "Source Code": "https://github.com/pyvista/pyvista",
+    },
     python_requires='>=3.7.*',
     install_requires=install_requires,
     extras_require={
-        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio'],
+        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio>=5.2', 'ipyvtklink', 'pythreejs'],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
         'io': ['meshio>=5.2'],
+        'jupyter': ['ipyvtklink', 'pythreejs'],
     },
+    zip_safe=False,
 )

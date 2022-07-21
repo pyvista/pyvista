@@ -14,7 +14,6 @@ import warnings
 
 from PIL import Image
 import imageio
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import vtk
@@ -25,10 +24,11 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.utilities.misc import can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
-    pytestmark = pytest.mark.skip
+    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
 
 ffmpeg_failed = False
@@ -47,6 +47,10 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 skip_9_1_0 = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
 
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
+)
+
 # Reset image cache with new images
 glb_reset_image_cache = False
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
@@ -62,6 +66,10 @@ skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
 )
+skip_mac_flaky = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
+)
+
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -70,23 +78,50 @@ IMAGE_REGRESSION_WARNING = 200  # minor differences
 # Image regression warning/error thresholds for releases after 9.0.1
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
-    'test_pbr',
-    'test_set_viewup',
     'test_add_title',
-    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
-    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
     'test_export_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
+    'test_opacity_by_array_user_transform',
+    'test_pbr',
+    'test_set_environment_texture_cubemap',
+    'test_set_viewup',
 }
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
+
+# these images vary between Windows when using OSMesa and Linux/MacOS
+# and will not be verified
+WINDOWS_SKIP_IMAGE_CACHE = {
+    'test_user_annotations_scalar_bar_volume',  # occurs even without Windows OSMesa
+    'test_enable_stereo_render',  # occurs even without Windows OSMesa
+    'test_plot_add_scalar_bar',
+    'test_plot_cell_data',
+    'test_scalars_by_name',
+    'test_user_annotations_scalar_bar_volume',
+    'test_plot_string_array',
+    'test_cmap_list',
+    'test_collision_plot',
+    'test_enable_stereo_render',
+    'test_plot_complex_value',
+    'test_plot_helper_volume',
+    'test_plot_helper_two_volumes',
+}
+
+# these images vary between Linux/Windows and MacOS
+# and will not be verified for MacOS
+MACOS_SKIP_IMAGE_CACHE = {
+    'test_plot_show_grid_with_mesh',
+}
 
 
 # this must be a session fixture to ensure this runs before any other test
 @pytest.fixture(scope="session", autouse=True)
 def get_cmd_opt(pytestconfig):
-    global glb_reset_image_cache, glb_ignore_image_cache
+    global glb_reset_image_cache, glb_ignore_image_cache, glb_fail_extra_image_cache
     glb_reset_image_cache = pytestconfig.getoption('reset_image_cache')
     glb_ignore_image_cache = pytestconfig.getoption('ignore_image_cache')
+    glb_fail_extra_image_cache = pytestconfig.getoption('fail_extra_image_cache')
 
 
 def verify_cache_image(plotter):
@@ -106,45 +141,53 @@ def verify_cache_image(plotter):
     plotter.show(before_close_callback=verify_cache_image)
 
     """
-    global glb_reset_image_cache, glb_ignore_image_cache
+    global glb_reset_image_cache, glb_ignore_image_cache, glb_fail_extra_image_cache
 
-    # Image cache is only valid for VTK9 on Linux
-    if not VTK9 or platform.system() != 'Linux':
+    # Image cache is only valid for VTK9+
+    if not VTK9:
         return
 
     # since each test must contain a unique name, we can simply
     # use the function test to name the image
     stack = inspect.stack()
-    test_name = None
     for item in stack:
         if item.function == 'check_gc':
             return
         if item.function[:5] == 'test_':
             test_name = item.function
             break
-    if item.function in HIGH_VARIANCE_TESTS:
+    else:
+        raise RuntimeError(
+            'Unable to identify calling test function.  This function '
+            'should only be used within a pytest environment.'
+        )
+
+    if test_name in HIGH_VARIANCE_TESTS:
         allowed_error = VER_IMAGE_REGRESSION_ERROR
         allowed_warning = VER_IMAGE_REGRESSION_WARNING
     else:
         allowed_error = IMAGE_REGRESSION_ERROR
         allowed_warning = IMAGE_REGRESSION_WARNING
 
-    if test_name is None:
-        raise RuntimeError(
-            'Unable to identify calling test function.  This function '
-            'should only be used within a pytest environment.'
-        )
+    # some tests fail when on Windows with OSMesa
+    if os.name == 'nt' and test_name in WINDOWS_SKIP_IMAGE_CACHE:
+        return
+    # high variation for MacOS
+    if platform.system() == 'Darwin' and test_name in MACOS_SKIP_IMAGE_CACHE:
+        return
 
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
 
+    if glb_ignore_image_cache:
+        return
+
+    if not os.path.isfile(image_filename) and glb_fail_extra_image_cache:
+        raise RuntimeError(f"{image_filename} does not exist in image cache")
     # simply save the last screenshot if it doesn't exist or the cache
     # is being reset.
     if glb_reset_image_cache or not os.path.isfile(image_filename):
         return plotter.screenshot(image_filename)
-
-    if glb_ignore_image_cache:
-        return
 
     # otherwise, compare with the existing cached image
     error = pyvista.compare_images(image_filename, plotter)
@@ -193,6 +236,32 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_gltf(filename)
 
 
+def test_import_vrml():
+    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.wrl')
+    pl = pyvista.Plotter()
+
+    with pytest.raises(FileNotFoundError):
+        pl.import_vrml('not a file')
+
+    pl.import_vrml(filename)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.wrl"))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+    pl.export_vrml(filename)
+
+    pl_import = pyvista.Plotter()
+    pl_import.import_vrml(filename)
+    pl_import.show(before_close_callback=verify_cache_image)
+
+    with pytest.raises(RuntimeError, match="This plotter has been closed"):
+        pl_import.export_vrml(filename)
+
+
 @skip_not_vtk9
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
@@ -216,6 +285,24 @@ def test_pbr(sphere):
         diffuse=1,
     )
     pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_not_vtk9
+@skip_windows
+@skip_mac
+def test_set_environment_texture_cubemap(sphere):
+    """Test set_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter(lighting=None)
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
+
+    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
+    if pyvista.vtk_version_info <= (9, 1):
+        pl.show(before_close_callback=verify_cache_image)
+    else:
+        pl.show()
 
 
 def test_plot_pyvista_ndarray(sphere):
@@ -267,7 +354,6 @@ def test_plot(sphere, tmpdir):
         interpolate_before_map=True,
         screenshot=filename,
         return_img=True,
-        before_close_callback=verify_cache_image,
         return_cpos=True,
     )
     assert isinstance(cpos, pyvista.CameraPosition)
@@ -284,6 +370,31 @@ def test_plot(sphere, tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+def test_plot_helper_volume(uniform):
+    uniform.plot(
+        volume=True,
+        parallel_projection=True,
+        show_scalar_bar=False,
+        show_grid=True,
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_plot_helper_two_datasets(sphere, airplane):
+    pyvista.plot([sphere, airplane], before_close_callback=verify_cache_image)
+
+
+def test_plot_helper_two_volumes(uniform):
+    grid = uniform.copy()
+    grid.origin = (0, 0, 10)
+    pyvista.plot(
+        [uniform, grid],
+        volume=True,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
 
 
 def test_plot_return_cpos(sphere):
@@ -456,8 +567,28 @@ def test_plot_bounds_axes_with_no_data():
 
 def test_plot_show_grid(sphere):
     plotter = pyvista.Plotter()
+
+    with pytest.raises(ValueError, match='Value of location'):
+        plotter.show_grid(location='foo')
+    with pytest.raises(TypeError, match='location must be a string'):
+        plotter.show_grid(location=10)
+    with pytest.raises(ValueError, match='Value of ticks'):
+        plotter.show_grid(ticks='foo')
+    with pytest.raises(TypeError, match='ticks must be a string'):
+        plotter.show_grid(ticks=10)
+
     plotter.show_grid()
     plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_show_grid_with_mesh(hexbeam, plane):
+    """Show the grid bounds for a specific mesh."""
+    hexbeam.clear_data()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(hexbeam, style='wireframe')
+    plotter.add_mesh(plane)
+    plotter.show_grid(mesh=plane, show_zlabels=False, show_zaxis=False)
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -1561,9 +1692,11 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
 
 @skip_windows
 def test_opacity_by_array_direct(plane):
-    # test with opacity parm as an array
+    # test with opacity parm as an array, both cell and point sized
+    plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pyvista.Plotter()
     pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points), show_edges=True)
+    pl.add_mesh(plane_shift, color='r', opacity=np.linspace(0, 1, plane.n_cells), show_edges=True)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -1592,7 +1725,7 @@ def test_opacity_by_array_user_transform(uniform):
     opacities = [0, 0.2, 0.9, 0.2, 0.1]
     p = pyvista.Plotter()
     p.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
-    p.show()  # note: =verify_cache_image does not work between Xvfb
+    p.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_mismatched_fail(uniform):
@@ -1602,7 +1735,28 @@ def test_opacity_mismatched_fail(uniform):
     # Test using mismatched arrays
     p = pyvista.Plotter()
     with pytest.raises(ValueError):
+        # cell scalars vs point opacity
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
+
+
+def test_opacity_by_array_preference():
+    tetra = pyvista.Tetrahedron()  # 4 points, 4 cells
+    opacities = np.linspace(0.2, 0.8, tetra.n_points)
+    tetra.clear_data()
+    tetra.point_data['scalars'] = tetra.cell_data['scalars'] = np.arange(tetra.n_points)
+    tetra.point_data['opac'] = tetra.cell_data['opac'] = opacities
+
+    # test opacity by key
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity='opac', preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity='opac', preference='point')
+    p.close()
+
+    # test opacity by array
+    p = pyvista.Plotter()
+    p.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
+    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
+    p.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_transfer_functions():
@@ -2068,7 +2222,7 @@ def test_collision_plot():
 
 
 @skip_mac
-@skip_9_1_0
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 2, 0), reason="Requires VTK>=9.2.0")
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
@@ -2135,8 +2289,11 @@ def test_chart_plot():
 
 
 @skip_9_1_0
+@skip_no_mpl_figure
 def test_chart_matplotlib_plot():
     """Test integration with matplotlib"""
+    import matplotlib.pyplot as plt
+
     rng = np.random.default_rng(1)
     # First, create the matplotlib figure
     # use tight layout to keep axis labels visible on smaller figures
@@ -2180,11 +2337,26 @@ def test_plot_zoom(sphere):
 
 def test_splitting():
     nut = examples.load_nut()
+    nut['sample_data'] = nut.points[:, 2]
+
     # feature angle of 50 will smooth the outer edges of the nut but not the inner.
     nut.plot(
         smooth_shading=True,
         split_sharp_edges=True,
         feature_angle=50,
+        before_close_callback=verify_cache_image,
+        show_scalar_bar=False,
+    )
+
+
+@skip_mac_flaky
+def test_splitting_active_cells(cube):
+    cube.cell_data['cell_id'] = range(cube.n_cells)
+    cube = cube.triangulate().subdivide(1)
+    cube.plot(
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
         before_close_callback=verify_cache_image,
     )
 
@@ -2257,4 +2429,86 @@ def test_ruler(sphere):
     plotter.add_mesh(sphere)
     plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
     plotter.view_xy()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_complex_value(plane):
+    """Test plotting complex data."""
+    data = np.arange(plane.n_points, dtype=np.complex128)
+    data += np.linspace(0, 1, plane.n_points) * -1j
+    with pytest.warns(np.ComplexWarning):
+        plane.plot(scalars=data)
+
+    pl = pyvista.Plotter()
+    with pytest.warns(np.ComplexWarning):
+        pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_warn_screenshot_notebook():
+    pl = pyvista.Plotter(notebook=True)
+    pl.theme.jupyter_backend = 'static'
+    with pytest.warns(UserWarning, match='Set `jupyter_backend` backend to `"none"`'):
+        pl.show(screenshot='tmp.png')
+
+
+def test_add_text():
+    plotter = pyvista.Plotter()
+    plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
+    plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_export_obj(tmpdir, sphere):
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.obj"))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+
+    if pyvista.vtk_version_info <= (8, 1, 2):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.export_obj(filename)
+        return
+
+    with pytest.raises(ValueError, match='end with ".obj"'):
+        pl.export_obj('badfilename')
+
+    pl.export_obj(filename)
+
+    # Check that the object file has been written
+    assert os.path.exists(filename)
+
+    # Check that when we close the plotter, the adequate error is raised
+    pl.close()
+    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+        pl.export_obj(filename)
+
+
+def test_multi_plot_scalars():
+    res = 5
+    plane = pyvista.Plane(j_resolution=res, i_resolution=res)
+    plane.clear_data()
+    kek = np.arange(res + 1)
+    kek = np.tile(kek, (res + 1, 1))
+    u = kek.flatten().copy()
+    v = kek.T.flatten().copy()
+
+    plane.point_data['u'] = u
+    plane.point_data['v'] = v
+
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_text('"u" point scalars')
+    pl.add_mesh(plane, scalars='u')
+    pl.subplot(0, 1)
+    pl.add_text('"v" point scalars')
+    pl.add_mesh(plane, scalars='v')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_bool_scalars(sphere):
+    sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
+    sphere['scalars'][::2] = 1
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
     plotter.show(before_close_callback=verify_cache_image)

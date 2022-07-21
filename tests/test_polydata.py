@@ -249,6 +249,11 @@ def test_multi_ray_trace(sphere):
     assert np.any(ind_r)
     assert np.any(ind_t)
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.multi_ray_trace(origins, directions)
+
 
 @skip_plotting
 def test_plot_curvature(sphere):
@@ -480,6 +485,11 @@ def test_invalid_subdivision(sphere):
     with pytest.raises(ValueError):
         sphere.subdivide(1, 'not valid')
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.subdivide(1)
+
 
 def test_extract_feature_edges(sphere):
     # Test extraction of NO edges
@@ -500,15 +510,25 @@ def test_decimate(sphere):
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.decimate(0.5)
+
 
 def test_decimate_pro(sphere):
-    mesh = sphere.decimate_pro(0.5, progress_bar=True)
+    mesh = sphere.decimate_pro(0.5, progress_bar=True, max_degree=10)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
     mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
+
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.decimate_pro(0.5)
 
 
 def test_compute_normals(sphere):
@@ -521,12 +541,42 @@ def test_compute_normals(sphere):
     assert cell_normals.shape[0] == sphere.n_cells
 
 
+def test_compute_normals_split_vertices(cube):
+    # verify edge splitting occurs and point IDs are tracked
+    cube_split_norm = cube.compute_normals(split_vertices=True)
+    assert cube_split_norm.n_points == 24
+    assert 'pyvistaOriginalPointIds' in cube_split_norm.point_data
+    assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
+
+
 def test_point_normals(sphere):
-    assert sphere.point_normals.shape[0] == sphere.n_points
+    sphere = sphere.compute_normals(cell_normals=False, point_normals=True)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
+    assert np.all(normals == sphere.point_data['Normals'])
+    assert np.shares_memory(normals, sphere.point_data['Normals'])
+
+    # when they don't, compute them
+    sphere.point_data.pop('Normals')
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
 
 
 def test_cell_normals(sphere):
-    assert sphere.cell_normals.shape[0] == sphere.n_cells
+    sphere = sphere.compute_normals(cell_normals=True, point_normals=False)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
+    assert np.all(normals == sphere.cell_data['Normals'])
+    assert np.shares_memory(normals, sphere.cell_data['Normals'])
+
+    # when they don't, compute them
+    sphere.cell_data.pop('Normals')
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
 
 
 def test_face_normals(sphere):

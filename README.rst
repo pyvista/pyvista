@@ -163,7 +163,7 @@ You can also visit `PyPI <https://pypi.org/project/pyvista/>`_,
 `GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
 
 See the `Installation <http://docs.pyvista.org/getting-started/installation.html#install-ref.>`_
-for more details if the installation through pip doesn't work out.
+for more details regarding optional dependencies or if the installation through pip doesn't work out.
 
 
 Connections

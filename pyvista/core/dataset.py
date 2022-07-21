@@ -1,9 +1,10 @@
 """Attributes common to PolyData and Grid Objects."""
 
 import collections.abc
+from copy import deepcopy
 import logging
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
 
 if sys.version_info >= (3, 8):
@@ -29,7 +30,7 @@ from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import NumericArray, Vector, VectorArray
+from .._typing import Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -40,6 +41,7 @@ log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+ActiveArrayInfoTuple = collections.namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
 
 
 class ActiveArrayInfo:
@@ -49,6 +51,10 @@ class ActiveArrayInfo:
         """Initialize."""
         self.association = association
         self.name = name
+
+    def copy(self):
+        """Return a copy of this object."""
+        return ActiveArrayInfo(self.association, self.name)
 
     def __getstate__(self):
         """Support pickling."""
@@ -64,8 +70,7 @@ class ActiveArrayInfo:
     @property
     def _namedtuple(self):
         """Build a namedtuple on the fly to provide legacy support."""
-        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
-        return named_tuple(self.association, self.name)
+        return ActiveArrayInfoTuple(self.association, self.name)
 
     def __iter__(self):
         """Provide namedtuple-like __iter__."""
@@ -142,7 +147,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pyvista.Sphere()
         >>> mesh['Z Height'] = mesh.points[:, 2]
         >>> mesh.active_scalars_info
-        ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Z Height')
+        ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Z Height')
 
         """
         field, name = self._active_scalars_info
@@ -201,7 +206,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = mesh.compute_normals(inplace=True)
         >>> mesh.active_vectors_name = 'Normals'
         >>> mesh.active_vectors_info
-        ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
+        ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Normals')
 
         """
         field, name = self._active_vectors_info
@@ -411,7 +416,7 @@ class DataSet(DataSetFilters, DataObject):
             self.Modified()
             return
         # otherwise, wrap and use the array
-        points = _coerce_pointslike_arg(points)
+        points, _ = _coerce_pointslike_arg(points, copy=False)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
@@ -763,7 +768,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cube['my_array'] = range(cube.n_points)
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
-        array([0, 1, 2, 3, 4, 5, 6, 7])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
         field = get_array_association(self, old_name, preference=preference)
@@ -1143,7 +1148,10 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def scale(
-        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+        self,
+        xyz: Union[Number, list, tuple, np.ndarray],
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Scale the mesh.
 
@@ -1154,8 +1162,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : scale factor list or tuple or np.ndarray
-            Length 3 list, tuple or array.
+        xyz : float or list or tuple or np.ndarray
+            A scalar or length 3 list, tuple or array defining the scale
+            factors along x, y, and z. If a scalar, the same uniform scale is
+            used along all three axes.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -1186,7 +1196,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
+        if isinstance(xyz, (float, int, np.number)):
+            xyz = [xyz] * 3
+
         transform = _vtk.vtkTransform()
         transform.Scale(xyz)
         return self.transform(
@@ -1234,6 +1248,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_x(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -1284,6 +1299,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_y(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -1327,13 +1343,14 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> pl.show_axes()
-        >>> mesh1 = examples.download_teapot()
+        >>> mesh1 = examples.download_teapot().rotate_x(90, inplace=False)
         >>> _ = pl.add_mesh(mesh1)
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
         >>> mesh2 = mesh1.flip_z(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos="xz")
+
         """
         if point is None:
             point = self.center
@@ -1389,6 +1406,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
+
         """
         if point is None:
             point = self.center
@@ -1399,7 +1417,7 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def copy_meta_from(self, ido: 'DataSet'):
+    def copy_meta_from(self, ido: 'DataSet', deep: bool = True):
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1407,11 +1425,27 @@ class DataSet(DataSetFilters, DataObject):
         ido : pyvista.DataSet
             Dataset to copy the metadata from.
 
+        deep : bool, optional
+            Deep or shallow copy.
+
         """
-        self._active_scalars_info = ido.active_scalars_info
-        self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
-        self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+
+        if deep:
+            self._association_complex_names = deepcopy(ido._association_complex_names)
+            self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
+            self._active_scalars_info = ido.active_scalars_info.copy()
+            self._active_vectors_info = ido.active_vectors_info.copy()
+            self._active_tensors_info = ido.active_tensors_info.copy()
+            self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+        else:
+            # pass by reference
+            self._association_complex_names = ido._association_complex_names
+            self._association_bitarray_names = ido._association_bitarray_names
+            self._active_scalars_info = ido.active_scalars_info
+            self._active_vectors_info = ido.active_vectors_info
+            self._active_tensors_info = ido.active_tensors_info
+            self._textures = ido.textures
 
     @property
     def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
@@ -1449,8 +1483,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64  (8,)
-            my_other_array          int64    (8,)                 SCALARS
+            my_array                float64    (8,)
+            my_other_array          int64      (8,)                 SCALARS
 
         Access an array from ``point_data``.
 
@@ -1586,8 +1620,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64  (6,)
-            my_other_array          int64    (6,)                 SCALARS
+            my_array                float64    (6,)
+            my_other_array          int64      (6,)                 SCALARS
 
         Access an array from ``cell_data``.
 
@@ -1706,25 +1740,6 @@ class DataSet(DataSetFilters, DataObject):
         return list(self.GetCenter())
 
     @property
-    def extent(self) -> Optional[tuple]:
-        """Return the range of the bounding box."""
-        try:
-            _extent = self.GetExtent()
-        except AttributeError:
-            return None
-        return _extent
-
-    @extent.setter
-    def extent(self, extent: Sequence[float]):
-        """Set the range of the bounding box."""
-        if hasattr(self, 'SetExtent'):
-            if len(extent) != 6:
-                raise ValueError('Extent must be a vector of 6 values.')
-            self.SetExtent(extent)
-        else:
-            raise AttributeError('This mesh type does not handle extents.')
-
-    @property
     def volume(self) -> float:
         """Return the mesh volume.
 
@@ -1748,7 +1763,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
-    ) -> np.ndarray:
+    ) -> 'pyvista.pyvista_ndarray':
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -1782,17 +1797,17 @@ class DataSet(DataSetFilters, DataObject):
         Get the point data array.
 
         >>> mesh.get_array('point-data')
-        array([0, 1, 2, 3, 4, 5, 6, 7])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         Get the cell data array.
 
         >>> mesh.get_array('cell-data')
-        array([0, 1, 2, 3, 4, 5])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5])
 
         Get the field data array.
 
         >>> mesh.get_array('field-data')
-        array(['a', 'b', 'c'], dtype='<U1')
+        pyvista_ndarray(['a', 'b', 'c'], dtype='<U1')
 
         """
         arr = get_array(self, name, preference=preference, err=True)
@@ -2027,7 +2042,7 @@ class DataSet(DataSetFilters, DataObject):
             )
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh)
+            self.copy_meta_from(mesh, deep=True)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2172,10 +2187,18 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that is/are closest
             to the given point(s).
 
+            .. versionchanged:: 0.35.0
+               Inputs of shape ``(1, 3)`` now return a :class:`numpy.ndarray`
+               of shape ``(1,)``.
+
         numpy.ndarray
             Point or points inside a cell of the mesh that is/are closest
             to the given point(s).  Only returned if
             ``return_closest_point=True``.
+
+            .. versionchanged:: 0.35.0
+               Inputs of shape ``(1, 3)`` now return a :class:`numpy.ndarray`
+               of the same shape.
 
         Warnings
         --------
@@ -2245,7 +2268,7 @@ class DataSet(DataSetFilters, DataObject):
         array([1., 1., 0.])
 
         """
-        point = _coerce_pointslike_arg(point, copy=False)
+        point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
@@ -2267,11 +2290,9 @@ class DataSet(DataSetFilters, DataObject):
             closest_points.append(closest_point)
 
         out_cells: Union[int, np.ndarray] = (
-            closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+            closest_cells[0] if singular else np.array(closest_cells)
         )
-        out_points = (
-            np.array(closest_points[0]) if len(closest_points) == 1 else np.array(closest_points)
-        )
+        out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
 
         if return_closest_point:
             return out_cells, out_points
@@ -2293,6 +2314,10 @@ class DataSet(DataSetFilters, DataObject):
         int or numpy.ndarray
             Index or indices of the cell in this mesh that contains
             the given point.
+
+            .. versionchanged:: 0.35.0
+               Inputs of shape ``(1, 3)`` now return a :class:`numpy.ndarray`
+               of shape ``(1,)``.
 
         See Also
         --------
@@ -2327,14 +2352,14 @@ class DataSet(DataSetFilters, DataObject):
         (1000,)
 
         """
-        point = _coerce_pointslike_arg(point, copy=False)
+        point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
 
         containing_cells = [locator.FindCell(node) for node in point]
-        return containing_cells[0] if len(containing_cells) == 1 else np.array(containing_cells)
+        return containing_cells[0] if singular else np.array(containing_cells)
 
     def find_cells_along_line(
         self,
@@ -2523,3 +2548,95 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.GetCellType(ind)
+
+    def cell_point_ids(self, ind: int) -> List[int]:
+        """Return the point ids in a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        list[int]
+            Point Ids that are associated with the cell.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell_type(0)
+        5
+
+        Cell type 5 is a triangular cell with three points.
+
+        >>> mesh.cell_point_ids(0)
+        [0, 1, 2]
+
+        """
+        cell = self.GetCell(ind)
+        point_ids = cell.GetPointIds()
+        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
+
+    def point_is_inside_cell(
+        self, ind: int, point: Union[VectorArray, NumericArray]
+    ) -> Union[int, np.ndarray]:
+        """Return whether one or more points are inside a cell.
+
+        .. versionadded:: 0.35.0
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        point : Sequence[float] or np.ndarray
+            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
+            points with shape ``(n, 3)``.
+
+        Returns
+        -------
+        bool or numpy.ndarray
+            Whether point(s) is/are inside cell. A scalar bool is only returned if
+            the input point has shape ``(3,)``.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> mesh.cell_bounds(0)
+        (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+        >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
+        True
+
+        """
+        if not isinstance(ind, (int, np.integer)):
+            raise TypeError(f"ind must be an int, got {type(ind)}")
+
+        if not 0 <= ind < self.n_cells:
+            raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
+
+        co_point, singular = _coerce_pointslike_arg(point, copy=False)
+
+        cell = self.GetCell(ind)
+        npoints = cell.GetPoints().GetNumberOfPoints()
+
+        closest_point = [0.0, 0.0, 0.0]
+        sub_id = _vtk.mutable(0)
+        pcoords = [0.0, 0.0, 0.0]
+        dist2 = _vtk.mutable(0.0)
+        weights = [0.0] * npoints
+
+        in_cell = np.empty(shape=co_point.shape[0], dtype=np.bool_)
+        for i, node in enumerate(co_point):
+            is_inside = cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights)
+            if not 0 <= is_inside <= 1:
+                raise RuntimeError(
+                    f"Computational difficulty encountered for point {node} in cell {ind}"
+                )
+            in_cell[i] = bool(is_inside)
+
+        if singular:
+            return in_cell[0]
+        return in_cell

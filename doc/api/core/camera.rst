@@ -1,3 +1,5 @@
+.. _cameras_api:
+
 Cameras
 =======
 The :class:`pyvista.Camera` class adds additional functionality and a

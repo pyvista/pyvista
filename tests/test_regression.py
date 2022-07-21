@@ -1,6 +1,11 @@
 import pytest
 
 import pyvista as pv
+from pyvista.plotting import system_supports_plotting
+
+# skip all tests if unable to render
+if not system_supports_plotting():
+    pytestmark = pytest.mark.skip
 
 
 def test_compare_images_two_plotters_same(sphere, tmpdir):
@@ -21,6 +26,11 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
 
     with pytest.raises(TypeError):
         pv.compare_images(im1, pl1.ren_win)
+
+    # test that this fails when the plotter is closed
+    pl1.close()
+    with pytest.raises(RuntimeError, match='already been closed'):
+        pv.compare_images(pl1, pl2)
 
 
 def test_compare_images_two_plotter_different(sphere, airplane, tmpdir):

@@ -22,7 +22,7 @@ within JupyterLab:
     sphere = pv.Sphere()
 
     # short example
-    image = sphere.plot(use_ipyvtk=True, return_cpos=False)
+    image = sphere.plot(jupyter_backend='ipyvtklink', return_cpos=False)
 
     # long example
     plotter = pv.Plotter(notebook=True)

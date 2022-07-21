@@ -417,6 +417,7 @@ class Renderers:
         >>> plotter.set_background('black')
         >>> plotter.background_color
         Color(name='black', hex='#000000ff')
+        >>> plotter.close()
 
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.

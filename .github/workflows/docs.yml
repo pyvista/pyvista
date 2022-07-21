@@ -16,6 +16,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
 
@@ -28,13 +32,13 @@ jobs:
       ALLOW_PLOTTING: true
       SHELLOPTS: 'errexit:pipefail'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - uses: syphar/restore-virtualenv@v1
         id: cache-virtualenv
@@ -47,7 +51,7 @@ jobs:
           sudo apt-get install libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
 
       - name: Install OSMesa VTK
-        run: pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
+        run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
 
       - name: Install PyVista
         run: |
@@ -64,48 +68,45 @@ jobs:
           echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)") >> $GITHUB_ENV
 
       - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: doc/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache docs _build directory
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: doc/_build/
           key: doc-_build-${{ hashFiles('pyvista/_version.py') }}-${{ hashFiles('doc/conf.py') }}
 
       - name: Cache example data
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: example-data-${{ hashFiles('pyvista/_version.py') }}
+          key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache autosummary
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
         with:
           path: /**/_autosummary/*.rst
           key: autosummary-rst-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
-
-      - name: Check for Warnings
-        run: python doc/print_errors.py
+        run: make -C doc html SPHINXOPTS="-W --keep-going"
 
       - name: Tar build
         run: tar -zcvf docs-build.tar.gz doc/_build/
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: docs-build
           path: docs-build.tar.gz
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: examples
           path: doc/examples/
@@ -113,7 +114,7 @@ jobs:
         run: |
           mkdir _notebooks
           find doc/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: pyvista-notebooks
           path: _notebooks
@@ -124,8 +125,8 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
           name: docs-build
           path: .
@@ -160,14 +161,14 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Install Dependencies
         run: |
           pip install cookiecutter
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: pyvista-notebooks
           path: .

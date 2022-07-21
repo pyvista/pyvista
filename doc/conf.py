@@ -40,6 +40,7 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
+os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
 # SG warnings
 import warnings
@@ -49,6 +50,7 @@ warnings.filterwarnings(
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
+
 
 # -- General configuration ------------------------------------------------
 numfig = False
@@ -267,7 +269,7 @@ release = pyvista.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -348,6 +350,13 @@ from numpydoc.docscrape_sphinx import SphinxDocString
 
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
+
+plot_setup = """
+from pyvista import set_plot_theme as __s_p_t
+__s_p_t('document')
+del __s_p_t
+"""
+plot_cleanup = plot_setup
 
 
 def _str_examples(self):

@@ -52,8 +52,7 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
-        if return_clipped:
-            alg.GenerateClippedOutputOn()
+        alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
         if return_clipped:
@@ -320,7 +319,7 @@ class DataSetFilters:
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> type(dist)
-        <class 'numpy.ndarray'>
+        <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
 
         Plot these distances as a heatmap
 
@@ -1460,9 +1459,10 @@ class DataSetFilters:
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str, numpy.ndarray, optional
-            Name or array of scalars to threshold on. Defaults to
-            currently active scalars.
+        scalars : str, collections.abc.Sequence, numpy.ndarray, optional
+            Name or array of scalars to threshold on. If this is an array, the
+            output of this filter will save them as ``"Contour Data"``.
+            Defaults to currently active scalars.
 
         compute_normals : bool, optional
             Compute normals for the dataset.
@@ -1533,7 +1533,7 @@ class DataSetFilters:
         >>> x, y, z = grid.points.T
         >>> values = f(x, y, z)
         >>> out = grid.contour(
-        ...     1, scalars=values, rng=[0, 0], method='flying_edges'
+        ...     1, scalars=values, rng=[0, 0], method='flying_edges',
         ... )
         >>> out.plot(color='tan', smooth_shading=True)
 
@@ -1551,10 +1551,25 @@ class DataSetFilters:
         else:
             raise ValueError(f"Method '{method}' is not supported")
 
-        if isinstance(scalars, np.ndarray):
-            scalars_name = 'Contour Input'
+        if rng is not None:
+            if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
+                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
+            rng_shape = np.shape(rng)
+            if rng_shape != (2,):
+                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
+            if rng[0] > rng[1]:
+                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
+
+        if isinstance(scalars, str):
+            scalars_name = scalars
+        elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
+            scalars_name = 'Contour Data'
             self[scalars_name] = scalars
-            scalars = scalars_name
+        elif scalars is not None:
+            raise TypeError(
+                f'Invalid type for `scalars` ({type(scalars)}). Should be either '
+                'a numpy.ndarray, a string, or None.'
+            )
 
         # Make sure the input has scalars to contour on
         if self.n_arrays < 1:
@@ -1567,22 +1582,24 @@ class DataSetFilters:
         # set the array to contour on
         if scalars is None:
             pyvista.set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            field, scalars_name = self.active_scalars_info
         else:
-            field = get_array_association(self, scalars, preference=preference)
+            field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
-            )
+            raise TypeError('Contour filter only works on point data.')
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars_name,
         )  # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars)
+                rng = self.get_data_range(scalars_name)
             alg.GenerateValues(isosurfaces, rng)
         elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
@@ -1591,7 +1608,14 @@ class DataSetFilters:
         else:
             raise TypeError('isosurfaces not understood.')
         _update_alg(alg, progress_bar, 'Computing Contour')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # some of these filters fail to correctly name the array
+        if scalars_name not in output.point_data:
+            if 'Unnamed_0' in output.point_data:
+                output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
+
+        return output
 
     def texture_map_to_plane(
         self,
@@ -1790,7 +1814,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(show_edges=True)
+        >>> surf.plot(show_edges=True, scalars='Area')
 
         """
         alg = _vtk.vtkCellSizeFilter()
@@ -2110,7 +2134,14 @@ class DataSetFilters:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # remove regionID from the output when extraction mode is set to the
+        # largest to avoid the VTK warning:
+        # the Cell array RegionId ... has X tuples but there are only Y cells
+        if largest:
+            output.cell_data.pop('RegionId', None)
+        return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
         """Extract largest connected set in mesh.
@@ -2395,7 +2426,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         These cell scalars can be applied to individual points to
         effectively smooth out the cell data onto the points.
@@ -2404,7 +2435,7 @@ class DataSetFilters:
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
         >>> surf = surf.cell_data_to_point_data()
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         """
         alg = _vtk.vtkCellDataToPointData()
@@ -4602,37 +4633,45 @@ class DataSetFilters:
 
         """
         alg = _vtk.vtkCellQuality()
-        measure_setters = {
-            'area': alg.SetQualityMeasureToArea,
-            'aspect_beta': alg.SetQualityMeasureToAspectBeta,
-            'aspect_frobenius': alg.SetQualityMeasureToAspectFrobenius,
-            'aspect_gamma': alg.SetQualityMeasureToAspectGamma,
-            'aspect_ratio': alg.SetQualityMeasureToAspectRatio,
-            'collapse_ratio': alg.SetQualityMeasureToCollapseRatio,
-            'condition': alg.SetQualityMeasureToCondition,
-            'diagonal': alg.SetQualityMeasureToDiagonal,
-            'dimension': alg.SetQualityMeasureToDimension,
-            'distortion': alg.SetQualityMeasureToDistortion,
-            'jacobian': alg.SetQualityMeasureToJacobian,
-            'max_angle': alg.SetQualityMeasureToMaxAngle,
-            'max_aspect_frobenius': alg.SetQualityMeasureToMaxAspectFrobenius,
-            'max_edge_ratio': alg.SetQualityMeasureToMaxEdgeRatio,
-            'med_aspect_frobenius': alg.SetQualityMeasureToMedAspectFrobenius,
-            'min_angle': alg.SetQualityMeasureToMinAngle,
-            'oddy': alg.SetQualityMeasureToOddy,
-            'radius_ratio': alg.SetQualityMeasureToRadiusRatio,
-            'relative_size_squared': alg.SetQualityMeasureToRelativeSizeSquared,
-            'scaled_jacobian': alg.SetQualityMeasureToScaledJacobian,
-            'shape': alg.SetQualityMeasureToShape,
-            'shape_and_size': alg.SetQualityMeasureToShapeAndSize,
-            'shear': alg.SetQualityMeasureToShear,
-            'shear_and_size': alg.SetQualityMeasureToShearAndSize,
-            'skew': alg.SetQualityMeasureToSkew,
-            'stretch': alg.SetQualityMeasureToStretch,
-            'taper': alg.SetQualityMeasureToTaper,
-            'volume': alg.SetQualityMeasureToVolume,
-            'warpage': alg.SetQualityMeasureToWarpage,
+        possible_measure_setters = {
+            'area': 'SetQualityMeasureToArea',
+            'aspect_beta': 'SetQualityMeasureToAspectBeta',
+            'aspect_frobenius': 'SetQualityMeasureToAspectFrobenius',
+            'aspect_gamma': 'SetQualityMeasureToAspectGamma',
+            'aspect_ratio': 'SetQualityMeasureToAspectRatio',
+            'collapse_ratio': 'SetQualityMeasureToCollapseRatio',
+            'condition': 'SetQualityMeasureToCondition',
+            'diagonal': 'SetQualityMeasureToDiagonal',
+            'dimension': 'SetQualityMeasureToDimension',
+            'distortion': 'SetQualityMeasureToDistortion',
+            'jacobian': 'SetQualityMeasureToJacobian',
+            'max_angle': 'SetQualityMeasureToMaxAngle',
+            'max_aspect_frobenius': 'SetQualityMeasureToMaxAspectFrobenius',
+            'max_edge_ratio': 'SetQualityMeasureToMaxEdgeRatio',
+            'med_aspect_frobenius': 'SetQualityMeasureToMedAspectFrobenius',
+            'min_angle': 'SetQualityMeasureToMinAngle',
+            'oddy': 'SetQualityMeasureToOddy',
+            'radius_ratio': 'SetQualityMeasureToRadiusRatio',
+            'relative_size_squared': 'SetQualityMeasureToRelativeSizeSquared',
+            'scaled_jacobian': 'SetQualityMeasureToScaledJacobian',
+            'shape': 'SetQualityMeasureToShape',
+            'shape_and_size': 'SetQualityMeasureToShapeAndSize',
+            'shear': 'SetQualityMeasureToShear',
+            'shear_and_size': 'SetQualityMeasureToShearAndSize',
+            'skew': 'SetQualityMeasureToSkew',
+            'stretch': 'SetQualityMeasureToStretch',
+            'taper': 'SetQualityMeasureToTaper',
+            'volume': 'SetQualityMeasureToVolume',
+            'warpage': 'SetQualityMeasureToWarpage',
         }
+
+        # we need to check if these quality measures exist as VTK API changes
+        measure_setters = {}
+        for name, attr in possible_measure_setters.items():
+            setter_candidate = getattr(alg, attr, None)
+            if setter_candidate:
+                measure_setters[name] = setter_candidate
+
         try:
             # Set user specified quality measure
             measure_setters[quality_measure]()
@@ -4912,7 +4951,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -4994,7 +5033,7 @@ class DataSetFilters:
                 name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_points, 3)
+                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
@@ -5125,3 +5164,52 @@ class DataSetFilters:
             inplace=inplace,
             progress_bar=progress_bar,
         )
+
+    def integrate_data(self, progress_bar=False):
+        """Integrate point and cell data.
+
+        Area or volume is also provided in point data.
+
+        This filter uses the VTK `vtkIntegrateAttributes
+        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_
+        and requires VTK v9.1.0 or newer.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGird
+            Mesh with 1 point and 1 vertex cell with integrated data in point
+            and cell data.
+
+        Examples
+        --------
+        Integrate data on a sphere mesh.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+        >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
+        >>> integrated = sphere.integrate_data()
+
+        There is only 1 point and cell, so access the only value.
+
+        >>> integrated["Area"][0]
+        3.14
+        >>> integrated["data"][0]
+        6.28
+
+        See the :ref:`integrate_example` for more examples using this filter.
+
+        """
+        if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover
+            raise VTKVersionError('`integrate_data` requires VTK 9.1.0 or newer.')
+
+        alg = _vtk.vtkIntegrateAttributes()
+        alg.SetInputData(self)
+        alg.SetDivideAllCellDataByVolume(False)
+        _update_alg(alg, progress_bar, 'Integrating Variables')
+        return _get_output(alg)

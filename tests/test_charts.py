@@ -3,13 +3,13 @@
 import itertools
 import platform
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
 import pyvista
 from pyvista import examples
 from pyvista.plotting import charts, system_supports_plotting
+from pyvista.utilities.misc import can_create_mpl_figure
 
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
@@ -17,6 +17,10 @@ skip_mac = pytest.mark.skipif(
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Test requires system to support plotting"
+)
+
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
 
 # skip all tests if VTK<9.1.0
@@ -61,6 +65,8 @@ def chart_pie():
 
 @pytest.fixture
 def chart_mpl():
+    import matplotlib.pyplot as plt
+
     f, ax = plt.subplots()
     ax.plot([0, 1, 2], [3, 1, 2])
     return pyvista.ChartMPL(f)
@@ -99,6 +105,14 @@ def box_plot(chart_box):
 @pytest.fixture
 def pie_plot(chart_pie):
     return chart_pie.plot
+
+
+@pytest.fixture
+def axis(chart_2d):
+    # Test properties, using the y axis of a 2D chart
+    chart_2d.line([0, 1], [1, 10])
+    chart_2d.show()
+    return chart_2d.y_axis
 
 
 def test_pen():
@@ -179,36 +193,30 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
-@skip_no_plotting
-def test_axis(chart_2d):
-    l = "Y axis"
-    r_fix, r_auto = [2, 5], None
-    m = 50
-    tc = 10
-    tlabels = ["Foo", "Blub", "Spam"]
-    tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
-    ts = 5
-    tlo = 10
+def test_axis_init(chart_2d):
+    label = "Y axis"
+    r_fix = [2, 5]
 
     # Test constructor arguments
-    axis = charts.Axis(label=l, range=r_fix, grid=True)
-    assert axis.label == l
+    axis = charts.Axis(label=label, range=r_fix, grid=True)
+    assert axis.label == label
     assert np.allclose(axis.range, r_fix) and axis.behavior == "fixed"
     assert axis.grid
 
-    # Test properties, using the y axis of a 2D chart
-    chart_2d.line([0, 1], [1, 10])
-    chart_2d.show()
-    axis = chart_2d.y_axis
 
-    axis.label = l
-    assert axis.label == l
-    assert axis.GetTitle() == l
+def test_axis_label(axis):
+    label = "Y axis"
+    axis.label = label
+    assert axis.label == label
+    assert axis.GetTitle() == label
 
     axis.label_visible = False
     assert not axis.label_visible
     assert not axis.GetTitleVisible()
 
+
+def test_axis_range(axis):
+    r_fix, r_auto = [2, 5], None
     axis.range = r_auto
     assert axis.behavior == "auto"
     axis.range = r_fix
@@ -225,30 +233,42 @@ def test_axis(chart_2d):
     with pytest.raises(ValueError):
         axis.behavior = "invalid"
 
-    axis.margin = m
-    assert axis.margin == m
-    assert axis.GetMargins()[0] == m
 
+def test_axis_margin(axis):
+    margin = 50
+    axis.margin = margin
+    assert axis.margin == margin
+    assert axis.GetMargins()[0] == margin
+
+
+@skip_no_plotting
+def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
     chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
     assert axis.log_scale
     assert axis.GetLogScaleActive()
+
     axis.log_scale = False
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
     # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
     #  This is a VTK issue that will be fixed once PR (!8618) is merged.
+
     chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
 
+
+def test_axis_grid(axis):
     axis.grid = False
     assert not axis.grid
     assert not axis.GetGridVisible()
 
+
+def test_axis_visible(axis):
     axis.visible = False
     assert not axis.visible
     assert not axis.GetAxisVisible()
@@ -256,6 +276,9 @@ def test_axis(chart_2d):
     assert axis.visible
     assert axis.GetAxisVisible()
 
+
+def test_axis_tick_count(axis):
+    tc = 10
     tc0 = axis.tick_count
     axis.tick_count = tc
     assert axis.tick_count == tc
@@ -267,8 +290,11 @@ def test_axis(chart_2d):
     assert axis.tick_count == tc0
     assert axis.GetNumberOfTicks() == tc0
 
-    tlocs0 = axis.tick_locations
-    tlabels0 = axis.tick_labels
+
+def test_axis_tick_locations(chart_2d, axis):
+    tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
+    tlabels = ["Foo", "Blub", "Spam"]
+
     axis.tick_locations = tlocs
     axis.tick_labels = tlabels
     assert np.allclose(axis.tick_locations, tlocs)
@@ -284,33 +310,37 @@ def test_axis(chart_2d):
     axis.tick_labels = "4e"
     axis.tick_locations = tlocs_large  # Add some more variety to labels
     chart_2d.show()
+
     assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(
         to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large
     )
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
-    axis.tick_locations = None
-    axis.tick_labels = None
-    chart_2d.show()
-    assert np.allclose(axis.tick_locations, tlocs0)
-    assert np.allclose(axis.GetTickPositions(), tlocs0)
-    assert tuple(axis.tick_labels) == tuple(tlabels0)
-    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels0)
 
+
+def test_axis_tick_size(axis):
+    ts = 5
     axis.tick_size = ts
     assert axis.tick_size == ts
     assert axis.GetTickLength() == ts
 
+
+def test_axis_tick_offset(axis):
+    tlo = 10
     axis.tick_labels_offset = tlo
     assert axis.tick_labels_offset == tlo
     assert axis.GetLabelOffset() == tlo
 
+
+def test_axis_tick_labels_visible(axis):
     axis.tick_labels_visible = False
     assert not axis.tick_labels_visible
     assert not axis.GetLabelsVisible()
     assert not axis.GetRangeLabelsVisible()
 
+
+def test_axis_tick_visible(axis):
     axis.ticks_visible = False
     assert not axis.ticks_visible
     assert not axis.GetTicksVisible()
@@ -331,6 +361,7 @@ def test_axis_label_font_size(chart_2d):
 
 
 @skip_no_plotting
+@skip_no_mpl_figure
 @pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
@@ -905,7 +936,10 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 
 @skip_no_plotting
+@skip_no_mpl_figure
 def test_chart_mpl(pl, chart_mpl):
+    import matplotlib.pyplot as plt
+
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
 
@@ -943,38 +977,43 @@ def test_charts(pl):
 
     # Test add_chart
     pl.add_chart(top_left)
-    assert pl.renderers[0].__this__ == top_left._renderer.__this__
-    assert pl.renderers[0]._charts._scene.__this__ == top_left._scene.__this__
+    assert pl.renderer.__this__ == top_left._renderer.__this__
+    assert pl.renderer._charts._scene.__this__ == top_left._scene.__this__
     pl.add_chart(bottom_right)
-    assert len(pl.renderers[0]._charts) == 2
+    assert len(pl.renderer._charts) == 2
 
     # Test toggle_interaction
     pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
     assert not top_left.GetInteractive()
     assert not bottom_right.GetInteractive()
     assert (
-        pl.renderers[0]._charts.toggle_interaction((0.75 * win_size[0], 0.25 * win_size[1]))
+        pl.renderer._charts.toggle_interaction((0.75 * win_size[0], 0.25 * win_size[1]))
         is bottom_right._scene
     )
     assert not top_left.GetInteractive()
     assert bottom_right.GetInteractive()
-    assert pl.renderers[0]._charts.toggle_interaction((0, 0)) is None
+    assert pl.renderer._charts.toggle_interaction((0, 0)) is None
     assert not top_left.GetInteractive()
     assert not bottom_right.GetInteractive()
 
     # Test remove_chart
     pl.remove_chart(1)
-    assert len(pl.renderers[0]._charts) == 1
-    assert pl.renderers[0]._charts[0] == top_left
-    assert top_left in pl.renderers[0]._charts
+    assert len(pl.renderer._charts) == 1
+    assert pl.renderer._charts[0] == top_left
+    assert top_left in pl.renderer._charts
     pl.remove_chart(top_left)
-    assert len(pl.renderers[0]._charts) == 0
+    assert len(pl.renderer._charts) == 0
 
     # Test deep_clean
     pl.add_chart(top_left, bottom_right)
     pl.deep_clean()
-    assert len(pl.renderers[0]._charts) == 0
-    assert pl.renderers[0]._charts._scene is None
+    assert len(pl.renderer._charts) == 0
+    assert pl.renderer._charts._scene is None
+
+    pl.add_chart(top_left, bottom_right)
+    pl.clear()  # also calls deep_clean()
+    assert len(pl.renderer._charts) == 0
+    assert pl.renderer._charts._scene is None
 
 
 @skip_no_plotting
@@ -1001,6 +1040,7 @@ def test_iren_context_style(pl):
     assert pl.iren._context_style.GetScene() is None
 
 
+@skip_mac
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d

@@ -88,7 +88,7 @@ def show_ipyvtk(plotter, return_viewer):
     """Display an interactive viewer widget using ``ipyvtklink``."""
     if any('SPYDER' in name for name in os.environ):
         warnings.warn(
-            '``use_ipyvtk`` is incompatible with Spyder.\n'
+            '``ipyvtklink`` backend is incompatible with Spyder.\n'
             'Use notebook=False for interactive '
             'plotting within spyder or disable it globally with:\n'
             'pyvista.set_jupyter_backend(None)'

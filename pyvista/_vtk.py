@@ -209,6 +209,7 @@ if VTK9:
         vtkTriangleFilter,
         vtkTubeFilter,
         vtkUnstructuredGridToExplicitStructuredGrid,
+        vtkWindowedSincPolyDataFilter,
     )
     from vtkmodules.vtkFiltersExtraction import (
         vtkExtractGeometry,
@@ -256,7 +257,9 @@ if VTK9:
         vtkRibbonFilter,
         vtkRotationalExtrusionFilter,
         vtkSelectEnclosedPoints,
+        vtkTrimmedExtrusionFilter,
     )
+    from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
@@ -294,6 +297,7 @@ if VTK9:
         vtkPTSReader,
         vtkSTLReader,
         vtkSTLWriter,
+        vtkTecplotReader,
     )
     from vtkmodules.vtkIOImage import (
         vtkBMPReader,
@@ -397,6 +401,12 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
+    from vtkmodules.vtkImagingFourier import (
+        vtkImageButterworthHighPass,
+        vtkImageButterworthLowPass,
+        vtkImageFFT,
+        vtkImageRFFT,
+    )
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,
@@ -454,6 +464,24 @@ if VTK9:
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
     # lazy import for some of the less used readers
+    def lazy_vtkOBJExporter():
+        """Lazy import of the vtkOBJExporter."""
+        from vtkmodules.vtkIOExport import vtkOBJExporter
+
+        return vtkOBJExporter()
+
+    def lazy_vtkVRMLImporter():
+        """Lazy import of the vtkVRMLImporter."""
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
+        return vtkVRMLImporter()
+
+    def lazy_vtkVRMLExporter():
+        """Lazy import of the vtkVRMLExporter."""
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
+        return vtkVRMLExporter()
+
     def lazy_vtkGL2PSExporter():
         """Lazy import of the vtkGL2PSExporter."""
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
@@ -502,6 +530,16 @@ if VTK9:
 
         return vtkCGNSReader()
 
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+        from vtkmodules.vtkParallelCore import vtkDummyController
+
+        # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
+        reader = vtkPOpenFOAMReader()
+        reader.SetController(vtkDummyController())
+        return reader
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
@@ -524,6 +562,18 @@ else:  # pragma: no cover
     )
 
     # match the imports for VTK9
+    def lazy_vtkOBJExporter():
+        """Lazy import of the vtkOBJExporter."""
+        return vtk.vtkOBJExporter()
+
+    def lazy_vtkVRMLImporter():
+        """Lazy import of the vtkVRMLImporter."""
+        return vtk.vtkVRMLImporter()
+
+    def lazy_vtkVRMLExporter():
+        """Lazy import of the vtkVRMLExporter."""
+        return vtk.vtkVRMLExporter()
+
     def lazy_vtkGL2PSExporter():
         """Lazy import of the vtkGL2PSExporter."""
         return vtk.vtkGL2PSExporter()
@@ -547,6 +597,14 @@ else:  # pragma: no cover
     def lazy_vtkCGNSReader():
         """Lazy import of the vtkCGNSReader."""
         raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
+
+    def lazy_vtkPOpenFOAMReader():
+        """Lazy import of the vtkPOpenFOAMReader."""
+        # Workaround to fix the following issue: https://gitlab.kitware.com/vtk/vtk/-/issues/18143
+        # Fixed in vtk > 9.1.0
+        reader = vtk.vtkPOpenFOAMReader()
+        reader.SetController(vtk.vtkDummyController())
+        return reader
 
     def lazy_vtkHDFReader():
         """Lazy import of the vtkHDFReader."""

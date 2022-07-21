@@ -293,6 +293,16 @@ def test_stlreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+def test_tecplotreader():
+    filename = examples.download_tecplot_ascii(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.TecplotReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh[0].n_points, mesh[0].n_cells])
+
+
 def test_vtkreader():
     filename = examples.hexbeamfile
     reader = pyvista.get_reader(filename)
@@ -335,6 +345,37 @@ def test_plot3dmetareader():
     mesh = reader.read()
     for m in mesh:
         assert all([m.n_points, m.n_cells])
+
+
+def test_multiblockplot3dreader():
+    filename, _ = _download_file('multi-bin.xyz')
+    q_filename, _ = _download_file('multi-bin.q')
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    for m in mesh:
+        assert all([m.n_points, m.n_cells])
+        assert len(m.array_names) == 0
+
+    # Reader doesn't yet support reusability
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files(q_filename)
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    q_filename = reader.add_q_files([q_filename])
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.auto_detect_format = False
+    assert reader.auto_detect_format is False
+    reader.auto_detect_format = True
+    assert reader.auto_detect_format is True
 
 
 def test_binarymarchingcubesreader():
@@ -388,9 +429,10 @@ def test_pvdreader():
 
 
 def test_pvdreader_no_time_group():
-    examples.download_dual_sphere_animation(load=False)  # download all the files
+    filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename, _ = _download_file('PVD/paraview/dualSphereNoTime.pvd')
+    filename = os.path.join(os.path.dirname(filename), 'dualSphereNoTime.pvd')
+
     reader = pyvista.PVDReader(filename)
     assert reader.time_values == [0.0]
     assert reader.active_time_value == 0.0
@@ -429,6 +471,11 @@ def test_openfoamreader_active_time():
     assert reader.active_time_value == 0.5
     reader.set_active_time_value(1.0)
     assert reader.active_time_value == 1.0
+
+    with pytest.raises(
+        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]'
+    ):
+        reader.set_active_time_value(1000)
 
 
 def test_openfoamreader_read_data_time_value():
@@ -493,6 +540,24 @@ def test_openfoam_decompose_polyhedra():
     assert reader.decompose_polyhedra is False
     reader.decompose_polyhedra = True
     assert reader.decompose_polyhedra is True
+
+
+def test_openfoam_skip_zero_time():
+    reader = get_cavity_reader()
+
+    reader.skip_zero_time = True
+    assert reader.skip_zero_time is True
+    assert 0.0 not in reader.time_values
+
+    # Test from 'True' to 'False'
+    reader.skip_zero_time = False
+    assert reader.skip_zero_time is False
+    assert 0.0 in reader.time_values
+
+    # Test from 'False' to 'True'
+    reader.skip_zero_time = True
+    assert reader.skip_zero_time is True
+    assert 0.0 not in reader.time_values
 
 
 def test_openfoam_cell_to_point_default():
@@ -571,12 +636,14 @@ def test_openfoam_patch_arrays():
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
-def test_read_hdf():
-    can = examples.download_can(partial=True)
-    assert can.n_points == 6724
-    assert 'VEL' in can.point_data
-    assert can.n_cells == 4800
+def test_openfoam_case_type():
+    reader = get_cavity_reader()
+    reader.case_type = 'decomposed'
+    assert reader.case_type == 'decomposed'
+    reader.case_type = 'reconstructed'
+    assert reader.case_type == 'reconstructed'
+    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+        reader.case_type = 'wrong_value'
 
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
@@ -723,6 +790,7 @@ def test_tiff_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 0), reason="Requires VTK v9.0.0 or newer")
 def test_hdr_reader():
     filename = examples.download_parched_canal_4k(load=False)
     reader = pyvista.get_reader(filename)
@@ -745,10 +813,13 @@ def test_avsucd_reader():
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_hdf_reader():
-    filename = examples.download_can(partial=True, load=False)
+    filename = examples.download_can_crushed_hdf(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.HDFReader)
     assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+    assert mesh.n_points == 6724
+    assert 'VEL' in mesh.point_data
+    assert mesh.n_cells == 4800

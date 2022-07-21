@@ -487,7 +487,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> mesh = pyvista.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
     >>> mesh.plot(color='k', line_width=10)
     """
-    points = _coerce_pointslike_arg(points)
+    points, _ = _coerce_pointslike_arg(points)
     src = _vtk.vtkLineSource()
     if not (len(points) >= 2):
         raise ValueError('>=2 points need to define multiple lines.')
@@ -627,7 +627,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility
-    cube.cell_data.set_array([1, 4, 0, 3, 5, 2], ['FaceIndex'])
+    cube.cell_data.set_array([1, 4, 0, 3, 5, 2], 'FaceIndex')
 
     # clean duplicate points
     if clean:
@@ -672,10 +672,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
         )
     src = _vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
-    if quads:
-        src.QuadsOn()
-    else:
-        src.QuadsOff()
+    src.SetQuads(quads)
     src.SetBounds(bounds)
     src.Update()
     return pyvista.wrap(src.GetOutput())
@@ -750,7 +747,7 @@ def Cone(
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6):
+def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6, fill=True):
     """Create a polygon.
 
     Parameters
@@ -768,6 +765,9 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6):
     n_sides : int, optional
         Number of sides of the polygon.
 
+    fill : bool, optional
+        Enable or disable producing filled polygons.
+
     Returns
     -------
     pyvista.PolyData
@@ -783,6 +783,7 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6):
 
     """
     src = _vtk.vtkRegularPolygonSource()
+    src.SetGeneratePolygon(fill)
     src.SetCenter(center)
     src.SetNumberOfSides(n_sides)
     src.SetRadius(radius)
@@ -1441,12 +1442,13 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     solid.SetSolidType(kind)
     solid.Update()
     solid = pyvista.wrap(solid.GetOutput())
-    solid.scale(radius, inplace=True)
-    solid.points += np.asanyarray(center) - solid.center
     # rename and activate cell scalars
-    cell_data = solid.get_array(0)
+    cell_data = solid.cell_data.get_array(0)
     solid.clear_data()
     solid.cell_data['FaceIndex'] = cell_data
+    # scale and translate
+    solid.scale(radius, inplace=True)
+    solid.points += np.asanyarray(center) - solid.center
     return solid
 
 

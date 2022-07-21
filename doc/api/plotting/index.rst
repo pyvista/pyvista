@@ -43,17 +43,9 @@ of at least 9.0 and in a future release will require `vtk>=9.2`.
 
 Widget API
 ----------
-The :class:`pyvista.Plotter` class inherits all of the widget methods in
-:class:`pyvista.WidgetHelper`, so all of the following methods
-are available from any PyVista plotter.
-
-.. currentmodule:: pyvista
-
-.. autosummary::
-   :toctree: _autosummary
-   :template: custom-class-template.rst
-
-   WidgetHelper
+The :class:`pyvista.Plotter` class inherits all of the widget methods described
+by the ``pyvista.WidgetHelper`` class. For additional details, see the
+:ref:`widgets` examples.
 
 
 Convenience Functions

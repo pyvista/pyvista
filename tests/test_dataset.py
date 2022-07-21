@@ -185,6 +185,47 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
+def test_copy_metadata(globe):
+    """Ensure metadata is copied correctly."""
+    globe.point_data['bitarray'] = np.zeros(globe.n_points, dtype=bool)
+    globe.point_data['complex_data'] = np.zeros(globe.n_points, dtype=np.complex128)
+
+    globe_shallow = globe.copy(deep=False)
+    assert globe_shallow._active_scalars_info is globe._active_scalars_info
+    assert globe_shallow._active_vectors_info is globe._active_vectors_info
+    assert globe_shallow._active_tensors_info is globe._active_tensors_info
+    assert globe_shallow.textures is globe.textures
+    assert globe_shallow.point_data['bitarray'].dtype == np.bool_
+    assert globe_shallow.point_data['complex_data'].dtype == np.complex128
+    assert globe_shallow._association_bitarray_names is globe._association_bitarray_names
+    assert globe_shallow._association_complex_names is globe._association_complex_names
+
+    globe_deep = globe.copy(deep=True)
+    assert globe_deep.textures is not globe.textures
+    assert globe_deep._active_scalars_info is not globe._active_scalars_info
+    assert globe_deep._active_vectors_info is not globe._active_vectors_info
+    assert globe_deep._active_tensors_info is not globe._active_tensors_info
+    assert globe_deep._active_scalars_info == globe._active_scalars_info
+    assert globe_deep._active_vectors_info == globe._active_vectors_info
+    assert globe_deep._active_tensors_info == globe._active_tensors_info
+    assert globe_deep.textures == globe.textures
+    assert globe_deep.point_data['bitarray'].dtype == np.bool_
+    assert globe_deep.point_data['complex_data'].dtype == np.complex128
+    assert (
+        globe_deep._association_bitarray_names['POINT']
+        is not globe._association_bitarray_names['POINT']
+    )
+    assert (
+        globe_deep._association_complex_names['POINT']
+        is not globe._association_complex_names['POINT']
+    )
+
+    globe.clear_textures()
+    assert not globe.textures
+    assert globe_deep.textures
+    assert not globe_shallow.textures
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
 def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
@@ -680,25 +721,6 @@ def test_get_cell_array_fail():
         sphere.cell_data[None]
 
 
-def test_extent_none(grid):
-    assert grid.extent is None
-
-
-def test_set_extent_expect_error(grid):
-    with pytest.raises(AttributeError):
-        grid.extent = [1, 2, 3]
-
-
-def test_set_extent():
-    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
-    with pytest.raises(ValueError):
-        uni_grid.extent = [0, 1]
-
-    extent = [0, 1, 0, 1, 0, 1]
-    uni_grid.extent = extent
-    assert np.allclose(uni_grid.extent, extent)
-
-
 def test_get_item(grid):
     with pytest.raises(KeyError):
         grid[0]
@@ -1061,6 +1083,14 @@ def test_cell_points(grid):
     assert points.shape[1] == 3
 
 
+def test_cell_point_ids(grid):
+    point_ids = grid.cell_point_ids(0)
+    assert isinstance(point_ids, list)
+    assert len(point_ids) == grid.cell_n_points(0)
+    assert all([isinstance(id, int) for id in point_ids])
+    assert all([0 <= id < grid.n_points for id in point_ids])
+
+
 def test_cell_bounds(grid):
     bounds = grid.cell_bounds(0)
     assert isinstance(bounds, tuple)
@@ -1070,6 +1100,34 @@ def test_cell_bounds(grid):
 def test_cell_type(grid):
     ctype = grid.cell_type(0)
     assert isinstance(ctype, int)
+
+
+def test_point_is_inside_cell():
+    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
+    assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
+
+    assert grid.point_is_inside_cell(0, np.array([0.5, 0.5, 0.5]))
+
+    # cell ind out of range
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(100000, [0.5, 0.5, 0.5])
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(-1, [0.5, 0.5, 0.5])
+
+    # cell ind wrong type
+    with pytest.raises(TypeError):
+        grid.point_is_inside_cell(0.1, [0.5, 0.5, 0.5])
+
+    # point not well formed
+    with pytest.raises(TypeError):
+        grid.point_is_inside_cell(0, 0.5)
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(0, [0.5, 0.5])
+
+    # multi-dimensional
+    in_cell = grid.point_is_inside_cell(0, [[0.5, 0.5, 0.5], [-0.5, -0.5, -0.5]])
+    assert np.array_equal(in_cell, np.array([True, False]))
 
 
 def test_serialize_deserialize(datasets):
@@ -1278,7 +1336,14 @@ def test_scale():
     scale3 = mesh.scale(xyz, inplace=False)
     assert np.allclose(scale1.points, scale2.points)
     assert np.allclose(scale3.points, scale2.points)
-    # Test non-point-based mesh doesn't fail
+    # test scalar scale case
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    xyz = 4.0
+    scale1.scale(xyz, inplace=True)
+    scale2.scale([xyz] * 3, inplace=True)
+    assert np.allclose(scale1.points, scale2.points)
+    # test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
