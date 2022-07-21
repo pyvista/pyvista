@@ -1962,7 +1962,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             :func:`pyvista.BasePlotter.add_legend`.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene.
+            Reset the camera after adding this mesh to the scene. The default
+            setting is ``None``, where the camera is only reset if this plotter
+            has already been shown. If ``False``, the camera is not reset
+            regardless of the state of the ``Plotter``. When ``True``, the
+            camera is always reset.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -2235,6 +2239,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
+            remove_existing_actor = False
+        else:
+            # check if this actor already exists
+            remove_existing_actor = True
 
         nan_color = Color(
             nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
@@ -2289,6 +2297,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the_arguments.pop('self')
             the_arguments.pop('mesh')
             the_arguments.pop('kwargs')
+            the_arguments.pop('remove_existing_actor')
 
             if multi_colors:
                 # Compute unique colors for each index of the block
@@ -2564,6 +2573,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
             pickable=pickable,
             render=render,
+            remove_existing_actor=remove_existing_actor,
         )
 
         # hide scalar bar if using special scalars
