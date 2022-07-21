@@ -38,7 +38,7 @@ def test_block_attr(block_attributes):
         block_attributes[-1]
     with pytest.raises(KeyError, match='out of bounds'):
         block_attributes[100000]
-    with pytest.raises(TypeError, match='got float'):
+    with pytest.raises(TypeError):
         block_attributes[0.5]
 
 

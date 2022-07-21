@@ -93,19 +93,20 @@ VER_IMAGE_REGRESSION_WARNING = 1000
 # these images vary between Windows when using OSMesa and Linux/MacOS
 # and will not be verified
 WINDOWS_SKIP_IMAGE_CACHE = {
-    'test_user_annotations_scalar_bar_volume',  # occurs even without Windows OSMesa
-    'test_enable_stereo_render',  # occurs even without Windows OSMesa
-    'test_plot_add_scalar_bar',
-    'test_plot_cell_data',
-    'test_scalars_by_name',
-    'test_user_annotations_scalar_bar_volume',
-    'test_plot_string_array',
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_enable_stereo_render',  # occurs even without Windows OSMesa
+    'test_plot_add_scalar_bar',
+    'test_plot_cell_data',
     'test_plot_complex_value',
-    'test_plot_helper_volume',
+    'test_plot_composite_poly_scalars_cell',
     'test_plot_helper_two_volumes',
+    'test_plot_helper_volume',
+    'test_plot_string_array',
+    'test_scalars_by_name',
+    'test_user_annotations_scalar_bar_volume',
+    'test_user_annotations_scalar_bar_volume',  # occurs even without Windows OSMesa
 }
 
 # these images vary between Linux/Windows and MacOS
