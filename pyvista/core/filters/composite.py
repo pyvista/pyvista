@@ -182,8 +182,6 @@ class CompositeFilters:
         # track original point indices
         if split_vertices and track_vertices:
             for block in self:
-                if not block:
-                    continue
                 ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 

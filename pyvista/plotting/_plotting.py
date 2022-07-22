@@ -233,9 +233,6 @@ def _common_arg_parser(
         else:
             smooth_shading = theme.smooth_shading
 
-    if render_points_as_spheres is None:
-        render_points_as_spheres = theme.render_points_as_spheres
-
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
 
@@ -247,8 +244,9 @@ def _common_arg_parser(
     if texture is False:
         texture = None
 
+    # allow directly specifying interpolation (potential future feature)
     if 'interpolation' in kwargs:
-        interpolation = kwargs.pop('interpolation')
+        interpolation = kwargs.pop('interpolation')  # pragma: no cover:
     else:
         if pbr:
             interpolation = 'Physically based rendering'

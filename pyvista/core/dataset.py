@@ -668,7 +668,7 @@ class DataSet(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             ret = self.GetCellData().SetActiveScalars(name)
         else:
-            raise ValueError(f'Data field "{name}" with type ({field}) not usable')
+            raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
         if ret < 0:
             raise ValueError(

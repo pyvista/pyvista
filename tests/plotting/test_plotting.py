@@ -2522,6 +2522,8 @@ def test_plot_composite_poly_component_single(multiblock_poly):
         block['data'] = data
 
     pl = pyvista.Plotter()
+    with pytest.raises(ValueError, match='must be nonnegative'):
+        pl.add_composite(multiblock_poly, scalars='data', component=-1)
     pl.add_composite(multiblock_poly, scalars='data', component=1)
     pl.show(before_close_callback=verify_cache_image)
 
@@ -2532,9 +2534,12 @@ def test_plot_composite_poly_complex(multiblock_poly):
         data = np.arange(block.n_points) + np.arange(block.n_points) * 1j
         block['data'] = data
 
+    # make a multi_multi for better coverage
+    multi_multi = pyvista.MultiBlock([multiblock_poly, multiblock_poly])
+
     pl = pyvista.Plotter()
     with pytest.warns(np.ComplexWarning, match='Casting complex'):
-        pl.add_composite(multiblock_poly, scalars='data')
+        pl.add_composite(multi_multi, scalars='data')
     pl.show(before_close_callback=verify_cache_image)
 
 

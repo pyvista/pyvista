@@ -896,7 +896,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
-                block._convert_to_real_scalars(self, data_attr)
+                block._convert_to_real_scalars(data_attr, scalars_name)
             elif block is not None:
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
