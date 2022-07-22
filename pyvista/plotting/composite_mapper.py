@@ -345,6 +345,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             n_colors = 2
             scalar_bar_args.setdefault('n_labels', 0)
             self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
+            clim = [-0.5, 1.5]
 
         if isinstance(annotations, dict):
             for val, anno in annotations.items():

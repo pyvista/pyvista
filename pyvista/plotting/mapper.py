@@ -97,6 +97,7 @@ def make_mapper(mapper_class):
                 if scalars.dtype == np.bool_:
                     cats = np.array([b'False', b'True'], dtype='|S5')
                     values = np.array([0, 1])
+                    clim = [-0.5, 1.5]
                 else:
                     # If str array, digitive and annotate
                     cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
