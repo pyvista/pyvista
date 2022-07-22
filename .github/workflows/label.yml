@@ -43,3 +43,7 @@ jobs:
       if: startsWith(github.event.pull_request.head.ref, 'release')
       with:
         labels: release
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.event.pull_request.head.ref, 'breaking-change')
+      with:
+        labels: breaking-change
