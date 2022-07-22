@@ -203,7 +203,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
-        self.parent = parent  # the plotter
+        self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
@@ -2760,6 +2760,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.disable_shadows()
         if self.__charts is not None:
             self.__charts.deep_clean()
+            self.__charts = None
 
         self.remove_floors(render=render)
         self.remove_legend(render=render)
