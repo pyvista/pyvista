@@ -875,9 +875,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
         elif scalars.dtype in (np.bool_, np.uint8):
             # bool and uint8 do not display properly, must convert to float
+            real_scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
             if scalars.dtype == np.bool_:
                 dtype = np.bool_
-            scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
+            else:
+                scalars_name = real_scalars_name
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
