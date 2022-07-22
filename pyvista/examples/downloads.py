@@ -84,7 +84,7 @@ def delete_downloads():
 
     """
     _check_examples_path()
-    if os.path.exists(pyvista.EXAMPLES_PATH):
+    if os.path.isdir(pyvista.EXAMPLES_PATH):
         shutil.rmtree(pyvista.EXAMPLES_PATH)
     os.makedirs(pyvista.EXAMPLES_PATH)
     return True
