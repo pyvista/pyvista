@@ -445,14 +445,14 @@ def from_meshio(mesh):
 
     if _vtk.VTK9:
         grid = pyvista.UnstructuredGrid(
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )
     else:
         grid = pyvista.UnstructuredGrid(
             np.array(offset),
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )
