@@ -2546,7 +2546,20 @@ def test_plot_composite_rgba(multiblock_poly):
         block['data'] = rgba_value
 
     pl = pyvista.Plotter()
+    with pytest.raises(ValueError, match='3/4 in shape'):
+        pl.add_composite(multiblock_poly, scalars='all_data', rgba=True)
     pl.add_composite(multiblock_poly, scalars='data', rgba=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_bool(multiblock_poly):
+    # add in bool data
+    for i, block in enumerate(multiblock_poly):
+        block['scalars'] = np.zeros(block.n_points, dtype=bool)
+        block['scalars'][::2] = 1
+
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='scalars')
     pl.show(before_close_callback=verify_cache_image)
 
 

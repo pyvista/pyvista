@@ -92,12 +92,18 @@ def make_mapper(mapper_class):
 
             _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):
-                # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
-                # TODO: If str array, digitive and annotate
-                cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
-                values = np.unique(scalars)
-                clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                scalars_name = f'{scalars_name}-digitized'
+
+                # we can rapidly handle bools
+                if scalars.dtype == np.bool_:
+                    cats = np.array([b'False', b'True'], dtype='|S5')
+                    values = np.array([0, 1])
+                else:
+                    # If str array, digitive and annotate
+                    cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
+                    values = np.unique(scalars)
+                    clim = [np.min(values) - 0.5, np.max(values) + 0.5]
+                    scalars_name = f'{scalars_name}-digitized'
+
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True

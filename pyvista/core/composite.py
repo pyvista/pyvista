@@ -866,6 +866,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         )
 
         data_attr = f'{field.name.lower()}_data'
+        dtype = scalars.dtype
         if rgb:
             if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
@@ -874,6 +875,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
         elif scalars.dtype in (np.bool_, np.uint8):
             # bool and uint8 do not display properly, must convert to float
+            if scalars.dtype == np.bool_:
+                dtype = np.bool_
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
         elif scalars.ndim > 1:
             # multi-component
@@ -887,7 +890,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                     )
             scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
 
-        return field, scalars_name
+        return field, scalars_name, dtype
 
     def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
         """Extract the real component of the active scalars of this dataset."""

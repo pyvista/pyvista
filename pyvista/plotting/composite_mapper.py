@@ -8,6 +8,7 @@ import weakref
 import numpy as np
 
 from pyvista import _vtk
+from pyvista.utilities import convert_array, convert_string_array
 
 from ..utilities.misc import has_module, vtk_version_info
 from .colors import Color, get_cmap_safe
@@ -205,8 +206,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         # individual blocks
         self._attr = CompositeAttributes(self, dataset)
         self._dataset = dataset
-        self._added_scalars = None
-        self._orig_scalars_name = None
 
         if color_missing_with_nan is not None:
             self.color_missing_with_nan = color_missing_with_nan
@@ -327,7 +326,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         """Set the scalars of the mapper."""
         self._orig_scalars_name = scalars_name
 
-        field, scalars_name = self._dataset._activate_plotting_scalars(
+        field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
             scalars_name, preference, component, rgb
         )
 
@@ -338,11 +337,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         else:
             self.scalar_map_mode = field.name.lower()
 
-        # track if any scalars have been added
-        if self._orig_scalars_name != scalars_name:
-            self._added_scalars = (scalars_name, field)
-
         scalar_bar_args.setdefault('title', scalars_name)
+
+        if dtype == np.bool_:
+            cats = np.array([b'False', b'True'], dtype='|S5')
+            values = np.array([0, 1])
+            n_colors = 2
+            scalar_bar_args.setdefault('n_labels', 0)
+            self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
         if isinstance(annotations, dict):
             for val, anno in annotations.items():
