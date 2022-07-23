@@ -163,7 +163,7 @@ articles = dict(
         title="GmshModel",
         description="A mesh modeling interface to the Gmsh-Python-API",
         link="https://gmshmodel.readthedocs.io/en/latest/",
-        image="gmsh_model.gif",
+        image="gmsh_model.png",
     ),
     # entry=Example(title="",
     #     description="",
