@@ -645,13 +645,14 @@ class Camera(_vtk.vtkCamera):
 
         return new_camera
 
-    def tight(self, padding=0, adjust_render_window=True):
+    def tight(self, padding=0.0, adjust_render_window=True):
         """Adjust the camera position so that the actors fill the entire renderer.
 
         Parameters
         ----------
-        padding : int, optional
-            Additional padding around the actors.
+        padding : float, optional
+            Additional padding around the actor(s). This is effectively a zoom,
+            where a value of 0.01 results in a zoom out of 1%.
 
         adjust_render_window : bool, optional
             Adjust the size of the render window as to match the dimensions of
@@ -659,32 +660,38 @@ class Camera(_vtk.vtkCamera):
 
         Notes
         -----
-        This only works with 2D images exposed in the XY plane.
+        This resets the view direction to look at the XY plane.
 
         Examples
         --------
+        Display the puppy image with a tight view.
+
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> puppy = examples.download_puppy()
         >>> pl = pv.Plotter(border=True, border_width=5)
         >>> _ = pl.add_mesh(puppy, rgb=True)
-        >>> pl.camera.tight(adjust_render_window=True)
+        >>> pl.camera.tight()
+        >>> pl.show()
+
+        Set the background to blue use a 5% padding around the image.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> pl.background_color = 'b'
+        >>> pl.camera.tight(padding=0.05)
         >>> pl.show()
 
         """
         # inspired by vedo resetCamera. Thanks @marcomusy!
         x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
-        if z1 - z0 > 1e-5:
-            warnings.warn(
-                '`tight` should only be used with actors that lie only on the ' 'XY plane'
-            )
 
         self.enable_parallel_projection()
 
         self._renderer.ComputeAspect()
         aspect = self._renderer.GetAspect()
         angle = np.pi * self.view_angle / 180.0
-        dx, dy = (x1 - x0) * 0.999, (y1 - y0) * 0.999
+        dx, dy = (x1 - x0), (y1 - y0)
         dist = max(dx / aspect[0], dy) / np.sin(angle / 2) / 2
 
         self.SetViewUp(0, 1, 0)
@@ -710,4 +717,4 @@ class Camera(_vtk.vtkCamera):
 
             # simply call tight again to reset the parallel scale due to the
             # resized window
-            self.tight(adjust_render_window=False)
+            self.tight(padding=padding, adjust_render_window=False)

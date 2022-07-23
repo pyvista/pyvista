@@ -190,10 +190,3 @@ def test_deep_clean(cube):
     assert pl.volume is None
     assert pl.textActor is None
     assert cube == cube_orig
-
-
-def test_tight_warn(cube):
-    pl = pyvista.Plotter()
-    pl.add_mesh(cube)
-    with pytest.warns(UserWarning, match='XY plane'):
-        pl.camera.tight()

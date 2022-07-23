@@ -2094,7 +2094,7 @@ class _GIFReader:
 
     def RemoveObservers(self, *args):
         """Needed for VTK-like compatibility with BaseReader."""
-        pass
+        self._observers = []
 
     def GetProgress(self):
         return self._current_frame / self._n_frames

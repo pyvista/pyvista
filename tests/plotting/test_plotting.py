@@ -2524,6 +2524,18 @@ def test_tight_square(noise_2d):
     )
 
 
+def test_tight_square_padding():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(padding=0.05)
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_tight_tall():
     grid = pyvista.UniformGrid(dims=(100, 200, 1))
     grid['data'] = np.arange(grid.n_points)
