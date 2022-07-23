@@ -343,7 +343,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self.set_block_name(index, name)
 
     def get(self, index: str, default: Optional[DataSet] = None) -> Optional[DataSet]:
-        """Get a block by its index or name.
+        """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
         Returns ``default`` if name isn't in the dataset.
