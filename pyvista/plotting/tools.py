@@ -491,10 +491,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
             tf_str.sort()
             allowable = (''.join([f'    * "{item}"\n' for item in tf_str]))[:-1]
             msg = (
-                f'Invalid opactiy transfer function "{mapping}". Should be one '
+                f'Invalid opacity transfer function "{mapping}". Should be one of '
                 f'the following:\n\n{allowable}'
             )
-            raise KeyError(KeyErrorMessage(msg))
+            raise ValueError(msg) from None
 
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
