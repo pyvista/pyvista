@@ -155,7 +155,7 @@ articles = dict(
     ),
     geemap=Example(
         title="geemap",
-        description="A Python package for interactive mapping with Google Earth Engine, ipyleaflet, and ipywidgets."
+        description="A Python package for interactive mapping with Google Earth Engine, ipyleaflet, and ipywidgets.",
         link="https://geemap.org/",
         image="geemap.gif",
     ),
