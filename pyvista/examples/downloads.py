@@ -4331,8 +4331,7 @@ def download_dipole_efield(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> grid = examples.download_dipole_efield()
-    >>> data = (grid['efield_fx']*2E10)
-    >>> grid['data'] = data
+    >>> grid['data'] = grid['efield_fx']*2E10
     >>> grid.plot(volume=True, opacity='sigmoid_5')
 
     """
@@ -4357,7 +4356,7 @@ def download_dipole_hfield(load=True):  # pragma: no cover
 
     Examples
     --------
-    Download the magnetic field dataset and plot it as a volume.
+    Download the magnetic field dataset and plot a slice of it in the XY plane.
 
     >>> from pyvista import examples
     >>> grid = examples.download_dipole_hfield()
@@ -4376,8 +4375,7 @@ def download_dipole_hfield(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> grid = examples.download_dipole_hfield()
-    >>> data = (grid['hfield_fx']*5E10)
-    >>> grid['data'] = data
+    >>> grid['data'] = grid['hfield_fx']*5E10
     >>> grid.plot(volume=True, opacity='sigmoid_4')
 
     """
