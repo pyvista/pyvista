@@ -153,6 +153,18 @@ articles = dict(
         link="https://github.com/camurban/pterasoftware",
         image="ptera_software.gif",
     ),
+    geemap=Example(
+        title="geemap",
+        description="A Python package for interactive mapping with Google Earth Engine, ipyleaflet, and ipywidgets."
+        link="https://geemap.org/",
+        image="geemap.gif",
+    ),
+    gmshmodel=Example(
+        title="GmshModel",
+        description="A mesh modeling interface to the Gmsh-Python-API",
+        link="https://gmshmodel.readthedocs.io/en/latest/",
+        image="gmsh_model.gif",
+    ),
     # entry=Example(title="",
     #     description="",
     #     link="",
