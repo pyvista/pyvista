@@ -1,9 +1,9 @@
 import pathlib
 
+import meshio
 import numpy as np
 import pytest
 
-import meshio
 import pyvista
 from pyvista import examples
 
