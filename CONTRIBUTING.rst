@@ -234,6 +234,7 @@ changes any given branch is introducing before looking at the code.
    routines
 -  ``testing/``: improvements or changes to testing
 -  ``release/``: releases (see below)
+-  ``breaking-change/``: Changes that break backward compatibility
 
 Testing
 ^^^^^^^
@@ -468,7 +469,7 @@ created the following will occur:
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest
+       make doctest-modules
        make html -b linkcheck
 
 4.  After building the documentation, open the local build and examine
