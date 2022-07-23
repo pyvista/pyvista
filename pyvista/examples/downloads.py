@@ -4313,7 +4313,7 @@ def download_dipole_efield(load=True):  # pragma: no cover
 
     Examples
     --------
-    Download the electric field dataset and plot it as a volume.
+    Download the electric field dataset and plot a slice of it in the XY plane.
 
     >>> from pyvista import examples
     >>> grid = examples.download_dipole_efield()

@@ -2631,8 +2631,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity : str or numpy.ndarray, optional
             Opacity mapping for the scalars array.  You can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
-            shorter, or you can pass a string to select the built in transfer
-            function. Should be one of the following:
+            array, or you can pass a string to select a built in transfer
+            function. It a string, should be one of the following:
 
             * ``'linear'`` - Linear
             * ``'linear_r'`` - Linear except reversed
