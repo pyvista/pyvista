@@ -2596,7 +2596,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         annotations=None,
         pickable=True,
         preference="point",
-        log_scale=False,
         opacity_unit_distance=None,
         shade=False,
         diffuse=0.7,
@@ -2969,8 +2968,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Set colormap and build lookup table
         table = _vtk.vtkLookupTable()
-        if log_scale:
-            table.SetScaleToLog10()
         # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
         # above/below colors not supported with volume rendering
 

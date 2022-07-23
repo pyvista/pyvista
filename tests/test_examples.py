@@ -446,3 +446,23 @@ if TEST_DOWNLOADS:
 
         dataset = examples.download_particles_lethe(load=True)
         assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_particles_dipole_efield():
+        filename = examples.download_dipole_efield(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_dipole_efield(load=True)
+        assert isinstance(dataset, pyvista.UniformGrid)
+        assert 'efield_fx' in dataset.point_data
+        assert 'efield_fy' in dataset.point_data
+        assert 'efield_fz' in dataset.point_data
+
+    def test_particles_dipole_hfield():
+        filename = examples.download_dipole_hfield(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_dipole_hfield(load=True)
+        assert isinstance(dataset, pyvista.UniformGrid)
+        assert 'hfield_fx' in dataset.point_data
+        assert 'hfield_fy' in dataset.point_data
+        assert 'hfield_fz' in dataset.point_data
