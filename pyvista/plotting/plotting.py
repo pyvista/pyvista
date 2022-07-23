@@ -1322,7 +1322,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
         >>> pl.camera_position
         [(0.02430, 0.0336, 0.9446),
          (0.02430, 0.0336, -0.02225),
@@ -1966,7 +1966,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             :func:`pyvista.BasePlotter.add_legend`.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene.
+            Reset the camera after adding this mesh to the scene. The default
+            setting is ``None``, where the camera is only reset if this plotter
+            has already been shown. If ``False``, the camera is not reset
+            regardless of the state of the ``Plotter``. When ``True``, the
+            camera is always reset.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -2239,6 +2243,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
+            remove_existing_actor = False
+        else:
+            # check if this actor already exists
+            remove_existing_actor = True
 
         nan_color = Color(
             nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
@@ -2266,6 +2274,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time and not self.camera_set
+
         ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
@@ -2289,6 +2301,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the_arguments.pop('self')
             the_arguments.pop('mesh')
             the_arguments.pop('kwargs')
+            the_arguments.pop('remove_existing_actor')
 
             if multi_colors:
                 # Compute unique colors for each index of the block
@@ -2337,7 +2350,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 a = self.add_mesh(data, **the_arguments)
                 actors.append(a)
 
-                if (reset_camera is None and not self.camera_set) or reset_camera:
+                if reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
                     self.camera_set = False
@@ -2564,6 +2577,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
             pickable=pickable,
             render=render,
+            remove_existing_actor=remove_existing_actor,
         )
 
         # hide scalar bar if using special scalars
