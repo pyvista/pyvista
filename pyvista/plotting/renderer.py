@@ -203,7 +203,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
-        self.parent = parent  # the plotter
+        self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
@@ -621,7 +621,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._actors
 
     def add_actor(
-        self, uinput, reset_camera=False, name=None, culling=False, pickable=True, render=True
+        self,
+        uinput,
+        reset_camera=False,
+        name=None,
+        culling=False,
+        pickable=True,
+        render=True,
+        remove_existing_actor=True,
     ):
         """Add an actor to render window.
 
@@ -653,6 +660,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the render window is being shown, trigger a render
             after adding the actor.
 
+        remove_existing_actor : bool, optional
+            Removes any existing actor if the named actor ``name`` is already
+            present.
+
         Returns
         -------
         actor : vtk.vtkActor
@@ -662,7 +673,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Actor properties.
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False, render=False)
+        if name and remove_existing_actor:
+            rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
             actor = _vtk.vtkActor()
@@ -705,7 +717,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
-        self.ResetCameraClippingRange()
         self.Modified()
 
         prop = None
@@ -1868,6 +1879,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 except KeyError:
                     pass
 
+        if self.__charts is not None:
+            self._charts.deep_clean()
         self.remove_all_lights()
         self.RemoveAllViewProps()
         self.Modified()
@@ -1935,13 +1948,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def set_viewup(self, vector):
+    def set_viewup(self, vector, reset=True):
         """Set camera viewup vector.
 
         Parameters
         ----------
         vector : sequence
             New 3 value camera viewup vector.
+
+        reset : bool, optional
+            Whether to reset the camera after setting the camera
+            position.
 
         Examples
         --------
@@ -1957,7 +1974,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
+
         self.camera.up = vector
+        if reset:
+            self.reset_camera()
+
         self.camera_set = True
         self.Modified()
 
@@ -2271,6 +2292,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.ResetCamera(*bounds)
         else:
             self.ResetCamera()
+
+        self.reset_camera_clipping_range()
+
         if render:
             self.parent.render()
         self.Modified()
@@ -2758,6 +2782,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.disable_shadows()
         if self.__charts is not None:
             self.__charts.deep_clean()
+            self.__charts = None
 
         self.remove_floors(render=render)
         self.remove_legend(render=render)
