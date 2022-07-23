@@ -32,9 +32,9 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
+from ..utilities.misc import PyvistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
-from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
+from ._plotting import prepare_smooth_shading, process_opacity
 from .colors import Color, get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
@@ -201,6 +201,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
+        self._initialized = False
+
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
@@ -280,6 +282,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set antialiasing based on theme
         if self.theme.antialiasing:
             self.enable_anti_aliasing()
+
+        self._initialized = True
 
     @property
     def theme(self):
@@ -1308,7 +1312,45 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def camera_position(self):
-        """Return camera position of the active render window."""
+        """Return camera position of the active render window.
+
+        Examples
+        --------
+        Return camera's position and then reposition it via a list of tuples.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
+        >>> pl.camera_position
+        [(0.02430, 0.0336, 0.9446),
+         (0.02430, 0.0336, -0.02225),
+         (0.0, 1.0, 0.0)]
+        >>> pl.camera_position = [
+        ...     (0.3914, 0.4542, 0.7670),
+        ...     (0.0243, 0.0336, -0.0222),
+        ...     (-0.2148, 0.8998, -0.3796),
+        ... ]
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'xy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'zy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'zy'
+        >>> pl.show()
+
+        For more examples, see :ref:`cameras_api`.
+
+        """
         return self.renderer.camera_position
 
     @camera_position.setter
@@ -1318,7 +1360,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the active render window."""
+        """Return the background color of the active render window.
+
+        Examples
+        --------
+        Set the background color to ``"pink"`` and plot it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
+        >>> pl.background_color = "pink"
+        >>> pl.background_color
+        Color(name='pink', hex='#ffc0cbff')
+        >>> pl.show()
+
+        """
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
@@ -1910,7 +1966,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             :func:`pyvista.BasePlotter.add_legend`.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene.
+            Reset the camera after adding this mesh to the scene. The default
+            setting is ``None``, where the camera is only reset if this plotter
+            has already been shown. If ``False``, the camera is not reset
+            regardless of the state of the ``Plotter``. When ``True``, the
+            camera is always reset.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -2047,7 +2107,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
-            positive float. Default: ``True``.
+            positive float. Default: ``False``.
 
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
@@ -2183,6 +2243,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
+            remove_existing_actor = False
+        else:
+            # check if this actor already exists
+            remove_existing_actor = True
 
         nan_color = Color(
             nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
@@ -2210,6 +2274,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time and not self.camera_set
+
         ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
@@ -2233,10 +2301,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the_arguments.pop('self')
             the_arguments.pop('mesh')
             the_arguments.pop('kwargs')
+            the_arguments.pop('remove_existing_actor')
 
             if multi_colors:
                 # Compute unique colors for each index of the block
-                if _has_matplotlib():
+                if has_module('matplotlib'):
                     from itertools import cycle
 
                     import matplotlib
@@ -2281,7 +2350,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 a = self.add_mesh(data, **the_arguments)
                 actors.append(a)
 
-                if (reset_camera is None and not self.camera_set) or reset_camera:
+                if reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
                     self.camera_set = False
@@ -2508,6 +2577,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
             pickable=pickable,
             render=render,
+            remove_existing_actor=remove_existing_actor,
         )
 
         # hide scalar bar if using special scalars
@@ -2853,7 +2923,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
-
         if scalars.ndim != 1:
             scalars = scalars.ravel()
 
@@ -2913,11 +2982,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 table.SetAnnotation(float(val), str(anno))
 
         if cmap is None:  # Set default map if matplotlib is available
-            if _has_matplotlib():
+            if has_module('matplotlib'):
                 cmap = self._theme.cmap
 
         if cmap is not None:
-            if not _has_matplotlib():
+            if not has_module('matplotlib'):
                 raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
@@ -3137,6 +3206,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
+
+        Examples
+        --------
+        Not linked view case.
+
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> ocube = demos.orientation_cube()
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        Linked view case.
+
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.link_views()
+        >>> pl.show()
 
         """
         if isinstance(views, (int, np.integer)):
@@ -4617,13 +4738,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        # We have to check here if it has the closed attribute as it
-        # may not exist should the plotter have failed to initialize.
-        if hasattr(self, '_closed'):
+        # We have to check here if the plotter was only partially initialized
+        if self._initialized:
             if not self._closed:
                 self.close()
         self.deep_clean()
-        if hasattr(self, 'renderers'):
+        if self._initialized:
             del self.renderers
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
@@ -5060,6 +5180,8 @@ class Plotter(BasePlotter):
             lighting=lighting,
             theme=theme,
         )
+        # reset partial initialization flag
+        self._initialized = False
 
         log.debug('Plotter init start')
 
@@ -5153,6 +5275,9 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # some cleanup only necessary for fully initialized plotters
+        self._initialized = True
         log.debug('Plotter init stop')
 
     def show(

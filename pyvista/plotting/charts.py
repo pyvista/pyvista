@@ -4370,7 +4370,16 @@ class Charts:
         # needed.
         self._scene = None
         self._actor = None
-        self._renderer = renderer
+
+        # a weakref.proxy would be nice here, but that doesn't play
+        # nicely with SetRenderer, so instead we'll use a weak reference
+        # plus a property to call it
+        self.__renderer = weakref.ref(renderer)
+
+    @property
+    def _renderer(self):
+        """Return the weakly dereferenced renderer, maybe None."""
+        return self.__renderer()
 
     def _setup_scene(self):
         """Set up a new context scene and actor for these charts."""
@@ -4384,7 +4393,7 @@ class Charts:
     def deep_clean(self):
         """Remove all references to the chart objects and internal objects."""
         if self._scene is not None:
-            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_plot
+            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
                 self.remove_chart(chart)
             self._renderer.RemoveActor(self._actor)
@@ -4458,3 +4467,7 @@ class Charts:
         """Return an iterable of charts."""
         for chart in self._charts:
             yield chart
+
+    def __del__(self):
+        """Clean up before being destroyed."""
+        self.deep_clean()

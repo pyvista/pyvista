@@ -104,6 +104,8 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
+    'test_plot_helper_volume',
+    'test_plot_helper_two_volumes',
 }
 
 # these images vary between Linux/Windows and MacOS
@@ -368,6 +370,31 @@ def test_plot(sphere, tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+def test_plot_helper_volume(uniform):
+    uniform.plot(
+        volume=True,
+        parallel_projection=True,
+        show_scalar_bar=False,
+        show_grid=True,
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_plot_helper_two_datasets(sphere, airplane):
+    pyvista.plot([sphere, airplane], before_close_callback=verify_cache_image)
+
+
+def test_plot_helper_two_volumes(uniform):
+    grid = uniform.copy()
+    grid.origin = (0, 0, 10)
+    pyvista.plot(
+        [uniform, grid],
+        volume=True,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
 
 
 def test_plot_return_cpos(sphere):
@@ -2050,7 +2077,7 @@ def test_set_focus():
     plane = pyvista.Plane()
     p = pyvista.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((1, 0, 0))
+    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
     p.show(before_close_callback=verify_cache_image)
 
 
@@ -2477,3 +2504,11 @@ def test_multi_plot_scalars():
     pl.add_text('"v" point scalars')
     pl.add_mesh(plane, scalars='v')
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_bool_scalars(sphere):
+    sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
+    sphere['scalars'][::2] = 1
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)

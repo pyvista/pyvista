@@ -1814,7 +1814,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(show_edges=True)
+        >>> surf.plot(show_edges=True, scalars='Area')
 
         """
         alg = _vtk.vtkCellSizeFilter()
@@ -2426,7 +2426,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         These cell scalars can be applied to individual points to
         effectively smooth out the cell data onto the points.
@@ -2435,7 +2435,7 @@ class DataSetFilters:
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
         >>> surf = surf.cell_data_to_point_data()
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         """
         alg = _vtk.vtkCellDataToPointData()

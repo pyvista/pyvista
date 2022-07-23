@@ -96,7 +96,7 @@ mesh.plot(scalars=dist, smooth_shading=True, specular=5, cmap="plasma", show_sca
 ###############################################################################
 # Animate Barth Sextic
 # ~~~~~~~~~~~~~~~~~~~~
-# Show 15 frames of various isocurves extracted from the Barth sextic
+# Show 20 frames of various isocurves extracted from the Barth sextic
 # function.
 
 
@@ -104,25 +104,25 @@ def angle_to_range(angle):
     return -2 * np.sin(angle)
 
 
-mesh = grid.contour([angle_to_range(0)], values, method='flying_edges')
-dist = np.linalg.norm(mesh.points, axis=1)
+pl = pv.Plotter(window_size=[800, 800], off_screen=True)
 
-pl = pv.Plotter()
-pl.add_mesh(
-    mesh,
-    scalars=dist,
-    smooth_shading=True,
-    specular=5,
-    rng=[0.5, 1.5],
-    cmap="plasma",
-    show_scalar_bar=False,
-)
 pl.open_gif('barth_sextic.gif')
 
-for angle in np.linspace(0, np.pi, 15)[:-1]:
-    new_mesh = grid.contour([angle_to_range(angle)], values, method='flying_edges')
-    mesh.overwrite(new_mesh)
-    pl.update_scalars(np.linalg.norm(new_mesh.points, axis=1), render=False)
+for angle in np.linspace(0, np.pi, 20, endpoint=False):
+    # clear the plotter before adding each frame's mesh
+    pl.clear()
+    pl.enable_lightkit()
+    mesh = grid.contour([angle_to_range(angle)], values, method='flying_edges')
+    dist = np.linalg.norm(mesh.points, axis=1)
+    pl.add_mesh(
+        mesh,
+        scalars=dist,
+        smooth_shading=True,
+        specular=5,
+        rng=[0.5, 1.5],
+        cmap="plasma",
+        show_scalar_bar=False,
+    )
     pl.write_frame()
 
-pl.show()
+pl.close()
