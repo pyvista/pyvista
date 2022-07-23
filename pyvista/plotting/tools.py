@@ -16,6 +16,18 @@ from pyvista.utilities import PyvistaDeprecationWarning
 from .colors import Color
 
 
+class KeyErrorMessage(str):
+    """Subclass str to deal with KeyError bug.
+
+    See https://stackoverflow.com/questions/46892261
+
+    """
+
+    def __repr__(self):
+        """Override __repr__ due to CPython bug."""
+        return str(self)
+
+
 class FONTS(Enum):
     """Font families available to PyVista."""
 
@@ -454,6 +466,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
         'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_1': sigmoid(np.linspace(-1.0, 1.0, n_colors)),
+        'sigmoid_2': sigmoid(np.linspace(-2.0, 2.0, n_colors)),
         'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
         'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
         'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
@@ -473,7 +487,15 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise KeyError(f'opactiy transfer function ({mapping}) unknown.')
+            tf_str = list(transfer_func.keys())
+            tf_str.sort()
+            allowable = (''.join([f'    * "{item}"\n' for item in tf_str]))[:-1]
+            msg = (
+                f'Invalid opactiy transfer function "{mapping}". Should be one '
+                f'the following:\n\n{allowable}'
+            )
+            raise KeyError(KeyErrorMessage(msg))
+
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:

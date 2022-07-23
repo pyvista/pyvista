@@ -2596,6 +2596,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         annotations=None,
         pickable=True,
         preference="point",
+        log_scale=False,
         opacity_unit_distance=None,
         shade=False,
         diffuse=0.7,
@@ -2629,12 +2630,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Block resolution.
 
         opacity : str or numpy.ndarray, optional
-            Opacity mapping for the scalars array.
-            A string can also be specified to map the scalars range to a
-            predefined opacity transfer function (options include: 'linear',
-            'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
+            Opacity mapping for the scalars array.  You can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
-            shorter.
+            shorter, or you can pass a string to select the built in transfer
+            function. Should be one of the following:
+
+            * ``'linear'`` - Linear
+            * ``'linear_r'`` - Linear except reversed
+            * ``'geom'`` - Evenly spaced on the log scale
+            * ``'geom_r'`` - Evenly spaced on the log scale except reversed
+            * ``'sigmoid'`` - Linear map between -10.0 and 10.0
+            * ``'sigmoid_3'`` - Linear map between -3.0 and 3.0
+            * ``'sigmoid_4'`` - Linear map between -4.0 and 4.0
+            * ``'sigmoid_5'`` - Linear map between -5.0 and 5.0
+            * ``'sigmoid_6'`` - Linear map between -6.0 and 6.0
+            * ``'sigmoid_7'`` - Linear map between -7.0 and 7.0
+            * ``'sigmoid_8'`` - Linear map between -8.0 and 8.0
+            * ``'sigmoid_9'`` - Linear map between -9.0 and 9.0
+            * ``'sigmoid_10'`` - Linear map between -10.0 and 10.0
 
         n_colors : int, optional
             Number of colors to use when displaying scalars. Defaults to 256.
@@ -2956,6 +2969,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Set colormap and build lookup table
         table = _vtk.vtkLookupTable()
+        if log_scale:
+            table.SetScaleToLog10()
         # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
         # above/below colors not supported with volume rendering
 
