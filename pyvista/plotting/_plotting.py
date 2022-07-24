@@ -211,6 +211,14 @@ def _common_arg_parser(
     culling = kwargs.pop("backface_culling", culling)
     rgb = kwargs.pop('rgba', rgb)
 
+    # Support aliases for 'back', 'front', or 'none'. Consider deprecating
+    if culling is False:
+        culling = 'none'
+    elif culling in ['b', 'backface', True]:
+        culling = 'back'
+    elif culling in ['f', 'frontface']:
+        culling = 'front'
+
     # Avoid mutating input
     if scalar_bar_args is None:
         scalar_bar_args = {'n_colors': n_colors}

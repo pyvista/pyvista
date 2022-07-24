@@ -43,3 +43,90 @@ def test_property_lighting(prop):
     value = False
     prop.lighting = value
     assert prop.lighting == value
+
+
+def test_property_ambient(prop):
+    value = 0.45
+    prop.ambient = value
+    assert prop.ambient == value
+
+
+def test_property_diffuse(prop):
+    value = 0.5
+    prop.diffuse = value
+    assert prop.diffuse == value
+
+
+def test_property_specular(prop):
+    value = 0.5
+    prop.specular = value
+    assert prop.specular == value
+
+
+def test_property_specular_power(prop):
+    value = 0.5
+    prop.specular_power = value
+    assert prop.specular_power == value
+
+
+def test_property_metallic(prop):
+    value = 0.1
+    prop.metallic = value
+    assert prop.metallic == value
+
+
+def test_property_roughness(prop):
+    value = 0.1
+    prop.roughness = value
+    assert prop.roughness == value
+
+
+def test_property_interpolation(prop):
+    value = 'Phong'
+    prop.interpolation = value
+    assert prop.interpolation == value
+
+
+def test_property_render_points_as_spheres(prop):
+    value = True
+    prop.render_points_as_spheres = value
+    assert prop.render_points_as_spheres is value
+
+
+def test_property_render_lines_as_tubes(prop):
+    value = True
+    prop.render_lines_as_tubes = value
+    assert prop.render_lines_as_tubes is value
+
+
+def test_property_point_size(prop):
+    value = 10.0
+    prop.point_size = value
+    assert prop.point_size == value
+
+
+@pytest.mark.parametrize("value", ['back', 'front', 'none'])
+def test_property_culling(prop, value):
+    prop.culling = value
+    assert prop.culling == value
+
+
+def test_property_diffuse_color(prop):
+    prop.diffuse_color = 'b'
+    assert prop.diffuse_color.float_rgb == (0, 0, 1)
+
+
+def test_property_ambient_color(prop):
+    prop.ambient_color = 'b'
+    assert prop.ambient_color.float_rgb == (0, 0, 1)
+
+
+def test_property_specular_color(prop):
+    prop.specular_color = 'b'
+    assert prop.specular_color.float_rgb == (0, 0, 1)
+
+
+def test_property_anisotropy(prop):
+    value = 0.1
+    prop.anisotrophy = value
+    assert prop.anisotrophy == value

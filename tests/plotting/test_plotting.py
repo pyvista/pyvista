@@ -2621,3 +2621,8 @@ def test_bool_scalars(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_property():
+    prop = pyvista.Property(color='b', lighting=False)
+    prop.plot(before_close_callback=verify_cache_image)

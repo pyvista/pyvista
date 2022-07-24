@@ -1,7 +1,7 @@
 import pytest
 
 import pyvista as pv
-from pyvista.plotting.composite_mapper import CompositePolyDataMapper, _BlockAttributes
+from pyvista.plotting.composite_mapper import BlockAttributes, CompositePolyDataMapper
 
 
 @pytest.fixture()
@@ -33,7 +33,7 @@ def test_composite_mapper_non_poly(multiblock_all):
 
 def test_block_attr(block_attributes):
     block = block_attributes[0]
-    assert isinstance(block, _BlockAttributes)
+    assert isinstance(block, BlockAttributes)
     with pytest.raises(KeyError, match='Invalid block key'):
         block_attributes[-1]
     with pytest.raises(KeyError, match='out of bounds'):
@@ -90,7 +90,7 @@ def test_attr_repr(block_attr):
     repr_ = repr(block_attr)
     assert 'True' in repr_
     assert 'False' in repr_
-    assert '1.0' in repr_
+    assert 'blue' in repr_
     assert '0.9' in repr_
 
 

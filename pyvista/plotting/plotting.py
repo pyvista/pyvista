@@ -2009,7 +2009,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             cause flat meshes to be partially displayed. Defaults to
             ``False``. One of the following:
 
-            * ``True``
+            * ``True`` - Enable backface culling
             * ``"b"`` - Enable backface culling
             * ``"back"`` - Enable backface culling
             * ``"backface"`` - Enable backface culling

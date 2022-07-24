@@ -30,6 +30,22 @@ all plotting functionality in PyVista.
    Property
 
 
+Composite Plotting Reference
+----------------------------
+Composite dataset plotting reference. These classes are used when plotting
+composite datasets like :class:`pyvista.MultiBlock`.
+
+.. currentmodule:: pyvista.plotting.composite_mapper
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
+
+   CompositePolyDataMapper
+   CompositeAttributes
+   BlockAttributes
+
+
 Charts API
 ----------
 Charts API reference. These dedicated classes can be used to embed
