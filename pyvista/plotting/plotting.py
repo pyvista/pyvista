@@ -1861,17 +1861,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         dataset : pyvista.MultiBlock
             A :class:`pyvista.MultiBlock` dataset.
 
-        color : color_like, optional
+        color : color_like, default: :attr:`pyvista.themes.DefaultTheme.color`
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
-            Defaults to :attr:`pyvista.global_theme.color
-            <pyvista.themes.DefaultTheme.color>`.
-
-        style : str, optional
+        style : str, default='wireframe'
             Visualization style of the mesh.  One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``.
             Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
@@ -1887,48 +1884,47 @@ class BasePlotter(PickingHelper, WidgetHelper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        show_edges : bool, optional
+        show_edges : bool, default: :attr:`pyvista.global_theme.show_edges`
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, optional
+        edge_color : color_like, default: :attr:`pyvista.global_theme.edge_color`
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
-            Defaults to :attr:`pyvista.global_theme.edge_color
+            Defaults to :attr:`pyvista.global_theme.edge_color`
             <pyvista.themes.DefaultTheme.edge_color>`.
 
-        point_size : float, optional
+        point_size : float, default: 5.0
             Point size of any points in the dataset plotted. Also
             applicable when style='points'. Default ``5.0``.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default None.
+            representations.
 
-        opacity : float, optional
+        opacity : float, default: 1.0
             Opacity of the mesh. A single float value that will be applied
             globally opacity of the mesh and uniformly
             applied everywhere - should be between 0 and 1.
 
-        flip_scalars : bool, optional
+        flip_scalars : bool, default: False
             Flip direction of cmap. Most colormaps allow ``*_r``
             suffix to do this as well.
 
-        lighting : bool, optional
-            Enable or disable view direction lighting. Default ``False``.
+        lighting : bool, default: True
+            Enable or disable view direction lighting.
 
-        n_colors : int, optional
-            Number of colors to use when displaying scalars. Defaults to 256.
-            The scalar bar will also have this many colors.
+        n_colors : int, default: 256
+            Number of colors to use when displaying scalars.  The scalar bar
+            will also have this many colors.
 
-        interpolate_before_map : bool, optional
-            Enabling makes for a smoother scalars display.  Default is
-            ``True``.  When ``False``, OpenGL will interpolate the
-            mapped colors which can result is showing colors that are
-            not present in the color map.
+        interpolate_before_map : bool, default: True
+            Enabling makes for a smoother scalars display.  When ``False``,
+            OpenGL will interpolate the mapped colors which can result is
+            showing colors that are not present in the color map.
 
-        cmap : str, list, optional
+        cmap : str or list, default :attr:`pyvista.themes.DefaultTheme.cmap`
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only
             applicable for when displaying ``scalars``. Requires
@@ -1957,7 +1953,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``False``, a scalar bar will not be added to the
             scene. Defaults to ``True`` unless ``rgba=True``.
 
-        multi_colors : bool, optional
+        multi_colors : bool, default: False
             Color each block by a solid color using matplotlib's color cycler.
 
         name : str, optional
@@ -1965,10 +1961,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        render_points_as_spheres : bool, optional
+        render_points_as_spheres : bool, default: False
             Render points as spheres rather than dots.
 
-        render_lines_as_tubes : bool, optional
+        render_lines_as_tubes : bool, default: False
             Show lines as thick tubes rather than flat lines.  Control
             the width with ``line_width``.
 
@@ -1978,7 +1974,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Automatically enabled when ``pbr=True``.  See
             :ref:`shading_example`.
 
-        split_sharp_edges : bool, optional
+        split_sharp_edges : bool, default: False
             Split sharp edges exceeding 30 degrees when plotting with smooth
             shading.  Control the angle with the optional keyword argument
             ``feature_angle``.  By default this is ``False`` unless overridden
@@ -1986,34 +1982,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
             create a copy of the input mesh within the plotter.  See
             :ref:`shading_example`.
 
-        ambient : float, optional
+        ambient : float, default: 0.0
             When lighting is enabled, this is the amount of light in
             the range of 0 to 1 (default 0.0) that reaches the actor
             when not directed at the light source emitted from the
             viewer.
 
-        diffuse : float, optional
-            The diffuse lighting coefficient. Default 1.0.
+        diffuse : float, default: 1.0
+            The diffuse lighting coefficient.
 
-        specular : float, optional
-            The specular lighting coefficient. Default 0.0.
+        specular : float, default: 0.0
+            The specular lighting coefficient.
 
-        specular_power : float, optional
+        specular_power : float, default: 1.0
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : color_like, optional, defaults to gray
+        nan_color : color_like, default: :attr:`pyvista.themes.DefaultTheme.nan_color`
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        nan_opacity : float, optional
+        nan_opacity : float, default: 1.0
             Opacity of ``NaN`` values.  Should be between 0 and 1.
-            Default 1.0.
 
-        culling : str, bool, optional
+        culling : str, bool, default: False
             Does not render faces that are culled. This can be helpful for
             dense surface meshes, especially when edges are visible, but can
-            cause flat meshes to be partially displayed. Defaults to
-            ``False``. One of the following:
+            cause flat meshes to be partially displayed. One of the following:
 
             * ``True`` - Enable backface culling
             * ``"b"`` - Enable backface culling
@@ -2024,7 +2018,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``"frontface"`` - Enable frontface culling
             * ``False`` - Disable both backface and frontface culling
 
-        rgb : bool, optional
+        rgb : bool, default: False
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
             accepted alias for this.  Opacity (the A) is optional.  If
@@ -2052,46 +2046,46 @@ class BasePlotter(PickingHelper, WidgetHelper):
             values in the scalars range to annotate on the scalar bar
             and the values are the the string annotations.
 
-        pickable : bool, optional
+        pickable : bool, default: True
             Set whether this actor is pickable.
 
-        preference : str, optional
+        preference : str, default: 'point'
             For each block, when ``block.n_points == block.n_cells`` and
             setting scalars, this parameter sets how the scalars will be mapped
-            to the mesh.  Default ``'point'``, causes the scalars will be
-            associated with the mesh points.  Can be either ``'point'`` or
-            ``'cell'``.
+            to the mesh.  For example, when ``'point'`` the scalars will be
+            associated with the mesh points if available.  Can be either
+            ``'point'`` or ``'cell'``.
 
-        log_scale : bool, optional
+        log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
-            positive float. Default ``False``.
+            positive float.
 
-        pbr : bool, optional
+        pbr : bool, default: False
             Enable physics based rendering (PBR) if the mesh is
             ``PolyData``.  Use the ``color`` argument to set the base
             color. This is only available in VTK>=9.
 
-        metallic : float, optional
+        metallic : float, default: 0.0
             Usually this value is either 0 or 1 for a real material
             but any value in between is valid. This parameter is only
-            used by PBR interpolation. Default value is 0.0.
+            used by PBR interpolation.
 
-        roughness : float, optional
+        roughness : float, default: 0.5
             This value has to be between 0 (glossy) and 1 (rough). A
             glossy material has reflections and a high specular
             part. This parameter is only used by PBR
-            interpolation. Default value is 0.5.
+            interpolation.
 
-        render : bool, optional
-            Force a render when ``True``.  Default ``True``.
+        render : bool, default: True
+            Force a render when ``True``.
 
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
-        color_missing_with_nan : bool, optional
+        color_missing_with_nan : bool, default: False
             Color any missing values with the ``nan_color``. This is useful
             when not all blocks of the composite dataset have the specified
             ``scalars``.
@@ -2106,6 +2100,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         pyvista.CompositePolyDataMapper
             Composite PolyData mapper.
+
+        Examples
+        --------
+        Add a sphere and a cube as a multiblock dataset to a plotter and then
+        change the visibility and color of the blocks.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.block_attr[1].color = 'b'
+        >>> mapper.block_attr[1].opacity = 0.5
+        >>> mapper.block_attr[2].color = 'r'
+        >>> pl.show()
 
         """
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
