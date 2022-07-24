@@ -2080,7 +2080,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when ``True``.  Default ``True``.
 
-        component :  int, optional
+        component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
