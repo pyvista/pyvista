@@ -1893,7 +1893,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Either a string, RGB list, or hex color string.
 
         point_size : float, optional
-            Point size of any nodes in the dataset plotted. Also
+            Point size of any points in the dataset plotted. Also
             applicable when style='points'. Default ``5.0``.
 
         line_width : float, optional
@@ -2003,12 +2003,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Opacity of ``NaN`` values.  Should be between 0 and 1.
             Default 1.0.
 
-        culling : str, optional
-            Does not render faces that are culled. Options are
-            ``'front'`` or ``'back'``. This can be helpful for dense
-            surface meshes, especially when edges are visible, but can
-            cause flat meshes to be partially displayed.  Defaults to
-            ``False``.
+        culling : str, bool, optional
+            Does not render faces that are culled. This can be helpful for
+            dense surface meshes, especially when edges are visible, but can
+            cause flat meshes to be partially displayed. Defaults to
+            ``False``. One of the following:
+
+            * ``True``
+            * ``"b"`` - Enable backface culling
+            * ``"back"`` - Enable backface culling
+            * ``"backface"`` - Enable backface culling
+            * ``"f"`` - Enable frontface culling
+            * ``"front"`` - Enable frontface culling
+            * ``"frontface"`` - Enable frontface culling
+            * ``False`` - Disable both backface and frontface culling
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot

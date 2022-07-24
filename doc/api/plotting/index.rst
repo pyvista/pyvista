@@ -27,6 +27,7 @@ all plotting functionality in PyVista.
 
    Plotter
    Renderer
+   Property
 
 
 Charts API

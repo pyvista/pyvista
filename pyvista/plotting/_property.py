@@ -17,7 +17,121 @@ def _check_supports_pbr():
 
 
 class Property(_vtk.vtkProperty):
-    """Wrap vtkProperty."""
+    """Wrap vtkProperty and expose it pythonically.
+
+    This class is useful when needing to set the property of actors.
+
+    Parameters
+    ----------
+    theme : pyvista.themes.DefaultTheme, optional
+        Plot-specific theme.
+
+    interpolation : str
+        Set the method of shading. One of the following:
+
+        * ``'Physically based rendering'``
+        * ``'pbr'` - Alias for Physically based rendering.
+        * ``'Phong'`` - Phong shading
+        * ``'Gouraud'`` - Gouraud shading
+        * ``'Flat'`` - Flat Shading
+
+    color : color_like, optional
+        Used to make the entire mesh have a single solid color.
+        Either a string, RGB list, or hex color string.  For example:
+        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+        ``color='#FFFFFF'``. Color will be overridden if scalars are
+        specified.
+
+    style : str, optional
+        Visualization style of the mesh.  One of the following:
+        ``style='surface'``, ``style='wireframe'``, ``style='points'``.
+        Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
+        wireframe of the outer geometry.
+
+    metallic : float, optional
+        Usually this value is either 0 or 1 for a real material
+        but any value in between is valid. This parameter is only
+        used by PBR interpolation.
+
+    roughness : float, optional
+        This value has to be between 0 (glossy) and 1 (rough). A
+        glossy material has reflections and a high specular
+        part. This parameter is only used by PBR
+        interpolation.
+
+    point_size : float, optional
+        Size of the points represented by this property.
+
+    opacity : float, optional
+        Opacity of the mesh. A single float value that will be applied globally
+        opacity of the mesh and uniformly applied everywhere - should be
+        between 0 and 1.
+
+    ambient : float, optional
+        When lighting is enabled, this is the amount of light in
+        the range of 0 to 1 (default 0.0) that reaches the actor
+        when not directed at the light source emitted from the
+        viewer.
+
+    diffuse : float, optional
+        The diffuse lighting coefficient. Default 1.0.
+
+    specular : float, optional
+        The specular lighting coefficient. Default 0.0.
+
+    specular_power : float, optional
+        The specular power. Between 0.0 and 128.0.
+
+    show_edges : bool, optional
+        Shows the edges.  Does not apply to a wireframe
+        representation.
+
+    edge_color : color_like, optional
+        The solid color to give the edges when ``show_edges=True``.
+        Either a string, RGB list, or hex color string.
+
+    render_points_as_spheres : bool, optional
+        Render points as spheres rather than dots.
+
+    render_lines_as_tubes : bool, optional
+        Show lines as thick tubes rather than flat lines.  Control
+        the width with ``line_width``.
+
+    lighting : bool, optional
+        Enable or disable view direction lighting.
+
+    culling : str, bool, optional
+        Does not render faces that are culled. This can be helpful for
+        dense surface meshes, especially when edges are visible, but can
+        cause flat meshes to be partially displayed. Defaults to
+        ``False``. One of the following:
+
+        * ``True``
+        * ``"b"`` - Enable backface culling
+        * ``"back"`` - Enable backface culling
+        * ``"backface"`` - Enable backface culling
+        * ``"f"`` - Enable frontface culling
+        * ``"front"`` - Enable frontface culling
+        * ``"frontface"`` - Enable frontface culling
+        * ``False`` - Disable both backface and frontface culling
+
+    Examples
+    --------
+    Create a vtk Actor and assign properties to it.
+
+    >>> import vtk
+    >>> import pyvista as pv
+    >>> prop = pv.Property(
+    ...     color='r',
+    ...     show_edges=True,
+    ...     interpolation='Physically based rendering',
+    ...     metallic=0.5,
+    ...     roughness=0.1
+    ... )
+    >>> actor = vtk.vtkActor()
+    >>> actor.SetProperty(prop)
+
+    """
 
     def __init__(
         self,
@@ -48,17 +162,12 @@ class Property(_vtk.vtkProperty):
             # after creation.
             self._theme.load_theme(pyvista.global_theme)
         else:
-            if not isinstance(theme, pyvista.themes.DefaultTheme):
-                raise TypeError(
-                    'Expected ``pyvista.themes.DefaultTheme`` for '
-                    f'``theme``, not {type(theme).__name__}.'
-                )
             self._theme.load_theme(theme)
 
         self.interpolation = interpolation
         self.color = color
         self.style = style
-        if interpolation == 'Physically based rendering':
+        if interpolation in ['Physically based rendering', 'pbr']:
             if metallic is not None:
                 self.metallic = metallic
             if roughness is not None:
@@ -86,7 +195,23 @@ class Property(_vtk.vtkProperty):
 
     @property
     def style(self) -> str:
-        """Return or set the representation."""
+        """Return or set Visualization style of the mesh.
+
+        One of the following (case insensitive)
+
+        * ``'surface'``
+        * ``'wireframe'``
+        * ``'points'``
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.style = 'Surface'
+        >>> prop.style
+        'Surface'
+
+        """
         return self.GetRepresentationAsString()
 
     @style.setter
@@ -112,8 +237,23 @@ class Property(_vtk.vtkProperty):
             )
 
     @property
-    def color(self):
-        """Return or set the color of this property."""
+    def color(self) -> Color:
+        """Return or set the color of this property.
+
+        Either a string, RGB list, or hex color string.  For example:
+        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+        ``color='#FFFFFF'``. Color will be overridden if scalars are
+        specified.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.color = 'b'
+        >>> prop.color
+        Color(name='blue', hex='#0000ffff')
+
+        """
         return Color(self.GetColor())
 
     @color.setter
@@ -123,8 +263,21 @@ class Property(_vtk.vtkProperty):
         self.SetColor(rgb_color.float_rgb)
 
     @property
-    def edge_color(self):
-        """Return or set the edge color of this property."""
+    def edge_color(self) -> Color:
+        """Return or set the edge color of this property.
+
+        The solid color to give the edges when ``show_edges=True``.
+        Either a string, RGB list, or hex color string.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.edge_color = 'brown'
+        >>> prop.edge_color
+        Color(name='brown', hex='#654321ff')
+
+        """
         return Color(self.GetEdgeColor())
 
     @edge_color.setter
@@ -133,8 +286,22 @@ class Property(_vtk.vtkProperty):
         self.SetEdgeColor(rgb_color.float_rgb)
 
     @property
-    def opacity(self):
-        """Return or set the opacity of this property."""
+    def opacity(self) -> float:
+        """Return or set the opacity of this property.
+
+        Opacity of the mesh. A single float value that will be applied globally
+        opacity of the mesh and uniformly applied everywhere - should be
+        between 0 and 1.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.opacity = 0.5
+        >>> prop.opacity
+        0.5
+
+        """
         return self.GetOpacity()
 
     @opacity.setter
@@ -144,9 +311,22 @@ class Property(_vtk.vtkProperty):
         self.SetOpacity(value)
 
     @property
-    def show_edges(self):
-        """Return or set show edges."""
-        return self.GetEdgeVisibility()
+    def show_edges(self) -> bool:
+        """Return or set the visibility of edges.
+
+        Shows or hides the edges.  Does not apply to a wireframe
+        representation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.show_edges = False
+        >>> prop.show_edges
+        False
+
+        """
+        return bool(self.GetEdgeVisibility())
 
     @show_edges.setter
     def show_edges(self, value):
@@ -156,8 +336,18 @@ class Property(_vtk.vtkProperty):
 
     @property
     def lighting(self) -> bool:
-        """Return or set lighting."""
-        return self.SetLighting()
+        """Return or set view direction lighting.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.lighting = True
+        >>> prop.lighting
+        True
+
+        """
+        return self.GetLighting()
 
     @lighting.setter
     def lighting(self, value):
@@ -166,12 +356,27 @@ class Property(_vtk.vtkProperty):
         self.SetLighting(value)
 
     @property
-    def ambient(self):
-        """Return or set ambient."""
+    def ambient(self) -> float:
+        """Return or set ambient.
+
+        When lighting is enabled, this is the amount of light in
+        the range of 0 to 1 (default 0.0) that reaches the actor
+        when not directed at the light source emitted from the
+        viewer.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.ambient = 0.2
+        >>> prop.ambient
+        0.2
+
+        """
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, new_ambient):
+    def ambient(self, new_ambient: float):
         self.SetAmbient(new_ambient)
 
     @property
@@ -230,7 +435,7 @@ class Property(_vtk.vtkProperty):
 
     @interpolation.setter
     def interpolation(self, new_interpolation):
-        if new_interpolation == 'Physically based rendering':
+        if new_interpolation in ['Physically based rendering', 'pbr']:
             _check_supports_pbr()
 
             self.SetInterpolationToPBR()
@@ -241,7 +446,16 @@ class Property(_vtk.vtkProperty):
         elif new_interpolation == 'Flat' or new_interpolation is None:
             self.SetInterpolationToFlat()
         else:
-            raise ValueError(f'Invalid interpolation "{new_interpolation}"')
+            raise ValueError(
+                f'Invalid interpolation "{new_interpolation}". Should be one of the '
+                'following:\n'
+                '    - "Physically based rendering"\n'
+                '    - "pbr"\n'
+                '    - "Phong"\n'
+                '    - "Gouraud"\n'
+                '    - "Flat"\n'
+                '    - None'
+            )
 
     @property
     def render_points_as_spheres(self):
@@ -311,6 +525,9 @@ class Property(_vtk.vtkProperty):
                 self.FrontfaceCullingOn()
             except AttributeError:  # pragma: no cover
                 pass
+        elif value is False:
+            self.FrontfaceCullingOff()
+            self.BackfaceCullingOff()
         else:
             raise ValueError(
                 f'Culling option ({value}) not understood. Should be either:\n'
