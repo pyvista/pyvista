@@ -1968,11 +1968,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Show lines as thick tubes rather than flat lines.  Control
             the width with ``line_width``.
 
-        smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using the Phong
-            shading algorithm.  When ``False``, use flat shading.
-            Automatically enabled when ``pbr=True``.  See
-            :ref:`shading_example`.
+        smooth_shading : bool, default: :attr`pyvista.themes.DefaultTheme.smooth_shading`
+            Enable smooth shading when ``True`` using the Phong shading
+            algorithm.  When ``False``, uses flat shading.  Automatically
+            enabled when ``pbr=True``.  See :ref:`shading_example`.
 
         split_sharp_edges : bool, default: False
             Split sharp edges exceeding 30 degrees when plotting with smooth
