@@ -456,7 +456,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def __setitem__(
         self,
         index: Union[int, str, slice],
-        data: Union[DataSet, Sequence[DataSet], Tuple[str, DataSet]],
+        data: Union[DataSet, Sequence[DataSet]],
     ):
         """Set a block with a VTK data object.
 
@@ -477,24 +477,18 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         3
 
         """
-        if isinstance(index, str) and isinstance(data, tuple):
-            raise TypeError(f"Cannot set key {index} with a different string key from {data}")
-
         i: int = 0
         name: Optional[str] = None
         if isinstance(index, str):
             try:
                 i = self.get_index_by_name(index)
             except KeyError:
-                # data cannot be a tuple here
                 if isinstance(data, collections.abc.Sequence):
                     raise TypeError(f"Cannot set key {index} with the sequence {data}")
                 self.append(data, index)
                 return
             name = index
         elif isinstance(index, slice):
-            if isinstance(data, tuple):
-                raise TypeError(f"Cannot set the slice {slice} with a tuple {tuple}")
             for i, d in zip(range(self.n_blocks)[index], data):
                 self[i] = d
             return
@@ -502,11 +496,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             i = index
 
         # data, i, and name are a single value now
-        if isinstance(data, tuple):
-            if not len(data) == 2:
-                raise ValueError(f"Data {data} must be a length 2 tuple of form (DataSet, str)")
-            name, data = data
-
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         data = cast(pyvista.DataSet, data)

@@ -123,7 +123,8 @@ def test_multi_block_set_get_ers():
     assert multi.n_blocks == 6  # Check pyvista side registered it
     # Add data to the MultiBlock
     data = ex.load_rectilinear()
-    multi[1] = ('rect', data)
+    multi[1] = data
+    multi.set_block_name(1, 'rect')
     # Make sure number of blocks is constant
     assert multi.n_blocks == 6
     # Check content
@@ -179,11 +180,6 @@ def test_multi_block_set_get_ers():
 
     with pytest.raises(TypeError):
         multi[1, 'foo'] = data
-    with pytest.raises(ValueError):
-        multi[1] = (UniformGrid(),)
-
-    with pytest.raises(TypeError):
-        multi["rect"] = ("another key", UniformGrid())
 
     with pytest.raises(TypeError):
         multi["not a key"] = [UniformGrid(), PolyData()]
@@ -193,10 +189,14 @@ def test_multi_block_clean(rectilinear, uniform, ant):
     # now test a clean of the null values
     multi = MultiBlock()
     multi.n_blocks = 6
-    multi[1] = ('rect', rectilinear)
-    multi[2] = ('empty', PolyData())
-    multi[3] = ('mempty', MultiBlock())
-    multi[5] = ('uni', uniform)
+    multi[1] = rectilinear
+    multi.set_block_name(1, 'rect')
+    multi[2] = PolyData()
+    multi.set_block_name(2, 'empty')
+    multi[3] = MultiBlock()
+    multi.set_block_name(3, 'mempty')
+    multi[5] = uniform
+    multi.set_block_name(5, 'uni')
     # perform the clean to remove all Null elements
     multi.clean()
     assert multi.n_blocks == 2
@@ -212,8 +212,10 @@ def test_multi_block_clean(rectilinear, uniform, ant):
     assert foo.n_blocks == 4
     multi = MultiBlock()
     multi.n_blocks = 6
-    multi[1] = ('rect', rectilinear)
-    multi[5] = ('multi', foo)
+    multi[1] = rectilinear
+    multi.set_block_name(1, 'rect')
+    multi[5] = foo
+    multi.set_block_name(5, 'multi')
     # perform the clean to remove all Null elements
     assert multi.n_blocks == 6
     multi.clean()
