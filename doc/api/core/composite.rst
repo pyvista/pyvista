@@ -21,7 +21,7 @@ can also access blocks by their string name.
 
    Add a named block and access it by name like a dict
 
-   >>> blocks.append(pv.Cube(center=(0, 0, -1), "cube")
+   >>> blocks.append(pv.Cube(center=(0, 0, -1)), "cube")
    >>> blocks["cube"].bounds  # same as blocks[1].bounds
 
    Plotting the MultiBlock plots all the meshes contained by it.
