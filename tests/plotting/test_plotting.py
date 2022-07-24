@@ -2067,7 +2067,7 @@ def test_set_focus():
     plane = pyvista.Plane()
     p = pyvista.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((1, 0, 0))
+    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
     p.show(before_close_callback=verify_cache_image)
 
 

@@ -243,6 +243,10 @@ def _common_arg_parser(
 
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
+        remove_existing_actor = False
+    else:
+        # check if this actor already exists
+        remove_existing_actor = True
 
     nan_color = Color(nan_color, default_opacity=nan_opacity, default_color=theme.nan_color)
 
@@ -272,6 +276,7 @@ def _common_arg_parser(
         raise TypeError(
             "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?"
         )
+
     assert_empty_kwargs(**kwargs)
     return (
         scalar_bar_args,
@@ -289,4 +294,5 @@ def _common_arg_parser(
         texture,
         rgb,
         interpolation,
+        remove_existing_actor,
     )

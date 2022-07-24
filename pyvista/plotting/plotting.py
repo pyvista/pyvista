@@ -198,6 +198,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
+        self._initialized = False
+
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
@@ -277,6 +279,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set antialiasing based on theme
         if self.theme.antialiasing:
             self.enable_anti_aliasing()
+
+        self._initialized = True
 
     @property
     def theme(self):
@@ -1315,7 +1319,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
         >>> pl.camera_position
         [(0.02430, 0.0336, 0.9446),
          (0.02430, 0.0336, -0.02225),
@@ -1942,7 +1946,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             :func:`pyvista.BasePlotter.add_legend`.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene.
+            Reset the camera after adding this mesh to the scene. The default
+            setting is ``None``, where the camera is only reset if this plotter
+            has already been shown. If ``False``, the camera is not reset
+            regardless of the state of the ``Plotter``. When ``True``, the
+            camera is always reset.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -2138,6 +2146,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             texture,
             rgb,
             interpolation,
+            remove_existing_actor,
         ) = _common_arg_parser(
             dataset,
             self._theme,
@@ -2252,12 +2261,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_scalar_bar and scalars is not None:
             self.add_scalar_bar(**scalar_bar_args)
 
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time and not self.camera_set
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
             name=name,
             pickable=pickable,
             render=render,
+            remove_existing_actor=remove_existing_actor,
         )
 
         return actor, self.mapper
@@ -2426,7 +2440,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             :func:`pyvista.BasePlotter.add_legend`.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene.
+            Reset the camera after adding this mesh to the scene. The default
+            setting is ``None``, where the camera is only reset if this plotter
+            has already been shown. If ``False``, the camera is not reset
+            regardless of the state of the ``Plotter``. When ``True``, the
+            camera is always reset.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -2728,6 +2746,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             texture,
             rgb,
             interpolation,
+            remove_existing_actor,
         ) = _common_arg_parser(
             mesh,
             self._theme,
@@ -2749,7 +2768,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             **kwargs,
         )
-
         if silhouette:
             if isinstance(silhouette, dict):
                 self.add_silhouette(mesh, silhouette)
@@ -2915,12 +2933,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if label is not None:
             self._add_legend_label(actor, label, scalars, prop.color)
 
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time and not self.camera_set
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
             name=name,
             pickable=pickable,
             render=render,
+            remove_existing_actor=remove_existing_actor,
         )
 
         # hide scalar bar if using special scalars
@@ -5094,13 +5117,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        # We have to check here if it has the closed attribute as it
-        # may not exist should the plotter have failed to initialize.
-        if hasattr(self, '_closed'):
+        # We have to check here if the plotter was only partially initialized
+        if self._initialized:
             if not self._closed:
                 self.close()
         self.deep_clean()
-        if hasattr(self, 'renderers'):
+        if self._initialized:
             del self.renderers
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
@@ -5537,6 +5559,8 @@ class Plotter(BasePlotter):
             lighting=lighting,
             theme=theme,
         )
+        # reset partial initialization flag
+        self._initialized = False
 
         log.debug('Plotter init start')
 
@@ -5630,6 +5654,9 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # some cleanup only necessary for fully initialized plotters
+        self._initialized = True
         log.debug('Plotter init stop')
 
     def show(

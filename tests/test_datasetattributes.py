@@ -311,6 +311,11 @@ def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
+    if not ''.join(arr).isascii():
+        with raises(ValueError, match='non-ASCII'):
+            hexbeam_field_attributes['string_arr'] = arr
+        return
+
     hexbeam_field_attributes['string_arr'] = arr
     assert np.array_equiv(arr, hexbeam_field_attributes['string_arr'])
 
@@ -460,6 +465,11 @@ def test_active_scalars_setter(hexbeam_point_attributes):
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_preserve_field_data_after_extract_cells(hexbeam, arr):
+    if not ''.join(arr).isascii():
+        with raises(ValueError, match='non-ASCII'):
+            hexbeam.field_data["foo"] = arr
+        return
+
     # https://github.com/pyvista/pyvista/pull/934
     hexbeam.field_data["foo"] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
