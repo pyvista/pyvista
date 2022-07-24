@@ -16,18 +16,6 @@ from pyvista.utilities import PyvistaDeprecationWarning
 from .colors import Color
 
 
-class KeyErrorMessage(str):
-    """Subclass str to deal with KeyError bug.
-
-    See https://stackoverflow.com/questions/46892261
-
-    """
-
-    def __repr__(self):
-        """Override __repr__ due to CPython bug."""
-        return str(self)
-
-
 class FONTS(Enum):
     """Font families available to PyVista."""
 
