@@ -4,28 +4,37 @@ Composite Datasets
 The :class:`pyvista.MultiBlock` class is a composite class to hold many
 data sets which can be iterated over.
 
-You can think of MultiBlock like lists or dictionaries as we can
-iterate over this data structure by index and we can also access
-blocks by their string name.
+MultiBlock behaves like a list, but also allows some dictionary
+like features.  We can iterate over this data structure by index, and we
+can also access blocks by their string name.
 
 .. pyvista-plot::
 
    Create empty composite dataset
 
-   >>> import pyvista
-   >>> blocks = pyvista.MultiBlock()
+   >>> import pyvista as pv
+   >>> blocks = pv.MultiBlock()
 
    Add a dataset to the collection
 
-   >>> blocks.append(pyvista.Sphere())
+   >>> blocks.append(pv.Sphere())
 
-   Or add a named block
+   Add a named block and access it by name like a dict
 
-   >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+   >>> blocks.append(pv.Cube(center=(0, 0, -1), "cube")
+   >>> blocks["cube"].bounds  # same as blocks[1].bounds
 
    Plotting the MultiBlock plots all the meshes contained by it.
 
    >>> blocks.plot(smooth_shading=True)
+
+   It is also possible to append to the MultiBlock using a
+   nonexistent key
+
+   >>> blocks["cone"] = pv.Cone()
+
+   Duplicate and ``None`` keys are possible in MultiBlock, so the use of
+   dictionary features must be used with care. 
 
 Examples using this class:
 

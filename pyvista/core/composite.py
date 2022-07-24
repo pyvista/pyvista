@@ -32,6 +32,10 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     can iterate over this data structure by index and we can also
     access blocks by their string name.
 
+    .. versionchanged:: 0.36.0
+       ``MultiBlock`` adheres more closely to being list like.
+       Multiple nonconforming behaviors were removed or modified.
+
     Examples
     --------
     >>> import pyvista as pv
