@@ -469,9 +469,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         >>> multi.append(pyvista.PolyData())
         >>> multi[0] = pyvista.UnstructuredGrid()
         >>> multi.append(pyvista.PolyData(), 'poly')
-        >>> multi[1] = ('foo', pyvista.UnstructuredGrid())
         >>> multi.keys()
-        ['Block-00', 'foo']
+        ['Block-00', 'poly']
         >>> multi['bar'] = pyvista.PolyData()
         >>> multi.n_blocks
         3
