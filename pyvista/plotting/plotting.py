@@ -1861,12 +1861,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         dataset : pyvista.MultiBlock
             A :class:`pyvista.MultiBlock` dataset.
 
-        color : color_like, optional, defaults to white
+        color : color_like, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
+
+            Defaults to :attr:`pyvista.global_theme.color
+            <pyvista.themes.DefaultTheme.color>`.
 
         style : str, optional
             Visualization style of the mesh.  One of the following:
@@ -1888,9 +1891,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, optional, defaults to black
+        edge_color : color_like, optional
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
+
+            Defaults to :attr:`pyvista.global_theme.edge_color
+            <pyvista.themes.DefaultTheme.edge_color>`.
 
         point_size : float, optional
             Point size of any points in the dataset plotted. Also
@@ -2307,6 +2313,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         and/or geometry of datasets. For volume rendering, see
         :func:`pyvista.BasePlotter.add_volume`.
 
+        To see the what most of the following parameters look like in action,
+        please refer to :class:`pyvista.Property`.
+
         Parameters
         ----------
         mesh : pyvista.DataSet or pyvista.MultiBlock
@@ -2314,12 +2323,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points.
 
-        color : color_like, optional, defaults to white
+        color : color_like, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
+
+            Defaults to :attr:`pyvista.global_theme.color
+            <pyvista.themes.DefaultTheme.color>`.
 
         style : str, optional
             Visualization style of the mesh.  One of the following:
@@ -2344,9 +2356,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, optional, defaults to black
+        edge_color : color_like, optional
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
+
+            Defaults to :attr:`pyvista.global_theme.edge_color
+            <pyvista.themes.DefaultTheme.edge_color>`.
 
         point_size : float, optional
             Point size of any nodes in the dataset plotted. Also

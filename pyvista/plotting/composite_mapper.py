@@ -227,7 +227,7 @@ class BlockAttributes:
 
 
 class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
-    """Wrap vtkCompositeDataDisplayAttributes.
+    """Access underlying block attributes.
 
     Parameters
     ----------
@@ -417,7 +417,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
-    """Wrap vtkCompositePolyDataMapper2.
+    """Composite PolyData mapper.
 
     Parameters
     ----------
