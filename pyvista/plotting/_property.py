@@ -26,7 +26,7 @@ class Property(_vtk.vtkProperty):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
-    interpolation : str
+    interpolation : str, optional
         Set the method of shading. One of the following:
 
         * ``'Physically based rendering'`` - Physically based rendering.
@@ -34,6 +34,8 @@ class Property(_vtk.vtkProperty):
         * ``'Phong'`` - Phong shading.
         * ``'Gouraud'`` - Gouraud shading.
         * ``'Flat'`` - Flat Shading.
+
+        This parameter is case insensitive.
 
     color : color_like, optional
         Used to make the entire mesh have a single solid color.
@@ -711,7 +713,7 @@ class Property(_vtk.vtkProperty):
         * ``'Gouraud'`` - Gouraud shading.
         * ``'Flat'`` - Flat Shading.
 
-        This is really great.
+        This parameter is case insensitive.
 
         Examples
         --------
@@ -761,7 +763,7 @@ class Property(_vtk.vtkProperty):
             self.SetInterpolationToPhong()
         elif value == 'gouraud':
             self.SetInterpolationToGouraud()
-        elif value == 'flat' or value is None:
+        elif value == 'flat':
             self.SetInterpolationToFlat()
         else:
             raise ValueError(

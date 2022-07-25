@@ -74,7 +74,7 @@ def test_property_metallic(prop):
     if pv.vtk_version_info < (9,):
         with pytest.raises(pv.core.errors.VTKVersionError):
             prop.metallic = value
-            return
+        return
     prop.metallic = value
     assert prop.metallic == value
 
@@ -84,7 +84,7 @@ def test_property_roughness(prop):
     if pv.vtk_version_info < (9,):
         with pytest.raises(pv.core.errors.VTKVersionError):
             prop.roughness = value
-            return
+        return
     prop.roughness = value
     assert prop.roughness == value
 
