@@ -3064,6 +3064,40 @@ def download_cube_map_debug():  # pragma: no cover
     return pyvista.cubemap(image_paths=glob.glob(path, '*.jpg'))
 
 
+def download_cubemap_park():  # pragma: no cover
+    """Download a cubemap of a park.
+
+    Downloaded from http://www.humus.name/index.php?page=Textures
+    by David Eck, and converted to a smaller 512x512 size for use
+    with WebGL in his free, on-line textbook at
+    http://math.hws.edu/graphicsbook
+
+    This work is licensed under a Creative Commons Attribution 3.0 Unported
+    License.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing a skybox.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter(lighting=None)
+    >>> dataset = examples.download_cubemap_park()
+    >>> _ = pl.add_actor(dataset.to_skybox())
+    >>> pl.set_environment_texture(dataset)
+    >>> pl.camera_position = 'xy'
+    >>> pl.camera.zoom(0.4)
+    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    >>> pl.show()
+
+    """
+    path, _ = _download_file('cubemap_park/cubemap_park.zip')
+    return pyvista.cubemap(path)
+
+
 def download_backward_facing_step(load=True):  # pragma: no cover
     """Download an ensight gold case of a fluid simulation.
 
