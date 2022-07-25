@@ -721,7 +721,7 @@ def test_demreader():
 
 
 def test_jpegreader():
-    filename = examples.planets.download_mars_jpg()
+    filename = examples.planets.download_mars_jpg(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.JPEGReader)
     assert reader.path == filename
