@@ -1087,6 +1087,10 @@ class Property(_vtk.vtkProperty):
         For further details see `PBR Journey Part 2 : Anisotropy model with VTK
         <https://www.kitware.com/pbr-journey-part-2-anisotropy-model-with-vtk/>`_
 
+        Notes
+        -----
+        This attribute requires VTK v9.1.0 or newer.
+
         Examples
         --------
         Set anisotropy to 0.1
@@ -1098,12 +1102,18 @@ class Property(_vtk.vtkProperty):
         0.1
 
         """
-        _check_supports_pbr()
+        if not hasattr(self, 'GetAnisotropy'):
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
         return self.GetAnisotropy()
 
     @anisotropy.setter
     def anisotropy(self, value: float):
-        _check_supports_pbr()
+        if not hasattr(self, 'SetAnisotropy'):
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
         self.SetAnisotropy(value)
 
     def plot(self, **kwargs) -> None:

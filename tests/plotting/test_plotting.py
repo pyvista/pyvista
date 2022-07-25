@@ -99,7 +99,8 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
-    'test_plot_composite_poly_component_nested_multiblock' 'test_plot_composite_poly_scalars_cell',
+    'test_plot_composite_poly_component_nested_multiblock',
+    'test_plot_composite_poly_scalars_cell',
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
@@ -2687,6 +2688,12 @@ def test_bool_scalars(sphere):
 
 
 @skip_windows  # because of pbr
+@skip_not_vtk9  # pbr required
 def test_property():
     prop = pyvista.Property(interpolation='pbr', metallic=1.0)
-    prop.plot(before_close_callback=verify_cache_image)
+
+    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
+    if pyvista.vtk_version_info <= (9, 1):
+        prop.plot(before_close_callback=verify_cache_image)
+    else:
+        prop.plot()
