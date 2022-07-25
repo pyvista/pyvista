@@ -182,14 +182,20 @@ class Property(_vtk.vtkProperty):
         else:
             self._theme.load_theme(theme)
 
-        self.interpolation = interpolation
+        if interpolation is not None:
+            self.interpolation = interpolation
+
         self.color = color
-        self.style = style
+
+        if style is not None:
+            self.style = style
+
         if interpolation in ['Physically based rendering', 'pbr']:
             if metallic is not None:
                 self.metallic = metallic
             if roughness is not None:
                 self.roughness = roughness
+
         if point_size is not None:
             self.point_size = point_size
         if opacity is not None:
@@ -202,7 +208,12 @@ class Property(_vtk.vtkProperty):
             self.specular = specular
         if specular_power is not None:
             self.specular_power = specular_power
-        self.show_edges = show_edges
+
+        if show_edges is None:
+            self.show_edges = self._theme.show_edges
+        else:
+            self.show_edges = show_edges
+
         self.edge_color = edge_color
         if render_points_as_spheres is not None:
             self.render_points_as_spheres = render_points_as_spheres
@@ -254,8 +265,6 @@ class Property(_vtk.vtkProperty):
 
     @style.setter
     def style(self, new_style: str):
-        if new_style is None:
-            new_style = 'surface'
         new_style = new_style.lower()
 
         if new_style == 'wireframe':
@@ -414,8 +423,6 @@ class Property(_vtk.vtkProperty):
 
     @show_edges.setter
     def show_edges(self, value: bool):
-        if value is None:
-            value = self._theme.show_edges
         self.SetEdgeVisibility(value)
 
     @property
@@ -741,15 +748,20 @@ class Property(_vtk.vtkProperty):
 
     @interpolation.setter
     def interpolation(self, value: str):
-        if value in ['Physically based rendering', 'pbr']:
-            _check_supports_pbr()
+        if not isinstance(value, str):
+            raise TypeError(f'`interpolation` must be a string, not {type(value)}')
 
+        # normalize to spaces and lowercase
+        value = value.lower().replace('-', ' ')
+
+        if value in ['physically based rendering', 'pbr']:
+            _check_supports_pbr()
             self.SetInterpolationToPBR()
-        elif value == 'Phong':
+        elif value == 'phong':
             self.SetInterpolationToPhong()
-        elif value == 'Gouraud':
+        elif value == 'gouraud':
             self.SetInterpolationToGouraud()
-        elif value == 'Flat' or value is None:
+        elif value == 'flat' or value is None:
             self.SetInterpolationToFlat()
         else:
             raise ValueError(

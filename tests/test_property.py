@@ -94,6 +94,9 @@ def test_property_interpolation(prop):
     prop.interpolation = value
     assert prop.interpolation == value
 
+    with pytest.raises(TypeError, match='`interpolation`'):
+        prop.interpolation = 1
+
 
 def test_property_render_points_as_spheres(prop):
     value = True
