@@ -17,6 +17,7 @@ import os
 import shutil
 from typing import Union
 from urllib.request import urlretrieve
+import warnings
 import zipfile
 
 import numpy as np
@@ -24,6 +25,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 CACHE_VERSION = 2
 
@@ -3363,6 +3365,24 @@ def download_action_figure(load=True):  # pragma: no cover
 
     """
     return _download_and_read('tigerfighter.obj', load=load)
+
+
+def download_mars_jpg(load=True):
+    """Download and return the path of ``'mars.jpg'``."""
+    warnings.warn(
+        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_jpg",
+        PyvistaDeprecationWarning,
+    )
+    return pyvista.examples.planets.download_mars_jpg(load)
+
+
+def download_stars_jpg(load=True):
+    """Download and return the path of ``'stars.jpg'``."""
+    warnings.warn(
+        "examples.ownload_stars_jpg is deprecated.  Use examples.planets.download_stars_jpg",
+        PyvistaDeprecationWarning,
+    )
+    return pyvista.examples.planets.download_stars_jpg
 
 
 def download_notch_stress(load=True):  # pragma: no cover
