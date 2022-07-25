@@ -25,6 +25,51 @@ def test_basic_mapper(composite_mapper):
     assert isinstance(composite_mapper, CompositePolyDataMapper)
 
 
+def test_interpolate_before_map(composite_mapper):
+    assert isinstance(composite_mapper.interpolate_before_map, bool)
+
+
+def test_color_missing_with_nan(composite_mapper):
+    assert isinstance(composite_mapper.color_missing_with_nan, bool)
+
+
+def test_lookup_table(composite_mapper):
+    isinstance(composite_mapper.lookup_table, pv._vtk.vtkLookupTable)
+
+
+def test_scalar_visibility(composite_mapper):
+    isinstance(composite_mapper.scalar_visibility, bool)
+
+
+def test_scalar_map_mode(composite_mapper):
+    isinstance(composite_mapper.scalar_map_mode, str)
+
+    value = 'default'
+    composite_mapper.scalar_map_mode = value
+    assert composite_mapper.scalar_map_mode == value
+
+    value = 'field'
+    composite_mapper.scalar_map_mode = value
+    assert composite_mapper.scalar_map_mode == value
+
+    with pytest.raises(ValueError, match='Invalid `scalar_map_mode`'):
+        composite_mapper.scalar_map_mode = 'foo'
+
+
+def test_nan_color(composite_mapper):
+    isinstance(composite_mapper.nan_color, pv.Color)
+
+
+def test_above_range_color(composite_mapper):
+    composite_mapper.above_range_color = 'r'
+    isinstance(composite_mapper.above_range_color, pv.Color)
+
+
+def test_below_range_color(composite_mapper):
+    composite_mapper.below_range_color = 'r'
+    isinstance(composite_mapper.below_range_color, pv.Color)
+
+
 def test_composite_mapper_non_poly(multiblock_all):
     # should run without raising
     pl = pv.Plotter()
@@ -108,6 +153,10 @@ def test_block_attributes(block_attributes):
     assert block_attributes[0].pickable == pickable
     assert block_attributes[0].opacity == opacity
     assert block_attributes[0].visible == visible
+
+    block_attributes[0].pickable = None
+    assert block_attributes[0].pickable is None
+    block_attributes[0].pickable = True
 
     block_attributes.reset_colors()
     assert block_attributes[0].color is None

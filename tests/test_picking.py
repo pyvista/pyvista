@@ -404,3 +404,5 @@ def test_block_picking(multiblock_poly):
     pl.iren._mouse_left_button_press(width // 2, height // 2)
     pl.iren._mouse_left_button_release(width // 2, height // 2)
     assert mapper.block_attr[2].color
+
+    assert pl.picked_block_index == picked_blocks[0]

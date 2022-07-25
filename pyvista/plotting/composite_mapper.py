@@ -75,10 +75,6 @@ class BlockAttributes:
         """Return if a block has its pickability set."""
         return self._attr.HasBlockPickability(self._block)
 
-    def _remove_block_color(self):
-        """Remove block color."""
-        self._attr.RemoveBlockColors()
-
     @property
     def color(self):
         """Get or set the color of a block.
@@ -388,7 +384,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         """
         try:
-            if vtk_version_info <= (9, 0, 3):  # prama: no cover
+            if vtk_version_info <= (9, 0, 3):  # pragma: no cover
                 vtk_ref = _vtk.reference(0)  # needed for <=9.0.3
                 block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)
             else:
@@ -453,16 +449,16 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def interpolate_before_map(self):
+    def interpolate_before_map(self) -> bool:
         """Return or set the interpolation of scalars before mapping."""
-        return self.GetInterpolateScalarsBeforeMapping()
+        return bool(self.GetInterpolateScalarsBeforeMapping())
 
     @interpolate_before_map.setter
     def interpolate_before_map(self, value: bool):
         self.SetInterpolateScalarsBeforeMapping(value)
 
     @property
-    def block_attr(self):
+    def block_attr(self) -> CompositeAttributes:
         """Return the block attributes.
 
         Examples
@@ -535,13 +531,22 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             for attr in self.block_attr:
                 attr.color = next(colors)['color']
 
-        else:
+        else:  # pragma: no cover
             logging.warning('Please install matplotlib for color cycles.')
 
     @property
     def scalar_map_mode(self) -> str:
         """Return or set the scalar map mode."""
-        return self.GetScalarModeAsString()
+        # map vtk strings to more sensible strings
+        vtk_to_pv = {
+            'Default': 'default',
+            'UsePointData': 'point',
+            'UseCellData': 'cell',
+            'UsePointFieldData': 'point_field',
+            'UseCellFieldData': 'cell_field',
+            'UseFieldData': 'field',
+        }
+        return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
     def scalar_map_mode(self, scalar_mode: str):
@@ -699,11 +704,11 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         self.lookup_table.SetNumberOfTableValues(n_colors)
         self.nan_color = nan_color.float_rgba
         if above_color:
-            self.above_range_color = above_color.float_rgba
+            self.above_range_color = above_color
             scalar_bar_args.setdefault('above_label', 'Above')
         if below_color:
-            self.below_range_color = below_color.float_rgba
-            scalar_bar_args.setdefault('below_label', 'Above')
+            self.below_range_color = below_color
+            scalar_bar_args.setdefault('below_label', 'Below')
 
         if clim is None:
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
@@ -726,7 +731,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
                 ctable = np.ascontiguousarray(ctable[::-1])
 
             self.lookup_table.SetTable(_vtk.numpy_to_vtk(ctable))
-        else:  # no cmap specified
+        else:  # pragma: no cover
             if flip_scalars:
                 self.lookup_table.SetHueRange(0.0, 0.66667)
             else:
@@ -735,30 +740,30 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         return scalar_bar_args
 
     @property
-    def nan_color(self):
+    def nan_color(self) -> Color:
         """Return or set the NaN color."""
-        return self.lookup_table.GetNanColor()
+        return Color(self.lookup_table.GetNanColor())
 
     @nan_color.setter
     def nan_color(self, color):
         self.lookup_table.SetNanColor(color)
 
     @property
-    def above_range_color(self):
+    def above_range_color(self) -> Color:
         """Return or set the above range color."""
-        return self.lookup_table.GetAboveRangeColor()
+        return Color(self.lookup_table.GetAboveRangeColor())
 
     @above_range_color.setter
     def above_range_color(self, color):
         self.lookup_table.SetUseAboveRangeColor(True)
-        self.lookup_table.SetAboveRangeColor(color)
+        self.lookup_table.SetAboveRangeColor(Color(color).float_rgba)
 
     @property
-    def below_range_color(self):
+    def below_range_color(self) -> Color:
         """Return or set the below range color."""
-        return self.lookup_table.GetBelowRangeColor()
+        return Color(self.lookup_table.GetBelowRangeColor())
 
     @below_range_color.setter
     def below_range_color(self, color):
         self.lookup_table.SetUseBelowRangeColor(True)
-        self.lookup_table.SetBelowRangeColor(color)
+        self.lookup_table.SetBelowRangeColor(Color(color).float_rgba)

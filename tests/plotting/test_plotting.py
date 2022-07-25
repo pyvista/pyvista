@@ -2442,6 +2442,12 @@ def test_warn_screenshot_notebook():
         pl.show(screenshot='tmp.png')
 
 
+def test_culling_frontface(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, culling='front')
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_add_text():
     plotter = pyvista.Plotter()
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
@@ -2524,7 +2530,27 @@ def test_plot_composite_poly_component_single(multiblock_poly):
     pl = pyvista.Plotter()
     with pytest.raises(ValueError, match='must be nonnegative'):
         pl.add_composite(multiblock_poly, scalars='data', component=-1)
+    with pytest.raises(TypeError, match='None or an integer'):
+        pl.add_composite(multiblock_poly, scalars='data', component='apple')
+
     pl.add_composite(multiblock_poly, scalars='data', component=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_component_nested_multiblock(multiblock_poly):
+    for block in multiblock_poly:
+        data = block.compute_normals().point_data['Normals']
+        block['data'] = data
+
+    multiblock_poly2 = multiblock_poly.copy()
+    for block in multiblock_poly2:
+        block.points += np.array([0, 0, 1])
+
+    multimulti = pyvista.MultiBlock([multiblock_poly, multiblock_poly2])
+
+    pl = pyvista.Plotter()
+    pl.add_composite(multimulti, scalars='data', style='points', clim=[0.99, 1.01])
+    pl.add_composite(multimulti, scalars='data', component=1)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2540,6 +2566,25 @@ def test_plot_composite_poly_complex(multiblock_poly):
     pl = pyvista.Plotter()
     with pytest.warns(np.ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_uint8(multiblock_poly):
+    # add composite data
+    for block in multiblock_poly:
+        block['data'] = np.arange(block.n_points, dtype=np.uint8)
+
+    pl = pyvista.Plotter()
+    pl.add_composite(
+        multiblock_poly,
+        scalars='data',
+        annotations={94: 'foo', 162: 'bar'},
+        above_color='k',
+        below_color='w',
+        clim=[64, 192],
+        log_scale=True,
+        flip_scalars=True,
+    )
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2623,6 +2668,7 @@ def test_bool_scalars(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows  # because of pbr
 def test_property():
-    prop = pyvista.Property(color='b', lighting=False)
+    prop = pyvista.Property(interpolation='pbr', metallic=1.0)
     prop.plot(before_close_callback=verify_cache_image)

@@ -1158,7 +1158,7 @@ class PickingHelper:
 
             for ii in range(selection.GetNumberOfNodes()):
                 node = selection.GetNode(ii)
-                if node is None:
+                if node is None:  # pragma: no cover
                     continue
                 node_prop = node.GetProperties()
                 self._picked_block_index = node_prop.Get(sel_index)

@@ -390,9 +390,7 @@ class Property(_vtk.vtkProperty):
         return self.GetOpacity()
 
     @opacity.setter
-    def opacity(self, value):
-        if value is None:
-            return
+    def opacity(self, value: float):
         self.SetOpacity(value)
 
     @property

@@ -90,12 +90,14 @@ def test_property_roughness(prop):
 
 
 def test_property_interpolation(prop):
-    value = 'Phong'
+    value = 'Gouraud'
     prop.interpolation = value
     assert prop.interpolation == value
 
     with pytest.raises(TypeError, match='`interpolation`'):
         prop.interpolation = 1
+    with pytest.raises(ValueError, match='Should be one of'):
+        prop.interpolation = 'foo'
 
 
 def test_property_render_points_as_spheres(prop):
@@ -116,10 +118,20 @@ def test_property_point_size(prop):
     assert prop.point_size == value
 
 
+def test_property_line_width(prop):
+    assert isinstance(prop.line_width, float)
+    value = 10.0
+    prop.line_width = value
+    assert prop.line_width == value
+
+
 @pytest.mark.parametrize("value", ['back', 'front', 'none'])
 def test_property_culling(prop, value):
     prop.culling = value
     assert prop.culling == value
+
+    with pytest.raises(ValueError, match='Invalid culling'):
+        prop.culling = 'foo'
 
 
 def test_property_diffuse_color(prop):
@@ -138,6 +150,7 @@ def test_property_specular_color(prop):
 
 
 def test_property_anisotropy(prop):
+    assert isinstance(prop.anisotropy, float)
     value = 0.1
-    prop.anisotrophy = value
-    assert prop.anisotrophy == value
+    prop.anisotropy = value
+    assert prop.anisotropy == value
