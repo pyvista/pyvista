@@ -27,10 +27,10 @@ def load_sun(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_sun())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_sun())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -52,10 +52,10 @@ def load_moon(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_moon())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_moon())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -77,10 +77,10 @@ def load_mercury(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_mercury())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_mercury())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -102,10 +102,10 @@ def load_venus(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_venus())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_venus())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -129,10 +129,10 @@ def load_mars(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_mars())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_mars())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -154,10 +154,10 @@ def load_jupiter(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_jupiter())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_jupiter())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -179,10 +179,10 @@ def load_saturn(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_saturn())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_saturn())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -204,10 +204,10 @@ def load_saturn_ring_alpha(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_saturn_ring_alpha())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_saturn_ring_alpha())
+    >>> plotter.show()
 
     """
     disc = pyvista.Disc(*args, **kwargs)
@@ -232,10 +232,10 @@ def load_uranus(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_uranus())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_uranus())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
@@ -257,10 +257,10 @@ def load_neptune(*args, **kwargs):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> pl = pyvista.Plotter()
-    >>> pl.add_background_image(examples.planets.download_stars_jpg())
-    >>> _ = pl.add_mesh(examples.planets.load_neptune())
-    >>> pl.show()
+    >>> plotter = pyvista.Plotter()
+    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> _ = plotter.add_mesh(examples.planets.load_neptune())
+    >>> plotter.show()
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
