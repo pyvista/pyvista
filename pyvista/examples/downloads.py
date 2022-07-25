@@ -3367,13 +3367,13 @@ def download_action_figure(load=True):  # pragma: no cover
     return _download_and_read('tigerfighter.obj', load=load)
 
 
-def download_mars_jpg(load=True):
+def download_mars_jpg():
     """Download and return the path of ``'mars.jpg'``."""
     warnings.warn(
         "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_jpg",
         PyvistaDeprecationWarning,
     )
-    return pyvista.examples.planets.download_mars_jpg(load)
+    return pyvista.examples.planets.download_mars_jpg(load=False)
 
 
 def download_stars_jpg(load=True):
