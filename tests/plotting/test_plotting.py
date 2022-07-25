@@ -99,7 +99,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
-    'test_plot_composite_poly_scalars_cell',
+    'test_plot_composite_poly_component_nested_multiblock' 'test_plot_composite_poly_scalars_cell',
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
@@ -111,6 +111,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
 # and will not be verified for MacOS
 MACOS_SKIP_IMAGE_CACHE = {
     'test_plot_show_grid_with_mesh',
+    'test_property',
 }
 
 
@@ -2444,7 +2445,7 @@ def test_warn_screenshot_notebook():
 
 def test_culling_frontface(sphere):
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, culling='front')
+    pl.add_mesh(sphere, culling='frontface')
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2453,6 +2454,42 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_many_options(multiblock_poly):
+    # add composite data
+    for block in multiblock_poly:
+        # use np.uint8 for coverage of non-standard datatypes
+        block['data'] = np.arange(block.n_points, dtype=np.uint8)
+
+    pl = pyvista.Plotter()
+    pl.add_composite(
+        multiblock_poly,
+        scalars='data',
+        annotations={94: 'foo', 162: 'bar'},
+        above_color='k',
+        below_color='w',
+        clim=[64, 192],
+        log_scale=True,
+        flip_scalars=True,
+        label='my composite',
+    )
+    pl.add_legend()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_fail(sphere, multiblock_poly):
+    pl = pyvista.Plotter()
+    with pytest.raises(TypeError, match='Must be a composite dataset'):
+        pl.add_composite(sphere)
+    with pytest.raises(TypeError, match='must be a string for'):
+        pl.add_composite(multiblock_poly, scalars=range(10))
+
+
+def test_plot_composite_categories(sphere, multiblock_poly):
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
+    pl.show(before_close_callback=verify_cache_image)
 
 
 @skip_windows  # because of opacity
@@ -2566,25 +2603,6 @@ def test_plot_composite_poly_complex(multiblock_poly):
     pl = pyvista.Plotter()
     with pytest.warns(np.ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
-    pl.show(before_close_callback=verify_cache_image)
-
-
-def test_plot_composite_uint8(multiblock_poly):
-    # add composite data
-    for block in multiblock_poly:
-        block['data'] = np.arange(block.n_points, dtype=np.uint8)
-
-    pl = pyvista.Plotter()
-    pl.add_composite(
-        multiblock_poly,
-        scalars='data',
-        annotations={94: 'foo', 162: 'bar'},
-        above_color='k',
-        below_color='w',
-        clim=[64, 192],
-        log_scale=True,
-        flip_scalars=True,
-    )
     pl.show(before_close_callback=verify_cache_image)
 
 

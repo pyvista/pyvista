@@ -1098,10 +1098,12 @@ class Property(_vtk.vtkProperty):
         0.1
 
         """
+        _check_supports_pbr()
         return self.GetAnisotropy()
 
     @anisotropy.setter
     def anisotropy(self, value: float):
+        _check_supports_pbr()
         self.SetAnisotropy(value)
 
     def plot(self, **kwargs) -> None:

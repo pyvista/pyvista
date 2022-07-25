@@ -43,17 +43,16 @@ def test_scalar_visibility(composite_mapper):
 
 def test_scalar_map_mode(composite_mapper):
     isinstance(composite_mapper.scalar_map_mode, str)
-
-    value = 'default'
-    composite_mapper.scalar_map_mode = value
-    assert composite_mapper.scalar_map_mode == value
-
-    value = 'field'
-    composite_mapper.scalar_map_mode = value
-    assert composite_mapper.scalar_map_mode == value
-
     with pytest.raises(ValueError, match='Invalid `scalar_map_mode`'):
         composite_mapper.scalar_map_mode = 'foo'
+
+
+@pytest.mark.parametrize(
+    'value', ['default', 'point', 'cell', 'point_field', 'cell_field', 'field']
+)
+def test_scalar_map_mode_values(value, composite_mapper):
+    composite_mapper.scalar_map_mode = value
+    assert composite_mapper.scalar_map_mode == value
 
 
 def test_nan_color(composite_mapper):
