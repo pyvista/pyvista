@@ -2203,10 +2203,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
-        else:
-            # A shallow copy of `mesh` is here so when we set (or add) scalars
-            # active, it doesn't modify the original input mesh.
-            mesh = mesh.copy(deep=False)
+        #else:
+        #    # A shallow copy of `mesh` is here so when we set (or add) scalars
+        #    # active, it doesn't modify the original input mesh.
+        #    mesh = mesh.copy(deep=False)
 
         ##### Parse arguments to be used for all meshes #####
 
