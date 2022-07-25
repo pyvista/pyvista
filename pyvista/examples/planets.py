@@ -537,17 +537,17 @@ def download_stars_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.planets.download_stars_jpg()
-    >>> pl.add_background_image(dataset)
-    >>> pl.show()
+    >>> plotter = pv.Plotter()
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
+    >>> plotter.show()
 
     See :func:`download_mars_jpg` for another example using this dataset.
 
@@ -566,17 +566,17 @@ def download_milkyway_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.planets.download_milkyway_jpg()
-    >>> pl.add_background_image(dataset)
-    >>> pl.show()
+    >>> plotter = pv.Plotter()
+    >>> image_path = examples.planets.download_milkyway_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
+    >>> plotter.show()
 
     """
     return _download_and_read('milkyway.jpg', load=load)
