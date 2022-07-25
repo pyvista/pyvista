@@ -2256,6 +2256,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self._theme,
                     log_scale,
                 )
+            else:
+                self.mapper.scalar_visibility = False
 
         # Only show scalar bar if there are scalars
         if show_scalar_bar and scalars is not None:

@@ -12,7 +12,6 @@ if not system_supports_plotting():
 
 
 @skip_no_vtk9
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_cell_picking():
     with pytest.raises(AttributeError, match="mesh"):
         plotter = pyvista.Plotter()
@@ -380,5 +379,28 @@ def test_enable_fly_to_right_click_multi_render(sphere):
 
 
 def test_block_picking(multiblock_poly):
+    """Test we can pick a block."""
+
     pl = pyvista.Plotter()
-    pl.add_composite(multiblock_poly)
+    width, height = pl.window_size
+    actor, mapper = pl.add_composite(multiblock_poly)
+
+    picked_blocks = []
+
+    def turn_blue(index, dataset):
+        mapper.block_attr[index].color = 'blue'
+        picked_blocks.append(index)
+
+    pl.enable_block_picking(callback=turn_blue)
+    pl.show(auto_close=False)
+
+    # click in the corner
+    assert not picked_blocks
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(0, 0)
+    assert not picked_blocks
+
+    # click directly in the middle
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width // 2, height // 2)
+    assert mapper.block_attr[2].color
