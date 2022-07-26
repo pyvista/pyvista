@@ -305,9 +305,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             raise ValueError(f"Non-valid index (<0) given for cells of type {elem_t}")
 
         if nr_points is not None and np.any(cells_arr >= nr_points):
-            raise ValueError(
-                f"Non-valid index (>={nr_points}) given for cells of type {elem_t}"
-            )
+            raise ValueError(f"Non-valid index (>={nr_points}) given for cells of type {elem_t}")
 
         if cells_arr.ndim == 1:  # Flattened array present
             cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
