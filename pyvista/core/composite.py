@@ -343,7 +343,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """
         # do not allow to add self
         if dataset is self:
-            raise ValueError("Cannot nest a composite dataset to itself.")
+            raise ValueError("Cannot nest a composite dataset in itself.")
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address

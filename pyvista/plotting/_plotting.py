@@ -11,7 +11,7 @@ from .colors import Color
 from .tools import opacity_transfer_function
 
 USE_SCALAR_BAR_ARGS = """
-"stitle" is a depreciated keyword and will be removed in a future
+"stitle" is a deprecated keyword argument and will be removed in a future
 release.
 
 Use ``scalar_bar_args`` instead.  For example:

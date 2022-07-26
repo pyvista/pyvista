@@ -113,7 +113,7 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     multi[4] = vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pyvista.UnstructuredGrid)
 
-    with pytest.raises(ValueError, match="Cannot nest a composite dataset to itself."):
+    with pytest.raises(ValueError, match="Cannot nest a composite dataset in itself."):
         multi.append(multi)
 
 

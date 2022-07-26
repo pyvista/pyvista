@@ -131,7 +131,7 @@ def pointset():
 
 @fixture()
 def multiblock_all(datasets):
-    """Return pyvista multiblock composed of any number of datasets."""
+    """Return datasets fixture combined in a pyvista multiblock."""
     return pyvista.MultiBlock(datasets)
 
 

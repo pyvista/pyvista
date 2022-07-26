@@ -122,10 +122,10 @@ def multicomp_poly():
     data = pyvista.Plane()
 
     vector_values_points = np.empty((data.n_points, 3))
-    vector_values_points[:, :] = [3.0, 4.0, 0.0]  # Vector has this value at all points
+    vector_values_points[...] = [3.0, 4.0, 0.0]  # Vector has this value at all points
 
     vector_values_cells = np.empty((data.n_cells, 3))
-    vector_values_cells[:, :] = [3.0, 4.0, 0.0]  # Vector has this value at all cells
+    vector_values_cells[...] = [3.0, 4.0, 0.0]  # Vector has this value at all cells
 
     data['vector_values_points'] = vector_values_points
     data['vector_values_cells'] = vector_values_cells
@@ -2487,7 +2487,7 @@ def test_plot_composite_fail(sphere, multiblock_poly):
         pl.add_composite(multiblock_poly, scalars=range(10))
 
 
-def test_plot_composite_categories(sphere, multiblock_poly):
+def test_plot_composite_categories(multiblock_poly):
     pl = pyvista.Plotter()
     pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
     pl.show(before_close_callback=verify_cache_image)
