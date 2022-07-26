@@ -440,6 +440,14 @@ if TEST_DOWNLOADS:
         dataset = examples.download_mount_damavand(load=True)
         assert isinstance(dataset, pyvista.PolyData)
 
+    def test_download_cubemap_space_4k():
+        dataset = examples.download_cubemap_space_4k()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_download_cubemap_space_16k():
+        dataset = examples.download_cubemap_space_16k()
+        assert isinstance(dataset, pyvista.Texture)
+
     def test_particles_lethe():
         filename = examples.download_particles_lethe(load=False)
         assert os.path.isfile(filename)
