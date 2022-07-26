@@ -64,7 +64,7 @@ neptune.translate((-700000.0, 0.0, 0.0), inplace=True)
 
 plotter = pyvista.Plotter(lighting="none")
 plotter.add_light(light)
-plotter.add_background_image(examples.download_milkyway_jpg())
+plotter.add_background_image(examples.planets.download_milkyway_jpg())
 plotter.add_mesh(mercury)
 plotter.add_mesh(venus)
 plotter.add_mesh(mars)
