@@ -3376,13 +3376,13 @@ def download_mars_jpg():
     return pyvista.examples.planets.download_mars_jpg(load=False)
 
 
-def download_stars_jpg(load=True):
+def download_stars_jpg():
     """Download and return the path of ``'stars.jpg'``."""
     warnings.warn(
         "examples.ownload_stars_jpg is deprecated.  Use examples.planets.download_stars_jpg",
         PyvistaDeprecationWarning,
     )
-    return pyvista.examples.planets.download_stars_jpg(load)
+    return pyvista.examples.planets.download_stars_jpg(load=False)
 
 
 def download_notch_stress(load=True):  # pragma: no cover

@@ -28,7 +28,8 @@ def load_sun(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_sun())
     >>> plotter.show()
 
@@ -53,7 +54,8 @@ def load_moon(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_moon())
     >>> plotter.show()
 
@@ -78,7 +80,8 @@ def load_mercury(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_mercury())
     >>> plotter.show()
 
@@ -103,7 +106,8 @@ def load_venus(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_venus())
     >>> plotter.show()
 
@@ -130,7 +134,8 @@ def load_mars(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_mars())
     >>> plotter.show()
 
@@ -155,7 +160,8 @@ def load_jupiter(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_jupiter())
     >>> plotter.show()
 
@@ -180,7 +186,8 @@ def load_saturn(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_saturn())
     >>> plotter.show()
 
@@ -205,7 +212,8 @@ def load_saturn_ring_alpha(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_saturn_ring_alpha())
     >>> plotter.show()
 
@@ -233,7 +241,8 @@ def load_uranus(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_uranus())
     >>> plotter.show()
 
@@ -258,7 +267,8 @@ def load_neptune(*args, **kwargs):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> plotter.add_background_image(examples.planets.download_stars_jpg())
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_neptune())
     >>> plotter.show()
 
