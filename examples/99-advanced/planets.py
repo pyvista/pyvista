@@ -91,7 +91,9 @@ plotter.subplot(0, 1)
 plotter.add_mesh(examples.planets.load_mercury())
 plotter.subplot(1, 0)
 plotter.add_text("Venus")
-plotter.add_mesh(pyvista.read(examples.planets.download_venus_jpg(atmosphere=True, load=False)), rgb=True)
+plotter.add_mesh(
+    pyvista.read(examples.planets.download_venus_jpg(atmosphere=True, load=False)), rgb=True
+)
 plotter.subplot(1, 1)
 plotter.add_mesh(examples.planets.load_venus(), texture="atmosphere")
 plotter.subplot(2, 0)
