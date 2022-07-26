@@ -1,4 +1,3 @@
-Sphinx<4.6.0
 cmocean==2.0
 colorcet==3.0.0
 imageio-ffmpeg==0.4.7
