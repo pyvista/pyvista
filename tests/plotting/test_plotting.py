@@ -312,10 +312,10 @@ def test_remove_environment_texture_cubemap(sphere):
     """Test remove_environment_texture with a cubemap."""
     texture = examples.download_sky_box_cube_map()
 
-    pl = pyvista.Plotter(lighting=None)
+    pl = pyvista.Plotter()
     pl.set_environment_texture(texture)
-    pl.remove_environment_texture()
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
+    pl.remove_environment_texture()
     pl.show(before_close_callback=verify_cache_image)
 
 
