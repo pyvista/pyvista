@@ -3368,7 +3368,13 @@ def download_action_figure(load=True):  # pragma: no cover
 
 
 def download_mars_jpg():
-    """Download and return the path of ``'mars.jpg'``."""
+    """Download and return the path of ``'mars.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+    """
     warnings.warn(
         "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_jpg",
         PyvistaDeprecationWarning,
@@ -3377,7 +3383,13 @@ def download_mars_jpg():
 
 
 def download_stars_jpg():
-    """Download and return the path of ``'stars.jpg'``."""
+    """Download and return the path of ``'stars.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+    """
     warnings.warn(
         "examples.ownload_stars_jpg is deprecated.  Use examples.planets.download_stars_jpg",
         PyvistaDeprecationWarning,

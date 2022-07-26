@@ -386,8 +386,8 @@ def download_moon_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
@@ -439,8 +439,8 @@ def download_venus_jpg(atmosphere=True, load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
@@ -467,8 +467,8 @@ def download_mars_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
@@ -492,8 +492,8 @@ def download_jupiter_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
@@ -517,8 +517,8 @@ def download_saturn_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
@@ -567,8 +567,8 @@ def download_uranus_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
@@ -592,8 +592,8 @@ def download_neptune_jpg(load=True):  # pragma: no cover
 
     Returns
     -------
-    str
-        Filename of the JPEG.
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
 
     Examples
     --------
