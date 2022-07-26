@@ -141,7 +141,7 @@ class StructuredGridFilters(DataSetFilters):
         ):
             raise RuntimeError(
                 f'Grids cannot be joined along axis {axis}, as points '
-                'are not coincident within tolerance of {tolerance}.'
+                'are not coincident within tolerance of {tolerance} .'
             )
 
         # slice to cut off the repeated grid face
