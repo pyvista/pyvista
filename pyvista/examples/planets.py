@@ -479,7 +479,7 @@ def download_saturn_ring_alpha_png(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_saturn_ring_alpha_jpg()
+    >>> surface = examples.planets.download_saturn_ring_alpha_png()
     >>> surface.plot(cpos="xy")
 
     """
