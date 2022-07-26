@@ -18,6 +18,13 @@ from .downloads import _download_and_read
 def load_sun(*args, **kwargs):
     """Load a sun source.
 
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
@@ -43,6 +50,13 @@ def load_sun(*args, **kwargs):
 
 def load_moon(*args, **kwargs):
     """Load a moon source.
+
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
 
     Returns
     -------
@@ -70,6 +84,13 @@ def load_moon(*args, **kwargs):
 def load_mercury(*args, **kwargs):
     """Load a mercury source.
 
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
@@ -95,6 +116,13 @@ def load_mercury(*args, **kwargs):
 
 def load_venus(*args, **kwargs):
     """Load a venus source.
+
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
 
     Returns
     -------
@@ -124,6 +152,13 @@ def load_venus(*args, **kwargs):
 def load_mars(*args, **kwargs):
     """Load a mars source.
 
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
@@ -149,6 +184,13 @@ def load_mars(*args, **kwargs):
 
 def load_jupiter(*args, **kwargs):
     """Load a jupiter source.
+
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
 
     Returns
     -------
@@ -176,6 +218,13 @@ def load_jupiter(*args, **kwargs):
 def load_saturn(*args, **kwargs):
     """Load a saturn source.
 
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
@@ -201,6 +250,13 @@ def load_saturn(*args, **kwargs):
 
 def load_saturn_ring_alpha(*args, **kwargs):
     """Load a saturn_ring_alpha source.
+
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
 
     Returns
     -------
@@ -231,6 +287,13 @@ def load_saturn_ring_alpha(*args, **kwargs):
 def load_uranus(*args, **kwargs):
     """Load a uranus source.
 
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
@@ -256,6 +319,13 @@ def load_uranus(*args, **kwargs):
 
 def load_neptune(*args, **kwargs):
     """Load a neptune source.
+
+    Parameters
+    ----------
+    *args
+        Variable length argument list.
+    **kwargs
+        Arbitrary keyword arguments.
 
     Returns
     -------
