@@ -6,7 +6,7 @@ to VTK algorithms and PyVista filtering/plotting routines.
 import collections.abc
 import logging
 import pathlib
-from typing import Any, List, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Iterable, List, Optional, Tuple, Union, cast, overload
 
 import numpy as np
 
@@ -21,7 +21,10 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
+_TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
+
+
+class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.Sequence):
     """A composite class to hold many data sets which can be iterated over.
 
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so
@@ -285,7 +288,15 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 return i
         raise KeyError(f'Block name ({name}) not found')
 
-    def __getitem__(self, index: Union[int, str]) -> Optional['MultiBlock']:
+    @overload
+    def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
+        ...
+
+    def __getitem__(self, index):
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -311,12 +322,12 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             data = wrap(data)
         return data
 
-    def append(self, dataset: DataSet, name: Optional[str] = None):
+    def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
         """Add a data set to the next block index.
 
         Parameters
         ----------
-        dataset : pyvista.DataSet
+        dataset : pyvista.DataSet or pyvista.MultiBlock
             Dataset to append to this multi-block.
 
         name : str, optional
@@ -346,7 +357,9 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # No overwrite if name is None
         self.set_block_name(index, name)
 
-    def get(self, index: str, default: Optional[DataSet] = None) -> Optional[DataSet]:
+    def get(
+        self, index: str, default: Optional[_TypeMultiBlockLeaf] = None
+    ) -> Optional[_TypeMultiBlockLeaf]:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
@@ -357,12 +370,12 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         index : str
             Index or name of the dataset within the multiblock.
 
-        default : pyvista.DataSet, optional
+        default : pyvista.DataSet or pyvista.MultiBlock, optional
             Default to return if index is not in the multiblock.
 
         Returns
         -------
-        pyvista.DataSet or None
+        pyvista.DataSet or pyvista.MultiBlock or None
             Dataset from the given index if it exists.
 
         Examples
@@ -457,10 +470,22 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
+    @overload
+    def __setitem__(
+        self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
+    ):  # noqa: D105
+        ...
+
+    @overload
+    def __setitem__(
+        self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
+    ):  # noqa: D105
+        ...
+
     def __setitem__(
         self,
-        index: Union[int, str, slice],
-        data: Union[DataSet, Sequence[DataSet]],
+        index,
+        data,
     ):
         """Set a block with a VTK data object.
 
@@ -503,10 +528,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             data = wrap(data)
         data = cast(pyvista.DataSet, data)
 
-        if i < -self.n_blocks or i >= self.n_blocks:
-            raise IndexError(f'index ({i}) out of range for this dataset.')
-        if i < 0:
-            i = self.n_blocks + i
+        i = range(self.n_blocks)[i]
 
         # this is the only spot in the class where we actually add
         # data to the MultiBlock
@@ -515,7 +537,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         existing_dataset = self.GetBlock(i)
         if existing_dataset is not None:
             self._remove_ref(i)
-
         self.SetBlock(i, data)
         if data is not None:
             self._refs[data.memory_address] = data
@@ -561,18 +582,15 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         return True
 
-    def next(self) -> Optional['MultiBlock']:
+    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
             self._iter_n += 1
             return result
-        else:
-            raise StopIteration
+        raise StopIteration
 
-    __next__ = next
-
-    def pop(self, index: Union[int, str]) -> Optional['MultiBlock']:
+    def pop(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:
         """Pop off a block at the specified index.
 
         Parameters
@@ -582,7 +600,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         Returns
         -------
-        pyvista.DataSet
+        pyvista.DataSet or pyvista.MultiBlock
             Dataset from the given index.
 
         """
