@@ -2697,3 +2697,51 @@ def test_property():
         prop.plot(before_close_callback=verify_cache_image)
     else:
         prop.plot()
+
+
+def test_tight_square(noise_2d):
+    noise_2d.plot(
+        window_size=[800, 200],
+        show_scalar_bar=False,
+        cpos='xy',
+        zoom='tight',
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_tight_square_padding():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(padding=0.05)
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_tall():
+    grid = pyvista.UniformGrid(dims=(100, 200, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    with pytest.raises(ValueError, match='can only be "tight"'):
+        pl.camera.zoom('invalid')
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [75, 150], rtol=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_wide():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)
