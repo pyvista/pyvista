@@ -795,7 +795,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         return field_asc, scalars
 
-    def as_polydata(self):
+    def as_polydata(self, copy=False):
         """Convert all the datasets in this MultiBlock to :class:`pyvista.PolyData`.
 
         This will return a new `pyvista.MultiBlock` dataset. Blocks that are
@@ -814,7 +814,9 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         """
         # we make a shallow copy here to avoid modifying the original dataset
-        dataset = self.copy(deep=False)
+        dataset = self
+        if copy:
+            dataset = self.copy(deep=False)
 
         # always convert to polydata
         for i, block in enumerate(dataset):
@@ -823,8 +825,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                     dataset[i] = block.as_polydata()
                 elif not isinstance(block, pyvista.PolyData):
                     dataset[i] = block.extract_surface()
-                else:
-                    # guarantee that the new instance is a shallow copy
+                elif copy:
+                    # create a shallow copy
                     dataset[i] = block.copy(deep=False)
             else:
                 # must have empty polydata within these datasets to ensure
