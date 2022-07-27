@@ -440,9 +440,26 @@ if TEST_DOWNLOADS:
         dataset = examples.download_mount_damavand(load=True)
         assert isinstance(dataset, pyvista.PolyData)
 
+    def test_download_cubemap_space_4k():
+        dataset = examples.download_cubemap_space_4k()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_download_cubemap_space_16k():
+        dataset = examples.download_cubemap_space_16k()
+        assert isinstance(dataset, pyvista.Texture)
+
     def test_particles_lethe():
         filename = examples.download_particles_lethe(load=False)
         assert os.path.isfile(filename)
 
         dataset = examples.download_particles_lethe(load=True)
         assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_gif_simple():
+        filename = examples.download_gif_simple(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('gif')
+
+        dataset = examples.download_gif_simple(load=True)
+        assert isinstance(dataset, pyvista.UniformGrid)
+        assert 'frame0' in dataset.point_data

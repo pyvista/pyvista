@@ -798,7 +798,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def as_polydata(self, copy=False):
         """Convert all the datasets in this MultiBlock to :class:`pyvista.PolyData`.
 
-        This will return a new `pyvista.MultiBlock` dataset. Blocks that are
+        This will return a new :class:`pyvista.MultiBlock` dataset. Blocks that are
         already :class:`pyvista.PolyData` will not be copied.
 
         Returns

@@ -134,7 +134,7 @@ def _option_boolean(arg):
     elif arg.strip().lower() in ('yes', '1', 'true'):
         return True
     else:  # pragma: no cover
-        raise ValueError('"%s" unknown boolean' % arg)
+        raise ValueError(f'"{arg}" unknown boolean')
 
 
 def _option_context(arg):

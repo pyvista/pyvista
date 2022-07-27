@@ -147,7 +147,7 @@ class BlockAttributes:
         Warnings
         --------
         VTK 9.0.3 has a bug where changing the opacity to less than 1.0 also
-        changes the edge visibility on the block that is partially opacity.
+        changes the edge visibility on the block that is partially transparent.
 
         Examples
         --------
