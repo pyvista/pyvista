@@ -322,6 +322,20 @@ def test_set_environment_texture_cubemap(sphere):
         pl.show()
 
 
+@skip_not_vtk9
+@skip_windows
+@skip_mac
+def test_remove_environment_texture_cubemap(sphere):
+    """Test remove_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter()
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
+    pl.remove_environment_texture()
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_plot_pyvista_ndarray(sphere):
     # verify we can plot pyvista_ndarray
     pyvista.plot(sphere.points)

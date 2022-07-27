@@ -1221,6 +1221,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.set_environment_texture``."""
         return self.renderer.set_environment_texture(*args, **kwargs)
 
+    @wraps(Renderer.remove_environment_texture)
+    def remove_environment_texture(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_environment_texture``."""
+        return self.renderer.remove_environment_texture(*args, **kwargs)
+
     #### Properties from Renderer ####
 
     @property

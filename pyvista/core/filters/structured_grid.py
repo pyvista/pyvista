@@ -122,9 +122,9 @@ class StructuredGridFilters(DataSetFilters):
             if i == axis:
                 continue
             if dim1 != dim2:
-                raise RuntimeError(
-                    'StructuredGrids with dimensions %s and %s '
-                    'are not compatible.' % (self.dimensions, other.dimensions)
+                raise ValueError(
+                    f'StructuredGrids with dimensions {self.dimensions} and {other.dimensions} '
+                    'are not compatible.'
                 )
 
         # check point/cell variables are the same
@@ -140,8 +140,8 @@ class StructuredGridFilters(DataSetFilters):
             atol=tolerance,
         ):
             raise RuntimeError(
-                'Grids cannot be joined along axis %d, as points '
-                'are not coincident within tolerance of %f.' % (axis, tolerance)
+                f'Grids cannot be joined along axis {axis}, as points '
+                'are not coincident within tolerance of {tolerance}.'
             )
 
         # slice to cut off the repeated grid face
@@ -163,8 +163,8 @@ class StructuredGridFilters(DataSetFilters):
                 np.take(arr_1, indices=-1, axis=axis), np.take(arr_2, indices=0, axis=axis)
             ):
                 raise RuntimeError(
-                    'Grids cannot be joined along axis %d, as field '
-                    '`%s` is not identical along the seam.' % (axis, name)
+                    f'Grids cannot be joined along axis {axis}, as field '
+                    '`{name}` is not identical along the seam.'
                 )
             new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(
                 order='F'
