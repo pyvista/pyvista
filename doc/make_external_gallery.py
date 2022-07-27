@@ -169,8 +169,8 @@ articles = dict(
         title="Gradient Descent Visualizer",
         description="A Python package used to visualize the gradient descent of function landscapes.",
         link="https://github.com/JacobBumgarner/grad-descent-visualizer",
-        image="grad_descent_visualizer.gif"
-    )
+        image="grad_descent_visualizer.gif",
+    ),
     # entry=Example(title="",
     #     description="",
     #     link="",
