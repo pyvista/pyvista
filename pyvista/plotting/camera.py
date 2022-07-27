@@ -283,16 +283,42 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        value : float
-            Zoom of the camera.  Must be greater than 0.
+        value : float or str
+            Zoom of the camera. If a float, must be greater than 0. Otherwise,
+            if a string, must be ``"tight"``. If tight, the plot will be zoomed
+            such that the actors fill the entire viewport.
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        Show the Default zoom.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.camera.zoom(1.0)
+        >>> pl.show()
+
+        Show 2x zoom.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.camera.zoom(2.0)
+        >>> pl.show()
+
+        Zoom so the actor fills the entire render window.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
 
         """
+        if isinstance(value, str):
+            if not value == 'tight':
+                raise ValueError('If a string, ``zoom`` can only be "tight"')
+            self.tight()
+            return
+
         self.Zoom(value)
 
     @property
@@ -618,3 +644,77 @@ class Camera(_vtk.vtkCamera):
             setattr(new_camera, attr, value)
 
         return new_camera
+
+    def tight(self, padding=0.0, adjust_render_window=True):
+        """Adjust the camera position so that the actors fill the entire renderer.
+
+        Parameters
+        ----------
+        padding : float, optional
+            Additional padding around the actor(s). This is effectively a zoom,
+            where a value of 0.01 results in a zoom out of 1%.
+
+        adjust_render_window : bool, optional
+            Adjust the size of the render window as to match the dimensions of
+            the visible actors.
+
+        Notes
+        -----
+        This resets the view direction to look at the XY plane.
+
+        Examples
+        --------
+        Display the puppy image with a tight view.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> puppy = examples.download_puppy()
+        >>> pl = pv.Plotter(border=True, border_width=5)
+        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> pl.camera.tight()
+        >>> pl.show()
+
+        Set the background to blue use a 5% padding around the image.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> pl.background_color = 'b'
+        >>> pl.camera.tight(padding=0.05)
+        >>> pl.show()
+
+        """
+        # inspired by vedo resetCamera. Thanks @marcomusy!
+        x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+
+        self.enable_parallel_projection()
+
+        self._renderer.ComputeAspect()
+        aspect = self._renderer.GetAspect()
+        angle = np.pi * self.view_angle / 180.0
+        dx, dy = (x1 - x0), (y1 - y0)
+        dist = max(dx / aspect[0], dy) / np.sin(angle / 2) / 2
+
+        self.SetViewUp(0, 1, 0)
+        self.SetPosition(x0 + dx / 2, y0 + dy / 2, dist * (1 + padding))
+        self.SetFocalPoint(x0 + dx / 2, y0 + dy / 2, 0)
+
+        ps = max(dx / aspect[0], dy) / 2
+        self.parallel_scale = ps * (1 + padding)
+        self._renderer.ResetCameraClippingRange(x0, x1, y0, y1, z0, z1)
+
+        if adjust_render_window:
+            ren_win = self._renderer.GetRenderWindow()
+            size = list(ren_win.GetSize())
+            size_ratio = size[0] / size[1]
+            tight_ratio = dx / dy
+            resize_ratio = tight_ratio / size_ratio
+            if resize_ratio < 1:
+                size[0] = round(size[0] * resize_ratio)
+            else:
+                size[1] = round(size[1] / resize_ratio)
+
+            ren_win.SetSize(size)
+
+            # simply call tight again to reset the parallel scale due to the
+            # resized window
+            self.tight(padding=padding, adjust_render_window=False)

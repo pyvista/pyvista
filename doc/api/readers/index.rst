@@ -33,6 +33,7 @@ Reader Classes
     EnSightReader
     FacetReader
     FluentReader
+    GIFReader
     GLTFReader
     HDFReader
     HDRReader

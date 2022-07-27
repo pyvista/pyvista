@@ -151,8 +151,7 @@ def generate_cell_offsets_loop(cells, cell_types):
     for cell_i, _ in enumerate(cell_types):
         if current_cell_pos >= cells.size:
             raise ValueError(
-                "Cell types and cell array are inconsistent. Got %d values left after reading all types"
-                % (cell_types.size - current_cell_pos)
+                f"Cell types and cell array are inconsistent. Got {cell_types.size - current_cell_pos} values left after reading all types"
             )
 
         cell_size = cells[current_cell_pos]
@@ -161,8 +160,7 @@ def generate_cell_offsets_loop(cells, cell_types):
 
     if current_cell_pos != cells.size:
         raise ValueError(
-            "Cell types and cell array are inconsistent. Got %d values left after reading all types"
-            % (cell_types.size - current_cell_pos)
+            f"Cell types and cell array are inconsistent. Got {cell_types.size - current_cell_pos} values left after reading all types"
         )
 
     return offsets
@@ -213,8 +211,7 @@ def generate_cell_offsets(cells, cell_types):
 
     if cell_sizes_cum[-1] != cells.size:
         raise ValueError(
-            "Cell types and cell array are inconsistent. Expected a cell array of length %d according to the cell types"
-            % (cell_sizes_cum[-1])
+            f"Cell types and cell array are inconsistent. Expected a cell array of length {cell_sizes_cum[-1]} according to the cell types"
         )
 
     offsets = np.concatenate([[0], cell_sizes_cum])[:-1]
@@ -301,17 +298,14 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)
         ):
             raise ValueError(
-                "Expected an np.ndarray of size [N, %d] or [N*%d] with an integral type"
-                % (nr_points_per_elem, nr_points_per_elem)
+                f"Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type"
             )
 
         if np.any(cells_arr < 0):
-            raise ValueError("Non-valid index (<0) given for cells of type %s" % (elem_t))
+            raise ValueError(f"Non-valid index (<0) given for cells of type {elem_t}")
 
         if nr_points is not None and np.any(cells_arr >= nr_points):
-            raise ValueError(
-                "Non-valid index (>=%d) given for cells of type %s" % (nr_points, elem_t)
-            )
+            raise ValueError(f"Non-valid index (>={nr_points}) given for cells of type {elem_t}")
 
         if cells_arr.ndim == 1:  # Flattened array present
             cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
