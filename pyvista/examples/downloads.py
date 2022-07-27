@@ -4294,3 +4294,45 @@ def download_particles_lethe(load=True):  # pragma: no cover
 
     """
     return _download_and_read('lethe/result_particles.20000.0000.vtu', load=load)
+
+
+def download_gif_simple(load=True):  # pragma: no cover
+    """Download a simple three frame GIF.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the first frame of a simple GIF.
+
+    >>> from pyvista import examples
+    >>> grid = examples.download_gif_simple()
+    >>> grid.plot(
+    ...     scalars='frame0',
+    ...     rgb=True,
+    ...     background='w',
+    ...     show_scalar_bar=False,
+    ...     cpos='xy'
+    ... )
+
+    Plot the second frame.
+
+    >>> grid.plot(
+    ...     scalars='frame1',
+    ...     rgb=True,
+    ...     background='w',
+    ...     show_scalar_bar=False,
+    ...     cpos='xy'
+    ... )
+
+    """
+    return _download_and_read('gifs/sample.gif', load=load)
