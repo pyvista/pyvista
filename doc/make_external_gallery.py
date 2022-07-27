@@ -165,6 +165,12 @@ articles = dict(
         link="https://gmshmodel.readthedocs.io/en/latest/",
         image="gmsh_model.png",
     ),
+    grad_descent_visualizer=Example(
+        title="Gradient Descent Visualizer",
+        description="A Python package used to visualize the gradient descent of function landscapes.",
+        link="https://github.com/JacobBumgarner/grad-descent-visualizer",
+        image="grad_descent_visualizer.gif"
+    )
     # entry=Example(title="",
     #     description="",
     #     link="",
