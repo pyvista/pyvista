@@ -75,6 +75,7 @@ def test_prepare_smooth_shading_texture_split_edges(globe):
     assert "Normals" in mesh.point_data
     assert "Texture Coordinates" in mesh.point_data
 
+
 def test_prepare_smooth_shading_texture_no_split(globe):
     """Test a copy of the mesh is not made when split edges is False."""
     mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, False, False, None)
