@@ -85,7 +85,10 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     else:
         # consider checking if mesh contains active normals
         # if mesh.point_data.active_normals is None:
-        mesh.compute_normals(cell_normals=False, inplace=True)
+
+        # Don't calculate normals in place - it creates a copy of the mesh
+        normals = mesh.compute_normals(cell_normals=False, inplace=False)['Normals']
+        mesh.point_data.set_array(normals, 'Normals')
 
     if has_scalars and indices_array is not None:
         ind = mesh[indices_array]
