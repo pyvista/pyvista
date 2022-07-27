@@ -269,7 +269,7 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(box_clipped_mesh, reset_camera=False, **kwargs)
+        return self.add_mesh(box_clipped_mesh, reset_camera=False, copy_mesh=False, **kwargs)
 
     def add_plane_widget(
         self,
@@ -620,7 +620,7 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(plane_clipped_mesh, **kwargs)
+        return self.add_mesh(plane_clipped_mesh, copy_mesh=False, **kwargs)
 
     def add_mesh_slice(
         self,
@@ -745,7 +745,7 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(plane_sliced_mesh, **kwargs)
+        return self.add_mesh(plane_sliced_mesh, copy_mesh=False, **kwargs)
 
     def add_mesh_slice_orthogonal(
         self,
@@ -1340,7 +1340,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault("reset_camera", False)
-        return self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
+        return self.add_mesh(threshold_mesh, scalars=scalars, copy_mesh=False, **kwargs)
 
     def add_mesh_isovalue(
         self,
@@ -1476,7 +1476,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault("reset_camera", False)
-        return self.add_mesh(isovalue_mesh, scalars=scalars, **kwargs)
+        return self.add_mesh(isovalue_mesh, scalars=scalars, copy_mesh=False, **kwargs)
 
     def add_spline_widget(
         self,
@@ -1733,7 +1733,7 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(spline_sliced_mesh, **kwargs)
+        return self.add_mesh(spline_sliced_mesh, copy_mesh=False, **kwargs)
 
     def add_sphere_widget(
         self,
