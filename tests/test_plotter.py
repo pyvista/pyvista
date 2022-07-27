@@ -68,12 +68,18 @@ def test_pickable_actors():
         plotter.pickable_actors = [0, 10]
 
 
-def test_prepare_smooth_shading_texture(globe):
+def test_prepare_smooth_shading_texture_split_edges(globe):
     """Test edge cases for smooth shading"""
     mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
     assert scalars is None
     assert "Normals" in mesh.point_data
     assert "Texture Coordinates" in mesh.point_data
+
+def test_prepare_smooth_shading_texture_no_split(globe):
+    """Test a copy of the mesh is not made when split edges is False."""
+    mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, False, False, None)
+    assert scalars is None
+    assert mesh is globe
 
 
 def test_prepare_smooth_shading_not_poly(hexbeam):
@@ -147,7 +153,8 @@ def test_no_added_with_scalar_bar(sphere):
     assert sphere.n_arrays == 1
 
 
-def test_plotter_remains_shallow():
+@pytest.mark.parametrize("smooth_shading", [True, False])
+def test_plotter_remains_shallow(smooth_shading):
     sphere = pyvista.Sphere()
     sphere.point_data['numbers'] = np.arange(sphere.n_points)
     sphere2 = sphere.copy(deep=False)
@@ -158,7 +165,7 @@ def test_plotter_remains_shallow():
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
     plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere, scalars=None)
+    plotter.add_mesh(sphere, scalars=None, smooth_shading=smooth_shading)
 
     sphere[
         'numbers'
