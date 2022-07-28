@@ -2135,7 +2135,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the vector is plotted.
 
         copy_mesh : bool, optional
-            If ``False``, a copy of the mesh will be made before adding it to the plotter.
+            If ``True``, a copy of the mesh will be made before adding it to the plotter.
             This is useful if e.g. you would like to add the same mesh to a plotter multiple
             times and display different scalars. Setting ``copy_mesh`` to ``False`` is necessary
             if you would like to update the mesh after adding it to the plotter and have these
