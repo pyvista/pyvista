@@ -2499,10 +2499,10 @@ def test_multi_plot_scalars():
     pl = pyvista.Plotter(shape=(1, 2))
     pl.subplot(0, 0)
     pl.add_text('"u" point scalars')
-    pl.add_mesh(plane, scalars='u')
+    pl.add_mesh(plane, scalars='u', copy_mesh=True)
     pl.subplot(0, 1)
     pl.add_text('"v" point scalars')
-    pl.add_mesh(plane, scalars='v')
+    pl.add_mesh(plane, scalars='v', copy_mesh=True)
     pl.show(before_close_callback=verify_cache_image)
 
 
