@@ -455,6 +455,10 @@ if TEST_DOWNLOADS:
         dataset = examples.download_particles_lethe(load=True)
         assert isinstance(dataset, pyvista.UnstructuredGrid)
 
+    def test_cubemap_park():
+        dataset = examples.download_cubemap_park()
+        assert isinstance(dataset, pyvista.Texture)
+
     def test_gif_simple():
         filename = examples.download_gif_simple(load=False)
         assert os.path.isfile(filename)
