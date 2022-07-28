@@ -24,7 +24,9 @@ log.setLevel('CRITICAL')
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
-class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.Sequence):
+class MultiBlock(
+    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence
+):
     """A composite class to hold many data sets which can be iterated over.
 
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so
@@ -332,7 +334,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collec
 
         name : str, optional
             Block name to give to dataset.  A default name is given
-            depending on the block index.
+            depending on the block index as 'Block-{i:02}'.
 
         Examples
         --------
@@ -416,6 +418,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collec
         ['cube', 'sphere', 'cone']
 
         """
+        index = range(self.n_blocks)[index]
         if name is None:
             return
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
@@ -443,6 +446,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collec
         'cube'
 
         """
+        index = range(self.n_blocks)[index]
         meta = self.GetMetaData(index)
         if meta is not None:
             return meta.Get(_vtk.vtkCompositeDataSet.NAME())
@@ -545,8 +549,16 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collec
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str]):
+    def __delitem__(self, index: Union[int, str, slice]) -> None:
         """Remove a block at the specified index."""
+        if isinstance(index, slice):
+            if index.indices(self.n_blocks)[2] > 0:
+                for i in reversed(range(*index.indices(self.n_blocks))):
+                    self.__delitem__(i)
+            else:
+                for i in range(*index.indices(self.n_blocks)):
+                    self.__delitem__(i)
+            return
         if isinstance(index, str):
             index = self.get_index_by_name(index)
         self._remove_ref(index)
@@ -590,7 +602,31 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collec
             return result
         raise StopIteration
 
-    def pop(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:
+    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: Optional[str] = None) -> None:
+        """Insert data before index.
+
+        Parameters
+        ----------
+        index : int
+            Index before which to insert data.
+        dataset : pyvista.DataSet or pyvista.MultiBlock
+            Data to insert.
+        name : str, optional
+            Name for key to give dataset.  A default name is given
+            depending on the block index as 'Block-{i:02}'.
+
+        """
+        index = range(self.n_blocks)[index]
+
+        self.n_blocks += 1
+        for i in reversed(range(index, self.n_blocks - 1)):
+            self[i + 1] = self[i]
+            self.set_block_name(i + 1, self.get_block_name(i))
+
+        self[index] = dataset
+        self.set_block_name(index, name)
+
+    def pop(self, index: Optional[Union[int, str]] = None) -> Optional[_TypeMultiBlockLeaf]:
         """Pop off a block at the specified index.
 
         Parameters
@@ -604,6 +640,10 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collec
             Dataset from the given index.
 
         """
+        if isinstance(index, int):
+            index = range(self.n_blocks)[index]
+        if index is None:
+            index = self.n_blocks
         data = self[index]
         del self[index]
         return data

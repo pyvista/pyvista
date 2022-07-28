@@ -157,7 +157,7 @@ def test_multi_block_set_get_ers():
     pop = multi.pop(0)
     assert isinstance(pop, RectilinearGrid)
     assert multi.n_blocks == 3
-    assert multi.get_block_name(10) is None
+    assert all([k is None for k in multi.keys()])
 
     multi["new key"] = pyvista.Sphere()
     assert multi.n_blocks == 4
@@ -183,6 +183,33 @@ def test_multi_block_set_get_ers():
 
     with pytest.raises(TypeError):
         multi["not a key"] = [UniformGrid(), PolyData()]
+
+
+def test_del_slice():
+    multi = MultiBlock({f"{i}": pyvista.Sphere() for i in range(10)})
+    del multi[0:10:2]
+    assert len(multi) == 5
+    assert all([f"{i}" in multi.keys() for i in range(1, 10, 2)])
+
+    multi = MultiBlock({f"{i}": pyvista.Sphere() for i in range(10)})
+    del multi[5:2:-1]
+    assert len(multi) == 7
+    assert all([f"{i}" in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9]])
+
+
+def test_insert():
+    multi = MultiBlock({f"{i}": pyvista.Sphere() for i in range(3)})
+    cube = pyvista.Cube()
+    multi.insert(0, cube)
+    assert len(multi) == 4
+    assert multi[0] is cube
+
+    # test with negative index and name
+    multi.insert(-1, pyvista.UniformGrid(), name="uni")
+    assert len(multi) == 5
+    # inserted before last element
+    assert isinstance(multi[-2], pyvista.UniformGrid)  # inserted before last element
+    assert multi.get_block_name(-2) == "uni"
 
 
 def test_multi_block_clean(rectilinear, uniform, ant):
