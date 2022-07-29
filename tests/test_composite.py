@@ -181,20 +181,43 @@ def test_multi_block_set_get_ers():
     with pytest.raises(TypeError):
         multi[1, 'foo'] = data
 
-    with pytest.raises(TypeError):
-        multi["not a key"] = [UniformGrid(), PolyData()]
 
-
-def test_del_slice():
-    multi = MultiBlock({f"{i}": pyvista.Sphere() for i in range(10)})
+def test_del_slice(sphere):
+    multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[0:10:2]
     assert len(multi) == 5
     assert all([f"{i}" in multi.keys() for i in range(1, 10, 2)])
 
-    multi = MultiBlock({f"{i}": pyvista.Sphere() for i in range(10)})
+    multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[5:2:-1]
     assert len(multi) == 7
     assert all([f"{i}" in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9]])
+
+
+def test_slicing_multiple_in_setitem(sphere):
+    # equal length
+    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi[1:3] = [pyvista.Cube(), pyvista.Cube()]
+    assert multi[1] == pyvista.Cube()
+    assert multi[2] == pyvista.Cube()
+    assert multi.count(pyvista.Cube()) == 2
+    assert len(multi) == 10
+
+    # len(slice) < len(data)
+    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi[1:3] = [pyvista.Cube(), pyvista.Cube(), pyvista.Cube()]
+    assert multi[1] == pyvista.Cube()
+    assert multi[2] == pyvista.Cube()
+    assert multi[3] == pyvista.Cube()
+    assert multi.count(pyvista.Cube()) == 3
+    assert len(multi) == 11
+
+    # len(slice) > len(data)
+    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi[1:3] = [pyvista.Cube()]
+    assert multi[1] == pyvista.Cube()
+    assert multi.count(pyvista.Cube()) == 1
+    assert len(multi) == 9
 
 
 def test_insert():

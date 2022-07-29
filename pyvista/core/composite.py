@@ -4,6 +4,7 @@ These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections.abc
+from itertools import zip_longest
 import logging
 import pathlib
 from typing import Any, Iterable, List, Optional, Tuple, Union, cast, overload
@@ -515,14 +516,20 @@ class MultiBlock(
             try:
                 i = self.get_index_by_name(index)
             except KeyError:
-                if isinstance(data, collections.abc.Sequence):
-                    raise TypeError(f"Cannot set key {index} with the sequence {data}")
                 self.append(data, index)
                 return
             name = index
         elif isinstance(index, slice):
-            for i, d in zip(range(self.n_blocks)[index], data):
-                self[i] = d
+            index_iter = range(self.n_blocks)[index]
+            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
+                if idx is None:
+                    self.insert(
+                        index_iter[-1] + 1 + (i - len(index_iter)), d
+                    )  # insert after last entry, increasing
+                elif d is None:
+                    del self[index_iter[-1] + 1]  # delete next entry
+                else:
+                    self[idx] = d  #
             return
         else:
             i = index
