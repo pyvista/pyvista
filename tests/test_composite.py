@@ -220,8 +220,16 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 9
 
 
-def test_insert():
-    multi = MultiBlock({f"{i}": pyvista.Sphere() for i in range(3)})
+def test_reverse(sphere):
+    multi = MultiBlock({f"{i}": sphere for i in range(3)})
+    multi.append(pyvista.Cube(), "cube")
+    multi.reverse()
+    assert multi[0] == pyvista.Cube()
+    assert np.array_equal(multi.keys(), ["cube", "2", "1", "0"])
+
+
+def test_insert(sphere):
+    multi = MultiBlock({f"{i}": sphere for i in range(3)})
     cube = pyvista.Cube()
     multi.insert(0, cube)
     assert len(multi) == 4

@@ -655,6 +655,16 @@ class MultiBlock(
         del self[index]
         return data
 
+    def reverse(self):
+        """Reverse MultiBlock in-place."""
+        # Taken from implementation in collections.abc.MutableSequence
+        names = self.keys()
+        n = len(self)
+        for i in range(n // 2):
+            self[i], self[n - i - 1] = self[n - i - 1], self[i]
+        for i, name in enumerate(reversed(names)):
+            self.set_block_name(i, name)
+
     def clean(self, empty=True):
         """Remove any null blocks in place.
 
