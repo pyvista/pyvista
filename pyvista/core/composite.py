@@ -34,13 +34,14 @@ class MultiBlock(
     that we can easily plot these data sets and use the composite in a
     Pythonic manner.
 
-    You can think of ``MultiBlock`` like lists or dictionaries as we
-    can iterate over this data structure by index and we can also
-    access blocks by their string name.
+    You can think of ``MultiBlock`` like a list as we
+    can iterate over this data structure by index.  It has some dictionary
+    features as we can also access blocks by their string name.
 
     .. versionchanged:: 0.36.0
-       ``MultiBlock`` adheres more closely to being list like.
-       Multiple nonconforming behaviors were removed or modified.
+       ``MultiBlock`` adheres more closely to being list like, and inherits
+       from ``collections.abc.MutableSequence``.  Multiple nonconforming
+       behaviors were removed or modified.
 
     Examples
     --------

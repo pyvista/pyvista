@@ -2,17 +2,18 @@ Composite Datasets
 ==================
 
 The :class:`pyvista.MultiBlock` class is a composite class to hold many
-data sets which can be iterated over.
+data sets which can be iterated over. ``MultiBlock`` behaves mostly like
+a list, but has some dictionary-like features.
 
-``MultiBlock`` behaves like a list, but also allows some dictionary
-like features.  We can iterate over this data structure by index, and we
-can also access blocks by their string name.
+List-like Features
+------------------
 
 .. pyvista-plot::
 
    Create empty composite dataset
 
    >>> import pyvista as pv
+   >>> from pyvista import examples
    >>> blocks = pv.MultiBlock()
 
    Add some data to the collection.
@@ -29,26 +30,68 @@ can also access blocks by their string name.
 
    >>> blocks[0]  # Sphere
 
+   The length of the block can be accessed through :func:`len`
+
+   >>> len(blocks)
+
+   or through the ``n_blocks`` attribute
+
+   >>> blocks.n_blocks
+
+   More specifically, ``MultiBlock`` is a :class:`collections.abc.MutableSequence`
+   and supports operations such as append, pop, insert, etc. Some of these operations
+   allow optional names to be provided for the dictionary like usage.  TODO: link.
+
+   >>> blocks.append(pv.Cone(), name="cone")
+   >>> cone = blocks.pop(-1)  # Pops Cone
+   >>> blocks.reverse()
+
+   ``MultiBlock`` also supports slicing for getting or setting blocks.
+
+   >>> blocks[0:2]  # The Sphere and Cube objects in a new ``MultiBlock``
+
+
+Dictionary-like Features
+------------------------
+.. pyvista-plot::
+
    ``MultiBlock`` also has some dictionary features.  We can set the name
    of the blocks, and then access them 
-
+   >>> blocks = pv.MultiBlock([pv.Sphere(), pv.Cube()])
    >>> blocks.set_block_name(0, "sphere")
    >>> blocks.set_block_name(1, "cube")
-   >>> blocks["sphere"]  # Sphere again
+   >>> blocks["sphere"]  # Sphere
 
-   To append data, it is preferred to use :function:`pyvista.MultiBlock.append`.
-   A name can be set for the block. It is also possible to append to the MultiBlock using a
-   nonexistent key.
+   It is important to note that ``MultiBlock`` is not a dictionary and does
+   not enforce unique keys.  Keys can also be ``None``.  Extra care must be
+   taken to avoid problems using the dictionary-like features.
 
-   >>> blocks.append(pv.Sphere(center=(-1, 0, 0)), "sphere2")
-   >>> blocks["cone"] = pv.Cone()
+   PyVista tries to keep the keys ordered correctly when doing list operations.
 
-   Duplicate and ``None`` keys are possible in MultiBlock, so the use of
-   dictionary-like features must be used with care. 
+   >>> block.reverse()
+   >>> block.keys()
 
-   We can use slicing to retrieve or set multiple blocks.
+   The dictionary like features are useful when reading in data from a file.  The
+   keys are often more understandable to access the data than the index.
+   :func:`pyvista.examples.download_cavity` is an OpenFoam dataset with a nested
+   ``MultiBlock`` structure.  There are two entries in the top-level object
 
-   >>> blocks[0:1]
+   >>> data = examples.download_cavity()
+   >>> data.keys()
+
+   ``"internalMesh"`` is a :class:`pyvista.UnstructuredGrid`.
+
+   >>> data["internalMesh"]
+
+   ``"boundary"`` is another :class:`pyvista.MultiBlock`.
+
+   >>> data["boundary"]
+
+   Using the dictionary like features of :class:`pyvista.MultiBlock` allow for easier
+   inspection and use of the data coming from an outside source.  The names of each key
+   correspond to human understable portions of the dataset.
+
+   >>> data["boundary"].keys()
 
 Examples using this class:
 
