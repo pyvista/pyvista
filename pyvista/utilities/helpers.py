@@ -117,6 +117,11 @@ def convert_string_array(arr, name=None):
 
     """
     if isinstance(arr, np.ndarray):
+        # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
+        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+            raise ValueError(
+                'String array contains non-ASCII characters that are not supported by VTK.'
+            )
         vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
         for val in arr:

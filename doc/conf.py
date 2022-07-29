@@ -234,6 +234,7 @@ intersphinx_mapping = {
     'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
 }
+intersphinx_timeout = 10
 
 linkcheck_retries = 3
 linkcheck_timeout = 500
