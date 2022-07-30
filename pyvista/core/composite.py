@@ -294,11 +294,11 @@ class MultiBlock(
 
     @overload
     def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105
-        ...
+        ...  # pragma: no covrr
 
     @overload
     def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
-        ...
+        ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a block by its index or name.
@@ -480,13 +480,13 @@ class MultiBlock(
     def __setitem__(
         self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
     ):  # noqa: D105
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
     ):  # noqa: D105
-        ...
+        ...  # pragma: no cover
 
     def __setitem__(
         self,
