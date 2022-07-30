@@ -167,14 +167,15 @@ def test_not_polydata(hexbeam):
     pv_pythreejs.convert_plotter(pl)
 
 
-def test_just_points(pointset):
+def test_just_points():
+    pdata = pyvista.PolyData(np.random.random((10, 3)))
     pl = pyvista.Plotter()
-    pl.add_mesh(pointset)
+    pl.add_mesh(pdata)
     output = pv_pythreejs.convert_plotter(pl)
 
     # ensure points in output
     pos = output.scene.children[0].geometry.attributes['position']
-    assert np.allclose(pos.array, pointset.points)
+    assert np.allclose(pos.array, pdata.points)
 
 
 @pytest.mark.parametrize('with_scalars', [False, True])
