@@ -410,6 +410,11 @@ def actor_to_mesh(actor, focal_point):
     prop = actor.GetProperty()
     rep_type = prop.GetRepresentationAsString()
 
+    # PolyData vertices should always be rendered
+    has_verts = False
+    if isinstance(dataset, pv.PolyData):
+        has_verts = dataset.verts.any()
+
     meshes = []
     if rep_type == 'Surface' and has_faces:
         surf = extract_surface_mesh(dataset)
@@ -422,9 +427,15 @@ def actor_to_mesh(actor, focal_point):
 
         meshes.append(to_surf_mesh(actor, surf, mapper, prop, add_attr))
 
-    elif rep_type == 'Points':
+    if rep_type == 'Points':
         meshes.append(to_tjs_points(dataset, mapper, prop))
-    else:  # wireframe
+
+    if has_verts:
+        # extract just vertices
+        poly_points = dataset.extract_cells(dataset.verts[1::2])
+        meshes.append(to_tjs_points(poly_points, mapper, prop))
+
+    if rep_type not in ['Surface', 'Points']:
         if has_faces:
             surf = extract_surface_mesh(dataset)
             mesh = to_edge_mesh(surf, mapper, prop, use_edge_coloring=False)
