@@ -127,6 +127,9 @@ class DataObject:
                 f' Must be one of: {self._WRITERS.keys()}'
             )
 
+        # store complex and bitarray types as field data
+        self._store_metadata()
+
         writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
@@ -144,6 +147,34 @@ class DataObject:
             if self[array_name].shape[-1] == 4:  # type: ignore
                 writer.SetEnableAlpha(True)
         writer.Write()
+
+    def _store_metadata(self):
+        """Store metadata as field data."""
+        fdata = self.field_data
+        for assoc_name in ('bitarray', 'complex'):
+            for assoc_type in ('POINT', 'CELL'):
+                assoc_data = getattr(self, f'_association_{assoc_name}_names')
+                if assoc_type in assoc_data:
+                    if assoc_data[assoc_type]:
+                        key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                        fdata[key] = list(assoc_data[assoc_type])
+
+    def _restore_metadata(self):
+        """Restore PyVista metadata from field data.
+
+        Metadata is stored using ``_store_metadata`` and contains entries in
+        the format of f'_PYVISTA_{assoc_name}_{assoc_type}_'. These entries are
+        removed when calling this method.
+
+        """
+        fdata = self.field_data
+        for assoc_name in ('bitarray', 'complex'):
+            for assoc_type in ('POINT', 'CELL'):
+                key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                if key in fdata:
+                    assoc_data = getattr(self, f'_association_{assoc_name}_names')
+                    assoc_data[assoc_type] = set(fdata[key])
+                    del fdata[key]
 
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
