@@ -8,90 +8,130 @@ a list, but has some dictionary-like features.
 List-like Features
 ------------------
 
-.. pyvista-plot::
+Create empty composite dataset
 
-   Create empty composite dataset
+.. jupyter-execute::
+   :hide-code:
 
-   >>> import pyvista as pv
-   >>> from pyvista import examples
-   >>> blocks = pv.MultiBlock()
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_plot_theme('document')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
 
-   Add some data to the collection.
+.. jupyter-execute::
 
-   >>> blocks.append(pv.Sphere())
-   >>> blocks.append(pv.Cube(center=(0, 0, -1)))
+   import pyvista as pv
+   from pyvista import examples
+   blocks = pv.MultiBlock()
+   blocks
 
-   Plotting the ``MultiBlock`` plots all the meshes contained by it.
+Add some data to the collection.
 
-   >>> blocks.plot(smooth_shading=True)
+.. jupyter-execute::
 
-   ``MultiBlock`` is list-like, so individual blocks can be accessed via
-   indices.
+   blocks.append(pv.Sphere())
+   blocks.append(pv.Cube(center=(0, 0, -1)))
 
-   >>> blocks[0]  # Sphere
+Plotting the ``MultiBlock`` plots all the meshes contained by it.
 
-   The length of the block can be accessed through :func:`len`
+.. jupyter-execute::
 
-   >>> len(blocks)
+   blocks.plot(smooth_shading=True)
 
-   or through the ``n_blocks`` attribute
+``MultiBlock`` is list-like, so individual blocks can be accessed via
+indices.
 
-   >>> blocks.n_blocks
+.. jupyter-execute::
 
-   More specifically, ``MultiBlock`` is a :class:`collections.abc.MutableSequence`
-   and supports operations such as append, pop, insert, etc. Some of these operations
-   allow optional names to be provided for the dictionary like usage.  TODO: link.
+   blocks[0]  # Sphere
 
-   >>> blocks.append(pv.Cone(), name="cone")
-   >>> cone = blocks.pop(-1)  # Pops Cone
-   >>> blocks.reverse()
+The length of the block can be accessed through :func:`len`
 
-   ``MultiBlock`` also supports slicing for getting or setting blocks.
+.. jupyter-execute::
 
-   >>> blocks[0:2]  # The Sphere and Cube objects in a new ``MultiBlock``
+   len(blocks)
+
+or through the ``n_blocks`` attribute
+
+.. jupyter-execute::
+
+   blocks.n_blocks
+
+More specifically, ``MultiBlock`` is a :class:`collections.abc.MutableSequence`
+and supports operations such as append, pop, insert, etc. Some of these operations
+allow optional names to be provided for the dictionary like usage.
+
+.. jupyter-execute::
+
+   blocks.append(pv.Cone(), name="cone")
+   cone = blocks.pop(-1)  # Pops Cone
+   blocks.reverse()
+
+``MultiBlock`` also supports slicing for getting or setting blocks.
+
+.. jupyter-execute::
+
+   blocks[0:2]  # The Sphere and Cube objects in a new ``MultiBlock``
 
 
 Dictionary-like Features
 ------------------------
-.. pyvista-plot::
 
-   ``MultiBlock`` also has some dictionary features.  We can set the name
-   of the blocks, and then access them 
-   >>> blocks = pv.MultiBlock([pv.Sphere(), pv.Cube()])
-   >>> blocks.set_block_name(0, "sphere")
-   >>> blocks.set_block_name(1, "cube")
-   >>> blocks["sphere"]  # Sphere
 
-   It is important to note that ``MultiBlock`` is not a dictionary and does
-   not enforce unique keys.  Keys can also be ``None``.  Extra care must be
-   taken to avoid problems using the dictionary-like features.
+``MultiBlock`` also has some dictionary features.  We can set the name
+of the blocks, and then access them 
 
-   PyVista tries to keep the keys ordered correctly when doing list operations.
+.. jupyter-execute::
 
-   >>> block.reverse()
-   >>> block.keys()
+   blocks = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+   blocks.set_block_name(0, "sphere")
+   blocks.set_block_name(1, "cube")
+   blocks["sphere"]  # Sphere
 
-   The dictionary like features are useful when reading in data from a file.  The
-   keys are often more understandable to access the data than the index.
-   :func:`pyvista.examples.download_cavity` is an OpenFoam dataset with a nested
-   ``MultiBlock`` structure.  There are two entries in the top-level object
+It is important to note that ``MultiBlock`` is not a dictionary and does
+not enforce unique keys.  Keys can also be ``None``.  Extra care must be
+taken to avoid problems using the dictionary-like features.
 
-   >>> data = examples.download_cavity()
-   >>> data.keys()
+PyVista tries to keep the keys ordered correctly when doing list operations.
 
-   ``"internalMesh"`` is a :class:`pyvista.UnstructuredGrid`.
+.. jupyter-execute::
 
-   >>> data["internalMesh"]
+   blocks.reverse()
+   blocks.keys()
 
-   ``"boundary"`` is another :class:`pyvista.MultiBlock`.
+The dictionary like features are useful when reading in data from a file.  The
+keys are often more understandable to access the data than the index.
+:func:`pyvista.examples.download_cavity` is an OpenFoam dataset with a nested
+``MultiBlock`` structure.  There are two entries in the top-level object
 
-   >>> data["boundary"]
+.. jupyter-execute::
 
-   Using the dictionary like features of :class:`pyvista.MultiBlock` allow for easier
-   inspection and use of the data coming from an outside source.  The names of each key
-   correspond to human understable portions of the dataset.
+   data = examples.download_cavity()
+   data.keys()
 
-   >>> data["boundary"].keys()
+``"internalMesh"`` is a :class:`pyvista.UnstructuredGrid`.
+
+.. jupyter-execute::
+
+   data["internalMesh"]
+
+``"boundary"`` is another :class:`pyvista.MultiBlock`.
+
+.. jupyter-execute::
+
+   data["boundary"]
+
+Using the dictionary like features of :class:`pyvista.MultiBlock` allow for easier
+inspection and use of the data coming from an outside source.  The names of each key
+correspond to human understable portions of the dataset.
+
+.. jupyter-execute::
+
+   data["boundary"].keys()
 
 Examples using this class:
 
