@@ -636,6 +636,7 @@ def test_to_polydata(multiblock_all):
     assert not multiblock_all.is_all_polydata
 
     dataset_a = multiblock_all.as_polydata()
+    assert not multiblock_all.is_all_polydata
     assert dataset_a.is_all_polydata
 
     # verify nested works

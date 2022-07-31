@@ -2549,14 +2549,18 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly):
 def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl = pyvista.Plotter()
 
-    # Note: set the camera position before making the blocks invisible. VTK
-    # 9.0.3 still considers invisible blocks when determining camera bounds.
     actor, mapper = pl.add_composite(
         multiblock_poly,
         color='red',
         lighting=False,
     )
 
+    # Note: set the camera position before making the blocks invisible to be
+    # consistent between 9.0.3 and 9.1+
+    #
+    # 9.0.3 still considers invisible blocks when determining camera bounds, so
+    # there will be some empty space where the invisible block is for 9.0.3,
+    # while 9.1.0 ignores invisible blocks when computing camera bounds.
     pl.camera_position = 'xy'
     mapper.block_attr[2].color = 'blue'
     mapper.block_attr[3].visible = False
@@ -2565,12 +2569,13 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
 
 
 def test_plot_composite_poly_component_norm(multiblock_poly):
-    for block in multiblock_poly:
+    for ii, block in enumerate(multiblock_poly):
         data = block.compute_normals().point_data['Normals']
+        data[:, ii] *= 2
         block['data'] = data
 
     pl = pyvista.Plotter()
-    pl.add_composite(multiblock_poly, scalars='data', clim=[0.9, 1.1], cmap='bwr')
+    pl.add_composite(multiblock_poly, scalars='data', cmap='bwr')
     pl.show(before_close_callback=verify_cache_image)
 
 

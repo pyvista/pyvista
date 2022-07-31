@@ -415,7 +415,6 @@ if VTK9:
         vtkCellPicker,
         vtkColorTransferFunction,
         vtkCompositeDataDisplayAttributes,
-        vtkCompositePolyDataMapper,
         vtkCoordinate,
         vtkDataSetMapper,
         vtkImageActor,
