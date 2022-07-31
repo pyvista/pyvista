@@ -22,13 +22,34 @@ class BlockAttributes:
     block : pyvista.DataObject
         PyVista data object.
 
-    attr : pyvista.CompositeAttributes
+    attr : pyvista.plotting.composite_mapper.CompositeAttributes
         Parent attributes.
+
+    Notes
+    -----
+    This class employs VTK's flat indexing and allows for accessing both
+    the blocks of a composite dataset as well as the entire composite
+    dataset. If there is only one composite dataset, ``A``, which contains
+    datasets ``[b, c]``, the indexing would be ``[A, b, c]``.
+
+    If there are two composite datasets ``[B, C]`` in one composite
+    dataset, ``A``, each of which containing three additional datasets
+    ``[d, e, f]``, and ``[g, h, i]``, respectively, then the head node,
+    ``A``, would be the zero index, followed by the first child, ``B``,
+    followed by all the children of ``B``, ``[d, e, f]``. In data
+    structures, this flat indexing would be known as "Depth-first search"
+    and the entire indexing would be::
+
+       [A, B, d, e, f, C, g, h, i]
+
+    Note how the composite datasets themselves are capitalized and are
+    accessible in the flat indexing, and not just the datasets.
 
     Examples
     --------
     Add a sphere and a cube as a multiblock dataset to a plotter and then
-    change the visibility and color of the blocks.
+    change the visibility and color of the blocks. Note how the index of the
+    cube is ``1`` as the index of the entire multiblock is ``0``.
 
     >>> import pyvista as pv
     >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
@@ -223,20 +244,41 @@ class BlockAttributes:
 
 
 class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
-    """Access underlying block attributes.
+    """Block attributes.
 
     Parameters
     ----------
-    mapper : pyvista.composite_mapper.CompositePolyDataMapper
+    mapper : pyvista.plotting.composite_mapper.CompositePolyDataMapper
         Parent mapper.
 
     dataset : pyvista.MultiBlock
         Multiblock dataset.
 
+    Notes
+    -----
+    This class employs VTK's flat indexing and allows for accessing both
+    the blocks of a composite dataset as well as the entire composite
+    dataset. If there is only one composite dataset, ``A``, which contains
+    datasets ``[b, c]``, the indexing would be ``[A, b, c]``.
+
+    If there are two composite datasets ``[B, C]`` in one composite
+    dataset, ``A``, each of which containing three additional datasets
+    ``[d, e, f]``, and ``[g, h, i]``, respectively, then the head node,
+    ``A``, would be the zero index, followed by the first child, ``B``,
+    followed by all the children of ``B``, ``[d, e, f]``. In data
+    structures, this flat indexing would be known as "Depth-first search"
+    and the entire indexing would be::
+
+       ``[A, B, d, e, f, C, g, h, i]``
+
+    Note how the composite datasets themselves are capitalized and are
+    accessible in the flat indexing, and not just the datasets.
+
     Examples
     --------
     Add a sphere and a cube as a multiblock dataset to a plotter and then
-    change the visibility and color of the blocks.
+    change the visibility and color of the blocks. Note how the index of the
+    cube is ``1`` as the index of the entire multiblock is ``0``.
 
     >>> import pyvista as pv
     >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])

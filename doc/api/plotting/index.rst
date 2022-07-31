@@ -32,7 +32,7 @@ all plotting functionality in PyVista.
 
 Composite Plotting Reference
 ----------------------------
-These classes are used when plotting :class:`pyvista.MultiBlock`.
+These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 
 .. currentmodule:: pyvista.plotting.composite_mapper
 
