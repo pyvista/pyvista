@@ -63,9 +63,10 @@ neptune.translate((-700000.0, 0.0, 0.0), inplace=True)
 # Add planets to Plotter.
 
 plotter = pyvista.Plotter(lighting="none")
+cubemap = examples.download_cubemap_space_16k()
+_ = plotter.add_actor(cubemap.to_skybox())
+plotter.set_environment_texture(cubemap, True)
 plotter.add_light(light)
-image_path = examples.planets.download_milkyway_jpg(load=False)
-plotter.add_background_image(image_path)
 plotter.add_mesh(mercury)
 plotter.add_mesh(venus)
 plotter.add_mesh(mars)
