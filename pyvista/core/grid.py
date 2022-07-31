@@ -190,6 +190,10 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         # Must at least be an x array
         if check_duplicates:
             raise_has_duplicates(x)
+
+        # weird side effects if x is not floating point
+        if not isinstance(x.dtype, np.floating):
+            x = x.astype(np.float32)
         self.SetXCoordinates(helpers.convert_array(x.ravel()))
         if y is not None:
             if check_duplicates:

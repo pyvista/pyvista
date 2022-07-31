@@ -2407,6 +2407,15 @@ def test_orbit_on_path(sphere):
     pl.close()
 
 
+def test_rectlinear_edge_case():
+    # ensure that edges look like square edges regardless of the dtype of X
+    xrng = np.arange(-10, 10, 5)
+    yrng = np.arange(-10, 10, 5)
+    zrng = [1]
+    rec_grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    rec_grid.plot(show_edges=True, cpos='xy', before_close_callback=verify_cache_image)
+
+
 @skip_9_1_0
 def test_pointset_plot(pointset):
     pointset.plot()
