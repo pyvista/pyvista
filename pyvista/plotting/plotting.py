@@ -1861,6 +1861,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render=True,
         component=None,
         color_missing_with_nan=False,
+        copy_mesh=False,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2102,6 +2103,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             when not all blocks of the composite dataset have the specified
             ``scalars``.
 
+        copy_mesh : bool, optional
+            If ``True``, a copy of the mesh will be made before adding it to
+            the plotter.  This is useful if e.g. you would like to add the same
+            mesh to a plotter multiple times and display different
+            scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
+            would like to update the mesh after adding it to the plotter and
+            have these updates rendered, e.g. by changing the active scalars or
+            through an interactive widget.  Defaults to ``False``.
+
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
@@ -2131,7 +2141,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
             raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
         # always convert
-        dataset = dataset.as_polydata()
+        dataset = dataset.as_polydata(copy_mesh)
         self.mesh = dataset  # legacy
 
         # Parse arguments
@@ -2333,6 +2343,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=0.5,
         render=True,
         component=None,
+        copy_mesh=False,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2614,6 +2625,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
+        copy_mesh : bool, optional
+            If ``True``, a copy of the mesh will be made before adding it to the plotter.
+            This is useful if e.g. you would like to add the same mesh to a plotter multiple
+            times and display different scalars. Setting ``copy_mesh`` to ``False`` is necessary
+            if you would like to update the mesh after adding it to the plotter and have these
+            updates rendered, e.g. by changing the active scalars or through an interactive widget.
+            Defaults to ``False``.
+
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
@@ -2731,8 +2750,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 render=render,
                 **kwargs,
             )
-        else:
-            # A shallow copy of `mesh` is here so when we set (or add) scalars
+        elif copy_mesh:
+            # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
             mesh = mesh.copy(deep=False)
 

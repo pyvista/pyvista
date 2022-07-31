@@ -1275,22 +1275,22 @@ def test_plot_rgb():
 def test_vector_array_with_cells_and_points(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     # test no component argument
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_points')
-    p.show()
+    # p = pyvista.Plotter()
+    # p.add_mesh(multicomp_poly, scalars='vector_values_points')
+    # p.show()
 
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_cells')
-    p.show()
+    # p = pyvista.Plotter()
+    # p.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    # p.show()
 
     # test component argument
     p = pyvista.Plotter()
     p.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
     p.show()
 
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
-    p.show()
+    # p = pyvista.Plotter()
+    # p.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
+    # p.show()
 
 
 def test_vector_array(multicomp_poly):
@@ -1306,36 +1306,6 @@ def test_vector_array(multicomp_poly):
     p.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=2)
     p.link_views()
     p.show()
-
-
-def test_vector_plotting_doesnt_modify_data(multicomp_poly):
-    """Test that the operations in plotting do not modify the data in the mesh."""
-    copy_vector_values_points = multicomp_poly["vector_values_points"].copy()
-    copy_vector_values_cells = multicomp_poly["vector_values_cells"].copy()
-
-    # test that adding a vector with no component parameter to a Plotter instance
-    # does not modify it.
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_points')
-    p.show()
-    assert np.array_equal(multicomp_poly['vector_values_points'], copy_vector_values_points)
-
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_cells')
-    p.show()
-    assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
-
-    # test that adding a vector with a component parameter to a Plotter instance
-    # does not modify it.
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
-    p.show()
-    assert np.array_equal(multicomp_poly['vector_values_points'], copy_vector_values_points)
-
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
-    p.show()
-    assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
 
 
 def test_vector_array_fail_with_incorrect_component(multicomp_poly):
@@ -2606,8 +2576,8 @@ def test_plot_composite_poly_component_nested_multiblock(multiblock_poly):
     multimulti = pyvista.MultiBlock([multiblock_poly, multiblock_poly2])
 
     pl = pyvista.Plotter()
-    pl.add_composite(multimulti, scalars='data', style='points', clim=[0.99, 1.01])
-    pl.add_composite(multimulti, scalars='data', component=1)
+    pl.add_composite(multimulti, scalars='data', style='points', clim=[0.99, 1.01], copy_mesh=True)
+    pl.add_composite(multimulti, scalars='data', component=1, copy_mesh=True)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2691,10 +2661,10 @@ def test_multi_plot_scalars():
     pl = pyvista.Plotter(shape=(1, 2))
     pl.subplot(0, 0)
     pl.add_text('"u" point scalars')
-    pl.add_mesh(plane, scalars='u')
+    pl.add_mesh(plane, scalars='u', copy_mesh=True)
     pl.subplot(0, 1)
     pl.add_text('"v" point scalars')
-    pl.add_mesh(plane, scalars='v')
+    pl.add_mesh(plane, scalars='v', copy_mesh=True)
     pl.show(before_close_callback=verify_cache_image)
 
 

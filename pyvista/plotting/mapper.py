@@ -131,7 +131,7 @@ def make_mapper(mapper_class):
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
                         scalars_name = f'{scalars_name}-normed'
                     elif component < scalars.shape[1] and component >= 0:
-                        scalars = scalars[:, component].copy()
+                        scalars = np.array(scalars[:, component]).copy()
                         scalars_name = f'{scalars_name}-{component}'
                     else:
                         raise ValueError(
