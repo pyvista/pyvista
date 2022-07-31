@@ -177,7 +177,7 @@ _ = grid.plot(show_edges=True)
 # Here is how we can create an unstructured tetrahedral grid.
 
 # There are 10 cells here, each cell is [4, INDEX0, INDEX1, INDEX2, INDEX3]
-# where INDEX is one of the corners of the tetrahedral.
+# where INDEX is one of the corners of the tetrahedron.
 #
 # Note that the array does not need to be shaped like this, we could have a
 # flat array, but it's easier to make out the structure of the array this way.
@@ -222,7 +222,7 @@ grid.plot(show_edges=True)
 
 
 ###############################################################################
-# For fun, let's separate all the cells and plot out the individual cells. shift
+# For fun, let's separate all the cells and plot out the individual cells. Shift
 # them a little bit from the center to create an "exploded view".
 
 split_cells = pv.MultiBlock()
