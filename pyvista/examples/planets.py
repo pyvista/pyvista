@@ -42,7 +42,7 @@ def load_sun(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     surface = download_sun_jpg()
     sphere.textures["atmosphere"] = surface
     return sphere
@@ -75,7 +75,7 @@ def load_moon(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     surface = download_moon_jpg()
     sphere.textures["surface"] = surface
     return sphere
@@ -108,7 +108,7 @@ def load_mercury(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     surface = download_mercury_jpg()
     sphere.textures["surface"] = surface
     return sphere
@@ -141,7 +141,7 @@ def load_venus(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     surface = download_venus_jpg(atmosphere=False)
     sphere.textures["surface"] = surface
     atmosphere = download_venus_jpg()
@@ -176,7 +176,7 @@ def load_mars(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     surface = examples.planets.download_mars_jpg()
     sphere.textures["surface"] = surface
     return sphere
@@ -209,7 +209,7 @@ def load_jupiter(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     atmosphere = download_jupiter_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
@@ -242,7 +242,7 @@ def load_saturn(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     atmosphere = download_saturn_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
@@ -311,7 +311,7 @@ def load_uranus(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     atmosphere = download_uranus_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
@@ -344,7 +344,7 @@ def load_neptune(*args, **kwargs):
 
     """
     sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True)
+    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
     atmosphere = download_neptune_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
