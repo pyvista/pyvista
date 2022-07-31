@@ -5186,7 +5186,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGird
+        pyvista.UnstructuredGrid
             Mesh with 1 point and 1 vertex cell with integrated data in point
             and cell data.
 
@@ -5227,7 +5227,7 @@ class DataSetFilters:
         It uses a DIY-based kdtree implementation that builds balances the cell
         centers among requested number of partitions. Current implementation
         only supports power-of-2 target partition. If a non-power of two value
-        is specified for NumberOfPartitions, then the load balancing simply
+        is specified for ``n_partitions``, then the load balancing simply
         uses the power-of-two greater than the requested value
 
         For more details, see `vtkRedistributeDataSetFilter
@@ -5255,7 +5255,7 @@ class DataSetFilters:
 
         Examples
         --------
-        Partition a simple UniformGrid into a :pyvista:`MultiBlock` containing
+        Partition a simple UniformGrid into a :class:`pyvista.MultiBlock` containing
         partitions.
 
         >>> import pyvista as pv
@@ -5294,6 +5294,11 @@ class DataSetFilters:
             How much each cell will move from the center of the dataset
             relative to its distance from it. Increase this number to push the
             cells farther away.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid containing the exploded cells.
 
         Notes
         -----

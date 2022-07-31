@@ -31,6 +31,11 @@ class RectilinearGridFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid containing the tetrahedral cells.
+
         Examples
         --------
         Divide a rectangular grid into tetrahedrals. Each cell contains by

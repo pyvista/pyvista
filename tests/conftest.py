@@ -60,6 +60,11 @@ def hexbeam():
 
 
 @fixture()
+def tetbeam():
+    return examples.load_tetbeam()
+
+
+@fixture()
 def struct_grid():
     x, y, z = np.meshgrid(
         np.arange(-10, 10, 2, dtype=np.float32),
