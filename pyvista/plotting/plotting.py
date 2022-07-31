@@ -2128,6 +2128,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Add a sphere and a cube as a multiblock dataset to a plotter and then
         change the visibility and color of the blocks.
 
+        Note index ``1`` and ``2`` are used to access the individual blocks of
+        the composite dataset. This is because the :class:`pyvista.MultiBlock`
+        is the root node of the "tree" and is index ``0``. This allows you to
+        access individual blocks or the entire composite dataset itself in the
+        case of multiple nested composite datasets.
+
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
@@ -2141,7 +2147,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
             raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
         # always convert
-        dataset = dataset.as_polydata(copy_mesh)
+        dataset = dataset.as_polydata_blocks(copy_mesh)
         self.mesh = dataset  # legacy
 
         # Parse arguments

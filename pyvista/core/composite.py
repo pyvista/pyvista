@@ -16,6 +16,7 @@ from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
+from .pyvista_ndarray import pyvista_ndarray
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -754,13 +755,13 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                         if not allow_missing:
                             raise err
                         block.set_active_scalars(None, preference)
-                        field, scalars = FieldAssociation.NONE, np.array([])
+                        field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
 
                 if field != FieldAssociation.NONE:
                     data_assoc.append((field, scalars, block))
 
         if name is None:
-            return FieldAssociation.NONE, np.array([])
+            return FieldAssociation.NONE, pyvista_ndarray([])
 
         if not data_assoc:
             raise KeyError(f'"{name}" is missing from all the blocks of this composite dataset.')
@@ -768,7 +769,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         field_asc = data_assoc[0][0]
         # set the field association to the preference if at least one occurrence
         # of it exists
-        if field_asc.name.lower() != preference:
+        if field_asc.name.lower() != preference.lower():
             for field, _, _ in data_assoc:
                 if field.name.lower() == preference:
                     field_asc = getattr(FieldAssociation, preference.upper())
@@ -795,16 +796,23 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         return field_asc, scalars
 
-    def as_polydata(self, copy=True):
-        """Convert all the datasets in this MultiBlock to :class:`pyvista.PolyData`.
+    def as_polydata_blocks(self, copy=True):
+        """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
 
-        This will return a new :class:`pyvista.MultiBlock` dataset. Blocks that are
-        already :class:`pyvista.PolyData` will not be copied.
+        Depending on ``copy``, this may return a new
+        :class:`pyvista.MultiBlock` dataset. Blocks that are already
+        :class:`pyvista.PolyData` will not be copied.
+
+        Parameters
+        ----------
+        copy : bool, optional
+            Option to return a shallow copy of this composite dataset. When
+            ``False``, this dataset will be modified in-place.
 
         Returns
         -------
         pyvista.MultiBlock
-            MultiBlock containing only PolyData datasets.
+            MultiBlock containing only :class:`pyvista.PolyData` datasets.
 
         Notes
         -----
@@ -822,7 +830,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         for i, block in enumerate(dataset):
             if block is not None:
                 if isinstance(block, MultiBlock):
-                    dataset[i] = block.as_polydata()
+                    dataset[i] = block.as_polydata_blocks()
                 elif not isinstance(block, pyvista.PolyData):
                     dataset[i] = block.extract_surface()
                 elif copy:

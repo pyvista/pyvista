@@ -20,7 +20,7 @@ class BlockAttributes:
     Parameters
     ----------
     block : pyvista.DataObject
-        PyVista dataobject.
+        PyVista data object.
 
     attr : pyvista.CompositeAttributes
         Parent attributes.
@@ -355,12 +355,33 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         Returns
         -------
         pyvista.DataObject
-            PyVista dataobject.
+            PyVista data object.
+
+        Notes
+        -----
+        This method employs VTK's flat indexing and allows for accessing both
+        the blocks of a composite dataset as well as the entire composite
+        dataset. If there is only one composite dataset, ``A``, which contains
+        datasets ``[b, c]``, the indexing would be ``[A, b, c]``.
+
+        If there are two composite datasets ``[B, C]`` in one composite
+        dataset, ``A``, each of which containing three additional datasets
+        ``[d, e, f]``, and ``[g, h, i]``, respectively, then the head node,
+        ``A``, would be the zero index, followed by the first child, ``B``,
+        followed by all the children of ``B``, ``[d, e, f]``. In data
+        structures, this flat indexing would be known as "Depth-first search"
+        and the entire indexing would be::
+
+           ``[A, B, d, e, f, C, g, h, i]``
+
+        Note how the composite datasets themselves are capitalized and are
+        accessible in the flat indexing, and not just the datasets.
 
         Examples
         --------
-        Note how the zero index is the entire multiblock. To access individual
-        multiblocks, add one to the index.
+        Add a composite dataset to a plotter and access its block attributes.
+        Note how the zero index is the entire multiblock and you can use ``1``
+        and ``2`` to access the individual sub-blocks.
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
@@ -392,7 +413,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
         if block is None:
-            if index > len(self):
+            if index > len(self) - 1:
                 raise KeyError(
                     f'index {index} is out of bounds. There are only {len(self)} blocks.'
                 ) from None
@@ -403,8 +424,18 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         return BlockAttributes(self.get_block(index), self)
 
     def __len__(self):
-        """Return the number of blocks."""
-        return len(self._dataset)
+        """Return the number of blocks in this dataset."""
+        from pyvista import MultiBlock  # avoid circular
+
+        # start with 1 as there is always a composite dataset and this is the
+        # root of the tree
+        cc = 1
+        for dataset in self._dataset:
+            if isinstance(dataset, MultiBlock):
+                cc += len(dataset) + 1  # include the block itself
+            else:
+                cc += 1
+        return cc
 
     def __iter__(self):
         """Return an iterator of all the block attributes."""
@@ -450,7 +481,24 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def interpolate_before_map(self) -> bool:
-        """Return or set the interpolation of scalars before mapping."""
+        """Return or set the interpolation of scalars before mapping.
+
+        Examples
+        --------
+        Disable interpolation before mapping.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.interpolate_before_map = False
+        >>> mapper.interpolate_before_map
+        False
+
+        See :ref:`interpolate_before_mapping_example` for additional
+        explanation regarding this attribute.
+
+        """
         return bool(self.GetInterpolateScalarsBeforeMapping())
 
     @interpolate_before_map.setter
@@ -460,6 +508,23 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     @property
     def block_attr(self) -> CompositeAttributes:
         """Return the block attributes.
+
+        Notes
+        -----
+        ``block_attr`` employs VTK's flat indexing and allows for accessing
+        both the blocks of a composite dataset as well as the entire composite
+        dataset. If there is only one composite dataset, ``A``, which contains
+        datasets ``[b, c]``, the indexing would be ``[A, b, c]``.
+
+        If there are two composite datasets ``[B, C]`` in one composite
+        dataset, ``A``, each of which containing three additional datasets
+        ``[d, e, f]``, and ``[g, h, i]``, respectively, then the head node,
+        ``A``, would be the zero index, followed by the first child, ``B``,
+        followed by all the children of ``B``, ``[d, e, f]``. In data
+        structures, this flat indexing would be known as "Depth-first search"
+        and the entire indexing would be::
+
+           ``[A, B, d, e, f, C, g, h, i]``
 
         Examples
         --------
@@ -484,7 +549,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def color_missing_with_nan(self) -> bool:
-        """Color missing arrays with the NaN color."""
+        """Color missing arrays with the NaN color.
+
+        Examples
+        --------
+        Enable coloring missing values with NaN.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.color_missing_with_nan = True
+        >>> mapper.color_missing_with_nan
+        True
+
+        """
         return self.GetColorMissingArraysWithNanColor()
 
     @color_missing_with_nan.setter
@@ -493,7 +572,20 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def lookup_table(self):
-        """Return or set the lookup table."""
+        """Return or set the lookup table.
+
+        Examples
+        --------
+        Return the lookup table.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.lookup_table  # doctest:+SKIP
+        <vtkmodules.vtkCommonCore.vtkLookupTable(0x2d4c6e0) at 0x7fce74a89fa0>
+
+        """
         return self.GetLookupTable()
 
     @lookup_table.setter
@@ -502,7 +594,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def scalar_range(self):
-        """Return or set the scalar range."""
+        """Return or set the scalar range.
+
+        Examples
+        --------
+        Return the scalar range. In this example its set to its default value
+        of ``(0.0, 1.0)``
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.scalar_range
+        (0.0, 1.0)
+
+        """
         return self.GetScalarRange()
 
     @scalar_range.setter
@@ -514,15 +620,47 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def scalar_visibility(self) -> bool:
-        """Return or set the scalar visibility."""
-        return self.GetScalarVisibility()
+        """Return or set the scalar visibility.
+
+        Examples
+        --------
+        Show that scalar visibility is ``True``.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> mapper.scalar_visibility
+        True
+
+        """
+        return bool(self.GetScalarVisibility())
 
     @scalar_visibility.setter
     def scalar_visibility(self, value: bool):
         return self.SetScalarVisibility(value)
 
     def set_unique_colors(self):
-        """Compute unique colors for each block of the dataset."""
+        """Set each block of the dataset to a unique color.
+
+        This uses ``matplotlib``'s color cycler.
+
+        Examples
+        --------
+        Set each block of the composite dataset to a unique color.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.set_unique_colors()
+        >>> mapper.block_attr[1].color
+        Color(name='tab:orange', hex='#ff7f0eff')
+        >>> mapper.block_attr[2].color
+        Color(name='tab:green', hex='#2ca02cff')
+        """
         self.scalar_visibility = False
         if has_module('matplotlib'):
             import matplotlib
@@ -536,7 +674,24 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def scalar_map_mode(self) -> str:
-        """Return or set the scalar map mode."""
+        """Return or set the scalar map mode.
+
+        Examples
+        --------
+        Show that the scalar map mode is set to ``'point'`` when setting the
+        active scalars to point data.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> mapper.scalar_map_mode
+        'point'
+
+
+        """
         # map vtk strings to more sensible strings
         vtk_to_pv = {
             'Default': 'default',
@@ -741,16 +896,47 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def nan_color(self) -> Color:
-        """Return or set the NaN color."""
+        """Return or set the NaN color.
+
+        Examples
+        --------
+        Set the NaN color to red.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> mapper.nan_color = 'r'
+        >>> mapper.nan_color
+        Color(name='red', hex='#ff0000ff')
+
+        """
         return Color(self.lookup_table.GetNanColor())
 
     @nan_color.setter
     def nan_color(self, color):
-        self.lookup_table.SetNanColor(color)
+
+        self.lookup_table.SetNanColor(Color(color).float_rgba)
 
     @property
     def above_range_color(self) -> Color:
-        """Return or set the above range color."""
+        """Return or set the above range color.
+
+        Examples
+        --------
+        Set the above range color to blue.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> mapper.above_range_color = 'b'
+        >>> mapper.above_range_color
+        Color(name='blue', hex='#0000ffff')
+
+        """
         return Color(self.lookup_table.GetAboveRangeColor())
 
     @above_range_color.setter
@@ -760,7 +946,22 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @property
     def below_range_color(self) -> Color:
-        """Return or set the below range color."""
+        """Return or set the below range color.
+
+        Examples
+        --------
+        Set the below range color to green.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> mapper.below_range_color = 'green'
+        >>> mapper.below_range_color
+        Color(name='green', hex='#008000ff')
+
+        """
         return Color(self.lookup_table.GetBelowRangeColor())
 
     @below_range_color.setter

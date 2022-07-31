@@ -659,7 +659,7 @@ class DataSet(DataSetFilters, DataObject):
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
             if name in self.field_data:
-                raise KeyError(f'Data named "{name}" is a field array which cannot be active.')
+                raise ValueError(f'Data named "{name}" is a field array which cannot be active.')
             else:
                 raise KeyError(f'Data named "{name}" does not exist in this dataset.')
         self._last_active_scalars_name = self.active_scalars_info.name

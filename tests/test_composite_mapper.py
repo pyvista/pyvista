@@ -86,6 +86,18 @@ def test_block_attr(block_attributes):
         block_attributes[0.5]
 
 
+def test_block_attr_get_item_(multiblock_poly):
+    """Verify flat indexing is correct."""
+    block_b = multiblock_poly.copy()
+    block_c = multiblock_poly.copy()
+    block_a = pv.MultiBlock([block_b, block_c])
+    pl = pv.Plotter()
+    actor, mapper = pl.add_composite(block_a)
+    assert len(mapper.block_attr) == len(block_b) + len(block_c) + 3
+    with pytest.raises(KeyError):
+        mapper.block_attr[len(mapper.block_attr)]
+
+
 def test_visible(block_attr):
     assert block_attr.visible is None
 

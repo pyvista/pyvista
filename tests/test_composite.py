@@ -635,14 +635,14 @@ def test_set_active_scalars_mixed(multiblock_poly):
 def test_to_polydata(multiblock_all):
     assert not multiblock_all.is_all_polydata
 
-    dataset_a = multiblock_all.as_polydata()
+    dataset_a = multiblock_all.as_polydata_blocks()
     assert not multiblock_all.is_all_polydata
     assert dataset_a.is_all_polydata
 
     # verify nested works
     nested_mblock = pyvista.MultiBlock([multiblock_all, multiblock_all])
     assert not nested_mblock.is_all_polydata
-    dataset_b = nested_mblock.as_polydata()
+    dataset_b = nested_mblock.as_polydata_blocks()
     assert dataset_b.is_all_polydata
 
 
