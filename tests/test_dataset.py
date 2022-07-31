@@ -1447,3 +1447,22 @@ def test_cast_to_pointset(sphere, deep):
         assert not np.allclose(sphere.points, pointset.points)
     else:
         assert np.allclose(sphere.points, pointset.points)
+
+
+def test_partition(hexbeam):
+    # split as composite
+    n_part = 2
+    out = hexbeam.partition(n_part, as_composite=True)
+    assert isinstance(out, pyvista.MultiBlock)
+    assert len(out) == 2
+
+    # split as unstrucutred grid
+    out = hexbeam.partition(hexbeam.n_cells, as_composite=False)
+    assert isinstance(hexbeam, pyvista.UnstructuredGrid)
+    assert out.n_points > hexbeam.n_points
+
+
+def test_explode(hexbeam):
+    out = hexbeam.explode()
+    assert out.n_cells == hexbeam.n_cells
+    assert out.n_points > hexbeam.n_points

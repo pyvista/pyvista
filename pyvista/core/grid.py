@@ -9,7 +9,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
-from pyvista.core.filters import UniformGridFilters, _get_output
+from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyvistaDeprecationWarning, raise_has_duplicates
@@ -64,7 +64,7 @@ class Grid(DataSet):
         return attrs
 
 
-class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
+class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
     """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:
@@ -116,6 +116,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
     >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    >>> grid.plot(show_edges=True)
 
     """
 
@@ -191,9 +192,6 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         if check_duplicates:
             raise_has_duplicates(x)
 
-        # weird side effects if x is not floating point
-        if not isinstance(x.dtype, np.floating):
-            x = x.astype(np.float64)
         self.SetXCoordinates(helpers.convert_array(x.ravel()))
         if y is not None:
             if check_duplicates:

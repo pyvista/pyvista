@@ -229,6 +229,7 @@ if VTK9:
         vtkIntersectionPolyDataFilter,
         vtkOBBTree,
         vtkRectilinearGridToPointSet,
+        vtkRectilinearGridToTetrahedra,
         vtkShrinkFilter,
         vtkTableBasedClipDataSet,
         vtkTableToPolyData,
@@ -260,6 +261,7 @@ if VTK9:
         vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
+    from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,

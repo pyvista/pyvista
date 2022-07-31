@@ -4154,15 +4154,20 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, progress_bar=False):
+    def extract_cells(self, ind, assume_unique=False, progress_bar=False):
         """Return a subset of the grid.
 
         Parameters
         ----------
-        ind : np.ndarray
+        ind : numpy.ndarray
             Numpy array of cell indices to be extracted.
 
-        progress_bar : bool, optional
+        assume_unique : bool, default: False
+            If the ``ind`` specified are already sorted and unique, then set
+            this to ``True`` to avoid the filter from doing time-consuming
+            sorts and uniquification operations.
+
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -5213,3 +5218,101 @@ class DataSetFilters:
         alg.SetDivideAllCellDataByVolume(False)
         _update_alg(alg, progress_bar, 'Integrating Variables')
         return _get_output(alg)
+
+    def partition(self, n_partitions, generate_global_id=False, as_composite=True):
+        """Break down input dataset into requested number of partitions.
+
+        Cells on boundaries are uniquely to each partition.
+
+        It uses a DIY-based kdtree implementation that builds balances the cell
+        centers among requested number of partitions. Current implementation
+        only supports power-of-2 target partition. If a non-power of two value
+        is specified for NumberOfPartitions, then the load balancing simply
+        uses the power-of-two greater than the requested value
+
+        For more details, see `vtkRedistributeDataSetFilter
+        <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
+
+        Parameters
+        ----------
+        n_partitions : int
+            Specify the number of partitions to split the input dataset
+            into. Current implementation results in number of partitions equal
+            to the power of 2 greater than or equal to the chosen value.
+
+        generate_global_id : bool, default: False
+            Generate global cell ids if ``None`` present in the input.  If
+            global cell ids are present in the input then this flag is
+            ignored.
+
+        as_composite : bool, default: False
+            Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
+
+        Returns
+        -------
+        pyvista.UnStructuredGird or pyvista.MultiBlock
+            UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
+
+        Examples
+        --------
+        Partition a simple UniformGrid into a :pyvista:`MultiBlock` containing
+        partitions.
+
+        >>> import pyvista as pv
+        >>> grid = pv.UniformGrid(dims=(5, 5, 5))
+        >>> out = grid.partition(4, as_composite=True)
+        >>> out.plot(multi_colors=True, show_edges=True)
+
+        Partition the Stanford bunny.
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny()
+        >>> out = mesh.partition(4, as_composite=True)
+        >>> out.plot(multi_colors=True, cpos='xy')
+
+        """
+        alg = _vtk.vtkRedistributeDataSetFilter()
+        alg.SetInputData(self)
+        alg.SetNumberOfPartitions(n_partitions)
+        alg.SetPreservePartitionsInOutput(as_composite)
+        alg.Update()
+        if as_composite:
+            # pyvista does not yet support vtkPartitionedDataSet
+            part = alg.GetOutput()
+            datasets = [part.GetPartition(ii) for ii in range(part.GetNumberOfPartitions())]
+            output = pyvista.MultiBlock(datasets)
+        else:
+            output = pyvista.wrap(alg.GetOutput())
+        return output
+
+    def explode(self, factor=0.1):
+        """Push each individual cell away from the center of the dataset.
+
+        Parameters
+        ----------
+        factor : float, default: 0.1
+            How much each cell will move from the center of the dataset
+            relative to its distance from it. Increase this number to push the
+            cells farther away.
+
+        Notes
+        -----
+        This is similar to :func:`shrink <pyvista.DataSetFilters.shrink>`
+        except that it does not change the size of the cells.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> xrng = np.linspace(0, 1, 3)
+        >>> yrng = np.linspace(0, 2, 4)
+        >>> zrng = np.linspace(0, 3, 5)
+        >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
+        >>> exploded = grid.explode()
+        >>> exploded.plot(show_edges=True)
+
+        """
+        split = self.shrink(1.0)  # simply used to isolate each cell
+        vec = (split.cell_centers().points - split.center) * factor
+        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
+        return split
