@@ -375,6 +375,7 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
         >>> blocks = pv.MultiBlock(data)
         >>> blocks_uniform = pv.MultiBlock({"uniform": examples.load_uniform()})
@@ -383,6 +384,7 @@ class MultiBlock(
         3
         >>> blocks.keys()
         ['cube', 'sphere', 'uniform']
+
         """
         # Code based on collections.abc
         if isinstance(datasets, MultiBlock):
