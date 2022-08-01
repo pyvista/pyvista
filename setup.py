@@ -18,7 +18,7 @@ install_requires = [
     'pillow',
     'appdirs',
     'scooby>=0.5.1',
-    'vtk>=8.1.2',
+    'vtk',
 ]
 
 readme_file = os.path.join(filepath, 'README.rst')
