@@ -1451,7 +1451,7 @@ def test_cast_to_pointset(sphere, deep):
 
 
 def test_partition(hexbeam):
-    if pyvista.vtk_version_info < (9, 0, 0):
+    if pyvista.vtk_version_info < (9, 1, 0):
         with pytest.raises(VTKVersionError):
             hexbeam.partition(2)
         return

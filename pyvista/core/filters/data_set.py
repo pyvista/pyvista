@@ -5275,10 +5275,10 @@ class DataSetFilters:
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
-        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
-            raise VTKVersionError(
-                'Partition uses `vtkRedistributeDataSetFilter` and requires vtk>=9.0.0'
-            )  # pragma: no cover
+        # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
+        # work correctly, returning the wrong number of partitions.
+        if pyvista.vtk_version_info < (9, 1, 0):
+            raise VTKVersionError('`partition` requires vtk>=9.1.0')
 
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)
@@ -5331,6 +5331,15 @@ class DataSetFilters:
 
         """
         split = self.shrink(1.0)  # simply used to isolate each cell
+
+        # VTK changed their cell indexing API in 9.0 and
+        if pyvista.vtk_version_info < (9, 0, 0):
+            offset = split.offset.copy()
+            offset -= np.arange(offset.size)
+            offset = np.hstack((offset, split.n_points))
+        else:
+            offset = split.offset
+
         vec = (split.cell_centers().points - split.center) * factor
-        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
+        split.points += np.repeat(vec, np.diff(offset), axis=0)
         return split
