@@ -294,7 +294,7 @@ class MultiBlock(
 
     @overload
     def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105
-        ...  # pragma: no covrr
+        ...  # pragma: no cover
 
     @overload
     def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
