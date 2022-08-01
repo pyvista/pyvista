@@ -1447,3 +1447,9 @@ def test_cast_to_pointset(sphere, deep):
         assert not np.allclose(sphere.points, pointset.points)
     else:
         assert np.allclose(sphere.points, pointset.points)
+
+
+def test_separate_cells(hexbeam):
+    assert hexbeam.n_points != hexbeam.n_cells * 8
+    sep_grid = hexbeam.separate_cells()
+    assert sep_grid.n_points == hexbeam.n_cells * 8
