@@ -182,6 +182,15 @@ def test_multi_block_set_get_ers():
         multi[1, 'foo'] = data
 
 
+def test_pop():
+    spheres = {f"{i}": pyvista.Sphere(phi_resolution=i + 3) for i in range(10)}
+    multi = MultiBlock(spheres)
+    assert multi.pop() == spheres["9"]
+    assert spheres["9"] not in multi
+    assert multi.pop(0) == spheres["0"]
+    assert spheres["0"] not in multi
+
+
 def test_del_slice(sphere):
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[0:10:2]

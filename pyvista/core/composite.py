@@ -667,24 +667,22 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    def pop(self, index: Optional[Union[int, str]] = None) -> Optional[_TypeMultiBlockLeaf]:
+    def pop(self, index: Union[int, str] = -1) -> Optional[_TypeMultiBlockLeaf]:
         """Pop off a block at the specified index.
 
         Parameters
         ----------
-        index : int or str
-            Index or name of the dataset within the multiblock.
+        index : int or str, optional
+            Index or name of the dataset within the multiblock.  Defaults to last dataset.
 
         Returns
         -------
         pyvista.DataSet or pyvista.MultiBlock
-            Dataset from the given index.
+            Dataset from the given index that was removed.
 
         """
         if isinstance(index, int):
             index = range(self.n_blocks)[index]
-        if index is None:
-            index = self.n_blocks
         data = self[index]
         del self[index]
         return data
