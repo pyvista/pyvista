@@ -361,6 +361,37 @@ class MultiBlock(
         # No overwrite if name is None
         self.set_block_name(index, name)
 
+    def extend(self, datasets: Iterable[_TypeMultiBlockLeaf]) -> None:
+        """Extend MultiBlock with an Iterable.
+
+        If another MultiBlock object is supplied, the key names will
+        be preserved.
+
+        Parameters
+        ----------
+        datasets : Iterable[pyvista.DataSet or pyvista.MultiBlock]
+            Datasets to extend.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks_uniform = pv.MultiBlock({"uniform": examples.load_uniform()})
+        >>> blocks.extend(blocks_uniform)
+        >>> len(blocks)
+        3
+        >>> blocks.keys()
+        ['cube', 'sphere', 'uniform']
+        """
+        # Code based on collections.abc
+        if isinstance(datasets, MultiBlock):
+            for key, data in zip(datasets.keys(), datasets):
+                self.append(data, key)
+        else:
+            for v in datasets:
+                self.append(v)
+
     def get(
         self, index: str, default: Optional[_TypeMultiBlockLeaf] = None
     ) -> Optional[_TypeMultiBlockLeaf]:

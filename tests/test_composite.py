@@ -243,6 +243,24 @@ def test_insert(sphere):
     assert multi.get_block_name(-2) == "uni"
 
 
+def test_extend(sphere, uniform, ant):
+    # test with Iterable
+    multi = MultiBlock([sphere, ant])
+    new_multi = [uniform, uniform]
+    multi.extend(new_multi)
+    assert len(multi) == 4
+    assert multi.count(uniform) == 2
+
+    # test with a MultiBlock
+    multi = MultiBlock([sphere, ant])
+    new_multi = MultiBlock({"uniform1": uniform, "uniform2": uniform})
+    multi.extend(new_multi)
+    assert len(multi) == 4
+    assert multi.count(uniform) == 2
+    assert multi.keys()[-2] == "uniform1"
+    assert multi.keys()[-1] == "uniform2"
+
+
 def test_multi_block_clean(rectilinear, uniform, ant):
     # now test a clean of the null values
     multi = MultiBlock()
