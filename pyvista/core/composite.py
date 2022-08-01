@@ -509,6 +509,32 @@ class MultiBlock(
     def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
+    def replace(self, index: int, dataset: Optional[_TypeMultiBlockLeaf]) -> None:
+        """Replace dataset at index while preserving key name.
+
+        Parameters
+        ----------
+        index : int
+            Index of the block to replace.
+        dataset : pyvista.DataSet or pyvista.MultiBlock
+            Dataset for replacing the one at index.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.replace(1, pv.Sphere(center=(10, 10, 10)))
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> np.allclose(blocks[1].center, [10., 10., 10.])
+        True
+
+        """
+        name = self.get_block_name(index)
+        self[index] = dataset
+        self.set_block_name(index, name)
+
     @overload
     def __setitem__(
         self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]

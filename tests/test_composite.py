@@ -182,6 +182,15 @@ def test_multi_block_set_get_ers():
         multi[1, 'foo'] = data
 
 
+def test_replace():
+    spheres = {f"{i}": pyvista.Sphere(phi_resolution=i + 3) for i in range(10)}
+    multi = MultiBlock(spheres)
+    cube = pyvista.Cube()
+    multi.replace(3, cube)
+    assert multi.get_block_name(3) == "3"
+    assert multi[3] is cube
+
+
 def test_pop():
     spheres = {f"{i}": pyvista.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)
