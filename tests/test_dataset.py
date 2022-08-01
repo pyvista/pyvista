@@ -12,6 +12,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import Texture, examples
+from pyvista.core.errors import VTKVersionError
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
@@ -1450,9 +1451,13 @@ def test_cast_to_pointset(sphere, deep):
 
 
 def test_partition(hexbeam):
+    if pyvista.vtk_version_info < (9, 0, 0):
+        with pytest.raises(VTKVersionError):
+            hexbeam.partition(2)
+        return
     # split as composite
     n_part = 2
-    out = hexbeam.partition(n_part, as_composite=True)
+    out = hexbeam.partition(n_part)
     assert isinstance(out, pyvista.MultiBlock)
     assert len(out) == 2
 

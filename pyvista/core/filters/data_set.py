@@ -5253,6 +5253,10 @@ class DataSetFilters:
         pyvista.UnStructuredGird or pyvista.MultiBlock
             UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
 
+        Notes
+        -----
+        This filter requires ``vtk>=9.0.0``.
+
         Examples
         --------
         Partition a simple UniformGrid into a :class:`pyvista.MultiBlock` containing
@@ -5271,18 +5275,27 @@ class DataSetFilters:
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
+        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
+            raise VTKVersionError(
+                'Partition uses `vtkRedistributeDataSetFilter` and requires vtk>=9.0.0'
+            )  # pragma: no cover
+
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)
         alg.SetNumberOfPartitions(n_partitions)
-        alg.SetPreservePartitionsInOutput(as_composite)
+        alg.SetPreservePartitionsInOutput(True)
         alg.Update()
-        if as_composite:
-            # pyvista does not yet support vtkPartitionedDataSet
-            part = alg.GetOutput()
-            datasets = [part.GetPartition(ii) for ii in range(part.GetNumberOfPartitions())]
-            output = pyvista.MultiBlock(datasets)
-        else:
-            output = pyvista.wrap(alg.GetOutput())
+
+        # pyvista does not yet support vtkPartitionedDataSet
+        part = alg.GetOutput()
+        datasets = [part.GetPartition(ii) for ii in range(part.GetNumberOfPartitions())]
+        output = pyvista.MultiBlock(datasets)
+        if not as_composite:
+            # note, SetPreservePartitionsInOutput does not work correctly in
+            # vtk 9.2.0, so instead we set it to True always and simply merge
+            # the result. See:
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
+            return pyvista.merge(list(output), merge_points=False)
         return output
 
     def explode(self, factor=0.1):
