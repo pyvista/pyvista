@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-import vtk
+import vtk  # noqa: F401
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
@@ -32,6 +32,7 @@ def test_numpy_to_idarr_bool():
     mask = np.ones(10, np.bool_)
     idarr = pyvista.utilities.cells.numpy_to_idarr(mask)
     assert np.allclose(mask.nonzero()[0], vtk_to_numpy(idarr))
+
 
 def test_cell_types():
     cell_types = [
@@ -101,4 +102,4 @@ def test_cell_types():
         "BEZIER_PYRAMID",
     ]
     for cell_type in cell_types:
-        assert eval("pyvista.CellType." + cell_type + ".value") == eval("vtk.VTK_"  + cell_type)
+        assert eval("pyvista.CellType." + cell_type + ".value") == eval("vtk.VTK_" + cell_type)
