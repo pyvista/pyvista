@@ -17,11 +17,11 @@ import pyvista as pv
 ###############################################################################
 # Create a MultiBlock Dataset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Create 100 super ellipsoid using :func:`pyvista.ParametricSuperEllipsoid`
+# Create 100 superellipsoids using :func:`pyvista.ParametricSuperEllipsoid`
 
 
 def make_poly():
-    """Create a super ellipsoid in a random location."""
+    """Create a superellipsoid in a random location."""
     poly = pv.ParametricSuperEllipsoid(
         n1=random.random(),
         n2=random.random() * 2,

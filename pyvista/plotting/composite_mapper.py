@@ -640,8 +640,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
         Examples
         --------
-        Return the scalar range. In this example its set to its default value
-        of ``(0.0, 1.0)``
+        Return the scalar range. In this example it's set to its default value
+        of ``(0.0, 1.0)``.
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
@@ -731,7 +731,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         >>> actor, mapper = pl.add_composite(dataset, scalars='data')
         >>> mapper.scalar_map_mode
         'point'
-
 
         """
         # map vtk strings to more sensible strings
