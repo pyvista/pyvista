@@ -124,7 +124,6 @@ if VTK9:
         vtkWeakReference,
     )
     from vtkmodules.vtkCommonDataModel import (
-        VTK_BEZIER_PYRAMID,
         VTK_BIQUADRATIC_QUAD,
         VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         VTK_BIQUADRATIC_QUADRATIC_WEDGE,
@@ -249,6 +248,11 @@ if VTK9:
 
     try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_WEDGE
+    except ImportError:  # pragma: no cover
+        pass
+
+    try:
+        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_PYRAMID
     except ImportError:  # pragma: no cover
         pass
 

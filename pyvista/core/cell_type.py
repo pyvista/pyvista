@@ -94,4 +94,5 @@ class CellType(Enum):
         BEZIER_HEXAHEDRON = _vtk.VTK_BEZIER_HEXAHEDRON
     if hasattr(_vtk, "VTK_BEZIER_WEDGE"):
         BEZIER_WEDGE = _vtk.VTK_BEZIER_WEDGE
-    BEZIER_PYRAMID = _vtk.VTK_BEZIER_PYRAMID
+    if hasattr(_vtk, "VTK_BEZIER_PYRAMID"):
+        BEZIER_PYRAMID = _vtk.VTK_BEZIER_PYRAMID
