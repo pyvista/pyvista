@@ -77,6 +77,9 @@ jobs:
         run: |
            echo "FULL_DOC_BUILD=TRUE" >> $GITHUB_ENV
 
+      - name: LinkCheck
+        run: make -C doc linkcheck SPHINXOPTS="-W --keep-going --color"
+
       - name: Build Documentation
         run: make -C doc html SPHINXOPTS="-W --keep-going"
 
