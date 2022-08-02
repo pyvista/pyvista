@@ -102,4 +102,5 @@ def test_cell_types():
         "BEZIER_PYRAMID",
     ]
     for cell_type in cell_types:
-        assert eval("pyvista.CellType." + cell_type + ".value") == eval("vtk.VTK_" + cell_type)
+        if hasattr(vtk, "VTK_" + cell_type):
+            assert eval("pyvista.CellType." + cell_type + ".value") == eval("vtk.VTK_" + cell_type)
