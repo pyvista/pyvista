@@ -83,7 +83,7 @@ class CellType(Enum):
 
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
     if hasattr(_vtk, "VTK_BEZIER_CURVE"):
-        BEZIER_TRIANGLE = _vtk.VTK_BEZIER_CURVE
+        BEZIER_CURVE = _vtk.VTK_BEZIER_CURVE
     if hasattr(_vtk, "VTK_BEZIER_TRIANGLE"):
         BEZIER_TRIANGLE = _vtk.VTK_BEZIER_TRIANGLE
     BEZIER_QUADRILATERAL = _vtk.VTK_BEZIER_QUADRILATERAL
