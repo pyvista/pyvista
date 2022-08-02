@@ -126,7 +126,6 @@ if VTK9:
     from vtkmodules.vtkCommonDataModel import (
         VTK_BEZIER_HEXAHEDRON,
         VTK_BEZIER_PYRAMID,
-        VTK_BEZIER_TETRAHEDRON,
         VTK_BEZIER_WEDGE,
         VTK_BIQUADRATIC_QUAD,
         VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
@@ -237,6 +236,11 @@ if VTK9:
 
     try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_QUADRILATERAL
+    except ImportError:  # pragma: no cover
+        pass
+
+    try:
+        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_TETRAHEDRON
     except ImportError:  # pragma: no cover
         pass
 
