@@ -82,9 +82,9 @@ class CellType(Enum):
     LAGRANGE_PYRAMID = _vtk.VTK_LAGRANGE_PYRAMID
 
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    if _vtk.VTK9:
-        BEZIER_CURVE = _vtk.VTK_BEZIER_CURVE
-    BEZIER_TRIANGLE = _vtk.VTK_BEZIER_TRIANGLE
+    BEZIER_CURVE = _vtk.VTK_BEZIER_CURVE
+    if hasattr(_vtk, "VTK_BEZIER_TRIANGLE"):
+        BEZIER_TRIANGLE = _vtk.VTK_BEZIER_TRIANGLE
     BEZIER_QUADRILATERAL = _vtk.VTK_BEZIER_QUADRILATERAL
     BEZIER_TETRAHEDRON = _vtk.VTK_BEZIER_TETRAHEDRON
     BEZIER_HEXAHEDRON = _vtk.VTK_BEZIER_HEXAHEDRON

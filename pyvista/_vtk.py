@@ -129,7 +129,6 @@ if VTK9:
         VTK_BEZIER_PYRAMID,
         VTK_BEZIER_QUADRILATERAL,
         VTK_BEZIER_TETRAHEDRON,
-        VTK_BEZIER_TRIANGLE,
         VTK_BEZIER_WEDGE,
         VTK_BIQUADRATIC_QUAD,
         VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
@@ -225,6 +224,11 @@ if VTK9:
 
     try:
         from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
+    except ImportError:  # pragma: no cover
+        pass
+
+    try:
+        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_TRIANGLE
     except ImportError:  # pragma: no cover
         pass
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
