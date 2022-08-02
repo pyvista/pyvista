@@ -222,6 +222,7 @@ if VTK9:
         vtkTable,
         vtkUnstructuredGrid,
     )
+
     try:
         from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
     except ImportError:  # pragma: no cover
