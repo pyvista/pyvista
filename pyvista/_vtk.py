@@ -124,7 +124,6 @@ if VTK9:
         vtkWeakReference,
     )
     from vtkmodules.vtkCommonDataModel import (
-        VTK_BEZIER_CURVE,
         VTK_BEZIER_HEXAHEDRON,
         VTK_BEZIER_PYRAMID,
         VTK_BEZIER_QUADRILATERAL,
@@ -229,6 +228,11 @@ if VTK9:
 
     try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_TRIANGLE
+    except ImportError:  # pragma: no cover
+        pass
+
+    try:
+        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_CURVE
     except ImportError:  # pragma: no cover
         pass
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
