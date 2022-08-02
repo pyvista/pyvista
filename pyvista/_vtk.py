@@ -239,6 +239,7 @@ if VTK9:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_QUADRILATERAL
     except ImportError:  # pragma: no cover
         pass
+
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
