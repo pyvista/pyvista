@@ -184,7 +184,6 @@ if VTK9:
         VTK_TRIANGLE,
         VTK_TRIANGLE_STRIP,
         VTK_TRIQUADRATIC_HEXAHEDRON,
-        VTK_TRIQUADRATIC_PYRAMID,
         VTK_VERTEX,
         VTK_VOXEL,
         VTK_WEDGE,
@@ -223,6 +222,10 @@ if VTK9:
         vtkTable,
         vtkUnstructuredGrid,
     )
+    try:
+        from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
+    except ImportError:  # pragma: no cover
+        pass
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
