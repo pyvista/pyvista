@@ -4344,19 +4344,22 @@ def download_mount_damavand(load=True):  # pragma: no cover
 
     Originally posted at `banesullivan/damavand-volcano
     <https://github.com/banesullivan/damavand-volcano>`_.
-    Download the Damavand dataset and plot it after warping it by its altitude.
 
     Parameters
     ----------
     load : bool, optional
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
     Returns
     -------
     pyvista.PolyData or str
         DataSet or filename depending on ``load``.
+
     Examples
     --------
+    Download the Damavand dataset and plot it after warping it by its altitude.
+
     >>> from pyvista import examples
     >>> dataset = examples.download_mount_damavand()
     >>> dataset = dataset.cell_data_to_point_data()
