@@ -23,4 +23,4 @@ from .pointset import (
 from .pyvista_ndarray import pyvista_ndarray
 from .common_data import perlin_noise
 from .imaging import sample_function
-from .cell_type import CellType
+from .cell import CellType
