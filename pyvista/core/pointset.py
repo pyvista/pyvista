@@ -12,7 +12,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import CellType, _vtk
+from pyvista import _vtk
 from pyvista.utilities import PyvistaDeprecationWarning, abstract_class
 from pyvista.utilities.cells import (
     CellArray,
@@ -23,6 +23,7 @@ from pyvista.utilities.cells import (
 )
 
 from ..utilities.fileio import get_ext
+from .cell import CellType
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
