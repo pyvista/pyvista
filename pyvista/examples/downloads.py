@@ -181,7 +181,7 @@ def _retrieve_file(retriever, filename):
     if os.path.isfile(local_path):
         return local_path, None
 
-    if isinstance(retriever, str):
+    if isinstance(retriever, str):  # pragma: no cover
         retriever = partial(_http_request, retriever, progress_bar=True)
     saved_file, resp = retriever()
 
@@ -4507,7 +4507,7 @@ def download_gif_simple(load=True):  # pragma: no cover
 
 
 def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
-    """Download a black vase scan from Ivan Nikolov.
+    """Download a black vase scan created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
@@ -4515,7 +4515,8 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
 
     Original datasets are under the CC BY 4.0 license.
 
-    For more details, see
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4537,6 +4538,10 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_black_vase()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fe489493520)
       N Cells:      3136652
@@ -4545,7 +4550,6 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
       Y Bounds:     -1.200e+02, 1.415e+02
       Z Bounds:     1.666e+01, 4.077e+02
       N Arrays:     0
-    >>> mesh.plot()
 
     """
     path, _ = _download_file('ivan-nikolov/blackVase.zip', progress_bar=progress_bar)
@@ -4555,8 +4559,8 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
     return filename
 
 
-def download_ivan_angle(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of a angle statue from Ivan Nikolov.
+def download_ivan_angel(load=True, progress_bar=False):  # pragma: no cover
+    """Download a scan of a angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
@@ -4564,7 +4568,8 @@ def download_ivan_angle(load=True, progress_bar=False):  # pragma: no cover
 
     Original datasets are under the CC BY 4.0 license.
 
-    For more details, see
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4585,7 +4590,14 @@ def download_ivan_angle(load=True, progress_bar=False):  # pragma: no cover
     Download and plot the dataset.
 
     >>> from pyvista import examples
-    >>> mesh = examples.download_angle()
+    >>> mesh = examples.download_ivan_angel()
+    >>> cpos = [(-476.14, -393.73, 282.14),
+    ...         (-15.00, 11.25, 44.08),
+    ...         (0.26, 0.24, 0.93)]
+    >>> mesh.plot(cpos=cpos)
+
+    Return the statistics of the dataset.
+
     >>> mesh  # doctest:+SKIP
     PolyData (0x7f6ed1345520)
       N Cells:      4547716
@@ -4594,18 +4606,17 @@ def download_ivan_angle(load=True, progress_bar=False):  # pragma: no cover
       Y Bounds:     -7.103e+01, 9.247e+01
       Z Bounds:     -1.198e+02, 2.052e+02
       N Arrays:     0
-    >>> mesh.plot()
 
     """
-    path, _ = _download_file('ivan-nikolov/Angle.zip', progress_bar=progress_bar)
-    filename = os.path.join(path, 'Angle.vtp')
+    path, _ = _download_file('ivan-nikolov/Angel.zip', progress_bar=progress_bar)
+    filename = os.path.join(path, 'Angel.vtp')
     if load:
         return pyvista.read(filename)
     return filename
 
 
 def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of a bird bath from Ivan Nikolov.
+    """Download a scan of a bird bath created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
@@ -4613,7 +4624,8 @@ def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
 
     Original datasets are under the CC BY 4.0 license.
 
-    For more details, see
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4635,6 +4647,10 @@ def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_bird_bath()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fe8caf2ba00)
     N Cells:      3507935
@@ -4643,7 +4659,6 @@ def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
     Y Bounds:     -1.521e+02, 1.547e+02
     Z Bounds:     -4.241e+00, 1.409e+02
     N Arrays:     0
-    >>> mesh.plot()
 
     """
     path, _ = _download_file('ivan-nikolov/birdBath.zip', progress_bar=progress_bar)
@@ -4654,7 +4669,7 @@ def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
 
 
 def download_owl(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of an owl statue from Ivan Nikolov.
+    """Download a scan of an owl statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
@@ -4662,7 +4677,8 @@ def download_owl(load=True, progress_bar=False):  # pragma: no cover
 
     Original datasets are under the CC BY 4.0 license.
 
-    For more details, see
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4684,6 +4700,13 @@ def download_owl(load=True, progress_bar=False):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_owl()
+    >>> cpos = [(-315.18, -402.21, 230.71),
+    ...         (6.06, -1.74, 101.48),
+    ...         (0.108, 0.226, 0.968)]
+    >>> mesh.plot(cpos=cpos)
+
+    Return the statistics of the dataset.
+
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fe8caeeaee0)
       N Cells:      2440707
@@ -4692,10 +4715,6 @@ def download_owl(load=True, progress_bar=False):  # pragma: no cover
       Y Bounds:     -7.006e+01, 6.658e+01
       Z Bounds:     1.676e+00, 2.013e+02
       N Arrays:     0
-    >>> cpos = [(-315.18, -402.21, 230.71),
-    ...         (6.06, -1.74, 101.48),
-    ...         (0.108, 0.226, 0.968)]
-    >>> mesh.plot(cpos=cpos)
 
     """
     path, _ = _download_file('ivan-nikolov/owl.zip', progress_bar=progress_bar)
@@ -4706,7 +4725,7 @@ def download_owl(load=True, progress_bar=False):  # pragma: no cover
 
 
 def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of a plastic vase from Ivan Nikolov.
+    """Download a scan of a plastic vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
@@ -4714,7 +4733,8 @@ def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
 
     Original datasets are under the CC BY 4.0 license.
 
-    For more details, see
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4736,6 +4756,10 @@ def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_plastic_vase()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fe8cadc14c0)
       N Cells:      3570967
@@ -4744,7 +4768,6 @@ def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
       Y Bounds:     -1.677e+02, 1.603e+02
       Z Bounds:     1.209e+02, 4.090e+02
       N Arrays:     0
-    >>> mesh.plot()
 
     """
     path, _ = _download_file('ivan-nikolov/plasticVase.zip', progress_bar=progress_bar)
@@ -4755,7 +4778,7 @@ def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
 
 
 def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of a sea vase from Ivan Nikolov.
+    """Download a scan of a sea vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
@@ -4763,7 +4786,8 @@ def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
 
     Original datasets are under the CC BY 4.0 license.
 
-    For more details, see
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4784,7 +4808,11 @@ def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
     Download and plot the dataset.
 
     >>> from pyvista import examples
-    >>> mesh = examples.download_plastic_vase()
+    >>> mesh = examples.download_sea_vase()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fe8b3862460)
       N Cells:      3548473
@@ -4793,7 +4821,6 @@ def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
       Y Bounds:     -1.742e+02, 1.384e+02
       Z Bounds:     -1.500e+02, 2.992e+02
       N Arrays:     0
-    >>> mesh.plot()
 
     """
     path, _ = _download_file('ivan-nikolov/seaVase.zip', progress_bar=progress_bar)

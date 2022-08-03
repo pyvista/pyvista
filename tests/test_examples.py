@@ -477,12 +477,12 @@ if TEST_DOWNLOADS:
         assert isinstance(dataset, pyvista.PolyData)
         assert dataset.n_points > 1_000_000
 
-    def test_ivan_angle():
-        filename = examples.download_ivan_angle(load=False)
+    def test_ivan_angel():
+        filename = examples.download_ivan_angel(load=False)
         assert os.path.isfile(filename)
         assert filename.endswith('vtp')
 
-        dataset = examples.download_ivan_angle(load=True)
+        dataset = examples.download_ivan_angel(load=True)
         assert isinstance(dataset, pyvista.PolyData)
         assert dataset.n_points > 1_000_000
 
