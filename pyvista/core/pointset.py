@@ -1453,7 +1453,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         >>> import numpy as np
-        >>> import vtk
+        >>> from pyvista import CellType
         >>> import pyvista
         >>> offset = np.array([0, 9])
         >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
