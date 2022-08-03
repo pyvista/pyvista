@@ -10,7 +10,7 @@ class PlotterITK:
     Used for plotting interactively within a jupyter notebook.
     Requires ``itkwidgets>=0.25.2``.  For installation see:
 
-    https://github.com/InsightSoftwareConsortium/itkwidgets#installation
+    https://github.com/InsightSoftwareConsortium/itkwidgets#user-content-installation
 
     Examples
     --------
