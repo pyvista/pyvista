@@ -12,7 +12,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista import CellType, _vtk
 from pyvista.utilities import PyvistaDeprecationWarning, abstract_class
 from pyvista.utilities.cells import (
     CellArray,
@@ -1456,7 +1456,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> import pyvista
         >>> offset = np.array([0, 9])
         >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-        >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
+        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
         >>> cell1 = np.array([[0, 0, 0],
         ...                   [1, 0, 0],
@@ -1568,7 +1568,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Return the cells dictionary of the sample hex beam.  Note how
         there is only one key/value pair as the hex beam example is
         composed of only all hexahedral cells, which is
-        ``vtk.VTK_HEXAHEDRON``, which evaluates to 12.
+        ``CellType.HEXAHEDRON``, which evaluates to 12.
 
         Also note how there is no padding for the cell array.  This
         approach may be more helpful than the ``cells`` property when
@@ -1627,10 +1627,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Converts the following cell types to their linear equivalents.
 
-        - ``VTK_QUADRATIC_TETRA      --> VTK_TETRA``
-        - ``VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID``
-        - ``VTK_QUADRATIC_WEDGE      --> VTK_WEDGE``
-        - ``VTK_QUADRATIC_HEXAHEDRON --> VTK_HEXAHEDRON``
+        - ``QUADRATIC_TETRA      --> TETRA``
+        - ``QUADRATIC_PYRAMID    --> PYRAMID``
+        - ``QUADRATIC_WEDGE      --> WEDGE``
+        - ``QUADRATIC_HEXAHEDRON --> HEXAHEDRON``
 
         Parameters
         ----------
@@ -1650,17 +1650,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         # grab the vtk object
         vtk_cell_type = _vtk.numpy_to_vtk(self.GetCellTypesArray(), deep=True)
         celltype = _vtk.vtk_to_numpy(vtk_cell_type)
-        celltype[celltype == _vtk.VTK_QUADRATIC_TETRA] = _vtk.VTK_TETRA
-        celltype[celltype == _vtk.VTK_QUADRATIC_PYRAMID] = _vtk.VTK_PYRAMID
-        celltype[celltype == _vtk.VTK_QUADRATIC_WEDGE] = _vtk.VTK_WEDGE
-        celltype[celltype == _vtk.VTK_QUADRATIC_HEXAHEDRON] = _vtk.VTK_HEXAHEDRON
+        celltype[celltype == CellType.QUADRATIC_TETRA] = CellType.TETRA
+        celltype[celltype == CellType.QUADRATIC_PYRAMID] = CellType.PYRAMID
+        celltype[celltype == CellType.QUADRATIC_WEDGE] = CellType.WEDGE
+        celltype[celltype == CellType.QUADRATIC_HEXAHEDRON] = CellType.HEXAHEDRON
 
         # track quad mask for later
-        quad_quad_mask = celltype == _vtk.VTK_QUADRATIC_QUAD
-        celltype[quad_quad_mask] = _vtk.VTK_QUAD
+        quad_quad_mask = celltype == CellType.QUADRATIC_QUAD
+        celltype[quad_quad_mask] = CellType.QUAD
 
-        quad_tri_mask = celltype == _vtk.VTK_QUADRATIC_TRIANGLE
-        celltype[quad_tri_mask] = _vtk.VTK_TRIANGLE
+        quad_tri_mask = celltype == CellType.QUADRATIC_TRIANGLE
+        celltype[quad_tri_mask] = CellType.TRIANGLE
 
         vtk_offset = self.GetCellLocationsArray()
         cells = _vtk.vtkCellArray()
@@ -1707,40 +1707,40 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Returns
         -------
         numpy.ndarray
-            Array of VTK cell types.  Some of the most popular cell types:
+            Array of cell types.  Some of the most popular cell types:
 
-        * ``VTK_EMPTY_CELL = 0``
-        * ``VTK_VERTEX = 1``
-        * ``VTK_POLY_VERTEX = 2``
-        * ``VTK_LINE = 3``
-        * ``VTK_POLY_LINE = 4``
-        * ``VTK_TRIANGLE = 5``
-        * ``VTK_TRIANGLE_STRIP = 6``
-        * ``VTK_POLYGON = 7``
-        * ``VTK_PIXEL = 8``
-        * ``VTK_QUAD = 9``
-        * ``VTK_TETRA = 10``
-        * ``VTK_VOXEL = 11``
-        * ``VTK_HEXAHEDRON = 12``
-        * ``VTK_WEDGE = 13``
-        * ``VTK_PYRAMID = 14``
-        * ``VTK_PENTAGONAL_PRISM = 15``
-        * ``VTK_HEXAGONAL_PRISM = 16``
-        * ``VTK_QUADRATIC_EDGE = 21``
-        * ``VTK_QUADRATIC_TRIANGLE = 22``
-        * ``VTK_QUADRATIC_QUAD = 23``
-        * ``VTK_QUADRATIC_POLYGON = 36``
-        * ``VTK_QUADRATIC_TETRA = 24``
-        * ``VTK_QUADRATIC_HEXAHEDRON = 25``
-        * ``VTK_QUADRATIC_WEDGE = 26``
-        * ``VTK_QUADRATIC_PYRAMID = 27``
-        * ``VTK_BIQUADRATIC_QUAD = 28``
-        * ``VTK_TRIQUADRATIC_HEXAHEDRON = 29``
-        * ``VTK_QUADRATIC_LINEAR_QUAD = 30``
-        * ``VTK_QUADRATIC_LINEAR_WEDGE = 31``
-        * ``VTK_BIQUADRATIC_QUADRATIC_WEDGE = 32``
-        * ``VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
-        * ``VTK_BIQUADRATIC_TRIANGLE = 34``
+        * ``EMPTY_CELL = 0``
+        * ``VERTEX = 1``
+        * ``POLY_VERTEX = 2``
+        * ``LINE = 3``
+        * ``POLY_LINE = 4``
+        * ``TRIANGLE = 5``
+        * ``TRIANGLE_STRIP = 6``
+        * ``POLYGON = 7``
+        * ``PIXEL = 8``
+        * ``QUAD = 9``
+        * ``TETRA = 10``
+        * ``VOXEL = 11``
+        * ``HEXAHEDRON = 12``
+        * ``WEDGE = 13``
+        * ``PYRAMID = 14``
+        * ``PENTAGONAL_PRISM = 15``
+        * ``HEXAGONAL_PRISM = 16``
+        * ``QUADRATIC_EDGE = 21``
+        * ``QUADRATIC_TRIANGLE = 22``
+        * ``QUADRATIC_QUAD = 23``
+        * ``QUADRATIC_POLYGON = 36``
+        * ``QUADRATIC_TETRA = 24``
+        * ``QUADRATIC_HEXAHEDRON = 25``
+        * ``QUADRATIC_WEDGE = 26``
+        * ``QUADRATIC_PYRAMID = 27``
+        * ``BIQUADRATIC_QUAD = 28``
+        * ``TRIQUADRATIC_HEXAHEDRON = 29``
+        * ``QUADRATIC_LINEAR_QUAD = 30``
+        * ``QUADRATIC_LINEAR_WEDGE = 31``
+        * ``BIQUADRATIC_QUADRATIC_WEDGE = 32``
+        * ``BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
+        * ``BIQUADRATIC_TRIANGLE = 34``
 
         See
         https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
@@ -1749,7 +1749,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         This mesh contains only linear hexahedral cells, type
-        ``vtk.VTK_HEXAHEDRON``, which evaluates to 12.
+        ``CellType.HEXAHEDRON``, which evaluates to 12.
 
         >>> import pyvista
         >>> from pyvista import examples
