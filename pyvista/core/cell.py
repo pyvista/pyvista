@@ -5,7 +5,13 @@ from pyvista import _vtk
 
 
 class CellType(IntEnum):
-    """Define types of cells."""
+    """Define types of cells.
+
+    Warnings
+    --------
+    TODO Add version warning of some cell types.
+
+    """
 
     # Linear cells
     EMPTY_CELL = _vtk.VTK_EMPTY_CELL
