@@ -104,6 +104,8 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
+    'test_plot_helper_volume',
+    'test_plot_helper_two_volumes',
 }
 
 # these images vary between Linux/Windows and MacOS
@@ -303,6 +305,20 @@ def test_set_environment_texture_cubemap(sphere):
         pl.show()
 
 
+@skip_not_vtk9
+@skip_windows
+@skip_mac
+def test_remove_environment_texture_cubemap(sphere):
+    """Test remove_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter()
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
+    pl.remove_environment_texture()
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_plot_pyvista_ndarray(sphere):
     # verify we can plot pyvista_ndarray
     pyvista.plot(sphere.points)
@@ -368,6 +384,31 @@ def test_plot(sphere, tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+def test_plot_helper_volume(uniform):
+    uniform.plot(
+        volume=True,
+        parallel_projection=True,
+        show_scalar_bar=False,
+        show_grid=True,
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_plot_helper_two_datasets(sphere, airplane):
+    pyvista.plot([sphere, airplane], before_close_callback=verify_cache_image)
+
+
+def test_plot_helper_two_volumes(uniform):
+    grid = uniform.copy()
+    grid.origin = (0, 0, 10)
+    pyvista.plot(
+        [uniform, grid],
+        volume=True,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
 
 
 def test_plot_return_cpos(sphere):
@@ -2050,7 +2091,7 @@ def test_set_focus():
     plane = pyvista.Plane()
     p = pyvista.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((1, 0, 0))
+    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
     p.show(before_close_callback=verify_cache_image)
 
 
@@ -2430,3 +2471,106 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_export_obj(tmpdir, sphere):
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.obj"))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+
+    if pyvista.vtk_version_info <= (8, 1, 2):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.export_obj(filename)
+        return
+
+    with pytest.raises(ValueError, match='end with ".obj"'):
+        pl.export_obj('badfilename')
+
+    pl.export_obj(filename)
+
+    # Check that the object file has been written
+    assert os.path.exists(filename)
+
+    # Check that when we close the plotter, the adequate error is raised
+    pl.close()
+    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+        pl.export_obj(filename)
+
+
+def test_multi_plot_scalars():
+    res = 5
+    plane = pyvista.Plane(j_resolution=res, i_resolution=res)
+    plane.clear_data()
+    kek = np.arange(res + 1)
+    kek = np.tile(kek, (res + 1, 1))
+    u = kek.flatten().copy()
+    v = kek.T.flatten().copy()
+
+    plane.point_data['u'] = u
+    plane.point_data['v'] = v
+
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_text('"u" point scalars')
+    pl.add_mesh(plane, scalars='u', copy_mesh=True)
+    pl.subplot(0, 1)
+    pl.add_text('"v" point scalars')
+    pl.add_mesh(plane, scalars='v', copy_mesh=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_bool_scalars(sphere):
+    sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
+    sphere['scalars'][::2] = 1
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_square(noise_2d):
+    noise_2d.plot(
+        window_size=[800, 200],
+        show_scalar_bar=False,
+        cpos='xy',
+        zoom='tight',
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_tight_square_padding():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(padding=0.05)
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_tall():
+    grid = pyvista.UniformGrid(dims=(100, 200, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    with pytest.raises(ValueError, match='can only be "tight"'):
+        pl.camera.zoom('invalid')
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [75, 150], rtol=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_wide():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)

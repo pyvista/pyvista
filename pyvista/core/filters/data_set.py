@@ -52,8 +52,7 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
-        if return_clipped:
-            alg.GenerateClippedOutputOn()
+        alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
         if return_clipped:
@@ -1815,7 +1814,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(show_edges=True)
+        >>> surf.plot(show_edges=True, scalars='Area')
 
         """
         alg = _vtk.vtkCellSizeFilter()
@@ -2427,7 +2426,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         These cell scalars can be applied to individual points to
         effectively smooth out the cell data onto the points.
@@ -2436,7 +2435,7 @@ class DataSetFilters:
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
         >>> surf = surf.cell_data_to_point_data()
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         """
         alg = _vtk.vtkCellDataToPointData()
@@ -5172,7 +5171,8 @@ class DataSetFilters:
         Area or volume is also provided in point data.
 
         This filter uses the VTK `vtkIntegrateAttributes
-        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_.
+        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_
+        and requires VTK v9.1.0 or newer.
 
         Parameters
         ----------
@@ -5182,7 +5182,8 @@ class DataSetFilters:
         Returns
         -------
         pyvista.UnstructuredGird
-            Mesh with 1 point and 1 vertex cell with integrated data in point and cell data.
+            Mesh with 1 point and 1 vertex cell with integrated data in point
+            and cell data.
 
         Examples
         --------
@@ -5204,8 +5205,11 @@ class DataSetFilters:
         See the :ref:`integrate_example` for more examples using this filter.
 
         """
-        filter = _vtk.vtkIntegrateAttributes()
-        filter.SetInputData(self)
-        filter.SetDivideAllCellDataByVolume(False)
-        _update_alg(filter, progress_bar, 'Integrating Variables')
-        return _get_output(filter)
+        if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover
+            raise VTKVersionError('`integrate_data` requires VTK 9.1.0 or newer.')
+
+        alg = _vtk.vtkIntegrateAttributes()
+        alg.SetInputData(self)
+        alg.SetDivideAllCellDataByVolume(False)
+        _update_alg(alg, progress_bar, 'Integrating Variables')
+        return _get_output(alg)

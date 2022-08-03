@@ -20,19 +20,21 @@ import scooby
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (
+    FieldAssociation,
     abstract_class,
     assert_empty_kwargs,
     convert_array,
     get_array,
+    get_array_association,
     is_pyvista_dataset,
     numpy_to_texture,
     raise_not_matching,
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, uses_egl
+from ..utilities.misc import PyvistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
-from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
+from ._plotting import prepare_smooth_shading, process_opacity
 from .colors import Color, get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
@@ -199,6 +201,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
+        self._initialized = False
+
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
@@ -270,8 +274,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
         self._has_background_layer = False
-        self._added_scalars = []
-        self._prev_active_scalars = {}
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -280,6 +282,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set antialiasing based on theme
         if self.theme.antialiasing:
             self.enable_anti_aliasing()
+
+        self._initialized = True
 
     @property
     def theme(self):
@@ -389,9 +393,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkVRMLImporter
-
-        importer = vtkVRMLImporter()
+        importer = _vtk.lazy_vtkVRMLImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.ren_win)
         importer.Update()
@@ -644,10 +646,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOExport import vtkVRMLExporter
-
-        exporter = vtkVRMLExporter()
+        exporter = _vtk.lazy_vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.ren_win)
         exporter.Write()
@@ -1225,6 +1224,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.set_environment_texture``."""
         return self.renderer.set_environment_texture(*args, **kwargs)
 
+    @wraps(Renderer.remove_environment_texture)
+    def remove_environment_texture(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_environment_texture``."""
+        return self.renderer.remove_environment_texture(*args, **kwargs)
+
     #### Properties from Renderer ####
 
     @property
@@ -1313,7 +1317,45 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def camera_position(self):
-        """Return camera position of the active render window."""
+        """Return camera position of the active render window.
+
+        Examples
+        --------
+        Return camera's position and then reposition it via a list of tuples.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
+        >>> pl.camera_position
+        [(0.02430, 0.0336, 0.9446),
+         (0.02430, 0.0336, -0.02225),
+         (0.0, 1.0, 0.0)]
+        >>> pl.camera_position = [
+        ...     (0.3914, 0.4542, 0.7670),
+        ...     (0.0243, 0.0336, -0.0222),
+        ...     (-0.2148, 0.8998, -0.3796),
+        ... ]
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'xy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        Set the camera position using a string and look at the ``'zy'`` plane.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.camera_position = 'zy'
+        >>> pl.show()
+
+        For more examples, see :ref:`cameras_api`.
+
+        """
         return self.renderer.camera_position
 
     @camera_position.setter
@@ -1323,7 +1365,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the active render window."""
+        """Return the background color of the active render window.
+
+        Examples
+        --------
+        Set the background color to ``"pink"`` and plot it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
+        >>> pl.background_color = "pink"
+        >>> pl.background_color
+        Color(name='pink', hex='#ffc0cbff')
+        >>> pl.show()
+
+        """
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
@@ -1810,6 +1866,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=0.5,
         render=True,
         component=None,
+        copy_mesh=False,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -1915,7 +1972,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             :func:`pyvista.BasePlotter.add_legend`.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene.
+            Reset the camera after adding this mesh to the scene. The default
+            setting is ``None``, where the camera is only reset if this plotter
+            has already been shown. If ``False``, the camera is not reset
+            regardless of the state of the ``Plotter``. When ``True``, the
+            camera is always reset.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -1935,7 +1996,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        texture : vtk.vtkTexture or np.ndarray or bool, optional
+        texture : vtk.vtkTexture or np.ndarray or bool or str, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
             datasets. If set to ``True``, the first available texture
@@ -2052,7 +2113,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
-            positive float. Default: ``True``.
+            positive float. Default: ``False``.
 
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
@@ -2077,6 +2138,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
+
+        copy_mesh : bool, optional
+            If ``True``, a copy of the mesh will be made before adding it to the plotter.
+            This is useful if e.g. you would like to add the same mesh to a plotter multiple
+            times and display different scalars. Setting ``copy_mesh`` to ``False`` is necessary
+            if you would like to update the mesh after adding it to the plotter and have these
+            updates rendered, e.g. by changing the active scalars or through an interactive widget.
+            Defaults to ``False``.
 
         **kwargs : dict, optional
             Optional developer keyword arguments.
@@ -2145,10 +2214,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
-
-        # cast to PointSet to PolyData
-        if isinstance(mesh, pyvista.PointSet):
+        elif isinstance(mesh, pyvista.PointSet):
+            # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
+        elif copy_mesh:
+            # A shallow copy of `mesh` is made here so when we set (or add) scalars
+            # active, it doesn't modify the original input mesh.
+            mesh = mesh.copy(deep=False)
 
         ##### Parse arguments to be used for all meshes #####
 
@@ -2185,6 +2257,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
+            remove_existing_actor = False
+        else:
+            # check if this actor already exists
+            remove_existing_actor = True
 
         nan_color = Color(
             nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
@@ -2212,6 +2288,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time and not self.camera_set
+
         ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
@@ -2235,10 +2315,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the_arguments.pop('self')
             the_arguments.pop('mesh')
             the_arguments.pop('kwargs')
+            the_arguments.pop('remove_existing_actor')
 
             if multi_colors:
                 # Compute unique colors for each index of the block
-                if _has_matplotlib():
+                if has_module('matplotlib'):
                     from itertools import cycle
 
                     import matplotlib
@@ -2283,7 +2364,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 a = self.add_mesh(data, **the_arguments)
                 actors.append(a)
 
-                if (reset_camera is None and not self.camera_set) or reset_camera:
+                if reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
                     self.camera_set = False
@@ -2328,6 +2409,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = get_array(mesh, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', original_scalar_name)
             scalars_name = original_scalar_name
+
+            # Set the active scalars name here. If the name already exists in
+            # the input mesh, it may not be set as the active scalars within
+            # the mapper. This should be refactored by 0.36.0
+            field = get_array_association(mesh, original_scalar_name, preference=preference)
+            if field == FieldAssociation.POINT:
+                mesh.point_data.active_scalars_name = original_scalar_name
+                self.mapper.SetScalarModeToUsePointData()
+            elif field == FieldAssociation.CELL:
+                mesh.cell_data.active_scalars_name = original_scalar_name
+                self.mapper.SetScalarModeToUseCellData()
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2380,17 +2472,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         # Scalars formatting ==================================================
-        added_scalar_info = None
         if scalars is not None:
-            # track the previous active scalars
-            if mesh.memory_address not in self._prev_active_scalars:
-                self._prev_active_scalars[mesh.memory_address] = (
-                    mesh,
-                    mesh.point_data.active_scalars_name,
-                    mesh.cell_data.active_scalars_name,
-                )
-
-            show_scalar_bar, n_colors, clim, added_scalar_info = self.mapper.set_scalars(
+            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
                 mesh,
                 scalars,
                 scalars_name,
@@ -2415,7 +2498,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_scalar_bar,
             )
         elif custom_opac:  # no scalars but custom opacity
-            added_scalar_info = self.mapper.set_custom_opacity(
+            self.mapper.set_custom_opacity(
                 opacity,
                 color,
                 mesh,
@@ -2427,10 +2510,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         else:
             self.mapper.SetScalarModeToUseFieldData()
-
-        # track if any data arrays have been added
-        if added_scalar_info is not None and added_scalar_info[0] is not None:
-            self._added_scalars.append((mesh, added_scalar_info))
 
         # Set actor properties ================================================
 
@@ -2512,6 +2591,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
             pickable=pickable,
             render=render,
+            remove_existing_actor=remove_existing_actor,
         )
 
         # hide scalar bar if using special scalars
@@ -2857,7 +2937,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
-
         if scalars.ndim != 1:
             scalars = scalars.ravel()
 
@@ -2917,11 +2996,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 table.SetAnnotation(float(val), str(anno))
 
         if cmap is None:  # Set default map if matplotlib is available
-            if _has_matplotlib():
+            if has_module('matplotlib'):
                 cmap = self._theme.cmap
 
         if cmap is not None:
-            if not _has_matplotlib():
+            if not has_module('matplotlib'):
                 raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
@@ -3142,6 +3221,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
 
+        Examples
+        --------
+        Not linked view case.
+
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> ocube = demos.orientation_cube()
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        Linked view case.
+
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.camera_position = 'yz'
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+        >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+        >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+        >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+        >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+        >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+        >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+        >>> pl.show_axes()
+        >>> pl.link_views()
+        >>> pl.show()
+
         """
         if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
@@ -3361,17 +3492,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # this helps managing closed plotters
         self._closed = True
 
-        # remove any added scalars
-        self._remove_added_scalars()
-
     def deep_clean(self):
         """Clean the plotter of the memory."""
         self.disable_picking()
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
-        if getattr(self, 'mesh', None) is not None:
-            self.mesh.point_data = None
-            self.mesh.cell_data = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None
@@ -4580,20 +4705,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str
-            Filename to export the scene to.  Should end in ``'.obj'``.
+            Filename to export the scene to.  Must end in ``'.obj'``.
 
-        Returns
-        -------
-        vtkOBJExporter
-            Object exporter.
+        Examples
+        --------
+        Export the scene to "scene.obj"
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        # lazy import vtkOBJExporter here as it takes a long time to
-        # load and is not always used
-        try:
-            from vtkmodules.vtkIOExport import vtkOBJExporter
-        except:  # noqa: E722
-            from vtk import vtkOBJExporter
+        if pyvista.vtk_version_info <= (8, 1, 2):
+            raise pyvista.core.errors.VTKVersionError()
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter must still have a render window open.")
@@ -4601,10 +4726,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
-        exporter = vtkOBJExporter()
-        exporter.SetFilePrefix(filename)
+
+        if not filename.endswith('.obj'):
+            raise ValueError('`filename` must end with ".obj"')
+
+        exporter = _vtk.lazy_vtkOBJExporter()
+        # remove the extension as VTK always adds it in
+        exporter.SetFilePrefix(filename[:-4])
         exporter.SetRenderWindow(self.ren_win)
-        return exporter.Write()
+        exporter.Write()
 
     @property
     def _datasets(self):
@@ -4620,50 +4750,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return datasets
 
-    def _remove_added_scalars(self):
-        """Remove any scalars added to this plotter's datasets by this plotter.
-
-        Additional point or cell data may be added to be able to correctly plot
-        scalars. This usually occurs in one of the following cases:
-
-        * ``<scalar-name>-real`` for complex data
-        * ``<scalar-name>-normed`` for normalized multi-component arrays.
-        * ``<scalars-name>-<index>`` when setting ``component=<index>`` in
-          ``add_mesh`` when plotting multi-component arrays.
-        * ``Data`` when passing an array as ``scalars`` with ``add_mesh`` rather than
-          selecting an existing array using a string.
-        * ``__custom_rgba`` when the color mode is set to map directly to the
-          scalars (an RGBA array).
-
-        This method removes those arrays, which are tracked in
-        ``self._added_scalars``. It also tries to restore the original scalars
-        as active scalars.
-
-        """
-        # remove the added scalars
-        for mesh, (name, assoc) in self._added_scalars:
-            dsattr = mesh.point_data if assoc == 'point' else mesh.cell_data
-            dsattr.pop(name, None)
-
-        # reactivate prior active scalars
-        for mesh, point_name, cell_name in self._prev_active_scalars.values():
-            if point_name is not None and mesh.point_data.active_scalars_name != point_name:
-                mesh.point_data.active_scalars_name = point_name
-            if cell_name is not None and mesh.cell_data.active_scalars_name != cell_name:
-                mesh.cell_data.active_scalars_name = cell_name
-
-        self._added_scalars = []
-        self._prev_active_scalars = {}
-
     def __del__(self):
         """Delete the plotter."""
-        # We have to check here if it has the closed attribute as it
-        # may not exist should the plotter have failed to initialize.
-        if hasattr(self, '_closed'):
+        # We have to check here if the plotter was only partially initialized
+        if self._initialized:
             if not self._closed:
                 self.close()
         self.deep_clean()
-        if hasattr(self, 'renderers'):
+        if self._initialized:
             del self.renderers
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
@@ -5100,6 +5194,8 @@ class Plotter(BasePlotter):
             lighting=lighting,
             theme=theme,
         )
+        # reset partial initialization flag
+        self._initialized = False
 
         log.debug('Plotter init start')
 
@@ -5193,6 +5289,9 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # some cleanup only necessary for fully initialized plotters
+        self._initialized = True
         log.debug('Plotter init stop')
 
     def show(

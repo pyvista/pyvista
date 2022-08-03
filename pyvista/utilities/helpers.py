@@ -117,6 +117,11 @@ def convert_string_array(arr, name=None):
 
     """
     if isinstance(arr, np.ndarray):
+        # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
+        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+            raise ValueError(
+                'String array contains non-ASCII characters that are not supported by VTK.'
+            )
         vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
         for val in arr:
@@ -370,6 +375,14 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return arr
 
+    if not isinstance(preference, str):
+        raise TypeError('`preference` must be a string')
+    if preference not in ['cell', 'point', 'field']:
+        raise ValueError(
+            f'`preference` must be either "cell", "point", "field" for a '
+            f'{type(mesh)}, not "{preference}".'
+        )
+
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
@@ -379,10 +392,8 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
             return carr
         elif preference == FieldAssociation.POINT:
             return parr
-        elif preference == FieldAssociation.NONE:
+        else:  # must be field
             return farr
-        else:
-            raise ValueError(f'Data field ({preference}) not supported.')
 
     if parr is not None:
         return parr
