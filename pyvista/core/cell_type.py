@@ -1,10 +1,10 @@
 """Define types of cells."""
-from enum import Enum
+from enum import IntEnum
 
 from pyvista import _vtk
 
 
-class CellType(Enum):
+class CellType(IntEnum):
     """Define types of cells."""
 
     # Linear cells

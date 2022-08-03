@@ -103,4 +103,4 @@ def test_cell_types():
     ]
     for cell_type in cell_types:
         if hasattr(vtk, "VTK_" + cell_type):
-            assert eval("pyvista.CellType." + cell_type + ".value") == eval("vtk.VTK_" + cell_type)
+            assert eval("pyvista.CellType." + cell_type) == eval("vtk.VTK_" + cell_type)
