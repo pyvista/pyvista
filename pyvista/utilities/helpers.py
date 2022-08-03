@@ -1124,10 +1124,10 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.size}) must match number of rows ({dataset.n_rows}).'
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
         )
     raise ValueError(
-        f'Number of scalars ({scalars.size}) '
+        f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '
         f'or the number of cells ({dataset.n_cells}).'
     )
