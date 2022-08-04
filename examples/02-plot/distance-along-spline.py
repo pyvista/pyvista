@@ -41,7 +41,7 @@ spline.point_data
 
 
 def get_point_along_spline(distance):
-    """Return the closest point on the spline a given a length along a spline."""
+    """Return the closest point on the spline given a length along the spline."""
     idx = np.argmin(np.abs(spline.point_data['arc_length'] - distance))
     return spline.points[idx]
 
