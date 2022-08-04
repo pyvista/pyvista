@@ -1,10 +1,11 @@
 """
-.. _ref_create_spline:
+.. _ref_create_spline_example:
 
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
 
-Create a spline/polyline from a numpy array of XYZ vertices
+Create a spline/polyline from a numpy array of XYZ vertices using
+:func:`pyvista.Spline`.
 """
 
 import numpy as np
