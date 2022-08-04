@@ -1,5 +1,5 @@
 """
-.. _ref_create_spline_example:
+.. _create_spline_example:
 
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
