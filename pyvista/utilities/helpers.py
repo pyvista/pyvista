@@ -1003,14 +1003,31 @@ def numpy_to_texture(image):
     Parameters
     ----------
     image : numpy.ndarray
-        Numpy image array.
+        Numpy image array. Texture datatype expected to be ``np.uint8``.
 
     Returns
     -------
-    vtkTexture
-        VTK texture.
+    pyvista.Texture
+        PyVista texture.
+
+    Examples
+    --------
+    Create an all white texture.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> tex_arr = np.ones((1024, 1024, 3), dtype=np.uint8) * 255
+    >>> tex = pv.numpy_to_texture(tex_im)
 
     """
+    if image.dtype != np.uint8:
+        image = image.astype(np.uint8)
+        warnings.warn(
+            'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
+            'and converted to np.uint8.',
+            UserWarning,
+        )
+
     return pyvista.Texture(image)
 
 
