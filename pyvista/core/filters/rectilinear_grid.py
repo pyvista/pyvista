@@ -25,7 +25,7 @@ class RectilinearGridFilters:
             determinine the number of tetrahedra to generate per cell.
 
         pass_cell_ids : bool, default: False
-            Set if the tetrahedra have scalar data indicating which cell they
+            Set to ``True`` to make the tetrahedra have scalar data indicating which cell they
             came from in the original :class:`pyvista.RectilinearGrid`.
 
         progress_bar : bool, optional

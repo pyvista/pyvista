@@ -5222,9 +5222,9 @@ class DataSetFilters:
     def partition(self, n_partitions, generate_global_id=False, as_composite=True):
         """Break down input dataset into requested number of partitions.
 
-        Cells on boundaries are uniquely to each partition.
+        Cells on boundaries are uniquely assigned to each partition without duplication.
 
-        It uses a DIY-based kdtree implementation that builds balances the cell
+        It uses a kdtree implementation that builds balances the cell
         centers among requested number of partitions. Current implementation
         only supports power-of-2 target partition. If a non-power of two value
         is specified for ``n_partitions``, then the load balancing simply
@@ -5250,7 +5250,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.UnStructuredGird or pyvista.MultiBlock
+       pyvista.MultiBlock or pyvista.UnstructuredGrid
             UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
 
         Notes
@@ -5278,7 +5278,7 @@ class DataSetFilters:
         # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
         # work correctly, returning the wrong number of partitions.
         if pyvista.vtk_version_info < (9, 1, 0):
-            raise VTKVersionError('`partition` requires vtk>=9.1.0')
+            raise VTKVersionError('`partition` requires vtk>=9.1.0')  # pragma: no cover
 
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)
@@ -5330,7 +5330,7 @@ class DataSetFilters:
         >>> exploded.plot(show_edges=True)
 
         """
-        split = self.shrink(1.0)  # simply used to isolate each cell
+        split = self.separate()
 
         # VTK changed their cell indexing API in 9.0 and
         if pyvista.vtk_version_info < (9, 0, 0):
