@@ -5343,3 +5343,35 @@ class DataSetFilters:
         vec = (split.cell_centers().points - split.center) * factor
         split.points += np.repeat(vec, np.diff(offset), axis=0)
         return split
+
+    def separate_cells(self):
+        """Return a copy of the dataset with separated cells with no shared points.
+
+        This method may be useful when datasets have scalars that need to be
+        associated to each point of each cell rather than either each cell or
+        just the points of the dataset.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid with isolated cells.
+
+        Examples
+        --------
+        Load the example hex beam and separate its cells. This increases the
+        total number of points in the dataset since points are no longer
+        shared.
+
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> grid.n_points
+        99
+        >>> sep_grid = grid.separate_cells()
+        >>> sep_grid.n_points
+        320
+
+        See the :ref:`point_cell_scalars_example` for a more detailed example
+        using this filter.
+
+        """
+        return self.shrink(1.0)

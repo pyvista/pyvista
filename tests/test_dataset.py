@@ -1471,3 +1471,9 @@ def test_explode(hexbeam):
     out = hexbeam.explode()
     assert out.n_cells == hexbeam.n_cells
     assert out.n_points > hexbeam.n_points
+
+
+def test_separate_cells(hexbeam):
+    assert hexbeam.n_points != hexbeam.n_cells * 8
+    sep_grid = hexbeam.separate_cells()
+    assert sep_grid.n_points == hexbeam.n_cells * 8
