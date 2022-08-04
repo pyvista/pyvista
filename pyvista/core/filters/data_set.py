@@ -4154,7 +4154,7 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, assume_unique=False, progress_bar=False):
+    def extract_cells(self, ind, progress_bar=False, assume_unique=False):
         """Return a subset of the grid.
 
         Parameters
