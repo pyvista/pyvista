@@ -1057,7 +1057,7 @@ class PolyDataFilters(DataSetFilters):
         'Tube Cells: 22'
         >>> tube.plot(color='tan')
 
-        See :ref:`ref_create_spline` for more examples using this filter.
+        See :ref:`create_spline_example` for more examples using this filter.
 
         """
         poly_data = self
