@@ -2075,10 +2075,10 @@ def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident
     voi_1, voi_2, structured = structured_grids_split_coincident
 
     # test invalid dimensions
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         voi_1.concatenate(voi_2, axis=0)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         voi_1.concatenate(voi_2, axis=2)
 
 

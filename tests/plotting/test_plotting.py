@@ -101,6 +101,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_user_annotations_scalar_bar_volume',
     'test_plot_string_array',
     'test_cmap_list',
+    'test_multi_plot_scalars',  # flaky
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
@@ -303,6 +304,20 @@ def test_set_environment_texture_cubemap(sphere):
         pl.show(before_close_callback=verify_cache_image)
     else:
         pl.show()
+
+
+@skip_not_vtk9
+@skip_windows
+@skip_mac
+def test_remove_environment_texture_cubemap(sphere):
+    """Test remove_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter()
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
+    pl.remove_environment_texture()
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_plot_pyvista_ndarray(sphere):
@@ -2499,10 +2514,10 @@ def test_multi_plot_scalars():
     pl = pyvista.Plotter(shape=(1, 2))
     pl.subplot(0, 0)
     pl.add_text('"u" point scalars')
-    pl.add_mesh(plane, scalars='u')
+    pl.add_mesh(plane, scalars='u', copy_mesh=True)
     pl.subplot(0, 1)
     pl.add_text('"v" point scalars')
-    pl.add_mesh(plane, scalars='v')
+    pl.add_mesh(plane, scalars='v', copy_mesh=True)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2512,3 +2527,51 @@ def test_bool_scalars(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_square(noise_2d):
+    noise_2d.plot(
+        window_size=[800, 200],
+        show_scalar_bar=False,
+        cpos='xy',
+        zoom='tight',
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_tight_square_padding():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(padding=0.05)
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_tall():
+    grid = pyvista.UniformGrid(dims=(100, 200, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    with pytest.raises(ValueError, match='can only be "tight"'):
+        pl.camera.zoom('invalid')
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [75, 150], rtol=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_wide():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)
