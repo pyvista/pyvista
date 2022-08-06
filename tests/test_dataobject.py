@@ -90,6 +90,7 @@ def test_metadata_save(hexbeam, tmpdir):
     bool_cell_data = np.zeros(hexbeam.n_cells, dtype=bool)
     bool_cell_data[::2] = 1
     hexbeam.cell_data['my_complex_cell_data'] = cell_data + 1j * cell_data
+    hexbeam.cell_data['my_other_complex_cell_data'] = -cell_data - 1j * cell_data
     hexbeam.cell_data['bool_data'] = bool_cell_data
 
     # verify that complex data is restored
@@ -98,6 +99,7 @@ def test_metadata_save(hexbeam, tmpdir):
     assert hexbeam_in.point_data['pt_data0'].dtype == np.complex128
     assert hexbeam_in.point_data['bool_data'].dtype == bool
     assert hexbeam_in.cell_data['my_complex_cell_data'].dtype == np.complex128
+    assert hexbeam_in.cell_data['my_other_complex_cell_data'].dtype == np.complex128
     assert hexbeam_in.cell_data['bool_data'].dtype == bool
 
     # metadata should be removed from the field data
