@@ -154,10 +154,10 @@ class DataObject:
         for assoc_name in ('bitarray', 'complex'):
             for assoc_type in ('POINT', 'CELL'):
                 assoc_data = getattr(self, f'_association_{assoc_name}_names')
-                if assoc_type in assoc_data:
-                    if assoc_data[assoc_type]:
-                        key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
-                        fdata[key] = list(assoc_data[assoc_type])
+                array_names = assoc_data.get(assoc_type)
+                if array_names:
+                    key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                    fdata[key] = list(array_names)
 
     def _restore_metadata(self):
         """Restore PyVista metadata from field data.
