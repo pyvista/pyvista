@@ -427,7 +427,7 @@ def actor_to_mesh(actor, focal_point):
 
         meshes.append(to_surf_mesh(actor, surf, mapper, prop, add_attr))
 
-    if rep_type == 'Points':
+    elif rep_type == 'Points':
         meshes.append(to_tjs_points(dataset, mapper, prop))
 
     if has_verts:
