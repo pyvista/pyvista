@@ -9,7 +9,15 @@ class CellType(IntEnum):
 
     Warnings
     --------
-    TODO Add version warning of some cell types.
+    The following type needs vtk >=v9.0.0 (See `Implementation of vtkTriQuadraticPyramid cell
+<https://gitlab.kitware.com/vtk/vtk/-/merge_requests/8295>`_ and `Add Bezier cell types <https://gitlab.kitware.com/vtk/vtk/-/merge_requests/6055>`_ ).
+    * TRIQUADRATIC_PYRAMID
+    * BEZIER_TRIANGLE
+    * BEZIER_QUADRILATERAL
+    * BEZIER_TETRAHEDRON
+    * BEZIER_HEXAHEDRON
+    * BEZIER_WEDGE
+    * BEZIER_PYRAMID
 
     """
 
