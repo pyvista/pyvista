@@ -101,6 +101,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_user_annotations_scalar_bar_volume',
     'test_plot_string_array',
     'test_cmap_list',
+    'test_multi_plot_scalars',  # flaky
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
