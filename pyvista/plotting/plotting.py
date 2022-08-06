@@ -2937,8 +2937,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetScalarModeToUseFieldData()
 
         # Set actor properties ================================================
-        prop = Property(
-            self._theme,
+        prop_kwargs = dict(
+            theme=self._theme,
             interpolation=interpolation,
             metallic=metallic,
             roughness=roughness,
@@ -2958,7 +2958,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
         if isinstance(opacity, (float, int)):
-            prop.opacity = opacity
+            prop_kwargs['opacity'] = opacity
+        prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
 
         # legend label
