@@ -30,8 +30,9 @@ class MultiBlock(
 ):
     """A composite class to hold many data sets which can be iterated over.
 
-    This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so
-    that we can easily plot these data sets and use the composite in a
+    This wraps/extends the `vtkMultiBlockDataSet
+    <https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html>`_ class
+    so that we can easily plot these data sets and use the composite in a
     Pythonic manner.
 
     You can think of ``MultiBlock`` like a list as we
@@ -40,14 +41,14 @@ class MultiBlock(
 
     .. versionchanged:: 0.36.0
        ``MultiBlock`` adheres more closely to being list like, and inherits
-       from ``collections.abc.MutableSequence``.  Multiple nonconforming
+       from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
        behaviors were removed or modified.
 
     Examples
     --------
     >>> import pyvista as pv
 
-    Create empty composite dataset
+    Create an empty composite dataset.
 
     >>> blocks = pv.MultiBlock()
 
@@ -73,7 +74,7 @@ class MultiBlock(
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
-    Iterate over the collection
+    Iterate over the collection.
 
     >>> for name in blocks.keys():
     ...     block = blocks[name]
@@ -681,7 +682,20 @@ class MultiBlock(
             Data to insert.
         name : str, optional
             Name for key to give dataset.  A default name is given
-            depending on the block index as 'Block-{i:02}'.
+            depending on the block index as ``'Block-{i:02}'``.
+
+        Examples
+        --------
+        Insert a new :class:`pyvista.PolyData` at the start of the multiblock.
+
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> blocks.insert(0, pv.Plane(), "plane")
+        >>> blocks.keys()
+        ['plane', 'cube', 'sphere']
 
         """
         index = range(self.n_blocks)[index]
@@ -700,12 +714,26 @@ class MultiBlock(
         Parameters
         ----------
         index : int or str, optional
-            Index or name of the dataset within the multiblock.  Defaults to last dataset.
+            Index or name of the dataset within the multiblock.  Defaults to
+            last dataset.
 
         Returns
         -------
         pyvista.DataSet or pyvista.MultiBlock
             Dataset from the given index that was removed.
+
+        Examples
+        --------
+        Pop the ``"cube"`` multiblock.
+
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> cube = blocks.pop("cube")
+        >>> blocks.keys()
+        ['sphere']
 
         """
         if isinstance(index, int):
@@ -715,7 +743,22 @@ class MultiBlock(
         return data
 
     def reverse(self):
-        """Reverse MultiBlock in-place."""
+        """Reverse MultiBlock in-place.
+
+        Examples
+        --------
+        Reverse a multiblock.
+
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> blocks.reverse()
+        >>> blocks.keys()
+        ['sphere', 'cube']
+
+        """
         # Taken from implementation in collections.abc.MutableSequence
         names = self.keys()
         n = len(self)
