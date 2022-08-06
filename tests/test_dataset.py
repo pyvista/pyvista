@@ -1467,10 +1467,11 @@ def test_partition(hexbeam):
     assert out.n_points > hexbeam.n_points
 
 
-def test_explode(hexbeam):
-    out = hexbeam.explode()
-    assert out.n_cells == hexbeam.n_cells
-    assert out.n_points > hexbeam.n_points
+def test_explode(datasets):
+    for dataset in datasets:
+        out = dataset.explode()
+        assert out.n_cells == dataset.n_cells
+        assert out.n_points > dataset.n_points
 
 
 def test_separate_cells(hexbeam):

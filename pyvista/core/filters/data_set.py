@@ -4154,18 +4154,13 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, progress_bar=False, assume_unique=False):
+    def extract_cells(self, ind, progress_bar=False):
         """Return a subset of the grid.
 
         Parameters
         ----------
         ind : numpy.ndarray
             Numpy array of cell indices to be extracted.
-
-        assume_unique : bool, default: False
-            If the ``ind`` specified are already sorted and unique, then set
-            this to ``True`` to avoid the filter from doing time-consuming
-            sorts and uniquification operations.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5222,57 +5217,60 @@ class DataSetFilters:
     def partition(self, n_partitions, generate_global_id=False, as_composite=True):
         """Break down input dataset into requested number of partitions.
 
-        Cells on boundaries are uniquely assigned to each partition without duplication.
+         Cells on boundaries are uniquely assigned to each partition without duplication.
 
-        It uses a kdtree implementation that builds balances the cell
-        centers among requested number of partitions. Current implementation
-        only supports power-of-2 target partition. If a non-power of two value
-        is specified for ``n_partitions``, then the load balancing simply
-        uses the power-of-two greater than the requested value
+         It uses a kdtree implementation that builds balances the cell
+         centers among requested number of partitions. Current implementation
+         only supports power-of-2 target partition. If a non-power of two value
+         is specified for ``n_partitions``, then the load balancing simply
+         uses the power-of-two greater than the requested value
 
-        For more details, see `vtkRedistributeDataSetFilter
-        <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
+         For more details, see `vtkRedistributeDataSetFilter
+         <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
 
-        Parameters
-        ----------
-        n_partitions : int
-            Specify the number of partitions to split the input dataset
-            into. Current implementation results in number of partitions equal
-            to the power of 2 greater than or equal to the chosen value.
+         Parameters
+         ----------
+         n_partitions : int
+             Specify the number of partitions to split the input dataset
+             into. Current implementation results in number of partitions equal
+             to the power of 2 greater than or equal to the chosen value.
 
-        generate_global_id : bool, default: False
-            Generate global cell ids if ``None`` present in the input.  If
-            global cell ids are present in the input then this flag is
-            ignored.
+         generate_global_id : bool, default: False
+             Generate global cell ids if ``None`` present in the input.  If
+             global cell ids are present in the input then this flag is
+             ignored.
 
-        as_composite : bool, default: False
-            Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
+             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
+             of the output dataset(s).
 
-        Returns
-        -------
-       pyvista.MultiBlock or pyvista.UnstructuredGrid
-            UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
+         as_composite : bool, default: False
+             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
 
-        Notes
-        -----
-        This filter requires ``vtk>=9.0.0``.
+         Returns
+         -------
+        pyvista.MultiBlock or pyvista.UnstructuredGrid
+             UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
 
-        Examples
-        --------
-        Partition a simple UniformGrid into a :class:`pyvista.MultiBlock` containing
-        partitions.
+         Notes
+         -----
+         This filter requires ``vtk>=9.0.0``.
 
-        >>> import pyvista as pv
-        >>> grid = pv.UniformGrid(dims=(5, 5, 5))
-        >>> out = grid.partition(4, as_composite=True)
-        >>> out.plot(multi_colors=True, show_edges=True)
+         Examples
+         --------
+         Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+         containing each partition.
 
-        Partition the Stanford bunny.
+         >>> import pyvista as pv
+         >>> grid = pv.UniformGrid(dims=(5, 5, 5))
+         >>> out = grid.partition(4, as_composite=True)
+         >>> out.plot(multi_colors=True, show_edges=True)
 
-        >>> from pyvista import examples
-        >>> mesh = examples.download_bunny()
-        >>> out = mesh.partition(4, as_composite=True)
-        >>> out.plot(multi_colors=True, cpos='xy')
+         Partition the Stanford bunny.
+
+         >>> from pyvista import examples
+         >>> mesh = examples.download_bunny()
+         >>> out = mesh.partition(4, as_composite=True)
+         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
         # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
@@ -5284,6 +5282,7 @@ class DataSetFilters:
         alg.SetInputData(self)
         alg.SetNumberOfPartitions(n_partitions)
         alg.SetPreservePartitionsInOutput(True)
+        alg.SetGenerateGlobalCellIds(generate_global_id)
         alg.Update()
 
         # pyvista does not yet support vtkPartitionedDataSet
@@ -5330,9 +5329,11 @@ class DataSetFilters:
         >>> exploded.plot(show_edges=True)
 
         """
-        split = self.separate()
+        split = self.separate_cells()
+        if not isinstance(split, pyvista.UnstructuredGrid):
+            split = split.cast_to_unstructured_grid()
 
-        # VTK changed their cell indexing API in 9.0 and
+        # VTK changed their cell indexing API in 9.0
         if pyvista.vtk_version_info < (9, 0, 0):
             offset = split.offset.copy()
             offset -= np.arange(offset.size)

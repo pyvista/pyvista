@@ -30,5 +30,13 @@ def test_to_tetrahedral_mixed(tiny_rectilinear):
     data[half:] = 12
     tiny_rectilinear['data'] = data
     tet_grid = tiny_rectilinear.to_tetrahedra(mixed=True)
-
     assert tet_grid.n_cells == (half * 5 + half * 12)
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(mixed='data')
+    assert tet_grid.n_cells == (half * 5 + half * 12)
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(mixed=data)
+    assert tet_grid.n_cells == (half * 5 + half * 12)
+
+    with pytest.raises(TypeError, match='mixed'):
+        tet_grid = tiny_rectilinear.to_tetrahedra(mixed=123)
