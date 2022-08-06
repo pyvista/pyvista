@@ -220,10 +220,10 @@ initializing.
 .. jupyter-execute::
 
    >>> import numpy as np
-   >>> import vtk
    >>> import pyvista
+   >>> from pyvista import CellType
    >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-   >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
+   >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
    >>> cell1 = np.array([[0, 0, 0],
    ...                   [1, 0, 0],
    ...                   [1, 1, 0],
