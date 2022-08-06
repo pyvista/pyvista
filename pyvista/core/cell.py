@@ -9,7 +9,7 @@ class CellType(IntEnum):
 
     Warnings
     --------
-    The following type needs vtk >=v9.0.0 (See `Implementation of vtkTriQuadraticPyramid cell
+    The following types need ``vtk >=v9.0.0`` (See `Implementation of vtkTriQuadraticPyramid cell
     <https://gitlab.kitware.com/vtk/vtk/-/merge_requests/8295>`_ and `Add Bezier cell types <https://gitlab.kitware.com/vtk/vtk/-/merge_requests/6055>`_ ).
     * TRIQUADRATIC_PYRAMID
     * BEZIER_TRIANGLE
