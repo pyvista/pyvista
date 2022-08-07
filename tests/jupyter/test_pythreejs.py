@@ -235,7 +235,7 @@ def test_labels():
     # ensure point labels at least don't raise a warning
     with pytest.warns(None) as record:
         pv_pythreejs.convert_plotter(pl)
-    assert len(record) == 0
+    assert not record
 
 
 def test_linked_views(sphere):
