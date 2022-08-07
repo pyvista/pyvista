@@ -2734,3 +2734,25 @@ def test_tight_wide():
     # limit to widest dimension
     assert np.allclose(pl.window_size, [150, 75])
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_backface_params():
+    mesh = pyvista.ParametricCatalanMinimal()
+
+    with pytest.raises(TypeError, match='pyvista.Property or a dict'):
+        mesh.plot(backface_params='invalid')
+
+    params = dict(color='blue', smooth_shading=True)
+    backface_params = dict(color='red', specular=1.0, specular_power=50.0)
+    backface_prop = pyvista.Property(**backface_params)
+
+    # check Property can be passed
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, **params, backface_params=backface_prop)
+    pl.close()
+
+    # check and cache dict
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, **params, backface_params=backface_params)
+    pl.view_xz()
+    pl.show(before_close_callback=verify_cache_image)
