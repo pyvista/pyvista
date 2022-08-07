@@ -1,0 +1,72 @@
+"""
+.. _backface_props_example:
+
+Setting Backface Properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default front and backface rendering uses the same properties. In certain
+situations it can be useful to set different properties for backfaces than
+for frontfaces.
+
+One straightforward example is when a closed (or close enough) surface has a
+different color on the inside. Note that the notion of "inside" and "outside"
+depend on the orientation of the surface normals:
+"""
+# sphinx_gallery_thumbnail_number = 1
+import numpy as np
+
+import pyvista as pv
+
+mesh = pv.ParametricEllipsoid(min_v=np.pi / 2 - 0.2, max_v=np.pi / 2 + 0.2)
+
+# create a shifted copy with flipped normals
+mesh_inside_out = mesh.translate((0, 0, 1), inplace=False)
+mesh_inside_out.compute_normals(flip_normals=True, inplace=True)
+meshes = mesh + mesh_inside_out
+
+backface_params = dict(color='orangered')
+meshes.plot(color='aquamarine', backface_params=backface_params, smooth_shading=True)
+
+
+###############################################################################
+# A more interesting use case is helping visualize the orientation of complex,
+# self-intersecting surfaces. For instance :func:`Catalan's minimal surface
+# <pyvista.ParametricCatalanMinimal>` has a complex shape, and coloring the
+# front and backfaces differently helps viewers comprehend the intricate
+# structure of the surface.
+
+catalan = pv.ParametricCatalanMinimal()
+backface_params = dict(color='forestgreen', specular=1.0, specular_power=50.0)
+catalan.plot(color='dodgerblue', backface_params=backface_params, smooth_shading=True)
+
+
+###############################################################################
+# In case of non-orientable surfaces adding specific backface properties can
+# make the non-orientable quality very obvious by the emergence of "seams"
+# where the face properties are discontinuous.
+
+henneberg = pv.ParametricHenneberg().scale(0.25, inplace=False)
+klein = pv.ParametricKlein().rotate_z(150, inplace=False).translate((6, 0, 0), inplace=False)
+meshes = henneberg + klein
+
+backface_params = dict(color='mediumseagreen', specular=1.0, specular_power=50.0)
+meshes.plot(color='gold', backface_params=backface_params, smooth_shading=True)
+
+
+###############################################################################
+# Of course we aren't constrained to only setting distinct colors for backfaces;
+# most :class:`pyvista.Property` attributes can be overridden. However, some of
+# these have no effect, while others merely don't make any sense. For instance,
+# most objects have the same opacity no matter which direction you look at them.
+# Here is a GIF animation circling around such an asymmetrically opaque Möbius
+# strip:
+
+mobius = pv.ParametricMobius().rotate_z(-90, inplace=False)
+backface_params = dict(opacity=0.5)
+plotter = pv.Plotter()
+plotter.add_mesh(mobius, color='deepskyblue', backface_params=backface_params, smooth_shading=True)
+plotter.open_gif('mobius_semiopaque.gif')
+
+viewup = [0, 0, 1]
+orbit = plotter.generate_orbital_path(n_points=24, shift=0.0, viewup=viewup)
+plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
