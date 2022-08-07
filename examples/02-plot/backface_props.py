@@ -70,3 +70,8 @@ plotter.open_gif('mobius_semiopaque.gif')
 viewup = [0, 0, 1]
 orbit = plotter.generate_orbital_path(n_points=24, shift=0.0, viewup=viewup)
 plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
+
+
+###############################################################################
+# See also the :ref:`sphere_eversion_example` example which relies on
+# distinguishing the inside and the outside of a sphere.
