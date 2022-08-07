@@ -1,4 +1,4 @@
-"""Filters module with class to manage filters/algorithms for rectilinear grid datasets."""
+"""Filters module with the class to manage filters/algorithms for rectilinear grid datasets."""
 
 import collections
 from typing import Sequence, Union
@@ -25,7 +25,7 @@ class RectilinearGridFilters:
         Parameters
         ----------
         tetra_per_cell : int, default: 5
-            The number of tetrahedrals to divide each cell in the into. Can be
+            The number of tetrahedrons to divide each cell into. Can be
             either ``5``, ``6``, or ``12``. If ``mixed=True``, this value is
             overridden.
 
@@ -35,8 +35,8 @@ class RectilinearGridFilters:
             :class:`pyvista.RectilinearGrid` to be either 5 or 12 to
             determining the number of tetrahedra to generate per cell.
 
-            When a sequence, uses these value to subdivide the cells. When a
-            string, uses cell array rather than the active array to determine
+            When a sequence, uses these values to subdivide the cells. When a
+            string uses a cell array rather than the active array to determine
             the number of tetrahedra to generate per cell.
 
         pass_cell_ids : bool, default: False
@@ -54,8 +54,8 @@ class RectilinearGridFilters:
 
         Examples
         --------
-        Divide a rectangular grid into tetrahedrals. Each cell contains by
-        default 5 tetrahedrals.
+        Divide a rectangular grid into tetrahedrons. Each cell contains by
+        default 5 tetrahedrons.
 
         First, create and plot the grid.
 
@@ -67,13 +67,13 @@ class RectilinearGridFilters:
         >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
         >>> grid.plot()
 
-        Now, generate the tetrahedra plot the exploded view of the cell.
+        Now, generate the tetrahedra plot in the exploded view of the cell.
 
         >>> tet_grid = grid.to_tetrahedra()
         >>> tet_grid.explode(factor=0.5).plot(show_edges=True)
 
         Take the same grid but divide the first cell into 5 cells and the other
-        cell into 12 tetrahedrals per cell.
+        cell into 12 tetrahedrons per cell.
 
         >>> tet_grid = grid.to_tetrahedra(mixed=[5, 12])
         >>> tet_grid.explode(factor=0.5).plot(show_edges=True)

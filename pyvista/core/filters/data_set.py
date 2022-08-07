@@ -5215,12 +5215,12 @@ class DataSetFilters:
         return _get_output(alg)
 
     def partition(self, n_partitions, generate_global_id=False, as_composite=True):
-        """Break down input dataset into requested number of partitions.
+        """Break down input dataset into a requested number of partitions.
 
          Cells on boundaries are uniquely assigned to each partition without duplication.
 
          It uses a kdtree implementation that builds balances the cell
-         centers among requested number of partitions. Current implementation
+         centers among a requested number of partitions. The current implementation
          only supports power-of-2 target partition. If a non-power of two value
          is specified for ``n_partitions``, then the load balancing simply
          uses the power-of-two greater than the requested value
@@ -5232,11 +5232,11 @@ class DataSetFilters:
          ----------
          n_partitions : int
              Specify the number of partitions to split the input dataset
-             into. Current implementation results in number of partitions equal
+             into. Current implementation results in a number of partitions equal
              to the power of 2 greater than or equal to the chosen value.
 
          generate_global_id : bool, default: False
-             Generate global cell ids if ``None`` present in the input.  If
+             Generate global cell ids if ``None`` are present in the input.  If
              global cell ids are present in the input then this flag is
              ignored.
 
@@ -5265,7 +5265,7 @@ class DataSetFilters:
          >>> out = grid.partition(4, as_composite=True)
          >>> out.plot(multi_colors=True, show_edges=True)
 
-         Partition the Stanford bunny.
+         Partition of the Stanford bunny.
 
          >>> from pyvista import examples
          >>> mesh = examples.download_bunny()
@@ -5334,7 +5334,7 @@ class DataSetFilters:
             split = split.cast_to_unstructured_grid()
 
         # VTK changed their cell indexing API in 9.0
-        if pyvista.vtk_version_info < (9, 0, 0):
+        if pyvista.vtk_version_info < (9, 0, 0):  # pragma: no cover
             offset = split.offset.copy()
             offset -= np.arange(offset.size)
             offset = np.hstack((offset, split.n_points))
