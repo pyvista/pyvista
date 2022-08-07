@@ -101,6 +101,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_user_annotations_scalar_bar_volume',
     'test_plot_string_array',
     'test_cmap_list',
+    'test_multi_plot_scalars',  # flaky
     'test_collision_plot',
     'test_enable_stereo_render',
     'test_plot_complex_value',
@@ -1179,7 +1180,7 @@ def test_multi_block_plot():
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
-    multi[3] = examples.load_airplane()
+    multi.append(examples.load_airplane())
     with pytest.raises(KeyError):
         # The scalars are not available in all datasets so raises KeyError
         multi.plot(scalars='Random Data', multi_colors=True)

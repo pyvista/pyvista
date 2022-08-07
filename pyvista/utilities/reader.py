@@ -308,6 +308,9 @@ class BaseReader:
         if data is None:  # pragma: no cover
             raise RuntimeError("Failed to read file.")
         data._post_file_load_processing()
+
+        # check for any pyvista metadata
+        data._restore_metadata()
         return data
 
     def _update_information(self):
