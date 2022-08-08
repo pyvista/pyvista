@@ -2162,7 +2162,7 @@ class XdmfReader(BaseReader, PointCellDataSelection):
     Parameters
     ----------
     path : str
-        Path of the GIF to read.
+        Path of the XDMF file to read.
     Examples
     --------
     >>> import pyvista
