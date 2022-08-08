@@ -26,7 +26,8 @@ Special thanks to `@thewtex`_ for the `itkwidgets`_ library.
 Installation
 ++++++++++++
 To use `PlotterITK` you'll need to install ``itkwidgets>=0.25.2``.
-Follow the installation steps `here <https://github.com/InsightSoftwareConsortium/itkwidgets#user-content-installation>`_.
+Follow the installation steps `here <https://itkwidgets.readthedocs.io/en/latest/quick_start_guide.html>`_.
+
 
 You can install everything with `pip` if you prefer not using conda,
 but be sure your juptyerlab is up-to-date.  If you encounter problems,
