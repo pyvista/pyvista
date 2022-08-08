@@ -41,8 +41,8 @@ Q = 2 / 3  # arbitrary < 1
 w = 2  # arbitrary > 0
 n = 2  # arbitrary integer > 1, the number of "lobes"
 beta = 1  # arbitrary > 1
-alpha_max = 1  # arbitrary > 1
-eta_min = 1  # arbitrary > 1
+alpha_final = 1  # arbitrary > 1
+eta_final = 2  # arbitrary > 1
 kappa = (n - 1) / (2 * n)
 
 ###############################################################################
@@ -201,8 +201,8 @@ for lamda in np.linspace(0, 1, n_steps, endpoint=False):
 # inverted wormhole -> unfolded wormhole
 x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(0, 1, n_steps)
-alphas = np.linspace(0, alpha_max, n_steps)
-etas = np.linspace(1, eta_min, n_steps)
+alphas = np.linspace(0, alpha_final, n_steps)
+etas = np.linspace(1, eta_final, n_steps)
 for xi, alpha, eta in zip(xis, alphas, etas):
     x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
@@ -232,8 +232,8 @@ for q in np.linspace(0, Q, n_steps + 1)[1:]:
 # unfolded wormhole -> inverted wormhole
 x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(1, 0, n_steps + 1)[1:]
-alphas = np.linspace(alpha_max, 0, n_steps + 1)[1:]
-etas = np.linspace(eta_min, 1, n_steps + 1)[1:]
+alphas = np.linspace(alpha_final, 0, n_steps + 1)[1:]
+etas = np.linspace(eta_final, 1, n_steps + 1)[1:]
 for xi, alpha in zip(xis, alphas):
     x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
@@ -252,8 +252,8 @@ plotter.close()
 # sphere are visible.
 t = q = 0
 xi = p = 1
-eta = eta_min
-alpha = alpha_max
+eta = eta_final
+alpha = alpha_final
 
 x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
