@@ -161,9 +161,6 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
 # :func:`pyvista.Plotter.add_mesh`, allowing us to plot the inside and the
 # outside with different colors.
 
-theta, phi = np.mgrid[-np.pi / 2 : np.pi / 2 : 200j, -np.pi : np.pi : 400j]
-h, phi = sphere_to_cylinder(theta, phi)
-
 # plot options to use for each frame
 opts = dict(
     color='aquamarine',
@@ -194,6 +191,8 @@ p = xi = alpha = 0
 eta = 1
 
 # sphere -> inverted wormhole
+theta, phi = np.mgrid[-np.pi / 2 : np.pi / 2 : 200j, -np.pi : np.pi : 400j]
+h, phi = sphere_to_cylinder(theta, phi)
 for lamda in np.linspace(0, 1, n_steps, endpoint=False):
     x2, y2, z2 = unfold_sphere(theta, phi, t, q, eta, lamda)
     save_frame(x2, y2, z2)
