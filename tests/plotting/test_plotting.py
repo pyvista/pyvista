@@ -93,20 +93,19 @@ VER_IMAGE_REGRESSION_WARNING = 1000
 # these images vary between Windows when using OSMesa and Linux/MacOS
 # and will not be verified
 WINDOWS_SKIP_IMAGE_CACHE = {
-    'test_user_annotations_scalar_bar_volume',  # occurs even without Windows OSMesa
-    'test_enable_stereo_render',  # occurs even without Windows OSMesa
-    'test_plot_add_scalar_bar',
-    'test_plot_cell_data',
-    'test_scalars_by_name',
-    'test_user_annotations_scalar_bar_volume',
-    'test_plot_string_array',
     'test_cmap_list',
     'test_multi_plot_scalars',  # flaky
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_plot_add_scalar_bar',
+    'test_plot_cell_data',
     'test_plot_complex_value',
-    'test_plot_helper_volume',
     'test_plot_helper_two_volumes',
+    'test_plot_helper_volume',
+    'test_plot_string_array',
+    'test_rectlinear_edge_case',
+    'test_scalars_by_name',
+    'test_user_annotations_scalar_bar_volume',
 }
 
 # these images vary between Linux/Windows and MacOS
@@ -2406,6 +2405,15 @@ def test_orbit_on_path(sphere):
     pl.add_mesh(sphere, show_edges=True)
     pl.orbit_on_path(step=0.01, progress_bar=True)
     pl.close()
+
+
+def test_rectlinear_edge_case():
+    # ensure that edges look like square edges regardless of the dtype of X
+    xrng = np.arange(-10, 10, 5)
+    yrng = np.arange(-10, 10, 5)
+    zrng = [1]
+    rec_grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    rec_grid.plot(show_edges=True, cpos='xy', before_close_callback=verify_cache_image)
 
 
 @skip_9_1_0

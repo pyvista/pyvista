@@ -4560,7 +4560,7 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
 
 
 def download_ivan_angel(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of a angel statue created by Ivan Nikolov.
+    """Download a scan of an angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions

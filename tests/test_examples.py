@@ -66,6 +66,12 @@ def test_load_random_hills():
     assert mesh.n_cells
 
 
+def test_load_tetbeam():
+    mesh = examples.load_tetbeam()
+    assert mesh.n_cells
+    assert (mesh.celltypes == 10).all()
+
+
 if TEST_DOWNLOADS:
 
     def test_download_single_sphere_animation():
