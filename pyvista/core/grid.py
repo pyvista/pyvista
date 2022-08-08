@@ -192,14 +192,21 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         if check_duplicates:
             raise_has_duplicates(x)
 
+        # edges are shown as triangles if x is not floating point
+        if not np.issubdtype(x.dtype, np.floating):
+            x = x.astype(float)
         self.SetXCoordinates(helpers.convert_array(x.ravel()))
         if y is not None:
             if check_duplicates:
                 raise_has_duplicates(y)
+            if not np.issubdtype(y.dtype, np.floating):
+                y = y.astype(float)
             self.SetYCoordinates(helpers.convert_array(y.ravel()))
         if z is not None:
             if check_duplicates:
                 raise_has_duplicates(z)
+            if not np.issubdtype(z.dtype, np.floating):
+                z = z.astype(float)
             self.SetZCoordinates(helpers.convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
