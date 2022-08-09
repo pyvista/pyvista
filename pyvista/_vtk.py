@@ -545,7 +545,7 @@ if VTK9:
 
     def lazy_vtkXdmfReader():
         """Lazy import of the vtkXdmfReader."""
-        from vtkmodules.vtkIOXdmf3 import vtkXdmfReader
+        from vtkmodules.vtkIOXdmf2 import vtkXdmfReader
 
         return vtkXdmfReader()
 
