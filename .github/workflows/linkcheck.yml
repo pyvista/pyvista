@@ -1,0 +1,24 @@
+name: LinkCheck - All files 5
+
+on:
+  schedule:
+    - cron: "0 5 * * 0" # Runs at 05:00 on Sunday.
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: LinkCheck
+        run: make -C doc linkcheck SPHINXOPTS="-W --keep-going --color"
