@@ -1,6 +1,7 @@
 """Fine-grained control of reading data files."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import enum
 from functools import wraps
 import os
 import pathlib
@@ -1248,6 +1249,30 @@ class Plot3DMetaReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
+class Plot3DFunctionEnum(enum.IntEnum):
+    """Enum for functions used in `MultiBLockPlot3DReader`."""
+
+    DENSITY = 100
+    PRESSURE = 110
+    PRESSURE_COEFFICIENT = 111
+    MACH = 112
+    SPEED_OF_SOUND = 113
+    TEMPERATURE = 120
+    ENTHALPY = 130
+    INTERNAL_ENERGY = 140
+    KINETIC_ENERGY = 144
+    VELOCITY_MAGNITUDE = 153
+    STAGNATION_ENERGY = 163
+    ENTROPY = 170
+    SWIRL = 184
+    VELOCITY = 200
+    VORTICITY = 201
+    MOMENTUM = 202
+    PRESSURE_GRADIENT = 210
+    STRAIN_RATE = 212
+    VORTICITY_MAGNITUDE = 211
+
+
 class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader."""
 
@@ -1294,6 +1319,68 @@ class MultiBlockPlot3DReader(BaseReader):
     @auto_detect_format.setter
     def auto_detect_format(self, value):
         self.reader.SetAutoDetectFormat(value)
+
+    def add_function(self, value: Union[int, Plot3DFunctionEnum]):
+        """Specify additional functions to read.
+
+        Parameters
+        ----------
+        value
+            An integer or `Plot3DFunctionEnum`.
+        """
+        if isinstance(value, enum.Enum):
+            value = value.value
+        self.reader.AddFunction(value)
+
+    def remove_function(self, value: Union[int, Plot3DFunctionEnum]):
+        """Remove one function from list of functions to read.
+
+        Parameters
+        ----------
+        value
+            An integer or `Plot3DFunctionEnum`.
+        """
+        if isinstance(value, enum.Enum):
+            value = value.value
+        self.reader.RemoveFunction(value)
+
+    def remove_all_functions(self):
+        """Remove all functions from list of functions to read."""
+        self.reader.RemoveAllFunctions()
+
+    @property
+    def preserve_intermediate_functions(self):
+        """When ``True`` (default), intermediate computed quantities will be preserved.
+
+        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still needs to compute
+        ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the output will not have ``Velocity``
+        array, only the requested ``VelocityMagnitude``.
+
+        This is useful to avoid using up memory for arrays that are not relevant for the analysis.
+        """
+        return self.reader.GetPreserveIntermediateFunctions()
+
+    @preserve_intermediate_functions.setter
+    def preserve_intermediate_functions(self, val):
+        self.reader.SetPreserveIntermediateFunctions(val)
+
+    @property
+    def gamma(self):
+        """Ratio of specific heats."""
+        return self.reader.GetGamma()
+
+    @gamma.setter
+    def gamma(self, val):
+        self.reader.SetGamma(val)
+
+    @property
+    def r_gas_constant(self):
+        """Gas constant."""
+        return self.reader.GetR()
+
+    @r_gas_constant.setter
+    def r_gas_constant(self, val):
+        self.reader.SetR(val)
 
 
 class CGNSReader(BaseReader, PointCellDataSelection):

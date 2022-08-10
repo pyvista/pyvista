@@ -384,21 +384,46 @@ def test_multiblockplot3dreader():
     # Reader doesn't yet support reusability
     reader = pyvista.MultiBlockPlot3DReader(filename)
     reader.add_q_files(q_filename)
+    reader.add_function(112)  # add by int
+    reader.add_function(pyvista.reader.Plot3DFunctionEnum.PRESSURE_GRADIENT)  # add by enum
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    assert 'MachNumber' in mesh[0].point_data
+    assert 'PressureGradient' in mesh[0].point_data
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files([q_filename])
     mesh = reader.read()
     for m in mesh:
         assert len(m.array_names) > 0
 
     reader = pyvista.MultiBlockPlot3DReader(filename)
-    q_filename = reader.add_q_files([q_filename])
-    mesh = reader.read()
-    for m in mesh:
-        assert len(m.array_names) > 0
 
-    reader = pyvista.MultiBlockPlot3DReader(filename)
+    # get/set of `auto_detect_format`
     reader.auto_detect_format = False
     assert reader.auto_detect_format is False
     reader.auto_detect_format = True
     assert reader.auto_detect_format is True
+
+    # get/set of `preserve_intermediate_functions`
+    reader.preserve_intermediate_functions = False
+    assert reader.preserve_intermediate_functions is False
+    reader.preserve_intermediate_functions = True
+    assert reader.preserve_intermediate_functions is True
+
+    # get/set of `gamma`
+    reader.gamma = 1.5
+    assert reader.gamma == 1.5
+    reader.gamma = 99
+    assert reader.gamma == 99
+
+    # get/set of `r_gas_constant`
+    reader.r_gas_constant = 5
+    assert reader.r_gas_constant == 5
+    reader.r_gas_constant = 10
+    assert reader.r_gas_constant == 10
 
 
 def test_binarymarchingcubesreader():
