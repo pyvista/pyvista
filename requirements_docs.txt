@@ -6,7 +6,7 @@ imageio>=2.5.0
 ipygany==0.5.0
 ipyvtklink==0.2.2
 jupyter_sphinx==0.4.0
-jupyterlab==3.4.4
+jupyterlab==3.4.5
 lxml==4.9.1
 matplotlib==3.5.2
 meshio==5.3.4
