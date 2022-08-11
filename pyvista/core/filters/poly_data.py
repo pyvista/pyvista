@@ -1903,7 +1903,13 @@ class PolyDataFilters(DataSetFilters):
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
-        output["vtkOriginalPointIds"] = original_ids
+
+        try:
+            output["vtkOriginalPointIds"] = original_ids
+        except ValueError as e:
+            if str(e) != 'Number of scalars (1) must match either the number of points (0) or the number of cells (0).':
+                raise
+            raise ValueError(f"There is no path between vertices {start_vertex} and {end_vertex}.")
 
         # Do not copy textures from input
         output.clear_textures()
