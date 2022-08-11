@@ -861,9 +861,11 @@ def test_n_lines():
 
 def test_geodesic_error_message(sphere, sphere_shifted):
 
-    combined = sphere + sphere_shifted  # the sphere and sphere_shifted are disconnected - no path between them
+    combined = (
+        sphere + sphere_shifted
+    )  # the sphere and sphere_shifted are disconnected - no path between them
     start_vertex = 0
-    end_vertex = combined.n_points-1
+    end_vertex = combined.n_points - 1
     match = f"There is no path between vertices {start_vertex} and {end_vertex}."
 
     with pytest.raises(ValueError, match=match):
