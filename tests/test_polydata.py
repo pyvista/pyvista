@@ -857,3 +857,17 @@ def test_n_verts():
 def test_n_lines():
     mesh = pyvista.Line()
     assert mesh.n_lines == 1
+
+
+def test_geodesic_error_message(sphere, sphere_shifted):
+
+    combined = sphere + sphere_shifted  # the sphere and sphere_shifted are disconnected - no path between them
+    start_vertex = 0
+    end_vertex = combined.n_points-1
+    match = f"There is no path between vertices {start_vertex} and {end_vertex}."
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic(start_vertex, end_vertex)
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic_distance(start_vertex, end_vertex)
