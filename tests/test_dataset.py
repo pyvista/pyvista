@@ -12,6 +12,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import Texture, examples
+from pyvista.core.errors import VTKVersionError
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
@@ -1447,6 +1448,30 @@ def test_cast_to_pointset(sphere, deep):
         assert not np.allclose(sphere.points, pointset.points)
     else:
         assert np.allclose(sphere.points, pointset.points)
+
+
+def test_partition(hexbeam):
+    if pyvista.vtk_version_info < (9, 1, 0):
+        with pytest.raises(VTKVersionError):
+            hexbeam.partition(2)
+        return
+    # split as composite
+    n_part = 2
+    out = hexbeam.partition(n_part)
+    assert isinstance(out, pyvista.MultiBlock)
+    assert len(out) == 2
+
+    # split as unstrucutred grid
+    out = hexbeam.partition(hexbeam.n_cells, as_composite=False)
+    assert isinstance(hexbeam, pyvista.UnstructuredGrid)
+    assert out.n_points > hexbeam.n_points
+
+
+def test_explode(datasets):
+    for dataset in datasets:
+        out = dataset.explode()
+        assert out.n_cells == dataset.n_cells
+        assert out.n_points > dataset.n_points
 
 
 def test_separate_cells(hexbeam):

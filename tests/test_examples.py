@@ -66,6 +66,12 @@ def test_load_random_hills():
     assert mesh.n_cells
 
 
+def test_load_tetbeam():
+    mesh = examples.load_tetbeam()
+    assert mesh.n_cells
+    assert (mesh.celltypes == 10).all()
+
+
 def test_load_sun():
     mesh = examples.planets.load_sun()
     assert mesh.n_cells

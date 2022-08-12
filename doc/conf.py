@@ -201,12 +201,15 @@ numpydoc_validation_exclude = {  # set of regex
     # wraps
     r'\.Plotter\.enable_depth_peeling$',
     r'\.add_scalar_bar$',
-    # pending refactor
-    r'\.MultiBlock\.next$',
     # called from inherited
     r'\.Table\.copy_meta_from$',
     # Type alias
     r'\.color_like$',
+    # Mixin methods from collections.abc
+    r'\.MultiBlock\.clear$',
+    r'\.MultiBlock\.count$',
+    r'\.MultiBlock\.index$',
+    r'\.MultiBlock\.remove$',
 }
 
 

@@ -260,7 +260,7 @@ def _retrieve_zip(retriever, filename):
     return local_path_zip_dir, resp
 
 
-def _download_file(filename):
+def _download_file(filename, progress_bar=False):
     """Download a file from https://github.com/pyvista/vtk-data/tree/master/Data.
 
     If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
@@ -4515,7 +4515,7 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
 
 
 def download_ivan_angel(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of a angel statue created by Ivan Nikolov.
+    """Download a scan of an angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
