@@ -864,7 +864,6 @@ def test_n_lines():
 
 @skip_not_vtk9
 def test_geodesic_disconnected(sphere, sphere_shifted):
-
     # the sphere and sphere_shifted are disconnected - no path between them
     combined = sphere + sphere_shifted
     start_vertex = 0
