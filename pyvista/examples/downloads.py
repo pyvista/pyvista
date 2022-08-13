@@ -259,7 +259,7 @@ def _retrieve_zip(retriever, filename):
 
 
 def _download_file(filename, progress_bar=False):
-    """Download a file from https://github.com/pyvista/vtk-data/master/Data.
+    """Download a file from https://github.com/pyvista/vtk-data/tree/master/Data.
 
     If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
     to be a local git repository.
@@ -267,7 +267,7 @@ def _download_file(filename, progress_bar=False):
     Parameters
     ----------
     filename : str
-        Path within https://github.com/pyvista/vtk-data/master/Data to download
+        Path within https://github.com/pyvista/vtk-data/tree/master/Data to download
         the file from.
 
     progress_bar : bool, default: False
@@ -4560,7 +4560,7 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
 
 
 def download_ivan_angel(load=True, progress_bar=False):  # pragma: no cover
-    """Download a scan of a angel statue created by Ivan Nikolov.
+    """Download a scan of an angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
     Close-range SfM Software Performance under Varying Capturing Conditions
@@ -4828,3 +4828,7 @@ def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
     if load:
         return pyvista.read(filename)
     return filename
+
+
+# verify example cache integrity
+_verify_cache_integrity()

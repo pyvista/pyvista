@@ -2584,3 +2584,8 @@ def test_integrate_data():
     assert np.isclose(integrated["Area"], np.pi, rtol=1e-3)
     assert np.isclose(integrated["cdata"], 2 * np.pi, rtol=1e-3)
     assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
+
+
+def test_subdivide_tetra(tetbeam):
+    grid = tetbeam.subdivide_tetra()
+    assert grid.n_cells == tetbeam.n_cells * 12
