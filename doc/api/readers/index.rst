@@ -50,6 +50,7 @@ Reader Classes
     PTSReader
     PVDReader
     Plot3DMetaReader
+    Plot3DFunctionEnum
     SLCReader
     STLReader
     SegYReader

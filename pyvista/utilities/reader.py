@@ -1250,7 +1250,7 @@ class Plot3DMetaReader(BaseReader):
 
 
 class Plot3DFunctionEnum(enum.IntEnum):
-    """Enum for functions used in `MultiBLockPlot3DReader`."""
+    """An enumeration for the functions used in `MultiBlockPlot3DReader`."""
 
     DENSITY = 100
     PRESSURE = 110
