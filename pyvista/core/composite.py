@@ -4,9 +4,10 @@ These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections.abc
+from itertools import zip_longest
 import logging
 import pathlib
-from typing import Any, List, Optional, Set, Tuple, Union, cast
+from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overload
 
 import numpy as np
 
@@ -22,22 +23,33 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
+_TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
+
+
+class MultiBlock(
+    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence
+):
     """A composite class to hold many data sets which can be iterated over.
 
-    This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so
-    that we can easily plot these data sets and use the composite in a
+    This wraps/extends the `vtkMultiBlockDataSet
+    <https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html>`_ class
+    so that we can easily plot these data sets and use the composite in a
     Pythonic manner.
 
-    You can think of ``MultiBlock`` like lists or dictionaries as we
-    can iterate over this data structure by index and we can also
-    access blocks by their string name.
+    You can think of ``MultiBlock`` like a list as we
+    can iterate over this data structure by index.  It has some dictionary
+    features as we can also access blocks by their string name.
+
+    .. versionchanged:: 0.36.0
+       ``MultiBlock`` adheres more closely to being list like, and inherits
+       from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
+       behaviors were removed or modified.
 
     Examples
     --------
     >>> import pyvista as pv
 
-    Create empty composite dataset
+    Create an empty composite dataset.
 
     >>> blocks = pv.MultiBlock()
 
@@ -63,7 +75,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
-    Iterate over the collection
+    Iterate over the collection.
 
     >>> for name in blocks.keys():
     ...     block = blocks[name]
@@ -100,10 +112,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
-                idx = 0
                 for key, block in args[0].items():
-                    self[idx, key] = block
-                    idx += 1
+                    self.append(block, key)
             else:
                 raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
 
@@ -293,7 +303,15 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 return i
         raise KeyError(f'Block name ({name}) not found')
 
-    def __getitem__(self, index: Union[int, str]) -> Optional['MultiBlock']:
+    @overload
+    def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105
+        ...  # pragma: no cover
+
+    @overload
+    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
+        ...  # pragma: no cover
+
+    def __getitem__(self, index):
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -302,21 +320,16 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if isinstance(index, slice):
             multi = MultiBlock()
             for i in range(self.n_blocks)[index]:
-                multi[-1, self.get_block_name(i)] = self[i]
-            return multi
-        elif isinstance(index, (list, tuple, np.ndarray)):
-            multi = MultiBlock()
-            for i in index:
-                name = i if isinstance(i, str) else self.get_block_name(i)
-                multi[-1, name] = self[i]  # type: ignore
+                multi.append(self[i], self.get_block_name(i))
             return multi
         elif isinstance(index, str):
             index = self.get_index_by_name(index)
         ############################
+        if index < -self.n_blocks or index >= self.n_blocks:
+            raise IndexError(f'index ({index}) out of range for this dataset.')
         if index < 0:
             index = self.n_blocks + index
-        if index < 0 or index >= self.n_blocks:
-            raise IndexError(f'index ({index}) out of range for this dataset.')
+
         data = self.GetBlock(index)
         if data is None:
             return data
@@ -324,22 +337,30 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             data = wrap(data)
         return data
 
-    def append(self, dataset: DataSet):
+    def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
         """Add a data set to the next block index.
 
         Parameters
         ----------
-        dataset : pyvista.DataSet
+        dataset : pyvista.DataSet or pyvista.MultiBlock
             Dataset to append to this multi-block.
+
+        name : str, optional
+            Block name to give to dataset.  A default name is given
+            depending on the block index as 'Block-{i:02}'.
 
         Examples
         --------
         >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.append(pv.Cone())
         >>> len(blocks)
         3
+        >>> blocks.append(examples.load_uniform(), "uniform")
+        >>> blocks.keys()
+        ['cube', 'sphere', 'Block-02', 'uniform']
 
         """
         # do not allow to add self
@@ -350,27 +371,82 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # always wrap since we may need to reference the VTK memory address
         if not pyvista.is_pyvista_dataset(dataset):
             dataset = pyvista.wrap(dataset)
+        self.n_blocks += 1
         self[index] = dataset
+        # No overwrite if name is None
+        self.set_block_name(index, name)
 
-    def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
-        """Get a block by its index or name.
+    def extend(self, datasets: Iterable[_TypeMultiBlockLeaf]) -> None:
+        """Extend MultiBlock with an Iterable.
 
-        If the name is non-unique then returns the first occurrence.
+        If another MultiBlock object is supplied, the key names will
+        be preserved.
 
         Parameters
         ----------
-        index : int or str
+        datasets : Iterable[pyvista.DataSet or pyvista.MultiBlock]
+            Datasets to extend.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks_uniform = pv.MultiBlock({"uniform": examples.load_uniform()})
+        >>> blocks.extend(blocks_uniform)
+        >>> len(blocks)
+        3
+        >>> blocks.keys()
+        ['cube', 'sphere', 'uniform']
+
+        """
+        # Code based on collections.abc
+        if isinstance(datasets, MultiBlock):
+            for key, data in zip(datasets.keys(), datasets):
+                self.append(data, key)
+        else:
+            for v in datasets:
+                self.append(v)
+
+    def get(
+        self, index: str, default: Optional[_TypeMultiBlockLeaf] = None
+    ) -> Optional[_TypeMultiBlockLeaf]:
+        """Get a block by its name.
+
+        If the name is non-unique then returns the first occurrence.
+        Returns ``default`` if name isn't in the dataset.
+
+        Parameters
+        ----------
+        index : str
             Index or name of the dataset within the multiblock.
+
+        default : pyvista.DataSet or pyvista.MultiBlock, optional
+            Default to return if index is not in the multiblock.
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset from the given index.
+        pyvista.DataSet or pyvista.MultiBlock or None
+            Dataset from the given index if it exists.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> data = {"poly": pv.PolyData(), "uni": pv.UniformGrid()}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.get("poly")
+        PolyData ...
+        >>> blocks.get("cone")
 
         """
-        return self[index]
+        try:
+            return self[index]
+        except KeyError:
+            return default
 
-    def set_block_name(self, index: int, name: str):
+    def set_block_name(self, index: int, name: Optional[str]):
         """Set a block's string name at the specified index.
 
         Parameters
@@ -392,6 +468,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         ['cube', 'sphere', 'cone']
 
         """
+        index = range(self.n_blocks)[index]
         if name is None:
             return
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
@@ -419,6 +496,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         'cube'
 
         """
+        index = range(self.n_blocks)[index]
         meta = self.GetMetaData(index)
         if meta is not None:
             return meta.Get(_vtk.vtkCompositeDataSet.NAME())
@@ -446,7 +524,50 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
-    def __setitem__(self, index: Union[Tuple[int, Optional[str]], int, str], data: DataSet):
+    def replace(self, index: int, dataset: Optional[_TypeMultiBlockLeaf]) -> None:
+        """Replace dataset at index while preserving key name.
+
+        Parameters
+        ----------
+        index : int
+            Index of the block to replace.
+        dataset : pyvista.DataSet or pyvista.MultiBlock
+            Dataset for replacing the one at index.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.replace(1, pv.Sphere(center=(10, 10, 10)))
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> np.allclose(blocks[1].center, [10., 10., 10.])
+        True
+
+        """
+        name = self.get_block_name(index)
+        self[index] = dataset
+        self.set_block_name(index, name)
+
+    @overload
+    def __setitem__(
+        self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
+    ):  # noqa: D105
+        ...  # pragma: no cover
+
+    @overload
+    def __setitem__(
+        self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
+    ):  # noqa: D105
+        ...  # pragma: no cover
+
+    def __setitem__(
+        self,
+        index,
+        data,
+    ):
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -455,8 +576,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         -------
         >>> import pyvista
         >>> multi = pyvista.MultiBlock()
-        >>> multi[0] = pyvista.PolyData()
-        >>> multi[1, 'foo'] = pyvista.UnstructuredGrid()
+        >>> multi.append(pyvista.PolyData())
+        >>> multi[0] = pyvista.UnstructuredGrid()
+        >>> multi.append(pyvista.PolyData(), 'poly')
+        >>> multi.keys()
+        ['Block-00', 'poly']
         >>> multi['bar'] = pyvista.PolyData()
         >>> multi.n_blocks
         3
@@ -464,41 +588,60 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """
         i: int = 0
         name: Optional[str] = None
-        if isinstance(index, (np.ndarray, collections.abc.Sequence)) and not isinstance(index, str):
-            i, name = index[0], index[1]
-        elif isinstance(index, str):
+        if isinstance(index, str):
             try:
                 i = self.get_index_by_name(index)
             except KeyError:
-                i = -1
+                self.append(data, index)
+                return
             name = index
+        elif isinstance(index, slice):
+            index_iter = range(self.n_blocks)[index]
+            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
+                if idx is None:
+                    self.insert(
+                        index_iter[-1] + 1 + (i - len(index_iter)), d
+                    )  # insert after last entry, increasing
+                elif d is None:
+                    del self[index_iter[-1] + 1]  # delete next entry
+                else:
+                    self[idx] = d  #
+            return
         else:
-            i, name = cast(int, index), None
+            i = index
+
+        # data, i, and name are a single value now
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
+        data = cast(pyvista.DataSet, data)
 
-        if i == -1:
-            self.append(data)
-            i = self.n_blocks - 1
-        else:
-            # this is the only spot in the class where we actually add
-            # data to the MultiBlock
+        i = range(self.n_blocks)[i]
 
-            # check if we are overwriting a block
-            existing_dataset = self.GetBlock(i)
-            if existing_dataset is not None:
-                self._remove_ref(i)
+        # this is the only spot in the class where we actually add
+        # data to the MultiBlock
 
-            self.SetBlock(i, data)
-            if data is not None:
-                self._refs[data.memory_address] = data
+        # check if we are overwriting a block
+        existing_dataset = self.GetBlock(i)
+        if existing_dataset is not None:
+            self._remove_ref(i)
+        self.SetBlock(i, data)
+        if data is not None:
+            self._refs[data.memory_address] = data
 
         if name is None:
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str]):
+    def __delitem__(self, index: Union[int, str, slice]) -> None:
         """Remove a block at the specified index."""
+        if isinstance(index, slice):
+            if index.indices(self.n_blocks)[2] > 0:
+                for i in reversed(range(*index.indices(self.n_blocks))):
+                    self.__delitem__(i)
+            else:
+                for i in range(*index.indices(self.n_blocks)):
+                    self.__delitem__(i)
+            return
         if isinstance(index, str):
             index = self.get_index_by_name(index)
         self._remove_ref(index)
@@ -534,34 +677,109 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         return True
 
-    def next(self) -> Optional['MultiBlock']:
+    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
             self._iter_n += 1
             return result
-        else:
-            raise StopIteration
+        raise StopIteration
 
-    __next__ = next
+    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: Optional[str] = None) -> None:
+        """Insert data before index.
 
-    def pop(self, index: Union[int, str]) -> Optional['MultiBlock']:
+        Parameters
+        ----------
+        index : int
+            Index before which to insert data.
+        dataset : pyvista.DataSet or pyvista.MultiBlock
+            Data to insert.
+        name : str, optional
+            Name for key to give dataset.  A default name is given
+            depending on the block index as ``'Block-{i:02}'``.
+
+        Examples
+        --------
+        Insert a new :class:`pyvista.PolyData` at the start of the multiblock.
+
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> blocks.insert(0, pv.Plane(), "plane")
+        >>> blocks.keys()
+        ['plane', 'cube', 'sphere']
+
+        """
+        index = range(self.n_blocks)[index]
+
+        self.n_blocks += 1
+        for i in reversed(range(index, self.n_blocks - 1)):
+            self[i + 1] = self[i]
+            self.set_block_name(i + 1, self.get_block_name(i))
+
+        self[index] = dataset
+        self.set_block_name(index, name)
+
+    def pop(self, index: Union[int, str] = -1) -> Optional[_TypeMultiBlockLeaf]:
         """Pop off a block at the specified index.
 
         Parameters
         ----------
-        index : int or str
-            Index or name of the dataset within the multiblock.
+        index : int or str, optional
+            Index or name of the dataset within the multiblock.  Defaults to
+            last dataset.
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset from the given index.
+        pyvista.DataSet or pyvista.MultiBlock
+            Dataset from the given index that was removed.
+
+        Examples
+        --------
+        Pop the ``"cube"`` multiblock.
+
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> cube = blocks.pop("cube")
+        >>> blocks.keys()
+        ['sphere']
 
         """
+        if isinstance(index, int):
+            index = range(self.n_blocks)[index]
         data = self[index]
         del self[index]
         return data
+
+    def reverse(self):
+        """Reverse MultiBlock in-place.
+
+        Examples
+        --------
+        Reverse a multiblock.
+
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.keys()
+        ['cube', 'sphere']
+        >>> blocks.reverse()
+        >>> blocks.keys()
+        ['sphere', 'cube']
+
+        """
+        # Taken from implementation in collections.abc.MutableSequence
+        names = self.keys()
+        n = len(self)
+        for i in range(n // 2):
+            self[i], self[n - i - 1] = self[n - i - 1], self[i]
+        for i, name in enumerate(reversed(names)):
+            self.set_block_name(i, name)
 
     def clean(self, empty=True):
         """Remove any null blocks in place.
@@ -741,7 +959,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         The number of components of the data must match.
 
         """
-        data_assoc: List[Tuple[FieldAssociation, np.ndarray, MultiBlock]] = []
+        data_assoc: List[Tuple[FieldAssociation, np.ndarray, _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):

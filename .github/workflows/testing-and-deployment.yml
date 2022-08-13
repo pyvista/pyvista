@@ -184,7 +184,7 @@ jobs:
         if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.0.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.0
         with:
           packages: libgl1-mesa-glx xvfb python-tk
           version: 1.0
@@ -224,7 +224,7 @@ jobs:
 
   windows:
     name: Windows Unit Testing
-    runs-on: windows-2019
+    runs-on: windows-latest
     env:
       CI_WINDOWS: true
     strategy:

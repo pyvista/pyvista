@@ -96,6 +96,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_multi_plot_scalars',  # flaky
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
@@ -104,6 +105,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
+    'test_rectlinear_edge_case',
     'test_scalars_by_name',
     'test_user_annotations_scalar_bar_volume',
 }
@@ -1196,7 +1198,7 @@ def test_multi_block_plot():
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
-    multi[3] = examples.load_airplane()
+    multi.append(examples.load_airplane())
 
     # missing data should still plot
     multi.plot(scalars='Random Data')
@@ -2367,6 +2369,15 @@ def test_orbit_on_path(sphere):
     pl.add_mesh(sphere, show_edges=True)
     pl.orbit_on_path(step=0.01, progress_bar=True)
     pl.close()
+
+
+def test_rectlinear_edge_case():
+    # ensure that edges look like square edges regardless of the dtype of X
+    xrng = np.arange(-10, 10, 5)
+    yrng = np.arange(-10, 10, 5)
+    zrng = [1]
+    rec_grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    rec_grid.plot(show_edges=True, cpos='xy', before_close_callback=verify_cache_image)
 
 
 @skip_9_1_0

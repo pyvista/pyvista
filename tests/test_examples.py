@@ -66,6 +66,12 @@ def test_load_random_hills():
     assert mesh.n_cells
 
 
+def test_load_tetbeam():
+    mesh = examples.load_tetbeam()
+    assert mesh.n_cells
+    assert (mesh.celltypes == 10).all()
+
+
 if TEST_DOWNLOADS:
 
     def test_download_single_sphere_animation():
@@ -467,3 +473,57 @@ if TEST_DOWNLOADS:
         dataset = examples.download_gif_simple(load=True)
         assert isinstance(dataset, pyvista.UniformGrid)
         assert 'frame0' in dataset.point_data
+
+    def test_black_vase():
+        filename = examples.download_black_vase(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_black_vase(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_ivan_angel():
+        filename = examples.download_ivan_angel(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_ivan_angel(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_bird_bath():
+        filename = examples.download_bird_bath(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_bird_bath(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_owl():
+        filename = examples.download_owl(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_owl(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_plastic_vase():
+        filename = examples.download_plastic_vase(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_plastic_vase(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_sea_vase():
+        filename = examples.download_sea_vase(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_sea_vase(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
