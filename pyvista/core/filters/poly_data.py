@@ -1903,6 +1903,12 @@ class PolyDataFilters(DataSetFilters):
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
+        if output.n_points == 0:
+            raise ValueError(
+                f"There is no path between vertices {start_vertex} and {end_vertex}. ",
+                "It is likely the vertices belong to disconnected regions.",
+            )
+
         output["vtkOriginalPointIds"] = original_ids
 
         # Do not copy textures from input
