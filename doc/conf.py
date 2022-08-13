@@ -71,7 +71,7 @@ extensions = [
     "sphinx_gallery.gen_gallery",
     "sphinx.ext.extlinks",
     "jupyter_sphinx",
-    "sphinx_panels",
+    "sphinx_design",
     "pyvista.ext.plot_directive",
     "pyvista.ext.coverage",
     "numpydoc",
