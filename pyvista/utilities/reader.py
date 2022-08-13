@@ -1321,31 +1321,34 @@ class MultiBlockPlot3DReader(BaseReader):
         self.reader.SetAutoDetectFormat(value)
 
     def add_function(self, value: Union[int, Plot3DFunctionEnum]):
-        """Specify additional functions to read.
+        """Specify additional functions to compute.
+
+        The available functions are enumerated in :class:`Plot3DFunctionEnum`. Multiple functions may be requested by
+        calling this method multiple times.
 
         Parameters
         ----------
-        value
-            An integer or `Plot3DFunctionEnum`.
+        value : int or Plot3DFunctionEnum
+            The function to add.
         """
         if isinstance(value, enum.Enum):
             value = value.value
         self.reader.AddFunction(value)
 
     def remove_function(self, value: Union[int, Plot3DFunctionEnum]):
-        """Remove one function from list of functions to read.
+        """Remove one function from list of functions to compute.
 
         Parameters
         ----------
-        value
-            An integer or `Plot3DFunctionEnum`.
+        value : int or Plot3DFunctionEnum
+            The function to remove.
         """
         if isinstance(value, enum.Enum):
             value = value.value
         self.reader.RemoveFunction(value)
 
     def remove_all_functions(self):
-        """Remove all functions from list of functions to read."""
+        """Remove all functions from list of functions to compute."""
         self.reader.RemoveAllFunctions()
 
     @property
