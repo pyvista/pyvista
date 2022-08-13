@@ -101,7 +101,7 @@ jobs:
           conda install -n base conda-libmamba-solver
 
       - name: 'Workaround for mamba-org/mamba#488'
-        run: rm /usr/local/miniconda/pkgs/cache/*.json
+        run: rm /usr/local/miniconda/pkgs/cache/*
 
       - name: Create Anaconda environment
         run: |
