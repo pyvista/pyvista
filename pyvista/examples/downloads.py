@@ -259,7 +259,7 @@ def _retrieve_zip(retriever, filename):
 
 
 def _download_file(filename, progress_bar=False):
-    """Download a file from https://github.com/pyvista/vtk-data/master/Data.
+    """Download a file from https://github.com/pyvista/vtk-data/tree/master/Data.
 
     If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
     to be a local git repository.
@@ -267,7 +267,7 @@ def _download_file(filename, progress_bar=False):
     Parameters
     ----------
     filename : str
-        Path within https://github.com/pyvista/vtk-data/master/Data to download
+        Path within https://github.com/pyvista/vtk-data/tree/master/Data to download
         the file from.
 
     progress_bar : bool, default: False
@@ -4852,3 +4852,7 @@ def download_dolfinx_mesh(load=True):  # pragma: no cover
 
     """
     return _download_and_read("dolfinx/mesh.xdmf", load=load)
+
+
+# verify example cache integrity
+_verify_cache_integrity()
