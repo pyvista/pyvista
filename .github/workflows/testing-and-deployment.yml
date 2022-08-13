@@ -92,11 +92,19 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Create Anaconda environment
+      # See: https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community
+      - name: Install mamba
         run: |
+          source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --set channel_priority strict
           conda update -n base conda
           conda install -n base conda-libmamba-solver
+
+      - name: 'Workaround for mamba-org/mamba#488'
+        run: rm /usr/local/miniconda/pkgs/cache/*.json
+
+      - name: Create Anaconda environment
+        run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
           sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
