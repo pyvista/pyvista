@@ -4828,3 +4828,7 @@ def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
     if load:
         return pyvista.read(filename)
     return filename
+
+
+# verify example cache integrity
+_verify_cache_integrity()
