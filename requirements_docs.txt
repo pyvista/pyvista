@@ -29,4 +29,3 @@ sphinx-panels==0.6.0
 sphinxcontrib-websupport==1.2.4
 trimesh==3.13.4
 typed-ast==1.5.4
-typing_extensions==4.3.0
