@@ -62,3 +62,15 @@ def test_filters_return_pointset(sphere):
     pointset = sphere.cast_to_pointset()
     clipped = pointset.clip()
     assert isinstance(clipped, pyvista.PointSet)
+
+
+def test_volume_area_pointgrid():
+    # 3D grid size 4x4x4
+    grid = pyvista.UniformGrid(dims=(5, 5, 5)).cast_to_unstructured_grid()
+    assert np.isclose(grid.volume, 64.0)
+    assert np.isclose(grid.area, 0.0)
+
+    # 2D grid size 4x4
+    grid = pyvista.UniformGrid(dims=(5, 5, 1)).cast_to_unstructured_grid()
+    assert np.isclose(grid.volume, 0.0)
+    assert np.isclose(grid.area, 16.0)

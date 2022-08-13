@@ -1280,11 +1280,18 @@ class PointGrid(_PointSet):
     def volume(self) -> float:
         """Compute the volume of the point grid.
 
-        This extracts the external surface and computes the interior
-        volume.
+        .. versionchanged:: 0.37.0
+           This now calculates the sum of the volume of all cells.
+
         """
-        surf = self.extract_surface().triangulate()
-        return surf.volume
+        vols = self.compute_cell_sizes(length=False, area=False, volume=True)
+        return np.sum(vols["Volume"])
+
+    @property
+    def area(self) -> float:
+        """Compute the area of the point grid if 2D."""
+        vols = self.compute_cell_sizes(length=False, area=True, volume=False)
+        return np.sum(vols["Area"])
 
 
 class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
