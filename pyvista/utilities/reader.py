@@ -1274,9 +1274,54 @@ class Plot3DFunctionEnum(enum.IntEnum):
 
 
 class MultiBlockPlot3DReader(BaseReader):
-    """MultiBlock Plot3D Reader."""
+    """MultiBlock Plot3D Reader.
+
+    The methods ``add_function()`` and ``remove_function()`` accept values from :class:``Plot3DFunctionEnum``.
+    For convenience, the values of that enumeration are available as class variables, as shown below.
+
+    - ``MultiBlockPlot3DReader.DENSITY = Plot3DFunctionEnum.DENSITY``
+    - ``MultiBlockPlot3DReader.PRESSURE = Plot3DFunctionEnum.PRESSURE``
+    - ``MultiBlockPlot3DReader.PRESSURE_COEFFICIENT = Plot3DFunctionEnum.PRESSURE_COEFFICIENT``
+    - ``MultiBlockPlot3DReader.MACH = Plot3DFunctionEnum.MACH``
+    - ``MultiBlockPlot3DReader.SPEED_OF_SOUND = Plot3DFunctionEnum.SPEED_OF_SOUND``
+    - ``MultiBlockPlot3DReader.TEMPERATURE = Plot3DFunctionEnum.TEMPERATURE``
+    - ``MultiBlockPlot3DReader.ENTHALPY = Plot3DFunctionEnum.ENTHALPY``
+    - ``MultiBlockPlot3DReader.INTERNAL_ENERGY = Plot3DFunctionEnum.INTERNAL_ENERGY``
+    - ``MultiBlockPlot3DReader.KINETIC_ENERGY = Plot3DFunctionEnum.KINETIC_ENERGY``
+    - ``MultiBlockPlot3DReader.VELOCITY_MAGNITUDE = Plot3DFunctionEnum.VELOCITY_MAGNITUDE``
+    - ``MultiBlockPlot3DReader.STAGNATION_ENERGY = Plot3DFunctionEnum.STAGNATION_ENERGY``
+    - ``MultiBlockPlot3DReader.ENTROPY = Plot3DFunctionEnum.ENTROPY``
+    - ``MultiBlockPlot3DReader.SWIRL = Plot3DFunctionEnum.SWIRL``
+    - ``MultiBlockPlot3DReader.VELOCITY = Plot3DFunctionEnum.VELOCITY``
+    - ``MultiBlockPlot3DReader.VORTICITY = Plot3DFunctionEnum.VORTICITY``
+    - ``MultiBlockPlot3DReader.MOMENTUM = Plot3DFunctionEnum.MOMENTUM``
+    - ``MultiBlockPlot3DReader.PRESSURE_GRADIENT = Plot3DFunctionEnum.PRESSURE_GRADIENT``
+    - ``MultiBlockPlot3DReader.STRAIN_RATE = Plot3DFunctionEnum.STRAIN_RATE``
+    - ``MultiBlockPlot3DReader.VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE``
+    """
 
     _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+
+    # pull in function name enum values as class constants
+    DENSITY = Plot3DFunctionEnum.DENSITY
+    PRESSURE = Plot3DFunctionEnum.PRESSURE
+    PRESSURE_COEFFICIENT = Plot3DFunctionEnum.PRESSURE_COEFFICIENT
+    MACH = Plot3DFunctionEnum.MACH
+    SPEED_OF_SOUND = Plot3DFunctionEnum.SPEED_OF_SOUND
+    TEMPERATURE = Plot3DFunctionEnum.TEMPERATURE
+    ENTHALPY = Plot3DFunctionEnum.ENTHALPY
+    INTERNAL_ENERGY = Plot3DFunctionEnum.INTERNAL_ENERGY
+    KINETIC_ENERGY = Plot3DFunctionEnum.KINETIC_ENERGY
+    VELOCITY_MAGNITUDE = Plot3DFunctionEnum.VELOCITY_MAGNITUDE
+    STAGNATION_ENERGY = Plot3DFunctionEnum.STAGNATION_ENERGY
+    ENTROPY = Plot3DFunctionEnum.ENTROPY
+    SWIRL = Plot3DFunctionEnum.SWIRL
+    VELOCITY = Plot3DFunctionEnum.VELOCITY
+    VORTICITY = Plot3DFunctionEnum.VORTICITY
+    MOMENTUM = Plot3DFunctionEnum.MOMENTUM
+    PRESSURE_GRADIENT = Plot3DFunctionEnum.PRESSURE_GRADIENT
+    STRAIN_RATE = Plot3DFunctionEnum.STRAIN_RATE
+    VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE
 
     def _set_defaults(self):
         self.auto_detect_format = True
