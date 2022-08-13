@@ -77,7 +77,7 @@ jobs:
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v1
 
-      - name: Cache Conda
+      - name: Cache Conda Packages
         uses: actions/cache@v3
         with:
           path: ~/anaconda3/pkgs
@@ -92,13 +92,20 @@ jobs:
           restore-keys: |
             Examples-1-
 
+      # https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community
+      - name: Install mamba
+        run: |
+          source /usr/share/miniconda/etc/profile.d/conda.sh
+          conda config --set channel_priority strict
+          conda update -n base conda
+          conda install -n base conda-libmamba-solver
+
       - name: Create Anaconda environment
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          conda config --set channel_priority strict
           sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
-          conda env create --quiet -n ${{ env.conda_env }} --file environment.yml
+          conda env create --quiet -n ${{ env.conda_env }} --file environment.yml --experimental-solver=libmamba
           conda activate ${{ env.conda_env }}
           conda list
 
