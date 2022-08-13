@@ -74,13 +74,6 @@ jobs:
           path: doc/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
-      - name: Cache docs _build directory
-        uses: actions/cache@v3
-        if: env.USE_CACHE == 'true'
-        with:
-          path: doc/_build/
-          key: doc-_build-${{ hashFiles('pyvista/_version.py') }}-${{ hashFiles('doc/conf.py') }}
-
       - name: Cache example data
         uses: actions/cache@v3
         if: env.USE_CACHE == 'true'
