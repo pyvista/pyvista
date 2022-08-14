@@ -61,8 +61,6 @@ if not os.path.isdir(IMAGE_CACHE_DIR):
 # always set on Windows CI
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
-skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
-
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
 )
@@ -205,7 +203,7 @@ def verify_cache_image(plotter):
         )
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_import_gltf():
     filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
     pl = pyvista.Plotter()
@@ -217,7 +215,7 @@ def test_import_gltf():
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.gltf'))
 
@@ -262,7 +260,7 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_vrml(filename)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
@@ -287,7 +285,7 @@ def test_pbr(sphere):
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 @skip_windows
 @skip_mac
 def test_set_environment_texture_cubemap(sphere):
@@ -305,7 +303,7 @@ def test_set_environment_texture_cubemap(sphere):
         pl.show()
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 @skip_windows
 @skip_mac
 def test_remove_environment_texture_cubemap(sphere):
@@ -338,7 +336,7 @@ def test_plot_increment_point_size():
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -2222,7 +2220,7 @@ def test_scalar_cell_priorities():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_collision_plot():
     """Verify rgba arrays automatically plot"""
     sphere0 = pyvista.Sphere()
