@@ -933,7 +933,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enable the default light-kit lighting.
 
         See:
-        https://www.researchgate.net/publication/2926068
+        https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization
 
         This will replace all pre-existing lights in the renderer.
 
