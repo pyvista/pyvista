@@ -140,6 +140,6 @@ def pytest_runtest_setup(item):
             version_needed = args[0]
         else:
             version_needed = args
-        if pyvista.vtk_version < version_needed:
+        if pyvista.vtk_version_info < version_needed:
             version_str = '.'.join(map(str, version_needed))
             skip(f'Test needs VTK {version_str} or newer.')
