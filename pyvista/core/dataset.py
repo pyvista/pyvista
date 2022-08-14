@@ -1743,6 +1743,8 @@ class DataSet(DataSetFilters, DataObject):
     def volume(self) -> float:
         """Return the mesh volume.
 
+        This will return 0 for meshes with 2D cells.
+
         Returns
         -------
         float
@@ -1760,6 +1762,30 @@ class DataSet(DataSetFilters, DataObject):
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_data['Volume'])
+
+    @property
+    def area(self) -> float:
+        """Return the mesh area if 2D.
+
+        This will return 0 for meshes with 3D cells.
+
+        Returns
+        -------
+        float
+            Total area of the mesh.
+
+        Examples
+        --------
+        Get the area of a sphere.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.volume
+        0.51825
+
+        """
+        sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
+        return np.sum(sizes.cell_data['Area'])
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'

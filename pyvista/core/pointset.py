@@ -1034,32 +1034,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         super().save(filename, binary, texture=texture)
 
     @property
-    def area(self) -> float:
-        """Return the mesh surface area.
-
-        Returns
-        -------
-        float
-            Total area of the mesh.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
-        >>> sphere.area
-        3.126
-
-        """
-        areas = self.compute_cell_sizes(
-            length=False,
-            area=True,
-            volume=False,
-        )["Area"]
-        return np.sum(areas)
-
-    @property
     def volume(self) -> float:
-        """Return the volume of the dataset.
+        """Return the approximate volume of the dataset.
 
         This will throw a VTK error/warning if not a closed surface.
 
@@ -1275,23 +1251,6 @@ class PointGrid(_PointSet):
         """
         trisurf = self.extract_surface().triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
-
-    @property
-    def volume(self) -> float:
-        """Compute the volume of the point grid.
-
-        .. versionchanged:: 0.37.0
-           This now calculates the sum of the volume of all cells.
-
-        """
-        vols = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return np.sum(vols["Volume"])
-
-    @property
-    def area(self) -> float:
-        """Compute the area of the point grid if 2D."""
-        vols = self.compute_cell_sizes(length=False, area=True, volume=False)
-        return np.sum(vols["Area"])
 
 
 class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
