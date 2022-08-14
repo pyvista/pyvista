@@ -45,7 +45,7 @@ except:  # noqa: E722
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
-skip_9_1_0 = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
+skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
@@ -2234,7 +2234,7 @@ def test_collision_plot():
 
 
 @skip_mac
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 2, 0), reason="Requires VTK>=9.2.0")
+@pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
