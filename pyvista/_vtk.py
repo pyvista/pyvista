@@ -217,14 +217,16 @@ if VTK9:
     )
 
     try:
-        from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
-        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_TRIANGLE
-        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_CURVE
-        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_QUADRILATERAL
-        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_TETRAHEDRON
-        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_HEXAHEDRON
-        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_WEDGE
-        from vtkmodules.vtkCommonDataModel import VTK_BEZIER_PYRAMID
+        from vtkmodules.vtkCommonDataModel import (
+            VTK_BEZIER_CURVE,
+            VTK_BEZIER_HEXAHEDRON,
+            VTK_BEZIER_PYRAMID,
+            VTK_BEZIER_QUADRILATERAL,
+            VTK_BEZIER_TETRAHEDRON,
+            VTK_BEZIER_TRIANGLE,
+            VTK_BEZIER_WEDGE,
+            VTK_TRIQUADRATIC_PYRAMID,
+        )
     except ImportError:  # pragma: no cover
         pass
 
