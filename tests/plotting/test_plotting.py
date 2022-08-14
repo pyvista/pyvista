@@ -124,10 +124,14 @@ def multicomp_poly():
     data = pyvista.Plane()
 
     vector_values_points = np.empty((data.n_points, 3))
-    vector_values_points[...] = [3.0, 4.0, 0.0]  # Vector has this value at all points
+    vector_values_points[:, 0] = np.arange(data.n_points)
+    vector_values_points[:, 1] = np.arange(data.n_points)[::-1]
+    vector_values_points[:, 2] = 0
 
     vector_values_cells = np.empty((data.n_cells, 3))
-    vector_values_cells[...] = [3.0, 4.0, 0.0]  # Vector has this value at all cells
+    vector_values_cells[:, 0] = np.arange(data.n_cells)
+    vector_values_cells[:, 1] = np.arange(data.n_cells)[::-1]
+    vector_values_cells[:, 2] = 0
 
     data['vector_values_points'] = vector_values_points
     data['vector_values_cells'] = vector_values_cells
@@ -1274,24 +1278,28 @@ def test_plot_rgb():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_vector_array_with_cells_and_points(multicomp_poly):
+def test_vector_array_with_points(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     # test no component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_points')
     pl.show()
 
+    # test component argument
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_vector_array_with_cells(multicomp_poly):
+    """Test using vector valued data with and without component arg."""
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
     pl.show()
 
     # test component argument
     pl = pyvista.Plotter()
-    pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
-    pl.show()
-
-    pl = pyvista.Plotter()
-    pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0, clim=[3, 5])
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
     pl.show(before_close_callback=verify_cache_image)
 
 
