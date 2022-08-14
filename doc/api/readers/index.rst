@@ -50,7 +50,6 @@ Reader Classes
     PTSReader
     PVDReader
     Plot3DMetaReader
-    Plot3DFunctionEnum
     SLCReader
     STLReader
     SegYReader
@@ -87,3 +86,14 @@ and setting time or iterations for reading.
    BaseReader
    PointCellDataSelection
    TimeReader
+
+
+Enumerations
+~~~~~~~~~~~~
+
+Enumerations are available to simplify inputs to certain readers.
+
+.. autoenum::
+    :toctree: _autosummary
+
+    Plot3DFunctionEnum

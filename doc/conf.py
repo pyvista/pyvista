@@ -66,6 +66,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.autosummary",
+    "enum_tools.autoenum",
     "notfound.extension",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",

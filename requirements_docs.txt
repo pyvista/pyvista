@@ -1,6 +1,7 @@
 Sphinx==4.5.0
 cmocean==2.0
 colorcet==3.0.0
+enum_tools
 imageio-ffmpeg==0.4.7
 imageio>=2.5.0
 ipygany==0.5.0
@@ -26,6 +27,7 @@ sphinx-copybutton==0.5.0
 sphinx-gallery==0.11.0
 sphinx-notfound-page==0.8.3
 sphinx-panels==0.6.0
+sphinx-toolbox
 sphinxcontrib-websupport==1.2.4
 trimesh==3.13.5
 typed-ast==1.5.4
