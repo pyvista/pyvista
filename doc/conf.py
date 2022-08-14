@@ -243,8 +243,7 @@ linkcheck_retries = 3
 linkcheck_timeout = 500
 
 # Add any paths that contain templates here, relative to this directory.
-# templates_path = ["_templates"]
-templates_path = []
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
