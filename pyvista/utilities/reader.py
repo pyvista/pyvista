@@ -1379,8 +1379,8 @@ class MultiBlockPlot3DReader(BaseReader):
         value : int or Plot3DFunctionEnum
             The function to add.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename, _  = examples.downloads._download_file('multi-bin.xyz')
