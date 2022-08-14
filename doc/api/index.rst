@@ -23,7 +23,6 @@ Highlights of the API include:
 
 .. grid:: 1 2 2 2
     :gutter: 2
-    :column: col-12 p-3
 
     Core API
     ^^^^^^^^
