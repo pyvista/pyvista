@@ -102,6 +102,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_complex_value',
     'test_plot_composite_poly_component_nested_multiblock',
     'test_plot_composite_poly_scalars_cell',
+    'test_plot_composite_preference_cell',
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
