@@ -1775,7 +1775,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return np.sum(sizes.cell_data['Volume'])
+        return sizes.cell_data['Volume'].sum()
 
     @property
     def area(self) -> float:
@@ -1814,7 +1814,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
-        return np.sum(sizes.cell_data['Area'])
+        return sizes.cell_data['Area'].sum()
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
