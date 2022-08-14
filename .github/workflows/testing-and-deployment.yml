@@ -122,7 +122,6 @@ jobs:
           python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
 
       - name: Test Core API
-        continue-on-error: true
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
@@ -130,18 +129,10 @@ jobs:
           pytest -v --ignore=tests/plotting
 
       - name: Test Core Plotting
-        continue-on-error: true
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
           pytest -v tests/plotting --cov-report html
-
-      - name: Test Package Docstrings
-        continue-on-error: true
-        run: |
-          source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
-          pytest -v --doctest-modules pyvista
 
   Linux:
     name: Linux Unit Testing
