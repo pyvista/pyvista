@@ -1297,17 +1297,49 @@ def test_vector_array_with_cells_and_points(multicomp_poly):
 
 def test_vector_array(multicomp_poly):
     """Test using vector valued data for image regression."""
-    p = pyvista.Plotter(shape=(2, 2))
-    p.subplot(0, 0)
-    p.add_mesh(multicomp_poly, scalars="vector_values_points", show_scalar_bar=False)
-    p.subplot(0, 1)
-    p.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=0)
-    p.subplot(1, 0)
-    p.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=1)
-    p.subplot(1, 1)
-    p.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=2)
-    p.link_views()
-    p.show()
+    pl = pyvista.Plotter(shape=(2, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(multicomp_poly, scalars="vector_values_points", show_scalar_bar=False)
+    pl.subplot(0, 1)
+    pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=0)
+    pl.subplot(1, 0)
+    pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=1)
+    pl.subplot(1, 1)
+    pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=2)
+    pl.link_views()
+    pl.reset_camera()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_vector_plotting_doesnt_modify_data(multicomp_poly):
+    """Test that the operations in plotting do not modify the data in the mesh."""
+
+    copy_vector_values_points = multicomp_poly["vector_values_points"].copy()
+    copy_vector_values_cells = multicomp_poly["vector_values_cells"].copy()
+
+    # test that adding a vector with no component parameter to a Plotter instance
+    # does not modify it.
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points')
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_points'], copy_vector_values_points)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
+
+    # test that adding a vector with a component parameter to a Plotter instance
+    # does not modify it.
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_points'], copy_vector_values_points)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
 
 
 def test_vector_array_fail_with_incorrect_component(multicomp_poly):
