@@ -34,8 +34,6 @@ Composite Plotting Reference
 ----------------------------
 These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 
-.. currentmodule:: pyvista.plotting
-
 .. autosummary::
    :toctree: _autosummary
    :template: custom-class-template.rst
