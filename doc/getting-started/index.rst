@@ -12,6 +12,7 @@ Getting Started
 
 
 .. grid:: 1 2 2 2
+    :gutter: 2
     :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
 
     Why PyVista?
@@ -56,6 +57,7 @@ Installation
 ============
 
 .. grid:: 1 2 2 2
+    :gutter: 2
     :card: + install-card
     :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
 
