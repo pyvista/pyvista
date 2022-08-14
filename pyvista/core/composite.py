@@ -1014,18 +1014,15 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    def as_polydata_blocks(self, copy=True):
+    def as_polydata_blocks(self, copy=False):
         """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
-
-        Depending on ``copy``, this may return a new
-        :class:`pyvista.MultiBlock` dataset. Blocks that are already
-        :class:`pyvista.PolyData` will not be copied.
 
         Parameters
         ----------
         copy : bool, optional
-            Option to return a shallow copy of this composite dataset. When
-            ``False``, this dataset will be modified in-place.
+            Option to create a shallow copy of any datasets that are already a
+            :class:`pyvista.PolyData`. When ``False``, any datasets that are
+            already PolyData will not be copied.
 
         Returns
         -------
@@ -1040,23 +1037,21 @@ class MultiBlock(
 
         """
         # we make a shallow copy here to avoid modifying the original dataset
-        dataset = self
-        if copy:
-            dataset = self.copy(deep=False)
+        dataset = self.copy(deep=False)
 
-        # always convert to polydata
+        # Loop through the multiblock and convert to polydata
         for i, block in enumerate(dataset):
             if block is not None:
                 if isinstance(block, MultiBlock):
-                    dataset[i] = block.as_polydata_blocks()
+                    dataset.replace(i, block.as_polydata_blocks(copy=copy))
                 elif not isinstance(block, pyvista.PolyData):
-                    dataset[i] = block.extract_surface()
+                    dataset.replace(i, block.extract_surface())
                 elif copy:
-                    # create a shallow copy
-                    dataset[i] = block.copy(deep=False)
+                    # dataset is a PolyData
+                    dataset.replace(i, block.copy(deep=False))
             else:
-                # must have empty polydata within these datasets to ensure
-                # downstream filters don't work on null pointers
+                # must have empty polydata within these datasets as some
+                # downstream filters don't work on null pointers (i.e. None)
                 dataset[i] = pyvista.PolyData()
 
         return dataset
