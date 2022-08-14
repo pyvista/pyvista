@@ -218,40 +218,12 @@ if VTK9:
 
     try:
         from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
-    except ImportError:  # pragma: no cover
-        pass
-
-    try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_TRIANGLE
-    except ImportError:  # pragma: no cover
-        pass
-
-    try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_CURVE
-    except ImportError:  # pragma: no cover
-        pass
-
-    try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_QUADRILATERAL
-    except ImportError:  # pragma: no cover
-        pass
-
-    try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_TETRAHEDRON
-    except ImportError:  # pragma: no cover
-        pass
-
-    try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_HEXAHEDRON
-    except ImportError:  # pragma: no cover
-        pass
-
-    try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_WEDGE
-    except ImportError:  # pragma: no cover
-        pass
-
-    try:
         from vtkmodules.vtkCommonDataModel import VTK_BEZIER_PYRAMID
     except ImportError:  # pragma: no cover
         pass
