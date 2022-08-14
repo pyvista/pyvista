@@ -7,6 +7,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
+from pyvista._vtk import VTK9
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.plotting import system_supports_plotting
 from pyvista.utilities.misc import PyvistaFutureWarning
@@ -16,6 +17,8 @@ radius = 0.5
 skip_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"
 )
+
+skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
 
 @pytest.fixture
@@ -857,3 +860,18 @@ def test_n_verts():
 def test_n_lines():
     mesh = pyvista.Line()
     assert mesh.n_lines == 1
+
+
+@skip_not_vtk9
+def test_geodesic_disconnected(sphere, sphere_shifted):
+    # the sphere and sphere_shifted are disconnected - no path between them
+    combined = sphere + sphere_shifted
+    start_vertex = 0
+    end_vertex = combined.n_points - 1
+    match = f"There is no path between vertices {start_vertex} and {end_vertex}."
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic(start_vertex, end_vertex)
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic_distance(start_vertex, end_vertex)
