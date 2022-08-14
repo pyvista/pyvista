@@ -7,6 +7,7 @@ import weakref
 
 import numpy as np
 
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array
 
@@ -520,6 +521,26 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             self.color_missing_with_nan = color_missing_with_nan
         if interpolate_before_map is not None:
             self.interpolate_before_map = interpolate_before_map
+
+    @property
+    def dataset(self) -> 'pv.MultiBlock':
+        """Return the composite dataset assigned to this mapper.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.dataset   # doctest:+SKIP
+        MultiBlock (...)
+          N Blocks:     2
+          X Bounds:     -0.500, 0.500
+          Y Bounds:     -0.500, 0.500
+          Z Bounds:     -0.500, 1.500
+
+        """
+        return self._dataset
 
     @property
     def interpolate_before_map(self) -> bool:

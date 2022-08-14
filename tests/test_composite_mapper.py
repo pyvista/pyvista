@@ -23,6 +23,7 @@ def block_attr(block_attributes):
 
 def test_basic_mapper(composite_mapper):
     assert isinstance(composite_mapper, CompositePolyDataMapper)
+    assert isinstance(composite_mapper.dataset, pv.MultiBlock)
 
 
 def test_interpolate_before_map(composite_mapper):
