@@ -12,6 +12,7 @@ from .colors import (
     string_to_rgb,
     PARAVIEW_BACKGROUND,
 )
+from .composite_mapper import CompositeAttributes, BlockAttributes, CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
 from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
 from .plotting import BasePlotter, Plotter, close_all
