@@ -1,10 +1,8 @@
 name: LinkCheck - All files 🔗
 
 on:
-  workflow_dispatch
-  #schedule:
-  #- cron: "* * * * *" # quick test
-  #- cron: "0 5 * * 0" # Runs at 05:00 on Sunday.
+  schedule:
+    - cron: "0 5 * * 0" # Runs at 05:00 on Sunday.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
