@@ -448,7 +448,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         else:
             raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
-        widget = self.to_pythreejs()
 
         # import after converting as we check for pythreejs import first
         try:

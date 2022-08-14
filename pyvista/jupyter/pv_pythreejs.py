@@ -150,7 +150,16 @@ def cast_to_min_size(ind, max_index):
 
 
 def to_surf_mesh(
-    surf, texture, prop, scalar_mode, color_mode, lookup_table, coloring, add_attr=None
+    surf,
+    texture,
+    prop,
+    scalar_mode,
+    color_mode,
+    lookup_table,
+    coloring,
+    add_attr=None,
+    color=None,
+    opacity=None,
 ):
     """Convert a pyvista surface to a buffer geometry.
 
@@ -174,6 +183,9 @@ def to_surf_mesh(
     * MeshBasicMaterial when lighting is disabled.
 
     """
+    # allow override of property opacity
+    opacity = prop.GetOpacity() if opacity is None else opacity
+
     if add_attr is None:
         add_attr = {}
     # convert to an all-triangular surface
@@ -253,20 +265,23 @@ def to_surf_mesh(
     shared_attr = {
         'vertexColors': coloring,
         'wireframe': prop.GetRepresentation() == 1,
-        'opacity': prop.GetOpacity(),
+        'opacity': opacity,
         'wireframeLinewidth': prop.GetLineWidth(),
         # 'side': 'DoubleSide'  # enabling seems to mess with textures
     }
 
     if colors is None:
-        shared_attr['color'] = pv.Color(prop.GetColor()).hex_rgb
+        if color is None:
+            shared_attr['color'] = pv.Color(prop.GetColor()).hex_rgb
+        else:
+            shared_attr['color'] = pv.Color(color).hex_rgb
 
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
     else:
         shared_attr['side'] = 'DoubleSide'
 
-    if prop.GetOpacity() < 1.0:
+    if opacity < 1.0:
         shared_attr['transparent'] = True
 
     if prop.GetInterpolation() == 3:  # using physically based rendering
@@ -295,7 +310,15 @@ def to_surf_mesh(
 
 
 def to_edge_mesh(
-    surf, prop, coloring, scalar_mode, lookup_table, use_edge_coloring=True, use_lines=False
+    surf,
+    prop,
+    coloring,
+    scalar_mode,
+    lookup_table,
+    use_edge_coloring=True,
+    use_lines=False,
+    color=None,
+    opacity=None,
 ):
     """Convert a pyvista surface to a three.js edge mesh."""
     # extract all edges from the surface.  Should not use triangular
@@ -327,20 +350,23 @@ def to_edge_mesh(
 
     if use_edge_coloring:
         edge_color = prop.GetEdgeColor()
+    elif color is not None:
+        edge_color = color
     else:
         edge_color = prop.GetColor()
 
+    opacity = prop.GetOpacity() if opacity is None else opacity
     edge_mat = tjs.LineBasicMaterial(
         color=pv.Color(edge_color).hex_rgb,
         linewidth=prop.GetLineWidth(),
-        opacity=prop.GetOpacity(),
+        opacity=opacity,
         side='FrontSide',
         **mesh_attr,
     )
     return tjs.LineSegments(edge_geo, edge_mat)
 
 
-def to_tjs_points(dataset, prop, coloring, lookup_table):
+def to_tjs_points(dataset, prop, coloring, lookup_table, color=None, opacity=None):
     """Extract the points from a dataset and return a buffered geometry."""
     attr = {
         'position': array_to_float_buffer(dataset.points),
@@ -352,10 +378,14 @@ def to_tjs_points(dataset, prop, coloring, lookup_table):
 
     geo = tjs.BufferGeometry(attributes=attr)
 
+    color = pv.Color(prop.GetColor()).hex_rgb if color is None else color
+    opacity = prop.GetOpacity() if opacity is None else opacity
     m_attr = {
-        'color': pv.Color(prop.GetColor()).hex_rgb,
+        'color': color,
         'size': prop.GetPointSize() / 100,
         'vertexColors': coloring,
+        'opacity': opacity,
+        'transparent': opacity < 1.0,
     }
 
     point_mat = tjs.PointsMaterial(**m_attr)
@@ -397,7 +427,16 @@ def extract_lights_from_renderer(renderer):
 
 
 def dataset_to_mesh(
-    dataset, prop, texture, focal_point, coloring, scalar_mode, color_mode, lookup_table
+    dataset,
+    prop,
+    texture,
+    focal_point,
+    coloring,
+    scalar_mode,
+    color_mode,
+    lookup_table,
+    color=None,
+    opacity=None,
 ):
     """Convert a VTK dataset to a threejs mesh or meshes."""
     has_faces = True
@@ -416,23 +455,48 @@ def dataset_to_mesh(
 
             meshes.append(
                 to_edge_mesh(
-                    surf, prop, coloring, scalar_mode, lookup_table, use_edge_coloring=True
+                    surf,
+                    prop,
+                    coloring,
+                    scalar_mode,
+                    lookup_table,
+                    use_edge_coloring=True,
+                    color=color,
+                    opacity=opacity,
                 )
             )
 
         meshes.append(
             to_surf_mesh(
-                surf, texture, prop, scalar_mode, color_mode, lookup_table, coloring, add_attr
+                surf,
+                texture,
+                prop,
+                scalar_mode,
+                color_mode,
+                lookup_table,
+                coloring,
+                add_attr,
+                color=color,
+                opacity=opacity,
             )
         )
 
     elif rep_type == 'Points':
-        meshes.append(to_tjs_points(dataset, prop, coloring, lookup_table))
+        meshes.append(
+            to_tjs_points(dataset, prop, coloring, lookup_table, color=color, opacity=opacity)
+        )
     else:  # wireframe
         if has_faces:
             surf = extract_surface_mesh(dataset)
             mesh = to_edge_mesh(
-                surf, prop, coloring, scalar_mode, lookup_table, use_edge_coloring=False
+                surf,
+                prop,
+                coloring,
+                scalar_mode,
+                lookup_table,
+                use_edge_coloring=False,
+                color=color,
+                opacity=opacity,
             )
             meshes.append(mesh)
         elif np.any(dataset.lines):
@@ -460,7 +524,22 @@ def dataset_to_mesh(
 
 
 def meshes_from_actors(actors, focal_point):
-    """Convert VTK actors to threejs meshes."""
+    """Convert VTK actors to threejs meshes.
+
+    Parameters
+    ----------
+    actors : list[vtk.vtkActor]
+        List of VTK actors.
+
+    focal_point : sequence
+        Length three sequence representing the focal point of the camera.
+
+    Returns
+    -------
+    list
+        List of :class:`pythreejs.Mesh`.
+
+    """
     meshes = []
     for actor in actors:
         mapper = actor.GetMapper()
@@ -468,25 +547,39 @@ def meshes_from_actors(actors, focal_point):
             continue
 
         # ignore any mappers whose inputs are not datasets
-        if not hasattr(mapper, 'GetInputAsDataSet'):
+        if isinstance(mapper, pv.CompositePolyDataMapper):
+            prop = actor.GetProperty()
+            block_attrs = mapper.block_attr
+            for i, dataset in enumerate(mapper.dataset):
+                # individual block opacity might be different
+                block_attr = block_attrs[i + 1]
+                mesh = dataset_to_mesh(
+                    dataset,
+                    prop,
+                    None,
+                    focal_point,
+                    get_coloring(mapper, dataset),
+                    mapper.GetScalarModeAsString(),
+                    mapper.GetColorMode(),
+                    mapper.GetLookupTable(),
+                    color=block_attr.color,
+                    opacity=block_attr.opacity,
+                )
+                meshes.extend(mesh)
+        elif not hasattr(mapper, 'GetInputAsDataSet'):
             continue
-        dataset = mapper.GetInputAsDataSet()
-
-        coloring = get_coloring(mapper, dataset)
-        scalar_mode = mapper.GetScalarModeAsString()
-        color_mode = mapper.GetColorMode()
-        lookup_table = mapper.GetLookupTable()
-        mesh = dataset_to_mesh(
-            dataset,
-            actor.GetProperty(),
-            actor.GetTexture(),
-            focal_point,
-            coloring,
-            scalar_mode,
-            color_mode,
-            lookup_table,
-        )
-        if mesh is not None:
+        else:
+            dataset = mapper.GetInputAsDataSet()
+            mesh = dataset_to_mesh(
+                dataset,
+                actor.GetProperty(),
+                actor.GetTexture(),
+                focal_point,
+                get_coloring(mapper, dataset),
+                mapper.GetScalarModeAsString(),
+                mapper.GetColorMode(),
+                mapper.GetLookupTable(),
+            )
             meshes.extend(mesh)
 
     return meshes
