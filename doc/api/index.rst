@@ -21,7 +21,7 @@ Highlights of the API include:
    readers/index
    examples/index
 
-.. panels::
+.. grid:: 1 2 2 2
     :column: col-12 p-3
 
     Core API
