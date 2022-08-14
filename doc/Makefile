@@ -15,9 +15,6 @@ BUILDDIR      = _build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-linkcheck-files:
-	sphinx-build -b linkcheck "$(SOURCEDIR)" "$(BUILDDIR)" 
-
 .PHONY: help Makefile
 
 clean:
