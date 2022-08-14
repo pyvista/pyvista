@@ -36,6 +36,10 @@ def test_color_missing_with_nan(composite_mapper):
 def test_lookup_table(composite_mapper):
     isinstance(composite_mapper.lookup_table, pv._vtk.vtkLookupTable)
 
+    table = pv._vtk.vtkLookupTable()
+    composite_mapper.lookup_table = table
+    assert composite_mapper.lookup_table is table
+
 
 def test_scalar_visibility(composite_mapper):
     isinstance(composite_mapper.scalar_visibility, bool)

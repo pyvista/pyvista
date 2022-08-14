@@ -1277,22 +1277,22 @@ def test_plot_rgb():
 def test_vector_array_with_cells_and_points(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     # test no component argument
-    # p = pyvista.Plotter()
-    # p.add_mesh(multicomp_poly, scalars='vector_values_points')
-    # p.show()
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points')
+    pl.show()
 
-    # p = pyvista.Plotter()
-    # p.add_mesh(multicomp_poly, scalars='vector_values_cells')
-    # p.show()
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    pl.show()
 
     # test component argument
-    p = pyvista.Plotter()
-    p.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
-    p.show()
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.show()
 
-    # p = pyvista.Plotter()
-    # p.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
-    # p.show()
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0, clim=[3, 5])
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_vector_array(multicomp_poly):
@@ -2474,18 +2474,26 @@ def test_plot_composite_many_options(multiblock_poly):
     pl.show(before_close_callback=verify_cache_image)
 
 
-def test_plot_composite_fail(sphere, multiblock_poly):
+def test_plot_composite_raise(sphere, multiblock_poly):
     pl = pyvista.Plotter()
     with pytest.raises(TypeError, match='Must be a composite dataset'):
         pl.add_composite(sphere)
     with pytest.raises(TypeError, match='must be a string for'):
         pl.add_composite(multiblock_poly, scalars=range(10))
+    with pytest.raises(TypeError, match='must be an int'):
+        pl.add_composite(multiblock_poly, categories='abc')
 
 
 def test_plot_composite_categories(multiblock_poly):
     pl = pyvista.Plotter()
     pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_preference_cell(multiblock_poly):
+    """Show that we will plot cell data if both point and cell exist in all."""
+    # use the first two datasets as the third is missing scalars
+    multiblock_poly[:2].plot(preference='cell', before_close_callback=verify_cache_image)
 
 
 @skip_windows  # because of opacity

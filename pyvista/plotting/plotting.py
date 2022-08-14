@@ -2250,12 +2250,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             elif not isinstance(scalars, str):
                 raise TypeError(
-                    '`scalars` must be a string for `add_composite`, not ' f'({type(scalars)})'
+                    f'`scalars` must be a string for `add_composite`, not ({type(scalars)})'
                 )
 
             if categories:
                 if not isinstance(categories, int):
-                    raise ValueError("Categories must be an integer for a composite dataset.")
+                    raise TypeError('Categories must be an integer for a composite dataset.')
                 n_colors = categories
 
             if scalars is not None:
