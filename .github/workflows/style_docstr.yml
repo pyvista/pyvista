@@ -17,6 +17,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
+          cache: 'pip'
 
       - name: Install pre-commit
         run: pip install pre-commit
@@ -33,11 +34,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
+          cache: 'pip'
 
       - uses: actions/cache@v3
         with:
@@ -46,27 +43,22 @@ jobs:
           restore-keys: |
             Examples-Data-
 
-      - name: Install PyVista
-        run: |
-          pip install .
+      - name: Install pyvista and doctest requirements
+        run: pip install . -r requirements_test.txt
 
-      - name: Install Doctest Requirements
-        run: |
-          sudo apt-get update
-          sudo apt-get install libgl1-mesa-glx xvfb python-tk -y
-          pip install -r requirements_test.txt
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.0
+        with:
+          packages: libgl1-mesa-glx xvfb python-tk
+          version: 1.0
 
       - name: Software Report
         run: |
-          xvfb-run python -c "import pyvista; print(pyvista.Report())"
-          xvfb-run python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
+          xvfb-run python -c "import pyvista; print(pyvista.Report()); print('Examples path:', pyvista.EXAMPLES_PATH)"
           which python
           pip list
 
       - name: Test Package Docstrings
-        run: |
-          xvfb-run pytest -v --doctest-modules pyvista
+        run: xvfb-run pytest -v --doctest-modules pyvista
 
       - name: Test Package Docstrings with Local Namespace
-        run: |
-          xvfb-run make doctest-modules-local-namespace
+        run: xvfb-run make doctest-modules-local-namespace
