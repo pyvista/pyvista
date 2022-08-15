@@ -84,7 +84,7 @@ jobs:
       # configure building documentation with methods on individual pages on
       # main, release, or tags with v*
       - name: Set building full docs
-        if: ${{ github.ref == 'refs/heads/main' ||  contains(github.ref, "release") || startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ github.ref == 'refs/heads/main' ||  contains(github.ref, 'release') || startsWith(github.ref, 'refs/tags/v') }}
         run: |
            echo "CLASS_TABLE_AUTOSUMMARY=TRUE" >> $GITHUB_ENV
 
