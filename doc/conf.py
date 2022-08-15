@@ -345,6 +345,14 @@ sphinx_gallery_conf = {
     ),
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
+    'binder': {
+        'org': "pyvista",
+        'repo': "pyvista-examples",
+        'branch': "master",
+        'binderhub_url': "https://mybinder.org",
+        'dependencies': "../../Dockerfile",
+        'use_jupyter_lab': True,
+    },
 }
 
 import re
