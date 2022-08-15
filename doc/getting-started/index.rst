@@ -19,7 +19,7 @@ Getting Started
 
     Learn more about why we created PyVista as an interface to the Visualization Toolkit (VTK).
 
-    .. link-button:: why
+    .. button-ref:: why
         :type: ref
         :text: Why PyVista?
         :classes: btn-outline-primary btn-block stretched-link
@@ -33,7 +33,7 @@ Getting Started
     Using PyVista in your research? Please consider citing or
     acknowledging us.  We have a publication!
 
-    .. link-button:: authors
+    .. button-ref:: authors
         :type: ref
         :text: Authors & Citation
         :classes: btn-outline-primary btn-block stretched-link
@@ -46,7 +46,7 @@ Getting Started
 
     Take a look at third party projects using PyVista
 
-    .. link-button:: external_examples
+    .. button-ref:: external_examples
         :type: ref
         :text: Learn more
         :classes: btn-outline-primary btn-block stretched-link
@@ -92,7 +92,7 @@ Installation
     Installing a specific version? Installing from source? Check the advanced
     installation page.
 
-    .. link-button:: installation
+    .. button-ref:: installation
         :type: ref
         :text: Installing PyVista
         :classes: btn-outline-primary btn-block stretched-link
