@@ -82,11 +82,14 @@ jobs:
       - name: Build Documentation
         run: make -C doc html SPHINXOPTS="-W --keep-going"
 
+      - name: Tar build
+        run: tar -zcvf docs-build.tar.gz doc/_build/html/
+
       - name: Upload HTML documentation
         uses: actions/upload-artifact@v3
         with:
           name: docs-build
-          path: doc/_build/html
+          path: docs-build.tar.gz
 
       - uses: actions/upload-artifact@v3
         with:

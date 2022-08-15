@@ -324,7 +324,7 @@ def _run_code(code, code_path, ns=None, function_name=None):
 
     try:
         if pyvista.PLOT_DIRECTIVE_THEME is not None:
-            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)
+            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err
