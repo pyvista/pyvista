@@ -2611,7 +2611,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalars=None,
         clim=None,
         resolution=None,
-        opacity="linear",
+        opacity='linear',
         n_colors=256,
         cmap=None,
         flip_scalars=False,
@@ -2621,13 +2621,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         categories=False,
         culling=False,
         multi_colors=False,
-        blending="composite",
+        blending='composite',
         mapper=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
         annotations=None,
         pickable=True,
-        preference='point',
+        preference="point",
         opacity_unit_distance=None,
         shade=False,
         diffuse=0.7,
@@ -2819,9 +2819,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap = kwargs.pop('colormap', cmap)
         culling = kwargs.pop('backface_culling', culling)
 
-        if 'scalar' in kwargs:
+        if "scalar" in kwargs:
             raise TypeError(
-                '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
+                "`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?"
             )
         assert_empty_kwargs(**kwargs)
 
