@@ -2611,7 +2611,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalars=None,
         clim=None,
         resolution=None,
-        opacity='linear',
+        opacity="linear",
         n_colors=256,
         cmap=None,
         flip_scalars=False,
@@ -2621,19 +2621,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         categories=False,
         culling=False,
         multi_colors=False,
-        blending='composite',
+        blending="composite",
         mapper=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
         annotations=None,
         pickable=True,
-        preference="point",
+        preference='point',
         opacity_unit_distance=None,
         shade=False,
         diffuse=0.7,
         specular=0.2,
         specular_power=10.0,
         render=True,
+        rescale_scalars=True,
+        copy_cell_to_point_data=True,
         **kwargs,
     ):
         """Add a volume, rendered using a smart mapper by default.
@@ -2774,6 +2776,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
+        rescale_scalars : bool, optional
+            Rescale scalar data. This is an expensive memory and time
+            operation, especially for large data. In that case, it is
+            best to set this to ``False``, clip and scale scalar data
+            of ``volume`` beforehand, and pass that to ``add_volume``.
+            Default ``True``.
+
+        copy_cell_to_point_data : bool, optional
+            Make a copy of the original ``volume``, passing cell data
+            to point data. This is an expensive memory and time
+            operation, especially for large data. In that case, it is
+            best to choose ``False``. However, this copy is a current
+            workaround to ensure original object data is not altered
+            and volume rendering on cells exhibits some issues. Use
+            with caution. Default ``True``.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -2799,11 +2817,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Supported aliases
         clim = kwargs.pop('rng', clim)
         cmap = kwargs.pop('colormap', cmap)
-        culling = kwargs.pop("backface_culling", culling)
+        culling = kwargs.pop('backface_culling', culling)
 
-        if "scalar" in kwargs:
+        if 'scalar' in kwargs:
             raise TypeError(
-                "`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?"
+                '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
             )
         assert_empty_kwargs(**kwargs)
 
@@ -2846,10 +2864,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         f'Object type ({type(volume)}) not supported for plotting in PyVista.'
                     )
         else:
-            # HACK: Make a copy so the original object is not altered.
-            #       Also, place all data on the nodes as issues arise when
-            #       volume rendering on the cells.
-            volume = volume.cell_data_to_point_data()
+            if copy_cell_to_point_data:
+                # HACK: Make a copy so the original object is not altered.
+                #       Also, place all data on the nodes as issues arise when
+                #       volume rendering on the cells.
+                volume = volume.cell_data_to_point_data()
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
@@ -2921,10 +2940,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
             else:
                 raise ValueError('No scalars to use for volume rendering.')
-        elif isinstance(scalars, str):
-            pass
-
-        ##############
 
         title = 'Data'
         if isinstance(scalars, str):
@@ -2939,9 +2954,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
         if scalars.ndim != 1:
             scalars = scalars.ravel()
-
-        if scalars.dtype == np.bool_ or scalars.dtype == np.uint8:
-            scalars = scalars.astype(np.float_)
 
         # Define mapper, volume, and add the correct properties
         mappers = {
@@ -2958,10 +2970,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume.point_data.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume.cell_data.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
@@ -2972,19 +2982,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, float) or isinstance(clim, int):
             clim = [-clim, clim]
 
-        ###############
+        if rescale_scalars:
+            clim = np.asarray(clim, dtype=scalars.dtype)
 
-        scalars = scalars.astype(np.float_)
-        with np.errstate(invalid='ignore'):
-            idxs0 = scalars < clim[0]
-            idxs1 = scalars > clim[1]
-        scalars[idxs0] = clim[0]
-        scalars[idxs1] = clim[1]
-        scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
-        # scalars = scalars.astype(np.uint8)
-        volume[title] = scalars
+            scalars.clip(clim[0], clim[1], out=scalars)
 
-        self.mapper.scalar_range = clim
+            min_ = np.nanmin(scalars)
+            max_ = np.nanmax(scalars)
+
+            np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
+
+            volume[title] = np.array(scalars, dtype=np.uint8)
+
+            self.mapper.scalar_range = clim
 
         # Set colormap and build lookup table
         table = _vtk.vtkLookupTable()
