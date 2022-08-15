@@ -77,15 +77,16 @@ jobs:
       - name: Set building full docs
         if: ${{ github.ref == 'refs/heads/main' ||  contains(github.ref, 'release') || startsWith(github.ref, 'refs/tags/v') }}
         run: |
-           echo "CLASS_TABLE_AUTOSUMMARY=TRUE" >> $GITHUB_ENV
+           echo "FULL_DOC_BUILD=TRUE" >> $GITHUB_ENV
 
       - name: Build Documentation
         run: make -C doc html SPHINXOPTS="-W --keep-going"
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload HTML documentation
+        uses: actions/upload-artifact@v3
         with:
           name: docs-build
-          path: doc/_build
+          path: doc/_build/html
 
       - uses: actions/upload-artifact@v3
         with:
