@@ -242,8 +242,14 @@ intersphinx_timeout = 10
 linkcheck_retries = 3
 linkcheck_timeout = 500
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+# Generate class table auto-summary when enabled. This generates one page per
+# class method or attribute and should be used with the production
+# documentation, but local builds and PR commits can get away without this as
+# it takes ~4x as long to generate the documentation.
+if os.environ.get('CLASS_TABLE_AUTOSUMMARY', '').upper() == 'TRUE':
+    templates_path = ["_templates"]
+else:
+    templates_path = ["_templates_basic"]
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
