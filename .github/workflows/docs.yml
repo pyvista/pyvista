@@ -47,9 +47,7 @@ jobs:
           version: 1.0
 
       - name: Install OSMesa VTK
-        run: |
-          pip install vtk --no-index
-          python -c "from vtkmodules.vtkRenderingCore import vtkRenderWindow;wstr = str(type(vtkRenderWindow())); assert 'EGL' in wstr or 'OSOpenGL' in wstr" || pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
+        run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
 
       - name: Install PyVista and dependencies
         run: pip install -e . -r requirements_docs.txt
