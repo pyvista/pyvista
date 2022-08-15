@@ -246,10 +246,11 @@ linkcheck_timeout = 500
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
+templates_path = ["_templates"]
 if os.environ.get('CLASS_TABLE_AUTOSUMMARY', '').upper() == 'TRUE':
-    templates_path = ["_templates"]
+    templates_path.append("_templates_full")
 else:
-    templates_path = ["_templates_basic"]
+    templates_path.append("_templates_basic")
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
@@ -284,7 +285,7 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", "_templates*"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
