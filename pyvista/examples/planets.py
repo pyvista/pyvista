@@ -16,15 +16,50 @@ from pyvista import examples
 from .downloads import _download_and_read
 
 
-def load_sun(*args, **kwargs):
+def _sphere_with_texture_map(radius=1.0, theta_resolution=50, phi_resolution=100):
+    """Sphere with texture coordinate.
+
+    Parameters
+    ----------
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
+
+    Returns
+    -------
+    pyvista.PolyData
+    """
+    # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
+    theta, phi = np.mgrid[0 : np.pi : theta_resolution * 1j, 0 : 2 * np.pi : phi_resolution * 1j]
+    x = radius * np.sin(theta) * np.cos(phi)
+    y = radius * np.sin(theta) * np.sin(phi)
+    z = radius * np.cos(theta)
+    sphere = pyvista.StructuredGrid(x, y, z)
+    texture_coords = np.empty((sphere.n_points, 2))
+    texture_coords[:, 0] = phi.ravel('F') / phi.max()
+    texture_coords[:, 1] = theta.ravel('F') / theta.max()
+    sphere.active_t_coords = texture_coords
+    return sphere
+
+
+def load_sun(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a sun source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -42,22 +77,27 @@ def load_sun(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     surface = download_sun_jpg()
     sphere.textures["atmosphere"] = surface
     return sphere
 
 
-def load_moon(*args, **kwargs):
+def load_moon(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a moon source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -75,22 +115,27 @@ def load_moon(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     surface = download_moon_jpg()
     sphere.textures["surface"] = surface
     return sphere
 
 
-def load_mercury(*args, **kwargs):
+def load_mercury(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a mercury source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -108,22 +153,27 @@ def load_mercury(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     surface = download_mercury_jpg()
     sphere.textures["surface"] = surface
     return sphere
 
 
-def load_venus(*args, **kwargs):
+def load_venus(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a venus source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -141,8 +191,9 @@ def load_venus(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     surface = download_venus_jpg(atmosphere=False)
     sphere.textures["surface"] = surface
     atmosphere = download_venus_jpg()
@@ -150,15 +201,19 @@ def load_venus(*args, **kwargs):
     return sphere
 
 
-def load_mars(*args, **kwargs):
+def load_mars(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a mars source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -176,22 +231,27 @@ def load_mars(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     surface = examples.planets.download_mars_jpg()
     sphere.textures["surface"] = surface
     return sphere
 
 
-def load_jupiter(*args, **kwargs):
+def load_jupiter(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a jupiter source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -209,22 +269,27 @@ def load_jupiter(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     atmosphere = download_jupiter_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
-def load_saturn(*args, **kwargs):
+def load_saturn(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a saturn source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -242,8 +307,9 @@ def load_saturn(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     atmosphere = download_saturn_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
@@ -285,15 +351,19 @@ def load_saturn_ring_alpha(*args, **kwargs):
     return disc
 
 
-def load_uranus(*args, **kwargs):
+def load_uranus(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a uranus source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -311,22 +381,27 @@ def load_uranus(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     atmosphere = download_uranus_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
-def load_neptune(*args, **kwargs):
+def load_neptune(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a neptune source.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
-    **kwargs
-        Arbitrary keyword arguments.
+    radius : float, optional
+        Sphere radius.
+
+    theta_resolution : int , optional
+        Set the number of points in the longitude direction.
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     Returns
     -------
@@ -344,8 +419,9 @@ def load_neptune(*args, **kwargs):
     >>> plotter.show()
 
     """
-    sphere = pyvista.Sphere(*args, **kwargs)
-    sphere.texture_map_to_sphere(inplace=True, prevent_seam=False)
+    sphere = _sphere_with_texture_map(
+        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+    )
     atmosphere = download_neptune_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
