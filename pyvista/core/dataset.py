@@ -1800,7 +1800,7 @@ class DataSet(DataSetFilters, DataObject):
 
         A mesh with 3D cells does not have an area.  To get
         the outer surface area, first extract the surface using
-        :func:`pyvista.DatasetFilters.extract_surface`.
+        :func:`pyvista.DataSetFilters.extract_surface`.
 
         >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
         >>> mesh.area
