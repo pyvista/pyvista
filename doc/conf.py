@@ -27,8 +27,7 @@ pyvista.set_error_output_file("errors.txt")
 pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 pyvista.set_plot_theme("document")
-# pyvista.global_theme.window_size = [1024, 768]
-pyvista.global_theme.window_size = [400, 300]
+pyvista.global_theme.window_size = [1024, 768]
 pyvista.global_theme.font.size = 22
 pyvista.global_theme.font.label_size = 22
 pyvista.global_theme.font.title_size = 22
