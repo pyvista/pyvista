@@ -30,7 +30,6 @@ Highlights of the API include:
     Learn more anout PyVista's different mesh types and direct access to common VTK filters.
 
     .. button-ref:: core/index
-        :type: ref
         :text: Core API
         :classes: btn-outline-primary btn-block stretched-link
 
@@ -42,7 +41,6 @@ Highlights of the API include:
     Explore PyVista's robust plotting interface for visualizing the core data structures.
 
     .. button-ref:: plotting/index
-        :type: ref
         :text: Plotting API
         :classes: btn-outline-primary btn-block stretched-link
 
@@ -54,7 +52,6 @@ Highlights of the API include:
     Use PyVista's Reader classes to read data files.
 
     .. button-ref:: readers/index
-        :type: ref
         :text: Readers
         :classes: btn-outline-primary btn-block stretched-link
 
@@ -66,7 +63,6 @@ Highlights of the API include:
     Utilize PyVista's helper modules, conversion tools, and geometric object creation routines.
 
     .. button-ref:: utilities/index
-        :type: ref
         :text: Utilities
         :classes: btn-outline-primary btn-block stretched-link
 
