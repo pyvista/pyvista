@@ -2934,7 +2934,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             # Make sure scalars components are not vectors/tuples
-            scalars = volume.active_scalars
+            scalars = volume.active_scalars.copy()
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
                 scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
@@ -2970,8 +2970,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
+            volume.point_data.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
+            volume.cell_data.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
