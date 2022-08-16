@@ -2845,6 +2845,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise TypeError(
                         f'Object type ({type(volume)}) not supported for plotting in PyVista.'
                     )
+        else:
+            # HACK: Make a copy so the original object is not altered.
+            #       Also, place all data on the nodes as issues arise when
+            #       volume rendering on the cells.
+            volume = volume.cell_data_to_point_data()
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
@@ -2925,15 +2930,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
-
-        for name in volume.array_names:
-            if scalars is volume[name]:
-                # ``add_volume`` rescales ``scalars`` to 8-bit for color mapping so that
-                # it can be plotted. We should not mutate the original data. We add a
-                # guard here in case any of the previous methods for obtaining ``scalars``
-                # from ``volume`` obtained the original scalars.
-                scalars = volume[name].copy()
-                break
 
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
