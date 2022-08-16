@@ -230,7 +230,7 @@ def test_widget_checkbox_button(uniform):
     p.close()
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires vtk>=9.1")
+@pytest.mark.needs_vtk_version(9, 1)
 def test_add_camera_orientation_widget(uniform):
     p = pyvista.Plotter()
     p.add_camera_orientation_widget()
