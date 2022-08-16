@@ -1149,7 +1149,7 @@ def test_set_extent():
     assert np.array_equal(uni_grid.extent, extent)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
@@ -1165,7 +1165,7 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_init():
     grid = examples.load_explicit_structured()
     assert isinstance(grid, pyvista.ExplicitStructuredGrid)
@@ -1178,7 +1178,7 @@ def test_ExplicitStructuredGrid_init():
     assert 'N Arrays' in str(grid)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     block_i = np.fromstring(
         '''
@@ -1224,7 +1224,7 @@ def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     assert np.array_equal(grid.cell_data['BLOCK_K'], block_k)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_save():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
@@ -1237,7 +1237,7 @@ def test_ExplicitStructuredGrid_save():
     os.remove('grid.vtu')
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_hide_cells():
     ghost = np.asarray(
         '''
@@ -1264,7 +1264,7 @@ def test_ExplicitStructuredGrid_hide_cells():
     assert np.array_equal(grid.cell_data['vtkGhostType'], ghost)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_show_cells():
     grid = examples.load_explicit_structured()
     grid.hide_cells(range(80, 120), inplace=True)
@@ -1280,7 +1280,7 @@ def test_ExplicitStructuredGrid_show_cells():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 0
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_dimensions():
     grid = examples.load_explicit_structured()
     assert isinstance(grid.dimensions, tuple)
@@ -1289,7 +1289,7 @@ def test_ExplicitStructuredGrid_dimensions():
     assert grid.dimensions == (5, 6, 7)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_visible_bounds():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
@@ -1299,7 +1299,7 @@ def test_ExplicitStructuredGrid_visible_bounds():
     assert grid.visible_bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_cell_id():
     grid = examples.load_explicit_structured()
 
@@ -1313,7 +1313,7 @@ def test_ExplicitStructuredGrid_cell_id():
     assert np.array_equal(ind, [19, 31, 41, 54])
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_cell_coords():
     grid = examples.load_explicit_structured()
 
@@ -1328,7 +1328,7 @@ def test_ExplicitStructuredGrid_cell_coords():
     assert np.array_equal(coords, [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_neighbors():
     grid = examples.load_explicit_structured()
 
@@ -1348,7 +1348,7 @@ def test_ExplicitStructuredGrid_neighbors():
     assert indices == [1, 4, 20]
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_compute_connectivity():
     connectivity = np.asarray(
         '''
@@ -1376,7 +1376,7 @@ def test_ExplicitStructuredGrid_compute_connectivity():
     assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_compute_connections():
     connections = np.asarray(
         '''
