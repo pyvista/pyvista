@@ -1300,7 +1300,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     Parameters
     ----------
     args : various
-        See below examples
+        See below examples.
     deep : optional
         Whether to deep copy a vtkUnstructuredGrid object.
         Default is ``False``.  Keyword only.
@@ -2240,6 +2240,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     - From a ``vtk.vtkExplicitStructuredGrid`` or ``vtk.vtkUnstructuredGrid`` object
     - From a VTU or VTK file
     - From ``dims`` and ``corners`` arrays
+
+    Parameters
+    ----------
+    args : various
+        See below examples.
+    deep : optional
+        Whether to deep copy a vtkUnstructuredGrid object.
+        Default is ``False``.  Keyword only.
 
     Examples
     --------
