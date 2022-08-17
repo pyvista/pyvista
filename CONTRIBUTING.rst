@@ -435,7 +435,9 @@ it with::
 
 This will generate the same documentation as rendered online, but as each
 individual class method and attribute will have its own documentation page, the
-documentation will take much longer to build.
+documentation will take much longer to build. Additionally, inherited methods
+will have their docstrings rendered, whereas the non-full documentation build
+only generates methods belonging directly to that class.
 
 Parallel Documentation Build
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
