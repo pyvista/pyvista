@@ -479,6 +479,8 @@ def test_merge_invalid(hexbeam, sphere):
 def test_init_structured_raise():
     with pytest.raises(TypeError, match="Invalid parameters"):
         pyvista.StructuredGrid(['a', 'b', 'c'])
+    with pytest.raises(ValueError, match="Too many args"):
+        pyvista.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
 
 def test_init_structured(struct_grid):
@@ -1409,6 +1411,12 @@ def test_ExplicitStructuredGrid_compute_connections():
     grid.compute_connections(inplace=True)
     assert 'number_of_connections' in grid.cell_data
     assert np.array_equal(grid.cell_data['number_of_connections'], connections)
+
+
+@pytest.mark.needs_vtk9
+def test_ExplicitStructuredGrid_raise_init():
+    with pytest.raises(ValueError, match="Too many args"):
+        pyvista.ExplicitStructuredGrid(1, 2, True)
 
 
 def test_copy_no_copy_wrap_object(datasets):
