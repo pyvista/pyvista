@@ -445,7 +445,7 @@ You can improve your documentation build time on Linux and Mac OS with:
 
 .. code:: bash
 
-   make -C doc html
+   make -C doc phtml
 
 This effectively invokes ``SPHINXOPTS=-j`` and can be especially useful for
 multi-core computers when ``FULL_DOC_BUILD=TRUE``
