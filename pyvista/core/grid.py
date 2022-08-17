@@ -96,7 +96,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         values in any of the array-valued input arguments.
 
     deep : bool, optional
-        Whether to deep copy a vtkRectilinearGrid object.
+        Whether to deep copy a ``vtk.vtkRectilinearGrid`` object.
         Default is ``False``.  Keyword only.
 
     Examples
@@ -427,7 +427,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``.
 
     deep : bool, optional
-        Whether to deep copy a vtkImageData object.
+        Whether to deep copy a ``vtk.vtkImageData`` object.
         Default is ``False``.  Keyword only.
 
     Examples

@@ -2246,7 +2246,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     args : various
         See below examples.
     deep : optional
-        Whether to deep copy a vtkUnstructuredGrid object.
+        Whether to deep copy a ``vtk.vtkUnstructuredGrid`` object.
         Default is ``False``.  Keyword only.
 
     Examples
