@@ -427,7 +427,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``.
 
     deep : bool, optional
-        Whether to deep copy a vtkImage3Data object.
+        Whether to deep copy a vtkImageData object.
         Default is ``False``.  Keyword only.
 
     Examples

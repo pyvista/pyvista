@@ -1413,7 +1413,7 @@ def test_ExplicitStructuredGrid_compute_connections():
 
 def test_copy_no_copy_wrap_object(datasets):
     for dataset in datasets:
-        # different dataset tyoes have different copy behavior for points
+        # different dataset types have different copy behavior for points
         # use point data which is common
         dataset["data"] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset)
@@ -1421,7 +1421,7 @@ def test_copy_no_copy_wrap_object(datasets):
         assert np.array_equal(new_dataset["data"], dataset["data"])
 
     for dataset in datasets:
-        # different dataset tyoes have different copy behavior for points
+        # different dataset types have different copy behavior for points
         # use point data which is common
         dataset["data"] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset, deep=True)
