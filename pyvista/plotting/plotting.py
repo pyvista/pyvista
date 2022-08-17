@@ -2965,15 +2965,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, float) or isinstance(clim, int):
             clim = [-clim, clim]
 
+        # convert the scalars to np.uint8 and scale between 0 and 255 within clim
         clim = np.asarray(clim, dtype=scalars.dtype)
-
         scalars.clip(clim[0], clim[1], out=scalars)
-
         min_ = np.nanmin(scalars)
         max_ = np.nanmax(scalars)
-
         np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
-
         volume[title] = np.array(scalars, dtype=np.uint8)
 
         self.mapper.scalar_range = clim
