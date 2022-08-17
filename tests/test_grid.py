@@ -1427,3 +1427,22 @@ def test_copy_no_copy_wrap_object(datasets):
         new_dataset = type(dataset)(dataset, deep=True)
         new_dataset["data"] += 1
         assert not np.any(new_dataset["data"] == dataset["data"])
+
+
+@pytest.mark.needs_vtk9
+def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
+    for dataset in datasets_vtk9:
+        # different dataset tyoes have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset)
+        new_dataset["data"] += 1
+        assert np.array_equal(new_dataset["data"], dataset["data"])
+
+    for dataset in datasets_vtk9:
+        # different dataset tyoes have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset, deep=True)
+        new_dataset["data"] += 1
+        assert not np.any(new_dataset["data"] == dataset["data"])
