@@ -16,7 +16,7 @@ from pyvista import examples
 from .downloads import _download_and_read
 
 
-def _sphere_with_texture_map(radius=0.5, theta_resolution=30, phi_resolution=30):
+def _sphere_with_texture_map(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Sphere with texture coordinate.
 
     Parameters
@@ -35,19 +35,19 @@ def _sphere_with_texture_map(radius=0.5, theta_resolution=30, phi_resolution=30)
     pyvista.PolyData
     """
     # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
-    phi, theta = np.mgrid[0 : np.pi : phi_resolution * 1j, 0 : 2 * np.pi : theta_resolution * 1j]
-    x = radius * np.sin(phi) * np.cos(theta)
-    y = radius * np.sin(phi) * np.sin(theta)
-    z = radius * np.cos(phi)
+    theta, phi = np.mgrid[0 : np.pi : theta_resolution * 1j, 0 : 2 * np.pi : phi_resolution * 1j]
+    x = radius * np.sin(theta) * np.cos(phi)
+    y = radius * np.sin(theta) * np.sin(phi)
+    z = radius * np.cos(theta)
     sphere = pyvista.StructuredGrid(x, y, z)
     texture_coords = np.empty((sphere.n_points, 2))
-    texture_coords[:, 0] = theta.ravel('F') / theta.max()
-    texture_coords[:, 1] = phi.ravel('F') / phi.max()
+    texture_coords[:, 0] = phi.ravel('F') / phi.max()
+    texture_coords[:, 1] = theta.ravel('F') / theta.max()
     sphere.active_t_coords = texture_coords
     return sphere
 
 
-def load_sun(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_sun(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a sun source.
 
     Parameters
@@ -85,7 +85,7 @@ def load_sun(radius=0.5, theta_resolution=30, phi_resolution=30):
     return sphere
 
 
-def load_moon(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_moon(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a moon source.
 
     Parameters
@@ -123,7 +123,7 @@ def load_moon(radius=0.5, theta_resolution=30, phi_resolution=30):
     return sphere
 
 
-def load_mercury(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_mercury(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a mercury source.
 
     Parameters
@@ -161,7 +161,7 @@ def load_mercury(radius=0.5, theta_resolution=30, phi_resolution=30):
     return sphere
 
 
-def load_venus(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_venus(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a venus source.
 
     Parameters
@@ -201,7 +201,7 @@ def load_venus(radius=0.5, theta_resolution=30, phi_resolution=30):
     return sphere
 
 
-def load_mars(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_mars(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a mars source.
 
     Parameters
@@ -239,7 +239,7 @@ def load_mars(radius=0.5, theta_resolution=30, phi_resolution=30):
     return sphere
 
 
-def load_jupiter(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_jupiter(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a jupiter source.
 
     Parameters
@@ -277,7 +277,7 @@ def load_jupiter(radius=0.5, theta_resolution=30, phi_resolution=30):
     return sphere
 
 
-def load_saturn(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_saturn(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a saturn source.
 
     Parameters
@@ -351,7 +351,7 @@ def load_saturn_ring_alpha(*args, **kwargs):
     return disc
 
 
-def load_uranus(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_uranus(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a uranus source.
 
     Parameters
@@ -389,7 +389,7 @@ def load_uranus(radius=0.5, theta_resolution=30, phi_resolution=30):
     return sphere
 
 
-def load_neptune(radius=0.5, theta_resolution=30, phi_resolution=30):
+def load_neptune(radius=1.0, theta_resolution=50, phi_resolution=100):
     """Load a neptune source.
 
     Parameters
