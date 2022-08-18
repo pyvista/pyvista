@@ -194,7 +194,7 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
 
     if cbar is not None:
         # Colormap choice widget
-        options = [(key, value) for key, value in colormaps.items()]
+        options = list(colormaps.items())
         colormap_dd = Dropdown(options=options, description='Colormap:')
         jslink((colored_mesh, 'colormap'), (colormap_dd, 'index'))
 

@@ -91,6 +91,7 @@ setup(
             'meshio>=5.2',
             'ipywidgets<8.0',
             'ipyvtklink',
+            'panel',
             'pythreejs',
         ],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
