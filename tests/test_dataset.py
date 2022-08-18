@@ -1511,7 +1511,7 @@ def test_volume_area():
 
     # PolyData
     # cube of size 4
-    # PolyData ia special baucause it is a 2D surface that can enclose a volume
+    # PolyData is special because it is a 2D surface that can enclose a volume
     grid = pyvista.UniformGrid(dims=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)

@@ -1753,7 +1753,7 @@ class DataSet(DataSetFilters, DataObject):
         Examples
         --------
         Get the volume of a cube of size 4x4x4.
-        Note 5 points in each direction.
+        Note that there are 5 points in each direction.
 
         >>> import pyvista as pv
         >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
@@ -1790,7 +1790,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the area of a square o size 2x2.
+        Get the area of a square of size 2x2.
         Note 5 points in each direction.
 
         >>> import pyvista as pv
