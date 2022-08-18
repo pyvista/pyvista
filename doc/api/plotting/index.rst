@@ -23,7 +23,6 @@ all plotting functionality in PyVista.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Plotter
    Renderer

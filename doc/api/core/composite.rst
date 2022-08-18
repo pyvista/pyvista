@@ -148,7 +148,6 @@ base class is analogous to VTK's `vtk.vtkMultiBlockDataSet`_ class.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.MultiBlock
 

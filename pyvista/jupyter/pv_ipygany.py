@@ -194,7 +194,8 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
 
     if cbar is not None:
         # Colormap choice widget
-        colormap_dd = Dropdown(options=colormaps, description='Colormap:')
+        options = list(colormaps.items())
+        colormap_dd = Dropdown(options=options, description='Colormap:')
         jslink((colored_mesh, 'colormap'), (colormap_dd, 'index'))
 
         # sensible colorbar maximum width, or else it looks bad when
