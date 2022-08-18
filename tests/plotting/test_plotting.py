@@ -2735,7 +2735,7 @@ def test_bool_scalars(sphere):
 
 
 @skip_windows  # because of pbr
-@skip_not_vtk9  # pbr required
+@skip_9_1_0  # pbr required
 def test_property():
     prop = pyvista.Property(interpolation='pbr', metallic=1.0)
 
