@@ -74,7 +74,6 @@ classes inherit all methods from their corresponding VTK `vtkPointSet`_,
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.PointSet
    pyvista.PolyData

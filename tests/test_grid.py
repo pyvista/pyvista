@@ -56,6 +56,10 @@ def test_init_from_unstructured(hexbeam):
     grid.points += 1
     assert not np.any(grid.points == hexbeam.points)
 
+    grid = pyvista.UnstructuredGrid(hexbeam)
+    grid.points += 1
+    assert np.array_equal(grid.points, hexbeam.points)
+
 
 def test_init_from_numpy_arrays():
     offset = np.array([0, 9])
@@ -475,6 +479,8 @@ def test_merge_invalid(hexbeam, sphere):
 def test_init_structured_raise():
     with pytest.raises(TypeError, match="Invalid parameters"):
         pyvista.StructuredGrid(['a', 'b', 'c'])
+    with pytest.raises(ValueError, match="Too many args"):
+        pyvista.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
 
 def test_init_structured(struct_grid):
@@ -487,8 +493,13 @@ def test_init_structured(struct_grid):
     assert np.allclose(struct_grid.y, y)
     assert np.allclose(struct_grid.z, z)
 
+    grid_a = pyvista.StructuredGrid(grid, deep=True)
+    grid_a.points += 1
+    assert not np.any(grid_a.points == grid.points)
+
     grid_a = pyvista.StructuredGrid(grid)
-    assert np.allclose(grid_a.points, grid.points)
+    grid_a.points += 1
+    assert np.array_equal(grid_a.points, grid.points)
 
 
 @pytest.fixture
@@ -1400,3 +1411,46 @@ def test_ExplicitStructuredGrid_compute_connections():
     grid.compute_connections(inplace=True)
     assert 'number_of_connections' in grid.cell_data
     assert np.array_equal(grid.cell_data['number_of_connections'], connections)
+
+
+@pytest.mark.needs_vtk9
+def test_ExplicitStructuredGrid_raise_init():
+    with pytest.raises(ValueError, match="Too many args"):
+        pyvista.ExplicitStructuredGrid(1, 2, True)
+
+
+def test_copy_no_copy_wrap_object(datasets):
+    for dataset in datasets:
+        # different dataset types have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset)
+        new_dataset["data"] += 1
+        assert np.array_equal(new_dataset["data"], dataset["data"])
+
+    for dataset in datasets:
+        # different dataset types have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset, deep=True)
+        new_dataset["data"] += 1
+        assert not np.any(new_dataset["data"] == dataset["data"])
+
+
+@pytest.mark.needs_vtk9
+def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
+    for dataset in datasets_vtk9:
+        # different dataset tyoes have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset)
+        new_dataset["data"] += 1
+        assert np.array_equal(new_dataset["data"], dataset["data"])
+
+    for dataset in datasets_vtk9:
+        # different dataset tyoes have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset, deep=True)
+        new_dataset["data"] += 1
+        assert not np.any(new_dataset["data"] == dataset["data"])

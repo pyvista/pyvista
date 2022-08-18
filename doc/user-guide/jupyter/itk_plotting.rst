@@ -72,17 +72,10 @@ For convenience, figures can also be plotted using the ``plot_itk`` function:
     pv.plot_itk(mesh, scalars=z)
 
 
-.. rubric:: Attributes
 
-.. autoautosummary:: pyvista.PlotterITK
-   :attributes:
+API Reference
+~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
 
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.PlotterITK
-   :methods:
-
-.. autoclass:: pyvista.PlotterITK
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   pyvista.PlotterITK

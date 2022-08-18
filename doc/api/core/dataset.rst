@@ -34,7 +34,6 @@ arrays associated with cells, points, and the DataSet in general (fields).
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.DataSet
    pyvista.DataSetAttributes

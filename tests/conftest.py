@@ -128,6 +128,13 @@ def multiblock_poly():
 
 
 @fixture()
+def datasets_vtk9():
+    return [
+        examples.load_explicit_structured(),
+    ]
+
+
+@fixture()
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
