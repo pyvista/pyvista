@@ -95,7 +95,7 @@ setup(
         ],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
         'io': ['meshio>=5.2'],
-        'jupyter': ['ipyvtklink', 'ipywidgets<8.0', 'panel' 'pythreejs'],
+        'jupyter': ['ipyvtklink', 'ipywidgets<8.0', 'panel', 'pythreejs'],
     },
     zip_safe=False,
 )
