@@ -270,7 +270,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     structures, this flat indexing would be known as "Depth-first search"
     and the entire indexing would be::
 
-       ``[A, B, d, e, f, C, g, h, i]``
+       [A, B, d, e, f, C, g, h, i]
 
     Note how the composite datasets themselves are capitalized and are
     accessible in the flat indexing, and not just the datasets.
