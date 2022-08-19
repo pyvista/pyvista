@@ -16,7 +16,7 @@ from pyvista import examples
 from .downloads import _download_and_read
 
 
-def _sphere_with_texture_map(radius=1.0, theta_resolution=50, phi_resolution=100):
+def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Sphere with texture coordinate.
 
     Parameters
@@ -24,10 +24,10 @@ def _sphere_with_texture_map(radius=1.0, theta_resolution=50, phi_resolution=100
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lon_resolution : int, optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lat_resolution : int , optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -35,7 +35,7 @@ def _sphere_with_texture_map(radius=1.0, theta_resolution=50, phi_resolution=100
     pyvista.PolyData
     """
     # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
-    theta, phi = np.mgrid[0 : np.pi : theta_resolution * 1j, 0 : 2 * np.pi : phi_resolution * 1j]
+    theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, 0 : 2 * np.pi : lon_resolution * 1j]
     x = radius * np.sin(theta) * np.cos(phi)
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)
@@ -47,7 +47,7 @@ def _sphere_with_texture_map(radius=1.0, theta_resolution=50, phi_resolution=100
     return sphere
 
 
-def load_sun(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a sun source.
 
     Parameters
@@ -55,10 +55,10 @@ def load_sun(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -78,14 +78,14 @@ def load_sun(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     surface = download_sun_jpg()
     sphere.textures["atmosphere"] = surface
     return sphere
 
 
-def load_moon(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a moon source.
 
     Parameters
@@ -93,10 +93,10 @@ def load_moon(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -116,14 +116,14 @@ def load_moon(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     surface = download_moon_jpg()
     sphere.textures["surface"] = surface
     return sphere
 
 
-def load_mercury(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a mercury source.
 
     Parameters
@@ -131,10 +131,10 @@ def load_mercury(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -154,14 +154,14 @@ def load_mercury(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     surface = download_mercury_jpg()
     sphere.textures["surface"] = surface
     return sphere
 
 
-def load_venus(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a venus source.
 
     Parameters
@@ -169,10 +169,10 @@ def load_venus(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -192,7 +192,7 @@ def load_venus(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     surface = download_venus_jpg(atmosphere=False)
     sphere.textures["surface"] = surface
@@ -201,7 +201,7 @@ def load_venus(radius=1.0, theta_resolution=50, phi_resolution=100):
     return sphere
 
 
-def load_mars(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a mars source.
 
     Parameters
@@ -209,10 +209,10 @@ def load_mars(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -232,14 +232,14 @@ def load_mars(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     surface = examples.planets.download_mars_jpg()
     sphere.textures["surface"] = surface
     return sphere
 
 
-def load_jupiter(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a jupiter source.
 
     Parameters
@@ -247,10 +247,10 @@ def load_jupiter(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -270,14 +270,14 @@ def load_jupiter(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     atmosphere = download_jupiter_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
-def load_saturn(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a saturn source.
 
     Parameters
@@ -285,10 +285,10 @@ def load_saturn(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -308,7 +308,7 @@ def load_saturn(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     atmosphere = download_saturn_jpg()
     sphere.textures["atmosphere"] = atmosphere
@@ -351,7 +351,7 @@ def load_saturn_ring_alpha(*args, **kwargs):
     return disc
 
 
-def load_uranus(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a uranus source.
 
     Parameters
@@ -359,10 +359,10 @@ def load_uranus(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -382,14 +382,14 @@ def load_uranus(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     atmosphere = download_uranus_jpg()
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
-def load_neptune(radius=1.0, theta_resolution=50, phi_resolution=100):
+def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a neptune source.
 
     Parameters
@@ -397,10 +397,10 @@ def load_neptune(radius=1.0, theta_resolution=50, phi_resolution=100):
     radius : float, optional
         Sphere radius.
 
-    theta_resolution : int , optional
+    lat_resolution : int , optional
         Set the number of points in the longitude direction.
 
-    phi_resolution : int, optional
+    lon_resolution : int, optional
         Set the number of points in the latitude direction.
 
     Returns
@@ -420,7 +420,7 @@ def load_neptune(radius=1.0, theta_resolution=50, phi_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, theta_resolution=theta_resolution, phi_resolution=phi_resolution
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
     atmosphere = download_neptune_jpg()
     sphere.textures["atmosphere"] = atmosphere
