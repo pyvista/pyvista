@@ -1478,3 +1478,40 @@ def test_separate_cells(hexbeam):
     assert hexbeam.n_points != hexbeam.n_cells * 8
     sep_grid = hexbeam.separate_cells()
     assert sep_grid.n_points == hexbeam.n_cells * 8
+
+
+def test_volume_area():
+    def assert_volume(grid):
+        assert np.isclose(grid.volume, 64.0)
+        assert np.isclose(grid.area, 0.0)
+
+    def assert_area(grid):
+        assert np.isclose(grid.volume, 0.0)
+        assert np.isclose(grid.area, 16.0)
+
+    # UniformGrid 3D size 4x4x4
+    vol_grid = pyvista.UniformGrid(dims=(5, 5, 5))
+    assert_volume(vol_grid)
+
+    # 2D grid size 4x4
+    surf_grid = pyvista.UniformGrid(dims=(5, 5, 1))
+    assert_area(surf_grid)
+
+    # UnstructuredGrid
+    assert_volume(vol_grid.cast_to_unstructured_grid())
+    assert_area(surf_grid.cast_to_unstructured_grid())
+
+    # StructuredGrid
+    assert_volume(vol_grid.cast_to_structured_grid())
+    assert_area(surf_grid.cast_to_structured_grid())
+
+    # Rectilinear
+    assert_volume(vol_grid.cast_to_rectilinear_grid())
+    assert_area(surf_grid.cast_to_rectilinear_grid())
+
+    # PolyData
+    # cube of size 4
+    # PolyData is special because it is a 2D surface that can enclose a volume
+    grid = pyvista.UniformGrid(dims=(5, 5, 5)).extract_surface()
+    assert np.isclose(grid.volume, 64.0)
+    assert np.isclose(grid.area, 96.0)

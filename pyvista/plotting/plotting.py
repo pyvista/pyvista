@@ -2799,7 +2799,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Supported aliases
         clim = kwargs.pop('rng', clim)
         cmap = kwargs.pop('colormap', cmap)
-        culling = kwargs.pop("backface_culling", culling)
+        culling = kwargs.pop('backface_culling', culling)
 
         if "scalar" in kwargs:
             raise TypeError(
@@ -2915,16 +2915,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             # Make sure scalars components are not vectors/tuples
-            scalars = volume.active_scalars
+            scalars = volume.active_scalars.copy()
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
                 scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
             else:
                 raise ValueError('No scalars to use for volume rendering.')
-        elif isinstance(scalars, str):
-            pass
-
-        ##############
 
         title = 'Data'
         if isinstance(scalars, str):
@@ -2939,9 +2935,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
         if scalars.ndim != 1:
             scalars = scalars.ravel()
-
-        if scalars.dtype == np.bool_ or scalars.dtype == np.uint8:
-            scalars = scalars.astype(np.float_)
 
         # Define mapper, volume, and add the correct properties
         mappers = {
@@ -2972,17 +2965,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, float) or isinstance(clim, int):
             clim = [-clim, clim]
 
-        ###############
-
-        scalars = scalars.astype(np.float_)
-        with np.errstate(invalid='ignore'):
-            idxs0 = scalars < clim[0]
-            idxs1 = scalars > clim[1]
-        scalars[idxs0] = clim[0]
-        scalars[idxs1] = clim[1]
-        scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
-        # scalars = scalars.astype(np.uint8)
-        volume[title] = scalars
+        # convert the scalars to np.uint8 and scale between 0 and 255 within clim
+        clim = np.asarray(clim, dtype=scalars.dtype)
+        scalars.clip(clim[0], clim[1], out=scalars)
+        min_ = np.nanmin(scalars)
+        max_ = np.nanmax(scalars)
+        np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
+        volume[title] = np.array(scalars, dtype=np.uint8)
 
         self.mapper.scalar_range = clim
 

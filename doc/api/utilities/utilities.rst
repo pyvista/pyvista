@@ -73,7 +73,6 @@ Miscellaneous
 ~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Color
 

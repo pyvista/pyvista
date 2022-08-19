@@ -39,7 +39,6 @@ demonstrate features.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-module-template.rst
 
    examples.examples
    examples.downloads
