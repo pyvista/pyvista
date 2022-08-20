@@ -15,7 +15,9 @@ for embedded html documentation (as shown here), rapid plotting (as
 compared to the other client jupyterlab plotting modules like
 ``panel`` or ``itkwidgets``).
 
-The ``ipygany`` includes the following features:
+There is an excellent block post at `ipygany: Jupyter into the third dimension <https://blog.jupyter.org/ipygany-jupyter-into-the-third-dimension-29a97597fc33>`_
+and without repeating too much here, ``ipygany`` includes the
+following features:
 
 - IsoColor: apply color-mapping to your mesh.
 - Warp: deform your mesh given a 3-D input data (e.g. displacement
