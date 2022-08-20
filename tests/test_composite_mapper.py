@@ -177,7 +177,7 @@ def test_block_attributes(block_attributes):
     block_attributes.reset_colors()
     assert block_attributes[0].color is None
 
-    block_attributes.reset_pickability()
+    block_attributes.reset_pickabilities()
     assert block_attributes[0].pickable is None
 
     block_attributes.reset_opacities()

@@ -1930,7 +1930,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         interpolate_before_map : bool, default: True
             Enabling makes for a smoother scalars display.  When ``False``,
-            OpenGL will interpolate the mapped colors which can result is
+            OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
         cmap : str or list, default :attr:`pyvista.themes.DefaultTheme.cmap`
