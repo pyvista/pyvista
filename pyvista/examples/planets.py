@@ -17,7 +17,7 @@ from .downloads import _download_and_read
 
 
 def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Sphere with texture coordinate.
+    """Sphere with texture coordinates.
 
     Parameters
     ----------
@@ -33,6 +33,8 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     Returns
     -------
     pyvista.PolyData
+        Sphere mesh with texture coordinates.
+
     """
     # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
     theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, 0 : 2 * np.pi : lon_resolution * 1j]
@@ -48,18 +50,18 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a sun source.
+    """Load a Sun source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
@@ -86,23 +88,23 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a moon source.
+    """Load a Moon source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Moon dataset with texture.
 
     Examples
     --------
@@ -124,23 +126,23 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a mercury source.
+    """Load a Mercury source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Mercury dataset with texture.
 
     Examples
     --------
@@ -162,18 +164,18 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a venus source.
+    """Load a Venus source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
@@ -202,23 +204,23 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a mars source.
+    """Load a Mars source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Mars dataset with texture.
 
     Examples
     --------
@@ -240,23 +242,23 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a jupiter source.
+    """Load a Jupiter source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Jupiter dataset with texture.
 
     Examples
     --------
@@ -278,23 +280,23 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a saturn source.
+    """Load a Saturn source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Saturn dataset with texture.
 
     Examples
     --------
@@ -316,19 +318,22 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_saturn_ring_alpha(*args, **kwargs):
-    """Load a saturn_ring_alpha source.
+    """Load a source for Saturn's rings with opacity.
+
+    Arguments are passed on to :func:`pyvista.Disc`.
 
     Parameters
     ----------
     *args
         Variable length argument list.
+
     **kwargs
         Arbitrary keyword arguments.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Dataset with texture for Saturn's rings.
 
     Examples
     --------
@@ -352,23 +357,23 @@ def load_saturn_ring_alpha(*args, **kwargs):
 
 
 def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a uranus source.
+    """Load a Uranus source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Uranus dataset with texture.
 
     Examples
     --------
@@ -390,23 +395,23 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a neptune source.
+    """Load a Neptune source.
 
     Parameters
     ----------
     radius : float, optional
         Sphere radius.
 
-    lat_resolution : int , optional
-        Set the number of points in the longitude direction.
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
 
     lon_resolution : int, optional
-        Set the number of points in the latitude direction.
+        Set the number of points in the longitude direction.
 
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Neptune dataset with texture.
 
     Examples
     --------
@@ -706,7 +711,7 @@ def download_stars_jpg(load=True):  # pragma: no cover
     >>> plotter.add_background_image(image_path)
     >>> plotter.show()
 
-    See :func:`download_mars_jpg` for another example using this dataset.
+    See :func:`load_mars` for another example using this dataset.
 
     """
     return _download_and_read('stars.jpg', load=load)
