@@ -351,7 +351,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         Examples
         --------
-        Set individual block colors and then reset it.
+        Set individual block colors and then reset them.
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
@@ -415,7 +415,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         structures, this flat indexing would be known as "Depth-first search"
         and the entire indexing would be::
 
-           ``[A, B, d, e, f, C, g, h, i]``
+           [A, B, d, e, f, C, g, h, i]
 
         Note how the composite datasets themselves are capitalized and are
         accessible in the flat indexing, and not just the datasets.
@@ -587,7 +587,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         structures, this flat indexing would be known as "Depth-first search"
         and the entire indexing would be::
 
-           ``[A, B, d, e, f, C, g, h, i]``
+           [A, B, d, e, f, C, g, h, i]
 
         Examples
         --------
