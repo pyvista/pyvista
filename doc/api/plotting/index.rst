@@ -35,7 +35,6 @@ These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    CompositePolyDataMapper
    CompositeAttributes
