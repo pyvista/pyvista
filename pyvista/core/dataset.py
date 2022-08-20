@@ -1743,6 +1743,8 @@ class DataSet(DataSetFilters, DataObject):
     def volume(self) -> float:
         """Return the mesh volume.
 
+        This will return 0 for meshes with 2D cells.
+
         Returns
         -------
         float
@@ -1750,16 +1752,69 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the volume of a sphere.
+        Get the volume of a cube of size 4x4x4.
+        Note that there are 5 points in each direction.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh.volume
+        64.0
+
+        A mesh with 2D cells has no volume.
+
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh.volume
+        0.0
+
+        :class:`pyvista.PolyData` is special as a 2D surface can
+        enclose a 3D volume.
+
+        >>> mesh = pv.Sphere()
         >>> mesh.volume
         0.51825
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return np.sum(sizes.cell_data['Volume'])
+        return sizes.cell_data['Volume'].sum()
+
+    @property
+    def area(self) -> float:
+        """Return the mesh area if 2D.
+
+        This will return 0 for meshes with 3D cells.
+
+        Returns
+        -------
+        float
+            Total area of the mesh.
+
+        Examples
+        --------
+        Get the area of a square of size 2x2.
+        Note 5 points in each direction.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh.area
+        16.0
+
+        A mesh with 3D cells does not have an area.  To get
+        the outer surface area, first extract the surface using
+        :func:`pyvista.DataSetFilters.extract_surface`.
+
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh.area
+        0.0
+
+        Get the area of a sphere.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.volume
+        0.51825
+
+        """
+        sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
+        return sizes.cell_data['Area'].sum()
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
