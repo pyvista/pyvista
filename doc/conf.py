@@ -242,8 +242,20 @@ intersphinx_timeout = 10
 linkcheck_retries = 3
 linkcheck_timeout = 500
 
-# Add any paths that contain templates here, relative to this directory.
+# Select if we want to generate production or dev documentation
+#
+# Generate class table auto-summary when enabled. This generates one page per
+# class method or attribute and should be used with the production
+# documentation, but local builds and PR commits can get away without this as
+# it takes ~4x as long to generate the documentation.
 templates_path = ["_templates"]
+if os.environ.get('FULL_DOC_BUILD', '').upper() == 'TRUE':
+    templates_path.append("_templates_full")
+else:
+    theme = pyvista.themes.DocumentTheme()
+    theme.window_size = [400, 300]
+    pyvista.PLOT_DIRECTIVE_THEME = theme
+    templates_path.append("_templates_basic")
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
@@ -278,7 +290,7 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", "_templates*"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
@@ -529,64 +541,7 @@ copybutton_prompt_text = r'>>> ?|\.\.\. '
 copybutton_prompt_is_regexp = True
 
 
-from docutils.parsers.rst import directives
-
-# -- Autosummary options
-from sphinx.ext.autosummary import Autosummary, get_documenter
-from sphinx.util.inspect import safe_getattr
-
-
-class AutoAutoSummary(Autosummary):
-
-    option_spec = {
-        "methods": directives.unchanged,
-        "attributes": directives.unchanged,
-    }
-
-    required_arguments = 1
-    app = None
-
-    @staticmethod
-    def get_members(obj, typ, include_public=None):
-        if not include_public:
-            include_public = []
-        items = []
-        for name in sorted(obj.__dict__.keys()):  # dir(obj):
-            try:
-                documenter = get_documenter(AutoAutoSummary.app, safe_getattr(obj, name), obj)
-            except AttributeError:
-                continue
-            if documenter.objtype in typ:
-                items.append(name)
-        public = [x for x in items if x in include_public or not x.startswith("_")]
-        return public, items
-
-    def run(self):
-        clazz = str(self.arguments[0])
-        try:
-            (module_name, class_name) = clazz.rsplit(".", 1)
-            m = __import__(module_name, globals(), locals(), [class_name])
-            c = getattr(m, class_name)
-            if "methods" in self.options:
-                _, methods = self.get_members(c, ["method"], ["__init__"])
-                self.content = [
-                    f"~{clazz}.{method}" for method in methods if not method.startswith("_")
-                ]
-            if "attributes" in self.options:
-                _, attribs = self.get_members(c, ["attribute", "property"])
-                self.content = [
-                    f"~{clazz}.{attrib}" for attrib in attribs if not attrib.startswith("_")
-                ]
-        except:  # noqa: E722
-            print(f"Something went wrong when autodocumenting {clazz}")
-        finally:
-            # TODO: address B012
-            return super().run()  # noqa: B012
-
-
 def setup(app):
-    AutoAutoSummary.app = app
-    app.add_directive("autoautosummary", AutoAutoSummary)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
     app.add_css_file("summary.css")

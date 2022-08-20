@@ -101,6 +101,8 @@ except Exception as e:
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
+# theme to use by default for the plot directive
+PLOT_DIRECTIVE_THEME = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter
