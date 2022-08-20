@@ -3559,7 +3559,7 @@ def download_stars_jpg():
         Filename of the JPEG.
     """
     warnings.warn(
-        "examples.ownload_stars_jpg is deprecated.  Use examples.planets.download_stars_jpg",
+        "examples.download_stars_jpg is deprecated.  Use examples.planets.download_stars_jpg",
         PyvistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_stars_jpg(load=False)

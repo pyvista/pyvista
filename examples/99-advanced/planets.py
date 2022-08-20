@@ -6,7 +6,7 @@
 
 Creates high-resolution renderings of the Earth and the major celestial bodies
 in our solar system for astrodynamics applications.
-This example is inspired by `planet3D-MATLAB <https://github.com/tamaskis/planet3D-MATLAB>`_ .
+This example is inspired by `planet3D-MATLAB <https://github.com/tamaskis/planet3D-MATLAB>`_.
 
 
 Note that this example author doesn't know anything about astronomy. There may
@@ -21,12 +21,11 @@ from pyvista import examples
 # Celestial bodies with the Milky Way in the background.
 
 
-# Light of the sun in the +x axis direction.
-
+# Light of the Sun in the +x axis direction.
 light = pyvista.Light()
 light.set_direction_angle(30, -20)
 
-# Load planet
+# Load planets
 
 # https://tamaskis.github.io/files/Visualizing_Celestial_Bodies_in_3D.pdf
 # Mercury's radius is 2439.0 km
@@ -48,8 +47,8 @@ uranus = examples.planets.load_uranus(radius=25559.0, lat_resolution=150, lon_re
 # Neptune's radius is 24764.0 km
 neptune = examples.planets.load_neptune(radius=24764.0, lat_resolution=150, lon_resolution=300)
 
-# Move planet position (Numbers have no meaning. The planets are laid out for
-# easy viewing.).
+# Move planet position. (Numbers have no meaning. The planets are laid out for
+# easy viewing.)
 
 mercury.translate((0.0, 0.0, 0.0), inplace=True)
 venus.translate((-15000.0, 0.0, 0.0), inplace=True)
@@ -79,7 +78,7 @@ plotter.camera.zoom(1.5)
 plotter.show()
 
 ###############################################################################
-# `Textures in this pack are based on NASA <https://www.solarsystemscope.com/textures/https://www.solarsystemscope.com/textures/>`_
+# `Textures in this pack are based on NASA <https://www.solarsystemscope.com/textures/>`_
 # elevation and imagery data. Colors and shades of the textures are tuned
 # according to true-color photos made by Messenger, Viking and Cassini
 # spacecrafts, and, of course, the Hubble Space Telescope.
