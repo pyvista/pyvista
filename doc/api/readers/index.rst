@@ -93,7 +93,4 @@ Enumerations
 
 Enumerations are available to simplify inputs to certain readers.
 
-.. autoenum::
-    :toctree: _autosummary
-
-    Plot3DFunctionEnum
+.. autoenum:: Plot3DFunctionEnum
