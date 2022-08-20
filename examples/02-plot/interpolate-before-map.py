@@ -6,7 +6,7 @@ Interpolate Before Mapping
 
 The :func:`add_mesh <pyvista.Plotter.add_mesh>` method has an
 ``interpolate_before_map`` argument that affects the way scalar data is
-visualized with colors.  The effect can of this can vary depending on the
+visualized with colors.  The effect of this can vary depending on the
 dataset's topology and the chosen colormap.
 
 This example serves to demo the difference and why we've chosen to enable this
