@@ -242,24 +242,12 @@ intersphinx_timeout = 10
 linkcheck_retries = 3
 linkcheck_timeout = 500
 
-<<<<<<< HEAD
 # Select if we want to generate production or dev documentation
 #
 # Generate class table auto-summary when enabled. This generates one page per
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-=======
-
-# Pages are not detected correct by ``make linkcheck``
-linkcheck_ignore = [
-    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
-    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
-    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
-]
-
-# Add any paths that contain templates here, relative to this directory.
->>>>>>> fix github url
 templates_path = ["_templates"]
 if os.environ.get('FULL_DOC_BUILD', '').upper() == 'TRUE':
     templates_path.append("_templates_full")
@@ -306,7 +294,9 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", 
 
 # Pages are not detected correct by ``make linkcheck``
 linkcheck_ignore = [
-    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183'
+    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
+    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
+    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
