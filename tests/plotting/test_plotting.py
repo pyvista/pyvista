@@ -48,7 +48,7 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 skip_9_0_X = pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1) and pyvista.vtk_version_info > (8, 2), reason="Flaky on 9.0.X"
+    (8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X"
 )
 
 skip_no_mpl_figure = pytest.mark.skipif(
