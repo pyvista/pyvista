@@ -212,7 +212,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.index$',
     r'\.MultiBlock\.remove$',
     # Enumerations
-    r'\.reader.Plot3DFunctionEnum$',
+    r'\.Plot3DFunctionEnum$',
 }
 
 
