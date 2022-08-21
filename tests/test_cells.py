@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import vtk  # noqa: F401
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista

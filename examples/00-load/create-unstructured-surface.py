@@ -196,21 +196,7 @@ cells = np.array(
     ]
 )
 
-celltypes = np.array(
-    [
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-        CellType.TETRA,
-    ],
-    dtype=np.uint8,
-)
+celltypes = np.full(10, fill_value=CellType.TETRA, dtype=np.uint8)
 
 # These are the 10 points. The number of cells does not need to match the
 # number of points, they just happen to in this example
