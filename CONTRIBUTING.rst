@@ -234,6 +234,7 @@ changes any given branch is introducing before looking at the code.
    routines
 -  ``testing/``: improvements or changes to testing
 -  ``release/``: releases (see below)
+-  ``breaking-change/``: Changes that break backward compatibility
 
 Testing
 ^^^^^^^
@@ -278,20 +279,6 @@ Run all code examples in the docstrings with:
 .. code:: bash
 
    python -m pytest -v --doctest-modules pyvista
-
-Build the documentation on Linux or Mac OS with:
-
-.. code:: bash
-
-   make -C doc html
-
-Build the documentation on Windows with:
-
-   cd doc
-   python -msphinx -M html . _build
-
-The generated documentation can be found in the ``doc/_build/html``
-directory.
 
 Style Checking
 ~~~~~~~~~~~~~~
@@ -394,8 +381,78 @@ exists, be sure to add the resulting image with
 
     git add tests/plotting/image_cache/*
 
+Building the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Build the documentation on Linux or Mac OS with:
+
+.. code:: bash
+
+   make -C doc html
+
+Build the documentation on Windows with:
+
+   cd doc
+   python -msphinx -M html . _build
+
+The generated documentation can be found in the ``doc/_build/html``
+directory.
+
+The first time you build the documentation locally will take a while as all the
+examples need to be built. After the first build, the documentation should take
+a fraction of the time.
+
+Clearing the local build
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you need to clear the locally built documentation, run:
+
+.. code:: bash
+
+   make -C doc clean
+
+This will clear out everything, including the examples gallery. If you only
+want to clear everything except the gallery examples, run:
+
+.. code:: bash
+
+   make -C doc clean-except-examples
+
+This will clear out the cache without forcing you to rebuild all the examples.
+
+Full documentation build
+^^^^^^^^^^^^^^^^^^^^^^^^
+By default, the documentation build places class documentation on single pages
+rather than generating a table and placing class methods and attributes on
+individual pages. Figures are also sized to ``(400, 300)`` rather than the
+default ``(1024, 768)``. This is to minimize the time it takes to build
+documentation locally. If you wish to generate the full documentation, enable
+it with::
+
+.. code:: bash
+
+   export FULL_DOC_BUILD=TRUE
+   make -C doc html
+
+This will generate the same documentation as rendered online, but as each
+individual class method and attribute will have its own documentation page, the
+documentation will take much longer to build. Additionally, inherited methods
+will have their docstrings rendered, whereas the non-full documentation build
+only generates methods belonging directly to that class.
+
+Parallel Documentation Build
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You can improve your documentation build time on Linux and Mac OS with:
+
+.. code:: bash
+
+   make -C doc phtml
+
+This effectively invokes ``SPHINXOPTS=-j`` and can be especially useful for
+multi-core computers when ``FULL_DOC_BUILD=TRUE``
+
+
 Creating a New Pull Request
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have tested your branch locally, create a pull request on
 `pyvista GitHub <https://github.com/pyvista/pyvista>`_ while merging to
@@ -468,7 +525,7 @@ created the following will occur:
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest
+       make doctest-modules
        make html -b linkcheck
 
 4.  After building the documentation, open the local build and examine

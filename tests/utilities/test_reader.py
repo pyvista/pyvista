@@ -1,6 +1,7 @@
 import os
 import platform
 
+from PIL import Image, ImageSequence
 import numpy as np
 import pytest
 
@@ -11,6 +12,28 @@ from pyvista.examples.downloads import _download_file
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
 )
+
+
+@pytest.fixture()
+def gif_file(tmpdir):
+    filename = str(tmpdir.join('sample.gif'))
+
+    pl = pyvista.Plotter(window_size=(300, 200))
+    pl.open_gif(filename, palettesize=16, fps=1)
+
+    mesh = pyvista.Sphere()
+    opacity = mesh.points[:, 0]
+    opacity -= opacity.min()
+    opacity /= opacity.max()
+    for color in ['red', 'blue', 'green']:
+        pl.clear()
+        pl.background_color = 'w'
+        pl.add_mesh(mesh, color=color, opacity=opacity)
+        pl.camera_position = 'xy'
+        pl.write_frame()
+
+    pl.close()
+    return filename
 
 
 def test_get_reader_fail():
@@ -646,7 +669,7 @@ def test_openfoam_case_type():
         reader.case_type = 'wrong_value'
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
+@pytest.mark.needs_vtk_version(9, 1)
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pyvista.get_reader(filename)
@@ -790,7 +813,7 @@ def test_tiff_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 0), reason="Requires VTK v9.0.0 or newer")
+@pytest.mark.needs_vtk9
 def test_hdr_reader():
     filename = examples.download_parched_canal_4k(load=False)
     reader = pyvista.get_reader(filename)
@@ -811,7 +834,7 @@ def test_avsucd_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
+@pytest.mark.needs_vtk_version(9, 1)
 def test_hdf_reader():
     filename = examples.download_can_crushed_hdf(load=False)
     reader = pyvista.get_reader(filename)
@@ -823,3 +846,23 @@ def test_hdf_reader():
     assert mesh.n_points == 6724
     assert 'VEL' in mesh.point_data
     assert mesh.n_cells == 4800
+
+
+def test_gif_reader(gif_file):
+    reader = pyvista.get_reader(gif_file)
+    assert isinstance(reader, pyvista.GIFReader)
+    assert reader.path == gif_file
+    reader.show_progress()
+
+    grid = reader.read()
+    assert grid.n_arrays == 3
+
+    img = Image.open(gif_file)
+    new_grid = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+
+    # load each frame to the grid
+    for i, frame in enumerate(ImageSequence.Iterator(img)):
+        data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
+        data_name = f'frame{i}'
+        new_grid.point_data.set_array(data, data_name)
+        assert np.allclose(grid[data_name], new_grid[data_name])

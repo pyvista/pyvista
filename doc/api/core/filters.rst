@@ -13,7 +13,6 @@ PyVista dataset.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    DataSetFilters
 
@@ -26,7 +25,6 @@ from any ``PolyData`` mesh.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    PolyDataFilters
 
@@ -39,7 +37,6 @@ available as callable methods directly from any ``UnstructuredGrid`` mesh.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    UnstructuredGridFilters
 
@@ -52,7 +49,6 @@ available as callable methods directly from any ``UniformGrid`` mesh.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    UniformGridFilters
 
@@ -65,6 +61,5 @@ inherits many but not all of the filters from :class:`pyvista.DataSetFilters`.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    CompositeFilters

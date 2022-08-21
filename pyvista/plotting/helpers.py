@@ -34,6 +34,9 @@ def plot(
     hidden_line_removal=None,
     anti_aliasing=None,
     zoom=None,
+    border=None,
+    border_color='k',
+    border_width=2.0,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
@@ -147,9 +150,23 @@ def plot(
         setting :attr:`pyvista.global_theme.antialiasing
         <pyvista.themes.DefaultTheme.antialiasing>`.
 
-    zoom : float, optional
-        Camera zoom.  A value greater than 1 is a zoom-in, a value
-        less than 1 is a zoom-out.  Must be greater than 0.
+    zoom : float, str, optional
+        Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
+        a zoom-in, a value less than 1 is a zoom-out.  Must be greater than 0.
+
+    border : bool, optional
+        Draw a border around each render window.  Default ``False``.
+
+    border_color : color_like, optional
+        Either a string, rgb list, or hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1.0, 1.0, 1.0]``
+            * ``color='#FFFFFF'``
+
+    border_width : float, optional
+        Width of the border in pixels when enabled.
 
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
@@ -200,12 +217,20 @@ def plot(
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
 
-    # pop from kwargs here to avoid including them in add_mesh or add_volumex
+    # pop from kwargs here to avoid including them in add_mesh or add_volume
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
-    pl = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
+    pl = Plotter(
+        window_size=window_size,
+        off_screen=off_screen,
+        notebook=notebook,
+        theme=theme,
+        border=border,
+        border_color=border_color,
+        border_width=border_width,
+    )
 
     if show_axes is None:
         show_axes = pl.theme.axes.show
@@ -255,17 +280,16 @@ def plot(
     else:
         pl.camera_position = cpos
 
-    if zoom is not None:
-        pl.camera.zoom(zoom)
-
     if eye_dome_lighting:
         pl.enable_eye_dome_lighting()
 
     if parallel_projection:
         pl.enable_parallel_projection()
 
+    if zoom is not None:
+        pl.camera.zoom(zoom)
+
     return pl.show(
-        window_size=window_size,
         auto_close=auto_close,
         interactive=interactive,
         full_screen=full_screen,

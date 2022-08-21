@@ -4370,7 +4370,16 @@ class Charts:
         # needed.
         self._scene = None
         self._actor = None
-        self._renderer = renderer
+
+        # a weakref.proxy would be nice here, but that doesn't play
+        # nicely with SetRenderer, so instead we'll use a weak reference
+        # plus a property to call it
+        self.__renderer = weakref.ref(renderer)
+
+    @property
+    def _renderer(self):
+        """Return the weakly dereferenced renderer, maybe None."""
+        return self.__renderer()
 
     def _setup_scene(self):
         """Set up a new context scene and actor for these charts."""
@@ -4459,6 +4468,6 @@ class Charts:
         for chart in self._charts:
             yield chart
 
-    def __del__(self):  # pragma: no cover
+    def __del__(self):
         """Clean up before being destroyed."""
         self.deep_clean()

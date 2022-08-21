@@ -103,13 +103,13 @@ def test_get_datasets(sphere, hexbeam):
 
 
 def test_remove_scalars_single(sphere, hexbeam):
-    """Ensure no scalars are added when plotting datasets."""
+    """Ensure no scalars are added when plotting datasets if copy_mesh=True."""
     # test single component scalars
     sphere.clear_data()
     hexbeam.clear_data()
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, scalars=range(sphere.n_points))
-    pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells))
+    pl.add_mesh(sphere, scalars=range(sphere.n_points), copy_mesh=True)
+    pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells), copy_mesh=True)
 
     # arrays will be added to the mesh
     pl.mesh.n_arrays == 1
@@ -122,7 +122,7 @@ def test_remove_scalars_single(sphere, hexbeam):
 
 
 def test_active_scalars_remain(sphere, hexbeam):
-    """Ensure active scalars remain active despite plotting different scalars."""
+    """Ensure active scalars remain active despite plotting different scalars when copy_mesh=True."""
     point_data_name = "point_data"
     cell_data_name = "cell_data"
     sphere[point_data_name] = np.random.random(sphere.n_points)
@@ -131,8 +131,8 @@ def test_active_scalars_remain(sphere, hexbeam):
     assert hexbeam.cell_data.active_scalars_name == cell_data_name
 
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, scalars=range(sphere.n_points))
-    pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells))
+    pl.add_mesh(sphere, scalars=range(sphere.n_points), copy_mesh=True)
+    pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells), copy_mesh=True)
     pl.close()
 
     assert sphere.point_data.active_scalars_name == point_data_name
@@ -172,10 +172,10 @@ def test_add_multiple(sphere):
     point_data_name = 'data'
     sphere[point_data_name] = np.random.random(sphere.n_points)
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere)
-    pl.add_mesh(sphere, scalars=np.arange(sphere.n_points))
-    pl.add_mesh(sphere, scalars=np.arange(sphere.n_cells))
-    pl.add_mesh(sphere, scalars='data')
+    pl.add_mesh(sphere, copy_mesh=True)
+    pl.add_mesh(sphere, scalars=np.arange(sphere.n_points), copy_mesh=True)
+    pl.add_mesh(sphere, scalars=np.arange(sphere.n_cells), copy_mesh=True)
+    pl.add_mesh(sphere, scalars='data', copy_mesh=True)
     pl.show()
     assert sphere.n_arrays == 1
 

@@ -64,6 +64,7 @@ fft_image.plot(
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT',
+    copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
 
@@ -95,6 +96,7 @@ fft_image.plot(
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT with Noise Removed',
+    copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
 

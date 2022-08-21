@@ -154,6 +154,14 @@ def test_skybox(tmpdir):
         pyvista.cubemap_from_filenames(image_paths=['/path'])
 
 
+def test_numpy_to_texture():
+    tex_im = np.ones((1024, 1024, 3), dtype=np.float64) * 255
+    with pytest.warns(UserWarning, match='np.uint8'):
+        tex = pyvista.numpy_to_texture(tex_im)
+    assert isinstance(tex, pyvista.Texture)
+    assert tex.to_array().dtype == np.uint8
+
+
 def test_array_association():
     # TODO: cover vtkTable/ROW association case
     mesh = pyvista.PolyData()

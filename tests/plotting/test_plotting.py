@@ -45,7 +45,7 @@ except:  # noqa: E722
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
-skip_9_1_0 = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0")
+skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 skip_9_0_X = pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1) and pyvista.vtk_version_info > (8, 2), reason="Flaky on 9.0.X"
@@ -64,8 +64,6 @@ if not os.path.isdir(IMAGE_CACHE_DIR):
 
 # always set on Windows CI
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
-
-skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
@@ -97,19 +95,19 @@ VER_IMAGE_REGRESSION_WARNING = 1000
 # these images vary between Windows when using OSMesa and Linux/MacOS
 # and will not be verified
 WINDOWS_SKIP_IMAGE_CACHE = {
-    'test_user_annotations_scalar_bar_volume',  # occurs even without Windows OSMesa
-    'test_enable_stereo_render',  # occurs even without Windows OSMesa
-    'test_plot_add_scalar_bar',
-    'test_plot_cell_data',
-    'test_scalars_by_name',
-    'test_user_annotations_scalar_bar_volume',
-    'test_plot_string_array',
     'test_cmap_list',
+    'test_multi_plot_scalars',  # flaky
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_plot_add_scalar_bar',
+    'test_plot_cell_data',
     'test_plot_complex_value',
-    'test_plot_helper_volume',
     'test_plot_helper_two_volumes',
+    'test_plot_helper_volume',
+    'test_plot_string_array',
+    'test_rectlinear_edge_case',
+    'test_scalars_by_name',
+    'test_user_annotations_scalar_bar_volume',
 }
 
 # these images vary between Linux/Windows and MacOS
@@ -209,7 +207,7 @@ def verify_cache_image(plotter):
         )
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_import_gltf():
     filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
     pl = pyvista.Plotter()
@@ -221,7 +219,7 @@ def test_import_gltf():
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_export_gltf(tmpdir, sphere, airplane, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.gltf'))
 
@@ -266,7 +264,7 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_vrml(filename)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
@@ -291,7 +289,7 @@ def test_pbr(sphere):
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 @skip_windows
 @skip_mac
 def test_set_environment_texture_cubemap(sphere):
@@ -307,6 +305,20 @@ def test_set_environment_texture_cubemap(sphere):
         pl.show(before_close_callback=verify_cache_image)
     else:
         pl.show()
+
+
+@pytest.mark.needs_vtk9
+@skip_windows
+@skip_mac
+def test_remove_environment_texture_cubemap(sphere):
+    """Test remove_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+
+    pl = pyvista.Plotter()
+    pl.set_environment_texture(texture)
+    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
+    pl.remove_environment_texture()
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_plot_pyvista_ndarray(sphere):
@@ -328,7 +340,7 @@ def test_plot_increment_point_size():
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -1169,7 +1181,7 @@ def test_multi_block_plot():
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
-    multi[3] = examples.load_airplane()
+    multi.append(examples.load_airplane())
     with pytest.raises(KeyError):
         # The scalars are not available in all datasets so raises KeyError
         multi.plot(scalars='Random Data', multi_colors=True)
@@ -2081,7 +2093,7 @@ def test_set_focus():
     plane = pyvista.Plane()
     p = pyvista.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((1, 0, 0))
+    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
     p.show(before_close_callback=verify_cache_image)
 
 
@@ -2212,7 +2224,7 @@ def test_scalar_cell_priorities():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_collision_plot():
     """Verify rgba arrays automatically plot"""
     sphere0 = pyvista.Sphere()
@@ -2226,7 +2238,7 @@ def test_collision_plot():
 
 
 @skip_mac
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 2, 0), reason="Requires VTK>=9.2.0")
+@pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
@@ -2397,6 +2409,15 @@ def test_orbit_on_path(sphere):
     pl.close()
 
 
+def test_rectlinear_edge_case():
+    # ensure that edges look like square edges regardless of the dtype of X
+    xrng = np.arange(-10, 10, 5)
+    yrng = np.arange(-10, 10, 5)
+    zrng = [1]
+    rec_grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    rec_grid.plot(show_edges=True, cpos='xy', before_close_callback=verify_cache_image)
+
+
 @skip_9_1_0
 def test_pointset_plot(pointset):
     pointset.plot()
@@ -2540,8 +2561,64 @@ def test_multi_plot_scalars():
     pl = pyvista.Plotter(shape=(1, 2))
     pl.subplot(0, 0)
     pl.add_text('"u" point scalars')
-    pl.add_mesh(plane, scalars='u')
+    pl.add_mesh(plane, scalars='u', copy_mesh=True)
     pl.subplot(0, 1)
     pl.add_text('"v" point scalars')
-    pl.add_mesh(plane, scalars='v')
+    pl.add_mesh(plane, scalars='v', copy_mesh=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_bool_scalars(sphere):
+    sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
+    sphere['scalars'][::2] = 1
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_square(noise_2d):
+    noise_2d.plot(
+        window_size=[800, 200],
+        show_scalar_bar=False,
+        cpos='xy',
+        zoom='tight',
+        before_close_callback=verify_cache_image,
+    )
+
+
+def test_tight_square_padding():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight(padding=0.05)
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_tall():
+    grid = pyvista.UniformGrid(dims=(100, 200, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    with pytest.raises(ValueError, match='can only be "tight"'):
+        pl.camera.zoom('invalid')
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [75, 150], rtol=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_tight_wide():
+    grid = pyvista.UniformGrid(dims=(200, 100, 1))
+    grid['data'] = np.arange(grid.n_points)
+    pl = pyvista.Plotter(window_size=(150, 150))
+    pl.add_mesh(grid, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
+    # limit to widest dimension
+    assert np.allclose(pl.window_size, [150, 75])
     pl.show(before_close_callback=verify_cache_image)

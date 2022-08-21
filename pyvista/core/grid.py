@@ -9,7 +9,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
-from pyvista.core.filters import UniformGridFilters, _get_output
+from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyvistaDeprecationWarning, raise_has_duplicates
@@ -64,7 +64,7 @@ class Grid(DataSet):
         return attrs
 
 
-class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
+class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
     """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:
@@ -95,6 +95,10 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         ``False``. If ``True``, an error is raised if there are any duplicate
         values in any of the array-valued input arguments.
 
+    deep : bool, optional
+        Whether to deep copy a ``vtk.vtkRectilinearGrid`` object.
+        Default is ``False``.  Keyword only.
+
     Examples
     --------
     >>> import pyvista
@@ -116,18 +120,22 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
     >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    >>> grid.plot(show_edges=True)
 
     """
 
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
-    def __init__(self, *args, check_duplicates=False, **kwargs):
+    def __init__(self, *args, check_duplicates=False, deep=False, **kwargs):
         """Initialize the rectilinear grid."""
         super().__init__()
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkRectilinearGrid):
-                self.deep_copy(args[0])
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], np.ndarray):
@@ -190,14 +198,22 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         # Must at least be an x array
         if check_duplicates:
             raise_has_duplicates(x)
+
+        # edges are shown as triangles if x is not floating point
+        if not np.issubdtype(x.dtype, np.floating):
+            x = x.astype(float)
         self.SetXCoordinates(helpers.convert_array(x.ravel()))
         if y is not None:
             if check_duplicates:
                 raise_has_duplicates(y)
+            if not np.issubdtype(y.dtype, np.floating):
+                y = y.astype(float)
             self.SetYCoordinates(helpers.convert_array(y.ravel()))
         if z is not None:
             if check_duplicates:
                 raise_has_duplicates(z)
+            if not np.issubdtype(z.dtype, np.floating):
+                z = z.astype(float)
             self.SetZCoordinates(helpers.convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
@@ -410,6 +426,10 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     origin : iterable, optional
         Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``.
 
+    deep : bool, optional
+        Whether to deep copy a ``vtk.vtkImageData`` object.
+        Default is ``False``.  Keyword only.
+
     Examples
     --------
     Create an empty UniformGrid.
@@ -459,7 +479,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
     def __init__(
-        self, uinput=None, *args, dims=None, spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
+        self,
+        uinput=None,
+        *args,
+        dims=None,
+        spacing=(1.0, 1.0, 1.0),
+        origin=(0.0, 0.0, 0.0),
+        deep=False,
     ):
         """Initialize the uniform grid."""
         super().__init__()
@@ -497,7 +523,10 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         # first argument must be either vtkImageData or a path
         if uinput is not None:
             if isinstance(uinput, _vtk.vtkImageData):
-                self.deep_copy(uinput)
+                if deep:
+                    self.deep_copy(uinput)
+                else:
+                    self.shallow_copy(uinput)
             elif isinstance(uinput, (str, pathlib.Path)):
                 self._from_file(uinput)
             else:

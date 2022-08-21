@@ -21,7 +21,6 @@ Reader Classes
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
     AVSucdReader
     BMPReader
@@ -33,6 +32,7 @@ Reader Classes
     EnSightReader
     FacetReader
     FluentReader
+    GIFReader
     GLTFReader
     HDFReader
     HDRReader
@@ -82,7 +82,6 @@ and setting time or iterations for reading.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    BaseReader
    PointCellDataSelection
