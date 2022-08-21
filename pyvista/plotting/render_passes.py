@@ -148,7 +148,7 @@ class RenderPasses:
         """Remove a single vtkGaussianBlurPass pass."""
         if self._blur_passes:
             # order of the blur passes does not matter
-            self._remove_pass(self._blur_passes.pop(0))
+            self._remove_pass(self._blur_passes.pop())
 
     def enable_shadow_pass(self):
         """Enable shadow pass."""
