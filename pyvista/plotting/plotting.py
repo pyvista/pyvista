@@ -279,9 +279,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
 
-        # set antialiasing based on theme
-        if self.theme.antialiasing:
-            self.enable_anti_aliasing(self.theme.antialiasing)
+        # set anti_aliasing based on theme
+        if self.theme.anti_aliasing:
+            self.enable_anti_aliasing(self.theme.anti_aliasing)
 
         self._initialized = True
 
@@ -1032,7 +1032,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
         >>> pl.show()
 
-        See :ref:`antialiasing_example` for a full example demonstrating
+        See :ref:`anti_aliasing_example` for a full example demonstrating
         VTK's anti-aliasing approaches.
 
         """
@@ -1067,7 +1067,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
         >>> pl.show()
 
-        See :ref:`antialiasing_example` for a full example demonstrating
+        See :ref:`anti_aliasing_example` for a full example demonstrating
         VTK's anti-aliasing approaches.
 
         """
@@ -5334,7 +5334,7 @@ class Plotter(BasePlotter):
 
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
-        if self._theme.antialiasing == 'msaa':
+        if self._theme.anti_aliasing == 'msaa':
             if multi_samples is None:
                 multi_samples = self._theme.multi_samples
             self.ren_win.SetMultiSamples(multi_samples)

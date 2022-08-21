@@ -434,47 +434,54 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pyvista.themes.DarkTheme()
 
 
-def test_antialiasing(default_theme):
+def test_anti_aliasing(default_theme):
     # test backwards compatibility
     with pytest.warns(PyvistaDeprecationWarning, match='is now a string'):
-        default_theme.antialiasing = True
+        default_theme.anti_aliasing = True
         pl = pyvista.Plotter(theme=default_theme)
         assert pl.renderer.GetUseFXAA()
 
-    with pytest.raises(ValueError, match='antialiasing must be either'):
-        default_theme.antialiasing = 'invalid value'
+    with pytest.raises(ValueError, match='anti_aliasing must be either'):
+        default_theme.anti_aliasing = 'invalid value'
 
     with pytest.raises(TypeError, match='must be either'):
-        default_theme.antialiasing = 42
+        default_theme.anti_aliasing = 42
 
 
-def test_antialiasing_fxaa(default_theme):
-    default_theme.antialiasing = 'fxaa'
-    assert default_theme.antialiasing == 'fxaa'
+def test_anti_aliasing_fxaa(default_theme):
+    default_theme.anti_aliasing = 'fxaa'
+    assert default_theme.anti_aliasing == 'fxaa'
     pl = pyvista.Plotter(theme=default_theme)
     assert pl.renderer.GetUseFXAA()
 
 
-def test_antialiasing_ssaa(default_theme):
+def test_anti_aliasing_ssaa(default_theme):
 
     # default should is not enabled
-    if default_theme.antialiasing != 'ssaa':
+    if default_theme.anti_aliasing != 'ssaa':
         pl = pyvista.Plotter(theme=default_theme)
         assert 'vtkSSAAPass' not in pl.renderer._render_passes._passes
 
-    default_theme.antialiasing = 'ssaa'
-    assert default_theme.antialiasing == 'ssaa'
+    default_theme.anti_aliasing = 'ssaa'
+    assert default_theme.anti_aliasing == 'ssaa'
     pl = pyvista.Plotter(theme=default_theme)
     assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
 
 
-def test_antialiasing_msaa(default_theme):
-    # if default_theme.antialiasing != 'msaa':
-    #     pl = pyvista.Plotter(theme=default_theme)
-    #     assert pl.ren_win.GetMultiSamples() == 0
+def test_anti_aliasing_msaa(default_theme):
+    if default_theme.anti_aliasing != 'msaa':
+        pl = pyvista.Plotter(theme=default_theme)
+        assert pl.ren_win.GetMultiSamples() == 0
 
-    default_theme.antialiasing = 'msaa'
+    default_theme.anti_aliasing = 'msaa'
     default_theme.multi_samples = 4
-    assert default_theme.antialiasing == 'msaa'
+    assert default_theme.anti_aliasing == 'msaa'
     pl = pyvista.Plotter(theme=default_theme)
     assert pl.ren_win.GetMultiSamples() == default_theme.multi_samples
+
+
+def test_antialiasing_deprication(default_theme):
+    with pytest.warns(PyvistaDeprecationWarning, match='anti_aliasing'):
+        default_theme.antialiasing
+    with pytest.warns(PyvistaDeprecationWarning, match='anti_aliasing'):
+        default_theme.antialiasing = True

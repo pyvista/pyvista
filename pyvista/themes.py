@@ -1143,7 +1143,7 @@ class DefaultTheme(_ThemeConfig):
         '_slider_styles',
         '_return_cpos',
         '_hidden_line_removal',
-        '_antialiasing',
+        '_anti_aliasing',
         '_enable_camera_orientation_widget',
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
@@ -1212,7 +1212,7 @@ class DefaultTheme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._antialiasing = None
+        self._anti_aliasing = None
         self._enable_camera_orientation_widget = False
 
     @property
@@ -1857,53 +1857,78 @@ class DefaultTheme(_ThemeConfig):
         self._title = title
 
     @property
-    def antialiasing(self) -> Optional[str]:
+    def anti_aliasing(self) -> Optional[str]:
         """Enable or disable anti-aliasing.
+
+        Should be either ``"ssaa"``, ``"msaa"``, ``"fxaa"``, or ``None``.
 
         Examples
         --------
         Use super-sampling anti-aliasing in the global theme.
 
         >>> import pyvista
-        >>> pyvista.global_theme.antialiasing = 'ssaa'
-        >>> pyvista.global_theme.antialiasing
+        >>> pyvista.global_theme.anti_aliasing = 'ssaa'
+        >>> pyvista.global_theme.anti_aliasing
         'ssaa'
 
         Disable anti-aliasing in the global theme.
 
         >>> import pyvista
-        >>> pyvista.global_theme.antialiasing = None
+        >>> pyvista.global_theme.anti_aliasing = None
 
-        See :ref:`antialiasing_example` for more information regarding
+        See :ref:`anti_aliasing_example` for more information regarding
         anti-aliasing.
 
         """
-        return self._antialiasing
+        return self._anti_aliasing
 
-    @antialiasing.setter
-    def antialiasing(self, antialiasing: Union[str, None]):
-        if isinstance(antialiasing, bool):
+    @anti_aliasing.setter
+    def anti_aliasing(self, anti_aliasing: Union[str, None]):
+        if isinstance(anti_aliasing, bool):
             warnings.warn(
-                '`antialiasing` is now a string or None and must be either "ssaa", '
+                '`anti_aliasing` is now a string or None and must be either "ssaa", '
                 '"msaa", "fxaa", or None',
                 PyvistaDeprecationWarning,
             )
-            antialiasing = 'fxaa'
+            anti_aliasing = 'fxaa'
 
-        if isinstance(antialiasing, str):
-            if antialiasing not in ['ssaa', 'msaa', 'fxaa']:
-                raise ValueError('antialiasing must be either "ssaa", "msaa", or "fxaa"')
-        elif antialiasing is not None:
-            raise TypeError('antialiasing must be either "ssaa", "msaa", "fxaa", or None')
+        if isinstance(anti_aliasing, str):
+            if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
+                raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
+        elif anti_aliasing is not None:
+            raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
 
-        self._antialiasing = antialiasing
+        self._anti_aliasing = anti_aliasing
+
+    @property
+    def antialiasing(self):
+        """Enable or disable anti-aliasing.
+
+        .. deprecated:: 0.37.0
+           Deprecated in favor of :attr:`anti_aliasing <DefaultTheme.anti_aliasing>`.
+        """
+        # Recommended removing at pyvista==0.40.0
+        warnings.warn(
+            'antialising is deprecated.  Please use `anti_aliasing` instead.',
+            PyvistaDeprecationWarning,
+        )
+        return self.anti_aliasing
+
+    @antialiasing.setter
+    def antialiasing(self, value):  # pragma: no cover
+        # Recommended removing at pyvista==0.40.0
+        warnings.warn(
+            'antialising is deprecated.  Please use `anti_aliasing` instead.',
+            PyvistaDeprecationWarning,
+        )
+        self.anti_aliasing = value
 
     @property
     def multi_samples(self) -> int:
         """Return or set the default ``multi_samples`` parameter.
 
-        Set the number of multisamples to used with hardware antialiasing. This
-        is only used when :attr:`antialiasing <DefaultTheme.antialiasing>` is
+        Set the number of multisamples to used with hardware anti_aliasing. This
+        is only used when :attr:`anti_aliasing <DefaultTheme.anti_aliasing>` is
         set to ``"msaa"``.
 
         Examples
@@ -1911,7 +1936,7 @@ class DefaultTheme(_ThemeConfig):
         Set the default number of multisamples to 2 and enable ``"msaa"``
 
         >>> import pyvista
-        >>> pyvista.global_theme.antialiasing = 'msaa'
+        >>> pyvista.global_theme.anti_aliasing = 'msaa'
         >>> pyvista.global_theme.multi_samples = 2
 
         """
@@ -2125,7 +2150,7 @@ class DefaultTheme(_ThemeConfig):
             'Slider Styles': 'slider_styles',
             'Return Camera Position': 'return_cpos',
             'Hidden Line Removal': 'hidden_line_removal',
-            'Anti-Aliasing': '_antialiasing',
+            'Anti-Aliasing': '_anti_aliasing',
             'Split sharp edges': '_split_sharp_edges',
             'Sharp edges feat. angle': '_sharp_edges_feature_angle',
         }
@@ -2216,7 +2241,8 @@ class DefaultTheme(_ThemeConfig):
     def use_ipyvtk(self):  # pragma: no cover
         """Set or return the usage of "ipyvtk" as a jupyter backend.
 
-        Deprecated in favor of ``jupyter_backend``.
+        .. deprecated:: 0.35.0
+           Deprecated in favor of ``jupyter_backend``.
         """
         warnings.warn(
             'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',

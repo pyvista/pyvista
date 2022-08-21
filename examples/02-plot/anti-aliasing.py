@@ -1,5 +1,5 @@
 """
-.. _antialiasing_example:
+.. _anti_aliasing_example:
 
 Anti-Aliasing
 ~~~~~~~~~~~~~
@@ -16,7 +16,7 @@ By default, anti-aliasing is disabled, but can be enabled globally with:
 .. code:: python
 
    >>> import pyvista as pv
-   >>> pv.global_theme.antialiasing = 'ssaa'
+   >>> pv.global_theme.anti_aliasing = 'ssaa'
 
 **Which Anti Aliasing Technique should You use?**
 

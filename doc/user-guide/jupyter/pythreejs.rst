@@ -40,7 +40,7 @@ setting it in :func:`pyvista.Plotter.show`.
    import pyvista
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 600]
-   pyvista.global_theme.antialiasing = 'fxaa'
+   pyvista.global_theme.anti_aliasing = 'fxaa'
    pyvista.global_theme.jupyter_backend = 'pythreejs'
 
 .. jupyter-execute::
@@ -288,7 +288,7 @@ You should also consider changing the global theme when plotting to improve the 
    import pyvista
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 600]
-   pyvista.global_theme.antialiasing = 'fxaa'
+   pyvista.global_theme.anti_aliasing = 'fxaa'
 
 You will need the following packages:
 

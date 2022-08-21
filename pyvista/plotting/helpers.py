@@ -147,8 +147,8 @@ def plot(
 
     anti_aliasing : bool, optional
         Enable or disable anti-aliasing.  Defaults to the theme
-        setting :attr:`pyvista.global_theme.antialiasing
-        <pyvista.themes.DefaultTheme.antialiasing>`.
+        setting :attr:`pyvista.global_theme.anti_aliasing
+        <pyvista.themes.DefaultTheme.anti_aliasing>`.
 
     zoom : float, str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
