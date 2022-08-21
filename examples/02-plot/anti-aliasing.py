@@ -18,7 +18,7 @@ By default, anti-aliasing is disabled, but can be enabled globally with:
    >>> import pyvista as pv
    >>> pv.global_theme.antialiasing = 'ssaa'
 
-**Which Anti Aliasing Technique should You use?**
+**Which anti-aliasing technique should you use?**
 
 Those who have PCs with high-end configuration should opt for ``"ssaa"`` or
 ``"msaa"``. Low-end PCs should use ``"fxaa"``.
