@@ -1032,6 +1032,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
         >>> pl.show()
 
+        See :ref:`antialiasing_example` for a full example demonstrating
+        VTK's anti-aliasing approaches.
+
         """
         # apply MSAA to entire render window
         if aa_type == 'msaa':
@@ -1053,8 +1056,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         all_renderers : bool
-            If ``True``, applies to all renderers in subplots. If
-            ``False``, then only applies to the active renderer.
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
 
         Examples
         --------
@@ -1063,6 +1066,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.disable_anti_aliasing()
         >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
         >>> pl.show()
+
+        See :ref:`antialiasing_example` for a full example demonstrating
+        VTK's anti-aliasing approaches.
 
         """
         self.ren_win.SetMultiSamples(0)

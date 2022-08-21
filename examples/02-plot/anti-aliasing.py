@@ -3,11 +3,12 @@
 
 Anti-Aliasing
 ~~~~~~~~~~~~~
+Demonstrate anti-aliasing within PyVista.
 
 PyVista supports three types of anti-aliasing:
 
 * ``"ssaa"`` - Super-Sample Anti-Aliasing
-* ``"mxaa"`` - Multi-Sample Anti-Aliasing
+* ``"msaa"`` - Multi-Sample Anti-Aliasing
 * ``"fxaa"`` - Fast Approximate Anti-Aliasing
 
 By default, anti-aliasing is disabled, but can be enabled globally with:
@@ -20,7 +21,7 @@ By default, anti-aliasing is disabled, but can be enabled globally with:
 **Which Anti Aliasing Technique should You use?**
 
 Those who have PCs with high-end configuration should opt for ``"ssaa"`` or
-``"mxaa"``. Low-end PCs should use ``"fxaa"``.
+``"msaa"``. Low-end PCs should use ``"fxaa"``.
 
 """
 
@@ -70,10 +71,9 @@ pl.show()
 # up the bulk of SSAA computations. MSAA is substantially less computationally
 # expensive than SSAA and results in comparable image quality.
 
-
 pl = pv.Plotter()
 pl.add_mesh(bunny, show_edges=True)
-pl.enable_anti_aliasing('mxaa')
+pl.enable_anti_aliasing('msaa')
 pl.camera_position = cpos
 pl.show()
 
