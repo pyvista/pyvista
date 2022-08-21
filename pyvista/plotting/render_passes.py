@@ -3,17 +3,16 @@ import weakref
 
 from pyvista import _vtk
 
-# ordered
+# The order of both the pre and post-passes matters.
 PRE_PASS = [
     'vtkEDLShading',
 ]
 
-# ordered
 POST_PASS = [
     'vtkDepthOfFieldPass',
     'vtkGaussianBlurPass',
     'vtkOpenGLFXAAPass',
-    'vtkSSAAPass',  # should really be last
+    'vtkSSAAPass',  # should one must be last
 ]
 
 

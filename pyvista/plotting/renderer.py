@@ -445,7 +445,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Parameters
         ----------
         aa_type : str
-            Anti-aliasing type. Either ``"fxaa"``, ``"mxaa"``, or ``"ssaa"``.
+            Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
         if not isinstance(aa_type, str):

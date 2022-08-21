@@ -1043,6 +1043,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     multi_samples = self._theme.multi_samples
                 self.ren_win.SetMultiSamples(multi_samples)
             return
+        elif aa_type not in ['ssaa', 'fxaa']:
+            raise ValueError(
+                f'Invalid `aa_type` "{aa_type}". Should be either "fxaa", "ssaa", or "msaa"'
+            )
 
         if all_renderers:
             for renderer in self.renderers:
