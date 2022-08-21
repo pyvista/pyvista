@@ -1885,16 +1885,16 @@ class DefaultTheme(_ThemeConfig):
         if isinstance(antialiasing, bool):
             warnings.warn(
                 '`antialiasing` is now a string or None and must be either "ssaa", '
-                '"mxaa", "fxaa", or None',
+                '"msaa", "fxaa", or None',
                 PyvistaDeprecationWarning,
             )
             antialiasing = 'fxaa'
 
         if isinstance(antialiasing, str):
-            if antialiasing not in ['ssaa', 'mxaa', 'fxaa']:
-                raise ValueError('antialiasing must be either "ssaa", "mxaa", or "fxaa"')
+            if antialiasing not in ['ssaa', 'msaa', 'fxaa']:
+                raise ValueError('antialiasing must be either "ssaa", "msaa", or "fxaa"')
         elif antialiasing is not None:
-            raise TypeError('`anti-aliasing` must be either a string or None')
+            raise TypeError('antialiasing must be either "ssaa", "msaa", "fxaa", or None')
 
         self._antialiasing = antialiasing
 
@@ -1902,13 +1902,16 @@ class DefaultTheme(_ThemeConfig):
     def multi_samples(self) -> int:
         """Return or set the default ``multi_samples`` parameter.
 
-        Set the number of multisamples to used with hardware antialiasing.
+        Set the number of multisamples to used with hardware antialiasing. This
+        is only used when :attr:`antialiasing <DefaultTheme.antialiasing>` is
+        set to ``"msaa"``.
 
         Examples
         --------
-        Set the default number of multisamples to 2.
+        Set the default number of multisamples to 2 and enable ``"msaa"``
 
         >>> import pyvista
+        >>> pyvista.global_theme.antialiasing = 'msaa'
         >>> pyvista.global_theme.multi_samples = 2
 
         """

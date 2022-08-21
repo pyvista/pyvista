@@ -972,7 +972,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    def enable_anti_aliasing(self, aa_type='fxaa', multi_samples=8, all_renderers=True):
+    def enable_anti_aliasing(self, aa_type='fxaa', multi_samples=None, all_renderers=True):
         """Enable anti-aliasing.
 
         This tends to make edges appear softer and less pixelated.
@@ -983,13 +983,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Anti-aliasing type. See the notes below. One of the following:
 
             * ``"ssaa"`` - Super-Sample Anti-Aliasing
-            * ``"mxaa"`` - Multi-Sample Anti-Aliasing
+            * ``"msaa"`` - Multi-Sample Anti-Aliasing
             * ``"fxaa"`` - Fast Approximate Anti-Aliasing
 
         multi_samples : int, optional
-            The number of multi-samples when ``aa_type`` is ``"mxaa"``. Note
+            The number of multi-samples when ``aa_type`` is ``"msaa"``. Note
             that using this setting automatically enables this for all
-            renderers.
+            renderers. Defaults to the theme multi_samples.
 
         all_renderers : bool
             If ``True``, applies to all renderers in subplots. If
@@ -1024,7 +1024,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
-        Enable super-sample anti-aliasing (SSAA)
+        Enable super-sample anti-aliasing (SSAA).
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
@@ -1033,12 +1033,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        # apply MXAA to entire render window
-        if aa_type == 'mxaa':
+        # apply MSAA to entire render window
+        if aa_type == 'msaa':
             if hasattr(self, 'ren_win'):
+                if multi_samples is None:
+                    multi_samples = self._theme.multi_samples
                 self.ren_win.SetMultiSamples(multi_samples)
-            else:
-                self.theme.multi_samples = multi_samples
             return
 
         if all_renderers:
@@ -5326,12 +5326,14 @@ class Plotter(BasePlotter):
             window_size = self._theme.window_size
         self.__prior_window_size = window_size
 
-        if multi_samples is None:
-            multi_samples = self._theme.multi_samples
-
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
-        self.ren_win.SetMultiSamples(multi_samples)
+        if self._theme.antialiasing == 'msaa':
+            if multi_samples is None:
+                multi_samples = self._theme.multi_samples
+            self.ren_win.SetMultiSamples(multi_samples)
+        else:
+            self.ren_win.SetMultiSamples(0)
         self.ren_win.SetBorders(True)
         if line_smoothing:
             self.ren_win.LineSmoothingOn()
