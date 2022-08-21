@@ -1250,7 +1250,7 @@ class Plot3DMetaReader(BaseReader):
 
 
 class Plot3DFunctionEnum(enum.IntEnum):
-    """An enumeration for the functions used in `MultiBlockPlot3DReader`."""
+    """An enumeration for the functions used in :class:`MultiBlockPlot3DReader`."""
 
     DENSITY = 100
     PRESSURE = 110
@@ -1276,8 +1276,8 @@ class Plot3DFunctionEnum(enum.IntEnum):
 class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader.
 
-    The methods :meth:``add_function()`` and :meth:``remove_function()`` accept values from
-    :class:``Plot3DFunctionEnum``. For convenience, the values of that enumeration are available as class variables,
+    The methods :meth:`add_function()` and :meth:`remove_function()` accept values from
+    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as class variables,
     as shown below.
 
         - ``MultiBlockPlot3DReader.DENSITY = Plot3DFunctionEnum.DENSITY``
