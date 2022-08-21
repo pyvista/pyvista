@@ -99,7 +99,7 @@ class RenderPasses:
     @property
     def _renderer(self):
         """Return the renderer."""
-        if self._renderer_ref is not None:
+        if self._renderer_ref() is not None:
             return self._renderer_ref()
 
     def deep_clean(self):
