@@ -461,6 +461,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         "FXAA anti-aliasing and SSAA will be used instead."
                     )
                 self._render_passes.enable_ssaa_pass()
+                return
             self._enable_fxaa()
 
         elif aa_type == 'ssaa':
@@ -2553,14 +2554,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._render_passes.add_blur_pass()
 
     def remove_blurring(self):
-        """Remove blurring.
+        """Remove a single blurring pass.
+
+        You will need to run this multiple times to remove all blurring passes.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
+        >>> pl.add_mesh(pv.Sphere())
         >>> pl.add_blurring()
         >>> pl.remove_blurring()
+        >>> pl.show()
 
         """
         self._render_passes.remove_blur_pass()

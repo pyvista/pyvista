@@ -2,8 +2,8 @@ from pyvista import _vtk
 from pyvista.plotting.render_passes import RenderPasses
 
 
-# this ideally would be a fixture, but if it's a fixture renderer collects
-# immediately
+# this ideally would be a fixture, but if it's a fixture the renderer object
+# collects immediately since RenderPasses only holds a weakref
 def make_passes():
     ren = _vtk.vtkRenderer()
     passes = RenderPasses(ren)
@@ -45,6 +45,9 @@ def test_ssaa_pass():
     # enabling again should just do nothing
     ssaa_pass = passes.enable_ssaa_pass()
     assert 'vtkSSAAPass' in passes._passes
+
+    passes.disable_ssaa_pass()
+    assert not passes._passes
 
     # disabling again should just do nothing
     passes.disable_ssaa_pass()

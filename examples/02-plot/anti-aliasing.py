@@ -48,11 +48,15 @@ pl.show()
 ###############################################################################
 # Fast Approximate Anti-Aliasing (FXAA)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Also known as Fast Approximate Anti-Aliasing, FXAA was crafted by
-# Nvidia. When it comes to anti-aliasing on low-end devices/PCs, FXAA is the
-# best technique. This is because, in terms of hardware or GPU, FXAA is not
-# that demanding. It directly smoothens the 2D image as soon as it appears on
-# the screen. This reduces the strain over GPU, making it best for low-end PCs.
+# FXAA is the most performant of all three anti-aliasing techniques. This is
+# because, in terms of hardware or GPU, FXAA is not that demanding. It directly
+# smooths the 2D image and this reduces the strain over GPU, making it best for
+# low-end PCs.
+#
+# Because FXAA only operates on the rendered image, FXAA may result in
+# smoothing out parts of the visual overlay that are usually kept sharp for
+# reasons of clarity as well as smoothing out textures. In general, FXAA is
+# inferior to MSAA and SSAA.
 
 pl = pv.Plotter()
 pl.add_mesh(bunny, show_edges=True)

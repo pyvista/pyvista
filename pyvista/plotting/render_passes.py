@@ -60,9 +60,9 @@ class RenderPasses:
 
     @property
     def _seq_pass(self):
-        """Initialize (when necessary) the pass collection and return it.
+        """Initialize (when necessary) the sequence collection and return it.
 
-        This lets us lazily generate the pass collection only when we need it
+        This lets us lazily generate the sequence collection only when we need it
         rather than at initialization of the class.
 
         """
@@ -145,8 +145,9 @@ class RenderPasses:
         return blur_pass
 
     def remove_blur_pass(self):
-        """Remove a vtkGaussianBlurPass pass."""
+        """Remove a single vtkGaussianBlurPass pass."""
         if self._blur_passes:
+            # order of the blur passes does not matter
             self._remove_pass(self._blur_passes.pop(0))
 
     def enable_shadow_pass(self):
@@ -212,19 +213,14 @@ class RenderPasses:
                     current_pass = render_pass
 
         # reset to the default rendering if no special passes have been added
-        if isinstance(current_pass, _vtk.vtkCameraPass) and self._shadow_map_pass is None:
+        if current_pass is self._camera_pass and self._shadow_map_pass is None:
             self._renderer.SetPass(None)
         else:
             self._renderer.SetPass(current_pass)
 
-    @staticmethod
-    def _class_name_from_vtk_obj(obj):
-        """Return the class name from a vtk object."""
-        return str(type(obj)).split('.')[-1].split("'")[0]
-
     def _add_pass(self, render_pass):
         """Add a render pass."""
-        class_name = RenderPasses._class_name_from_vtk_obj(render_pass)
+        class_name = render_pass.GetClassName()
 
         if class_name in PRE_PASS and render_pass in self._passes:
             return
@@ -242,7 +238,7 @@ class RenderPasses:
         Remove a pass and reassemble the pass ordering.
 
         """
-        class_name = RenderPasses._class_name_from_vtk_obj(render_pass)
+        class_name = render_pass.GetClassName()
 
         if class_name not in self._passes:  # pragma: no cover
             return

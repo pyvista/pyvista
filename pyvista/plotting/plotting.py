@@ -279,10 +279,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
 
-        # set anti_aliasing based on theme
-        if self.theme.anti_aliasing:
-            self.enable_anti_aliasing(self.theme.anti_aliasing)
-
         self._initialized = True
 
     @property
@@ -1038,10 +1034,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # apply MSAA to entire render window
         if aa_type == 'msaa':
-            if hasattr(self, 'ren_win'):
-                if multi_samples is None:
-                    multi_samples = self._theme.multi_samples
-                self.ren_win.SetMultiSamples(multi_samples)
+            if not hasattr(self, 'ren_win'):
+                raise AttributeError('The render window has been closed.')
+            if multi_samples is None:
+                multi_samples = self._theme.multi_samples
+            self.ren_win.SetMultiSamples(multi_samples)
             return
         elif aa_type not in ['ssaa', 'fxaa']:
             raise ValueError(
@@ -5338,12 +5335,7 @@ class Plotter(BasePlotter):
 
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
-        if self._theme.anti_aliasing == 'msaa':
-            if multi_samples is None:
-                multi_samples = self._theme.multi_samples
-            self.ren_win.SetMultiSamples(multi_samples)
-        else:
-            self.ren_win.SetMultiSamples(0)
+        self.ren_win.SetMultiSamples(0)
         self.ren_win.SetBorders(True)
         if line_smoothing:
             self.ren_win.LineSmoothingOn()
@@ -5400,6 +5392,10 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # set anti_aliasing based on theme
+        if self.theme.anti_aliasing:
+            self.enable_anti_aliasing(self.theme.anti_aliasing)
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
