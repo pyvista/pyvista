@@ -101,6 +101,7 @@ if VTK9:
         VTK_UNSIGNED_CHAR,
         buffer_shared,
         mutable,
+        reference,
         vtkAbstractArray,
         vtkBitArray,
         vtkCharArray,
@@ -262,7 +263,11 @@ if VTK9:
         vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
-    from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
+
+    try:
+        from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
+    except ModuleNotFoundError:  # pragma: no cover
+        pass  # unavailable on macOS M1 VTK 9.2.0rc1
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
@@ -416,6 +421,7 @@ if VTK9:
         vtkCamera,
         vtkCellPicker,
         vtkColorTransferFunction,
+        vtkCompositeDataDisplayAttributes,
         vtkCoordinate,
         vtkDataSetMapper,
         vtkImageActor,
@@ -446,6 +452,7 @@ if VTK9:
     from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
+        vtkCompositePolyDataMapper2,
         vtkEDLShading,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,

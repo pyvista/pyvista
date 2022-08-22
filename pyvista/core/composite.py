@@ -7,16 +7,17 @@ import collections.abc
 from itertools import zip_longest
 import logging
 import pathlib
-from typing import Any, Iterable, List, Optional, Tuple, Union, cast, overload
+from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overload
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import is_pyvista_dataset, wrap
+from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
+from .pyvista_ndarray import pyvista_ndarray
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -239,13 +240,16 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str) -> Tuple[float, float]:  # type: ignore
+    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
         ----------
         name : str
             Name of the array.
+
+        allow_missing : bool, optional
+            Allow a block to be missing the named array.
 
         Returns
         -------
@@ -259,7 +263,13 @@ class MultiBlock(
             if data is None:
                 continue
             # get the scalars if available - recursive
-            tmi, tma = data.get_data_range(name)
+            try:
+                tmi, tma = data.get_data_range(name)
+            except KeyError as err:
+                if allow_missing:
+                    continue
+                else:
+                    raise err
             if not np.isnan(tmi) and tmi < mini:
                 mini = tmi
             if not np.isnan(tma) and tma > maxi:
@@ -353,6 +363,10 @@ class MultiBlock(
         ['cube', 'sphere', 'Block-02', 'uniform']
 
         """
+        # do not allow to add self
+        if dataset is self:
+            raise ValueError("Cannot nest a composite dataset in itself.")
+
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
         if not pyvista.is_pyvista_dataset(dataset):
@@ -908,3 +922,248 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         newobject.wrap_nested()
         return newobject
+
+    def set_active_scalars(
+        self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
+    ) -> Tuple[FieldAssociation, np.ndarray]:  # type: ignore
+        """Find the scalars by name and appropriately set it as active.
+
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str or None
+            Name of the scalars array to assign as active.  If
+            ``None``, deactivates active scalars for both point and
+            cell data.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points or cells, it will prioritize an array matching this
+            type.  Can be either ``'cell'`` or ``'point'``.
+
+        allow_missing : bool, optional
+            Allow missing scalars in part of the composite dataset. If all
+            blocks are missing the array, it will raise a ``KeyError``.
+
+        Returns
+        -------
+        pyvista.FieldAssociation
+            Field association of the scalars activated.
+
+        numpy.ndarray
+            An array from the dataset matching ``name``.
+
+        Notes
+        -----
+        The number of components of the data must match.
+
+        """
+        data_assoc: List[Tuple[FieldAssociation, np.ndarray, _TypeMultiBlockLeaf]] = []
+        for block in self:
+            if block is not None:
+                if isinstance(block, MultiBlock):
+                    field, scalars = block.set_active_scalars(
+                        name, preference, allow_missing=allow_missing
+                    )
+                else:
+                    try:
+                        field, scalars = block.set_active_scalars(name, preference)
+                    except KeyError as err:
+                        if not allow_missing:
+                            raise err
+                        block.set_active_scalars(None, preference)
+                        field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
+
+                if field != FieldAssociation.NONE:
+                    data_assoc.append((field, scalars, block))
+
+        if name is None:
+            return FieldAssociation.NONE, pyvista_ndarray([])
+
+        if not data_assoc:
+            raise KeyError(f'"{name}" is missing from all the blocks of this composite dataset.')
+
+        field_asc = data_assoc[0][0]
+        # set the field association to the preference if at least one occurrence
+        # of it exists
+        if field_asc.name.lower() != preference.lower():
+            for field, _, _ in data_assoc:
+                if field.name.lower() == preference:
+                    field_asc = getattr(FieldAssociation, preference.upper())
+                    break
+
+        # Verify array consistency
+        dims: Set[int] = set()
+        dtypes: Set[np.dtype] = set()
+        for block in self:
+            for field, scalars, _ in data_assoc:
+                # only check for the active field association
+                if field != field_asc:
+                    continue
+                dims.add(scalars.ndim)
+                dtypes.add(scalars.dtype)
+
+        if len(dims) > 1:
+            raise ValueError(f'Inconsistent dimensions {dims} in active scalars.')
+
+        # check complex mismatch
+        is_complex = [np.issubdtype(dtype, np.complexfloating) for dtype in dtypes]
+        if any(is_complex) and not all(is_complex):
+            raise ValueError('Inconsistent complex and real data types in active scalars.')
+
+        return field_asc, scalars
+
+    def as_polydata_blocks(self, copy=False):
+        """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
+
+        Parameters
+        ----------
+        copy : bool, optional
+            Option to create a shallow copy of any datasets that are already a
+            :class:`pyvista.PolyData`. When ``False``, any datasets that are
+            already PolyData will not be copied.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            MultiBlock containing only :class:`pyvista.PolyData` datasets.
+
+        Notes
+        -----
+        Null blocks are converted to empty :class:`pyvista.PolyData`
+        objects. Downstream filters that operate on PolyData cannot accept
+        MultiBlocks with null blocks.
+
+        """
+        # we make a shallow copy here to avoid modifying the original dataset
+        dataset = self.copy(deep=False)
+
+        # Loop through the multiblock and convert to polydata
+        for i, block in enumerate(dataset):
+            if block is not None:
+                if isinstance(block, MultiBlock):
+                    dataset.replace(i, block.as_polydata_blocks(copy=copy))
+                elif not isinstance(block, pyvista.PolyData):
+                    dataset.replace(i, block.extract_surface())
+                elif copy:
+                    # dataset is a PolyData
+                    dataset.replace(i, block.copy(deep=False))
+            else:
+                # must have empty polydata within these datasets as some
+                # downstream filters don't work on null pointers (i.e. None)
+                dataset[i] = pyvista.PolyData()
+
+        return dataset
+
+    @property
+    def is_all_polydata(self) -> bool:
+        """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
+
+        This method will recursively check if any internal blocks are also
+        :class:`pyvista.PolyData`.
+
+        Returns
+        -------
+        bool
+            Return ``True`` when all blocks are :class:`pyvista.PolyData`.
+
+        """
+        for block in self:
+            if isinstance(block, MultiBlock):
+                if not block.is_all_polydata:
+                    return False
+            else:
+                if not isinstance(block, pyvista.PolyData):
+                    return False
+
+        return True
+
+    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):
+        """Active a scalars for an instance of :class:`pyvista.Plotter`."""
+        # set the active scalars
+        field, scalars = self.set_active_scalars(
+            scalars_name,
+            preference,
+            allow_missing=True,
+        )
+
+        data_attr = f'{field.name.lower()}_data'
+        dtype = scalars.dtype
+        if rgb:
+            if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
+                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+        elif np.issubdtype(scalars.dtype, np.complexfloating):
+            # Use only the real component if an array is complex
+            scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
+        elif scalars.dtype in (np.bool_, np.uint8):
+            # bool and uint8 do not display properly, must convert to float
+            self._convert_to_real_scalars(data_attr, scalars_name)
+            if scalars.dtype == np.bool_:
+                dtype = np.bool_
+        elif scalars.ndim > 1:
+            # multi-component
+            if not isinstance(component, (int, type(None))):
+                raise TypeError('`component` must be either None or an integer')
+            if component is not None:
+                if component >= scalars.shape[1] or component < 0:
+                    raise ValueError(
+                        'Component must be nonnegative and less than the '
+                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                    )
+            scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
+
+        return field, scalars_name, dtype
+
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
+        """Extract the real component of the active scalars of this dataset."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._convert_to_real_scalars(data_attr, scalars_name)
+            elif block is not None:
+                scalars = getattr(block, data_attr).get(scalars_name, None)
+                if scalars is not None:
+                    scalars = np.array(scalars.astype(float))
+                    getattr(block, data_attr)[f'{scalars_name}-real'] = scalars
+        return f'{scalars_name}-real'
+
+    def _convert_to_single_component(
+        self, data_attr: str, scalars_name: str, component: Union[None, str]
+    ) -> str:
+        """Convert multi-component scalars to a single component."""
+        if component is None:
+            for block in self:
+                if isinstance(block, MultiBlock):
+                    block._convert_to_single_component(data_attr, scalars_name, component)
+                elif block is not None:
+                    scalars = getattr(block, data_attr).get(scalars_name, None)
+                    if scalars is not None:
+                        scalars = np.linalg.norm(scalars, axis=1)
+                        getattr(block, data_attr)[f'{scalars_name}-normed'] = scalars
+            return f'{scalars_name}-normed'
+
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._convert_to_single_component(data_attr, scalars_name, component)
+            elif block is not None:
+                scalars = getattr(block, data_attr).get(scalars_name, None)
+                if scalars is not None:
+                    getattr(block, data_attr)[f'{scalars_name}-{component}'] = scalars[:, component]
+        return f'{scalars_name}-{component}'
+
+    def _get_consistent_active_scalars(self):
+        """Check if there are any consistent active scalars."""
+        point_names = set()
+        cell_names = set()
+        for block in self:
+            if isinstance(block, MultiBlock):
+                point_name, cell_name = block._get_consistent_active_scalars()
+            elif block is not None:
+                point_name = block.point_data.active_scalars_name
+                cell_name = block.cell_data.active_scalars_name
+            point_names.add(point_name)
+            cell_names.add(cell_name)
+
+        point_name = point_names.pop() if len(point_names) == 1 else None
+        cell_name = cell_names.pop() if len(cell_names) == 1 else None
+        return point_name, cell_name
