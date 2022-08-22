@@ -2562,7 +2562,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(pv.Sphere())
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.add_blurring()
         >>> pl.remove_blurring()
         >>> pl.show()
