@@ -976,6 +976,7 @@ def get_cmap_safe(cmap):
             )  # pragma: no cover
 
         from matplotlib import colors, colormaps
+
         if not isinstance(cmap, colors.Colormap):
             cmap = colormaps[cmap]
 

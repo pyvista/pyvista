@@ -262,6 +262,7 @@ if VTK9:
         vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
+
     try:
         from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
     except ModuleNotFoundError:  # macOS M1 VTK 9.2.0rc1
