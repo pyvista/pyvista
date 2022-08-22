@@ -83,21 +83,28 @@ def make_mapper(mapper_class):
                 if has_module('matplotlib'):
                     cmap = theme.cmap
 
+            if not isinstance(scalars, np.ndarray):
+                scalars = np.asarray(scalars)
+
             # Set the array title for when it is added back to the mesh
             if _custom_opac:
                 scalars_name = '__custom_rgba'
 
-            if not isinstance(scalars, np.ndarray):
-                scalars = np.asarray(scalars)
-
             _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):
-                # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
-                # TODO: If str array, digitive and annotate
-                cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
-                values = np.unique(scalars)
-                clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                scalars_name = f'{scalars_name}-digitized'
+
+                # we can rapidly handle bools
+                if scalars.dtype == np.bool_:
+                    cats = np.array([b'False', b'True'], dtype='|S5')
+                    values = np.array([0, 1])
+                    clim = [-0.5, 1.5]
+                else:
+                    # If str array, digitive and annotate
+                    cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
+                    values = np.unique(scalars)
+                    clim = [np.min(values) - 0.5, np.max(values) + 0.5]
+                    scalars_name = f'{scalars_name}-digitized'
+
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
@@ -124,7 +131,7 @@ def make_mapper(mapper_class):
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
                         scalars_name = f'{scalars_name}-normed'
                     elif component < scalars.shape[1] and component >= 0:
-                        scalars = scalars[:, component].copy()
+                        scalars = np.array(scalars[:, component]).copy()
                         scalars_name = f'{scalars_name}-{component}'
                     else:
                         raise ValueError(
