@@ -636,7 +636,7 @@ class PickingHelper:
 
         Enable picking a point at the mouse location in the render
         view using the ``P`` key. This point is saved to the
-        ``.picked_point`` attrbute on the plotter. Pass a callback
+        ``.picked_point`` attribute on the plotter. Pass a callback
         function that takes that point as an argument. The picked
         point can either be a point on the first intersecting mesh, or
         a point in the 3D window.
