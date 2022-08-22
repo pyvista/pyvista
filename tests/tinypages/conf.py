@@ -3,6 +3,8 @@ import datetime
 from packaging.version import parse as parse_version
 import sphinx
 
+import pyvista
+
 # -- General configuration ------------------------------------------------
 
 extensions = ['pyvista.ext.plot_directive']
@@ -28,3 +30,6 @@ else:
     html_theme = 'default'
 
 html_static_path = ['_static']
+
+# -- pyvista configuration ------------------------------------------------
+pyvista.BUILDING_GALLERY = True
