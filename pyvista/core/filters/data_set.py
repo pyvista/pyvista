@@ -5293,7 +5293,7 @@ class DataSetFilters:
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
             raise VTKVersionError(
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
-                f'was not found in VTK {vtk_version_info}')  # pragma: no cover
+                f'was not found in VTK {pyvista.vtk_version_info}')  # pragma: no cover
 
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)
