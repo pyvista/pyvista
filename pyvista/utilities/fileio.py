@@ -152,7 +152,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
                 name = os.path.basename(str(each))
             else:
                 name = None
-            multi[-1, name] = read(each, attrs=attrs, file_format=file_format)
+            multi.append(read(each, attrs=attrs, file_format=file_format), name)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
@@ -429,7 +429,8 @@ def from_meshio(mesh):
     for c in mesh.cells:
         vtk_type = meshio_to_vtk_type[c.type]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        cells.append(np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel())
+        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+        cells.append(np.hstack((fill_values, c.data)).ravel())
         cell_type += [vtk_type] * len(c.data)
         if not _vtk.VTK9:
             offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
@@ -440,19 +441,22 @@ def from_meshio(mesh):
 
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
+
+    # convert to 3D if points are 2D
     if points.shape[1] == 2:
-        points = np.hstack((points, np.zeros((len(points), 1))))
+        zero_points = np.zeros((len(points), 1), dtype=points.dtype)
+        points = np.hstack((points, zero_points))
 
     if _vtk.VTK9:
         grid = pyvista.UnstructuredGrid(
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )
     else:
         grid = pyvista.UnstructuredGrid(
             np.array(offset),
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )

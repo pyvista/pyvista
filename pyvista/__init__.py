@@ -98,14 +98,11 @@ except Exception as e:
     )
     EXAMPLES_PATH = ''
 
-# verify example cache integrity
-from pyvista.examples.downloads import _verify_cache_integrity
-
-_verify_cache_integrity()
-
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
+# theme to use by default for the plot directive
+PLOT_DIRECTIVE_THEME = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter

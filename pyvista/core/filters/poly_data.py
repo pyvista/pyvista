@@ -1057,7 +1057,7 @@ class PolyDataFilters(DataSetFilters):
         'Tube Cells: 22'
         >>> tube.plot(color='tan')
 
-        See :ref:`ref_create_spline` for more examples using this filter.
+        See :ref:`create_spline_example` for more examples using this filter.
 
         """
         poly_data = self
@@ -1801,7 +1801,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> import numpy as np
         >>> points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]], dtype=np.float32)
-        >>> faces = np.array([3, 0, 1, 2, 3, 0, 3, 3])
+        >>> faces = np.array([3, 0, 1, 2, 3, 0, 2, 2])
         >>> mesh = pv.PolyData(points, faces)
         >>> mout = mesh.clean()
         >>> mout.faces  # doctest:+SKIP
@@ -1903,6 +1903,12 @@ class PolyDataFilters(DataSetFilters):
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
+        if output.n_points == 0:
+            raise ValueError(
+                f"There is no path between vertices {start_vertex} and {end_vertex}. ",
+                "It is likely the vertices belong to disconnected regions.",
+            )
+
         output["vtkOriginalPointIds"] = original_ids
 
         # Do not copy textures from input

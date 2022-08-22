@@ -101,6 +101,7 @@ if VTK9:
         VTK_UNSIGNED_CHAR,
         buffer_shared,
         mutable,
+        reference,
         vtkAbstractArray,
         vtkBitArray,
         vtkCharArray,
@@ -229,6 +230,7 @@ if VTK9:
         vtkIntersectionPolyDataFilter,
         vtkOBBTree,
         vtkRectilinearGridToPointSet,
+        vtkRectilinearGridToTetrahedra,
         vtkShrinkFilter,
         vtkTableBasedClipDataSet,
         vtkTableToPolyData,
@@ -257,9 +259,11 @@ if VTK9:
         vtkRibbonFilter,
         vtkRotationalExtrusionFilter,
         vtkSelectEnclosedPoints,
+        vtkSubdivideTetra,
         vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
+    from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
@@ -413,6 +417,7 @@ if VTK9:
         vtkCamera,
         vtkCellPicker,
         vtkColorTransferFunction,
+        vtkCompositeDataDisplayAttributes,
         vtkCoordinate,
         vtkDataSetMapper,
         vtkImageActor,
@@ -443,6 +448,7 @@ if VTK9:
     from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
+        vtkCompositePolyDataMapper2,
         vtkEDLShading,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,

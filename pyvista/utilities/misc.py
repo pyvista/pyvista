@@ -1,5 +1,7 @@
 """Miscellaneous pyvista functions."""
 from collections import namedtuple
+from functools import lru_cache
+import importlib
 import os
 import warnings
 
@@ -22,6 +24,13 @@ def _set_plot_theme_from_env():
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
+
+
+@lru_cache(maxsize=None)
+def has_module(module_name):
+    """Return if a module can be imported."""
+    module_spec = importlib.util.find_spec(module_name)
+    return module_spec is not None
 
 
 def raise_has_duplicates(arr):
@@ -54,6 +63,12 @@ class PyvistaDeprecationWarning(Warning):
 
 class PyvistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
+
+    pass
+
+
+class PyvistaEfficiencyWarning(Warning):
+    """Efficiency warning."""
 
     pass
 

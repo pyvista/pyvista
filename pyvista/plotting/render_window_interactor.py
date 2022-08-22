@@ -61,6 +61,7 @@ class RenderWindowInteractor:
 
     @property
     def plotter(self):
+        """Return the plotter."""
         return self._plotter()
 
     def add_key_event(self, key, callback):
@@ -242,7 +243,6 @@ class RenderWindowInteractor:
         """
         event = self._get_click_event(side)
         add_observer = all(len(cbs) == 0 for cbs in self._click_event_callbacks[event].values())
-
         if callback is None and add_observer:
             # No observers for this event yet and custom callback not given => insert dummy callback
             callback = lambda obs, event: None
@@ -594,7 +594,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
-                self._style_class.AddObserver(event, callback)
+                self._style_class.add_observer(event, callback)
 
         if shift_pans:
 
@@ -612,7 +612,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
-                self._style_class.AddObserver(event, callback)
+                self._style_class.add_observer(event, callback)
 
     def enable_rubber_band_style(self):
         """Set the interactive style to Rubber Band Picking.
@@ -866,7 +866,6 @@ def _style_factory(klass):
 
     def _make_class(klass):
         """Make the class."""
-
         try:
             from vtkmodules import vtkInteractionStyle
         except ImportError:  # pragma: no cover
@@ -902,6 +901,9 @@ def _style_factory(klass):
                 if len(parent.plotter.renderers) > 1:
                     for renderer in parent.plotter.renderers:
                         renderer.SetInteractive(True)
+
+            def add_observer(self, event, callback):
+                self._observers.append(self.AddObserver(event, callback))
 
             def remove_observers(self):
                 for obs in self._observers:

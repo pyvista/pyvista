@@ -134,7 +134,7 @@ def _option_boolean(arg):
     elif arg.strip().lower() in ('yes', '1', 'true'):
         return True
     else:  # pragma: no cover
-        raise ValueError('"%s" unknown boolean' % arg)
+        raise ValueError(f'"{arg}" unknown boolean')
 
 
 def _option_context(arg):
@@ -323,6 +323,8 @@ def _run_code(code, code_path, ns=None, function_name=None):
         return ns
 
     try:
+        if pyvista.PLOT_DIRECTIVE_THEME is not None:
+            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err
@@ -372,7 +374,8 @@ def render_figures(
             images = []
             figures = pyvista.plotting._ALL_PLOTTERS
 
-            for j, (_, plotter) in enumerate(figures.items()):
+            for j, (_, plotter_ref) in enumerate(figures.items()):
+                plotter = plotter_ref()
                 if hasattr(plotter, '_gif_filename'):
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
                     shutil.move(plotter._gif_filename, image_file.filename)

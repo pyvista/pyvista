@@ -197,6 +197,7 @@ class Renderers:
 
     @property
     def render_window(self):
+        """Return the render window."""
         return self._render_window()
 
     def loc_to_group(self, loc):
@@ -374,7 +375,8 @@ class Renderers:
         """Clear all renders."""
         for renderer in self:
             renderer.clear()
-        self._shadow_renderer.clear()
+        if hasattr(self, '_shadow_renderer'):
+            self._shadow_renderer.clear()
         self.clear_background_renderers()
 
     def close(self):
@@ -382,7 +384,8 @@ class Renderers:
         for renderer in self:
             renderer.close()
 
-        self._shadow_renderer.close()
+        if hasattr(self, '_shadow_renderer'):
+            self._shadow_renderer.close()
 
         for renderer in self._background_renderers:
             if renderer is not None:
