@@ -102,6 +102,32 @@ def datasets():
 
 
 @fixture()
+def multiblock_poly():
+    # format and order of data (including missing) is intentional
+    mesh_a = pyvista.Sphere(center=(0, 0, 0))
+    mesh_a['data_a'] = mesh_a.points[:, 0] * 10
+    mesh_a['data_b'] = mesh_a.points[:, 1] * 10
+    mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
+    mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
+
+    mesh_b = pyvista.Sphere(center=(1, 0, 0))
+    mesh_b['data_a'] = mesh_b.points[:, 0] * 10
+    mesh_b['data_b'] = mesh_b.points[:, 1] * 10
+    mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
+    mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
+
+    mesh_c = pyvista.Sphere(center=(2, 0, 0))
+    mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
+    mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
+
+    mblock = pyvista.MultiBlock()
+    mblock.append(mesh_a)
+    mblock.append(mesh_b)
+    mblock.append(mesh_c)
+    return mblock
+
+
+@fixture()
 def datasets_vtk9():
     return [
         examples.load_explicit_structured(),
@@ -113,6 +139,12 @@ def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
+
+
+@fixture()
+def multiblock_all(datasets):
+    """Return datasets fixture combined in a pyvista multiblock."""
+    return pyvista.MultiBlock(datasets)
 
 
 @fixture()
