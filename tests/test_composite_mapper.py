@@ -23,6 +23,7 @@ def block_attr(block_attributes):
 
 def test_basic_mapper(composite_mapper):
     assert isinstance(composite_mapper, CompositePolyDataMapper)
+    assert isinstance(composite_mapper.dataset, pv.MultiBlock)
 
 
 def test_interpolate_before_map(composite_mapper):
@@ -35,6 +36,10 @@ def test_color_missing_with_nan(composite_mapper):
 
 def test_lookup_table(composite_mapper):
     isinstance(composite_mapper.lookup_table, pv._vtk.vtkLookupTable)
+
+    table = pv._vtk.vtkLookupTable()
+    composite_mapper.lookup_table = table
+    assert composite_mapper.lookup_table is table
 
 
 def test_scalar_visibility(composite_mapper):
@@ -172,7 +177,7 @@ def test_block_attributes(block_attributes):
     block_attributes.reset_colors()
     assert block_attributes[0].color is None
 
-    block_attributes.reset_pickability()
+    block_attributes.reset_pickabilities()
     assert block_attributes[0].pickable is None
 
     block_attributes.reset_opacities()

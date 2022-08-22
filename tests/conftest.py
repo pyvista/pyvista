@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.random import default_rng
-from pytest import fixture
+from pytest import fixture, skip
 
 import pyvista
 from pyvista import examples
@@ -57,6 +57,11 @@ def globe():
 @fixture()
 def hexbeam():
     return examples.load_hexbeam()
+
+
+@fixture()
+def tetbeam():
+    return examples.load_tetbeam()
 
 
 @fixture()
@@ -123,6 +128,13 @@ def multiblock_poly():
 
 
 @fixture()
+def datasets_vtk9():
+    return [
+        examples.load_explicit_structured(),
+    ]
+
+
+@fixture()
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
@@ -146,3 +158,27 @@ def pytest_addoption(parser):
     parser.addoption("--reset_image_cache", action='store_true', default=False)
     parser.addoption("--ignore_image_cache", action='store_true', default=False)
     parser.addoption("--fail_extra_image_cache", action='store_true', default=False)
+
+
+def pytest_runtest_setup(item):
+    """Custom setup to handle skips based on VTK version.
+
+    See pytest.mark.needs_vtk9 and pytest.mark.needs_vtk_version
+    in pytest.ini.
+
+    """
+    for mark in item.iter_markers('needs_vtk9'):
+        # this test needs VTK 9 or newer
+        if not pyvista._vtk.VTK9:
+            skip('Test needs VTK 9 or newer.')
+    for mark in item.iter_markers('needs_vtk_version'):
+        # this test needs the given VTK version
+        # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))
+        args = mark.args
+        if len(args) == 1 and isinstance(args[0], tuple):
+            version_needed = args[0]
+        else:
+            version_needed = args
+        if pyvista.vtk_version_info < version_needed:
+            version_str = '.'.join(map(str, version_needed))
+            skip(f'Test needs VTK {version_str} or newer.')

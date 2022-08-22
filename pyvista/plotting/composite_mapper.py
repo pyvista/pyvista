@@ -7,6 +7,7 @@ import weakref
 
 import numpy as np
 
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array
 
@@ -216,6 +217,10 @@ class BlockAttributes:
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].pickable = True
         >>> mapper.block_attr[2].pickable = False
+        >>> pl.close()
+
+        See :ref:`composite_picking_example` for a full example using block
+        picking.
 
         """
         if not self._has_pickable:
@@ -269,7 +274,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     structures, this flat indexing would be known as "Depth-first search"
     and the entire indexing would be::
 
-       ``[A, B, d, e, f, C, g, h, i]``
+       [A, B, d, e, f, C, g, h, i]
 
     Note how the composite datasets themselves are capitalized and are
     accessible in the flat indexing, and not just the datasets.
@@ -323,7 +328,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         """
         self.RemoveBlockVisibilities()
 
-    def reset_pickability(self):
+    def reset_pickabilities(self):
         """Reset the pickability of all blocks.
 
         Examples
@@ -340,7 +345,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].pickable = True
         >>> mapper.block_attr[2].pickable = False
-        >>> mapper.block_attr.reset_pickability()
+        >>> mapper.block_attr.reset_pickabilities()
+        >>> [mapper.block_attr[1].pickable, mapper.block_attr[2].pickable]
+        [None, None]
+        >>> pl.close()
 
         """
         self.RemoveBlockPickabilities()
@@ -350,7 +358,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         Examples
         --------
-        Set individual block colors and then reset it.
+        Set individual block colors and then reset them.
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
@@ -414,7 +422,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         structures, this flat indexing would be known as "Depth-first search"
         and the entire indexing would be::
 
-           ``[A, B, d, e, f, C, g, h, i]``
+           [A, B, d, e, f, C, g, h, i]
 
         Note how the composite datasets themselves are capitalized and are
         accessible in the flat indexing, and not just the datasets.
@@ -522,8 +530,32 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             self.interpolate_before_map = interpolate_before_map
 
     @property
+    def dataset(self) -> 'pv.MultiBlock':
+        """Return the composite dataset assigned to this mapper.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.dataset   # doctest:+SKIP
+        MultiBlock (...)
+          N Blocks:     2
+          X Bounds:     -0.500, 0.500
+          Y Bounds:     -0.500, 0.500
+          Z Bounds:     -0.500, 1.500
+
+        """
+        return self._dataset
+
+    @property
     def interpolate_before_map(self) -> bool:
         """Return or set the interpolation of scalars before mapping.
+
+        Enabling makes for a smoother scalars display.  When ``False``,
+        OpenGL will interpolate the mapped colors which can result in
+        showing colors that are not present in the color map.
 
         Examples
         --------
@@ -531,11 +563,23 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset)
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ... )
         >>> mapper.interpolate_before_map = False
-        >>> mapper.interpolate_before_map
-        False
+        >>> pl.show()
+
+        Enable interpolation before mapping.
+
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ... )
+        >>> mapper.interpolate_before_map = True
+        >>> pl.show()
 
         See :ref:`interpolate_before_mapping_example` for additional
         explanation regarding this attribute.
@@ -566,7 +610,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         structures, this flat indexing would be known as "Depth-first search"
         and the entire indexing would be::
 
-           ``[A, B, d, e, f, C, g, h, i]``
+           [A, B, d, e, f, C, g, h, i]
 
         Examples
         --------
@@ -599,11 +643,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset)
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
+        >>> mapper.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
-        >>> mapper.color_missing_with_nan
-        True
+        >>> pl.show()
 
         """
         return self.GetColorMissingArraysWithNanColor()
@@ -649,6 +694,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.scalar_range
         (0.0, 1.0)
+        >>> pl.close()
 
         """
         return self.GetScalarRange()
@@ -676,6 +722,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         >>> actor, mapper = pl.add_composite(dataset, scalars='data')
         >>> mapper.scalar_visibility
         True
+        >>> pl.close()
 
         """
         return bool(self.GetScalarVisibility())
@@ -728,9 +775,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
         >>> mapper.scalar_map_mode
         'point'
+        >>> pl.close()
 
         """
         # map vtk strings to more sensible strings
@@ -939,18 +987,25 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     def nan_color(self) -> Color:
         """Return or set the NaN color.
 
+        Notes
+        -----
+        :attr:`CompositePolyDataMapper.color_missing_with_nan` must be enabled
+        for the color to be applied to the actor.
+
         Examples
         --------
-        Set the NaN color to red.
+        Set the NaN color to blue.
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
-        >>> mapper.nan_color = 'r'
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
+        >>> mapper.color_missing_with_nan = True
+        >>> mapper.nan_color = 'b'
         >>> mapper.nan_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='blue', hex='#0000ffff')
+        >>> pl.show()
 
         """
         return Color(self.lookup_table.GetNanColor())
@@ -971,8 +1026,11 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, scalars='data', show_scalar_bar=False, clim=(0, 1),
+        ... )
         >>> mapper.above_range_color = 'b'
         >>> mapper.above_range_color
         Color(name='blue', hex='#0000ffff')
@@ -996,8 +1054,11 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, scalars='data', show_scalar_bar=False, clim=(0, 1),
+        ... )
         >>> mapper.below_range_color = 'green'
         >>> mapper.below_range_color
         Color(name='green', hex='#008000ff')

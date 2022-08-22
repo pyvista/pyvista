@@ -4,14 +4,13 @@ import pyvista
 from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
-skip_no_vtk9 = pytest.mark.skipif(pyvista.vtk_version_info < (9,), reason="Requires VTK v9+")
 
 # skip all tests if unable to render
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_cell_picking():
     with pytest.raises(AttributeError, match="mesh"):
         plotter = pyvista.Plotter()
@@ -194,7 +193,7 @@ def test_enable_cell_picking_interactive_two_ren_win():
     assert n_cells[0]
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_point_picking(left_clicking):
     sphere = pyvista.Sphere()
@@ -225,7 +224,7 @@ def test_point_picking(left_clicking):
         plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_point_picking_window_not_pickable():
 
     plotter = pyvista.Plotter(
@@ -261,7 +260,7 @@ def test_point_picking_window_not_pickable():
     plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_path_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
@@ -284,7 +283,7 @@ def test_path_picking():
     plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_geodesic_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
@@ -312,7 +311,7 @@ def test_geodesic_picking():
     plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_horizon_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(

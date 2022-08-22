@@ -1102,7 +1102,7 @@ class Property(_vtk.vtkProperty):
         0.1
 
         """
-        if not hasattr(self, 'GetAnisotropy'):
+        if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
@@ -1110,7 +1110,7 @@ class Property(_vtk.vtkProperty):
 
     @anisotropy.setter
     def anisotropy(self, value: float):
-        if not hasattr(self, 'SetAnisotropy'):
+        if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')

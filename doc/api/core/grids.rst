@@ -54,7 +54,6 @@ classes inherit all methods from their corresponding VTK
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.RectilinearGrid
    pyvista.UniformGrid

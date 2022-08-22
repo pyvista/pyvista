@@ -449,7 +449,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         else:
             raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
-        widget = self.to_pythreejs()
 
         # import after converting as we check for pythreejs import first
         try:
@@ -1932,7 +1931,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         interpolate_before_map : bool, default: True
             Enabling makes for a smoother scalars display.  When ``False``,
-            OpenGL will interpolate the mapped colors which can result is
+            OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
         cmap : str or list, default :attr:`pyvista.themes.DefaultTheme.cmap`
@@ -2149,7 +2148,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
         # always convert
         dataset = dataset.as_polydata_blocks(copy_mesh)
-        self.mesh = dataset  # legacy
+        self.mesh = dataset  # for legacy behavior
 
         # Parse arguments
         (
@@ -2251,12 +2250,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             elif not isinstance(scalars, str):
                 raise TypeError(
-                    '`scalars` must be a string for `add_composite`, not ' f'({type(scalars)})'
+                    f'`scalars` must be a string for `add_composite`, not ({type(scalars)})'
                 )
 
             if categories:
                 if not isinstance(categories, int):
-                    raise ValueError("Categories must be an integer for a composite dataset.")
+                    raise TypeError('Categories must be an integer for a composite dataset.')
                 n_colors = categories
 
             if scalars is not None:
@@ -3221,7 +3220,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Supported aliases
         clim = kwargs.pop('rng', clim)
         cmap = kwargs.pop('colormap', cmap)
-        culling = kwargs.pop("backface_culling", culling)
+        culling = kwargs.pop('backface_culling', culling)
 
         if "scalar" in kwargs:
             raise TypeError(
@@ -3337,16 +3336,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             # Make sure scalars components are not vectors/tuples
-            scalars = volume.active_scalars
+            scalars = volume.active_scalars.copy()
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
                 scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
             else:
                 raise ValueError('No scalars to use for volume rendering.')
-        elif isinstance(scalars, str):
-            pass
-
-        ##############
 
         title = 'Data'
         if isinstance(scalars, str):
@@ -3361,9 +3356,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
         if scalars.ndim != 1:
             scalars = scalars.ravel()
-
-        if scalars.dtype == np.bool_ or scalars.dtype == np.uint8:
-            scalars = scalars.astype(np.float_)
 
         # Define mapper, volume, and add the correct properties
         mappers = {
@@ -3394,17 +3386,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, float) or isinstance(clim, int):
             clim = [-clim, clim]
 
-        ###############
-
-        scalars = scalars.astype(np.float_)
-        with np.errstate(invalid='ignore'):
-            idxs0 = scalars < clim[0]
-            idxs1 = scalars > clim[1]
-        scalars[idxs0] = clim[0]
-        scalars[idxs1] = clim[1]
-        scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
-        # scalars = scalars.astype(np.uint8)
-        volume[title] = scalars
+        # convert the scalars to np.uint8 and scale between 0 and 255 within clim
+        clim = np.asarray(clim, dtype=scalars.dtype)
+        scalars.clip(clim[0], clim[1], out=scalars)
+        min_ = np.nanmin(scalars)
+        max_ = np.nanmax(scalars)
+        np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
+        volume[title] = np.array(scalars, dtype=np.uint8)
 
         self.mapper.scalar_range = clim
 

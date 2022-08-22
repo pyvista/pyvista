@@ -23,7 +23,6 @@ all plotting functionality in PyVista.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Plotter
    Renderer
@@ -34,11 +33,8 @@ Composite Plotting Reference
 ----------------------------
 These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 
-.. currentmodule:: pyvista.plotting.composite_mapper
-
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    CompositePolyDataMapper
    CompositeAttributes
