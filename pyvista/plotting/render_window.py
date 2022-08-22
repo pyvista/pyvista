@@ -49,11 +49,13 @@ class RenderWindow:
 
     @property
     def plotter(self):
+        """Return the plotter object."""
         if self._plotter is not None:
             return self._plotter()
 
     @property
     def theme(self):
+        """Return the theme."""
         if self._plotter is None or self._plotter() is None:
             return pyvista.global_theme
         else:
@@ -245,6 +247,7 @@ class RenderWindow:
 
     @property
     def interactor(self):
+        """Return the interactor."""
         if self._ren_win is not None:
             return self._ren_win.GetInteractor()
         elif self._interactor_ref is not None:

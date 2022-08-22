@@ -79,9 +79,8 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for pl_ref in _ALL_PLOTTERS.values():
-        pl = pl_ref()
-        if pl is not None and not pl._closed:
+    for pl in _ALL_PLOTTERS.values():
+        if not pl._closed:
             pl.close()
             pl.deep_clean()
     _ALL_PLOTTERS.clear()
@@ -255,9 +254,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Add self to open plotters
+        # Add self to open plotters when building the gallery
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
-        _ALL_PLOTTERS[self._id_name] = weakref.ref(self)
+        if pyvista.BUILDING_GALLERY:
+            _ALL_PLOTTERS[self._id_name] = self
 
         # Key bindings
         self.reset_key_events()
@@ -6071,8 +6071,10 @@ class Plotter(BasePlotter):
             return self._window._ren_win
 
 
-# Tracks created plotters.  At the end of the file as we need to
+# Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
+#
+# This should only be used when pyvista.BUILDING_GALLERY = True
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 
