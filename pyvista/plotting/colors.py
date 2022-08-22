@@ -975,7 +975,7 @@ def get_cmap_safe(cmap):
                 'The use of custom colormaps requires the installation of matplotlib.'
             )  # pragma: no cover
 
-        from matplotlib import colors, colormaps
+        from matplotlib import colormaps, colors
 
         if not isinstance(cmap, colors.Colormap):
             cmap = colormaps[cmap]
