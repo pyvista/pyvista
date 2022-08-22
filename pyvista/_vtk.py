@@ -266,8 +266,8 @@ if VTK9:
 
     try:
         from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
-    except ModuleNotFoundError:  # macOS M1 VTK 9.2.0rc1
-        pass
+    except ModuleNotFoundError:  # pragma: no cover
+        pass  # unavailable on macOS M1 VTK 9.2.0rc1
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
