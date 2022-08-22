@@ -101,6 +101,7 @@ if VTK9:
         VTK_UNSIGNED_CHAR,
         buffer_shared,
         mutable,
+        reference,
         vtkAbstractArray,
         vtkBitArray,
         vtkCharArray,
@@ -416,6 +417,7 @@ if VTK9:
         vtkCamera,
         vtkCellPicker,
         vtkColorTransferFunction,
+        vtkCompositeDataDisplayAttributes,
         vtkCoordinate,
         vtkDataSetMapper,
         vtkImageActor,
@@ -446,6 +448,7 @@ if VTK9:
     from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
+        vtkCompositePolyDataMapper2,
         vtkDepthOfFieldPass,
         vtkEDLShading,
         vtkGaussianBlurPass,

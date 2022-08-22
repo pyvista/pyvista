@@ -94,12 +94,15 @@ VER_IMAGE_REGRESSION_WARNING = 1000
 # and will not be verified
 WINDOWS_SKIP_IMAGE_CACHE = {
     'test_cmap_list',
-    'test_multi_plot_scalars',  # flaky
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_multi_plot_scalars',  # flaky
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
+    'test_plot_composite_poly_component_nested_multiblock',
+    'test_plot_composite_poly_scalars_cell',
+    'test_plot_composite_preference_cell',
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
@@ -112,7 +115,28 @@ WINDOWS_SKIP_IMAGE_CACHE = {
 # and will not be verified for MacOS
 MACOS_SKIP_IMAGE_CACHE = {
     'test_plot_show_grid_with_mesh',
+    'test_property',
 }
+
+
+@pytest.fixture()
+def multicomp_poly():
+    """Create a dataset with vector values on points and cells."""
+    data = pyvista.Plane()
+
+    vector_values_points = np.empty((data.n_points, 3))
+    vector_values_points[:, 0] = np.arange(data.n_points)
+    vector_values_points[:, 1] = np.arange(data.n_points)[::-1]
+    vector_values_points[:, 2] = 0
+
+    vector_values_cells = np.empty((data.n_cells, 3))
+    vector_values_cells[:, 0] = np.arange(data.n_cells)
+    vector_values_cells[:, 1] = np.arange(data.n_cells)[::-1]
+    vector_values_cells[:, 2] = 0
+
+    data['vector_values_points'] = vector_values_points
+    data['vector_values_cells'] = vector_values_cells
+    return data
 
 
 # this must be a session fixture to ensure this runs before any other test
@@ -1067,8 +1091,8 @@ def test_plot_clim(sphere):
         clim=10,
         show_scalar_bar=False,
     )
-    plotter.show(before_close_callback=verify_cache_image)
     assert plotter.mapper.GetScalarRange() == (-10, 10)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_invalid_n_arrays(sphere):
@@ -1180,9 +1204,10 @@ def test_multi_block_plot():
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi.append(examples.load_airplane())
-    with pytest.raises(KeyError):
-        # The scalars are not available in all datasets so raises KeyError
-        multi.plot(scalars='Random Data', multi_colors=True)
+
+    # missing data should still plot
+    multi.plot(scalars='Random Data')
+
     multi.plot(multi_colors=True, before_close_callback=verify_cache_image)
 
 
@@ -1254,117 +1279,97 @@ def test_plot_rgb():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def setup_multicomponent_data():
-    """Create a dataset with vector values on points and cells."""
-    data = pyvista.Plane()
-
-    vector_values_points = np.empty((data.n_points, 3))
-    vector_values_points[:, :] = [3.0, 4.0, 0.0]  # Vector has this value at all points
-
-    vector_values_cells = np.empty((data.n_cells, 3))
-    vector_values_cells[:, :] = [3.0, 4.0, 0.0]  # Vector has this value at all cells
-
-    data['vector_values_points'] = vector_values_points
-    data['vector_values_cells'] = vector_values_cells
-
-    return data
-
-
-def test_vector_array_with_cells_and_points():
+def test_vector_array_with_points(multicomp_poly):
     """Test using vector valued data with and without component arg."""
-    data = setup_multicomponent_data()
-
     # test no component argument
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_points')
-    p.show()
-
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_cells')
-    p.show()
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points')
+    pl.show()
 
     # test component argument
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_points', component=0)
-    p.show()
-
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_cells', component=0)
-    p.show()
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.show(before_close_callback=verify_cache_image)
 
 
-def test_vector_array():
+def test_vector_array_with_cells(multicomp_poly):
+    """Test using vector valued data with and without component arg."""
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    pl.show()
+
+    # test component argument
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_vector_array(multicomp_poly):
     """Test using vector valued data for image regression."""
-    data = setup_multicomponent_data()
-
-    p = pyvista.Plotter(shape=(2, 2))
-    p.subplot(0, 0)
-    p.add_mesh(data, scalars="vector_values_points", show_scalar_bar=False)
-    p.subplot(0, 1)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=0)
-    p.subplot(1, 0)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=1)
-    p.subplot(1, 1)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=2)
-    p.link_views()
-    p.show()
-
-    # p.show(before_close_callback=verify_cache_image)
+    pl = pyvista.Plotter(shape=(2, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(multicomp_poly, scalars="vector_values_points", show_scalar_bar=False)
+    pl.subplot(0, 1)
+    pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=0)
+    pl.subplot(1, 0)
+    pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=1)
+    pl.subplot(1, 1)
+    pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=2)
+    pl.link_views()
+    pl.reset_camera()
+    pl.show(before_close_callback=verify_cache_image)
 
 
-def test_vector_plotting_doesnt_modify_data():
+def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     """Test that the operations in plotting do not modify the data in the mesh."""
-    data = setup_multicomponent_data()
 
-    copy_vector_values_points = data["vector_values_points"].copy()
-    copy_vector_values_cells = data["vector_values_cells"].copy()
+    copy_vector_values_points = multicomp_poly["vector_values_points"].copy()
+    copy_vector_values_cells = multicomp_poly["vector_values_cells"].copy()
 
     # test that adding a vector with no component parameter to a Plotter instance
     # does not modify it.
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_points')
-    p.show()
-    assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points')
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_points'], copy_vector_values_points)
 
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_cells')
-    p.show()
-    assert np.array_equal(data['vector_values_cells'], copy_vector_values_cells)
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
 
     # test that adding a vector with a component parameter to a Plotter instance
     # does not modify it.
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_points', component=0)
-    p.show()
-    assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_points'], copy_vector_values_points)
 
-    p = pyvista.Plotter()
-    p.add_mesh(data, scalars='vector_values_cells', component=0)
-    p.show()
-    assert np.array_equal(data['vector_values_cells'], copy_vector_values_cells)
+    pl = pyvista.Plotter()
+    pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
+    pl.show()
+    assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
 
 
-def test_vector_array_fail_with_incorrect_component():
+def test_vector_array_fail_with_incorrect_component(multicomp_poly):
     """Test failure modes of component argument."""
-    data = setup_multicomponent_data()
-
     p = pyvista.Plotter()
 
     # Non-Integer
     with pytest.raises(TypeError):
-        p.add_mesh(data, scalars='vector_values_points', component=1.5)
+        p.add_mesh(multicomp_poly, scalars='vector_values_points', component=1.5)
         p.show()
 
     # Component doesn't exist
     p = pyvista.Plotter()
     with pytest.raises(ValueError):
-        p.add_mesh(data, scalars='vector_values_points', component=3)
+        p.add_mesh(multicomp_poly, scalars='vector_values_points', component=3)
         p.show()
 
     # Component doesn't exist
     p = pyvista.Plotter()
     with pytest.raises(ValueError):
-        p.add_mesh(data, scalars='vector_values_points', component=-1)
+        p.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
         p.show()
 
 
@@ -2475,6 +2480,12 @@ def test_warn_screenshot_notebook():
         pl.show(screenshot='tmp.png')
 
 
+def test_culling_frontface(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, culling='frontface')
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_add_text():
     plotter = pyvista.Plotter()
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
@@ -2516,6 +2527,193 @@ def test_many_multi_pass():
     pl.add_blurring()
     pl.enable_shadows()
     pl.enable_eye_dome_lighting()
+
+
+def test_plot_composite_many_options(multiblock_poly):
+    # add composite data
+    for block in multiblock_poly:
+        # use np.uint8 for coverage of non-standard datatypes
+        block['data'] = np.arange(block.n_points, dtype=np.uint8)
+
+    pl = pyvista.Plotter()
+    pl.add_composite(
+        multiblock_poly,
+        scalars='data',
+        annotations={94: 'foo', 162: 'bar'},
+        above_color='k',
+        below_color='w',
+        clim=[64, 192],
+        log_scale=True,
+        flip_scalars=True,
+        label='my composite',
+    )
+    pl.add_legend()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_raise(sphere, multiblock_poly):
+    pl = pyvista.Plotter()
+    with pytest.raises(TypeError, match='Must be a composite dataset'):
+        pl.add_composite(sphere)
+    with pytest.raises(TypeError, match='must be a string for'):
+        pl.add_composite(multiblock_poly, scalars=range(10))
+    with pytest.raises(TypeError, match='must be an int'):
+        pl.add_composite(multiblock_poly, categories='abc')
+
+
+def test_plot_composite_categories(multiblock_poly):
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_preference_cell(multiblock_poly):
+    """Show that we will plot cell data if both point and cell exist in all."""
+    # use the first two datasets as the third is missing scalars
+    multiblock_poly[:2].plot(preference='cell', before_close_callback=verify_cache_image)
+
+
+@skip_windows  # because of opacity
+def test_plot_composite_poly_scalars_opacity(multiblock_poly):
+    pl = pyvista.Plotter()
+
+    actor, mapper = pl.add_composite(
+        multiblock_poly,
+        scalars='data_a',
+        nan_color='green',
+        color_missing_with_nan=True,
+        smooth_shading=True,
+        show_edges=True,
+        cmap='bwr',
+    )
+    mapper.block_attr[1].color = 'blue'
+    mapper.block_attr[1].opacity = 0.5
+
+    pl.camera_position = 'xy'
+
+    # 9.0.3 has a bug where VTK changes the edge visibility on blocks that are
+    # also opaque. Don't verify the image of that version.
+    if pyvista.vtk_version_info == (9, 0, 3):
+        pl.show()
+    else:
+        pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_scalars_cell(multiblock_poly):
+    pl = pyvista.Plotter()
+
+    actor, mapper = pl.add_composite(
+        multiblock_poly,
+        scalars='cell_data',
+    )
+    mapper.block_attr[1].color = 'blue'
+
+    pl.camera_position = 'xy'
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_no_scalars(multiblock_poly):
+    pl = pyvista.Plotter()
+
+    actor, mapper = pl.add_composite(
+        multiblock_poly,
+        color='red',
+        lighting=False,
+    )
+
+    # Note: set the camera position before making the blocks invisible to be
+    # consistent between 9.0.3 and 9.1+
+    #
+    # 9.0.3 still considers invisible blocks when determining camera bounds, so
+    # there will be some empty space where the invisible block is for 9.0.3,
+    # while 9.1.0 ignores invisible blocks when computing camera bounds.
+    pl.camera_position = 'xy'
+    mapper.block_attr[2].color = 'blue'
+    mapper.block_attr[3].visible = False
+
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_component_norm(multiblock_poly):
+    for ii, block in enumerate(multiblock_poly):
+        data = block.compute_normals().point_data['Normals']
+        data[:, ii] *= 2
+        block['data'] = data
+
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data', cmap='bwr')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_component_single(multiblock_poly):
+    for block in multiblock_poly:
+        data = block.compute_normals().point_data['Normals']
+        block['data'] = data
+
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError, match='must be nonnegative'):
+        pl.add_composite(multiblock_poly, scalars='data', component=-1)
+    with pytest.raises(TypeError, match='None or an integer'):
+        pl.add_composite(multiblock_poly, scalars='data', component='apple')
+
+    pl.add_composite(multiblock_poly, scalars='data', component=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_component_nested_multiblock(multiblock_poly):
+    for block in multiblock_poly:
+        data = block.compute_normals().point_data['Normals']
+        block['data'] = data
+
+    multiblock_poly2 = multiblock_poly.copy()
+    for block in multiblock_poly2:
+        block.points += np.array([0, 0, 1])
+
+    multimulti = pyvista.MultiBlock([multiblock_poly, multiblock_poly2])
+
+    pl = pyvista.Plotter()
+    pl.add_composite(multimulti, scalars='data', style='points', clim=[0.99, 1.01], copy_mesh=True)
+    pl.add_composite(multimulti, scalars='data', component=1, copy_mesh=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_poly_complex(multiblock_poly):
+    # add composite data
+    for block in multiblock_poly:
+        data = np.arange(block.n_points) + np.arange(block.n_points) * 1j
+        block['data'] = data
+
+    # make a multi_multi for better coverage
+    multi_multi = pyvista.MultiBlock([multiblock_poly, multiblock_poly])
+
+    pl = pyvista.Plotter()
+    with pytest.warns(np.ComplexWarning, match='Casting complex'):
+        pl.add_composite(multi_multi, scalars='data')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_rgba(multiblock_poly):
+    # add composite data
+    for i, block in enumerate(multiblock_poly):
+        rgba_value = np.zeros((block.n_points, 3), dtype=np.uint8)
+        rgba_value[:, i] = np.linspace(0, 255, block.n_points)
+        block['data'] = rgba_value
+
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError, match='3/4 in shape'):
+        pl.add_composite(multiblock_poly, scalars='all_data', rgba=True)
+    pl.add_composite(multiblock_poly, scalars='data', rgba=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_bool(multiblock_poly):
+    # add in bool data
+    for i, block in enumerate(multiblock_poly):
+        block['scalars'] = np.zeros(block.n_points, dtype=bool)
+        block['scalars'][::2] = 1
+
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='scalars')
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2572,6 +2770,18 @@ def test_bool_scalars(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_windows  # because of pbr
+@skip_9_1_0  # pbr required
+def test_property():
+    prop = pyvista.Property(interpolation='pbr', metallic=1.0)
+
+    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
+    if pyvista.vtk_version_info <= (9, 1):
+        prop.plot(before_close_callback=verify_cache_image)
+    else:
+        prop.plot()
 
 
 def test_tight_square(noise_2d):

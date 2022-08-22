@@ -34,8 +34,15 @@ from pyvista.utilities import (
 
 from ..utilities.misc import PyvistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
-from ._plotting import prepare_smooth_shading, process_opacity
+from ._plotting import (
+    USE_SCALAR_BAR_ARGS,
+    _common_arg_parser,
+    prepare_smooth_shading,
+    process_opacity,
+)
+from ._property import Property
 from .colors import Color, get_cmap_safe
+from .composite_mapper import CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
@@ -120,16 +127,6 @@ def _warn_xserver():  # pragma: no cover
             'Try starting a virtual frame buffer with xvfb, or using\n '
             ' ``pyvista.start_xvfb()``\n'
         )
-
-
-USE_SCALAR_BAR_ARGS = """
-"stitle" is a depreciated keyword and will be removed in a future
-release.
-
-Use ``scalar_bar_args`` instead.  For example:
-
-scalar_bar_args={'title': 'Scalar Bar Title'}
-"""
 
 
 @abstract_class
@@ -447,7 +444,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         else:
             raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
-        widget = self.to_pythreejs()
 
         # import after converting as we check for pythreejs import first
         try:
@@ -1933,6 +1929,492 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if force_redraw:
             self.render()
 
+    def add_composite(
+        self,
+        dataset,
+        color=None,
+        style=None,
+        scalars=None,
+        clim=None,
+        show_edges=None,
+        edge_color=None,
+        point_size=5.0,
+        line_width=None,
+        opacity=1.0,
+        flip_scalars=False,
+        lighting=None,
+        n_colors=256,
+        interpolate_before_map=True,
+        cmap=None,
+        label=None,
+        reset_camera=None,
+        scalar_bar_args=None,
+        show_scalar_bar=None,
+        multi_colors=False,
+        name=None,
+        render_points_as_spheres=None,
+        render_lines_as_tubes=False,
+        smooth_shading=None,
+        split_sharp_edges=None,
+        ambient=0.0,
+        diffuse=1.0,
+        specular=0.0,
+        specular_power=100.0,
+        nan_color=None,
+        nan_opacity=1.0,
+        culling=None,
+        rgb=None,
+        categories=None,
+        below_color=None,
+        above_color=None,
+        annotations=None,
+        pickable=True,
+        preference="point",
+        log_scale=False,
+        pbr=False,
+        metallic=0.0,
+        roughness=0.5,
+        render=True,
+        component=None,
+        color_missing_with_nan=False,
+        copy_mesh=False,
+        **kwargs,
+    ):
+        """Add a composite dataset to the plotter.
+
+        Parameters
+        ----------
+        dataset : pyvista.MultiBlock
+            A :class:`pyvista.MultiBlock` dataset.
+
+        color : color_like, default: :attr:`pyvista.themes.DefaultTheme.color`
+            Use to make the entire mesh have a single solid color.
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+            ``color='#FFFFFF'``. Color will be overridden if scalars are
+            specified.
+
+        style : str, default='wireframe'
+            Visualization style of the mesh.  One of the following:
+            ``style='surface'``, ``style='wireframe'``, ``style='points'``.
+            Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
+            wireframe of the outer geometry.
+
+        scalars : str, optional
+            Scalars used to "color" the points or cells of the dataset.
+            Accepts only a string name of an array that is present on the
+            composite dataset.
+
+        clim : 2 item list, optional
+            Color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
+            is also an accepted alias for this.
+
+        show_edges : bool, default: :attr:`pyvista.global_theme.show_edges`
+            Shows the edges of a mesh.  Does not apply to a wireframe
+            representation.
+
+        edge_color : color_like, default: :attr:`pyvista.global_theme.edge_color`
+            The solid color to give the edges when ``show_edges=True``.
+            Either a string, RGB list, or hex color string.
+
+            Defaults to :attr:`pyvista.global_theme.edge_color`
+            <pyvista.themes.DefaultTheme.edge_color>`.
+
+        point_size : float, default: 5.0
+            Point size of any points in the dataset plotted. Also
+            applicable when style='points'. Default ``5.0``.
+
+        line_width : float, optional
+            Thickness of lines.  Only valid for wireframe and surface
+            representations.
+
+        opacity : float, default: 1.0
+            Opacity of the mesh. A single float value that will be applied
+            globally opacity of the mesh and uniformly
+            applied everywhere - should be between 0 and 1.
+
+        flip_scalars : bool, default: False
+            Flip direction of cmap. Most colormaps allow ``*_r``
+            suffix to do this as well.
+
+        lighting : bool, default: True
+            Enable or disable view direction lighting.
+
+        n_colors : int, default: 256
+            Number of colors to use when displaying scalars.  The scalar bar
+            will also have this many colors.
+
+        interpolate_before_map : bool, default: True
+            Enabling makes for a smoother scalars display.  When ``False``,
+            OpenGL will interpolate the mapped colors which can result in
+            showing colors that are not present in the color map.
+
+        cmap : str or list, default :attr:`pyvista.themes.DefaultTheme.cmap`
+            Name of the Matplotlib colormap to use when mapping the
+            ``scalars``.  See available Matplotlib colormaps.  Only
+            applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an
+            accepted alias for this. If ``colorcet`` or ``cmocean``
+            are installed, their colormaps can be specified by name.
+
+            You can also specify a list of colors to override an
+            existing colormap with a custom one.  For example, to
+            create a three color colormap you might specify
+            ``['green', 'red', 'blue']``.
+
+        label : str, optional
+            String label to use when adding a legend to the scene with
+            :func:`pyvista.BasePlotter.add_legend`.
+
+        reset_camera : bool, optional
+            Reset the camera after adding this mesh to the scene. The default
+            setting is ``None``, where the camera is only reset if this plotter
+            has already been shown. If ``False``, the camera is not reset
+            regardless of the state of the ``Plotter``. When ``True``, the
+            camera is always reset.
+
+        scalar_bar_args : dict, optional
+            Dictionary of keyword arguments to pass when adding the
+            scalar bar to the scene. For options, see
+            :func:`pyvista.BasePlotter.add_scalar_bar`.
+
+        show_scalar_bar : bool
+            If ``False``, a scalar bar will not be added to the
+            scene. Defaults to ``True`` unless ``rgba=True``.
+
+        multi_colors : bool, default: False
+            Color each block by a solid color using matplotlib's color cycler.
+
+        name : str, optional
+            The name for the added mesh/actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
+
+        render_points_as_spheres : bool, default: False
+            Render points as spheres rather than dots.
+
+        render_lines_as_tubes : bool, default: False
+            Show lines as thick tubes rather than flat lines.  Control
+            the width with ``line_width``.
+
+        smooth_shading : bool, default: :attr`pyvista.themes.DefaultTheme.smooth_shading`
+            Enable smooth shading when ``True`` using the Phong shading
+            algorithm.  When ``False``, uses flat shading.  Automatically
+            enabled when ``pbr=True``.  See :ref:`shading_example`.
+
+        split_sharp_edges : bool, default: False
+            Split sharp edges exceeding 30 degrees when plotting with smooth
+            shading.  Control the angle with the optional keyword argument
+            ``feature_angle``.  By default this is ``False`` unless overridden
+            by the global or plotter theme.  Note that enabling this will
+            create a copy of the input mesh within the plotter.  See
+            :ref:`shading_example`.
+
+        ambient : float, default: 0.0
+            When lighting is enabled, this is the amount of light in
+            the range of 0 to 1 (default 0.0) that reaches the actor
+            when not directed at the light source emitted from the
+            viewer.
+
+        diffuse : float, default: 1.0
+            The diffuse lighting coefficient.
+
+        specular : float, default: 0.0
+            The specular lighting coefficient.
+
+        specular_power : float, default: 1.0
+            The specular power. Between 0.0 and 128.0.
+
+        nan_color : color_like, default: :attr:`pyvista.themes.DefaultTheme.nan_color`
+            The color to use for all ``NaN`` values in the plotted
+            scalar array.
+
+        nan_opacity : float, default: 1.0
+            Opacity of ``NaN`` values.  Should be between 0 and 1.
+
+        culling : str, bool, default: False
+            Does not render faces that are culled. This can be helpful for
+            dense surface meshes, especially when edges are visible, but can
+            cause flat meshes to be partially displayed. One of the following:
+
+            * ``True`` - Enable backface culling
+            * ``"b"`` - Enable backface culling
+            * ``"back"`` - Enable backface culling
+            * ``"backface"`` - Enable backface culling
+            * ``"f"`` - Enable frontface culling
+            * ``"front"`` - Enable frontface culling
+            * ``"frontface"`` - Enable frontface culling
+            * ``False`` - Disable both backface and frontface culling
+
+        rgb : bool, default: False
+            If an 2 dimensional array is passed as the scalars, plot
+            those values as RGB(A) colors. ``rgba`` is also an
+            accepted alias for this.  Opacity (the A) is optional.  If
+            a scalars array ending with ``"_rgba"`` is passed, the default
+            becomes ``True``.  This can be overridden by setting this
+            parameter to ``False``.
+
+        categories : bool, optional
+            If set to ``True``, then the number of unique values in
+            the scalar array will be used as the ``n_colors``
+            argument.
+
+        below_color : color_like, optional
+            Solid color for values below the scalars range
+            (``clim``). This will automatically set the scalar bar
+            ``below_label`` to ``'Below'``.
+
+        above_color : color_like, optional
+            Solid color for values below the scalars range
+            (``clim``). This will automatically set the scalar bar
+            ``above_label`` to ``'Above'``.
+
+        annotations : dict, optional
+            Pass a dictionary of annotations. Keys are the float
+            values in the scalars range to annotate on the scalar bar
+            and the values are the the string annotations.
+
+        pickable : bool, default: True
+            Set whether this actor is pickable.
+
+        preference : str, default: 'point'
+            For each block, when ``block.n_points == block.n_cells`` and
+            setting scalars, this parameter sets how the scalars will be mapped
+            to the mesh.  For example, when ``'point'`` the scalars will be
+            associated with the mesh points if available.  Can be either
+            ``'point'`` or ``'cell'``.
+
+        log_scale : bool, default: False
+            Use log scale when mapping data to colors. Scalars less
+            than zero are mapped to the smallest representable
+            positive float.
+
+        pbr : bool, default: False
+            Enable physics based rendering (PBR) if the mesh is
+            ``PolyData``.  Use the ``color`` argument to set the base
+            color. This is only available in VTK>=9.
+
+        metallic : float, default: 0.0
+            Usually this value is either 0 or 1 for a real material
+            but any value in between is valid. This parameter is only
+            used by PBR interpolation.
+
+        roughness : float, default: 0.5
+            This value has to be between 0 (glossy) and 1 (rough). A
+            glossy material has reflections and a high specular
+            part. This parameter is only used by PBR
+            interpolation.
+
+        render : bool, default: True
+            Force a render when ``True``.
+
+        component : int, optional
+            Set component of vector valued scalars to plot.  Must be
+            nonnegative, if supplied. If ``None``, the magnitude of
+            the vector is plotted.
+
+        color_missing_with_nan : bool, default: False
+            Color any missing values with the ``nan_color``. This is useful
+            when not all blocks of the composite dataset have the specified
+            ``scalars``.
+
+        copy_mesh : bool, optional
+            If ``True``, a copy of the mesh will be made before adding it to
+            the plotter.  This is useful if e.g. you would like to add the same
+            mesh to a plotter multiple times and display different
+            scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
+            would like to update the mesh after adding it to the plotter and
+            have these updates rendered, e.g. by changing the active scalars or
+            through an interactive widget.  Defaults to ``False``.
+
+        **kwargs : dict, optional
+            Optional developer keyword arguments.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the composite dataset.
+
+        pyvista.CompositePolyDataMapper
+            Composite PolyData mapper.
+
+        Examples
+        --------
+        Add a sphere and a cube as a multiblock dataset to a plotter and then
+        change the visibility and color of the blocks.
+
+        Note index ``1`` and ``2`` are used to access the individual blocks of
+        the composite dataset. This is because the :class:`pyvista.MultiBlock`
+        is the root node of the "tree" and is index ``0``. This allows you to
+        access individual blocks or the entire composite dataset itself in the
+        case of multiple nested composite datasets.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.block_attr[1].color = 'b'
+        >>> mapper.block_attr[1].opacity = 0.5
+        >>> mapper.block_attr[2].color = 'r'
+        >>> pl.show()
+
+        """
+        if not isinstance(dataset, _vtk.vtkCompositeDataSet):
+            raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
+        # always convert
+        dataset = dataset.as_polydata_blocks(copy_mesh)
+        self.mesh = dataset  # for legacy behavior
+
+        # Parse arguments
+        (
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            feature_angle,
+            render_points_as_spheres,
+            smooth_shading,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            color,
+            texture,
+            rgb,
+            interpolation,
+            remove_existing_actor,
+        ) = _common_arg_parser(
+            dataset,
+            self._theme,
+            n_colors,
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            render_points_as_spheres,
+            smooth_shading,
+            pbr,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            nan_opacity,
+            color,
+            None,
+            rgb,
+            **kwargs,
+        )
+
+        # Compute surface normals if using smooth shading
+        if smooth_shading:
+            dataset = dataset._compute_normals(
+                cell_normals=False,
+                split_vertices=True,
+                feature_angle=feature_angle,
+            )
+
+        self.mapper = CompositePolyDataMapper(
+            dataset,
+            color_missing_with_nan=color_missing_with_nan,
+            interpolate_before_map=interpolate_before_map,
+        )
+
+        actor, _ = self.add_actor(self.mapper)
+
+        prop = Property(
+            self._theme,
+            interpolation=interpolation,
+            metallic=metallic,
+            roughness=roughness,
+            point_size=point_size,
+            ambient=ambient,
+            diffuse=diffuse,
+            specular=specular,
+            specular_power=specular_power,
+            show_edges=show_edges,
+            color=color,
+            style=style,
+            edge_color=edge_color,
+            render_points_as_spheres=render_points_as_spheres,
+            render_lines_as_tubes=render_lines_as_tubes,
+            lighting=lighting,
+            line_width=line_width,
+            opacity=opacity,
+            culling=culling,
+        )
+        actor.SetProperty(prop)
+
+        if label is not None:
+            self._add_legend_label(actor, label, None, prop.color)
+
+        # check if there are any consistent active scalars
+        if color is not None:
+            self.mapper.scalar_visibility = False
+        elif multi_colors:
+            self.mapper.set_unique_colors()
+        else:
+            if scalars is None:
+                point_name, cell_name = dataset._get_consistent_active_scalars()
+                if point_name and cell_name:
+                    if preference == 'point':
+                        scalars = point_name
+                    else:
+                        scalars = cell_name
+                else:
+                    scalars = point_name if point_name is not None else cell_name
+
+            elif not isinstance(scalars, str):
+                raise TypeError(
+                    f'`scalars` must be a string for `add_composite`, not ({type(scalars)})'
+                )
+
+            if categories:
+                if not isinstance(categories, int):
+                    raise TypeError('Categories must be an integer for a composite dataset.')
+                n_colors = categories
+
+            if scalars is not None:
+                scalar_bar_args = self.mapper.set_scalars(
+                    scalars,
+                    preference,
+                    component,
+                    annotations,
+                    rgb,
+                    scalar_bar_args,
+                    n_colors,
+                    nan_color,
+                    above_color,
+                    below_color,
+                    clim,
+                    cmap,
+                    flip_scalars,
+                    categories,
+                    self._theme,
+                    log_scale,
+                )
+            else:
+                self.mapper.scalar_visibility = False
+
+        # Only show scalar bar if there are scalars
+        if show_scalar_bar and scalars is not None:
+            self.add_scalar_bar(**scalar_bar_args)
+
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time and not self.camera_set
+
+        self.add_actor(
+            actor,
+            reset_camera=reset_camera,
+            name=name,
+            pickable=pickable,
+            render=render,
+            remove_existing_actor=remove_existing_actor,
+        )
+
+        return actor, self.mapper
+
     def add_mesh(
         self,
         mesh,
@@ -1992,6 +2474,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         and/or geometry of datasets. For volume rendering, see
         :func:`pyvista.BasePlotter.add_volume`.
 
+        To see the what most of the following parameters look like in action,
+        please refer to :class:`pyvista.Property`.
+
         Parameters
         ----------
         mesh : pyvista.DataSet or pyvista.MultiBlock
@@ -1999,12 +2484,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points.
 
-        color : color_like, optional, defaults to white
+        color : color_like, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
+
+            Defaults to :attr:`pyvista.global_theme.color
+            <pyvista.themes.DefaultTheme.color>`.
 
         style : str, optional
             Visualization style of the mesh.  One of the following:
@@ -2029,9 +2517,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, optional, defaults to black
+        edge_color : color_like, optional
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
+
+            Defaults to :attr:`pyvista.global_theme.edge_color
+            <pyvista.themes.DefaultTheme.edge_color>`.
 
         point_size : float, optional
             Point size of any nodes in the dataset plotted. Also
@@ -2039,7 +2530,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default None.
+            representations.  Default ``None``.
 
         opacity : float, str, array-like
             Opacity of the mesh. If a single float value is given, it
@@ -2105,8 +2596,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scene. Defaults to ``True``.
 
         multi_colors : bool, optional
-            If a ``MultiBlock`` dataset is given this will color each
-            block by a solid color using matplotlib's color cycler.
+            If a :class:`pyvista.MultiBlock` dataset is given this will color
+            each block by a solid color using matplotlib's color cycler.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
@@ -2230,7 +2721,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
-            positive float. Default: ``False``.
+            positive float. Default ``False``.
 
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
@@ -2334,162 +2825,97 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
+        elif isinstance(mesh, pyvista.MultiBlock):
+            return self.add_composite(
+                mesh,
+                color=color,
+                style=style,
+                scalars=scalars,
+                clim=clim,
+                show_edges=show_edges,
+                edge_color=edge_color,
+                point_size=point_size,
+                line_width=line_width,
+                opacity=opacity,
+                flip_scalars=flip_scalars,
+                lighting=lighting,
+                n_colors=n_colors,
+                interpolate_before_map=interpolate_before_map,
+                cmap=cmap,
+                label=label,
+                reset_camera=reset_camera,
+                scalar_bar_args=scalar_bar_args,
+                show_scalar_bar=show_scalar_bar,
+                multi_colors=multi_colors,
+                name=name,
+                render_points_as_spheres=render_points_as_spheres,
+                render_lines_as_tubes=render_lines_as_tubes,
+                smooth_shading=smooth_shading,
+                split_sharp_edges=split_sharp_edges,
+                ambient=ambient,
+                diffuse=diffuse,
+                specular=specular,
+                specular_power=specular_power,
+                nan_color=nan_color,
+                nan_opacity=nan_opacity,
+                culling=culling,
+                rgb=rgb,
+                categories=categories,
+                below_color=below_color,
+                above_color=above_color,
+                pickable=pickable,
+                preference=preference,
+                log_scale=log_scale,
+                pbr=pbr,
+                metallic=metallic,
+                roughness=roughness,
+                render=render,
+                **kwargs,
+            )
         elif copy_mesh:
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
             mesh = mesh.copy(deep=False)
 
-        ##### Parse arguments to be used for all meshes #####
-
-        # Avoid mutating input
-        if scalar_bar_args is None:
-            scalar_bar_args = {'n_colors': n_colors}
-        else:
-            scalar_bar_args = scalar_bar_args.copy()
-
-        # theme based parameters
-        if show_edges is None:
-            show_edges = self._theme.show_edges
-        if split_sharp_edges is None:
-            split_sharp_edges = self._theme.split_sharp_edges
-        if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar
-        if lighting is None:
-            lighting = self._theme.lighting
-        feature_angle = kwargs.pop('feature_angle', self._theme.sharp_edges_feature_angle)
-
-        if smooth_shading is None:
-            if pbr:
-                smooth_shading = True
-            else:
-                smooth_shading = self._theme.smooth_shading
-
-        # supported aliases
-        clim = kwargs.pop('rng', clim)
-        cmap = kwargs.pop('colormap', cmap)
-        culling = kwargs.pop("backface_culling", culling)
-
-        if render_points_as_spheres is None:
-            render_points_as_spheres = self._theme.render_points_as_spheres
-
-        if name is None:
-            name = f'{type(mesh).__name__}({mesh.memory_address})'
-            remove_existing_actor = False
-        else:
-            # check if this actor already exists
-            remove_existing_actor = True
-
-        nan_color = Color(
-            nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
+        # Parse arguments
+        (
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            feature_angle,
+            render_points_as_spheres,
+            smooth_shading,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            color,
+            texture,
+            rgb,
+            interpolation,
+            remove_existing_actor,
+        ) = _common_arg_parser(
+            mesh,
+            self._theme,
+            n_colors,
+            scalar_bar_args,
+            split_sharp_edges,
+            show_scalar_bar,
+            render_points_as_spheres,
+            smooth_shading,
+            pbr,
+            clim,
+            cmap,
+            culling,
+            name,
+            nan_color,
+            nan_opacity,
+            color,
+            texture,
+            rgb,
+            **kwargs,
         )
-
-        if color is True:
-            color = self._theme.color
-
-        if texture is False:
-            texture = None
-
-        if culling is True:
-            culling = 'backface'
-
-        rgb = kwargs.pop('rgba', rgb)
-
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
-        if "scalar" in kwargs:
-            raise TypeError(
-                "`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?"
-            )
-        assert_empty_kwargs(**kwargs)
-
-        # by default reset the camera if the plotting window has been rendered
-        if reset_camera is None:
-            reset_camera = not self._first_time and not self.camera_set
-
-        ##### Handle composite datasets #####
-
-        if isinstance(mesh, pyvista.MultiBlock):
-            # first check the scalars
-            if clim is None and scalars is not None:
-                # Get the data range across the array for all blocks
-                # if scalars specified
-                if isinstance(scalars, str):
-                    clim = mesh.get_data_range(scalars)
-                else:
-                    # TODO: an array was given... how do we deal with
-                    #       that? Possibly a 2D arrays or list of
-                    #       arrays where first index corresponds to
-                    #       the block? This could get complicated real
-                    #       quick.
-                    raise TypeError(
-                        'scalars array must be given as a string name for multiblock datasets.'
-                    )
-
-            the_arguments = locals()
-            the_arguments.pop('self')
-            the_arguments.pop('mesh')
-            the_arguments.pop('kwargs')
-            the_arguments.pop('remove_existing_actor')
-
-            if multi_colors:
-                # Compute unique colors for each index of the block
-                if has_module('matplotlib'):
-                    from itertools import cycle
-
-                    import matplotlib
-
-                    cycler = matplotlib.rcParams['axes.prop_cycle']
-                    colors = cycle(cycler)
-                else:
-                    multi_colors = False
-                    logging.warning('Please install matplotlib for color cycles')
-
-            # Now iteratively plot each element of the multiblock dataset
-            actors = []
-            for idx in range(mesh.GetNumberOfBlocks()):
-                if mesh[idx] is None:
-                    continue
-                # Get a good name to use
-                next_name = f'{name}-{idx}'
-                # Get the data object
-                if not is_pyvista_dataset(mesh[idx]):
-                    data = wrap(mesh.GetBlock(idx))
-                    if not is_pyvista_dataset(mesh[idx]):
-                        continue  # move on if we can't plot it
-                else:
-                    data = mesh.GetBlock(idx)
-                if data is None or (not isinstance(data, pyvista.MultiBlock) and data.n_points < 1):
-                    # Note that a block can exist but be None type
-                    # or it could have zeros points (be empty) after filtering
-                    continue
-                # Now check that scalars is available for this dataset
-                if isinstance(data, _vtk.vtkMultiBlockDataSet) or get_array(data, scalars) is None:
-                    ts = None
-                else:
-                    ts = scalars
-                if multi_colors:
-                    color = next(colors)['color']
-
-                ## Add to the scene
-                the_arguments['color'] = color
-                the_arguments['scalars'] = ts
-                the_arguments['name'] = next_name
-                the_arguments['texture'] = None
-                a = self.add_mesh(data, **the_arguments)
-                actors.append(a)
-
-                if reset_camera:
-                    cpos = self.get_default_cam_pos()
-                    self.camera_position = cpos
-                    self.camera_set = False
-                    self.reset_camera()
-            return actors
-
-        ##### Plot a single PyVista mesh #####
-
         if silhouette:
             if isinstance(silhouette, dict):
                 self.add_silhouette(mesh, silhouette)
@@ -2555,9 +2981,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.InterpolateScalarsBeforeMappingOn()
 
         actor = _vtk.vtkActor()
-        prop = _vtk.vtkProperty()
         actor.SetMapper(self.mapper)
-        actor.SetProperty(prop)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -2629,83 +3053,42 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetScalarModeToUseFieldData()
 
         # Set actor properties ================================================
-
-        # select view style
-        if not style:
-            style = 'surface'
-        style = style.lower()
-        if style == 'wireframe':
-            prop.SetRepresentationToWireframe()
-            if color is None:
-                color = self._theme.outline_color
-        elif style == 'points':
-            prop.SetRepresentationToPoints()
-        elif style == 'surface':
-            prop.SetRepresentationToSurface()
-        else:
-            raise ValueError(
-                'Invalid style.  Must be one of the following:\n'
-                '\t"surface"\n'
-                '\t"wireframe"\n'
-                '\t"points"\n'
-            )
-
-        prop.SetPointSize(point_size)
-        prop.SetAmbient(ambient)
-        prop.SetDiffuse(diffuse)
-        prop.SetSpecular(specular)
-        prop.SetSpecularPower(specular_power)
-
-        if pbr:
-            if not _vtk.VTK9:  # pragma: no cover
-                raise RuntimeError('Physically based rendering requires VTK 9 ' 'or newer')
-            prop.SetInterpolationToPBR()
-            prop.SetMetallic(metallic)
-            prop.SetRoughness(roughness)
-        elif smooth_shading:
-            prop.SetInterpolationToPhong()
-        else:
-            prop.SetInterpolationToFlat()
-        # edge display style
-        if show_edges:
-            prop.EdgeVisibilityOn()
-
-        rgb_color = Color(color, default_color=self._theme.color)
-        prop.SetColor(rgb_color.float_rgb)
+        prop = Property(
+            self._theme,
+            interpolation=interpolation,
+            metallic=metallic,
+            roughness=roughness,
+            point_size=point_size,
+            ambient=ambient,
+            diffuse=diffuse,
+            specular=specular,
+            specular_power=specular_power,
+            show_edges=show_edges,
+            color=color,
+            style=style,
+            edge_color=edge_color,
+            render_points_as_spheres=render_points_as_spheres,
+            render_lines_as_tubes=render_lines_as_tubes,
+            lighting=lighting,
+            line_width=line_width,
+            culling=culling,
+        )
         if isinstance(opacity, (float, int)):
-            prop.SetOpacity(opacity)
-        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
-
-        if render_points_as_spheres:
-            prop.SetRenderPointsAsSpheres(render_points_as_spheres)
-        if render_lines_as_tubes:
-            prop.SetRenderLinesAsTubes(render_lines_as_tubes)
+            prop.opacity = opacity
+        actor.SetProperty(prop)
 
         # legend label
-        if label:
-            if not isinstance(label, str):
-                raise TypeError('Label must be a string')
-            geom = pyvista.Triangle()
-            if scalars is not None:
-                geom = pyvista.Box()
-                rgb_color = Color('black')
-            geom.points -= geom.center
-            addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [geom, label, rgb_color]
+        if label is not None:
+            self._add_legend_label(actor, label, scalars, prop.color)
 
-        # lighting display style
-        if not lighting:
-            prop.LightingOff()
-
-        # set line thickness
-        if line_width:
-            prop.SetLineWidth(line_width)
+        # by default reset the camera if the plotting window has been rendered
+        if reset_camera is None:
+            reset_camera = not self._first_time and not self.camera_set
 
         self.add_actor(
             actor,
             reset_camera=reset_camera,
             name=name,
-            culling=culling,
             pickable=pickable,
             render=render,
             remove_existing_actor=remove_existing_actor,
@@ -2721,6 +3104,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.renderer.Modified()
         return actor
+
+    def _add_legend_label(self, actor, label, scalars, color):
+        """Add a legend label based on an actor and its scalars."""
+        if not isinstance(label, str):
+            raise TypeError('Label must be a string')
+        geom = pyvista.Triangle()
+        if scalars is not None:
+            geom = pyvista.Box()
+            color = Color('black')
+        geom.points -= geom.center
+        addr = actor.GetAddressAsString("")
+        self.renderer._labels[addr] = [geom, label, color]
 
     def add_volume(
         self,
@@ -3316,6 +3711,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
+        self.mapper = None
 
     def link_views(self, views=0):
         """Link the views' cameras.

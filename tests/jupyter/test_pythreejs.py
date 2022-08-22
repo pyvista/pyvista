@@ -47,6 +47,28 @@ def test_export_to_html(sphere, tmpdir):
     assert 'DirectionalLightModel' in raw
 
 
+def test_export_to_html_composite(tmpdir):
+    filename = str(tmpdir.join('tmp.html'))
+
+    blocks = pyvista.MultiBlock()
+    blocks.append(pyvista.Sphere())
+    blocks.append(pyvista.Cube(center=(0, 0, -1)))
+
+    pl = pyvista.Plotter()
+    actor, mapper = pl.add_composite(blocks, show_edges=False, color='red')
+
+    # override the color of the sphere
+    mapper.block_attr[1].color = 'b'
+    mapper.block_attr[1].opacity = 0.5
+
+    pl.export_html(filename)
+
+    # ensure modified block attributes have been outputted
+    raw = open(filename).read()
+    assert f'"opacity": {mapper.block_attr[1].opacity}' in raw
+    assert f'"color": "{mapper.block_attr[1].color.hex_rgb}"' in raw
+
+
 def test_segment_poly_cells(spline):
     cells = pv_pythreejs.segment_poly_cells(spline)
 
