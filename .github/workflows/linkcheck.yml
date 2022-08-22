@@ -8,12 +8,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
 
 jobs:
   doc:
-    name: Build Documentation
+    name: Check Links
     runs-on: ubuntu-latest
     env:
       PYVISTA_OFF_SCREEN: "True"
@@ -21,17 +19,12 @@ jobs:
       SHELLOPTS: "errexit:pipefail"
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-python@v4
         with:
           python-version: "3.9"
-
-      - uses: syphar/restore-virtualenv@v1
-        id: cache-virtualenv
-        with:
-          requirement_files: requirements_docs.txt
+          cache: 'pip'
+          cache-dependency-path: requirements_docs.txt
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.1.0
         with:
@@ -42,12 +35,9 @@ jobs:
         run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
 
       - name: Install PyVista
-        run: |
-          pip install -e .
-          git restore-mtime
+        run: pip install -e .
 
       - name: Install Dependencies
-        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
         run: pip install -r requirements_docs.txt
 
       - name: LinkCheck
