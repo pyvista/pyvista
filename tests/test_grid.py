@@ -934,7 +934,7 @@ def test_cast_uniform_to_rectilinear():
 
 
 def test_uniform_grid_to_tetrahedra():
-    grid = pyvista.UniformGrid(dims=(1, 1, 1))
+    grid = pyvista.UniformGrid(dims=(2, 2, 2))
     ugrid = grid.to_tetrahedra()
     assert ugrid.n_cells == 5
 

@@ -2728,7 +2728,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrals
+        Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
         nearby each other and plot it without SSAO.
 
         >>> import pyvista as pv
@@ -2739,7 +2739,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Enable SSAO with the default parameters.
 
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(exploded)
+        >>> _ = pl.add_mesh(exploded)
         >>> pl.enable_ssao()
         >>> pl.show()
 
