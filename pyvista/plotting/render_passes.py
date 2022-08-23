@@ -12,7 +12,8 @@ POST_PASS = [
     'vtkDepthOfFieldPass',
     'vtkGaussianBlurPass',
     'vtkOpenGLFXAAPass',
-    'vtkSSAAPass',  # should one must be last
+    'vtkSSAOPass',
+    'vtkSSAAPass',  # should be last
 ]
 
 
@@ -41,6 +42,7 @@ class RenderPasses:
         self._edl_pass = None
         self._dof_pass = None
         self._ssaa_pass = None
+        self._ssao_pass = None
         self._blur_passes = []
         self.__pass_collection = None
         self.__seq_pass = None
@@ -116,6 +118,7 @@ class RenderPasses:
         self._edl_pass = None
         self._dof_pass = None
         self._ssaa_pass = None
+        self._ssao_pass = None
         self._blur_passes = []
 
     def enable_edl_pass(self):
@@ -184,6 +187,25 @@ class RenderPasses:
             return
         self._remove_pass(self._dof_pass)
         self._dof_pass = None
+
+    def enable_ssao_pass(self, radius, bias, kernel_size, blur):
+        """Enable the screen space ambient occlusion pass."""
+        if self._ssao_pass is not None:
+            return
+        self._ssao_pass = _vtk.vtkSSAOPass()
+        self._ssao_pass.SetRadius(radius)
+        self._ssao_pass.SetBias(bias)
+        self._ssao_pass.SetKernelSize(kernel_size)
+        self._ssao_pass.SetBlur(blur)
+        self._add_pass(self._ssao_pass)
+        return self._ssao_pass
+
+    def disable_ssao_pass(self):
+        """Disable the screen space ambient occlusion pass."""
+        if self._ssao_pass is None:
+            return
+        self._remove_pass(self._ssao_pass)
+        self._ssao_pass = None
 
     def enable_ssaa_pass(self):
         """Enable super-sample anti-aliasing pass."""

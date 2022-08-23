@@ -345,6 +345,11 @@ if TEST_DOWNLOADS:
         data = examples.download_carotid()
         assert data.n_cells
 
+    def test_download_carburetor():
+        data = examples.download_carburetor()
+        assert isinstance(data, pyvista.PolyData)
+        assert data.n_faces
+
     def test_download_blow():
         data = examples.download_blow()
         assert data.n_cells

@@ -2699,6 +2699,57 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.disable_shadow_pass()
 
+    def enable_ssao(self, radius=0.5, bias=0.005, kernel_size=256, blur=True):
+        """Enable surface space ambient occlusion (SSAO).
+
+        SSAO can approximate shadows more efficiently than ray-tracing
+        and produce similar results. Use this when you wish to plot the
+        occlusion effect that nearby meshes have on each other by blocking
+        nearby light sources.
+
+        See `Kitware: Screen-Space Ambient Occlusion
+        <https://www.kitware.com/ssao/>`_ for more details
+
+        Parameters
+        ----------
+        radius : float, default: 0.5
+            Neighbor pixels considered when computing the occlusion.
+
+        bias : float, default 0.005
+            Tolerance factor used when comparing pixel depth.
+
+        kernel_size : int, default: 256
+            Number of samples used. This controls the quality where a higher
+            number increases the quality at the expense of computation time.
+
+        blur : bool, default: True
+            Controls if occlusion buffer should be blurred before combining it
+            with the color buffer.
+
+        Examples
+        --------
+        Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrals
+        nearby each other and plot it without SSAO.
+
+        >>> import pyvista as pv
+        >>> ugrid = pv.UniformGrid(dims=(3, 2, 2)).to_tetrahedra(12)
+        >>> exploded = ugrid.explode()
+        >>> exploded.plot()
+
+        Enable SSAO with the default parameters.
+
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_mesh(exploded)
+        >>> pl.enable_ssao()
+        >>> pl.show()
+
+        """
+        self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
+
+    def disable_ssao(self):
+        """Disable surface space ambient occulusion (SSAO)."""
+        self._render_passes.disable_ssao_pass()
+
     def get_pick_position(self):
         """Get the pick position/area as ``x0, y0, x1, y1``.
 

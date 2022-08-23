@@ -2675,7 +2675,17 @@ def download_thermal_probes(load=True):  # pragma: no cover
 
 
 def download_carburator(load=True):  # pragma: no cover
-    """Download scan of a carburator.
+    """Download scan of a carburetor.
+
+    .. deprecated:: 0.37.0
+       Please use :func:`pyvista.examples.downloads.download_carburetor` instead
+
+    """
+    return _download_and_read("carburetor.ply", load=load)
+
+
+def download_carburetor(load=True):  # pragma: no cover
+    """Download scan of a carburetor.
 
     Parameters
     ----------
@@ -2691,7 +2701,7 @@ def download_carburator(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_carburator()
+    >>> dataset = examples.download_carburetor()
     >>> dataset.plot()
 
     """

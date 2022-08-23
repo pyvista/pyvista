@@ -37,6 +37,7 @@ def plot(
     border=None,
     border_color='k',
     border_width=2.0,
+    ssao=False,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
@@ -168,6 +169,10 @@ def plot(
     border_width : float, optional
         Width of the border in pixels when enabled.
 
+    ssao : bool, optional
+        Enable surface space ambient occulusion (SSAO). See
+        :func:`Plotter.enable_ssao` for more details.
+
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
 
@@ -287,6 +292,9 @@ def plot(
 
     if parallel_projection:
         pl.enable_parallel_projection()
+
+    if ssao:
+        pl.enable_ssao()
 
     if zoom is not None:
         pl.camera.zoom(zoom)

@@ -933,6 +933,12 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
+def test_uniform_grid_to_tetrahedra():
+    grid = pyvista.UniformGrid(dims=(1, 1, 1))
+    ugrid = grid.to_tetrahedra()
+    assert ugrid.n_cells == 5
+
+
 def test_fft_and_rfft(noise_2d):
     grid = pyvista.UniformGrid(dims=(10, 10, 1))
     with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):

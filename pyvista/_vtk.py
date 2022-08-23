@@ -461,6 +461,7 @@ if VTK9:
         vtkSequencePass,
         vtkShadowMapPass,
         vtkSSAAPass,
+        vtkSSAOPass,
     )
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingVolume import (

@@ -1148,6 +1148,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
+    @wraps(Renderer.enable_ssao)
+    def enable_ssao(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_ssao``."""
+        return self.renderer.enable_ssao(*args, **kwargs)
+
+    @wraps(Renderer.disable_ssao)
+    def disable_ssao(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_ssao``."""
+        return self.renderer.disable_ssao(*args, **kwargs)
+
     @wraps(Renderer.enable_shadows)
     def enable_shadows(self, *args, **kwargs):
         """Wrap ``Renderer.enable_shadows``."""

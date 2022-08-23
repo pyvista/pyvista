@@ -2517,6 +2517,24 @@ def test_ssaa_pass():
     pl.show(before_close_callback=verify_cache_image)
 
 
+def test_ssao_pass():
+    ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
+    pl = pyvista.Plotter()
+    pl.add_mesh(ugrid)
+    pl.enable_ssao()
+    pl.show(before_close_callback=verify_cache_image, auto_close=False)
+
+    # ensure this fails when ssao disabled
+    pl.disable_ssao()
+    with pytest.raises(RuntimeError):
+        pl.show(before_close_callback=verify_cache_image)
+
+
+def test_ssao_pass_from_helper():
+    ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid.plot(ssao=True, before_close_callback=verify_cache_image)
+
+
 @skip_windows
 def test_many_multi_pass():
     pl = pyvista.Plotter(lighting=None)
