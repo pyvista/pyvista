@@ -1,3 +1,6 @@
+import pytest
+
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.render_passes import RenderPasses
 
@@ -106,6 +109,11 @@ def test_edl_pass():
 def test_ssao_pass():
     ren, passes = make_passes()
     assert not passes._passes
+    if pv.vtk_version_info < (9,):
+        with pytest.raises(pv.core.errors.VTKVersionError):
+            ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
+            return
+
     ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
     assert isinstance(ren_pass, _vtk.vtkSSAOPass)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1

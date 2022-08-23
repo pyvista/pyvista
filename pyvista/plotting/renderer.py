@@ -2738,7 +2738,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Enable SSAO with the default parameters.
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(exploded)
         >>> pl.enable_ssao()
         >>> pl.show()
