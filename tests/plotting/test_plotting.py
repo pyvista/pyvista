@@ -2526,7 +2526,7 @@ def test_ssao_pass():
     if pyvista.vtk_version_info < (9,):
         with pytest.raises(pyvista.core.errors.VTKVersionError):
             pl.enable_ssao()
-            return
+        return
 
     pl.enable_ssao()
     pl.show(before_close_callback=verify_cache_image, auto_close=False)
@@ -2544,7 +2544,7 @@ def test_ssao_pass_from_helper():
     if pyvista.vtk_version_info < (9,):
         with pytest.raises(pyvista.core.errors.VTKVersionError):
             ugrid.plot(ssao=True)
-            return
+        return
 
     ugrid.plot(ssao=True, before_close_callback=verify_cache_image)
 
