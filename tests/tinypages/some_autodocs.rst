@@ -6,4 +6,6 @@ Autosummary Testing
 
 .. autofunction:: make_sphere
 
-.. autofunction:: do_nothing
+.. autofunction:: example_with_empty_plotter
+
+.. autofunction:: example_with_closed_plotter

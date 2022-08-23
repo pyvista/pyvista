@@ -18,7 +18,7 @@ def make_sphere():
     return pv.Sphere()
 
 
-def do_nothing():
+def example_with_empty_plotter():
     """Do not do anything.
 
     Test that the pyvista-plot directive works correctly when there is
@@ -28,6 +28,22 @@ def do_nothing():
     --------
     >>> import pyvista
     >>> pl = pyvista.Plotter()
+
+    """
+    return
+
+
+def example_with_closed_plotter():
+    """Do not do anything.
+
+    Test that the pyvista-plot directive works correctly when there is
+    nothing to plot and the plotter has been created but not shown.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pl = pyvista.Plotter()
+    >>> pl.close()
 
     """
     return
