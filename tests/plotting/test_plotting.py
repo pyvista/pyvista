@@ -9,6 +9,7 @@ import io
 import os
 import pathlib
 import platform
+import re
 import time
 import warnings
 
@@ -60,6 +61,18 @@ IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
 
+
+def using_mesa():
+    """Determine if using mesa."""
+    pl = pyvista.Plotter(notebook=False, off_screen=True)
+    pl.show(auto_close=False)
+    gpu_info = pl.ren_win.ReportCapabilities()
+    pl.close()
+
+    regex = re.compile("OpenGL version string:(.+)\n")
+    return "Mesa" in regex.findall(gpu_info)[0]
+
+
 # always set on Windows CI
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -69,6 +82,7 @@ skip_mac = pytest.mark.skipif(
 skip_mac_flaky = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
 )
+skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 
 # Normal image warning/error thresholds (assumes using use_vtk)
@@ -2517,7 +2531,7 @@ def test_ssaa_pass():
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_windows  # OSMesa with SSAO windows segfaults
+@skip_mesa
 def test_ssao_pass():
     ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pyvista.Plotter()
@@ -2537,7 +2551,7 @@ def test_ssao_pass():
         pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_windows  # OSMesa with SSAO windows segfaults
+@skip_mesa
 def test_ssao_pass_from_helper():
     ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
 

@@ -112,7 +112,7 @@ def test_ssao_pass():
     if pv.vtk_version_info < (9,):
         with pytest.raises(pv.core.errors.VTKVersionError):
             ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
-            return
+        return
 
     ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
     assert isinstance(ren_pass, _vtk.vtkSSAOPass)

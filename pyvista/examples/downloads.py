@@ -2680,6 +2680,17 @@ def download_carburator(load=True):  # pragma: no cover
     .. deprecated:: 0.37.0
        Please use :func:`pyvista.examples.downloads.download_carburetor` instead
 
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
     """
     return _download_and_read("carburetor.ply", load=load)
 
