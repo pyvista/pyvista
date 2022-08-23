@@ -222,9 +222,7 @@ def test_grid_layout():
 
 def test_export_after_show():
     pl = pyvista.Plotter(shape=(2, 2))
-
-    # deleting rather than showing to save time
-    pl.show()
+    pl.close()
 
     with pytest.raises(PyvistaPlotterClosed):
         pv_pythreejs.convert_plotter(pl)
