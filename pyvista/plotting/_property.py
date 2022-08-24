@@ -865,7 +865,7 @@ class Property(_vtk.vtkProperty):
         >>> prop.show_edges = True
         >>> prop.plot()
 
-        Visualize the a line width of 5.0
+        Visualize the line width of 5.0
 
         >>> prop.line_width = 5.0
         >>> prop.plot()
