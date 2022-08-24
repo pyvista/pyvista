@@ -78,7 +78,7 @@ def test_depth_of_field_pass():
 
 def test_depth_of_field_raise_no_ssao():
     ren, passes = make_passes()
-    passes.enable_ssao_pass()
+    passes.enable_ssao_pass(0.5, 0.005, 16, False)
     with pytest.raises(RuntimeError, match='Depth of field pass is incompatible'):
         passes.enable_depth_of_field_pass()
 
@@ -87,7 +87,7 @@ def test_ssao_raise_no_depth_of_field():
     ren, passes = make_passes()
     passes.enable_depth_of_field_pass()
     with pytest.raises(RuntimeError, match='SSAO pass is incompatible'):
-        passes.enable_ssao_pass()
+        passes.enable_ssao_pass(0.5, 0.005, 16, False)
 
 
 def test_shadow_pass():

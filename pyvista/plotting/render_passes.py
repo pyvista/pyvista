@@ -179,7 +179,7 @@ class RenderPasses:
         if self._dof_pass is not None:
             return
 
-        if self._dof_pass is not None:
+        if self._ssao_pass is not None:
             raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
 
         self._dof_pass = _vtk.vtkDepthOfFieldPass()
