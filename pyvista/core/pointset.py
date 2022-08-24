@@ -767,6 +767,41 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetPolys(CellArray(faces))
 
     @property
+    def strips(self) -> np.ndarray:
+        """Return a pointer to the strips as a numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of strip indices.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polygon = pv.Rectangle()
+        >>> extruded = polygon.extrude((0, 0, 1))
+        >>> extruded
+        PolyData (0x7f96e0eccee0)
+        N Cells:	4
+        N Points:	8
+        X Bounds:	0.000e+00, 1.000e+00
+        Y Bounds:	0.000e+00, 1.000e+00
+        Z Bounds:	0.000e+00, 1.000e+00
+        N Arrays:	0
+        >>> extruded.strips
+        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4], dtype=int64)
+        """
+        return _vtk.vtk_to_numpy(self.GetStrips().GetData())
+
+    @strips.setter
+    def strips(self, strips):
+        """Set the strip cells."""
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
+
+    @property
     def is_all_triangles(self):
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 

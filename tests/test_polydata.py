@@ -822,6 +822,7 @@ def test_extrude():
     poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
+    assert np.any(poly.strips)
 
     n_points_old = arc.n_points
     arc.extrude([0, 0, 1], inplace=True, capping=True)
