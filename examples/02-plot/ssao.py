@@ -28,7 +28,7 @@ grid = pv.UniformGrid(dims=(5, 5, 5)).explode(0.2)
 # Plot with defaults
 # ~~~~~~~~~~~~~~~~~~
 # Let's plot this without SSAO. Note how the lighting is identical for each
-# sphere.
+# cube.
 
 pl = pv.Plotter()
 pl.add_mesh(grid)
@@ -38,11 +38,11 @@ pl.show()
 ###############################################################################
 # Plot with SSAO
 # ~~~~~~~~~~~~~~
-# Now plot this with SSAO. Note how adjacent spheres affect the lighting of
-# each other to make it look less artificial.
+# Now plot this with SSAO. Note how adjacent cubes affect the lighting of each
+# other to make it look less artificial.
 #
-# Note that with a low ``kernel_size`` the image will be rendered
-# quickly will be of low quality.
+# With a low ``kernel_size``, the image will be rendered quickly at the expense
+# of quality.
 
 pl = pv.Plotter()
 pl.add_mesh(grid)
@@ -59,7 +59,7 @@ pl.show()
 
 pl = pv.Plotter()
 pl.add_mesh(grid)
-pl.enable_ssao(kernel_size=256)
+pl.enable_ssao(kernel_size=128)
 pl.enable_anti_aliasing('ssaa')
 pl.show()
 
