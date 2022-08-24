@@ -532,3 +532,12 @@ if TEST_DOWNLOADS:
         dataset = examples.download_sea_vase(load=True)
         assert isinstance(dataset, pyvista.PolyData)
         assert dataset.n_points > 1_000_000
+
+    def test_cad_model_case():
+        filename = examples.download_cad_model_case(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_cad_model_case(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points == 7677

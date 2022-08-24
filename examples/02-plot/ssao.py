@@ -1,5 +1,4 @@
 """
-
 .. _ssao_example:
 
 Surface Space Ambient Occlusion
@@ -16,27 +15,14 @@ See `Kitware: Screen-Space Ambient Occlusion
 <https://www.kitware.com/ssao/>`_ for more details
 
 """
+# sphinx_gallery_thumbnail_number = 3
 
-# First, let's create several spheres tightly touching each other.
-import numpy as np
+# First, let's create several cubes nearby each other
 
 import pyvista as pv
 from pyvista import examples
 
-grid = pv.UniformGrid(dims=(4, 4, 4))
-spheres = grid.glyph(geom=pv.Sphere(), orient=False, scale=False)
-spheres
-
-###############################################################################
-# Convert Position to RBG Colors
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Generate some fun colors to plot our spheres with.
-#
-colors = spheres.points
-colors -= colors.min(axis=0)
-colors /= colors.max(axis=0)
-colors = (colors * 255).astype(np.uint8)
-
+grid = pv.UniformGrid(dims=(5, 5, 5)).explode(0.2)
 
 ###############################################################################
 # Plot with defaults
@@ -44,13 +30,8 @@ colors = (colors * 255).astype(np.uint8)
 # Let's plot this without SSAO. Note how the lighting is identical for each
 # sphere.
 
-# always include an environment texture when using physically based rendering.
-cubemap = examples.download_cubemap_park()
-
 pl = pv.Plotter()
-pl.add_mesh(spheres, scalars=colors, rgb=True, smooth_shading=True, pbr=True, metallic=1.0)
-pl.set_environment_texture(cubemap)
-pl.enable_anti_aliasing('ssaa')
+pl.add_mesh(grid)
 pl.show()
 
 
@@ -60,47 +41,70 @@ pl.show()
 # Now plot this with SSAO. Note how adjacent spheres affect the lighting of
 # each other to make it look less artificial.
 #
-# We've also enabled SSAA anti-aliasing to smooth out some visual artifacts
-# that occur with SSAO. We've also increased the ``kernel_size`` to improve the
-# quality of the SSAO.
+# Note that with a low ``kernel_size`` the image will be rendered
+# quickly will be of low quality.
 
 pl = pv.Plotter()
-pl.add_mesh(spheres, scalars=colors, rgb=True, smooth_shading=True, pbr=True, metallic=1.0)
-pl.set_environment_texture(cubemap)
-pl.enable_ssao(kernel_size=2048)
+pl.add_mesh(grid)
+pl.enable_ssao(kernel_size=32)
+pl.show()
+
+
+###############################################################################
+# Improve the SSAO rendering
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Here we've increased the ``kernel_size`` to improve the quality of the SSAO
+# and also enabled SSAA anti-aliasing to smooth out any of the artifacts
+# created from SSAO.
+
+pl = pv.Plotter()
+pl.add_mesh(grid)
+pl.enable_ssao(kernel_size=256)
 pl.enable_anti_aliasing('ssaa')
 pl.show()
 
 
 ###############################################################################
-# Plot a carburetor without SSAO
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Here's another example without SSAO. This is a simple CAD model.
+# Plot a CAD model without SSAO
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Here's another example without SSAO. This is a CAD model of a Raspberry PI
+# case.
 
-mesh = examples.download_cad_model()
+mesh = examples.download_cad_model_case()
 
 pl = pv.Plotter()
-pl.add_mesh(
-    mesh, smooth_shading=True, split_sharp_edges=True, pbr=True, metallic=0.5, roughness=0.5
-)
-pl.set_environment_texture(cubemap)
+pl.add_mesh(mesh, smooth_shading=True, split_sharp_edges=True)
 pl.enable_anti_aliasing('ssaa')
 pl.camera.zoom(1.7)
 pl.show()
 
 
 ###############################################################################
-# Plot a carburetor with SSAO
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot with SSAO
+# ~~~~~~~~~~~~~~
 # Here's the same CAD model with SSAO. Note how we had to increase both
 # ``radius`` and ``bias`` due to the relative scene size.
+#
+# Note that the occlusion still seems quite small. In the next example we will
+# increase the ``radius`` to increase the effect of the occlusion.
 
 pl = pv.Plotter()
-pl.add_mesh(
-    mesh, smooth_shading=True, split_sharp_edges=True, pbr=True, metallic=0.5, roughness=0.5
-)
-pl.enable_ssao(radius=2, bias=1)
-pl.set_environment_texture(cubemap)
+pl.add_mesh(mesh, smooth_shading=True, split_sharp_edges=True)
+pl.enable_ssao(radius=2, bias=0.5)
+pl.enable_anti_aliasing('ssaa')
+pl.camera.zoom(1.7)
+pl.show()
+
+
+###############################################################################
+# Increase the Radius
+# ~~~~~~~~~~~~~~~~~~~
+# Here we've increased the ``radius`` to the point where the case occlusion now
+# seems realistic without it becoming overwhelming.
+
+pl = pv.Plotter()
+pl.add_mesh(mesh, smooth_shading=True, split_sharp_edges=True)
+pl.enable_ssao(radius=15, bias=0.5)
 pl.enable_anti_aliasing('ssaa')
 pl.camera.zoom(1.7)
 pl.show()
