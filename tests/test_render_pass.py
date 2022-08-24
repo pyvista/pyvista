@@ -76,6 +76,7 @@ def test_depth_of_field_pass():
     assert not passes._passes
 
 
+@pytest.mark.needs_vtk9
 def test_depth_of_field_raise_no_ssao():
     ren, passes = make_passes()
     passes.enable_ssao_pass(0.5, 0.005, 16, False)
@@ -83,6 +84,7 @@ def test_depth_of_field_raise_no_ssao():
         passes.enable_depth_of_field_pass()
 
 
+@pytest.mark.needs_vtk9
 def test_ssao_raise_no_depth_of_field():
     ren, passes = make_passes()
     passes.enable_depth_of_field_pass()
