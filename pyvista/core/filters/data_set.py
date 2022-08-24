@@ -2222,7 +2222,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> dataset = examples.load_uniform()
-        >>> dataset.set_active_scalars('Spatial Cell Data')
+        >>> _ = dataset.set_active_scalars('Spatial Cell Data')
         >>> threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
         >>> bodies = threshed.split_bodies()
         >>> len(bodies)
@@ -5290,6 +5290,11 @@ class DataSetFilters:
         # work correctly, returning the wrong number of partitions.
         if pyvista.vtk_version_info < (9, 1, 0):
             raise VTKVersionError('`partition` requires vtk>=9.1.0')  # pragma: no cover
+        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
+            raise VTKVersionError(
+                '`partition` requires vtkRedistributeDataSetFilter, but it '
+                f'was not found in VTK {pyvista.vtk_version_info}'
+            )  # pragma: no cover
 
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)

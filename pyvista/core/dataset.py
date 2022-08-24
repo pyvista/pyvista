@@ -641,16 +641,27 @@ class DataSet(DataSetFilters, DataObject):
             points or cells, it will prioritize an array matching this
             type.  Can be either ``'cell'`` or ``'point'``.
 
+        Returns
+        -------
+        pyvista.FieldAssociation
+            Association of the scalars matching ``name``.
+
+        numpy.ndarray
+            An array from the dataset matching ``name``.
+
         """
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
         if name is None:
             self.GetCellData().SetActiveScalars(None)
             self.GetPointData().SetActiveScalars(None)
-            return
+            return FieldAssociation.NONE, np.array([])
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
-            raise KeyError(f'Data named ({name}) is a field array which cannot be active.')
+            if name in self.field_data:
+                raise ValueError(f'Data named "{name}" is a field array which cannot be active.')
+            else:
+                raise KeyError(f'Data named "{name}" does not exist in this dataset.')
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             ret = self.GetPointData().SetActiveScalars(name)
@@ -661,10 +672,15 @@ class DataSet(DataSetFilters, DataObject):
 
         if ret < 0:
             raise ValueError(
-                f'Data field ({name}) with type ({field}) could not be set as the active scalars'
+                f'Data field "{name}" with type ({field}) could not be set as the active scalars'
             )
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
+
+        if field == FieldAssociation.POINT:
+            return field, self.point_data.active_scalars
+        else:  # must be cell
+            return field, self.cell_data.active_scalars
 
     def set_active_vectors(self, name: Optional[str], preference='point'):
         """Find the vectors by name and appropriately sets it as active.
@@ -1743,6 +1759,8 @@ class DataSet(DataSetFilters, DataObject):
     def volume(self) -> float:
         """Return the mesh volume.
 
+        This will return 0 for meshes with 2D cells.
+
         Returns
         -------
         float
@@ -1750,16 +1768,69 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the volume of a sphere.
+        Get the volume of a cube of size 4x4x4.
+        Note that there are 5 points in each direction.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh.volume
+        64.0
+
+        A mesh with 2D cells has no volume.
+
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh.volume
+        0.0
+
+        :class:`pyvista.PolyData` is special as a 2D surface can
+        enclose a 3D volume.
+
+        >>> mesh = pv.Sphere()
         >>> mesh.volume
         0.51825
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return np.sum(sizes.cell_data['Volume'])
+        return sizes.cell_data['Volume'].sum()
+
+    @property
+    def area(self) -> float:
+        """Return the mesh area if 2D.
+
+        This will return 0 for meshes with 3D cells.
+
+        Returns
+        -------
+        float
+            Total area of the mesh.
+
+        Examples
+        --------
+        Get the area of a square of size 2x2.
+        Note 5 points in each direction.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh.area
+        16.0
+
+        A mesh with 3D cells does not have an area.  To get
+        the outer surface area, first extract the surface using
+        :func:`pyvista.DataSetFilters.extract_surface`.
+
+        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh.area
+        0.0
+
+        Get the area of a sphere.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.volume
+        0.51825
+
+        """
+        sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
+        return sizes.cell_data['Area'].sum()
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'

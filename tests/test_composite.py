@@ -113,6 +113,9 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     multi[4] = vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pyvista.UnstructuredGrid)
 
+    with pytest.raises(ValueError, match="Cannot nest a composite dataset in itself."):
+        multi.append(multi)
+
 
 def test_multi_block_set_get_ers():
     """This puts all of the example data objects into a a MultiBlock container"""
@@ -614,3 +617,174 @@ def test_multiblock_ref():
     del cube
     block[0] = None
     assert wref_cube() is None
+
+
+def test_set_active_scalars(multiblock_all):
+    for block in multiblock_all:
+        block.clear_data()
+        block.point_data['data'] = range(block.n_points)
+        block.point_data['point_data_a'] = range(block.n_points)
+        block.point_data['point_data_b'] = range(block.n_points)
+
+        block.cell_data['data'] = range(block.n_cells)
+        block.cell_data['cell_data_a'] = range(block.n_cells)
+        block.cell_data['cell_data_b'] = range(block.n_cells)
+
+    # test none
+    multiblock_all.set_active_scalars(None)
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name is None
+        assert block.cell_data.active_scalars_name is None
+
+    # test set point_data
+    active_scalars_name = 'point_data_a'
+    multiblock_all.set_active_scalars(active_scalars_name)
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name == active_scalars_name
+
+    # test set point_data
+    active_scalars_name = 'cell_data_a'
+    multiblock_all.set_active_scalars(active_scalars_name)
+    for block in multiblock_all:
+        assert block.cell_data.active_scalars_name == active_scalars_name
+
+    # test set point_data
+    multiblock_all.set_active_scalars(None)
+    active_scalars_name = 'data'
+    multiblock_all.set_active_scalars(active_scalars_name, preference='point')
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name == active_scalars_name
+        assert block.cell_data.active_scalars_name is None
+
+    multiblock_all.set_active_scalars(None)
+    active_scalars_name = 'data'
+    multiblock_all.set_active_scalars(active_scalars_name, preference='cell')
+    for block in multiblock_all:
+        assert block.point_data.active_scalars_name is None
+        assert block.cell_data.active_scalars_name == active_scalars_name
+
+    # test partial
+    multiblock_all[0].clear_data()
+    multiblock_all.set_active_scalars(None)
+    with pytest.raises(KeyError, match='does not exist'):
+        multiblock_all.set_active_scalars('point_data_a')
+    multiblock_all.set_active_scalars('point_data_a', allow_missing=True)
+    multiblock_all[1].point_data.active_scalars_name == 'point_data_a'
+
+    with pytest.raises(KeyError, match='is missing from all'):
+        multiblock_all.set_active_scalars('does not exist', allow_missing=True)
+
+
+def test_set_active_scalars_multi(multiblock_poly):
+    multiblock_poly.set_active_scalars(None)
+
+    block = multiblock_poly[0]
+    block.point_data.set_array(range(block.n_points), 'data')
+    block.cell_data.set_array(range(block.n_cells), 'data')
+
+    block = multiblock_poly[1]
+    block.point_data.set_array(range(block.n_points), 'data')
+
+    multiblock_poly.set_active_scalars('data', preference='point', allow_missing=True)
+    for block in multiblock_poly:
+        if 'data' in block.point_data:
+            assert block.point_data.active_scalars_name == 'data'
+        else:
+            assert block.point_data.active_scalars_name is None
+
+    multiblock_poly.set_active_scalars('data', preference='cell', allow_missing=True)
+    for block in multiblock_poly:
+        if 'data' in block.cell_data:
+            assert block.cell_data.active_scalars_name == 'data'
+        else:
+            assert block.cell_data.active_scalars_name is None
+
+
+def test_set_active_scalars_components(multiblock_poly):
+    multiblock_poly[0].point_data['data'] = range(multiblock_poly[0].n_points)
+    multiblock_poly[1].point_data['data'] = range(multiblock_poly[1].n_points)
+    multiblock_poly[2].point_data['data'] = range(multiblock_poly[2].n_points)
+
+    multiblock_poly.set_active_scalars(None)
+    multiblock_poly.set_active_scalars('data')
+    for block in multiblock_poly:
+        assert multiblock_poly[0].point_data.active_scalars_name == 'data'
+
+    data = np.zeros((multiblock_poly[2].n_points, 3))
+    multiblock_poly[2].point_data['data'] = data
+    with pytest.raises(ValueError, match='Inconsistent dimensions'):
+        multiblock_poly.set_active_scalars('data')
+
+    data = np.arange(multiblock_poly[2].n_points, dtype=np.complex128)
+    multiblock_poly[2].point_data['data'] = data
+    with pytest.raises(ValueError, match='Inconsistent complex and real'):
+        multiblock_poly.set_active_scalars('data')
+
+
+def test_set_active_multi_multi(multiblock_poly):
+    multi_multi = MultiBlock([multiblock_poly, multiblock_poly])
+    with pytest.raises(KeyError, match='missing from all'):
+        multi_multi.set_active_scalars('does-not-exist', allow_missing=True)
+
+    multi_multi.set_active_scalars('multi-comp', allow_missing=True)
+
+
+def test_set_active_scalars_mixed(multiblock_poly):
+    for block in multiblock_poly:
+        block.clear_data()
+        block.point_data.set_array(range(block.n_points), 'data')
+        block.cell_data.set_array(range(block.n_cells), 'data')
+
+    # remove data from the last block
+    del multiblock_poly[-1].point_data['data']
+    del multiblock_poly[-1].cell_data['data']
+
+    multiblock_poly.set_active_scalars('data', preference='cell', allow_missing=True)
+
+    for block in multiblock_poly:
+        if 'data' in block.cell_data:
+            assert block.cell_data.active_scalars_name == 'data'
+
+    multiblock_poly.set_active_scalars('data', preference='point', allow_missing=True)
+
+    for block in multiblock_poly:
+        if 'data' in block.point_data:
+            assert block.point_data.active_scalars_name == 'data'
+
+
+def test_to_polydata(multiblock_all):
+    assert not multiblock_all.is_all_polydata
+
+    dataset_a = multiblock_all.as_polydata_blocks()
+    assert not multiblock_all.is_all_polydata
+    assert dataset_a.is_all_polydata
+
+    # verify nested works
+    nested_mblock = pyvista.MultiBlock([multiblock_all, multiblock_all])
+    assert not nested_mblock.is_all_polydata
+    dataset_b = nested_mblock.as_polydata_blocks()
+    assert dataset_b.is_all_polydata
+
+
+def test_compute_normals(multiblock_poly):
+    for block in multiblock_poly:
+        block.clear_data()
+        block['point_data'] = range(block.n_points)
+    mblock = multiblock_poly._compute_normals(
+        cell_normals=False, split_vertices=True, track_vertices=True
+    )
+    for block in mblock:
+        assert 'Normals' in block.point_data
+        assert 'point_data' in block.point_data
+        assert 'pyvistaOriginalPointIds' in block.point_data
+
+    # test non-poly raises
+    multiblock_poly.append(pyvista.UnstructuredGrid())
+    with pytest.raises(RuntimeError, match='This multiblock contains non-PolyData'):
+        multiblock_poly._compute_normals()
+
+
+def test_activate_plotting_scalars(multiblock_poly):
+    for block in multiblock_poly:
+        data = np.array(['a'] * block.n_points)
+        block.point_data.set_array(data, 'data')
