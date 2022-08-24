@@ -178,6 +178,10 @@ class RenderPasses:
         """Enable the depth of field pass."""
         if self._dof_pass is not None:
             return
+
+        if self._dof_pass is not None:
+            raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
+
         self._dof_pass = _vtk.vtkDepthOfFieldPass()
         self._dof_pass.SetAutomaticFocalDistance(automatic_focal_distance)
         self._add_pass(self._dof_pass)
@@ -196,6 +200,9 @@ class RenderPasses:
             from pyvista.core.errors import VTKVersionError  # avoid circular import
 
             raise VTKVersionError('SSAO pass requires VTK 9 or newer.')
+
+        if self._dof_pass is not None:
+            raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
 
         if self._ssao_pass is not None:
             return
