@@ -642,6 +642,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             # here we use CellArray since we must specify deep and n_lines
             self.lines = CellArray(lines, n_lines, deep)
 
+        self._glyph_geom = None
+
     def _post_file_load_processing(self):
         """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and

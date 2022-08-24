@@ -161,3 +161,18 @@ def test_legend_face(sphere, face):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)
+
+
+def test_legend_from_glyph(sphere):
+    pl = pyvista.Plotter()
+    x = sphere.face_normals[:, 0] ** 2
+    y = sphere.face_normals[:, 1] ** 2
+    z = sphere.face_normals[:, 2] ** 2
+
+    sphere['scale'] = (x**2 + y**2 + z**2) ** (1 / 2)
+    sphere['normals'] = sphere.face_normals * 0.1
+
+    arrows = sphere.glyph(scale='scale', orient='normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='red', label='Magnitude')
+    pl.add_mesh(sphere)
+    pl.add_legend()

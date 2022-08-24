@@ -2141,7 +2141,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
         elif isinstance(mesh, pyvista.PointSet):
-            # cast to PointSet to PolyData
+            # cast PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
         else:
             # A shallow copy of `mesh` is here so when we set (or add) scalars
@@ -2486,6 +2486,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
 
+            # breakpoint()
             if hasattr(mesh, '_glyph_geom'):
                 geom = pyvista.PolyData(mesh._glyph_geom[0])  # Using only the first geometry
             else:

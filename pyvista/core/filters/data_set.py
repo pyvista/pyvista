@@ -2089,9 +2089,9 @@ class DataSetFilters:
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar, 'Computing Glyphs')
-        
-        output = _get_output(alg)
 
+        output = _get_output(alg)
+        # breakpoint()
         # Storing geom on the algorithm, for later use in legends.
         output._glyph_geom = geom
 

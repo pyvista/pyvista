@@ -2960,10 +2960,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
 
-                if face is None:
-                    if hasattr(vtk_object, '_glyph_geom'):  # it should not happen
-                        vtk_object = vtk_object._glyph_geom[0]  # using only the first one
-                else:
+                if face is not None:
                     vtk_object = make_legend_face(face)
 
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
