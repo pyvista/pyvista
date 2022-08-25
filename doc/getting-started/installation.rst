@@ -80,7 +80,7 @@ Alternatively, you can clone the repository with git and install it with pip.
 
    git clone https://github.com/pyvista/pyvista.git
    cd pyvista
-   pip install . -e
+   pip install -e .
 
 Note the development flag ``-e``.  This allows you to change pyvista
 in-place without having to reinstall it for each change.
