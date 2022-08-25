@@ -502,6 +502,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         optional, setting this speeds up the creation of the
         ``PolyData``.
 
+    strips : sequence, optional
+        The strips connectivity array.  Strips require an initial
+        triangle, and the following points of the strip. Each
+        triangle is built with the new point and the two previous
+        points. As ``lines`` and ``faces``, this array requires a
+        padding indicating the number of points. For example,
+        triangle ``[0, 1, 3]`` and the next point ``[2]`` will be
+        represented as ``[4, 0, 1, 3, 2]``.
+
+    n_strips : int, optional
+        Number of strips in the ``strips`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
     deep : bool, optional
         Whether to copy the inputs, or to create a mesh from them
         without copying them.  Setting ``deep=True`` ensures that the
@@ -550,6 +564,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
     >>> mesh = pyvista.PolyData(vertices, lines=lines)
 
+    Initialize from vertices and strips
+
+    >>> strips = np.hstack([[4, 0, 1, 3, 2]])
+    >>> mesh = pyvista.PolyData(vertices, strips=strips)
+
     Initialize from a filename.
 
     >>> mesh = pyvista.PolyData(examples.antfile)
@@ -572,6 +591,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         n_faces=None,
         lines=None,
         n_lines=None,
+        strips=None,
+        n_strips=None,
         deep=False,
         force_ext=None,
         force_float=True,
@@ -628,11 +649,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
-        if faces is None and lines is None:
+        if faces is None and lines is None and strips is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
             self.verts = CellArray(verts, self.n_points, deep)
-
+        elif strips is not None:
+            self.strips = CellArray(strips, n_strips, deep)
         elif faces is not None:
             # here we use CellArray since we must specify deep and n_faces
             self.faces = CellArray(faces, n_faces, deep)
