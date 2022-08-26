@@ -163,7 +163,7 @@ See other examples and demos:
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#testing
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#user-content-testing
 
 
 Running on CI Services
