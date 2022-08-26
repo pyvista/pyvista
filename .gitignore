@@ -7,7 +7,7 @@
 __pycache__/
 
 # Cython generated files #
-#pymeshfix/cython/_meshfix.cpp
+# pymeshfix/cython/_meshfix.cpp
 
 # OS generated files #
 ######################
