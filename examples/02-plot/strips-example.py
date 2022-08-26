@@ -1,5 +1,7 @@
 """
-.._strips_example:
+Build a figure from strips
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This example shows how to build a simple figure using strips.
 """
 import numpy as np
