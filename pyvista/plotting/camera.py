@@ -39,13 +39,14 @@ class Camera(_vtk.vtkCamera):
         self._elevation = 0.0
         self._azimuth = 0.0
 
-        self._renderer = None
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
                 raise TypeError(
                     'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 )
             self._renderer = proxy(renderer)
+        else:
+            self._renderer = None
 
     def __repr__(self):
         """Print a repr specifying the id of the camera and its camera type."""
