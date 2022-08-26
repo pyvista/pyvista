@@ -800,6 +800,11 @@ def test_strips():
     strips_init = pyvista.PolyData(vertices, strips=strips)
     assert len(strips_init.strips) == 5
 
+    # add strips using the setter
+    strips_setter = pyvista.PolyData(vertices)
+    strips_setter.strips = strips
+    assert len(strips_setter.strips) == 5
+
 
 def test_ribbon_filter():
     line = examples.load_spline().compute_arc_length(progress_bar=True)
