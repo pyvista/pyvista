@@ -9,11 +9,12 @@ import pytest
 
 import pyvista
 from pyvista.plotting import _plotting
+from pyvista.utilities.misc import PyvistaPlotterClosed
 
 
 def test_plotter_image():
     plotter = pyvista.Plotter()
-    with pytest.raises(AttributeError, match="not yet been set up"):
+    with pytest.raises(PyvistaPlotterClosed, match="not yet been set up"):
         plotter.image
 
 

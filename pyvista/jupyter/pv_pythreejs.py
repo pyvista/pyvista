@@ -12,6 +12,7 @@ except ImportError:  # pragma: no cover
 from ipywidgets import GridspecLayout
 
 import pyvista as pv
+from pyvista.utilities.misc import PyvistaPlotterClosed
 
 
 def segment_poly_cells(mesh):
@@ -641,8 +642,8 @@ def convert_renderer(pv_renderer):
 
 def convert_plotter(pl):
     """Convert a pyvista plotter to a pythreejs widget."""
-    if not hasattr(pl, 'ren_win'):
-        raise AttributeError(
+    if pl._closed:
+        raise PyvistaPlotterClosed(
             'This plotter is closed and unable to export to html.\n'
             'Please run this before showing or closing the plotter.'
         )

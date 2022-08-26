@@ -9,7 +9,9 @@ from .renderer import Renderer
 class BackgroundRenderer(Renderer):
     """BackgroundRenderer for visualizing a background image."""
 
-    def __init__(self, parent, image_path, scale=1, view_port=None):
+    def __init__(
+        self, render_window, background, image_path, scale=1, view_port=None, plotter=None
+    ):
         """Initialize BackgroundRenderer with an image."""
         # avoiding circular import
         from pyvista import _vtk
@@ -18,10 +20,10 @@ class BackgroundRenderer(Renderer):
         # the image path is invalid
         image_data = pyvista.read(image_path)
 
-        super().__init__(parent, border=False)
+        super().__init__(render_window, border=False)
         self.SetLayer(0)
         self.InteractiveOff()
-        self.SetBackground(self.parent.renderer.GetBackground())
+        self.SetBackground(background)
         self._scale = scale
         self._modified_observer = None
         self._prior_window_size = None
@@ -38,13 +40,9 @@ class BackgroundRenderer(Renderer):
 
     def resize(self, *args):
         """Resize a background renderer."""
-        if self.parent is None:  # when deleted
-            return
-        if not hasattr(self.parent, 'ren_win'):  # BasePlotter
-            return
-
-        if self._prior_window_size != self.parent.window_size:
-            self._prior_window_size = self.parent.window_size
+        window_size = self.render_window.size
+        if self._prior_window_size != window_size:
+            self._prior_window_size = window_size
 
         actor = self._actors['background']
         image_data = actor.GetInput()
@@ -61,7 +59,7 @@ class BackgroundRenderer(Renderer):
         self.camera.focus = np.array([xc, yc, 0.0])
         self.camera.position = np.array([xc, yc, dist])
 
-        ratio = img_dim / np.array(self.parent.window_size)
+        ratio = img_dim / np.array(window_size)
         scale_value = 1
         if ratio.max() > 1:
             # images are not scaled if larger than the window

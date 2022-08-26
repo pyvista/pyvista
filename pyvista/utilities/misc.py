@@ -73,6 +73,12 @@ class PyvistaEfficiencyWarning(Warning):
     pass
 
 
+class PyvistaPlotterClosed(RuntimeError):
+    """Raise when plotter has been closed."""
+
+    pass
+
+
 def VTKVersionInfo():
     """Return the vtk version as a namedtuple."""
     version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
