@@ -1,5 +1,5 @@
 """
-.._strips_example:
+.. _strips_example:
 
 Triangle Strips
 ~~~~~~~~~~~~~~~
