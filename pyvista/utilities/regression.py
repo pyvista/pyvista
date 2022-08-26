@@ -43,8 +43,7 @@ def image_from_window(ren_win, as_vtk=False, ignore_alpha=False):
     width, height = ren_win.GetSize()
     arr = _vtk.vtkUnsignedCharArray()
     ren_win.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
-    # data = _vtk.vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
-    data = np.array(pyvista.wrap(arr).reshape(height, width, -1)[::-1])
+    data = _vtk.vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
     if ignore_alpha:
         data = data[:, :, :-1]
     if as_vtk:
@@ -114,12 +113,13 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         elif isinstance(img, np.ndarray):
             return wrap_image_array(img)
         elif isinstance(img, Plotter):
-            if img.ren_win is None:
+            if img._first_time:  # must be rendered first else segfault
+                img._on_first_render_request()
+                img.render()
+            if not hasattr(img, 'ren_win'):
                 raise RuntimeError(
                     'Unable to extract image from Plotter as it has already been closed.'
                 )
-            img._window._set_up_camera()
-            img._window.render()
             return image_from_window(img.ren_win, True, ignore_alpha=True)
         else:
             raise TypeError(

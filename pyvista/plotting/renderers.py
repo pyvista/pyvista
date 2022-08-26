@@ -1,6 +1,6 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 import collections
-import weakref
+from weakref import proxy
 
 import numpy as np
 
@@ -11,11 +11,11 @@ from .renderer import Renderer
 
 
 class Renderers:
-    """Organize Renderers for ``RenderWindow``."""
+    """Organize Renderers for ``pyvista.Plotter``."""
 
     def __init__(
         self,
-        render_window=None,
+        plotter,
         shape=(1, 1),
         splitting_position=None,
         row_weights=None,
@@ -27,9 +27,7 @@ class Renderers:
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
-        self._render_window = None
-        if render_window is not None:
-            self._render_window = weakref.ref(render_window)
+        self._plotter = proxy(plotter)
         self._renderers = []
 
         # by default add border for multiple plots
@@ -65,14 +63,14 @@ class Renderers:
                 xsplit = splitting_position
 
             for i in rangen:
-                arenderer = Renderer(render_window, border, border_color, border_width)
+                arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
                     arenderer.SetViewport(0, i / n, xsplit, (i + 1) / n)
                 else:
                     arenderer.SetViewport(i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
-                arenderer = Renderer(render_window, border, border_color, border_width)
+                arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
                     arenderer.SetViewport(xsplit, i / m, 1, (i + 1) / m)
                 else:
@@ -174,7 +172,7 @@ class Renderers:
                         nb_rows = 1
                         nb_cols = 1
                     if nb_rows is not None:
-                        renderer = Renderer(render_window, border, border_color, border_width)
+                        renderer = Renderer(self._plotter, border, border_color, border_width)
                         x0 = col_off[col]
                         y0 = row_off[row + nb_rows]
                         x1 = col_off[col + nb_cols]
@@ -191,14 +189,9 @@ class Renderers:
         self._background_renderers = [None for _ in range(len(self))]
 
         # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(render_window, border, border_color, border_width)
+        self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
         self._shadow_renderer.SetViewport(0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
-
-    @property
-    def render_window(self):
-        """Return the render window."""
-        return self._render_window()
 
     def loc_to_group(self, loc):
         """Return group id of the given location index or ``None`` if this location is not part of any group."""
@@ -349,13 +342,7 @@ class Renderers:
             self.active_renderer.layer = 2
             view_port = self.active_renderer.GetViewport()
 
-        renderer = BackgroundRenderer(
-            self.render_window,
-            self.active_renderer.GetBackground(),
-            image_path,
-            scale,
-            view_port,
-        )
+        renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
         renderer.layer = 1
         self._background_renderers[self.active_index] = renderer
         return renderer
@@ -375,8 +362,7 @@ class Renderers:
         """Clear all renders."""
         for renderer in self:
             renderer.clear()
-        if hasattr(self, '_shadow_renderer'):
-            self._shadow_renderer.clear()
+        self._shadow_renderer.clear()
         self.clear_background_renderers()
 
     def close(self):
@@ -384,8 +370,7 @@ class Renderers:
         for renderer in self:
             renderer.close()
 
-        if hasattr(self, '_shadow_renderer'):
-            self._shadow_renderer.close()
+        self._shadow_renderer.close()
 
         for renderer in self._background_renderers:
             if renderer is not None:
