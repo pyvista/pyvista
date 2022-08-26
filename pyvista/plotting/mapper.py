@@ -339,7 +339,4 @@ def make_mapper(mapper_class):
                 rgba, mesh, '', n_colors, preference, interpolate_before_map, True
             )
 
-        def __del__(self):
-            self._lut = None
-
     return MapperHelper()
