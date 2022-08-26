@@ -19,7 +19,7 @@ def _launch_pick_event(interactor, event):
     click_z = 0
 
     picker = interactor.GetPicker()
-    renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
+    renderer = interactor.GetInteractorStyle()._parent()._plotter().renderer
     picker.Pick(click_x, click_y, click_z, renderer)
 
 
@@ -1239,8 +1239,13 @@ class PickingHelper:
 
         self.track_click_position(callback=_the_callback, side="right")
 
-    def disable_picking(self):
+    def disable_picking(self, render=True):
         """Disable any active picking.
+
+        Parameters
+        ----------
+        render : bool, default: True
+            Perform a render after removing any picking text.
 
         Examples
         --------
@@ -1266,5 +1271,5 @@ class PickingHelper:
 
         # remove any picking text
         if hasattr(self, 'renderers'):
-            self.remove_actor(self._picking_text)
+            self.remove_actor(self._picking_text, render=render)
         self._picking_text = None

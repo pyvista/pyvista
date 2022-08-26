@@ -116,6 +116,7 @@ import jinja2  # Sphinx dependency.
 # must enable BUILDING_GALLERY to to keep windows active
 # enable offscreen to hide figures when generating them
 import pyvista
+from pyvista.utilities.misc import PyvistaPlotterClosed
 
 pyvista.BUILDING_GALLERY = True
 pyvista.OFF_SCREEN = True
@@ -373,7 +374,6 @@ def render_figures(
 
             images = []
             figures = pyvista.plotting._ALL_PLOTTERS
-
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
@@ -382,7 +382,7 @@ def render_figures(
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
                     try:
                         plotter.screenshot(image_file.filename)
-                    except RuntimeError:  # pragma no cover
+                    except PyvistaPlotterClosed:
                         # ignore closed, unrendered plotters
                         continue
                 images.append(image_file)

@@ -24,7 +24,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.utilities.misc import can_create_mpl_figure
+from pyvista.utilities.misc import PyvistaPlotterClosed, can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -372,7 +372,7 @@ def test_plot_update(sphere):
     pl.close()
 
 
-def test_plot(sphere, tmpdir):
+def test_plot_basic(sphere, tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
     scalars = np.arange(sphere.n_points)
@@ -2203,7 +2203,7 @@ def test_plot_lighting_change_positional_false_true(sphere):
 def test_plotter_image():
     plotter = pyvista.Plotter()
     plotter.show()
-    with pytest.raises(AttributeError, match='To retrieve an image after'):
+    with pytest.raises(PyvistaPlotterClosed, match='To retrieve an image after'):
         plotter.image
 
     plotter = pyvista.Plotter()
