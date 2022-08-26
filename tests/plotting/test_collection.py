@@ -52,6 +52,7 @@ def test_plotting_collection():
     ref_charts = weakref.ref(pl.renderer._charts)  # instantiated on the fly
 
     # delete known references to Plotter
+    del pv.plotting._ALL_PLOTTERS[pl._id_name]
     del pl
 
     # check that everything is eventually destroyed

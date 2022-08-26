@@ -10,7 +10,6 @@ except:  # noqa: E722
 
 import pyvista
 from pyvista.jupyter import pv_pythreejs
-from pyvista.utilities.misc import PyvistaPlotterClosed
 
 
 def test_set_jupyter_backend_ipygany():
@@ -222,9 +221,11 @@ def test_grid_layout():
 
 def test_export_after_show():
     pl = pyvista.Plotter(shape=(2, 2))
-    pl.close()
 
-    with pytest.raises(PyvistaPlotterClosed):
+    # deleting rather than showing to save time
+    del pl.ren_win
+
+    with pytest.raises(AttributeError):
         pv_pythreejs.convert_plotter(pl)
 
 
