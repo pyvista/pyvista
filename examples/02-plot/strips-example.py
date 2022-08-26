@@ -1,5 +1,7 @@
 """
-Build a figure from strips
+.._strips_example:
+
+Strips Figure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how to build a simple figure using strips.
