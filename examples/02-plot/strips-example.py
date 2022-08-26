@@ -1,8 +1,8 @@
 """
 .._strips_example:
 
-Strips Figure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Triangle Strips
+~~~~~~~~~~~~~~~
 
 This example shows how to build a simple figure using strips.
 """
