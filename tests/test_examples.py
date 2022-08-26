@@ -75,6 +75,9 @@ def test_load_tetbeam():
 if TEST_DOWNLOADS:
 
     def test_download_single_sphere_animation():
+        filename = examples.download_single_sphere_animation(load=False)
+        assert os.path.isfile(filename)
+
         data = examples.download_single_sphere_animation()
         assert data.n_blocks
 
@@ -115,6 +118,10 @@ if TEST_DOWNLOADS:
         assert data.n_points
 
     def test_download_bolt_nut():
+        filenames = examples.download_bolt_nut(load=False)
+        assert os.path.isfile(filenames[0])
+        assert os.path.isfile(filenames[1])
+
         data = examples.download_bolt_nut()
         assert isinstance(data, pyvista.MultiBlock)
 
@@ -127,11 +134,17 @@ if TEST_DOWNLOADS:
         assert data.n_blocks
 
     def test_download_nefertiti():
+        filename = examples.download_nefertiti(load=False)
+        assert os.path.isfile(filename)
+
         data = examples.download_nefertiti()
         assert data.n_cells
 
     def test_download_blood_vessels():
         """Tests the parallel VTU reader"""
+        filename = examples.download_blood_vessels(load=False)
+        assert os.path.isfile(filename)
+
         data = examples.download_blood_vessels()
         assert isinstance(data, pyvista.UnstructuredGrid)
 
@@ -342,6 +355,9 @@ if TEST_DOWNLOADS:
         assert data.n_cells
 
     def test_download_carotid():
+        filename = examples.download_carotid(load=False)
+        assert os.path.isfile(filename)
+
         data = examples.download_carotid()
         assert data.n_cells
 
@@ -370,6 +386,9 @@ if TEST_DOWNLOADS:
         assert data.n_cells
 
     def test_download_kitchen():
+        filename = examples.download_kitchen(load=False)
+        assert os.path.isfile(filename)
+
         data = examples.download_kitchen()
         assert data.n_cells
 
@@ -378,16 +397,21 @@ if TEST_DOWNLOADS:
         assert data.n_blocks
 
     def test_download_backward_facing_step():
+        filename = examples.download_backward_facing_step(load=False)
+        assert os.path.isfile(filename)
+
         data = examples.download_backward_facing_step()
         assert data.n_blocks
 
-    # def test_download_topo_global():
-    #     data = examples.download_topo_global()
-    #     assert data.n_cells
-    #
-    # def test_download_topo_land():
-    #     data = examples.download_topo_land()
-    #     assert data.n_cells
+    def test_download_topo_global():
+        data = examples.download_topo_global()
+        assert isinstance(data, pyvista.PolyData)
+        assert data.n_cells
+
+    def test_download_topo_land():
+        data = examples.download_topo_land()
+        assert isinstance(data, pyvista.PolyData)
+        assert data.n_cells
 
     def test_download_coastlines():
         data = examples.download_coastlines()
@@ -406,16 +430,19 @@ if TEST_DOWNLOADS:
         assert data.n_points
 
     def test_download_dicom_stack():
+        filename = examples.download_dicom_stack(load=False)
+        assert os.path.isdir(filename)
+
         data = examples.download_dicom_stack()
         assert isinstance(data, pyvista.UniformGrid)
         assert all([data.n_points, data.n_cells])
 
-    def test_vrml_download_teapot():
-        filename = examples.vrml.download_teapot()
+    def test_download_teapot_vrml():
+        filename = examples.download_teapot_vrml()
         assert os.path.isfile(filename)
 
-    def test_vrml_download_sextant():
-        filename = examples.vrml.download_sextant()
+    def test_download_sextant_vrml():
+        filename = examples.download_sextant_vrml()
         assert os.path.isfile(filename)
 
     def test_download_cavity():
@@ -527,3 +554,210 @@ if TEST_DOWNLOADS:
         dataset = examples.download_sea_vase(load=True)
         assert isinstance(dataset, pyvista.PolyData)
         assert dataset.n_points > 1_000_000
+
+    def test_download_sparse_points():
+        filename = examples.download_sparse_points(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('txt')
+
+        dataset = examples.download_sparse_points(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points == 16
+
+    def test_download_puppy():
+        dataset = examples.download_puppy()
+        assert isinstance(dataset, pyvista.UniformGrid)
+        assert dataset.n_points > 1_000_000
+
+    def test_download_puppy_texture():
+        dataset = examples.download_puppy_texture()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_download_gourds_pnm():
+        dataset = examples.download_gourds_pnm()
+        assert isinstance(dataset, pyvista.UniformGrid)
+
+    def test_download_model_with_variance():
+        dataset = examples.download_model_with_variance()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_downlad_download_thermal_probes():
+        dataset = examples.download_thermal_probes()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_turbine_blade():
+        dataset = examples.download_turbine_blade()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_crater_topo():
+        dataset = examples.download_crater_topo()
+        assert isinstance(dataset, pyvista.UniformGrid)
+
+    def test_downlad_download_crater_imagery():
+        dataset = examples.download_crater_imagery()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_downlad_download_dolfin():
+        dataset = examples.download_dolfin()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_downlad_download_damavand_volcano():
+        filename = examples.download_damavand_volcano(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_damavand_volcano()
+        assert isinstance(dataset, pyvista.UniformGrid)
+
+    def test_downlad_download_delaunay_example():
+        dataset = examples.download_delaunay_example()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_embryo():
+        filename = examples.download_embryo(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_embryo()
+        assert isinstance(dataset, pyvista.UniformGrid)
+
+    def test_downlad_download_antarctica_velocity():
+        dataset = examples.download_antarctica_velocity()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_room_surface_mesh():
+        dataset = examples.download_room_surface_mesh()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_beach():
+        dataset = examples.download_beach()
+        assert isinstance(dataset, pyvista.UniformGrid)
+
+    def test_downlad_download_rgba_texture():
+        dataset = examples.download_rgba_texture()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_downlad_download_vtk_logo():
+        dataset = examples.download_vtk_logo()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_downlad_download_gpr_data_array():
+        filename = examples.download_gpr_data_array(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_gpr_data_array()
+        assert isinstance(dataset, np.ndarray)
+
+    def test_downlad_download_gpr_path():
+        filename = examples.download_gpr_path(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_gpr_path()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_woman():
+        dataset = examples.download_woman()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_lobster():
+        dataset = examples.download_lobster()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_face2():
+        dataset = examples.download_face2()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_urn():
+        dataset = examples.download_urn()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_pepper():
+        dataset = examples.download_pepper()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_drill():
+        dataset = examples.download_drill()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_action_figure():
+        dataset = examples.download_action_figure()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_mars_jpg():
+        filename = examples.download_mars_jpg()
+        assert os.path.isfile(filename)
+
+    def test_downlad_download_stars_jpg():
+        filename = examples.download_stars_jpg()
+        assert os.path.isfile(filename)
+
+    def test_downlad_download_notch_stress():
+        dataset = examples.download_notch_stress()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_downlad_download_notch_displacement():
+        dataset = examples.download_notch_displacement()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_downlad_download_louis_louvre():
+        dataset = examples.download_louis_louvre()
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_downlad_download_cylinder_crossflow():
+        filename = examples.download_cylinder_crossflow(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_cylinder_crossflow()
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_downlad_download_naca():
+        filename = examples.download_naca(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_naca()
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_downlad_download_wavy():
+        filename = examples.download_wavy(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_wavy()
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_downlad_download_dual_sphere_animation():
+        filename = examples.download_dual_sphere_animation(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_dual_sphere_animation()
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_downlad_download_cgns_structured():
+        filename = examples.download_cgns_structured(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_cgns_structured()
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_downlad_download_tecplot_ascii():
+        filename = examples.download_tecplot_ascii(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_tecplot_ascii()
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_downlad_download_cgns_multi():
+        filename = examples.download_cgns_multi(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_cgns_multi()
+        assert isinstance(dataset, pyvista.MultiBlock)
+
+    def test_downlad_download_parched_canal_4k():
+        dataset = examples.download_parched_canal_4k()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_downlad_download_cells_nd():
+        dataset = examples.download_cells_nd()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_downlad_download_moonlanding_image():
+        dataset = examples.download_moonlanding_image()
+        assert isinstance(dataset, pyvista.UniformGrid)
