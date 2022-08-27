@@ -391,6 +391,9 @@ def test_multiblockplot3dreader():
     reader.add_function(reader.ENTROPY)  # add ENTROPY by class variable
     reader.remove_function(170)  # remove ENTROPY by int
 
+    reader.add_function(reader.ENTROPY)
+    reader.remove_function(reader.ENTROPY)  # remove by class variable
+
     mesh = reader.read()
     for m in mesh:
         assert len(m.array_names) > 0
@@ -431,6 +434,14 @@ def test_multiblockplot3dreader():
     assert reader.r_gas_constant == 5
     reader.r_gas_constant = 10
     assert reader.r_gas_constant == 10
+
+    # check removing all functions
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files(q_filename)
+    reader.add_function(reader.ENTROPY)
+    reader.remove_all_functions()
+    mesh_no_functions = reader.read()
+    assert 'ENTROPY' not in mesh_no_functions[0].point_data
 
 
 def test_binarymarchingcubesreader():
