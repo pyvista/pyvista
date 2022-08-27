@@ -260,8 +260,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Track all active plotters
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         if pyvista.BUILDING_GALLERY:
+            # keep a reference so these plotters don't collect
             _ALL_PLOTTERS[self._id_name] = self
         else:
+            # proxy reference for backwards compatibility
             _ALL_PLOTTERS[self._id_name] = weakref.proxy(self)
 
         # Key bindings
@@ -6091,7 +6093,8 @@ class Plotter(BasePlotter):
 # Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
 #
-# This should only be used when pyvista.BUILDING_GALLERY = True
+# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
+# when True, BasePlotter.
 _ALL_PLOTTERS: Dict[str, Union[BasePlotter, weakref.ProxyType]] = {}
 
 
