@@ -1,17 +1,6 @@
 """glTF examples."""
 
-from .downloads import _retrieve_file
-
-GLTF_SAMPLES_ROOT_URL = (
-    'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/'
-)
-
-
-def _download_file(end_url):  # pragma: no cover
-    """Download a gltf example file."""
-    basename = end_url.split('/')[-1]
-    filename, _ = _retrieve_file(GLTF_SAMPLES_ROOT_URL + end_url, basename)
-    return filename
+from .downloads import FETCHER
 
 
 def download_damaged_helmet():  # pragma: no cover
@@ -36,7 +25,7 @@ def download_damaged_helmet():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
+    return FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
 
 
 def download_sheen_chair():  # pragma: no cover
@@ -61,7 +50,7 @@ def download_sheen_chair():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('SheenChair/glTF-Binary/SheenChair.glb')
+    return FETCHER.fetch('SheenChair/glTF-Binary/SheenChair.glb')
 
 
 def download_gearbox():  # pragma: no cover
@@ -84,7 +73,7 @@ def download_gearbox():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('GearboxAssy/glTF-Binary/GearboxAssy.glb')
+    return FETCHER.fetch('GearboxAssy/glTF-Binary/GearboxAssy.glb')
 
 
 def download_avocado():  # pragma: no cover
@@ -107,11 +96,11 @@ def download_avocado():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('Avocado/glTF-Binary/Avocado.glb')
+    return FETCHER.fetch('Avocado/glTF-Binary/Avocado.glb')
 
 
 def download_milk_truck():  # pragma: no cover
-    """Download the avocado example.
+    """Download the milk truck example.
 
     Files hosted at https://github.com/KhronosGroup/glTF-Sample-Models
 
@@ -130,4 +119,4 @@ def download_milk_truck():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
+    return FETCHER.fetch('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')

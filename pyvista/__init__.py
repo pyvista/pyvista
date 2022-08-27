@@ -50,8 +50,8 @@ if 'PYVISTA_VTK_DATA' in os.environ:
     VTK_DATA_PATH = os.environ['PYVISTA_VTK_DATA']
     if not os.path.isdir(VTK_DATA_PATH):
         warnings.warn(f"VTK_DATA_PATH: {VTK_DATA_PATH} is an invalid path")
-    if not os.path.isdir(os.path.join(VTK_DATA_PATH, 'Data')):
-        warnings.warn(f"VTK_DATA_PATH: {os.path.join(VTK_DATA_PATH, 'Data')} does not exist")
+    if not os.path.basename(VTK_DATA_PATH) == 'Data':
+        warnings.warn(f"VTK_DATA_PATH: {VTK_DATA_PATH} is expected to end with 'Data'")
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = False

@@ -17,7 +17,6 @@ import os
 import shutil
 from typing import Union
 from urllib.request import urlretrieve
-import zipfile
 
 import numpy as np
 
@@ -26,6 +25,253 @@ from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
 
 CACHE_VERSION = 2
+
+
+import pooch
+from pooch import Unzip
+
+pooch_path = pyvista.VTK_DATA_PATH
+if pooch_path is None:
+    pooch_path = pooch.os_cache("pyvista")
+
+GLTF_SAMPLES_ROOT_URL = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/'
+
+FETCHER = pooch.create(
+    # Use the default cache folder for the operating system
+    path=pooch_path,
+    base_url="https://github.com/pyvista/vtk-data/raw/master/Data/",
+    # The registry specifies the files that can be fetched
+    registry={
+        '250.vtk': None,
+        '42400-IDGH.stl': None,
+        'AOI.Damavand.32639.vtp': None,
+        'AngularSector.vtk': None,
+        'Armadillo.ply': None,
+        'Avocado/glTF-Binary/Avocado.glb': None,
+        'BJ34_GeoTifv1-04_crater_clip.tif': None,
+        'Bunny.vtp': None,
+        'Cellsnd.ascii.inp': None,
+        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': None,
+        'DICOM_KNEE.dcm': None,
+        'DICOM_Stack/data.zip': None,
+        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': None,
+        'Disc_BiQuadraticQuads_0_0.vtu': None,
+        'EarthModels/Coastlines_Los_Alamos.vtp': None,
+        'EarthModels/ETOPO_10min_Ice.vtp': None,
+        'EarthModels/ETOPO_10min_Ice_only-land.vtp': None,
+        'EnSight.zip': None,
+        'EnSight/CylinderCrossflow/cylinder_Re35.case': None,
+        'EnSight/CylinderCrossflow/cylinder_Re35.geo': None,
+        'EnSight/CylinderCrossflow/cylinder_Re35.scl1': None,
+        'EnSight/CylinderCrossflow/cylinder_Re35.scl2': None,
+        'EnSight/CylinderCrossflow/cylinder_Re35.vel': None,
+        'EnSight/naca.bin.case': None,
+        'EnSight/naca.gold.bin.DENS_1': None,
+        'EnSight/naca.gold.bin.DENS_3': None,
+        'EnSight/naca.gold.bin.geo': None,
+        'GearboxAssy/glTF-Binary/GearboxAssy.glb': None,
+        'Gourds.png': None,
+        'Gourds.png': None,
+        'Gourds.pnm': None,
+        'Gourds2.jpg': None,
+        'Gourds2.jpg': None,
+        'HeadMRVolume.mhd': None,
+        'HeadMRVolume.raw': None,
+        'Human.vtp': None,
+        'InterpolatingOnSTL_final.stl': None,
+        'MetaIO/ChestCT-SHORT.mha': None,
+        'ObliqueCone.vtp': None,
+        'OpenFOAM.zip': None,
+        'PVD/paraview/dualSphereAnimation.zip': None,
+        'PVD/paraview/singleSphereAnimation.zip': None,
+        'PVD/wavy.zip': None,
+        'Pileated.jpg': None,
+        'Pileated.jpg': None,
+        'QuadraticPyramid.vtu': None,
+        'RectilinearGrid.vtr': None,
+        'Ruapehu_mag_dem_15m_NZTM.vtk': None,
+        'SainteHelens.dem': None,
+        'SampleStructGrid.vtk': None,
+        'SheenChair/glTF-Binary/SheenChair.glb': None,
+        'StructuredGrid.vts': None,
+        'Tetrahedron.vtu': None,
+        'Torso.vtp': None,
+        'TriQuadraticHexahedron.vtu': None,
+        'a_grid.vtk': None,
+        'alphachannel.png': None,
+        'antarctica_velocity.vtp': None,
+        'beach.nrrd': None,
+        'blow.vtk': None,
+        'bolt.slc': None,
+        'bolt.slc': None,
+        'brain.vtk': None,
+        'bunny.ply': None,
+        'cake_easy.jpg': None,
+        'cake_easy.jpg': None,
+        'carotid.vtk': None,
+        'cellsnd.ascii.inp': None,
+        'cgns/multi.cgns': None,
+        'cgns/sqnz_s.adf.cgns': None,
+        'clown.facet': None,
+        'cow.vtp': None,
+        'cowHead.vtp': None,
+        'cubemap_park/cubemap_park.zip': None,
+        'cubemap_space/16k.zip': None,
+        'cubemap_space/4k.zip': None,
+        'damavand-volcano.vtk': None,
+        'dc-inversion.zip': None,
+        'dc-inversion.zip': None,
+        'dikhololo_night_4k.hdr': None,
+        'dolfin_fine.xml': None,
+        'doorman/doorman.obj': None,
+        'dragon.ply': None,
+        'drill.obj': None,
+        'embryo.slc': None,
+        'emote.jpg': None,
+        'emote.jpg': None,
+        'faults.vtk': None,
+        'filledContours.vtp': None,
+        'fran_cut.vtk': None,
+        'froggy/frog.mhd': None,
+        'froggy/frog.zraw': None,
+        'fsu/footbones.ply': None,
+        'fsu/stratocaster.ply': None,
+        'gears.stl': None,
+        'gifs/sample.gif': None,
+        'gpr-example/data.npy': None,
+        'gpr-example/path.txt': None,
+        'hdf/can-vtu.hdf': None,
+        'hdf/can_0.hdf': None,
+        'hdf/can_1.hdf': None,
+        'hdf/can_2.hdf': None,
+        'honolulu.vtk': None,
+        'horse.vtp': None,
+        'horsePoints.vtp': None,
+        'ironProt.vtk': None,
+        'ivan-nikolov/Angel.zip': None,
+        'ivan-nikolov/birdBath.zip': None,
+        'ivan-nikolov/blackVase.zip': None,
+        'ivan-nikolov/owl.zip': None,
+        'ivan-nikolov/plasticVase.zip': None,
+        'ivan-nikolov/seaVase.zip': None,
+        'k.vtk': None,
+        'kafadar-lidar-interp.vtp': None,
+        'kitchen.vtk': None,
+        'lethe/result_particles.20000.0000.vtu': None,
+        'lobster.ply': None,
+        'louis.ply': None,
+        'lucy.ply': None,
+        'man_face.stl': None,
+        'mars.jpg': None,
+        'masonry.bmp': None,
+        'mesh_fs8.exo': None,
+        'model_with_variance.vtu': None,
+        'moonlanding.png': None,
+        'motor.g': None,
+        'mug.e': None,
+        'nefertiti.ply.zip': None,
+        'notch_disp.vtu': None,
+        'notch_stress.vtk': None,
+        'nut.slc': None,
+        'office.binary.vtk': None,
+        'osmnx_graph.p': None,
+        'parched_canal_4k.hdr': None,
+        'pepper.ply': None,
+        'pine_root.tri': None,
+        'polyline.vtk': None,
+        'probes.vtp': None,
+        'prostate.img': None,
+        'puppy.jpg': None,
+        'puppy.jpg': None,
+        'pvtu_blood_vessels/blood_vessels.zip': None,
+        'room_surface_mesh.obj': None,
+        'shark.ply': None,
+        'skybox-nz.jpg': None,
+        'skybox-nz.jpg': None,
+        'skybox2-negx': None,
+        'skybox2-negy': None,
+        'skybox2-negz': None,
+        'skybox2-posx': None,
+        'skybox2-posy': None,
+        'skybox2-posz': None,
+        'sparsePoints.txt': None,
+        'spider.ply': None,
+        'stars.jpg': None,
+        'teapot.g': None,
+        'tecplot_ascii.dat': None,
+        'tensors.vtk': None,
+        'tigerfighter.obj': None,
+        'trumpet.obj': None,
+        'turbineblade.ply': None,
+        'uGridEx.vtk': None,
+        'urn.stl': None,
+        'usa.vtk': None,
+        'usa_image.jpg': None,
+        'vrml/sextant.wrl': None,
+        'vrml/teapot.wrl': None,
+        'vtk.png': None,
+        'vtk.vtp': None,
+        'vw_knee.slc': None,
+        'woman.stl': None,
+    },
+    # examples outside of the default repository
+    urls={
+        'Avocado/glTF-Binary/Avocado.glb': GLTF_SAMPLES_ROOT_URL,
+        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': GLTF_SAMPLES_ROOT_URL,
+        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': GLTF_SAMPLES_ROOT_URL,
+        'GearboxAssy/glTF-Binary/GearboxAssy.glb': GLTF_SAMPLES_ROOT_URL,
+        'SheenChair/glTF-Binary/SheenChair.glb': GLTF_SAMPLES_ROOT_URL,
+    },
+)
+
+
+def file_from_files(target_file, fnames):
+    """Return the full path of a single file within a list of files.
+
+    Parameters
+    ----------
+    target_file : str
+        File base name to find.
+
+    fnames : list
+        List of filenames.
+
+    Returns
+    -------
+    str
+        Entry in ``fnames`` matching ``filename``.
+
+    """
+    for fname in fnames:
+        if os.path.basename(fname) == target_file:
+            return fname
+    raise FileNotFoundError(f'``fnames`` missing {target_file}')
+
+
+def _download_archive(filename, target_file=None, progress_bar=False):
+    """Download an archive.
+
+    Return the path to a single file when set.
+
+    Parameters
+    ----------
+    filename : str
+        Relative path to the archive file. The entire archive will be
+        downloaded and unarchived.
+
+    target_file : str, optional
+        Target file to return within the archive.
+
+    Returns
+    -------
+    list or str
+        List of files when ``target_file`` is ``None``. Otherwise, a single path.
+
+    """
+    fnames = FETCHER.fetch(filename, processor=Unzip(), progressbar=progress_bar)
+    if target_file is not None:
+        return file_from_files(target_file, fnames)
+    return fnames
 
 
 def _check_examples_path():
@@ -90,226 +336,6 @@ def delete_downloads():
     return True
 
 
-def _decompress(filename, output_path):
-    _check_examples_path()
-    zip_ref = zipfile.ZipFile(filename, 'r')
-    zip_ref.extractall(output_path)
-    return zip_ref.close()
-
-
-def _get_vtk_file_url(filename):
-    return f'https://github.com/pyvista/vtk-data/raw/master/Data/{filename}'
-
-
-def _http_request(url, progress_bar=False):  # pragma: no cover
-    """Download a file from a url using ``urlretrieve``.
-
-    Inspired by https://stackoverflow.com/a/53877507/3369879
-
-    Parameters
-    ----------
-    url : str
-        URL of the file to download.
-
-    progress_bar : bool, default: False
-        Display a progress_bar bar when downloading the file.
-
-    Returns
-    -------
-    str
-        Filename of the downloaded file.
-
-    http.client.HTTPMessage
-        The headers returned by urlretrieve.
-
-    """
-    if progress_bar:
-
-        try:
-            from tqdm import tqdm
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                'Install `tqdm` for download progress bars with:\n\n' 'pip install tqdm'
-            ) from None
-
-        class DownloadProgressBar(tqdm):
-            """Download progress bar."""
-
-            def update_to(self, b=1, bsize=1, tsize=None):
-                """Update the progress bar."""
-                if tsize is not None:
-                    self.total = tsize
-                    self.update(b * bsize - self.n)
-
-        desc = f"Downloading {url.split('/')[-1]}"
-
-        with DownloadProgressBar(unit='B', unit_scale=True, miniters=1, desc=desc) as pbar:
-            return urlretrieve(url, reporthook=pbar.update_to)
-    else:
-        return urlretrieve(url)
-
-
-def _repo_file_request(repo_path, filename):
-    return os.path.join(repo_path, 'Data', filename), None
-
-
-def _retrieve_file(retriever, filename):
-    """Retrieve a file and cache it in pyvsita.EXAMPLES_PATH.
-
-    Parameters
-    ----------
-    retriever : str or callable
-        If str, it is treated as a url.
-        If callable, the function must take no arguments and must
-        return a tuple like (file_path, resp), where file_path is
-        the path to the file to use.
-    filename : str
-        The name of the file.
-
-    Returns
-    -------
-    str
-        Path to the downloaded file.
-    http.client.HTTPMessage
-        HTTP download Response.
-
-    """
-    _check_examples_path()
-
-    # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH, filename)
-    if os.path.isfile(local_path):
-        return local_path, None
-
-    if isinstance(retriever, str):  # pragma: no cover
-        retriever = partial(_http_request, retriever, progress_bar=True)
-    saved_file, resp = retriever()
-
-    # Make sure folder exists
-    local_dir = os.path.dirname(local_path)
-    if not os.path.isdir(local_dir):
-        os.makedirs(local_dir)
-
-    if pyvista.VTK_DATA_PATH is None:
-        shutil.move(saved_file, local_path)
-    else:
-        if os.path.isdir(saved_file):
-            shutil.copytree(saved_file, local_path)
-        else:
-            shutil.copy(saved_file, local_path)
-
-    return local_path, resp
-
-
-def _retrieve_zip(retriever, filename):
-    """Retrieve a zip and cache it in pyvista.EXAMPLES_PATH.
-
-    Parameters
-    ----------
-    retriever : str or callable
-        If str, it is treated as a URL.
-        If callable, the function must take no arguments and must
-        return a tuple like (file_path, resp), where file_path is
-        the path to the file to use.
-
-    filename : str
-        The name of the file.
-
-    Returns
-    -------
-    str
-        Path of the directory with the unzipped files.
-
-    http.client.HTTPMessage
-        HTTP download Response.
-
-    """
-    _check_examples_path()
-
-    # First check if file has already been downloaded
-    local_path_zip_dir = os.path.join(pyvista.EXAMPLES_PATH, filename)
-    if os.path.isdir(local_path_zip_dir):
-        return local_path_zip_dir, None
-    if isinstance(retriever, str):  # pragma: no cover
-        retriever = partial(_http_request, retriever)
-    saved_file, resp = retriever()
-
-    # Edge case where retriever saves to an identical location as the saved
-    # file name.
-    if filename == saved_file:  # pragma: no cover
-        new_saved_file = saved_file + '.download'
-        os.rename(saved_file, new_saved_file)
-        saved_file = new_saved_file
-
-    # Make sure directory exists
-    if not os.path.isdir(local_path_zip_dir):
-        os.makedirs(local_path_zip_dir)
-
-    # move the tmp file to the new directory
-    local_path_zip_file = os.path.join(local_path_zip_dir, os.path.basename(filename))
-    if pyvista.VTK_DATA_PATH is None:
-        shutil.move(saved_file, local_path_zip_file)
-    else:  # pragma: no cover
-        shutil.copy(saved_file, local_path_zip_file)
-
-    # decompress and remove the zip file to save space
-    _decompress(local_path_zip_file, local_path_zip_dir)
-    os.remove(local_path_zip_file)
-    return local_path_zip_dir, resp
-
-
-def _download_file(filename, progress_bar=False):
-    """Download a file from https://github.com/pyvista/vtk-data/tree/master/Data.
-
-    If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
-    to be a local git repository.
-
-    Parameters
-    ----------
-    filename : str
-        Path within https://github.com/pyvista/vtk-data/tree/master/Data to download
-        the file from.
-
-    progress_bar : bool, default: False
-        Display a progress_bar bar when downloading the file. This is ignored
-        when ``VTK_DATA_PATH`` is set.
-
-    Examples
-    --------
-    Download the ``'blood_vessels.zip'`` file from
-    https://github.com/pyvista/vtk-data/tree/master/Data/pvtu_blood_vessels.
-    This returns a path of the unzipped archive.
-
-    >>> path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')  # doctest:+SKIP
-    >>> path  # doctest:+SKIP
-    /home/user/.local/share/pyvista/examples/blood_vessels
-
-    Download the ``'emote.jpg'`` file.
-
-    >>> path, _ = _download_file('emote.jpg')  # doctest:+SKIP
-    >>> path  # doctest:+SKIP
-    /home/user/.local/share/pyvista/examples/emote.jpg
-
-    """
-    if pyvista.VTK_DATA_PATH is None:
-        url = _get_vtk_file_url(filename)
-        retriever = partial(_http_request, url, progress_bar=progress_bar)
-    else:
-        if not os.path.isdir(pyvista.VTK_DATA_PATH):
-            raise FileNotFoundError(
-                f'VTK data repository path does not exist at:\n\n{pyvista.VTK_DATA_PATH}'
-            )
-        if not os.path.isdir(os.path.join(pyvista.VTK_DATA_PATH, 'Data')):
-            raise FileNotFoundError(
-                f'VTK data repository does not have "Data" folder at:\n\n{pyvista.VTK_DATA_PATH}'
-            )
-        retriever = partial(_repo_file_request, pyvista.VTK_DATA_PATH, filename)
-
-    if pyvista.get_ext(filename) == '.zip':
-        return _retrieve_zip(retriever, filename)
-    return _retrieve_file(retriever, filename)
-
-
 def _download_and_read(filename, texture=False, file_format=None, load=True, progress_bar=False):
     """Download and read a file.
 
@@ -338,18 +364,15 @@ def _download_and_read(filename, texture=False, file_format=None, load=True, pro
         Dataset or path to the file depending on the ``load`` parameter.
 
     """
-    saved_file, _ = _download_file(filename, progress_bar=progress_bar)
     if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
         raise ValueError('Cannot download and read an archive file')
 
+    saved_file = FETCHER.fetch(filename)
     if not load:
         return saved_file
     if texture:
         return pyvista.read_texture(saved_file)
     return pyvista.read(saved_file, file_format=file_format)
-
-
-###############################################################################
 
 
 def download_masonry_texture(load=True):
@@ -725,7 +748,7 @@ def download_head(load=True):
     dataset.
 
     """
-    _download_file('HeadMRVolume.raw')
+    FETCHER.fetch('HeadMRVolume.raw')
     return _download_and_read('HeadMRVolume.mhd', load=load)
 
 
@@ -1024,8 +1047,8 @@ def download_nefertiti(load=True):
     * :ref:`box_widget_example`
 
     """
-    path, _ = _download_file('nefertiti.ply.zip')
-    filename = os.path.join(path, 'nefertiti.ply')
+    filename = _download_archive('nefertiti.ply.zip', target_file='nefertiti.ply')
+
     if not load:
         return filename
     return pyvista.read(filename)
@@ -1058,8 +1081,9 @@ def download_blood_vessels(load=True):
     * :ref:`integrate_example`
 
     """
-    directory, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
-    filename = os.path.join(directory, 'blood_vessels', 'T0000000500.pvtu')
+    filename = _download_archive(
+        'pvtu_blood_vessels/blood_vessels.zip', target_file='T0000000500.pvtu'
+    )
 
     if not load:
         return filename
@@ -1172,7 +1196,7 @@ def download_sparse_points(load=True):
     dataset.
 
     """
-    saved_file, _ = _download_file('sparsePoints.txt')
+    saved_file = FETCHER.fetch('sparsePoints.txt')
     if not load:
         return saved_file
     points_reader = _vtk.vtkDelimitedTextReader()
@@ -1708,7 +1732,7 @@ def download_frog(load=True):
 
     """
     # TODO: there are other files with this
-    _download_file('froggy/frog.zraw')
+    FETCHER.fetch('froggy/frog.zraw')
     return _download_and_read('froggy/frog.mhd', load=load)
 
 
@@ -2611,13 +2635,10 @@ def download_tetra_dc_mesh():
     >>> coarse.plot()
 
     """
-    local_path, _ = _download_file('dc-inversion.zip')
-    local_path = os.path.join(local_path, 'dc-inversion')
-    filename = os.path.join(local_path, 'mesh-forward.vtu')
-    fwd = pyvista.read(filename)
+    fnames = _download_archive('dc-inversion.zip')
+    fwd = pyvista.read(file_from_files('mesh-forward.vtu', fnames))
     fwd.set_active_scalars('Resistivity(log10)-fwd')
-    filename = os.path.join(local_path, 'mesh-inverse.vtu')
-    inv = pyvista.read(filename)
+    inv = pyvista.read(file_from_files('mesh-inverse.vtu', fnames))
     inv.set_active_scalars('Resistivity(log10)')
     return pyvista.MultiBlock({'forward': fwd, 'inverse': inv})
 
@@ -3085,35 +3106,9 @@ def download_sky_box_cube_map():
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     images = [prefix + suffix + '.jpg' for suffix in sets]
     for image in images:
-        _download_file(image)
+        FETCHER.FETCH(image)
 
-    return pyvista.cubemap(pyvista.EXAMPLES_PATH, prefix)
-
-
-def download_cube_map_debug():
-    """Download the debug cube map texture.
-
-    Textures obtained from `BabylonJS/Babylon.js
-    <https://github.com/BabylonJS/Babylon.js>`_ and licensed under Apache2.
-
-    Returns
-    -------
-    pyvista.Texture
-        Texture containing a skybox.
-
-    Examples
-    --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.download_sky_box_cube_map()
-    >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset)
-    >>> pl.show()
-
-    """
-    path, _ = _download_file('cubemapDebug/cubemapDebug.zip')
-    return pyvista.cubemap(image_paths=glob.glob(path, '*.jpg'))
+    return pyvista.cubemap(pooch_path, prefix)
 
 
 def download_cubemap_park():
@@ -3146,8 +3141,8 @@ def download_cubemap_park():
     >>> pl.show()
 
     """
-    path, _ = _download_file('cubemap_park/cubemap_park.zip')
-    return pyvista.cubemap(path)
+    fnames = FETCHER.fetch('cubemap_park/cubemap_park.zip', processor=Unzip())
+    return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
 def download_cubemap_space_4k():
@@ -3157,8 +3152,8 @@ def download_cubemap_space_4k():
     Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
     https://jaxry.github.io/panorama-to-cubemap/
 
-    See `vtk-data/Data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space>`_ for
+    See `vtk-data/cubemap_space
+    <https://github.com/pyvista/vtk-data/tree/master/cubemap_space>`_ for
     more details.
 
     Returns
@@ -3181,8 +3176,8 @@ def download_cubemap_space_4k():
     >>> pl.show()
 
     """
-    path, _ = _download_file('cubemap_space/4k.zip')
-    return pyvista.cubemap(path)
+    fnames = FETCHER.fetch('cubemap_space/4k.zip', processor=Unzip())
+    return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
 def download_cubemap_space_16k(progress_bar=False):
@@ -3192,8 +3187,8 @@ def download_cubemap_space_16k(progress_bar=False):
     Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
     https://jaxry.github.io/panorama-to-cubemap/
 
-    See `vtk-data/Data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space>`_ for
+    See `vtk-data/cubemap_space
+    <https://github.com/pyvista/vtk-data/tree/master/cubemap_space>`_ for
     more details.
 
     Parameters
@@ -3228,8 +3223,8 @@ def download_cubemap_space_16k(progress_bar=False):
     >>> pl.show()
 
     """
-    path, _ = _download_file('cubemap_space/16k.zip', progress_bar=progress_bar)
-    return pyvista.cubemap(path)
+    fnames = FETCHER.fetch('cubemap_space/16k.zip', processor=Unzip())
+    return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
 def download_backward_facing_step(load=True):
@@ -3253,8 +3248,7 @@ def download_backward_facing_step(load=True):
     >>> dataset.plot()
 
     """
-    directory, _ = _download_file('EnSight.zip')
-    filename = os.path.join(directory, 'EnSight', "foam_case_0_0_0_0.case")
+    filename = _download_archive('EnSight.zip', 'foam_case_0_0_0_0.case')
     if not load:
         return filename
     return pyvista.read(filename)
@@ -3290,7 +3284,7 @@ def download_gpr_data_array(load=True):
     See :ref:`create_draped_surf_example` for an example using this dataset.
 
     """
-    saved_file, _ = _download_file("gpr-example/data.npy")
+    saved_file = FETCHER.fetch("gpr-example/data.npy")
     if not load:
         return saved_file
     return np.load(saved_file)
@@ -3319,7 +3313,7 @@ def download_gpr_path(load=True):
     See :ref:`create_draped_surf_example` for an example using this dataset.
 
     """
-    saved_file, _ = _download_file("gpr-example/path.txt")
+    saved_file = FETCHER.fetch("gpr-example/path.txt")
     if not load:
         return saved_file
     path = np.loadtxt(saved_file, skiprows=1)
@@ -3584,7 +3578,7 @@ def download_mars_jpg():
     >>> pl.show()
 
     """
-    return _download_file('mars.jpg')[0]
+    return FETCHER.fetch('mars.jpg')
 
 
 def download_stars_jpg():
@@ -3607,7 +3601,7 @@ def download_stars_jpg():
     See :func:`download_mars_jpg` for another example using this dataset.
 
     """
-    return _download_file('stars.jpg')[0]
+    return FETCHER.fetch('stars.jpg')
 
 
 def download_notch_stress(load=True):
@@ -3728,11 +3722,11 @@ def download_cylinder_crossflow(load=True):
     See :ref:`2d_streamlines_example` for an example using this dataset.
 
     """
-    filename, _ = _download_file('EnSight/CylinderCrossflow/cylinder_Re35.case')
-    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.geo')
-    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
-    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
-    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.vel')
+    filename = FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.case')
+    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.geo')
+    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
+    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
+    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.vel')
     if not load:
         return filename
     return pyvista.read(filename)
@@ -3769,10 +3763,10 @@ def download_naca(load=True):
     See :ref:`reader_example` for an example using this dataset.
 
     """
-    filename, _ = _download_file('EnSight/naca.bin.case')
-    _download_file('EnSight/naca.gold.bin.DENS_1')
-    _download_file('EnSight/naca.gold.bin.DENS_3')
-    _download_file('EnSight/naca.gold.bin.geo')
+    filename = FETCHER.fetch('EnSight/naca.bin.case')
+    FETCHER.fetch('EnSight/naca.gold.bin.DENS_1')
+    FETCHER.fetch('EnSight/naca.gold.bin.DENS_3')
+    FETCHER.fetch('EnSight/naca.gold.bin.geo')
     if not load:
         return filename
     return pyvista.read(filename)
@@ -3801,8 +3795,7 @@ def download_wavy(load=True):
     See :ref:`reader_example` for an example using this dataset.
 
     """
-    folder, _ = _download_file('PVD/wavy.zip')
-    filename = os.path.join(folder, 'wavy.pvd')
+    filename = _download_archive('PVD/wavy.zip', 'wavy.pvd')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3851,8 +3844,9 @@ def download_single_sphere_animation(load=True):
     >>> plotter.close()
 
     """
-    path, _ = _download_file('PVD/paraview/singleSphereAnimation.zip')
-    filename = os.path.join(path, 'singleSphereAnimation.pvd')
+    filename = _download_archive(
+        'PVD/paraview/singleSphereAnimation.zip', 'singleSphereAnimation.pvd'
+    )
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3901,8 +3895,11 @@ def download_dual_sphere_animation(load=True):
     >>> plotter.close()
 
     """
-    path, _ = _download_file('PVD/paraview/dualSphereAnimation.zip')
-    filename = os.path.join(path, 'dualSphereAnimation.pvd')
+    filename = _download_archive(
+        'PVD/paraview/dualSphereAnimation.zip',
+        'dualSphereAnimation.pvd',
+    )
+
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3940,7 +3937,7 @@ def download_osmnx_graph():
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
 
-    filename, _ = _download_file('osmnx_graph.p')
+    filename = FETCHER.fetch('osmnx_graph.p')
     return pickle.load(open(filename, 'rb'))
 
 
@@ -3969,8 +3966,7 @@ def download_cavity(load=True):
     See :ref:`openfoam_example` for a full example using this dataset.
 
     """
-    directory, _ = _download_file('OpenFOAM.zip')
-    filename = os.path.join(directory, 'OpenFOAM', 'cavity', 'case.foam')
+    filename = _download_archive('OpenFOAM.zip', target_file='case.foam')
     if not load:
         return filename
     return pyvista.OpenFOAMReader(filename).read()
@@ -4089,7 +4085,7 @@ def download_can_crushed_hdf(load=True):
 
     Originally built using VTK v9.2.0rc from:
 
-    ``VTK/build/ExternalData/Testing/Data/can-vtu.hdf``
+    ``VTK/build/ExternalTesting/can-vtu.hdf``
 
     Parameters
     ----------
@@ -4144,7 +4140,7 @@ def download_cgns_structured(load=True):
     >>> dataset[0].plot(scalars='Density')
 
     """
-    filename, _ = _download_file('cgns/sqnz_s.adf.cgns')
+    filename = FETCHER.fetch('cgns/sqnz_s.adf.cgns')
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
@@ -4179,7 +4175,7 @@ def download_tecplot_ascii(load=True):
     >>> dataset.plot()
 
     """
-    filename, _ = _download_file('tecplot_ascii.dat')
+    filename = FETCHER.fetch('tecplot_ascii.dat')
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
@@ -4220,7 +4216,7 @@ def download_cgns_multi(load=True):
     ... )
 
     """
-    filename, _ = _download_file('cgns/multi.cgns')
+    filename = FETCHER.fetch('cgns/multi.cgns')
     if not load:
         return filename
     reader = pyvista.get_reader(filename)
@@ -4279,8 +4275,8 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:
     >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
 
     """
-    path, _ = _download_file('DICOM_Stack/data.zip')
-    path = os.path.join(path, 'data')
+    fnames = _download_archive('DICOM_Stack/data.zip')
+    path = os.path.dirname(fnames[0])
     if load:
         reader = pyvista.DICOMReader(path)
         return reader.read()
@@ -4516,7 +4512,7 @@ def download_black_vase(load=True, progress_bar=False):
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4552,8 +4548,11 @@ def download_black_vase(load=True, progress_bar=False):
       N Arrays:     0
 
     """
-    path, _ = _download_file('ivan-nikolov/blackVase.zip', progress_bar=progress_bar)
-    filename = os.path.join(path, 'blackVase.vtp')
+    filename = _download_archive(
+        'ivan-nikolov/blackVase.zip',
+        'blackVase.vtp',
+        progress_bar,
+    )
     if load:
         return pyvista.read(filename)
     return filename
@@ -4569,7 +4568,7 @@ def download_ivan_angel(load=True, progress_bar=False):
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4608,8 +4607,11 @@ def download_ivan_angel(load=True, progress_bar=False):
       N Arrays:     0
 
     """
-    path, _ = _download_file('ivan-nikolov/Angel.zip', progress_bar=progress_bar)
-    filename = os.path.join(path, 'Angel.vtp')
+    filename = _download_archive(
+        'ivan-nikolov/Angel.zip',
+        'Angel.vtp',
+        progress_bar,
+    )
     if load:
         return pyvista.read(filename)
     return filename
@@ -4625,7 +4627,7 @@ def download_bird_bath(load=True, progress_bar=False):
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4661,8 +4663,11 @@ def download_bird_bath(load=True, progress_bar=False):
     N Arrays:     0
 
     """
-    path, _ = _download_file('ivan-nikolov/birdBath.zip', progress_bar=progress_bar)
-    filename = os.path.join(path, 'birdBath.vtp')
+    filename = _download_archive(
+        'ivan-nikolov/birdBath.zip',
+        'birdBath.vtp',
+        progress_bar,
+    )
     if load:
         return pyvista.read(filename)
     return filename
@@ -4678,7 +4683,7 @@ def download_owl(load=True, progress_bar=False):
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4717,8 +4722,11 @@ def download_owl(load=True, progress_bar=False):
       N Arrays:     0
 
     """
-    path, _ = _download_file('ivan-nikolov/owl.zip', progress_bar=progress_bar)
-    filename = os.path.join(path, 'owl.vtp')
+    filename = _download_archive(
+        'ivan-nikolov/owl.zip',
+        'owl.vtp',
+        progress_bar,
+    )
     if load:
         return pyvista.read(filename)
     return filename
@@ -4734,7 +4742,7 @@ def download_plastic_vase(load=True, progress_bar=False):
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4770,8 +4778,11 @@ def download_plastic_vase(load=True, progress_bar=False):
       N Arrays:     0
 
     """
-    path, _ = _download_file('ivan-nikolov/plasticVase.zip', progress_bar=progress_bar)
-    filename = os.path.join(path, 'plasticVase.vtp')
+    filename = _download_archive(
+        'ivan-nikolov/plasticVase.zip',
+        'plasticVase.vtp',
+        progress_bar,
+    )
     if load:
         return pyvista.read(filename)
     return filename
@@ -4787,7 +4798,7 @@ def download_sea_vase(load=True, progress_bar=False):
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4823,53 +4834,43 @@ def download_sea_vase(load=True, progress_bar=False):
       N Arrays:     0
 
     """
-    path, _ = _download_file('ivan-nikolov/seaVase.zip', progress_bar=progress_bar)
-    filename = os.path.join(path, 'seaVase.vtp')
+    filename = _download_archive(
+        'ivan-nikolov/seaVase.zip',
+        'seaVase.vtp',
+        progress_bar,
+    )
     if load:
         return pyvista.read(filename)
     return filename
 
 
-def download_teapot_vrml():
-    """Download the a 2-manifold solid version of the famous teapot example.
+def download_dikhololo_night():
+    """Download and read the dikholo night hdr texture example.
+
+    Files hosted at https://polyhaven.com/
 
     Returns
     -------
-    str
-        Filename of the VRML file.
+    pyvista.texture
+        HDR Texture.
 
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> vrml_file = examples.download_teapot_vrml()
+    >>> gltf_file = examples.gltf.download_damaged_helmet()
+    >>> texture = examples.hdr.download_dikhololo_night()
     >>> pl = pyvista.Plotter()
-    >>> pl.import_vrml(vrml_file)
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.set_environment_texture(texture)
     >>> pl.show()
 
     """
-    return _download_file("vrml/teapot.wrl")[0]
-
-
-def download_sextant_vrml():
-    """Download the sextant example.
-
-    Returns
-    -------
-    str
-        Filename of the VRML file.
-
-    Examples
-    --------
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> vrml_file = examples.download_sextant_vrml()
-    >>> pl = pyvista.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
-
-    """
-    return _download_file("vrml/sextant.wrl")[0]
+    texture = _download_and_read('dikhololo_night_4k.hdr', texture=True)
+    texture.SetColorModeToDirectScalars()
+    texture.SetMipmap(True)
+    texture.SetInterpolate(True)
+    return texture
 
 
 # verify example cache integrity

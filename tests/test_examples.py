@@ -437,12 +437,12 @@ if TEST_DOWNLOADS:
         assert isinstance(data, pyvista.UniformGrid)
         assert all([data.n_points, data.n_cells])
 
-    def test_download_teapot_vrml():
-        filename = examples.download_teapot_vrml()
+    def test_download_teapot():
+        filename = examples.vrml.download_teapot()
         assert os.path.isfile(filename)
 
     def test_download_sextant_vrml():
-        filename = examples.download_sextant_vrml()
+        filename = examples.vrml.download_sextant()
         assert os.path.isfile(filename)
 
     def test_download_cavity():
@@ -761,3 +761,23 @@ if TEST_DOWNLOADS:
     def test_downlad_download_moonlanding_image():
         dataset = examples.download_moonlanding_image()
         assert isinstance(dataset, pyvista.UniformGrid)
+
+    def test_download_gltf_milk_truck():
+        filename = examples.gltf.download_milk_truck()
+        assert os.path.isfile(filename)
+
+    def test_download_gltf_damaged_helmet():
+        filename = examples.gltf.download_damaged_helmet()
+        assert os.path.isfile(filename)
+
+    def test_download_gltf_sheen_chair():
+        filename = examples.gltf.download_sheen_chair()
+        assert os.path.isfile(filename)
+
+    def test_download_gltf_gearbox():
+        filename = examples.gltf.download_gearbox()
+        assert os.path.isfile(filename)
+
+    def test_download_gltf_avocado():
+        filename = examples.gltf.download_avocado()
+        assert os.path.isfile(filename)
