@@ -25,5 +25,9 @@ strips = np.hstack([10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1])
 
 # build the mesh
 mesh = pyvista.PolyData(vertices, strips=strips)
+mesh
 
+###############################################################################
+# Plot the triangle strips
+# ~~~~~~~~~~~~~~~~~~~~~~~~
 mesh.plot(show_edges=True)

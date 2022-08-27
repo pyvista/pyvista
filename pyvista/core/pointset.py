@@ -503,13 +503,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ``PolyData``.
 
     strips : sequence, optional
-        The strips connectivity array.  Strips require an initial
+        Triangle strips connectivity array.  Triangle strips require an initial
         triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
-        points. As ``lines`` and ``faces``, this array requires a
+        points. Just as in ``lines`` and ``faces``, this array requires a
         padding indicating the number of points. For example,
-        triangle ``[0, 1, 3]`` and the next point ``[2]`` will be
-        represented as ``[4, 0, 1, 3, 2]``.
+        a single triangle strip of ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
+        ``10`` and should input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
 
     n_strips : int, optional
         Number of strips in the ``strips`` connectivity array.  While
@@ -564,7 +564,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
     >>> mesh = pyvista.PolyData(vertices, lines=lines)
 
-    Initialize from vertices and strips
+    Initialize from vertices and triangle strips.
 
     >>> strips = np.hstack([[4, 0, 1, 3, 2]])
     >>> mesh = pyvista.PolyData(vertices, strips=strips)
