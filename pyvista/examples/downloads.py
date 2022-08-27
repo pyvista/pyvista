@@ -12,7 +12,7 @@ Examples
 """
 import os
 import shutil
-from typing import Optional, Union
+from typing import Union
 import warnings
 
 import numpy as np
@@ -26,58 +26,64 @@ from pyvista.core.errors import VTKVersionError
 CACHE_VERSION = 3
 
 # If available, a local vtk-data instance will be used for examples
-
-VTK_DATA_PATH: Optional[str] = None
-if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
-    warnings.warn(
-        'PYVISTA_VTK_PATH has been deprecated as of 0.37.0\n\n' 'Please use PYVISTA_USERDATA_PATH'
-    )
-    os.environ['PYVISTA_USERDATA_PATH'] = os.environ['PYVISTA_VTK_DATA']
-
-PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
-if not os.path.isdir(PATH):  # pragma: no cover
-    try:
-        os.makedirs(PATH, exist_ok=True)
-        if not os.access(PATH, os.W_OK):
-            raise OSError
-    except (PermissionError, OSError):
+if 'VTK_DATA_PATH' in os.environ:  # pragma: no cover
+    _path = os.environ['VTK_DATA_PATH']
+    if not os.path.isdir(_path):
+        warnings.warn(f"VTK_DATA_PATH: {_path} is an invalid path")
+    if not os.path.basename(_path) == 'Data':
+        expected_path = os.path.join(_path, 'Data')
         warnings.warn(
-            f'Unable to access {PATH}. Manually specify the PyVista examples cache '
-            'with the PYVISTA_USERDATA_PATH environment variable.'
-        )
-
-# allow to override the examples path
-if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
-    PYVISTA_USERDATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
-    if not os.path.isdir(PYVISTA_USERDATA_PATH):
-        warnings.warn(f"PYVISTA_USERDATA_PATH: {PYVISTA_USERDATA_PATH} is an invalid path")
-    if not os.path.basename(PYVISTA_USERDATA_PATH) == 'Data':
-        expected_path = os.path.join('PYVISTA_USERDATA_PATH', 'Data')
-        warnings.warn(
-            f'As of 0.37.0, PYVISTA_USERDATA_PATH: {PYVISTA_USERDATA_PATH} is '
+            f'As of 0.37.0, VTK_DATA_PATH: {_path} is '
             'expected to end with the "Data" directory. For example:\n'
-            f'{expected_path}'
+            f'{expected_path}\n\n'
+            'VTK_DATA_PATH will be ignored.'
         )
+    else:
+        # pooch assumes this is a URL so we have to take care of this
+        if not _path.endswith('/'):
+            _path = _path + '/'
+        SOURCE = _path
+        _FILE_CACHE = True
+else:
+    SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    _FILE_CACHE = False
 
-GLTF_SAMPLES_URL = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/'
+# allow user to override the local path
+if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
+    if not os.path.isdir(os.environ['PYVISTA_USERDATA_PATH']):
+        warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH')
+    else:
+        PATH = os.environ['PYVISTA_USERDATA_PATH']
+else:
+    # use default pooch path
+    PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+
+    # provide helpful message if pooch path is inaccessible
+    if not os.path.isdir(PATH):  # pragma: no cover
+        try:
+            os.makedirs(PATH, exist_ok=True)
+            if not os.access(PATH, os.W_OK):
+                raise OSError
+        except (PermissionError, OSError):
+            warnings.warn(
+                f'Unable to access {PATH}. Manually specify the PyVista'
+                'examples cache with the PYVISTA_USERDATA_PATH environment variable.'
+            )
 
 FETCHER = pooch.create(
     path=PATH,
-    base_url="https://github.com/pyvista/vtk-data/raw/master/Data/",
+    base_url=SOURCE,
     registry={
         '250.vtk': None,
         '42400-IDGH.stl': None,
         'AOI.Damavand.32639.vtp': None,
         'AngularSector.vtk': None,
         'Armadillo.ply': None,
-        'Avocado/glTF-Binary/Avocado.glb': None,
         'BJ34_GeoTifv1-04_crater_clip.tif': None,
         'Bunny.vtp': None,
         'Cellsnd.ascii.inp': None,
-        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': None,
         'DICOM_KNEE.dcm': None,
         'DICOM_Stack/data.zip': None,
-        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': None,
         'Disc_BiQuadraticQuads_0_0.vtu': None,
         'EarthModels/Coastlines_Los_Alamos.vtp': None,
         'EarthModels/ETOPO_10min_Ice.vtp': None,
@@ -92,7 +98,6 @@ FETCHER = pooch.create(
         'EnSight/naca.gold.bin.DENS_1': None,
         'EnSight/naca.gold.bin.DENS_3': None,
         'EnSight/naca.gold.bin.geo': None,
-        'GearboxAssy/glTF-Binary/GearboxAssy.glb': None,
         'Gourds.png': None,
         'Gourds.png': None,
         'Gourds.pnm': None,
@@ -115,7 +120,6 @@ FETCHER = pooch.create(
         'Ruapehu_mag_dem_15m_NZTM.vtk': None,
         'SainteHelens.dem': None,
         'SampleStructGrid.vtk': None,
-        'SheenChair/glTF-Binary/SheenChair.glb': None,
         'StructuredGrid.vts': None,
         'Tetrahedron.vtu': None,
         'Torso.vtp': None,
@@ -131,6 +135,7 @@ FETCHER = pooch.create(
         'bunny.ply': None,
         'cake_easy.jpg': None,
         'cake_easy.jpg': None,
+        'carburetor.ply': None,
         'carotid.vtk': None,
         'cellsnd.ascii.inp': None,
         'cgns/multi.cgns': None,
@@ -247,17 +252,7 @@ FETCHER = pooch.create(
         'vw_knee.slc': None,
         'woman.stl': None,
     },
-    # examples outside of the default repository
-    urls={
-        'Avocado/glTF-Binary/Avocado.glb': GLTF_SAMPLES_URL,
-        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': GLTF_SAMPLES_URL,
-        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': GLTF_SAMPLES_URL,
-        'GearboxAssy/glTF-Binary/GearboxAssy.glb': GLTF_SAMPLES_URL,
-        'SheenChair/glTF-Binary/SheenChair.glb': GLTF_SAMPLES_URL,
-    },
     retry_if_failed=3,
-    # allow the user to override the path if needed
-    env='PYVISTA_USERDATA_PATH',
 )
 
 
@@ -284,6 +279,48 @@ def file_from_files(target_file, fnames):
     raise FileNotFoundError(f'Missing {target_file}')
 
 
+def _file_copier(input_file, output_file, pooch):
+    """Copy a file from a local directory to the output path."""
+    if not os.path.isfile(input_file):
+        raise FileNotFoundError(f"'{input_file}' not found within VTK_DATA_PATH '{SOURCE}'")
+    shutil.copy(input_file, output_file)
+
+
+def download_file(filename, progress_bar=False):
+    """Download a single file from the VTK data repository.
+
+    Parameters
+    ----------
+    filename : str
+        Filename relative to the ``Data`` directory.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file.
+
+    Returns
+    -------
+    str or list
+        A single path if the file is not an archive. A ``list`` of paths if the
+        file is an archive.
+
+    Examples
+    --------
+    Download the ``'puppy.jpg'`` image.
+
+    >>> from pyvista import examples
+    >>> path = examples.download_file('puppy.jpg')  # doctest:+SKIP
+    >>> path  # doctest:+SKIP
+    '/home/user/.cache/pyvista_3/puppy.jpg'
+
+    """
+    return FETCHER.fetch(
+        filename,
+        processor=Unzip() if filename.endswith('.zip') else None,
+        downloader=_file_copier if _FILE_CACHE else None,
+        progressbar=progress_bar,
+    )
+
+
 def _download_archive(filename, target_file=None, progress_bar=False):  # pragma: no cover
     """Download an archive.
 
@@ -304,7 +341,7 @@ def _download_archive(filename, target_file=None, progress_bar=False):  # pragma
         List of files when ``target_file`` is ``None``. Otherwise, a single path.
 
     """
-    fnames = FETCHER.fetch(filename, processor=Unzip(), progressbar=progress_bar)
+    fnames = download_file(filename, progress_bar=progress_bar)
     if target_file is not None:
         return file_from_files(target_file, fnames)
     return fnames
@@ -363,7 +400,7 @@ def _download_and_read(filename, texture=False, file_format=None, load=True, pro
     if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
         raise ValueError('Cannot download and read an archive file')
 
-    saved_file = FETCHER.fetch(filename, progressbar=progress_bar)
+    saved_file = download_file(filename, progress_bar=progress_bar)
     if not load:
         return saved_file
     if texture:
@@ -744,7 +781,7 @@ def download_head(load=True):  # pragma: no cover
     dataset.
 
     """
-    FETCHER.fetch('HeadMRVolume.raw')
+    download_file('HeadMRVolume.raw')
     return _download_and_read('HeadMRVolume.mhd', load=load)
 
 
@@ -1192,7 +1229,7 @@ def download_sparse_points(load=True):  # pragma: no cover
     dataset.
 
     """
-    saved_file = FETCHER.fetch('sparsePoints.txt')
+    saved_file = download_file('sparsePoints.txt')
     if not load:
         return saved_file
     points_reader = _vtk.vtkDelimitedTextReader()
@@ -1728,7 +1765,7 @@ def download_frog(load=True):  # pragma: no cover
 
     """
     # TODO: there are other files with this
-    FETCHER.fetch('froggy/frog.zraw')
+    download_file('froggy/frog.zraw')
     return _download_and_read('froggy/frog.mhd', load=load)
 
 
@@ -3102,7 +3139,7 @@ def download_sky_box_cube_map():  # pragma: no cover
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     images = [prefix + suffix + '.jpg' for suffix in sets]
     for image in images:
-        FETCHER.fetch(image)
+        download_file(image)
 
     return pyvista.cubemap(str(FETCHER.path), prefix)
 
@@ -3137,7 +3174,7 @@ def download_cubemap_park():  # pragma: no cover
     >>> pl.show()
 
     """
-    fnames = FETCHER.fetch('cubemap_park/cubemap_park.zip', processor=Unzip())
+    fnames = download_file('cubemap_park/cubemap_park.zip')
     return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
@@ -3172,7 +3209,7 @@ def download_cubemap_space_4k():  # pragma: no cover
     >>> pl.show()
 
     """
-    fnames = FETCHER.fetch('cubemap_space/4k.zip', processor=Unzip())
+    fnames = download_file('cubemap_space/4k.zip')
     return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
@@ -3219,7 +3256,7 @@ def download_cubemap_space_16k(progress_bar=False):  # pragma: no cover
     >>> pl.show()
 
     """
-    fnames = FETCHER.fetch('cubemap_space/16k.zip', processor=Unzip(), progressbar=progress_bar)
+    fnames = download_file('cubemap_space/16k.zip', progress_bar)
     return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
@@ -3280,7 +3317,7 @@ def download_gpr_data_array(load=True):  # pragma: no cover
     See :ref:`create_draped_surf_example` for an example using this dataset.
 
     """
-    saved_file = FETCHER.fetch("gpr-example/data.npy")
+    saved_file = download_file("gpr-example/data.npy")
     if not load:
         return saved_file
     return np.load(saved_file)
@@ -3309,7 +3346,7 @@ def download_gpr_path(load=True):  # pragma: no cover
     See :ref:`create_draped_surf_example` for an example using this dataset.
 
     """
-    saved_file = FETCHER.fetch("gpr-example/path.txt")
+    saved_file = download_file("gpr-example/path.txt")
     if not load:
         return saved_file
     path = np.loadtxt(saved_file, skiprows=1)
@@ -3574,7 +3611,7 @@ def download_mars_jpg():  # pragma: no cover
     >>> pl.show()
 
     """
-    return FETCHER.fetch('mars.jpg')
+    return download_file('mars.jpg')
 
 
 def download_stars_jpg():  # pragma: no cover
@@ -3597,7 +3634,7 @@ def download_stars_jpg():  # pragma: no cover
     See :func:`download_mars_jpg` for another example using this dataset.
 
     """
-    return FETCHER.fetch('stars.jpg')
+    return download_file('stars.jpg')
 
 
 def download_notch_stress(load=True):  # pragma: no cover
@@ -3718,11 +3755,11 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
     See :ref:`2d_streamlines_example` for an example using this dataset.
 
     """
-    filename = FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.case')
-    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.geo')
-    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
-    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
-    FETCHER.fetch('EnSight/CylinderCrossflow/cylinder_Re35.vel')
+    filename = download_file('EnSight/CylinderCrossflow/cylinder_Re35.case')
+    download_file('EnSight/CylinderCrossflow/cylinder_Re35.geo')
+    download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
+    download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
+    download_file('EnSight/CylinderCrossflow/cylinder_Re35.vel')
     if not load:
         return filename
     return pyvista.read(filename)
@@ -3759,10 +3796,10 @@ def download_naca(load=True):  # pragma: no cover
     See :ref:`reader_example` for an example using this dataset.
 
     """
-    filename = FETCHER.fetch('EnSight/naca.bin.case')
-    FETCHER.fetch('EnSight/naca.gold.bin.DENS_1')
-    FETCHER.fetch('EnSight/naca.gold.bin.DENS_3')
-    FETCHER.fetch('EnSight/naca.gold.bin.geo')
+    filename = download_file('EnSight/naca.bin.case')
+    download_file('EnSight/naca.gold.bin.DENS_1')
+    download_file('EnSight/naca.gold.bin.DENS_3')
+    download_file('EnSight/naca.gold.bin.geo')
     if not load:
         return filename
     return pyvista.read(filename)
@@ -3933,7 +3970,7 @@ def download_osmnx_graph():  # pragma: no cover
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
 
-    filename = FETCHER.fetch('osmnx_graph.p')
+    filename = download_file('osmnx_graph.p')
     return pickle.load(open(filename, 'rb'))
 
 
@@ -4136,7 +4173,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
     >>> dataset[0].plot(scalars='Density')
 
     """
-    filename = FETCHER.fetch('cgns/sqnz_s.adf.cgns')
+    filename = download_file('cgns/sqnz_s.adf.cgns')
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
@@ -4171,7 +4208,7 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
     >>> dataset.plot()
 
     """
-    filename = FETCHER.fetch('tecplot_ascii.dat')
+    filename = download_file('tecplot_ascii.dat')
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
@@ -4212,7 +4249,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     ... )
 
     """
-    filename = FETCHER.fetch('cgns/multi.cgns')
+    filename = download_file('cgns/multi.cgns')
     if not load:
         return filename
     reader = pyvista.get_reader(filename)
@@ -4867,10 +4904,3 @@ def download_dikhololo_night():  # pragma: no cover
     texture.SetMipmap(True)
     texture.SetInterpolate(True)
     return texture
-
-
-def _download_multi_p3d():
-    """Download multi_p3d file.
-
-    Used for testing Plot3DMetaReader
-    """

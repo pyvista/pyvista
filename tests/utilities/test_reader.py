@@ -7,7 +7,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.examples.downloads import FETCHER
+from pyvista.examples.downloads import download_file
 
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
@@ -357,10 +357,10 @@ def test_facetreader():
 
 
 def test_plot3dmetareader():
-    filename = FETCHER.fetch('multi.p3d')
-    FETCHER.fetch('multi-bin.xyz')
-    FETCHER.fetch('multi-bin.q')
-    FETCHER.fetch('multi-bin.f')
+    filename = download_file('multi.p3d')
+    download_file('multi-bin.xyz')
+    download_file('multi-bin.q')
+    download_file('multi-bin.f')
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.Plot3DMetaReader)
     assert reader.path == filename
@@ -371,8 +371,8 @@ def test_plot3dmetareader():
 
 
 def test_multiblockplot3dreader():
-    filename = FETCHER.fetch('multi-bin.xyz')
-    q_filename = FETCHER.fetch('multi-bin.q')
+    filename = download_file('multi-bin.xyz')
+    q_filename = download_file('multi-bin.q')
     reader = pyvista.MultiBlockPlot3DReader(filename)
     assert reader.path == filename
 

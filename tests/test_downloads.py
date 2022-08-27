@@ -48,3 +48,17 @@ def test_file_from_files(tmpdir):
 
     fname = examples.downloads.file_from_files('tmp1.txt', fnames)
     assert fname == fnames[1]
+
+
+def test_file_copier(tmpdir):
+    input_file = str(tmpdir.join('tmp0.txt'))
+    output_file = str(tmpdir.join('tmp1.txt'))
+
+    with open(input_file, 'w') as fid:
+        fid.write('hello world')
+
+    examples.downloads._file_copier(input_file, output_file, None)
+    assert os.path.isfile(output_file)
+
+    with pytest.raises(FileNotFoundError):
+        examples.downloads._file_copier('not a file', output_file, None)

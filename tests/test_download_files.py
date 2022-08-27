@@ -18,7 +18,7 @@ from pyvista import examples
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
-pytestmark = pytest.mark.skip_download
+pytestmark = pytest.mark.needs_download
 
 
 def test_download_single_sphere_animation():
@@ -853,23 +853,33 @@ def test_downlad_download_moonlanding_image():
 def test_download_gltf_milk_truck():
     filename = examples.gltf.download_milk_truck()
     assert os.path.isfile(filename)
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
 
 
 def test_download_gltf_damaged_helmet():
     filename = examples.gltf.download_damaged_helmet()
     assert os.path.isfile(filename)
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
 
 
 def test_download_gltf_sheen_chair():
     filename = examples.gltf.download_sheen_chair()
     assert os.path.isfile(filename)
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
 
 
 def test_download_gltf_gearbox():
     filename = examples.gltf.download_gearbox()
     assert os.path.isfile(filename)
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
 
 
 def test_download_gltf_avocado():
     filename = examples.gltf.download_avocado()
     assert os.path.isfile(filename)
+    pl = pv.Plotter()
+    pl.import_gltf(filename)

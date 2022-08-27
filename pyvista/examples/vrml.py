@@ -1,6 +1,6 @@
 """vrml examples."""
 
-from .downloads import FETCHER
+from .downloads import download_file
 
 
 def download_teapot():
@@ -15,13 +15,13 @@ def download_teapot():
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_teapot_vrml()
+    >>> vrml_file = examples.vrml.download_teapot()
     >>> pl = pyvista.Plotter()
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
 
     """
-    return FETCHER.fetch("vrml/teapot.wrl")
+    return download_file("vrml/teapot.wrl")
 
 
 def download_sextant():
@@ -36,10 +36,10 @@ def download_sextant():
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_sextant_vrml()
+    >>> vrml_file = examples.vrml.download_sextant()
     >>> pl = pyvista.Plotter()
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
 
     """
-    return FETCHER.fetch("vrml/sextant.wrl")
+    return download_file("vrml/sextant.wrl")

@@ -170,9 +170,10 @@ def pytest_collection_modifyitems(config, items):
 
     # skip all tests that need downloads
     if not test_downloads:
+        skip_downloads = mark.skip("Downloads not enabled with --test_downloads")
         for item in items:
-            if 'skip_download' in marker_names(item):
-                item.add_marker(mark.skip("Skip download"))
+            if 'needs_download' in marker_names(item):
+                item.add_marker(skip_downloads)
 
 
 def pytest_runtest_setup(item):
