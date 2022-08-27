@@ -10,10 +10,10 @@ Examples
 >>> mesh.plot()
 
 """
-
 import os
 import shutil
-from typing import Union
+from typing import Optional, Union
+import warnings
 
 import numpy as np
 import pooch
@@ -25,11 +25,44 @@ from pyvista.core.errors import VTKVersionError
 
 CACHE_VERSION = 3
 
-GLTF_SAMPLES_ROOT_URL = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/'
+# If available, a local vtk-data instance will be used for examples
 
+VTK_DATA_PATH: Optional[str] = None
+if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
+    warnings.warn(
+        'PYVISTA_VTK_PATH has been deprecated as of 0.37.0\n\n' 'Please use PYVISTA_USERDATA_PATH'
+    )
+    os.environ['PYVISTA_USERDATA_PATH'] = os.environ['PYVISTA_VTK_DATA']
+
+PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+if not os.path.isdir(PATH):  # pragma: no cover
+    try:
+        os.makedirs(PATH, exist_ok=True)
+        if not os.access(PATH, os.W_OK):
+            raise OSError
+    except (PermissionError, OSError):
+        warnings.warn(
+            f'Unable to access {PATH}. Manually specify the PyVista examples cache '
+            'with the PYVISTA_USERDATA_PATH environment variable.'
+        )
+
+# allow to override the examples path
+if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
+    PYVISTA_USERDATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
+    if not os.path.isdir(PYVISTA_USERDATA_PATH):
+        warnings.warn(f"PYVISTA_USERDATA_PATH: {PYVISTA_USERDATA_PATH} is an invalid path")
+    if not os.path.basename(PYVISTA_USERDATA_PATH) == 'Data':
+        expected_path = os.path.join('PYVISTA_USERDATA_PATH', 'Data')
+        warnings.warn(
+            f'As of 0.37.0, PYVISTA_USERDATA_PATH: {PYVISTA_USERDATA_PATH} is '
+            'expected to end with the "Data" directory. For example:\n'
+            f'{expected_path}'
+        )
+
+GLTF_SAMPLES_URL = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/'
 
 FETCHER = pooch.create(
-    path=pyvista.EXAMPLES_PATH if pyvista.VTK_DATA_PATH is None else pyvista.VTK_DATA_PATH,
+    path=PATH,
     base_url="https://github.com/pyvista/vtk-data/raw/master/Data/",
     registry={
         '250.vtk': None,
@@ -159,6 +192,10 @@ FETCHER = pooch.create(
         'moonlanding.png': None,
         'motor.g': None,
         'mug.e': None,
+        'multi-bin.f': None,
+        'multi-bin.q': None,
+        'multi-bin.xyz': None,
+        'multi.p3d': None,
         'nefertiti.ply.zip': None,
         'notch_disp.vtu': None,
         'notch_stress.vtk': None,
@@ -179,11 +216,17 @@ FETCHER = pooch.create(
         'skybox-nz.jpg': None,
         'skybox-nz.jpg': None,
         'skybox2-negx': None,
+        'skybox2-negx.jpg': None,
         'skybox2-negy': None,
+        'skybox2-negy.jpg': None,
         'skybox2-negz': None,
+        'skybox2-negz.jpg': None,
         'skybox2-posx': None,
+        'skybox2-posx.jpg': None,
         'skybox2-posy': None,
+        'skybox2-posy.jpg': None,
         'skybox2-posz': None,
+        'skybox2-posz.jpg': None,
         'sparsePoints.txt': None,
         'spider.ply': None,
         'stars.jpg': None,
@@ -206,13 +249,15 @@ FETCHER = pooch.create(
     },
     # examples outside of the default repository
     urls={
-        'Avocado/glTF-Binary/Avocado.glb': GLTF_SAMPLES_ROOT_URL,
-        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': GLTF_SAMPLES_ROOT_URL,
-        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': GLTF_SAMPLES_ROOT_URL,
-        'GearboxAssy/glTF-Binary/GearboxAssy.glb': GLTF_SAMPLES_ROOT_URL,
-        'SheenChair/glTF-Binary/SheenChair.glb': GLTF_SAMPLES_ROOT_URL,
+        'Avocado/glTF-Binary/Avocado.glb': GLTF_SAMPLES_URL,
+        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': GLTF_SAMPLES_URL,
+        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': GLTF_SAMPLES_URL,
+        'GearboxAssy/glTF-Binary/GearboxAssy.glb': GLTF_SAMPLES_URL,
+        'SheenChair/glTF-Binary/SheenChair.glb': GLTF_SAMPLES_URL,
     },
     retry_if_failed=3,
+    # allow the user to override the path if needed
+    env='PYVISTA_USERDATA_PATH',
 )
 
 
@@ -236,10 +281,10 @@ def file_from_files(target_file, fnames):
     for fname in fnames:
         if os.path.basename(fname) == target_file:
             return fname
-    raise FileNotFoundError(f'``fnames`` missing {target_file}')
+    raise FileNotFoundError(f'Missing {target_file}')
 
 
-def _download_archive(filename, target_file=None, progress_bar=False):
+def _download_archive(filename, target_file=None, progress_bar=False):  # pragma: no cover
     """Download an archive.
 
     Return the path to a single file when set.
@@ -265,44 +310,6 @@ def _download_archive(filename, target_file=None, progress_bar=False):
     return fnames
 
 
-def _check_examples_path():
-    """Check if the examples path exists."""
-    if not pyvista.EXAMPLES_PATH:
-        raise FileNotFoundError(
-            'EXAMPLES_PATH does not exist.  Try setting the '
-            'environment variable `PYVISTA_USERDATA_PATH` '
-            'to a writable path and restarting python'
-        )
-
-
-def _cache_version(cache_version_file) -> int:
-    """Return the cache version."""
-    if os.path.isfile(cache_version_file):
-        with open(cache_version_file) as fid:
-            try:
-                return int(fid.read())
-            except:
-                pass
-    return 0
-
-
-def _verify_cache_integrity():  # pragma: no cover
-    """Verify that the version of the cache matches the expected version.
-
-    Clears cache when there is a version mismatch. This avoids any potential
-    issues with old file structures due to changed download methods.
-
-    """
-    cache_version_file = os.path.join(pyvista.EXAMPLES_PATH, 'VERSION')
-    cache_version = _cache_version(cache_version_file)
-
-    # clear with no version file or an old cache version
-    if cache_version < CACHE_VERSION:
-        delete_downloads()
-        with open(cache_version_file, 'w') as fid:
-            fid.write(str(CACHE_VERSION))
-
-
 def delete_downloads():
     """Delete all downloaded examples to free space or update the files.
 
@@ -320,10 +327,9 @@ def delete_downloads():
     True
 
     """
-    _check_examples_path()
-    if os.path.isdir(pyvista.EXAMPLES_PATH):
-        shutil.rmtree(pyvista.EXAMPLES_PATH)
-    os.makedirs(pyvista.EXAMPLES_PATH)
+    if os.path.isdir(PATH):
+        shutil.rmtree(PATH)
+    os.makedirs(PATH)
     return True
 
 
@@ -346,8 +352,7 @@ def _download_and_read(filename, texture=False, file_format=None, load=True, pro
         file.
 
     progress_bar : bool, default: False
-        Display a progress_bar bar when downloading the file. This is ignored
-        when ``VTK_DATA_PATH`` is set.
+        Display a progress_bar bar when downloading the file.
 
     Returns
     -------
@@ -366,7 +371,7 @@ def _download_and_read(filename, texture=False, file_format=None, load=True, pro
     return pyvista.read(saved_file, file_format=file_format)
 
 
-def download_masonry_texture(load=True):
+def download_masonry_texture(load=True):  # pragma: no cover
     """Download masonry texture.
 
     Parameters
@@ -397,7 +402,7 @@ def download_masonry_texture(load=True):
     return _download_and_read('masonry.bmp', texture=True, load=load)
 
 
-def download_usa_texture(load=True):
+def download_usa_texture(load=True):  # pragma: no cover
     """Download USA texture.
 
     Parameters
@@ -422,7 +427,7 @@ def download_usa_texture(load=True):
     return _download_and_read('usa_image.jpg', texture=True, load=load)
 
 
-def download_puppy_texture(load=True):
+def download_puppy_texture(load=True):  # pragma: no cover
     """Download puppy texture.
 
     Parameters
@@ -449,7 +454,7 @@ def download_puppy_texture(load=True):
     return _download_and_read('puppy.jpg', texture=True, load=load)
 
 
-def download_puppy(load=True):
+def download_puppy(load=True):  # pragma: no cover
     """Download puppy dataset.
 
     Parameters
@@ -473,7 +478,7 @@ def download_puppy(load=True):
     return _download_and_read('puppy.jpg', load=load)
 
 
-def download_usa(load=True):
+def download_usa(load=True):  # pragma: no cover
     """Download usa dataset.
 
     Parameters
@@ -497,7 +502,7 @@ def download_usa(load=True):
     return _download_and_read('usa.vtk', load=load)
 
 
-def download_st_helens(load=True):
+def download_st_helens(load=True):  # pragma: no cover
     """Download Saint Helens dataset.
 
     Parameters
@@ -531,7 +536,7 @@ def download_st_helens(load=True):
     return _download_and_read('SainteHelens.dem', load=load)
 
 
-def download_bunny(load=True):
+def download_bunny(load=True):  # pragma: no cover
     """Download bunny dataset.
 
     Parameters
@@ -568,7 +573,7 @@ def download_bunny(load=True):
     return _download_and_read('bunny.ply', load=load)
 
 
-def download_bunny_coarse(load=True):
+def download_bunny_coarse(load=True):  # pragma: no cover
     """Download coarse bunny dataset.
 
     Parameters
@@ -603,7 +608,7 @@ def download_bunny_coarse(load=True):
     return result
 
 
-def download_cow(load=True):
+def download_cow(load=True):  # pragma: no cover
     """Download cow dataset.
 
     Parameters
@@ -635,7 +640,7 @@ def download_cow(load=True):
     return _download_and_read('cow.vtp', load=load)
 
 
-def download_cow_head(load=True):
+def download_cow_head(load=True):  # pragma: no cover
     """Download cow head dataset.
 
     Parameters
@@ -659,7 +664,7 @@ def download_cow_head(load=True):
     return _download_and_read('cowHead.vtp', load=load)
 
 
-def download_faults(load=True):
+def download_faults(load=True):  # pragma: no cover
     """Download faults dataset.
 
     Parameters
@@ -683,7 +688,7 @@ def download_faults(load=True):
     return _download_and_read('faults.vtk', load=load)
 
 
-def download_tensors(load=True):
+def download_tensors(load=True):  # pragma: no cover
     """Download tensors dataset.
 
     Parameters
@@ -707,7 +712,7 @@ def download_tensors(load=True):
     return _download_and_read('tensors.vtk', load=load)
 
 
-def download_head(load=True):
+def download_head(load=True):  # pragma: no cover
     """Download head dataset.
 
     Parameters
@@ -743,7 +748,7 @@ def download_head(load=True):
     return _download_and_read('HeadMRVolume.mhd', load=load)
 
 
-def download_bolt_nut(load=True):
+def download_bolt_nut(load=True):  # pragma: no cover
     """Download bolt nut dataset.
 
     Parameters
@@ -785,7 +790,7 @@ def download_bolt_nut(load=True):
     return blocks
 
 
-def download_clown(load=True):
+def download_clown(load=True):  # pragma: no cover
     """Download clown dataset.
 
     Parameters
@@ -809,7 +814,7 @@ def download_clown(load=True):
     return _download_and_read('clown.facet', load=load)
 
 
-def download_topo_global(load=True):
+def download_topo_global(load=True):  # pragma: no cover
     """Download topo dataset.
 
     Parameters
@@ -838,7 +843,7 @@ def download_topo_global(load=True):
     return _download_and_read('EarthModels/ETOPO_10min_Ice.vtp', load=load)
 
 
-def download_topo_land(load=True):
+def download_topo_land(load=True):  # pragma: no cover
     """Download topo land dataset.
 
     Parameters
@@ -867,7 +872,7 @@ def download_topo_land(load=True):
     return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp', load=load)
 
 
-def download_coastlines(load=True):
+def download_coastlines(load=True):  # pragma: no cover
     """Download coastlines dataset.
 
     Parameters
@@ -891,7 +896,7 @@ def download_coastlines(load=True):
     return _download_and_read('EarthModels/Coastlines_Los_Alamos.vtp', load=load)
 
 
-def download_knee(load=True):
+def download_knee(load=True):  # pragma: no cover
     """Download knee dataset.
 
     Parameters
@@ -921,7 +926,7 @@ def download_knee(load=True):
     return _download_and_read('DICOM_KNEE.dcm', load=load)
 
 
-def download_knee_full(load=True):
+def download_knee_full(load=True):  # pragma: no cover
     """Download full knee dataset.
 
     Parameters
@@ -955,7 +960,7 @@ def download_knee_full(load=True):
     return _download_and_read('vw_knee.slc', load=load)
 
 
-def download_lidar(load=True):
+def download_lidar(load=True):  # pragma: no cover
     """Download lidar dataset.
 
     Parameters
@@ -984,7 +989,7 @@ def download_lidar(load=True):
     return _download_and_read('kafadar-lidar-interp.vtp', load=load)
 
 
-def download_exodus(load=True):
+def download_exodus(load=True):  # pragma: no cover
     """Sample ExodusII data file.
 
     Parameters
@@ -1008,7 +1013,7 @@ def download_exodus(load=True):
     return _download_and_read('mesh_fs8.exo', load=load)
 
 
-def download_nefertiti(load=True):
+def download_nefertiti(load=True):  # pragma: no cover
     """Download mesh of Queen Nefertiti.
 
     Parameters
@@ -1045,7 +1050,7 @@ def download_nefertiti(load=True):
     return pyvista.read(filename)
 
 
-def download_blood_vessels(load=True):
+def download_blood_vessels(load=True):  # pragma: no cover
     """Download data representing the bifurcation of blood vessels.
 
     Parameters
@@ -1083,7 +1088,7 @@ def download_blood_vessels(load=True):
     return mesh
 
 
-def download_iron_protein(load=True):
+def download_iron_protein(load=True):  # pragma: no cover
     """Download iron protein dataset.
 
     Parameters
@@ -1107,7 +1112,7 @@ def download_iron_protein(load=True):
     return _download_and_read('ironProt.vtk', load=load)
 
 
-def download_tetrahedron(load=True):
+def download_tetrahedron(load=True):  # pragma: no cover
     """Download tetrahedron dataset.
 
     Parameters
@@ -1134,7 +1139,7 @@ def download_tetrahedron(load=True):
     return _download_and_read('Tetrahedron.vtu', load=load)
 
 
-def download_saddle_surface(load=True):
+def download_saddle_surface(load=True):  # pragma: no cover
     """Download saddle surface dataset.
 
     Parameters
@@ -1161,7 +1166,7 @@ def download_saddle_surface(load=True):
     return _download_and_read('InterpolatingOnSTL_final.stl', load=load)
 
 
-def download_sparse_points(load=True):
+def download_sparse_points(load=True):  # pragma: no cover
     """Download sparse points data.
 
     Used with :func:`download_saddle_surface`.
@@ -1204,7 +1209,7 @@ def download_sparse_points(load=True):
     return pyvista.wrap(table_points.GetOutput())
 
 
-def download_foot_bones(load=True):
+def download_foot_bones(load=True):  # pragma: no cover
     """Download foot bones dataset.
 
     Parameters
@@ -1231,7 +1236,7 @@ def download_foot_bones(load=True):
     return _download_and_read('fsu/footbones.ply', load=load)
 
 
-def download_guitar(load=True):
+def download_guitar(load=True):  # pragma: no cover
     """Download guitar dataset.
 
     Parameters
@@ -1255,7 +1260,7 @@ def download_guitar(load=True):
     return _download_and_read('fsu/stratocaster.ply', load=load)
 
 
-def download_quadratic_pyramid(load=True):
+def download_quadratic_pyramid(load=True):  # pragma: no cover
     """Download quadratic pyramid dataset.
 
     Parameters
@@ -1282,7 +1287,7 @@ def download_quadratic_pyramid(load=True):
     return _download_and_read('QuadraticPyramid.vtu', load=load)
 
 
-def download_bird(load=True):
+def download_bird(load=True):  # pragma: no cover
     """Download bird dataset.
 
     Parameters
@@ -1306,7 +1311,7 @@ def download_bird(load=True):
     return _download_and_read('Pileated.jpg', load=load)
 
 
-def download_bird_texture(load=True):
+def download_bird_texture(load=True):  # pragma: no cover
     """Download bird texture.
 
     Parameters
@@ -1330,7 +1335,7 @@ def download_bird_texture(load=True):
     return _download_and_read('Pileated.jpg', texture=True, load=load)
 
 
-def download_office(load=True):
+def download_office(load=True):  # pragma: no cover
     """Download office dataset.
 
     Parameters
@@ -1357,7 +1362,7 @@ def download_office(load=True):
     return _download_and_read('office.binary.vtk', load=load)
 
 
-def download_horse_points(load=True):
+def download_horse_points(load=True):  # pragma: no cover
     """Download horse points dataset.
 
     Parameters
@@ -1381,7 +1386,7 @@ def download_horse_points(load=True):
     return _download_and_read('horsePoints.vtp', load=load)
 
 
-def download_horse(load=True):
+def download_horse(load=True):  # pragma: no cover
     """Download horse dataset.
 
     Parameters
@@ -1408,7 +1413,7 @@ def download_horse(load=True):
     return _download_and_read('horse.vtp', load=load)
 
 
-def download_cake_easy(load=True):
+def download_cake_easy(load=True):  # pragma: no cover
     """Download cake dataset.
 
     Parameters
@@ -1432,7 +1437,7 @@ def download_cake_easy(load=True):
     return _download_and_read('cake_easy.jpg', load=load)
 
 
-def download_cake_easy_texture(load=True):
+def download_cake_easy_texture(load=True):  # pragma: no cover
     """Download cake texture.
 
     Parameters
@@ -1456,7 +1461,7 @@ def download_cake_easy_texture(load=True):
     return _download_and_read('cake_easy.jpg', texture=True, load=load)
 
 
-def download_rectilinear_grid(load=True):
+def download_rectilinear_grid(load=True):  # pragma: no cover
     """Download rectilinear grid dataset.
 
     Parameters
@@ -1482,7 +1487,7 @@ def download_rectilinear_grid(load=True):
     return _download_and_read('RectilinearGrid.vtr', load=load)
 
 
-def download_gourds(zoom=False, load=True):
+def download_gourds(zoom=False, load=True):  # pragma: no cover
     """Download gourds dataset.
 
     Parameters
@@ -1514,7 +1519,7 @@ def download_gourds(zoom=False, load=True):
     return _download_and_read('Gourds2.jpg', load=load)
 
 
-def download_gourds_texture(zoom=False, load=True):
+def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
     """Download gourds texture.
 
     Parameters
@@ -1543,7 +1548,7 @@ def download_gourds_texture(zoom=False, load=True):
     return _download_and_read('Gourds2.jpg', texture=True, load=load)
 
 
-def download_gourds_pnm(load=True):
+def download_gourds_pnm(load=True):  # pragma: no cover
     """Download gourds dataset from pnm file.
 
     Parameters
@@ -1567,7 +1572,7 @@ def download_gourds_pnm(load=True):
     return _download_and_read('Gourds.pnm', load=load)
 
 
-def download_unstructured_grid(load=True):
+def download_unstructured_grid(load=True):  # pragma: no cover
     """Download unstructured grid dataset.
 
     Parameters
@@ -1591,7 +1596,7 @@ def download_unstructured_grid(load=True):
     return _download_and_read('uGridEx.vtk', load=load)
 
 
-def download_letter_k(load=True):
+def download_letter_k(load=True):  # pragma: no cover
     """Download letter k dataset.
 
     Parameters
@@ -1615,7 +1620,7 @@ def download_letter_k(load=True):
     return _download_and_read('k.vtk', load=load)
 
 
-def download_letter_a(load=True):
+def download_letter_a(load=True):  # pragma: no cover
     """Download letter a dataset.
 
     Parameters
@@ -1642,7 +1647,7 @@ def download_letter_a(load=True):
     return _download_and_read('a_grid.vtk', load=load)
 
 
-def download_poly_line(load=True):
+def download_poly_line(load=True):  # pragma: no cover
     """Download polyline dataset.
 
     Parameters
@@ -1666,7 +1671,7 @@ def download_poly_line(load=True):
     return _download_and_read('polyline.vtk', load=load)
 
 
-def download_cad_model(load=True):
+def download_cad_model(load=True):  # pragma: no cover
     """Download cad dataset.
 
     Parameters
@@ -1693,7 +1698,7 @@ def download_cad_model(load=True):
     return _download_and_read('42400-IDGH.stl', load=load)
 
 
-def download_frog(load=True):
+def download_frog(load=True):  # pragma: no cover
     """Download frog dataset.
 
     Parameters
@@ -1727,7 +1732,7 @@ def download_frog(load=True):
     return _download_and_read('froggy/frog.mhd', load=load)
 
 
-def download_chest(load=True):
+def download_chest(load=True):  # pragma: no cover
     """Download chest dataset.
 
     Parameters
@@ -1754,7 +1759,7 @@ def download_chest(load=True):
     return _download_and_read('MetaIO/ChestCT-SHORT.mha', load=load)
 
 
-def download_prostate(load=True):
+def download_prostate(load=True):  # pragma: no cover
     """Download prostate dataset.
 
     Parameters
@@ -1778,7 +1783,7 @@ def download_prostate(load=True):
     return _download_and_read('prostate.img', load=load)
 
 
-def download_filled_contours(load=True):
+def download_filled_contours(load=True):  # pragma: no cover
     """Download filled contours dataset.
 
     Parameters
@@ -1802,7 +1807,7 @@ def download_filled_contours(load=True):
     return _download_and_read('filledContours.vtp', load=load)
 
 
-def download_doorman(load=True):
+def download_doorman(load=True):  # pragma: no cover
     """Download doorman dataset.
 
     Parameters
@@ -1830,7 +1835,7 @@ def download_doorman(load=True):
     return _download_and_read('doorman/doorman.obj', load=load)
 
 
-def download_mug(load=True):
+def download_mug(load=True):  # pragma: no cover
     """Download mug dataset.
 
     Parameters
@@ -1854,7 +1859,7 @@ def download_mug(load=True):
     return _download_and_read('mug.e', load=load)
 
 
-def download_oblique_cone(load=True):
+def download_oblique_cone(load=True):  # pragma: no cover
     """Download oblique cone dataset.
 
     Parameters
@@ -1878,7 +1883,7 @@ def download_oblique_cone(load=True):
     return _download_and_read('ObliqueCone.vtp', load=load)
 
 
-def download_emoji(load=True):
+def download_emoji(load=True):  # pragma: no cover
     """Download emoji dataset.
 
     Parameters
@@ -1902,7 +1907,7 @@ def download_emoji(load=True):
     return _download_and_read('emote.jpg', load=load)
 
 
-def download_emoji_texture(load=True):
+def download_emoji_texture(load=True):  # pragma: no cover
     """Download emoji texture.
 
     Parameters
@@ -1926,7 +1931,7 @@ def download_emoji_texture(load=True):
     return _download_and_read('emote.jpg', texture=True, load=load)
 
 
-def download_teapot(load=True):
+def download_teapot(load=True):  # pragma: no cover
     """Download teapot dataset.
 
     Parameters
@@ -1955,7 +1960,7 @@ def download_teapot(load=True):
     return _download_and_read('teapot.g', load=load)
 
 
-def download_brain(load=True):
+def download_brain(load=True):  # pragma: no cover
     """Download brain dataset.
 
     Parameters
@@ -1987,7 +1992,7 @@ def download_brain(load=True):
     return _download_and_read('brain.vtk', load=load)
 
 
-def download_structured_grid(load=True):
+def download_structured_grid(load=True):  # pragma: no cover
     """Download structured grid dataset.
 
     Parameters
@@ -2011,7 +2016,7 @@ def download_structured_grid(load=True):
     return _download_and_read('StructuredGrid.vts', load=load)
 
 
-def download_structured_grid_two(load=True):
+def download_structured_grid_two(load=True):  # pragma: no cover
     """Download structured grid two dataset.
 
     Parameters
@@ -2035,7 +2040,7 @@ def download_structured_grid_two(load=True):
     return _download_and_read('SampleStructGrid.vtk', load=load)
 
 
-def download_trumpet(load=True):
+def download_trumpet(load=True):  # pragma: no cover
     """Download trumpet dataset.
 
     Parameters
@@ -2059,7 +2064,7 @@ def download_trumpet(load=True):
     return _download_and_read('trumpet.obj', load=load)
 
 
-def download_face(load=True):
+def download_face(load=True):  # pragma: no cover
     """Download face dataset.
 
     Parameters
@@ -2088,7 +2093,7 @@ def download_face(load=True):
     return _download_and_read('fran_cut.vtk', load=load)
 
 
-def download_sky_box_nz(load=True):
+def download_sky_box_nz(load=True):  # pragma: no cover
     """Download skybox-nz dataset.
 
     Parameters
@@ -2112,7 +2117,7 @@ def download_sky_box_nz(load=True):
     return _download_and_read('skybox-nz.jpg', load=load)
 
 
-def download_sky_box_nz_texture(load=True):
+def download_sky_box_nz_texture(load=True):  # pragma: no cover
     """Download skybox-nz texture.
 
     Parameters
@@ -2136,7 +2141,7 @@ def download_sky_box_nz_texture(load=True):
     return _download_and_read('skybox-nz.jpg', texture=True, load=load)
 
 
-def download_disc_quads(load=True):
+def download_disc_quads(load=True):  # pragma: no cover
     """Download disc quads dataset.
 
     Parameters
@@ -2160,7 +2165,7 @@ def download_disc_quads(load=True):
     return _download_and_read('Disc_BiQuadraticQuads_0_0.vtu', load=load)
 
 
-def download_honolulu(load=True):
+def download_honolulu(load=True):  # pragma: no cover
     """Download honolulu dataset.
 
     Parameters
@@ -2189,7 +2194,7 @@ def download_honolulu(load=True):
     return _download_and_read('honolulu.vtk', load=load)
 
 
-def download_motor(load=True):
+def download_motor(load=True):  # pragma: no cover
     """Download motor dataset.
 
     Parameters
@@ -2213,7 +2218,7 @@ def download_motor(load=True):
     return _download_and_read('motor.g', load=load)
 
 
-def download_tri_quadratic_hexahedron(load=True):
+def download_tri_quadratic_hexahedron(load=True):  # pragma: no cover
     """Download tri quadratic hexahedron dataset.
 
     Parameters
@@ -2245,7 +2250,7 @@ def download_tri_quadratic_hexahedron(load=True):
     return dataset
 
 
-def download_human(load=True):
+def download_human(load=True):  # pragma: no cover
     """Download human dataset.
 
     Parameters
@@ -2269,7 +2274,7 @@ def download_human(load=True):
     return _download_and_read('Human.vtp', load=load)
 
 
-def download_vtk(load=True):
+def download_vtk(load=True):  # pragma: no cover
     """Download vtk dataset.
 
     Parameters
@@ -2293,7 +2298,7 @@ def download_vtk(load=True):
     return _download_and_read('vtk.vtp', load=load)
 
 
-def download_spider(load=True):
+def download_spider(load=True):  # pragma: no cover
     """Download spider dataset.
 
     Parameters
@@ -2317,7 +2322,7 @@ def download_spider(load=True):
     return _download_and_read('spider.ply', load=load)
 
 
-def download_carotid(load=True):
+def download_carotid(load=True):  # pragma: no cover
     """Download carotid dataset.
 
     Parameters
@@ -2358,7 +2363,7 @@ def download_carotid(load=True):
     return mesh
 
 
-def download_blow(load=True):
+def download_blow(load=True):  # pragma: no cover
     """Download blow dataset.
 
     Parameters
@@ -2393,7 +2398,7 @@ def download_blow(load=True):
     return _download_and_read('blow.vtk', load=load)
 
 
-def download_shark(load=True):
+def download_shark(load=True):  # pragma: no cover
     """Download shark dataset.
 
     Parameters
@@ -2422,7 +2427,7 @@ def download_shark(load=True):
     return _download_and_read('shark.ply', load=load)
 
 
-def download_dragon(load=True):
+def download_dragon(load=True):  # pragma: no cover
     """Download dragon dataset.
 
     Parameters
@@ -2453,7 +2458,7 @@ def download_dragon(load=True):
     return _download_and_read('dragon.ply', load=load)
 
 
-def download_armadillo(load=True):
+def download_armadillo(load=True):  # pragma: no cover
     """Download armadillo dataset.
 
     Parameters
@@ -2484,7 +2489,7 @@ def download_armadillo(load=True):
     return _download_and_read('Armadillo.ply', load=load)
 
 
-def download_gears(load=True):
+def download_gears(load=True):  # pragma: no cover
     """Download gears dataset.
 
     Parameters
@@ -2506,7 +2511,7 @@ def download_gears(load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_gears()
     >>> bodies = dataset.split_bodies()
-    >>> for i, body in enumerate(bodies):
+    >>> for i, body in enumerate(bodies):  # pragma: no cover
     ...     bid = np.empty(body.n_points)
     ...     bid[:] = i
     ...     body.point_data["Body ID"] = bid
@@ -2515,7 +2520,7 @@ def download_gears(load=True):
     return _download_and_read('gears.stl', load=load)
 
 
-def download_torso(load=True):
+def download_torso(load=True):  # pragma: no cover
     """Download torso dataset.
 
     Parameters
@@ -2539,7 +2544,7 @@ def download_torso(load=True):
     return _download_and_read('Torso.vtp', load=load)
 
 
-def download_kitchen(split=False, load=True):
+def download_kitchen(split=False, load=True):  # pragma: no cover
     """Download structured grid of kitchen with velocity field.
 
     Use the ``split`` argument to extract all of the furniture in the
@@ -2597,7 +2602,7 @@ def download_kitchen(split=False, load=True):
         'furniture': (17, 19, 7, 9, 11, 11),
     }
     kitchen = pyvista.MultiBlock()
-    for key, extent in extents.items():
+    for key, extent in extents.items():  # pragma: no cover
         alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
@@ -2607,7 +2612,7 @@ def download_kitchen(split=False, load=True):
     return kitchen
 
 
-def download_tetra_dc_mesh():
+def download_tetra_dc_mesh():  # pragma: no cover
     """Download two meshes defining an electrical inverse problem.
 
     This contains a high resolution forward modeled mesh and a coarse
@@ -2634,7 +2639,7 @@ def download_tetra_dc_mesh():
     return pyvista.MultiBlock({'forward': fwd, 'inverse': inv})
 
 
-def download_model_with_variance(load=True):
+def download_model_with_variance(load=True):  # pragma: no cover
     """Download model with variance dataset.
 
     Parameters
@@ -2660,7 +2665,7 @@ def download_model_with_variance(load=True):
     return _download_and_read("model_with_variance.vtu", load=load)
 
 
-def download_thermal_probes(load=True):
+def download_thermal_probes(load=True):  # pragma: no cover
     """Download thermal probes dataset.
 
     Parameters
@@ -2686,7 +2691,7 @@ def download_thermal_probes(load=True):
     return _download_and_read("probes.vtp", load=load)
 
 
-def download_carburator(load=True):
+def download_carburator(load=True):  # pragma: no cover
     """Download scan of a carburator.
 
     Parameters
@@ -2710,7 +2715,7 @@ def download_carburator(load=True):
     return _download_and_read("carburetor.ply", load=load)
 
 
-def download_turbine_blade(load=True):
+def download_turbine_blade(load=True):  # pragma: no cover
     """Download scan of a turbine blade.
 
     Parameters
@@ -2734,7 +2739,7 @@ def download_turbine_blade(load=True):
     return _download_and_read('turbineblade.ply', load=load)
 
 
-def download_pine_roots(load=True):
+def download_pine_roots(load=True):  # pragma: no cover
     """Download pine roots dataset.
 
     Parameters
@@ -2760,7 +2765,7 @@ def download_pine_roots(load=True):
     return _download_and_read('pine_root.tri', load=load)
 
 
-def download_crater_topo(load=True):
+def download_crater_topo(load=True):  # pragma: no cover
     """Download crater dataset.
 
     Parameters
@@ -2789,7 +2794,7 @@ def download_crater_topo(load=True):
     return _download_and_read('Ruapehu_mag_dem_15m_NZTM.vtk', load=load)
 
 
-def download_crater_imagery(load=True):
+def download_crater_imagery(load=True):  # pragma: no cover
     """Download crater texture.
 
     Parameters
@@ -2820,7 +2825,7 @@ def download_crater_imagery(load=True):
     return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True, load=load)
 
 
-def download_dolfin(load=True):
+def download_dolfin(load=True):  # pragma: no cover
     """Download dolfin mesh.
 
     Parameters
@@ -2844,7 +2849,7 @@ def download_dolfin(load=True):
     return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml", load=load)
 
 
-def download_damavand_volcano(load=True):
+def download_damavand_volcano(load=True):  # pragma: no cover
     """Download damavand volcano model.
 
     Parameters
@@ -2879,7 +2884,7 @@ def download_damavand_volcano(load=True):
     return volume
 
 
-def download_delaunay_example(load=True):
+def download_delaunay_example(load=True):  # pragma: no cover
     """Download a pointset for the Delaunay example.
 
     Parameters
@@ -2903,7 +2908,7 @@ def download_delaunay_example(load=True):
     return _download_and_read('250.vtk', load=load)
 
 
-def download_embryo(load=True):
+def download_embryo(load=True):  # pragma: no cover
     """Download a volume of an embryo.
 
     Parameters
@@ -2941,7 +2946,7 @@ def download_embryo(load=True):
         return filename
 
 
-def download_antarctica_velocity(load=True):
+def download_antarctica_velocity(load=True):  # pragma: no cover
     """Download the antarctica velocity simulation results.
 
     Parameters
@@ -2967,7 +2972,7 @@ def download_antarctica_velocity(load=True):
     return _download_and_read("antarctica_velocity.vtp", load=load)
 
 
-def download_room_surface_mesh(load=True):
+def download_room_surface_mesh(load=True):  # pragma: no cover
     """Download the room surface mesh.
 
     This mesh is for demonstrating the difference that depth peeling can
@@ -2998,7 +3003,7 @@ def download_room_surface_mesh(load=True):
     return _download_and_read("room_surface_mesh.obj", load=load)
 
 
-def download_beach(load=True):
+def download_beach(load=True):  # pragma: no cover
     """Download the beach NRRD image.
 
     Parameters
@@ -3022,7 +3027,7 @@ def download_beach(load=True):
     return _download_and_read("beach.nrrd", load=load)
 
 
-def download_rgba_texture(load=True):
+def download_rgba_texture(load=True):  # pragma: no cover
     """Download a texture with an alpha channel.
 
     Parameters
@@ -3048,7 +3053,7 @@ def download_rgba_texture(load=True):
     return _download_and_read("alphachannel.png", texture=True, load=load)
 
 
-def download_vtk_logo(load=True):
+def download_vtk_logo(load=True):  # pragma: no cover
     """Download a texture of the VTK logo.
 
     Parameters
@@ -3072,7 +3077,7 @@ def download_vtk_logo(load=True):
     return _download_and_read("vtk.png", texture=True, load=load)
 
 
-def download_sky_box_cube_map():
+def download_sky_box_cube_map():  # pragma: no cover
     """Download a skybox cube map texture.
 
     Returns
@@ -3097,12 +3102,12 @@ def download_sky_box_cube_map():
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     images = [prefix + suffix + '.jpg' for suffix in sets]
     for image in images:
-        FETCHER.FETCH(image)
+        FETCHER.fetch(image)
 
     return pyvista.cubemap(str(FETCHER.path), prefix)
 
 
-def download_cubemap_park():
+def download_cubemap_park():  # pragma: no cover
     """Download a cubemap of a park.
 
     Downloaded from http://www.humus.name/index.php?page=Textures
@@ -3136,7 +3141,7 @@ def download_cubemap_park():
     return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
-def download_cubemap_space_4k():
+def download_cubemap_space_4k():  # pragma: no cover
     """Download the 4k space cubemap.
 
     This cubemap was generated by downloading the 4k image from: `Deep Star
@@ -3171,7 +3176,7 @@ def download_cubemap_space_4k():
     return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
-def download_cubemap_space_16k(progress_bar=False):
+def download_cubemap_space_16k(progress_bar=False):  # pragma: no cover
     """Download the 16k space cubemap.
 
     This cubemap was generated by downloading the 16k image from: `Deep Star
@@ -3218,7 +3223,7 @@ def download_cubemap_space_16k(progress_bar=False):
     return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
-def download_backward_facing_step(load=True):
+def download_backward_facing_step(load=True):  # pragma: no cover
     """Download an ensight gold case of a fluid simulation.
 
     Parameters
@@ -3245,7 +3250,7 @@ def download_backward_facing_step(load=True):
     return pyvista.read(filename)
 
 
-def download_gpr_data_array(load=True):
+def download_gpr_data_array(load=True):  # pragma: no cover
     """Download GPR example data array.
 
     Parameters
@@ -3281,7 +3286,7 @@ def download_gpr_data_array(load=True):
     return np.load(saved_file)
 
 
-def download_gpr_path(load=True):
+def download_gpr_path(load=True):  # pragma: no cover
     """Download GPR example path.
 
     Parameters
@@ -3311,7 +3316,7 @@ def download_gpr_path(load=True):
     return pyvista.PolyData(path)
 
 
-def download_woman(load=True):
+def download_woman(load=True):  # pragma: no cover
     """Download scan of a woman.
 
     Originally obtained from Laser Design.
@@ -3342,7 +3347,7 @@ def download_woman(load=True):
     return _download_and_read('woman.stl', load=load)
 
 
-def download_lobster(load=True):
+def download_lobster(load=True):  # pragma: no cover
     """Download scan of a lobster.
 
     Originally obtained from Laser Design.
@@ -3368,7 +3373,7 @@ def download_lobster(load=True):
     return _download_and_read('lobster.ply', load=load)
 
 
-def download_face2(load=True):
+def download_face2(load=True):  # pragma: no cover
     """Download scan of a man's face.
 
     Originally obtained from Laser Design.
@@ -3394,7 +3399,7 @@ def download_face2(load=True):
     return _download_and_read('man_face.stl', load=load)
 
 
-def download_urn(load=True):
+def download_urn(load=True):  # pragma: no cover
     """Download scan of a burial urn.
 
     Originally obtained from Laser Design.
@@ -3425,7 +3430,7 @@ def download_urn(load=True):
     return _download_and_read('urn.stl', load=load)
 
 
-def download_pepper(load=True):
+def download_pepper(load=True):  # pragma: no cover
     """Download scan of a pepper (capsicum).
 
     Originally obtained from Laser Design.
@@ -3451,7 +3456,7 @@ def download_pepper(load=True):
     return _download_and_read('pepper.ply', load=load)
 
 
-def download_drill(load=True):
+def download_drill(load=True):  # pragma: no cover
     """Download scan of a power drill.
 
     Originally obtained from Laser Design.
@@ -3477,7 +3482,7 @@ def download_drill(load=True):
     return _download_and_read('drill.obj', load=load)
 
 
-def download_action_figure(load=True):
+def download_action_figure(load=True):  # pragma: no cover
     """Download scan of an action figure.
 
     Originally obtained from Laser Design.
@@ -3518,7 +3523,7 @@ def download_action_figure(load=True):
     return _download_and_read('tigerfighter.obj', load=load)
 
 
-def download_mars_jpg():
+def download_mars_jpg():  # pragma: no cover
     """Download and return the path of ``'mars.jpg'``.
 
     Returns
@@ -3572,7 +3577,7 @@ def download_mars_jpg():
     return FETCHER.fetch('mars.jpg')
 
 
-def download_stars_jpg():
+def download_stars_jpg():  # pragma: no cover
     """Download and return the path of ``'stars.jpg'``.
 
     Returns
@@ -3595,7 +3600,7 @@ def download_stars_jpg():
     return FETCHER.fetch('stars.jpg')
 
 
-def download_notch_stress(load=True):
+def download_notch_stress(load=True):  # pragma: no cover
     """Download the FEA stress result from a notched beam.
 
     Parameters
@@ -3623,7 +3628,7 @@ def download_notch_stress(load=True):
     return _download_and_read('notch_stress.vtk', load=load)
 
 
-def download_notch_displacement(load=True):
+def download_notch_displacement(load=True):  # pragma: no cover
     """Download the FEA displacement result from a notched beam.
 
     Parameters
@@ -3647,7 +3652,7 @@ def download_notch_displacement(load=True):
     return _download_and_read('notch_disp.vtu', load=load)
 
 
-def download_louis_louvre(load=True):
+def download_louis_louvre(load=True):  # pragma: no cover
     """Download the Louis XIV de France statue at the Louvre, Paris.
 
     Statue found in the Napoléon Courtyard of Louvre Palace. It is a
@@ -3690,7 +3695,7 @@ def download_louis_louvre(load=True):
     return _download_and_read('louis.ply', load=load)
 
 
-def download_cylinder_crossflow(load=True):
+def download_cylinder_crossflow(load=True):  # pragma: no cover
     """Download CFD result for cylinder in cross flow at Re=35.
 
     Parameters
@@ -3723,7 +3728,7 @@ def download_cylinder_crossflow(load=True):
     return pyvista.read(filename)
 
 
-def download_naca(load=True):
+def download_naca(load=True):  # pragma: no cover
     """Download NACA airfoil dataset in EnSight format.
 
     Parameters
@@ -3763,7 +3768,7 @@ def download_naca(load=True):
     return pyvista.read(filename)
 
 
-def download_wavy(load=True):
+def download_wavy(load=True):  # pragma: no cover
     """Download PVD file of a 2D wave.
 
     Parameters
@@ -3792,7 +3797,7 @@ def download_wavy(load=True):
     return pyvista.PVDReader(filename).read()
 
 
-def download_single_sphere_animation(load=True):
+def download_single_sphere_animation(load=True):  # pragma: no cover
     """Download PVD file for single sphere.
 
     Parameters
@@ -3843,7 +3848,7 @@ def download_single_sphere_animation(load=True):
     return pyvista.PVDReader(filename).read()
 
 
-def download_dual_sphere_animation(load=True):
+def download_dual_sphere_animation(load=True):  # pragma: no cover
     """Download PVD file for double sphere.
 
     Parameters
@@ -3896,7 +3901,7 @@ def download_dual_sphere_animation(load=True):
     return pyvista.PVDReader(filename).read()
 
 
-def download_osmnx_graph():
+def download_osmnx_graph():  # pragma: no cover
     """Load a simple street map from Open Street Map.
 
     Generated from:
@@ -3932,7 +3937,7 @@ def download_osmnx_graph():
     return pickle.load(open(filename, 'rb'))
 
 
-def download_cavity(load=True):
+def download_cavity(load=True):  # pragma: no cover
     """Download cavity OpenFOAM example.
 
     Retrieved from
@@ -3963,7 +3968,7 @@ def download_cavity(load=True):
     return pyvista.OpenFOAMReader(filename).read()
 
 
-def download_lucy(load=True):
+def download_lucy(load=True):  # pragma: no cover
     """Download the lucy angel mesh.
 
     Original downloaded from the `The Stanford 3D Scanning Repository
@@ -4017,7 +4022,7 @@ def download_lucy(load=True):
     return _download_and_read('lucy.ply', load=load)
 
 
-def download_can(partial=False, load=True):
+def download_can(partial=False, load=True):  # pragma: no cover
     """Download the can dataset mesh.
 
     File obtained from `Kitware <https://www.kitware.com/>`_. Used
@@ -4047,7 +4052,7 @@ def download_can(partial=False, load=True):
     >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
 
     """
-    if pyvista.vtk_version_info > (9, 1):
+    if pyvista.vtk_version_info > (9, 1):  # pragma: no cover
         raise VTKVersionError(
             'This example file is deprecated for VTK v9.2.0 and newer. '
             'Use `download_can_crushed_hdf` instead.'
@@ -4068,7 +4073,7 @@ def download_can(partial=False, load=True):
     return cans
 
 
-def download_can_crushed_hdf(load=True):
+def download_can_crushed_hdf(load=True):  # pragma: no cover
     """Download the crushed can dataset.
 
     File obtained from `Kitware <https://www.kitware.com/>`_. Used
@@ -4102,7 +4107,7 @@ def download_can_crushed_hdf(load=True):
     return _download_and_read('hdf/can-vtu.hdf', load=load)
 
 
-def download_cgns_structured(load=True):
+def download_cgns_structured(load=True):  # pragma: no cover
     """Download the structured CGNS dataset mesh.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -4137,7 +4142,7 @@ def download_cgns_structured(load=True):
     return pyvista.get_reader(filename).read()
 
 
-def download_tecplot_ascii(load=True):
+def download_tecplot_ascii(load=True):  # pragma: no cover
     """Download the single block ASCII Tecplot dataset.
 
     Originally downloaded from Paul Bourke's
@@ -4172,7 +4177,7 @@ def download_tecplot_ascii(load=True):
     return pyvista.get_reader(filename).read()
 
 
-def download_cgns_multi(load=True):
+def download_cgns_multi(load=True):  # pragma: no cover
     """Download a multielement airfoil with a cell centered solution.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -4255,7 +4260,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:
     * **TCIA Citation**
 
         Clark K, Vendt B, Smith K, Freymann J, Kirby J, Koppel P, Moore S, Phillips S,
-        Maffitt D, Pringle M, Tarbox L, Prior F. The Cancer Imaging Archive (TCIA):
+        Maffitt D, Pringle M, Tarbox L, Prior F. The Cancer Imaging Archive (TCIA):  # pragma: no cover
         Maintaining and Operating a Public Information Repository, Journal of Digital Imaging,
         Volume 26, Number 6, December, 2013, pp 1045-1057. doi: 10.1007/s10278-013-9622-7
 
@@ -4274,7 +4279,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:
     return path
 
 
-def download_parched_canal_4k(load=True):
+def download_parched_canal_4k(load=True):  # pragma: no cover
     """Download parched canal 4k dataset.
 
     Parameters
@@ -4298,7 +4303,7 @@ def download_parched_canal_4k(load=True):
     return _download_and_read("parched_canal_4k.hdr", texture=True, load=load)
 
 
-def download_cells_nd(load=True):
+def download_cells_nd(load=True):  # pragma: no cover
     """Download example AVS UCD dataset.
 
     Parameters
@@ -4322,7 +4327,7 @@ def download_cells_nd(load=True):
     return _download_and_read("cellsnd.ascii.inp", load=load)
 
 
-def download_moonlanding_image(load=True):
+def download_moonlanding_image(load=True):  # pragma: no cover
     """Download the Moon landing image.
 
     This is a noisy image originally obtained from `Scipy Lecture Notes
@@ -4356,7 +4361,7 @@ def download_moonlanding_image(load=True):
     return _download_and_read('moonlanding.png', load=load)
 
 
-def download_angular_sector(load=True):
+def download_angular_sector(load=True):  # pragma: no cover
     """Download the angular sector dataset.
 
     Parameters
@@ -4380,7 +4385,7 @@ def download_angular_sector(load=True):
     return _download_and_read('AngularSector.vtk', load=load)
 
 
-def download_mount_damavand(load=True):
+def download_mount_damavand(load=True):  # pragma: no cover
     """Download the Mount Damavand dataset.
 
     Visualize 3D models of Damavand Volcano, Alborz, Iran. This is a 2D map
@@ -4415,7 +4420,7 @@ def download_mount_damavand(load=True):
     return _download_and_read('AOI.Damavand.32639.vtp', load=load)
 
 
-def download_particles_lethe(load=True):
+def download_particles_lethe(load=True):  # pragma: no cover
     """Download a particles dataset generated by `lethe <https://github.com/lethe-cfd/lethe>`_ .
 
     See `PyVista discussions #1984
@@ -4451,7 +4456,7 @@ def download_particles_lethe(load=True):
     return _download_and_read('lethe/result_particles.20000.0000.vtu', load=load)
 
 
-def download_gif_simple(load=True):
+def download_gif_simple(load=True):  # pragma: no cover
     """Download a simple three frame GIF.
 
     Parameters
@@ -4493,7 +4498,7 @@ def download_gif_simple(load=True):
     return _download_and_read('gifs/sample.gif', load=load)
 
 
-def download_black_vase(load=True, progress_bar=False):
+def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
     """Download a black vase scan created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -4549,7 +4554,7 @@ def download_black_vase(load=True, progress_bar=False):
     return filename
 
 
-def download_ivan_angel(load=True, progress_bar=False):
+def download_ivan_angel(load=True, progress_bar=False):  # pragma: no cover
     """Download a scan of an angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -4608,7 +4613,7 @@ def download_ivan_angel(load=True, progress_bar=False):
     return filename
 
 
-def download_bird_bath(load=True, progress_bar=False):
+def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
     """Download a scan of a bird bath created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -4664,7 +4669,7 @@ def download_bird_bath(load=True, progress_bar=False):
     return filename
 
 
-def download_owl(load=True, progress_bar=False):
+def download_owl(load=True, progress_bar=False):  # pragma: no cover
     """Download a scan of an owl statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -4723,7 +4728,7 @@ def download_owl(load=True, progress_bar=False):
     return filename
 
 
-def download_plastic_vase(load=True, progress_bar=False):
+def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
     """Download a scan of a plastic vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -4779,7 +4784,7 @@ def download_plastic_vase(load=True, progress_bar=False):
     return filename
 
 
-def download_sea_vase(load=True, progress_bar=False):
+def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
     """Download a scan of a sea vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -4835,7 +4840,7 @@ def download_sea_vase(load=True, progress_bar=False):
     return filename
 
 
-def download_dikhololo_night():
+def download_dikhololo_night():  # pragma: no cover
     """Download and read the dikholo night hdr texture example.
 
     Files hosted at https://polyhaven.com/
@@ -4850,7 +4855,7 @@ def download_dikhololo_night():
     >>> import pyvista
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_damaged_helmet()
-    >>> texture = examples.hdr.download_dikhololo_night()
+    >>> texture = examples.download_dikhololo_night()
     >>> pl = pyvista.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.set_environment_texture(texture)
@@ -4864,5 +4869,8 @@ def download_dikhololo_night():
     return texture
 
 
-# verify example cache integrity
-_verify_cache_integrity()
+def _download_multi_p3d():
+    """Download multi_p3d file.
+
+    Used for testing Plot3DMetaReader
+    """

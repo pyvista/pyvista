@@ -834,9 +834,9 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-def test_make_movie(sphere):
+def test_make_movie(sphere, tmpdir):
     # Make temporary file
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.mp4')
+    filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
     plotter = pyvista.Plotter()
