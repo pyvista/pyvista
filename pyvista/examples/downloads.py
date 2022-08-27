@@ -363,7 +363,7 @@ def _download_and_read(filename, texture=False, file_format=None, load=True, pro
     if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
         raise ValueError('Cannot download and read an archive file')
 
-    saved_file = FETCHER.fetch(filename)
+    saved_file = FETCHER.fetch(filename, progressbar=progress_bar)
     if not load:
         return saved_file
     if texture:
@@ -3219,7 +3219,7 @@ def download_cubemap_space_16k(progress_bar=False):  # pragma: no cover
     >>> pl.show()
 
     """
-    fnames = FETCHER.fetch('cubemap_space/16k.zip', processor=Unzip())
+    fnames = FETCHER.fetch('cubemap_space/16k.zip', processor=Unzip(), progressbar=progress_bar)
     return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
