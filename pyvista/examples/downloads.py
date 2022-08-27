@@ -11,36 +11,26 @@ Examples
 
 """
 
-from functools import partial
-import glob
 import os
 import shutil
 from typing import Union
-from urllib.request import urlretrieve
 
 import numpy as np
+import pooch
+from pooch import Unzip
 
 import pyvista
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
 
-CACHE_VERSION = 2
-
-
-import pooch
-from pooch import Unzip
-
-pooch_path = pyvista.VTK_DATA_PATH
-if pooch_path is None:
-    pooch_path = pooch.os_cache("pyvista")
+CACHE_VERSION = 3
 
 GLTF_SAMPLES_ROOT_URL = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/'
 
+
 FETCHER = pooch.create(
-    # Use the default cache folder for the operating system
-    path=pooch_path,
+    path=pyvista.EXAMPLES_PATH if pyvista.VTK_DATA_PATH is None else pyvista.VTK_DATA_PATH,
     base_url="https://github.com/pyvista/vtk-data/raw/master/Data/",
-    # The registry specifies the files that can be fetched
     registry={
         '250.vtk': None,
         '42400-IDGH.stl': None,
@@ -222,6 +212,7 @@ FETCHER = pooch.create(
         'GearboxAssy/glTF-Binary/GearboxAssy.glb': GLTF_SAMPLES_ROOT_URL,
         'SheenChair/glTF-Binary/SheenChair.glb': GLTF_SAMPLES_ROOT_URL,
     },
+    retry_if_failed=3,
 )
 
 
@@ -3108,7 +3099,7 @@ def download_sky_box_cube_map():
     for image in images:
         FETCHER.FETCH(image)
 
-    return pyvista.cubemap(pooch_path, prefix)
+    return pyvista.cubemap(str(FETCHER.path), prefix)
 
 
 def download_cubemap_park():
