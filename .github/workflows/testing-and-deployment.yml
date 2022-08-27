@@ -41,7 +41,7 @@ jobs:
         run: |
           pip install wheel
           pip install .
-          python -c "import pyvista; print(pyvista.Report(gpu=False));print('Examples path:', pyvista.examples.PATH)"
+          python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('Examples path:', examples.PATH)"
 
       - name: Install test dependencies
         run: pip install -r requirements_test.txt
