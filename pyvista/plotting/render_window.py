@@ -32,9 +32,9 @@ class RenderWindow:
             self._plotter = plotter
 
         self._interactor_ref = None
+        self._rendered = False
         self._ren_win = None
         self._camera_setup = False
-        self._rendered = False
         self._renderers = Renderers(
             self,
             shape,
@@ -62,9 +62,16 @@ class RenderWindow:
             return self._plotter()._theme
 
     def attach_render_window(self, ren_win=None):
-        """Attach an existing or new render window."""
+        """Attach a render window or create a new one.
+
+        Parameters
+        ----------
+        ren_win : vtk.vtkRenderWindow, optional
+            Render window to attach. If not specified, a new one is created.
+
+        """
         if self._ren_win is not None:
-            raise RuntimeError('Render window already attached')
+            raise RuntimeError('Render window has already been attached.')
         if ren_win is None:
             ren_win = pyvista._vtk.vtkRenderWindow()
         else:
@@ -166,11 +173,14 @@ class RenderWindow:
             return
 
         self._ren_win.Render()
+        # cache that the render window has been rendered
         self._rendered = True
 
     @property
-    def rendered(self):
+    def rendered(self) -> bool:
         """Return if this render window has ever been rendered."""
+        if self._ren_win is not None:
+            return not bool(self._ren_win.GetNeverRendered())
         return self._rendered
 
     @property

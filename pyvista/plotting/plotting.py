@@ -10,7 +10,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict
+from typing import Dict, Union
 import warnings
 import weakref
 
@@ -80,9 +80,12 @@ def close_all():
 
     """
     for pl in _ALL_PLOTTERS.values():
-        if not pl._closed:
-            pl.close()
-            pl.deep_clean()
+        try:
+            if not pl._closed:
+                pl.close()
+                pl.deep_clean()
+        except ReferenceError:
+            continue
     _ALL_PLOTTERS.clear()
     return True
 
@@ -254,10 +257,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Add self to open plotters when building the gallery
+        # Track all active plotters
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         if pyvista.BUILDING_GALLERY:
             _ALL_PLOTTERS[self._id_name] = self
+        else:
+            _ALL_PLOTTERS[self._id_name] = weakref.proxy(self)
 
         # Key bindings
         self.reset_key_events()
@@ -5430,6 +5435,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
+    @property
+    def ren_win(self):
+        """Return the vtkRenderWindow."""
+        # kept here for backwards compatibility, with plans to deprecate
+        if hasattr(self, '_window'):
+            return self._window._ren_win
+
+    @ren_win.setter
+    def ren_win(self, obj):
+        """Return the vtkRenderWindow."""
+        # kept here for backwards compatibility, with plans to deprecate
+        if hasattr(self, '_window'):
+            self._window.attach_render_window(obj)
+        else:
+            raise PyvistaPlotterClosed(
+                "This plotter has been closed and a render window cannot be attached."
+            )
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -6064,19 +6087,12 @@ class Plotter(BasePlotter):
 
         return actor
 
-    @property
-    def ren_win(self):
-        """Return the vtkRenderWindow."""
-        # kept here for backwards compatibility, with plans to deprecate
-        if hasattr(self, '_window'):
-            return self._window._ren_win
-
 
 # Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
 #
 # This should only be used when pyvista.BUILDING_GALLERY = True
-_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
+_ALL_PLOTTERS: Dict[str, Union[BasePlotter, weakref.ProxyType]] = {}
 
 
 def _kill_display(disp_id):  # pragma: no cover
