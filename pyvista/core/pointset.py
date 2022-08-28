@@ -962,6 +962,26 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.GetNumberOfVerts()
 
     @property
+    def n_strips(self) -> int:
+        """Return the number of strips.
+
+        Examples
+        --------
+        Create a simple mesh with one triangle strip and return the
+        number of triangles.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+        >>> strip = np.array([3, 0, 1, 2])
+        >>> mesh = pyvista.PolyData(vertices, strips=strip)
+        >>> mesh.n_strips
+        1
+
+        """
+        return self.GetNumberOfStrips()
+
+    @property
     def n_faces(self) -> int:
         """Return the number of cells.
 

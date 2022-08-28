@@ -793,7 +793,6 @@ def test_lines():
 
 
 def test_strips():
-
     # init with strips test
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
     strips = np.array([4, 0, 1, 3, 2])
@@ -804,6 +803,12 @@ def test_strips():
     strips_setter = pyvista.PolyData(vertices)
     strips_setter.strips = strips
     assert len(strips_setter.strips) == len(strips)
+
+    # test n_strips function
+    strips = np.array([[4, 0, 1, 3, 2], [4, 1, 2, 3, 0]])
+    strips_stack = np.hstack(strips)
+    n_strips_test = pyvista.PolyData(vertices, strips=strips_stack)
+    assert n_strips_test.n_strips == len(strips)
 
 
 def test_ribbon_filter():
