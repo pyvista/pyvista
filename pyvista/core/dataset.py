@@ -2019,7 +2019,9 @@ class DataSet(DataSetFilters, DataObject):
         attrs = []
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
-        attrs.append(("N Strips", self.GetNumberOfStrips(), "{}"))
+        has_strips = getattr(self, "GetNumberOfStrips", None)
+        if callable(has_strips):
+            attrs.append(("N Strips", self.GetNumberOfStrips(), "{}"))
         bds = self.bounds
         fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
         attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
