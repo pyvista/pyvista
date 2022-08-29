@@ -1809,12 +1809,16 @@ def test_opacity_transfer_functions():
 def test_closing_and_mem_cleanup():
     n = 5
     for _ in range(n):
-        for _ in range(n):
-            p = pyvista.Plotter()
+        for m in range(n):
+            pl = pyvista.Plotter()
             for k in range(n):
-                p.add_mesh(pyvista.Sphere(radius=k))
-            p.show()
-        pyvista.close_all()
+                pl.add_mesh(pyvista.Sphere(radius=k))
+
+            # test showing or closing the plotter
+            if m % 2:
+                pl.show()
+            else:
+                pl.close()
 
 
 def test_above_below_scalar_range_annotations():
