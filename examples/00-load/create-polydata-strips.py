@@ -15,10 +15,18 @@ import numpy as np
 
 import pyvista as pv
 
-# set an array of vertices
-vertices = np.array(
-    [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]],
-    dtype=float,
+# Create an array of points
+points = np.array(
+    [
+        [0.5, -1.5, 0.0],
+        [-0.5, -1.5, 0.0],
+        [0.5, -0.5, 0.0],
+        [-0.5, -0.5, 0.0],
+        [0.5, 0.5, 0.0],
+        [-0.5, 0.5, 0.0],
+        [0.5, 1.5, 0.0],
+        [-0.5, 1.5, 0.0],
+    ]
 )
 
 ###############################################################################
@@ -26,10 +34,11 @@ vertices = np.array(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The first element is the number of points in the strip next three elements is the
 # initial triangle the rest of the points is where the strip extends to.
-strips = np.hstack([10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1])
+strips = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+
 
 # build the mesh
-mesh = pv.PolyData(vertices, strips=strips)
+mesh = pv.PolyData(points, strips=strips)
 mesh
 
 
@@ -37,16 +46,14 @@ mesh
 # Plot the triangle strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the ``PolyData`` and include the point labels using
-# :func:`add_point_labels <pyvista.Plotter.add_point_labels>` so we can see how
+# :func:`add_point_labels() <pyvista.Plotter.add_point_labels>` so we can see how
 # the PolyData is constructed using triangle strips.
-
-# good viewing angle obtained from pl.show(return_cpos=True)
-cpos = [(-1.45, -0.67, 2.95), (0.5, 0.5, 0.5), (0.692, 0.257, 0.674)]
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_point_labels(mesh.points, range(mesh.n_points))
-pl.camera_position = cpos
+pl.camera_position = 'yx'
+pl.camera.zoom(1.2)
 pl.show()
 
 
@@ -73,3 +80,20 @@ trimesh
 
 faces = trimesh.faces.reshape(-1, 4)
 faces
+
+
+###############################################################################
+# Convert triangles to strips
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Convert faces from a :class:`pyvista.PolyData` to strips using :func:`strip()
+# <pyvista.PolyData.strip>`. Here, for demonstration purposes we convert the
+# triangulated mesh back to a stripped mesh.
+
+restripped = trimesh.strip()
+restripped
+
+
+###############################################################################
+# The output from the ``strip`` filter is, as expected, identical to the
+# original ``mesh``.
+restripped == mesh

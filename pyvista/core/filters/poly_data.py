@@ -3085,6 +3085,9 @@ class PolyDataFilters(DataSetFilters):
         filter to fragment the input into triangles and lines prior to
         running this filter.)
 
+        This filter implements `vtkStripper
+        <https://vtk.org/doc/nightly/html/classvtkStripper.html>`_
+
         Parameters
         ----------
         join : bool, optional
