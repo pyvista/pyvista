@@ -307,7 +307,7 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match='not a valid value'):
+    with pytest.raises(KeyError, match='not a color map'):
         default_theme.cmap = 'not a color map'
 
 

@@ -263,7 +263,12 @@ if VTK9:
         vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
-    from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
+
+    try:
+        from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
+    except ModuleNotFoundError:  # pragma: no cover
+        # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
+        pass
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
