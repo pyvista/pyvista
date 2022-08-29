@@ -221,6 +221,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
+        self._cube_axes_actor = None
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -1435,7 +1436,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
-        self.cube_axes_actor = cube_axes_actor
+        self._cube_axes_actor = weakref.ref(cube_axes_actor)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
@@ -1447,6 +1448,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.Modified()
         return cube_axes_actor
+
+    @property
+    def cube_axes_actor(self):
+        """Return the cube axes actor.
+
+        Examples
+        --------
+        Show the bounds and return the cube axes actor from the renderer.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(mesh)
+        >>> _ = plotter.show_bounds(
+        ...     grid='front',
+        ...     location='outer',
+        ...     all_edges=True,
+        ... )
+        >>> plotter.renderer.cube_axes_actor   # doctest:+SKIP
+        <vtkmodules.vtkRenderingAnnotation.vtkCubeAxesActor(0x333f9c0) at 0x7fd84b2763a0>
+        """
+        if self._cube_axes_actor is not None:
+            return self._cube_axes_actor()
 
     def show_grid(self, **kwargs):
         """Show gridlines and axes labels.
@@ -1830,7 +1854,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> actor = pl.add_mesh(pyvista.Sphere())
-        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >> actor = pl.show_bounds(grid='front', location='outer')
         >>> pl.subplot(0, 1)
         >>> actor = pl.add_mesh(pyvista.Sphere())
         >>> actor = pl.show_bounds(grid='front', location='outer')
@@ -1838,7 +1862,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if hasattr(self, 'cube_axes_actor'):
+        if self.cube_axes_actor is not None:
             self.remove_actor(self.cube_axes_actor)
             self.Modified()
 
@@ -1902,14 +1926,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 except KeyError:
                     pass
 
-        if self.__charts is not None:
-            self._charts.deep_clean()
+        self.remove_charts()
         self.remove_all_lights()
         self.RemoveAllViewProps()
         self.Modified()
 
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
+
+    def charts_remove(self):
+        """Remove all charts from this renderer."""
+        self.__charts = None
 
     def set_focus(self, point):
         """Set focus to a point.
@@ -2278,7 +2305,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 for floor_kwargs in self._floor_kwargs:
                     floor_kwargs['store_floor_kwargs'] = False
                     self.add_floor(**floor_kwargs)
-        if hasattr(self, 'cube_axes_actor'):
+        if self.cube_axes_actor is not None:
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
                 self.cube_axes_actor.SetUse2DMode(True)
@@ -2819,18 +2846,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             (if applicable).
 
         """
-        if hasattr(self, 'cube_axes_actor'):
-            del self.cube_axes_actor
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
         if self._shadow_pass is not None:
             self.disable_shadows()
-        if self.__charts is not None:
-            self.__charts.deep_clean()
-            self.__charts = None
 
+        self.remove_charts()
         self.remove_floors(render=render)
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
@@ -2839,7 +2862,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
-        # remove reference to parent last
 
     def __del__(self):
         """Delete the renderer."""

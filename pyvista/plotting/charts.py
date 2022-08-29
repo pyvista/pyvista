@@ -1364,6 +1364,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
+        **kwargs,
     ):
         """Show this chart in a self contained plotter.
 
@@ -1430,6 +1431,7 @@ class _Chart(DocSubs):
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,
+            **kwargs,
         )
 
 
@@ -4390,16 +4392,6 @@ class Charts:
         self._renderer.AddActor(self._actor)
         self._scene.SetRenderer(self._renderer)
 
-    def deep_clean(self):
-        """Remove all references to the chart objects and internal objects."""
-        if self._scene is not None:
-            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
-            for chart in charts:
-                self.remove_chart(chart)
-            self._renderer.RemoveActor(self._actor)
-        self._scene = None
-        self._actor = None
-
     def add_chart(self, *charts):
         """Add charts to the collection."""
         if self._scene is None:
@@ -4467,7 +4459,3 @@ class Charts:
         """Return an iterable of charts."""
         for chart in self._charts:
             yield chart
-
-    def __del__(self):
-        """Clean up before being destroyed."""
-        self.deep_clean()

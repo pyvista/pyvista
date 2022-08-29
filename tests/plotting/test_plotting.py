@@ -2792,3 +2792,21 @@ def test_tight_wide():
     # limit to widest dimension
     assert np.allclose(pl.window_size, [150, 75])
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_remove_bounds_axes(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    actor = pl.show_bounds(grid='front', location='outer')
+    assert isinstance(actor, vtk.vtkActor)
+    pl.remove_bounds_axes()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_charts_sin():
+    x = np.linspace(0, 2 * np.pi, 20)
+    y = np.sin(x)
+    chart = pyvista.Chart2D()
+    chart.scatter(x, y)
+    chart.line(x, y, 'r')
+    chart.show(before_close_callback=verify_cache_image)
