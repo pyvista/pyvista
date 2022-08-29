@@ -2836,6 +2836,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
+    def remove_charts(self):
+        """Remove all charts from this renderer."""
+        self.__charts = None
+
     def deep_clean(self, render=False):
         """Clean the renderer of the memory.
 
