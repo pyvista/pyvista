@@ -473,7 +473,7 @@ class Renderers:
         renderer = self._background_renderers[self.active_index]
         if renderer is None:
             raise RuntimeError('No background image to remove at this subplot')
-        renderer.deep_clean()
+        renderer.remove_all_view_props()
         self._background_renderers[self.active_index] = None
 
     def __del__(self):

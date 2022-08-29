@@ -2860,12 +2860,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.remove_charts()
         self.remove_floors(render=render)
         self.remove_legend(render=render)
-        self.RemoveAllViewProps()
         self._actors = {}
         self._camera = None
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+
+    def remove_all_view_props(self):
+        """Remove all view properties."""
+        self.RemoveAllViewProps()
 
     def __del__(self):
         """Delete the renderer."""
