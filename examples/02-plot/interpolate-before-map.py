@@ -1,16 +1,20 @@
 """
+.. _interpolate_before_mapping_example:
+
 Interpolate Before Mapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``add_mesh`` function has an ``interpolate_before_map`` argument - this
-affects the way scalar data is visualized with colors.
-The effect can of this can vary depending on the dataset's topology and the
-chosen colormap.
+The :func:`add_mesh <pyvista.Plotter.add_mesh>` method has an
+``interpolate_before_map`` argument that affects the way scalar data is
+visualized with colors.  The effect of this can vary depending on the
+dataset's topology and the chosen colormap.
 
 This example serves to demo the difference and why we've chosen to enable this
 by default.
 
-For more details, please see `this blog post <https://blog.kitware.com/what-is-interpolatescalarsbeforemapping-in-vtk/>`_
+For more details, please see `What is InterpolateScalarsBeforeMapping in VTK?
+<https://www.kitware.com/what-is-interpolatescalarsbeforemapping-in-vtk/>`_
+
 """
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv

@@ -105,7 +105,8 @@ PyVista tries to keep the keys ordered correctly when doing list operations.
 
 The dictionary like features are useful when reading in data from a file.  The
 keys are often more understandable to access the data than the index.
-:func:`pyvista.examples.download_cavity` is an OpenFoam dataset with a nested
+:func:`pyvista.examples.download_cavity()
+<pyvista.examples.downloads.download_cavity>` is an OpenFoam dataset with a nested
 ``MultiBlock`` structure.  There are two entries in the top-level object
 
 .. jupyter-execute::
@@ -148,7 +149,6 @@ base class is analogous to VTK's `vtk.vtkMultiBlockDataSet`_ class.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.MultiBlock
 
