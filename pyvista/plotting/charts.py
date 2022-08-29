@@ -1405,6 +1405,9 @@ class _Chart(DocSubs):
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``.  Defaults to ``'w'``.
 
+        **kwargs : dict, optional
+            Optional developer keyword arguments.
+
         Returns
         -------
         np.ndarray
