@@ -1630,33 +1630,42 @@ def test_image_properties():
     p.close()
 
 
-def test_volume_rendering():
-    # Really just making sure no errors are thrown
-    vol = examples.load_uniform()
-    vol.plot(volume=True, opacity='linear')
+def test_volume_rendering(uniform):
+    uniform.plot(volume=True, opacity='linear')
 
     plotter = pyvista.Plotter()
-    plotter.add_volume(vol, opacity='sigmoid', cmap='jet', n_colors=15)
-    plotter.show()
+    plotter.add_volume(uniform, opacity='sigmoid', cmap='jet', n_colors=15)
+    plotter.show(before_close_callback=verify_cache_image)
 
-    # Now test MultiBlock rendering
+
+def test_multiblock_volume_rendering(uniform):
+    ds_a = uniform.copy()
+    ds_b = uniform.copy()
+    ds_b.origin = (9.0, 0.0, 0.0)
+    ds_c = uniform.copy()
+    ds_c.origin = (0.0, 9.0, 0.0)
+    ds_d = uniform.copy()
+    ds_d.origin = (9.0, 9.0, 0.0)
+
     data = pyvista.MultiBlock(
         dict(
-            a=examples.load_uniform(),
-            b=examples.load_uniform(),
-            c=examples.load_uniform(),
-            d=examples.load_uniform(),
+            a=ds_a,
+            b=ds_b,
+            c=ds_c,
+            d=ds_d,
         )
     )
     data['a'].rename_array('Spatial Point Data', 'a')
     data['b'].rename_array('Spatial Point Data', 'b')
     data['c'].rename_array('Spatial Point Data', 'c')
     data['d'].rename_array('Spatial Point Data', 'd')
-    data.plot(volume=True, multi_colors=True)
+    data.plot(volume=True, multi_colors=True, before_close_callback=verify_cache_image)
 
+
+def test_array_volume_rendering(uniform):
     # Check that NumPy arrays work
-    arr = vol["Spatial Point Data"].reshape(vol.dimensions)
-    pyvista.plot(arr, volume=True, opacity='linear')
+    arr = uniform["Spatial Point Data"].reshape(uniform.dimensions)
+    pyvista.plot(arr, volume=True, opacity='linear', before_close_callback=verify_cache_image)
 
 
 def test_plot_compare_four():

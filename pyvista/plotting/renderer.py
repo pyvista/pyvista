@@ -1853,12 +1853,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> actor = pl.add_mesh(pyvista.Sphere())
-        >> actor = pl.show_bounds(grid='front', location='outer')
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.show_bounds(grid='front', location='outer')
         >>> pl.subplot(0, 1)
-        >>> actor = pl.add_mesh(pyvista.Sphere())
-        >>> actor = pl.show_bounds(grid='front', location='outer')
-        >>> actor = pl.remove_bounds_axes()
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.show_bounds(grid='front', location='outer')
+        >>> pl.remove_bounds_axes()
         >>> pl.show()
 
         """
