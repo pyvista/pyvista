@@ -973,18 +973,6 @@ def test_isometric_view_interactive(sphere):
     assert not plotter_iso.camera_position == cpos_old
 
 
-def test_add_cell_labels():
-    radius = 0.5
-    circle = pyvista.Circle(radius)
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(circle)
-    points = [circle.center]
-    # Add labels here
-    labels = ["1234"]
-    p.add_point_labels(points=points, labels=labels)
-    p.show(before_close_callback=verify_cache_image)
-
-
 def test_add_point_labels():
     plotter = pyvista.Plotter()
 
