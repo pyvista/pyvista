@@ -979,10 +979,9 @@ def test_add_cell_labels():
     plotter = pyvista.Plotter()
     plotter.add_mesh(circle)
     points = [circle.center]
-    # Add labels here
     labels = ["1234"]
-    p.add_point_labels(points=points, labels=labels)
-    p.show(before_close_callback=verify_cache_image)
+    plotter.add_point_labels(points=points, labels=labels)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_add_point_labels():
