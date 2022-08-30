@@ -2121,6 +2121,11 @@ class DataSet(DataSetFilters, DataObject):
         .. deprecated:: 0.37.0
             Use :attr:`DataSet.copy_from` instead.
 
+        Parameters
+        ----------
+        mesh : vtk.vtkDataSet
+            The overwriting mesh.
+
         """
         warnings.warn(
             "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
