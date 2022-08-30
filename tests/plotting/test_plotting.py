@@ -1209,6 +1209,7 @@ def test_multi_block_plot():
     multi.plot(multi_colors=True, before_close_callback=verify_cache_image)
 
 
+@skip_mac_flaky  # unable to reproduce error locally
 def test_clear(sphere):
     if VTK9:
         chart = pyvista.Chart2D()
