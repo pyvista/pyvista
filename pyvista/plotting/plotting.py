@@ -4330,9 +4330,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
 
-    def add_cell_labels(self, cells, labels):
-        self.add_point_labels(cells.center, labels)
-
     def add_point_labels(
         self,
         points,
