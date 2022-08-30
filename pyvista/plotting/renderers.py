@@ -314,7 +314,7 @@ class Renderers:
         """
         # plan to convert to error 0.40.0, remove at 0.43.0
         warnings.warn(
-            '`deep_clean` has been depreciated, Use `Renderers.clear()`', PyvistaDeprecationWarning
+            '`deep_clean` has been deprecated, Use `Renderers.clear()`', PyvistaDeprecationWarning
         )
         self.clear()
 
