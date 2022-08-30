@@ -1210,10 +1210,25 @@ def test_multi_block_plot():
 
 
 def test_clear(sphere):
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere)
-    plotter.clear()
-    plotter.show(before_close_callback=verify_cache_image)
+    chart = pyvista.Chart2D()
+    chart.line(range(10), range(10))
+
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.add_mesh(sphere, label='sphere')
+    pl.add_floor()
+    pl.add_legend()
+    pl.add_chart(chart)
+    pl.add_axes_at_origin()
+    pl.add_orientation_widget(pyvista.Cube())
+    pl.subplot(0, 1)
+    pl.add_mesh(sphere, scalars=sphere.points[:, 0])
+    # pl.link_views()
+    pl.show_bounds()
+    pl.show_grid()
+    pl.add_axes()
+    pl.add_background_image(examples.mapfile, as_global=False)
+    pl.clear()
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_plot_texture():
@@ -1638,6 +1653,7 @@ def test_volume_rendering(uniform):
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
@@ -1662,6 +1678,7 @@ def test_multiblock_volume_rendering(uniform):
     data.plot(volume=True, multi_colors=True, before_close_callback=verify_cache_image)
 
 
+@skip_windows
 def test_array_volume_rendering(uniform):
     # Check that NumPy arrays work
     arr = uniform["Spatial Point Data"].reshape(uniform.dimensions)
@@ -2816,6 +2833,7 @@ def test_remove_bounds_axes(sphere):
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_9_1_0
 def test_charts_sin():
     x = np.linspace(0, 2 * np.pi, 20)
     y = np.sin(x)

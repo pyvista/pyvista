@@ -1,11 +1,13 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 import collections
+import warnings
 import weakref
 
 import numpy as np
 
 import pyvista
 
+from ..utilities.misc import PyvistaDeprecationWarning
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
 
@@ -304,16 +306,17 @@ class Renderers:
         self._active_index = self.loc_to_index((index_row, index_column))
 
     def deep_clean(self):
-        """Clean all renderers."""
-        # Do not remove the renderers on the clean
-        for renderer in self:
-            renderer.deep_clean()
-        if hasattr(self, '_shadow_renderer'):
-            self._shadow_renderer.deep_clean()
-        if hasattr(self, '_background_renderers'):
-            for renderer in self._background_renderers:
-                if renderer is not None:
-                    renderer.deep_clean()
+        """Clear all renderers.
+
+        .. deprecated:: 0.37.0
+           Use :func:`Renderers.clear` instead.
+
+        """
+        # plan to convert to error 0.40.0, remove at 0.43.0
+        warnings.warn(
+            '`deep_clean` has been depreciated, Use `Renderers.clear()`', PyvistaDeprecationWarning
+        )
+        self.clear()
 
     def add_background_renderer(self, image_path, scale, as_global):
         """Add a background image to the renderers.
@@ -375,6 +378,8 @@ class Renderers:
         """Clear all renders."""
         for renderer in self:
             renderer.clear()
+            self.layer = 0
+
         if hasattr(self, '_shadow_renderer'):
             self._shadow_renderer.clear()
         self.clear_background_renderers()

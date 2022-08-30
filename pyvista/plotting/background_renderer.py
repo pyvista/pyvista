@@ -33,7 +33,7 @@ class BackgroundRenderer(Renderer):
         # create image actor
         image_actor = _vtk.vtkImageActor()
         image_actor.SetInputData(image_data)
-        self.add_actor(image_actor, name='background')
+        self.add_actor(image_actor, name='background', remove_existing_actor=False)
         self.camera.enable_parallel_projection()
         self.reset_camera()  # necessary to get first render
         self.resize()

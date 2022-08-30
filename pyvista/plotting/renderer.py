@@ -13,6 +13,7 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import uses_egl
 
+from ..utilities.misc import PyvistaDeprecationWarning
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
@@ -222,6 +223,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
         self._cube_axes_actor = None
+        self.axes_widget = None
+        self._edl_pass = None
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -869,11 +872,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if color is not None:
                 prop.SetColor(Color(color).float_rgb)
             prop.SetOpacity(opacity)
-        if hasattr(self, 'axes_widget'):
-            # Delete the old one
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+
+        self.remove_axes()
+
         if interactive is None:
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -988,10 +989,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+        self.remove_axes()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1040,7 +1038,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
 
         """
-        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
+        if self.axes_widget and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
             self.Modified()
 
@@ -1054,7 +1052,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show_axes()
 
         """
-        if hasattr(self, 'axes_widget'):
+        if self.axes_widget is not None:
             self.axes_widget.EnabledOn()
             self.axes_widget.SetCurrentRenderer(self)
         else:
@@ -1074,7 +1072,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         False
 
         """
-        if hasattr(self, 'axes_widget'):
+        if self.axes_widget is not None:
             return bool(self.axes_widget.GetEnabled())
         return False
 
@@ -1917,8 +1915,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.RemoveAllLights()
         self._lights.clear()
 
-    def clear(self):
-        """Remove all actors and properties."""
+    def clear(self, render=False):
+        """Remove all actors and properties.
+
+        Parameters
+        ----------
+        render : bool, default: False
+            Render the render window after clearing this renderer.
+
+        """
         if self._actors:
             for actor in list(self._actors):
                 try:
@@ -1926,9 +1931,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 except KeyError:
                     pass
 
+        self.remove_axes()
         self.remove_charts()
         self.remove_all_lights()
-        self.RemoveAllViewProps()
+        self.remove_all_view_props()
         self.Modified()
 
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
@@ -2595,18 +2601,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.enable_eye_dome_lighting()
 
         """
-        if hasattr(self, 'edl_pass'):
-            return self
         # create the basic VTK render steps
         basic_passes = _vtk.vtkRenderStepsPass()
-        # blur the resulting image
-        # The blur delegates rendering the unblured image to the basic_passes
-        self.edl_pass = _vtk.vtkEDLShading()
-        self.edl_pass.SetDelegatePass(basic_passes)
+
+        edl_pass = _vtk.vtkEDLShading()
+        edl_pass.SetDelegatePass(basic_passes)
 
         # tell the renderer to use our render pass pipeline
         self.glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
-        self.glrenderer.SetPass(self.edl_pass)
+        self.glrenderer.SetPass(edl_pass)
+
         self.Modified()
         return self.glrenderer
 
@@ -2620,12 +2624,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.disable_eye_dome_lighting()
 
         """
-        if not hasattr(self, 'edl_pass'):
-            return
         self.SetPass(None)
-        if self.render_window.vtk_obj is not None:
-            self.edl_pass.ReleaseGraphicsResources(self.render_window.vtk_obj)
-        del self.edl_pass
         self.Modified()
 
     def enable_shadows(self):
@@ -2827,52 +2826,48 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        if hasattr(self, 'axes_widget'):
-            self.hide_axes()  # Necessary to avoid segfault
-            self.axes_actor = None
-            del self.axes_widget
+        self.remove_axes()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
+
+    def remove_axes(self):
+        """Remove the axes widget object."""
+        if self.axes_widget is not None:
+            self.axes_widget.EnabledOff()  # potential segfault
+            self.axes_actor = None
 
     def remove_charts(self):
         """Remove all charts from this renderer."""
         self.__charts = None
 
     def deep_clean(self, render=False):
-        """Clean the renderer of the memory.
+        """Clear all renderers.
+
+        .. deprecated:: 0.37.0
+           Use :func:`Renderer.clear` instead.
 
         Parameters
         ----------
-        render : bool, optional
-            Render the render window after removing the bounding box
-            (if applicable).
+        render : bool, default: False
+            Render the render window after clearing this renderer.
 
         """
-        if hasattr(self, 'edl_pass'):
-            del self.edl_pass
-        if hasattr(self, '_box_object'):
-            self.remove_bounding_box(render=render)
-        if self._shadow_pass is not None:
-            self.disable_shadows()
-
-        self.remove_charts()
-        self.remove_floors(render=render)
-        self.remove_legend(render=render)
-        self._actors = {}
-        self._camera = None
-        self._bounding_box = None
-        self._marker_actor = None
-        self._border_actor = None
+        # plan to convert to error 0.40.0, remove at 0.43.0
+        warnings.warn(
+            '`deep_clean` has been depreciated, Use `Renderer.clear()`', PyvistaDeprecationWarning
+        )
+        self.clear()
 
     def remove_all_view_props(self):
         """Remove all view properties."""
         self.RemoveAllViewProps()
 
     def __del__(self):
-        """Delete the renderer."""
-        self.deep_clean()
+        """Remove all references to the actors."""
+        self._actors = {}
+        self._camera = None
 
     def enable_hidden_line_removal(self):
         """Enable hidden line removal."""

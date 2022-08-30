@@ -83,7 +83,6 @@ def close_all():
         try:
             if not pl._closed:
                 pl.close()
-                pl.deep_clean()
         except ReferenceError:
             continue
     _ALL_PLOTTERS.clear()
@@ -3582,8 +3581,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
 
-    def clear(self):
+    def clear(self, render=False):
         """Clear plot by removing all actors and properties.
+
+        Parameters
+        ----------
+        render : bool, default: False
+            Render after clearing the plotter.
 
         Examples
         --------
@@ -3595,10 +3599,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         {}
 
         """
+        if self.iren is not None:
+            self.iren.remove_observers()
+        self.disable_picking(render=False)
         self.renderers.clear()
         self.scalar_bars.clear()
+        if getattr(self, 'mapper', None) is not None:
+            self.mapper.lookup_table = None
+        self.mapper = None
+        self.volume = None
+        self.textActor = None
         self.mesh = None
         self.mapper = None
+        if render:
+            render()
 
     def link_views(self, views=0):
         """Link the views' cameras.
@@ -3830,7 +3844,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         render : bool
-            Unused argument.
+            Unused argument, kept for backwards compatibility.
 
         """
         # optionally run just prior to exiting the plotter
@@ -3850,16 +3864,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image = self.screenshot(None, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
-        # reset scalar bars
+        # Remove all associated objects and finalize
         self.clear()
         self._clear_ren_win()
 
         if hasattr(self, 'iren') and self.iren is not None:
             self.iren.close()
             self.iren = None
-
-        if hasattr(self, 'textActor'):
-            del self.textActor
 
         # end movie
         if hasattr(self, 'mwriter'):
@@ -3872,16 +3883,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._closed = True
 
     def deep_clean(self):
-        """Clean the plotter of the memory."""
-        self.disable_picking(render=False)
-        if hasattr(self, 'renderers'):
-            self.renderers.deep_clean()
-        self.mesh = None
-        if getattr(self, 'mapper', None) is not None:
-            self.mapper.lookup_table = None
-        self.mapper = None
-        self.volume = None
-        self.textActor = None
+        """Clean the plotter of the memory.
+
+        .. deprecated:: 0.37.0
+           Use :func:`Plotter.clear` instead.
+
+        """
+        # plan to convert to error 0.40.0, remove at 0.43.0
+        warnings.warn(
+            '`deep_clean` has been depreciated, Use `Plotter.clear()`', PyvistaDeprecationWarning
+        )
+        self.clear()
 
     def add_text(
         self,
@@ -5130,9 +5142,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._initialized:
             if not self._closed:
                 self.close()
-        self.deep_clean()
         if self._initialized:
             del self.renderers
+        del _ALL_PLOTTERS[self._id_name]
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
         """Add a background image to a plot.
