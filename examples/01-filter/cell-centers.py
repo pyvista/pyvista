@@ -4,9 +4,10 @@
 Extract Cell Centers
 ~~~~~~~~~~~~~~~~~~~~
 
-Extract the coordinates of the centers of all cells/faces in a mesh.
+Extract the coordinates of the centers of all cells or faces in a mesh.
 
-Here we use :func:`pyvista.DataSetFilters.cell_centers`
+Here we use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>`.
+
 """
 import pyvista as pv
 
@@ -25,10 +26,10 @@ cpos = [
 
 centers = mesh.cell_centers()
 
-p = pv.Plotter()
-p.add_mesh(mesh, show_edges=True, line_width=1)
-p.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(mesh, show_edges=True, line_width=1)
+pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.show(cpos=cpos)
 
 
 ###############################################################################
@@ -45,14 +46,38 @@ cpos = [
 
 centers = grid.cell_centers()
 
-p = pv.Plotter()
-p.add_mesh(grid, show_edges=True, opacity=0.5, line_width=1)
-p.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(grid, show_edges=True, opacity=0.5, line_width=1)
+pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.show(cpos=cpos)
 
 ###############################################################################
 
-p = pv.Plotter()
-p.add_mesh(grid.extract_all_edges(), color="k", line_width=1)
-p.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(grid.extract_all_edges(), color="k", line_width=1)
+pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.show(cpos=cpos)
+
+
+###############################################################################
+# Edge centers
+# ~~~~~~~~~~~~
+# You can use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>` in
+# combination with :func:`extract_all_edges
+# <pyvista.DataSetFilters.extract_all_edges>` to get the center of all edges of
+# a mesh.
+
+# create a simple mesh and extract all the edges and then centers of the mesh.
+mesh = pv.Cube()
+edge_centers = mesh.extract_all_edges().cell_centers().points
+
+# Plot the edge centers
+pl = pv.Plotter()
+pl.add_mesh(mesh, show_edges=True, line_width=5)
+pl.add_points(
+    edge_centers,
+    render_points_as_spheres=True,
+    color='r',
+    point_size=20,
+)
+pl.show()
