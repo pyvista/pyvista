@@ -79,7 +79,7 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for pl in _ALL_PLOTTERS.values():
+    for pl in list(_ALL_PLOTTERS.values()):
         try:
             if not pl._closed:
                 pl.close()
@@ -5142,9 +5142,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._initialized:
             if not self._closed:
                 self.close()
-        if self._initialized:
             del self.renderers
-        del _ALL_PLOTTERS[self._id_name]
+
+            _ALL_PLOTTERS.pop(self._id_name, None)
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
         """Add a background image to a plot.

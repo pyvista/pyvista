@@ -9,7 +9,7 @@ import pytest
 
 import pyvista
 from pyvista.plotting import _plotting
-from pyvista.utilities.misc import PyvistaPlotterClosed
+from pyvista.utilities.misc import PyvistaDeprecationWarning, PyvistaPlotterClosed
 
 
 def test_plotter_image():
@@ -181,13 +181,21 @@ def test_add_multiple(sphere):
     assert sphere.n_arrays == 1
 
 
-def test_deep_clean(cube):
+def test_clear(cube):
     pl = pyvista.Plotter()
     cube_orig = cube.copy()
     pl.add_mesh(cube)
-    pl.deep_clean()
+    pl.clear()
     assert pl.mesh is None
     assert pl.mapper is None
     assert pl.volume is None
     assert pl.textActor is None
     assert cube == cube_orig
+
+
+def test_deep_clean():
+    pl = pyvista.Plotter()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pl.deep_clean()
+    with pytest.warns(PyvistaDeprecationWarning):
+        pl.renderers.deep_clean()
