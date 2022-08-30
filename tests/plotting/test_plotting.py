@@ -1210,19 +1210,20 @@ def test_multi_block_plot():
 
 
 def test_clear(sphere):
-    chart = pyvista.Chart2D()
-    chart.line(range(10), range(10))
+    if VTK9:
+        chart = pyvista.Chart2D()
+        chart.line(range(10), range(10))
 
     pl = pyvista.Plotter(shape=(1, 2))
     pl.add_mesh(sphere, label='sphere')
     pl.add_floor()
     pl.add_legend()
-    pl.add_chart(chart)
+    if VTK9:
+        pl.add_chart(chart)
     pl.add_axes_at_origin()
     pl.add_orientation_widget(pyvista.Cube())
     pl.subplot(0, 1)
     pl.add_mesh(sphere, scalars=sphere.points[:, 0])
-    # pl.link_views()
     pl.show_bounds()
     pl.show_grid()
     pl.add_axes()
