@@ -2,7 +2,6 @@
 
 import collections.abc
 from copy import deepcopy
-import logging
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
@@ -35,9 +34,6 @@ from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -606,13 +602,13 @@ class DataSet(DataSetFilters, DataObject):
             try:
                 name = keys[idx]
             except IndexError:
-                logging.warning('No textures associated with input mesh.')
+                warnings.warn('No textures associated with input mesh.')
                 return None
         # Grab the texture object by name
         try:
             texture = mesh.textures[name]
         except KeyError:
-            logging.warning(f'Texture ({name}) not associated with this dataset')
+            warnings.warn(f'Texture ({name}) not associated with this dataset')
             texture = None
         else:
             # Be sure to reset the tcoords if present

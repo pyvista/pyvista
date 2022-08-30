@@ -1,5 +1,4 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-import logging
 import pathlib
 from typing import Sequence, Tuple, Union
 import warnings
@@ -13,9 +12,6 @@ from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _ge
 from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyvistaDeprecationWarning, raise_has_duplicates
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 
 @abstract_class

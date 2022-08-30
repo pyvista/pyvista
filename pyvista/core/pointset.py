@@ -1,7 +1,6 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
 from collections.abc import Iterable
 from functools import wraps
-import logging
 import numbers
 import os
 import pathlib
@@ -27,8 +26,6 @@ from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
     'be changing to `False` in future versions for point-based meshes (e.g., '

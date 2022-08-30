@@ -5,7 +5,6 @@ to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections.abc
 from itertools import zip_longest
-import logging
 import pathlib
 from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overload
 
@@ -18,10 +17,6 @@ from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
-
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 

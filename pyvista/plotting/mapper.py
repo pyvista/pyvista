@@ -1,6 +1,6 @@
 """An internal module for wrapping the use of mappers."""
-import logging
 import sys
+import warnings
 
 import numpy as np
 
@@ -189,7 +189,7 @@ def make_mapper(mapper_class):
                 else:
                     if not has_module('matplotlib'):
                         cmap = None
-                        logging.warning('Please install matplotlib for color maps.')
+                        warnings.warn('Please install matplotlib for color maps.')
 
                     cmap = get_cmap_safe(cmap)
                     if categories:

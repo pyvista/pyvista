@@ -2,7 +2,6 @@
 
 from abc import abstractmethod
 import collections.abc
-import logging
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, Type, Union
 import warnings
@@ -15,9 +14,6 @@ from pyvista.utilities import FieldAssociation, abstract_class, fileio
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 from .datasetattributes import DataSetAttributes
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'

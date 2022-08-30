@@ -1,7 +1,7 @@
 """Module managing picking events."""
 
 from functools import partial
-import logging
+import warnings
 import weakref
 
 import numpy as np
@@ -172,7 +172,7 @@ class PickingHelper:
                         **kwargs,
                     )
                 except Exception as e:  # pragma: no cover
-                    logging.warning("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -392,7 +392,7 @@ class PickingHelper:
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
-                        logging.warning(
+                        warnings.warn(
                             "Display representations other than `surface` will result in incorrect results."
                         )
                     smesh = actor.GetMapper().GetInputAsDataSet()
