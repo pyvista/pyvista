@@ -4330,7 +4330,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
 
-    def add_cell_labels(self, cells, labels):
+    def add_cell_labels(self, cells, labels, **kwargs):
+        """Create a point actor with one label from list labels assigned to each center of cell.
+
+        Parameters
+        ----------
+        cells : pyvista.DataSet
+            A pyvista dataset.
+
+        labels : list or str
+            List of labels.  Must be the same length as points. If a
+            string name is given with a :class:`pyvista.DataSet` input for
+            points, then these are fetched.
+
+        **kwargs : dict, optional
+            Keyword arguments passed to
+            :func:`pyvista.BasePlotter.add_point_labels`.
+
+        Examples
+        --------
+        >>> radius = 0.5
+        >>> circle = pyvista.Circle(radius)
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.add_mesh(circle)
+        >>> cells = circle
+        >>> labels = "1234"
+        >>> plotter.add_cell_labels(cells=cells, labels=labels)
+        >>> plotter.show(cpos="xy")
+
+        """
         self.add_point_labels(cells.center, labels)
 
     def add_point_labels(
