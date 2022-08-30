@@ -981,7 +981,7 @@ def test_add_cell_labels():
     points = [circle.center]
     labels = ["1234"]
     plotter.add_point_labels(points=points, labels=labels)
-    plotter.show(before_close_callback=verify_cache_image)
+    plotter.show(cpos="xy", before_close_callback=verify_cache_image)
 
 
 def test_add_point_labels():
