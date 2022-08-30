@@ -502,6 +502,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         optional, setting this speeds up the creation of the
         ``PolyData``.
 
+    strips : sequence, optional
+        Triangle strips connectivity array.  Triangle strips require an initial
+        triangle, and the following points of the strip. Each
+        triangle is built with the new point and the two previous
+        points. Just as in ``lines`` and ``faces``, this array requires a
+        padding indicating the number of points. For example,
+        a single triangle strip of ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
+        ``10`` and should input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
+
+    n_strips : int, optional
+        Number of strips in the ``strips`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
     deep : bool, optional
         Whether to copy the inputs, or to create a mesh from them
         without copying them.  Setting ``deep=True`` ensures that the
@@ -550,6 +564,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
     >>> mesh = pyvista.PolyData(vertices, lines=lines)
 
+    Initialize from vertices and triangle strips.
+
+    >>> strips = np.hstack([[4, 0, 1, 3, 2]])
+    >>> mesh = pyvista.PolyData(vertices, strips=strips)
+
     Initialize from a filename.
 
     >>> mesh = pyvista.PolyData(examples.antfile)
@@ -572,6 +591,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         n_faces=None,
         lines=None,
         n_lines=None,
+        strips=None,
+        n_strips=None,
         deep=False,
         force_ext=None,
         force_float=True,
@@ -628,11 +649,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
-        if faces is None and lines is None:
+        if faces is None and lines is None and strips is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
             self.verts = CellArray(verts, self.n_points, deep)
-
+        elif strips is not None:
+            self.strips = CellArray(strips, n_strips, deep)
         elif faces is not None:
             # here we use CellArray since we must specify deep and n_faces
             self.faces = CellArray(faces, n_faces, deep)
@@ -765,6 +787,33 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         else:
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
+
+    @property
+    def strips(self) -> np.ndarray:
+        """Return a pointer to the strips as a numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of strip indices.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polygon = pv.Rectangle()
+        >>> extruded = polygon.extrude((0, 0, 1))
+        >>> extruded.strips
+        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+        """
+        return _vtk.vtk_to_numpy(self.GetStrips().GetData())
+
+    @strips.setter
+    def strips(self, strips):
+        """Set the strip cells."""
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
 
     @property
     def is_all_triangles(self):
@@ -911,6 +960,26 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         """
         return self.GetNumberOfVerts()
+
+    @property
+    def n_strips(self) -> int:
+        """Return the number of strips.
+
+        Examples
+        --------
+        Create a simple mesh with one triangle strip and return the
+        number of triangles.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+        >>> strip = np.array([3, 0, 1, 2])
+        >>> mesh = pyvista.PolyData(vertices, strips=strip)
+        >>> mesh.n_strips
+        1
+
+        """
+        return self.GetNumberOfStrips()
 
     @property
     def n_faces(self) -> int:
