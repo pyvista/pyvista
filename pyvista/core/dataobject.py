@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import FieldAssociation, abstract_class, fileio
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .datasetattributes import DataSetAttributes
 
@@ -332,7 +332,7 @@ class DataObject:
         """
         warnings.warn(
             "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.clear_point_data()
 
@@ -396,7 +396,7 @@ class DataObject:
         """
         warnings.warn(
             "Use of `field_arrays` is deprecated. Use `field_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.field_data
 
@@ -433,7 +433,7 @@ class DataObject:
         """
         warnings.warn(
             "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.field_data
 

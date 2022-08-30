@@ -9,7 +9,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyvistaFutureWarning
+from pyvista.utilities.misc import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -830,9 +830,9 @@ def test_extrude():
 
 def test_extrude_capping_warnings():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude([0, 0, 1])
-    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude_rotate()
 
 

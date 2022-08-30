@@ -18,7 +18,7 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.utilities.misc import PyvistaFutureWarning
+from pyvista.utilities.misc import PyVistaFutureWarning
 
 
 @abstract_class
@@ -2779,7 +2779,7 @@ class PolyDataFilters(DataSetFilters):
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
-                PyvistaFutureWarning,
+                PyVistaFutureWarning,
             )
 
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -2914,7 +2914,7 @@ class PolyDataFilters(DataSetFilters):
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
-                PyvistaFutureWarning,
+                PyVistaFutureWarning,
             )
 
         if (
