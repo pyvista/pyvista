@@ -35,7 +35,7 @@ pl.show()
 def callback(mesh):
     """Shrink the mesh each time it's clicked."""
     shrunk = mesh.shrink(0.9)
-    mesh.overwrite(shrunk)  # must operate "in-place" by overwrite
+    mesh.copy_from(shrunk)  # must operate "in-place" by overwrite
 
 
 pl = pv.Plotter()

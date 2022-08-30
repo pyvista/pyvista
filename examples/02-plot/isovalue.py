@@ -60,11 +60,11 @@ plotter.show(auto_close=False)
 
 # Run through each frame
 for surf in surfaces:
-    surface.overwrite(surf)
+    surface.copy_from(surf)
     plotter.write_frame()  # Write this frame
 # Run through backwards
 for surf in surfaces[::-1]:
-    surface.overwrite(surf)
+    surface.copy_from(surf)
     plotter.write_frame()  # Write this frame
 
 # Be sure to close the plotter when finished

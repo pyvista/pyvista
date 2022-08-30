@@ -25,7 +25,13 @@ def grid():
 
 def test_invalid_overwrite(grid):
     with pytest.raises(TypeError):
-        grid.overwrite(pyvista.Plane())
+        grid.copy_from(pyvista.Plane())
+
+
+def test_overwirte_deprecation(grid):
+    mesh = type(grid)()
+    with pytest.warns(PyvistaDeprecationWarning):
+        mesh.overwrite(grid)
 
 
 @composite
