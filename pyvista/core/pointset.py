@@ -336,6 +336,37 @@ class _PointSet(DataSet):
             kwargs['inplace'] = True
         return super().rotate_vector(*args, **kwargs)
 
+    def cast_to_pointset(self, deep: bool = False) -> 'pyvista.PointSet':
+        """Get a new representation of this object as a :class:`pyvista.PointSet`.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            When ``True`` makes a full copy of the object.  When ``False``,
+            performs a shallow copy where the points and data arrays are
+            references to the original object.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Dataset cast into a :class:`pyvista.PointSet`.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pointset = mesh.cast_to_pointset()
+        >>> type(pointset)
+        <class 'pyvista.core.pointset.PointSet'>
+
+        """
+        pset = pyvista.PointSet()
+        pset.SetPoints(self.GetPoints())
+        pset.GetPointData().ShallowCopy(self.GetPointData())
+        if deep:
+            return pset.copy(deep=True)
+        return pset
+
 
 class PointSet(_vtk.vtkPointSet, _PointSet):
     """Concrete class for storing a set of points.

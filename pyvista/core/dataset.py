@@ -2144,37 +2144,6 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self, deep: bool = False) -> 'pyvista.PointSet':
-        """Get a new representation of this object as a :class:`pyvista.PointSet`.
-
-        Parameters
-        ----------
-        deep : bool, optional
-            When ``True`` makes a full copy of the object.  When ``False``,
-            performs a shallow copy where the points and data arrays are
-            references to the original object.
-
-        Returns
-        -------
-        pyvista.PointSet
-            Dataset cast into a :class:`pyvista.PointSet`.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> pointset = mesh.cast_to_pointset()
-        >>> type(pointset)
-        <class 'pyvista.core.pointset.PointSet'>
-
-        """
-        pset = pyvista.PointSet()
-        pset.SetPoints(self.GetPoints())
-        pset.GetPointData().ShallowCopy(self.GetPointData())
-        if deep:
-            return pset.copy(deep=True)
-        return pset
-
     def find_closest_point(self, point: Iterable[float], n=1) -> int:
         """Find index of closest point in this mesh to the given point.
 
