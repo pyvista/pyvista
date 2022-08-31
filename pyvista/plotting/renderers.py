@@ -388,6 +388,7 @@ class Renderers:
         """Close all renderers."""
         for renderer in self:
             renderer.close()
+        self._renderers.clear()
 
         if hasattr(self, '_shadow_renderer'):
             self._shadow_renderer.close()

@@ -2825,6 +2825,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def close(self):
         """Close out widgets and sensitive elements."""
+        self._lights.clear()
         self.RemoveAllObservers()
         self.remove_axes()
 

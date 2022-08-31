@@ -3857,7 +3857,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        render : bool
+        render : bool, default: False
             Unused argument, kept for backwards compatibility.
 
         """
@@ -3869,17 +3869,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._before_close_callback(self)
             self._before_close_callback = None
 
-        # must close out widgets first
-        super().close()
-
-        # Renderer has an axes widget, so close it
-        self.renderers.close()
-        self.renderers.remove_all_lights()
-
         # Grab screenshots of last render
         if self._store_image and self.ren_win is not None:
             self.last_image = self.screenshot(None, return_img=True)
             self.last_image_depth = self.get_image_depth()
+
+        # Close renderers first
+        super().close()
+        self.renderers.close()
 
         if hasattr(self, 'iren') and self.iren is not None:
             self.iren.close()
