@@ -326,7 +326,8 @@ if VTK9:
     try:
         from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
     except ModuleNotFoundError:  # pragma: no cover
-        pass  # unavailable on macOS M1 VTK 9.2.0rc1
+        # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
+        pass
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,

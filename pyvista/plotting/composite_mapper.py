@@ -858,7 +858,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
         rgb : bool
             If the ``scalars_name`` corresponds to a 2 dimensional array, plot
-            htose values as RGB(A) colors.
+            those values as RGB(A) colors.
 
         scalar_bar_args : dict
             Dictionary of keyword arguments to pass when adding the

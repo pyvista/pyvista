@@ -6,7 +6,7 @@ import numpy as np
 import pyvista
 from pyvista.utilities import assert_empty_kwargs, get_array
 
-from ..utilities.misc import PyvistaDeprecationWarning
+from ..utilities.misc import PyVistaDeprecationWarning
 from .colors import Color
 from .tools import opacity_transfer_function
 
@@ -269,7 +269,7 @@ def _common_arg_parser(
 
     # account for legacy behavior
     if 'stitle' in kwargs:  # pragma: no cover
-        warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
+        warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
         scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
     if "scalar" in kwargs:

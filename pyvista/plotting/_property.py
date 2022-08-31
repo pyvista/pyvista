@@ -338,7 +338,7 @@ class Property(_vtk.vtkProperty):
         >>> prop.edge_color
         Color(name='red', hex='#ff0000ff')
 
-        Visualize red edges. Set the edges visibility to ``True`` so we can see
+        Visualize red edges. Set the edge's visibility to ``True`` so we can see
         them.
 
         >>> prop.show_edges = True
@@ -865,7 +865,7 @@ class Property(_vtk.vtkProperty):
         >>> prop.show_edges = True
         >>> prop.plot()
 
-        Visualize the a line width of 5.0
+        Visualize with a line width of 5.0
 
         >>> prop.line_width = 5.0
         >>> prop.plot()
