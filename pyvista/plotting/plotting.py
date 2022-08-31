@@ -3874,13 +3874,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image = self.screenshot(None, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
-        # Close renderers first
+        # Close superclass if applicable first
         super().close()
-        self.renderers.close()
 
+        # close interactor first and then renderers
         if hasattr(self, 'iren') and self.iren is not None:
             self.iren.close()
             self.iren = None
+        self.renderers.close()
 
         # end movie
         if hasattr(self, 'mwriter'):
