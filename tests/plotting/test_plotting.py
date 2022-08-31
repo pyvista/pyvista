@@ -1400,6 +1400,7 @@ def test_camera(sphere):
     plotter.view_xz(True)
     plotter.view_yz(True)
     plotter.show(before_close_callback=verify_cache_image)
+    plotter.camera_position = None
 
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -1645,39 +1646,33 @@ def test_image_properties():
     p.close()
 
 
-def test_volume_rendering_from_helper(uniform):
-    uniform.plot(volume=True, opacity='linear', before_close_callback=verify_cache_image)
+def test_volume_rendering():
+    # Really just making sure no errors are thrown
+    vol = examples.load_uniform()
+    vol.plot(volume=True, opacity='linear')
 
-
-def test_volume_rendering_from_plotter(uniform):
     plotter = pyvista.Plotter()
-    plotter.add_volume(uniform, opacity='sigmoid', cmap='jet', n_colors=15)
-    plotter.show(before_close_callback=verify_cache_image)
+    plotter.add_volume(vol, opacity='sigmoid', cmap='jet', n_colors=15)
+    plotter.show()
 
-
-@skip_windows
-def test_multiblock_volume_rendering(uniform):
-    ds_a = uniform.copy()
-    ds_b = uniform.copy()
-    ds_b.origin = (9.0, 0.0, 0.0)
-    ds_c = uniform.copy()
-    ds_c.origin = (0.0, 9.0, 0.0)
-    ds_d = uniform.copy()
-    ds_d.origin = (9.0, 9.0, 0.0)
-
+    # Now test MultiBlock rendering
     data = pyvista.MultiBlock(
         dict(
-            a=ds_a,
-            b=ds_b,
-            c=ds_c,
-            d=ds_d,
+            a=examples.load_uniform(),
+            b=examples.load_uniform(),
+            c=examples.load_uniform(),
+            d=examples.load_uniform(),
         )
     )
     data['a'].rename_array('Spatial Point Data', 'a')
     data['b'].rename_array('Spatial Point Data', 'b')
     data['c'].rename_array('Spatial Point Data', 'c')
     data['d'].rename_array('Spatial Point Data', 'd')
-    data.plot(volume=True, multi_colors=True, before_close_callback=verify_cache_image)
+    data.plot(volume=True, multi_colors=True)
+
+    # Check that NumPy arrays work
+    arr = vol["Spatial Point Data"].reshape(vol.dimensions)
+    pyvista.plot(arr, volume=True, opacity='linear')
 
 
 def test_plot_compare_four():
@@ -2881,22 +2876,3 @@ def test_tight_wide():
     # limit to widest dimension
     assert np.allclose(pl.window_size, [150, 75])
     pl.show(before_close_callback=verify_cache_image)
-
-
-def test_remove_bounds_axes(sphere):
-    pl = pyvista.Plotter()
-    pl.add_mesh(sphere)
-    actor = pl.show_bounds(grid='front', location='outer')
-    assert isinstance(actor, vtk.vtkActor)
-    pl.remove_bounds_axes()
-    pl.show(before_close_callback=verify_cache_image)
-
-
-@skip_9_1_0
-def test_charts_sin():
-    x = np.linspace(0, 2 * np.pi, 20)
-    y = np.sin(x)
-    chart = pyvista.Chart2D()
-    chart.scatter(x, y)
-    chart.line(x, y, 'r')
-    chart.show(before_close_callback=verify_cache_image)
