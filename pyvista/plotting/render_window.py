@@ -25,12 +25,7 @@ class RenderWindow:
         """Initialize the render window."""
         super().__init__()
 
-        self._plotter = None
-        if plotter is not None:
-            if not isinstance(plotter, (weakref.ref, type(None))):
-                raise TypeError('`plotter` must be a weak reference.')
-            self._plotter = plotter
-
+        self._plotter = plotter
         self._interactor_ref = None
         self._rendered = False
         self._ren_win = None
@@ -50,16 +45,15 @@ class RenderWindow:
     @property
     def plotter(self):
         """Return the plotter object."""
-        if self._plotter is not None:
-            return self._plotter()
+        return self._plotter
 
     @property
     def theme(self):
         """Return the theme."""
-        if self._plotter is None or self._plotter() is None:
+        if self._plotter is None:
             return pyvista.global_theme
         else:
-            return self._plotter()._theme
+            return self._plotter._theme
 
     def attach_render_window(self, ren_win=None):
         """Attach a render window or create a new one.

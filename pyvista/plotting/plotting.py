@@ -225,6 +225,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if title is None:
             title = self._theme.title
         self.title = str(title)
+        self.__rendered = False
 
         # add renderers
         self._window = RenderWindow(
@@ -236,7 +237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             border,
             border_color,
             border_width,
-            plotter=weakref.ref(self),
+            plotter=self,
         )
         self.renderers = self._window._renderers
 
@@ -1422,7 +1423,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_rendered(self):
         """Check if the render window has been shown and raise an exception if not."""
-        if not self._window.rendered:
+        if not self._rendered:
             raise PyvistaPlotterClosed(
                 '\nThis plotter has not yet been set up and rendered '
                 'with ``show()``.\n'
@@ -1431,8 +1432,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
 
     def _check_has_ren_win(self):
-        """Check if render window attribute exists and raise an exception if not."""
-        if self._closed:
+        """Check if render window has been closed and raise an exception if it has."""
+        if self._window is None:
             raise PyvistaPlotterClosed(
                 '\n\nTo retrieve an image after the render window '
                 'has been closed, set:\n\n'
@@ -3847,6 +3848,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Unused argument, kept for backwards compatibility.
 
         """
+        if self._closed:
+            return
+
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)
@@ -3879,8 +3883,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             except BaseException:
                 pass
 
+        # this is needed for garbage collection of the render window
+        # be sure to cache if the window was ever rendered
+        self.__rendered = self._window.rendered
+        self._window = None
+
         # this helps managing closed plotters
         self._closed = True
+
+    @property
+    def _rendered(self):
+        """Return ``True`` when the render window has ever been rendered."""
+        if self._window is None:
+            return self.__rendered
+        else:
+            return self._window.rendered
 
     def deep_clean(self):
         """Clean the plotter of the memory.
@@ -5453,14 +5470,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def ren_win(self):
         """Return the vtkRenderWindow."""
         # kept here for backwards compatibility, with plans to deprecate
-        if hasattr(self, '_window'):
+        if hasattr(self, '_window') and self._window is not None:
             return self._window._ren_win
 
     @ren_win.setter
     def ren_win(self, obj):
         """Return the vtkRenderWindow."""
         # kept here for backwards compatibility, with plans to deprecate
-        if hasattr(self, '_window'):
+        if hasattr(self, '_window') and self._window is not None:
             self._window.attach_render_window(obj)
         else:
             raise PyvistaPlotterClosed(
