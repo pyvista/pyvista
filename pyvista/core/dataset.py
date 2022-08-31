@@ -2156,7 +2156,7 @@ class DataSet(DataSetFilters, DataObject):
 
         pass_cell_data : bool, optional
             Run the ``cell_data_to_point_data`` filter and pass cell data
-            fields to the new pointset
+            fields to the new pointset.
 
         Returns
         -------
@@ -2196,7 +2196,7 @@ class DataSet(DataSetFilters, DataObject):
 
         pass_cell_data : bool, optional
             Run the ``cell_data_to_point_data`` filter and pass cell data
-            fields to the new pointset
+            fields to the new pointset.
 
         Returns
         -------
