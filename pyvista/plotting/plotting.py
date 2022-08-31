@@ -202,6 +202,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._initialized = False
+        self._camera_position = None
 
         self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
@@ -239,7 +240,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             border_width,
             plotter=self,
         )
-        self.renderers = self._window._renderers
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bars = ScalarBars(self)
@@ -284,6 +284,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.enable_anti_aliasing()
 
         self._initialized = True
+
+    @property
+    def renderers(self):
+        """Return the renderers of the plotter."""
+        if self._window is not None:
+            return self._window._renderers
 
     @property
     def theme(self):
@@ -1357,11 +1363,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         For more examples, see :ref:`cameras_api`.
 
         """
+        if self._closed:
+            return self._camera_position
         return self.renderer.camera_position
 
     @camera_position.setter
     def camera_position(self, camera_location):
         """Set camera position of the active render window."""
+        if self._closed:
+            raise PyvistaPlotterClosed(
+                'This plotter is closed and the camera position cannot be set.'
+            )
+
         self.renderer.camera_position = camera_location
 
     @property
@@ -5155,7 +5168,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._initialized:
             if not self._closed:
                 self.close()
-            del self.renderers
 
             _ALL_PLOTTERS.pop(self._id_name, None)
 
@@ -5984,6 +5996,9 @@ class Plotter(BasePlotter):
         #       kernel if code here tries to access that renderer.
         #       See issues #135 and #186 for insight before editing the
         #       remainder of this function.
+
+        # cache the camera position prior to exit
+        self._camera_position = self.camera_position
 
         # Close the render window if requested
         if auto_close:
