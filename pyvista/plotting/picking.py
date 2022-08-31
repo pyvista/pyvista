@@ -19,7 +19,7 @@ def _launch_pick_event(interactor, event):
     click_z = 0
 
     picker = interactor.GetPicker()
-    renderer = interactor.GetInteractorStyle()._parent().plotter.renderer
+    renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
     picker.Pick(click_x, click_y, click_z, renderer)
 
 

@@ -829,21 +829,6 @@ class RenderWindowInteractor:
             # #################################################################
 
             self.interactor.TerminateApp()
-            self.interactor = None
-
-    def close(self):
-        """Close out the render window interactor.
-
-        This will terminate the render window if it is not already closed.
-        """
-        self.remove_observers()
-        if self._style_class is not None:
-            self._style_class.remove_observers()
-            self._style_class = None
-
-        self.terminate_app()
-        self._click_event_callbacks = None
-        self._plotter = None
 
 
 def _style_factory(klass):
@@ -861,38 +846,25 @@ def _style_factory(klass):
         def __init__(self, parent):
             super().__init__()
             self._parent = weakref.ref(parent)
-
-            self._observers = []
-            self._observers.append(
-                self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
-            )
-            self._observers.append(
-                self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
-            )
+            self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+            self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
 
         def _press(self, obj, event):
             # Figure out which renderer has the event and disable the
             # others
             super().OnLeftButtonDown()
             parent = self._parent()
-            if len(parent.plotter.renderers) > 1:
+            if len(parent._plotter.renderers) > 1:
                 click_pos = parent.get_event_position()
-                for renderer in parent.plotter.renderers:
+                for renderer in parent._plotter.renderers:
                     interact = renderer.IsInViewport(*click_pos)
                     renderer.SetInteractive(interact)
 
         def _release(self, obj, event):
             super().OnLeftButtonUp()
             parent = self._parent()
-            if len(parent.plotter.renderers) > 1:
-                for renderer in parent.plotter.renderers:
+            if len(parent._plotter.renderers) > 1:
+                for renderer in parent._plotter.renderers:
                     renderer.SetInteractive(True)
-
-        def add_observer(self, event, callback):
-            self._observers.append(self.AddObserver(event, callback))
-
-        def remove_observers(self):
-            for obs in self._observers:
-                self.RemoveObserver(obs)
 
     return CustomStyle

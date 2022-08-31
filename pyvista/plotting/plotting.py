@@ -3994,7 +3994,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._clear_ren_win()
 
         if self.iren is not None:
-            self.iren.close()
+            self.iren.remove_observers()
+            self.iren.terminate_app()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
