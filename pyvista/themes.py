@@ -39,7 +39,7 @@ import warnings
 from ._typing import color_like
 from .plotting.colors import Color, get_cmap_safe
 from .plotting.tools import parse_font_family
-from .utilities.misc import PyvistaDeprecationWarning
+from .utilities.misc import PyVistaDeprecationWarning
 
 
 class _rcParams(dict):  # pragma: no cover
@@ -127,7 +127,7 @@ def set_plot_theme(theme):
     if isinstance(theme, str):
         theme = theme.lower()
         if theme == 'night':  # pragma: no cover
-            warnings.warn('use "dark" instead of "night" theme', PyvistaDeprecationWarning)
+            warnings.warn('use "dark" instead of "night" theme', PyVistaDeprecationWarning)
             theme = 'dark'
         new_theme_type = _ALLOWED_THEMES[theme].value
         pyvista.global_theme.load_theme(new_theme_type())

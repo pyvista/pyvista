@@ -12,7 +12,7 @@ from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyvistaDeprecationWarning, raise_has_duplicates
+from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -495,7 +495,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. First argument must be "
                 "either a ``vtk.vtkImageData`` or path.",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
             dims = uinput
             uinput = None
@@ -509,7 +509,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                 "    ...     spacing=(2, 1, 5),\n"
                 "    ...     origin=(10, 35, 50),\n"
                 "    ... )\n",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
             origin = args[0]
             if len(args) > 1:

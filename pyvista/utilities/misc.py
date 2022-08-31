@@ -55,19 +55,19 @@ def _get_vtk_id_type():
     return np.int32
 
 
-class PyvistaDeprecationWarning(Warning):
+class PyVistaDeprecationWarning(Warning):
     """Non-supressed Depreciation Warning."""
 
     pass
 
 
-class PyvistaFutureWarning(Warning):
+class PyVistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
 
     pass
 
 
-class PyvistaEfficiencyWarning(Warning):
+class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
 
     pass

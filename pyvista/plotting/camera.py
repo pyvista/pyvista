@@ -6,7 +6,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 class Camera(_vtk.vtkCamera):
@@ -196,7 +196,7 @@ class Camera(_vtk.vtkCamera):
         warnings.warn(
             "Use of `Camera.is_parallel_projection` is deprecated. "
             "Use `Camera.parallel_projection` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self._parallel_projection
 
