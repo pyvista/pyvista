@@ -66,6 +66,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.autosummary",
+    "enum_tools.autoenum",
     "notfound.extension",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
@@ -210,6 +211,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.count$',
     r'\.MultiBlock\.index$',
     r'\.MultiBlock\.remove$',
+    # Enumerations
+    r'\.Plot3DFunctionEnum$',
 }
 
 
