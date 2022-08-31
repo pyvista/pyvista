@@ -26,17 +26,14 @@ class RenderWindowInteractor:
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
         """Initialize."""
-        self._plotter = weakref.ref(plotter)
-
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
-
         self.interactor = interactor
         self.interactor.SetDesiredUpdateRate(desired_update_rate)
         if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
 
-        # # Map of observers to events
+        # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = collections.defaultdict(list)
         self._click_event_callbacks = {
@@ -47,9 +44,10 @@ class RenderWindowInteractor:
         self._MAX_CLICK_DELAY = 0.8  # seconds
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
 
-        # # Set default style
+        # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
+        self._plotter = plotter
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
@@ -61,7 +59,7 @@ class RenderWindowInteractor:
     @property
     def plotter(self):
         """Return the plotter."""
-        return self._plotter()
+        return self._plotter
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -792,9 +790,6 @@ class RenderWindowInteractor:
 
     def set_render_window(self, ren_win):
         """Set the render window."""
-        # edge_case: accept pyvista.RenderWindow
-        if hasattr(ren_win, '_ren_win'):
-            ren_win = ren_win._ren_win
         self.interactor.SetRenderWindow(ren_win)
 
     def process_events(self):
@@ -855,6 +850,7 @@ class RenderWindowInteractor:
 
         self.terminate_app()
         self._click_event_callbacks = None
+        self._plotter = None
 
 
 def _style_factory(klass):

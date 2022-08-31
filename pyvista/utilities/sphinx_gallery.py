@@ -43,9 +43,9 @@ class Scraper:
 
         if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(
-                'pyvista.BUILDING_GALLERY must be set to True to capture images within '
-                'sphinx_gallery or when building documentation using the pyvista-plot '
-                'directive.'
+                'pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture '
+                'images within sphinx_gallery or when building documentation using the '
+                'pyvista-plot directive.'
             )
 
         image_names = list()
