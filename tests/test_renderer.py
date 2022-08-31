@@ -4,7 +4,7 @@ from pytest import raises
 import pyvista
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
-from pyvista.utilities.misc import PyvistaDeprecationWarning, PyvistaPlotterClosed
+from pyvista.utilities.misc import PyVistaDeprecationWarning, PyvistaPlotterClosed
 
 
 def test_show_bounds_axes_ranges():
@@ -168,5 +168,5 @@ def test_legend_face(sphere, face):
 
 def test_deep_clean():
     pl = pyvista.Plotter()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pl.deep_clean()

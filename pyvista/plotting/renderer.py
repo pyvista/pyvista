@@ -13,7 +13,7 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import uses_egl
 
-from ..utilities.misc import PyvistaDeprecationWarning
+from ..utilities.misc import PyVistaDeprecationWarning
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
@@ -2857,7 +2857,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         # plan to convert to error 0.40.0, remove at 0.43.0
         warnings.warn(
-            '`deep_clean` has been deprecated, Use `Renderer.clear()`', PyvistaDeprecationWarning
+            '`deep_clean` has been deprecated, Use `Renderer.clear()`', PyVistaDeprecationWarning
         )
         self.clear()
 

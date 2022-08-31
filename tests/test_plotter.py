@@ -9,7 +9,7 @@ import pytest
 
 import pyvista
 from pyvista.plotting import _plotting
-from pyvista.utilities.misc import PyvistaDeprecationWarning, PyvistaPlotterClosed
+from pyvista.utilities.misc import PyVistaDeprecationWarning, PyvistaPlotterClosed
 
 
 def test_plotter_image():
@@ -195,7 +195,7 @@ def test_clear(cube):
 
 def test_deep_clean():
     pl = pyvista.Plotter()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pl.deep_clean()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pl.renderers.deep_clean()
