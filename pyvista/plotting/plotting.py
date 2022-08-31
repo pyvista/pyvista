@@ -10,7 +10,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict
+from typing import Dict, Union
 import warnings
 import weakref
 
@@ -78,10 +78,12 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
-        if not p._closed:
-            p.close()
-        p.deep_clean()
+    for pl in list(_ALL_PLOTTERS.values()):
+        try:
+            if not pl._closed:
+                pl.close()
+        except ReferenceError:
+            continue
     _ALL_PLOTTERS.clear()
     return True
 
@@ -259,9 +261,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Add self to open plotters
+        # Track all active plotters
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
-        _ALL_PLOTTERS[self._id_name] = self
+        if pyvista.BUILDING_GALLERY:
+            # keep a reference so these plotters don't collect
+            _ALL_PLOTTERS[self._id_name] = self
+        else:
+            # proxy reference for backwards compatibility
+            _ALL_PLOTTERS[self._id_name] = weakref.proxy(self)
 
         # Key bindings
         self.reset_key_events()
@@ -4003,6 +4010,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
+        _ALL_PLOTTERS.pop(self._id_name, None)
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -6239,9 +6247,12 @@ class Plotter(BasePlotter):
         return actor
 
 
-# Tracks created plotters.  At the end of the file as we need to
+# Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
-_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
+#
+# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
+# when True, BasePlotter.
+_ALL_PLOTTERS: Dict[str, Union[BasePlotter, weakref.ProxyType]] = {}
 
 
 def _kill_display(disp_id):  # pragma: no cover

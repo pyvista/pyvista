@@ -25,6 +25,9 @@ class Scraper:
 
     Pass an instance of this class to ``sphinx_gallery_conf`` in your
     ``conf.py`` as the ``"image_scrapers"`` argument.
+
+    Be sure to set ``pyvista.BUILDING_GALLERY = True`` in your ``conf.py``.
+
     """
 
     def __call__(self, block, block_vars, gallery_conf):
@@ -35,8 +38,16 @@ class Scraper:
         """
         try:
             from sphinx_gallery.scrapers import figure_rst
-        except ImportError:
-            raise ImportError('You must install `sphinx_gallery`')
+        except ImportError:  # pragma: no cover
+            raise ImportError('You must install `sphinx_gallery` to use this feature.')
+
+        if not pyvista.BUILDING_GALLERY:
+            raise RuntimeError(
+                'pyvista.BUILDING_GALLERY must be set to True to capture images within '
+                'sphinx_gallery or when building documentation using the pyvista-plot '
+                'directive.'
+            )
+
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting._ALL_PLOTTERS
