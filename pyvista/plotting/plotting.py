@@ -3981,7 +3981,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
-        self.clear()
+        self.scalar_bars.clear()
+        self.mesh = None
+        self.mapper = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
