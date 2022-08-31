@@ -1,6 +1,4 @@
 """PyVista Scalar bar module."""
-import weakref
-
 import numpy as np
 
 import pyvista
@@ -15,7 +13,7 @@ class ScalarBars:
 
     def __init__(self, plotter):
         """Initialize ScalarBars."""
-        self._plotter = weakref.proxy(plotter)
+        self._plotter = plotter
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}

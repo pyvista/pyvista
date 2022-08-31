@@ -2141,10 +2141,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        try:
-            self.parent.scalar_bars._remove_mapper_from_plotter(actor)
-        except (AttributeError, ReferenceError):
-            pass
+        self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
 
         if name is None:
