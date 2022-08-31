@@ -10,7 +10,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict, Union
+from typing import Dict
 import warnings
 import weakref
 
@@ -79,11 +79,8 @@ def close_all():
 
     """
     for pl in list(_ALL_PLOTTERS.values()):
-        try:
-            if not pl._closed:
-                pl.close()
-        except ReferenceError:
-            continue
+        if not pl._closed:
+            pl.close()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -263,12 +260,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Track all active plotters
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
-        if pyvista.BUILDING_GALLERY:
-            # keep a reference so these plotters don't collect
-            _ALL_PLOTTERS[self._id_name] = self
-        else:
-            # proxy reference for backwards compatibility
-            _ALL_PLOTTERS[self._id_name] = weakref.proxy(self)
+        _ALL_PLOTTERS[self._id_name] = self
 
         # Key bindings
         self.reset_key_events()
@@ -5278,7 +5270,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.deep_clean()
         if self._initialized:
             del self.renderers
-            _ALL_PLOTTERS.pop(self._id_name, None)
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
         """Add a background image to a plot.
@@ -6252,7 +6243,7 @@ class Plotter(BasePlotter):
 #
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
-_ALL_PLOTTERS: Dict[str, Union[BasePlotter, weakref.ProxyType]] = {}
+_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 
 def _kill_display(disp_id):  # pragma: no cover
