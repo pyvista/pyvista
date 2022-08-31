@@ -1400,7 +1400,6 @@ def test_camera(sphere):
     plotter.view_xz(True)
     plotter.view_yz(True)
     plotter.show(before_close_callback=verify_cache_image)
-    plotter.camera_position = None
 
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)

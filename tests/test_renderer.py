@@ -54,7 +54,6 @@ def test_show_bounds_invalid_axes_ranges():
 def test_camera_position():
     plotter = pyvista.Plotter()
     plotter.add_mesh(pyvista.Sphere())
-    plotter.show()
     assert isinstance(plotter.camera_position, pyvista.CameraPosition)
 
 

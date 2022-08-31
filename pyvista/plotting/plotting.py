@@ -78,7 +78,7 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
+    for p in list(_ALL_PLOTTERS.values()):
         if not p._closed:
             p.close()
         p.deep_clean()
@@ -1479,11 +1479,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         For more examples, see :ref:`cameras_api`.
 
         """
+        if not hasattr(self, 'ren_win'):
+            raise Exception(
+                'The plotter has been closed. To retrieve the last camera position '
+                'use `show(return_cpos=True)`.'
+            )
         return self.renderer.camera_position
 
     @camera_position.setter
     def camera_position(self, camera_location):
         """Set camera position of the active render window."""
+        if not hasattr(self, 'ren_win'):
+            raise Exception('The plotter has been and the camera cannot be set.')
         self.renderer.camera_position = camera_location
 
     @property
@@ -4001,6 +4008,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             except BaseException:
                 pass
 
+        # Remove the global reference to this plotter unless building the
+        # gallery to allow it to collect.
+        if not pyvista.BUILDING_GALLERY:
+            self.deep_clean()
+            _ALL_PLOTTERS.pop(self._id_name, None)
+
         # this helps managing closed plotters
         self._closed = True
 
@@ -6109,6 +6122,10 @@ class Plotter(BasePlotter):
         #       See issues #135 and #186 for insight before editing the
         #       remainder of this function.
 
+        # cache the camera position if needed
+        if return_cpos:
+            camera_position = self.camera_position
+
         # Close the render window if requested
         if auto_close:
             self.close()
@@ -6117,10 +6134,10 @@ class Plotter(BasePlotter):
         # position
         if return_img or screenshot is True:
             if return_cpos:
-                return self.camera_position, self.last_image
+                return camera_position, self.last_image
 
         if return_cpos:
-            return self.camera_position
+            return camera_position
 
     def add_title(self, title, font_size=18, color=None, font=None, shadow=False):
         """Add text to the top center of the plot.
