@@ -1,4 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+from functools import wraps
 import logging
 import pathlib
 from typing import Sequence, Tuple, Union
@@ -830,3 +831,8 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         if len(new_extent) != 6:
             raise ValueError('Extent must be a vector of 6 values.')
         self.SetExtent(new_extent)
+
+    @wraps(RectilinearGridFilters.to_tetrahedra)
+    def to_tetrahedra(self, *args, **kwargs):
+        """Cast to a rectangular grid and then convert to tetrahedra."""
+        return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)

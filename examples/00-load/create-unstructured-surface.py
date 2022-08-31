@@ -57,12 +57,15 @@ cell2 = np.array(
 )
 
 # points of the cell array
-points = np.vstack((cell1, cell2))
+points = np.vstack((cell1, cell2)).astype(float)
 
 # create the unstructured grid directly from the numpy arrays
 # The offset is optional and will be either calculated if not given (VTK version < 9),
 # or is not necessary anymore (VTK version >= 9)
-grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
+if pv.vtk_version_info < (9,):
+    grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
+else:
+    grid = pv.UnstructuredGrid(cells, cell_type, points)
 
 # For cells of fixed sizes (like the mentioned Hexahedra), it is also possible to use the
 # simplified dictionary interface. This automatically calculates the cell array with types
@@ -159,7 +162,10 @@ print(indices_in_cell)
 # grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # if you are not using VTK 9.0 or newer, you must use the offset array
-grid = pv.UnstructuredGrid(offset, cells, celltypes, points)
+if pv.vtk_version_info < (9,):
+    grid = pv.UnstructuredGrid(offset, cells, celltypes, points)
+else:
+    grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # Alternate versions:
 grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
@@ -225,10 +231,5 @@ grid.plot(show_edges=True)
 # For fun, let's separate all the cells and plot out the individual cells. Shift
 # them a little bit from the center to create an "exploded view".
 
-split_cells = pv.MultiBlock()
-for index in range(10):
-    single_cell = grid.extract_cells([index])
-    single_cell.points += (np.array(single_cell.center) - np.array(grid.center)) * 0.5
-    split_cells.append(single_cell)
-
-split_cells.plot(show_edges=True)
+split_cells = grid.explode(0.5)
+split_cells.plot(show_edges=True, ssao=True)
