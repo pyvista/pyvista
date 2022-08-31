@@ -3992,8 +3992,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._clear_ren_win()
 
         if self.iren is not None:
-            self.iren.remove_observers()
-            self.iren.terminate_app()
+            self.iren.close()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
@@ -4010,7 +4009,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
-        _ALL_PLOTTERS.pop(self._id_name, None)
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -4018,8 +4016,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        if getattr(self, 'mapper', None) is not None:
-            self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
         self.textActor = None
@@ -5279,6 +5275,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.deep_clean()
         if self._initialized:
             del self.renderers
+            _ALL_PLOTTERS.pop(self._id_name, None)
 
     def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
         """Add a background image to a plot.

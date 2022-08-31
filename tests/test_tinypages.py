@@ -39,7 +39,6 @@ def test_tinypages(tmpdir):
     out, err = proc.communicate()
 
     assert proc.returncode == 0, f"sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n"
-
     if err:
         if err.strip() != 'vtkDebugLeaks has found no leaks.':
             pytest.fail(f"sphinx build emitted the following warnings:\n{err}")

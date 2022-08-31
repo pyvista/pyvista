@@ -19,7 +19,7 @@ def _launch_pick_event(interactor, event):
     click_z = 0
 
     picker = interactor.GetPicker()
-    renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
+    renderer = interactor.GetInteractorStyle()._parent().plotter.renderer
     picker.Pick(click_x, click_y, click_z, renderer)
 
 
@@ -1266,5 +1266,5 @@ class PickingHelper:
 
         # remove any picking text
         if hasattr(self, 'renderers'):
-            self.remove_actor(self._picking_text)
+            self.remove_actor(self._picking_text, render=False)
         self._picking_text = None

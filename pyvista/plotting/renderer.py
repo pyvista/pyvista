@@ -2143,7 +2143,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # ensure any scalar bars associated with this actor are removed
         try:
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
-        except ReferenceError:
+        except (AttributeError, ReferenceError):
             pass
         self.RemoveActor(actor)
 
