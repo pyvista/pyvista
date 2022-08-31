@@ -5671,6 +5671,7 @@ class Plotter(BasePlotter):
 
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
+        self.iren.set_render_window(self._window._ren_win)
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
