@@ -11,7 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyvistaDeprecationWarning
+from pyvista.utilities import PyVistaDeprecationWarning
 
 from .colors import Color
 
@@ -570,7 +570,7 @@ def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
     # Deprecated on v0.34.0, estimated removal on v0.37.0
     warnings.warn(
         "The usage of `parse_color` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     color_valid = True
     if color is None:

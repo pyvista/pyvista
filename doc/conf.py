@@ -312,7 +312,7 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-class ResetPyvista:
+class ResetPyVista:
     """Reset pyvista module to default settings."""
 
     def __call__(self, gallery_conf, fname):
@@ -326,10 +326,10 @@ class ResetPyvista:
         pyvista.set_plot_theme('document')
 
     def __repr__(self):
-        return 'ResetPyvista'
+        return 'ResetPyVista'
 
 
-reset_pyvista = ResetPyvista()
+reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed

@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -70,7 +70,7 @@ def read_legacy(filename, progress_bar=False):
 
     """
     warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyvistaDeprecationWarning
+        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
     )
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     return read(filename, progress_bar=progress_bar)
@@ -209,7 +209,7 @@ def _apply_attrs_to_reader(reader, attrs):
     """
     warnings.warn(
         "attrs use is deprecated.  Use a Reader class for more flexible control",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)
@@ -399,7 +399,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
     """
     warnings.warn(
         "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
 
     filename = _process_filename(filename)
