@@ -1888,7 +1888,7 @@ class DefaultTheme(_ThemeConfig):
             warnings.warn(
                 '`anti_aliasing` is now a string or None and must be either "ssaa", '
                 '"msaa", "fxaa", or None',
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
             anti_aliasing = 'fxaa' if anti_aliasing else None
 
@@ -1910,7 +1910,7 @@ class DefaultTheme(_ThemeConfig):
         # Recommended removing at pyvista==0.40.0
         warnings.warn(
             'antialising is deprecated.  Please use `anti_aliasing` instead.',
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.anti_aliasing
 
@@ -1919,7 +1919,7 @@ class DefaultTheme(_ThemeConfig):
         # Recommended removing at pyvista==0.40.0
         warnings.warn(
             'antialising is deprecated.  Please use `anti_aliasing` instead.',
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.anti_aliasing = value
 

@@ -3,7 +3,7 @@ import vtk
 
 import pyvista
 from pyvista import colors
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 @pytest.fixture
@@ -436,7 +436,7 @@ def test_load_theme(tmpdir, default_theme):
 
 def test_anti_aliasing(default_theme):
     # test backwards compatibility
-    with pytest.warns(PyvistaDeprecationWarning, match='is now a string'):
+    with pytest.warns(PyVistaDeprecationWarning, match='is now a string'):
         default_theme.anti_aliasing = True
         pl = pyvista.Plotter(theme=default_theme)
         assert pl.renderer.GetUseFXAA()
@@ -481,7 +481,7 @@ def test_anti_aliasing_msaa(default_theme):
 
 
 def test_antialiasing_deprication(default_theme):
-    with pytest.warns(PyvistaDeprecationWarning, match='anti_aliasing'):
+    with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
         default_theme.antialiasing
-    with pytest.warns(PyvistaDeprecationWarning, match='anti_aliasing'):
+    with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
         default_theme.antialiasing = True
