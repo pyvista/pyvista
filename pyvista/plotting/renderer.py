@@ -2608,11 +2608,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         edl_pass.SetDelegatePass(basic_passes)
 
         # tell the renderer to use our render pass pipeline
-        self.glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
-        self.glrenderer.SetPass(edl_pass)
+        glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
+        glrenderer.SetPass(edl_pass)
 
         self.Modified()
-        return self.glrenderer
+        return glrenderer
 
     def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL).

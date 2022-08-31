@@ -433,10 +433,17 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             PointSet cast to a ``pyvista.PolyData``.
 
         """
-        pdata = PolyData(self.points, deep=deep)
+        pdata = PolyData()
+        if not self.n_points:
+            return pdata
+
         if deep:
+            points = _vtk.vtkPoints()
+            points.DeepCopy(self.GetPoints())
+            pdata.points = points
             pdata.point_data.update(self.point_data)  # update performs deep copy
         else:
+            pdata.points = self.GetPoints()
             for key, value in self.point_data.items():
                 pdata.point_data[key] = value
         return pdata
@@ -610,9 +617,19 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             return
 
         # First parameter is points
+        # if isinstance(var_inp, pyvista.pyvista_ndarray) and var_inp.VTKObject is not None:
+        #     if deep:
+        #         self.SetPoints(copy_vtk_array(var_inp.VTKObject))
+        #     else:
+        #         self.SetPoints(var_inp.VTKObject)
+
+        #     vtkpts = _vtk.vtkPoints()
+        #     vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
+        #     vtkpts.SetData(vtk_arr)
+        #     return vtkpts
+
         if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
             self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
-
         else:
             msg = f"""
                 Invalid Input type:

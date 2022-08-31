@@ -3868,10 +3868,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image = self.screenshot(None, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
-        # Remove all associated objects and finalize
-        self.clear()
-        self._clear_ren_win()
-
         if hasattr(self, 'iren') and self.iren is not None:
             self.iren.close()
             self.iren = None
