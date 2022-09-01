@@ -26,8 +26,6 @@ class RenderWindowInteractor:
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
         """Initialize."""
-        self.__plotter = weakref.ref(plotter)
-
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
         self.interactor = interactor
@@ -49,6 +47,7 @@ class RenderWindowInteractor:
         # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
+        self.__plotter = weakref.ref(plotter)
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
@@ -791,9 +790,6 @@ class RenderWindowInteractor:
 
     def set_render_window(self, ren_win):
         """Set the render window."""
-        # edge_case: accept pyvista.RenderWindow
-        if hasattr(ren_win, '_ren_win'):
-            ren_win = ren_win._ren_win
         self.interactor.SetRenderWindow(ren_win)
 
     def process_events(self):

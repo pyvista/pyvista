@@ -373,6 +373,7 @@ def render_figures(
 
             images = []
             figures = pyvista.plotting._ALL_PLOTTERS
+
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")

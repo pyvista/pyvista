@@ -258,7 +258,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Track all active plotters
+        # Track all active plotters. This has the side effect of ensuring that plotters are not
+        # collected until `close()`. See https://github.com//pull/3216
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         _ALL_PLOTTERS[self._id_name] = self
 
