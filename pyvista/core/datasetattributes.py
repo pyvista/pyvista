@@ -8,7 +8,7 @@ import numpy as np
 from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
-from pyvista.utilities.misc import PyvistaDeprecationWarning, copy_vtk_array
+from pyvista.utilities.misc import PyVistaDeprecationWarning, copy_vtk_array
 
 from .._typing import Number
 from .pyvista_ndarray import pyvista_ndarray
@@ -277,9 +277,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
-            return pyvista_ndarray(
+            array = pyvista_ndarray(
                 self.GetScalars(), dataset=self.dataset, association=self.association
             )
+            return self._patch_type(array)
         return None
 
     @active_scalars.setter
@@ -290,7 +291,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "  - `DataSetAttributes.set_scalars`\n"
             "  - `DataSetAttributes.active_scalars_name`\n"
             "  - The [] operator",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_scalars_name = name
 
@@ -333,7 +334,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "deprecated.  Use:\n\n"
             "  - `DataSetAttributes.set_vectors`\n"
             "  - `DataSetAttributes.active_vectors_name`\n",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_vectors_name = name
 
@@ -379,7 +380,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.t_coords` is deprecated. "
             "Use `DataSetAttributes.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_t_coords
 
@@ -388,7 +389,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.t_coords` is deprecated. "
             "Use `DataSetAttributes.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_t_coords = t_coords  # type: ignore
 
@@ -453,7 +454,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         warnings.warn(
             "Use of `active_texture_name` is deprecated. Use `active_t_coords_name` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_t_coords_name
 
@@ -476,11 +477,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_t_coords_name.setter
     def active_t_coords_name(self, name: str) -> None:
+        if name is None:
+            self.SetActiveTCoords(None)
+            return
+
         self._raise_no_t_coords()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
         if np.issubdtype(dtype, np.number) or dtype == bool:
-            self.SetActiveScalars(name)
+            self.SetActiveTCoords(name)
 
     def get_array(self, key: Union[str, int]) -> pyvista_ndarray:
         """Get an array in this object.
@@ -536,17 +541,21 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if vtk_arr is None:
                 raise KeyError(f'{key}')
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
+        return self._patch_type(narray)
 
-        # check if array needs to be represented as a different type
-        name = vtk_arr.GetName()
+    def _patch_type(self, narray):
+        """Check if array needs to be represented as a different type."""
+        name = narray.VTKObject.GetName()
         if name in self.dataset._association_bitarray_names[self.association.name]:
             narray = narray.view(np.bool_)  # type: ignore
         elif name in self.dataset._association_complex_names[self.association.name]:
-            narray = narray.view(np.complex128)  # type: ignore
+            if narray.dtype == np.float32:
+                narray = narray.view(np.complex64)  # type: ignore
+            if narray.dtype == np.float64:
+                narray = narray.view(np.complex128)  # type: ignore
             # remove singleton dimensions to match the behavior of the rest of 1D
             # VTK arrays
             narray = narray.squeeze()
-
         return narray
 
     def set_array(
@@ -772,6 +781,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 # VTK doesn't support strides, therefore we can't directly
                 # point to the underlying object
                 if data.flags.c_contiguous:
+                    # no reason to return a shallow copy if the array and name
+                    # are identical, just return the underlying array name
+                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
+                        return data.VTKObject
+
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
                     if isinstance(name, str):
                         vtk_arr.SetName(name)
@@ -805,9 +819,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.dataset._association_bitarray_names[self.association.name].add(name)
             data = data.view(np.uint8)
         elif np.issubdtype(data.dtype, np.complexfloating):
-            if data.dtype != np.complex128:
+            if data.dtype not in (np.complex64, np.complex128):
                 raise ValueError(
-                    'Only numpy.complex128 is supported when setting dataset attributes'
+                    'Only numpy.complex64 or numpy.complex128 is supported when '
+                    'setting dataset attributes'
                 )
 
             if data.ndim != 1:
@@ -816,8 +831,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.dataset._association_complex_names[self.association.name].add(name)
 
             # complex data is stored internally as a contiguous 2 component
-            # float64 array
-            data = data.view(np.float64).reshape(-1, 2)
+            # float arrays
+            if data.dtype == np.complex64:
+                data = data.view(np.float32).reshape(-1, 2)
+            else:
+                data = data.view(np.float64).reshape(-1, 2)
 
         shape = data.shape
         if data.ndim == 3:
@@ -880,7 +898,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "  - `DataSetAttributes.set_scalars`\n"
             "  - `DataSetAttributes.set_vectors`\n"
             "  - The [] operator",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         if active_vectors:  # pragma: no cover
             raise ValueError('Use set_vectors to set vector data')
@@ -1072,19 +1090,20 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.remove(key=array_name)
 
     def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):
-        """Update arrays in this object.
+        """Update arrays in this object from another dictionary or dataset attributes.
 
-        For each key, value given, add the pair. If it already exists,
-        update it.
+        For each key, value given, add the pair. If it already exists, replace
+        it with the new array. These arrays will be copied.
 
         Parameters
         ----------
-        array_dict : dict
-            A dictionary of ``(array name, numpy.ndarray)``.
+        array_dict : dict, DataSetAttributes
+            A dictionary of ``(array name, :class:`numpy.ndarray`)`` or a
+            :class:`pyvista.DataSetAttributes`.
 
         Examples
         --------
-        Add two arrays using ``update``.
+        Add two arrays to ``point_data`` using ``update``.
 
         >>> import numpy as np
         >>> from pyvista import examples
@@ -1150,6 +1169,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_scalars_name.setter
     def active_scalars_name(self, name: str) -> None:
+        # permit setting no active scalars
+        if name is None:
+            self.SetActiveScalars(None)
+            return
         self._raise_field_data_no_scalars_vectors()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
@@ -1177,6 +1200,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_vectors_name.setter
     def active_vectors_name(self, name: str) -> None:
+        # permit setting no active
+        if name is None:
+            self.SetActiveVectors(None)
+            return
         self._raise_field_data_no_scalars_vectors()
         if name not in self:
             raise KeyError(f'DataSetAttribute does not contain "{name}"')
@@ -1313,6 +1340,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_normals_name.setter
     def active_normals_name(self, name: str) -> None:
+        # permit setting no active
+        if name is None:
+            self.SetActiveNormals(None)
+            return
         self._raise_no_normals()
         self.SetActiveNormals(name)
 

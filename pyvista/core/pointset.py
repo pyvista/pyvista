@@ -13,7 +13,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyvistaDeprecationWarning, abstract_class
+from pyvista.utilities import PyVistaDeprecationWarning, abstract_class
 from pyvista.utilities.cells import (
     CellArray,
     create_mixed_cells,
@@ -202,7 +202,7 @@ class _PointSet(DataSet):
         """
         if inplace is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             inplace = True
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore
@@ -258,7 +258,7 @@ class _PointSet(DataSet):
         """
         if inplace is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             inplace = True
         return super().scale(
             xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
@@ -269,7 +269,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_x``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_x(*args, **kwargs)
 
@@ -278,7 +278,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_y``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_y(*args, **kwargs)
 
@@ -287,7 +287,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_z``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_z(*args, **kwargs)
 
@@ -296,7 +296,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_normal``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_normal(*args, **kwargs)
 
@@ -305,7 +305,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_x``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_x(*args, **kwargs)
 
@@ -314,7 +314,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_y``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_y(*args, **kwargs)
 
@@ -323,7 +323,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_z``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_z(*args, **kwargs)
 
@@ -332,7 +332,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_vector``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_vector(*args, **kwargs)
 
@@ -502,6 +502,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         optional, setting this speeds up the creation of the
         ``PolyData``.
 
+    strips : sequence, optional
+        Triangle strips connectivity array.  Triangle strips require an initial
+        triangle, and the following points of the strip. Each
+        triangle is built with the new point and the two previous
+        points. Just as in ``lines`` and ``faces``, this array requires a
+        padding indicating the number of points. For example,
+        a single triangle strip of ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
+        ``10`` and should input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
+
+    n_strips : int, optional
+        Number of strips in the ``strips`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
     deep : bool, optional
         Whether to copy the inputs, or to create a mesh from them
         without copying them.  Setting ``deep=True`` ensures that the
@@ -550,6 +564,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
     >>> mesh = pyvista.PolyData(vertices, lines=lines)
 
+    Initialize from vertices and triangle strips.
+
+    >>> strips = np.hstack([[4, 0, 1, 3, 2]])
+    >>> mesh = pyvista.PolyData(vertices, strips=strips)
+
     Initialize from a filename.
 
     >>> mesh = pyvista.PolyData(examples.antfile)
@@ -572,6 +591,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         n_faces=None,
         lines=None,
         n_lines=None,
+        strips=None,
+        n_strips=None,
         deep=False,
         force_ext=None,
         force_float=True,
@@ -628,11 +649,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
-        if faces is None and lines is None:
+        if faces is None and lines is None and strips is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
             self.verts = CellArray(verts, self.n_points, deep)
-
+        elif strips is not None:
+            self.strips = CellArray(strips, n_strips, deep)
         elif faces is not None:
             # here we use CellArray since we must specify deep and n_faces
             self.faces = CellArray(faces, n_faces, deep)
@@ -765,6 +787,33 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         else:
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
+
+    @property
+    def strips(self) -> np.ndarray:
+        """Return a pointer to the strips as a numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of strip indices.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polygon = pv.Rectangle()
+        >>> extruded = polygon.extrude((0, 0, 1))
+        >>> extruded.strips
+        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+        """
+        return _vtk.vtk_to_numpy(self.GetStrips().GetData())
+
+    @strips.setter
+    def strips(self, strips):
+        """Set the strip cells."""
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
 
     @property
     def is_all_triangles(self):
@@ -913,6 +962,26 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.GetNumberOfVerts()
 
     @property
+    def n_strips(self) -> int:
+        """Return the number of strips.
+
+        Examples
+        --------
+        Create a simple mesh with one triangle strip and return the
+        number of triangles.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+        >>> strip = np.array([3, 0, 1, 2])
+        >>> mesh = pyvista.PolyData(vertices, strips=strip)
+        >>> mesh.n_strips
+        1
+
+        """
+        return self.GetNumberOfStrips()
+
+    @property
     def n_faces(self) -> int:
         """Return the number of cells.
 
@@ -1034,32 +1103,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         super().save(filename, binary, texture=texture)
 
     @property
-    def area(self) -> float:
-        """Return the mesh surface area.
-
-        Returns
-        -------
-        float
-            Total area of the mesh.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
-        >>> sphere.area
-        3.126
-
-        """
-        areas = self.compute_cell_sizes(
-            length=False,
-            area=True,
-            volume=False,
-        )["Area"]
-        return np.sum(areas)
-
-    @property
     def volume(self) -> float:
-        """Return the volume of the dataset.
+        """Return the approximate volume of the dataset.
 
         This will throw a VTK error/warning if not a closed surface.
 
@@ -1276,16 +1321,6 @@ class PointGrid(_PointSet):
         trisurf = self.extract_surface().triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
 
-    @property
-    def volume(self) -> float:
-        """Compute the volume of the point grid.
-
-        This extracts the external surface and computes the interior
-        volume.
-        """
-        surf = self.extract_surface().triangulate()
-        return surf.volume
-
 
 class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     """Dataset used for arbitrary combinations of all possible cell types.
@@ -1296,6 +1331,14 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
     - From cell, offset, and node arrays
     - From a file
+
+    Parameters
+    ----------
+    args : various
+        See below examples.
+    deep : optional
+        Whether to deep copy a vtkUnstructuredGrid object.
+        Default is ``False``.  Keyword only.
 
     Examples
     --------
@@ -1326,10 +1369,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, deep=False, **kwargs) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
-        deep = kwargs.pop('deep', False)
 
         if not len(args):
             return
@@ -1889,6 +1931,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         Coordinates of the points in z direction. If this is passed, ``uinput``
         and ``y`` must be a :class:`numpy.ndarray` and match the shape of ``z``.
 
+    deep : optional
+        Whether to deep copy a StructuredGrid object.
+        Default is ``False``.  Keyword only.
+
     **kwargs : dict, optional
         Additional keyword arguments passed when reading from a file or loading
         from arrays.
@@ -1929,12 +1975,18 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     _WRITERS = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
-    def __init__(self, uinput=None, y=None, z=None, **kwargs) -> None:
+    def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
         """Initialize the structured grid."""
         super().__init__()
 
+        if args:
+            raise ValueError("Too many args to create StructuredGrid.")
+
         if isinstance(uinput, _vtk.vtkStructuredGrid):
-            self.deep_copy(uinput)
+            if deep:
+                self.deep_copy(uinput)
+            else:
+                self.shallow_copy(uinput)
         elif isinstance(uinput, (str, pathlib.Path)):
             self._from_file(uinput, **kwargs)
         elif (
@@ -2224,6 +2276,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     - From a VTU or VTK file
     - From ``dims`` and ``corners`` arrays
 
+    Parameters
+    ----------
+    args : various
+        See below examples.
+    deep : optional
+        Whether to deep copy a ``vtk.vtkUnstructuredGrid`` object.
+        Default is ``False``.  Keyword only.
+
     Examples
     --------
     >>> import numpy as np
@@ -2255,23 +2315,28 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, deep=False, **kwargs):
         """Initialize the explicit structured grid."""
         if not _vtk.VTK9:
             raise VTKVersionError('VTK 9 or higher is required')  # pragma: no cover
         super().__init__()
         n = len(args)
+        if n > 2:
+            raise ValueError("Too many args to create ExplicitStructuredGrid.")
         if n == 1:
             arg0 = args[0]
             if isinstance(arg0, _vtk.vtkExplicitStructuredGrid):
-                self.deep_copy(arg0)
+                if deep:
+                    self.deep_copy(arg0)
+                else:
+                    self.shallow_copy(arg0)
             elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
                 grid = arg0.cast_to_explicit_structured_grid()
-                self.deep_copy(grid)
+                self.shallow_copy(grid)
             elif isinstance(arg0, (str, pathlib.Path)):
                 grid = UnstructuredGrid(arg0)
                 grid = grid.cast_to_explicit_structured_grid()
-                self.deep_copy(grid)
+                self.shallow_copy(grid)
         elif n == 2:
             arg0, arg1 = args
             if isinstance(arg0, tuple):

@@ -135,6 +135,29 @@ def load_hexbeam():
     return pyvista.UnstructuredGrid(hexbeamfile)
 
 
+def load_tetbeam():
+    """Load a sample UnstructuredGrid containing only tetrahedral cells.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_tetbeam()
+    >>> dataset.plot()
+
+    """
+    # make the geometry identical to the hexbeam
+    xrng = np.linspace(0, 1, 3)
+    yrng = np.linspace(0, 1, 3)
+    zrng = np.linspace(0, 5, 11)
+    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    return grid.to_tetrahedra()
+
+
 def load_structured():
     """Load a simple StructuredGrid.
 

@@ -23,6 +23,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.core.errors import VTKVersionError
 
 CACHE_VERSION = 2
 
@@ -83,7 +84,8 @@ def delete_downloads():
 
     """
     _check_examples_path()
-    shutil.rmtree(pyvista.EXAMPLES_PATH)
+    if os.path.isdir(pyvista.EXAMPLES_PATH):
+        shutil.rmtree(pyvista.EXAMPLES_PATH)
     os.makedirs(pyvista.EXAMPLES_PATH)
     return True
 
@@ -99,8 +101,52 @@ def _get_vtk_file_url(filename):
     return f'https://github.com/pyvista/vtk-data/raw/master/Data/{filename}'
 
 
-def _http_request(url):
-    return urlretrieve(url)
+def _http_request(url, progress_bar=False):  # pragma: no cover
+    """Download a file from a url using ``urlretrieve``.
+
+    Inspired by https://stackoverflow.com/a/53877507/3369879
+
+    Parameters
+    ----------
+    url : str
+        URL of the file to download.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file.
+
+    Returns
+    -------
+    str
+        Filename of the downloaded file.
+
+    http.client.HTTPMessage
+        The headers returned by urlretrieve.
+
+    """
+    if progress_bar:
+
+        try:
+            from tqdm import tqdm
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                'Install `tqdm` for download progress bars with:\n\n' 'pip install tqdm'
+            ) from None
+
+        class DownloadProgressBar(tqdm):
+            """Download progress bar."""
+
+            def update_to(self, b=1, bsize=1, tsize=None):
+                """Update the progress bar."""
+                if tsize is not None:
+                    self.total = tsize
+                    self.update(b * bsize - self.n)
+
+        desc = f"Downloading {url.split('/')[-1]}"
+
+        with DownloadProgressBar(unit='B', unit_scale=True, miniters=1, desc=desc) as pbar:
+            return urlretrieve(url, reporthook=pbar.update_to)
+    else:
+        return urlretrieve(url)
 
 
 def _repo_file_request(repo_path, filename):
@@ -135,8 +181,8 @@ def _retrieve_file(retriever, filename):
     if os.path.isfile(local_path):
         return local_path, None
 
-    if isinstance(retriever, str):
-        retriever = partial(_http_request, retriever)
+    if isinstance(retriever, str):  # pragma: no cover
+        retriever = partial(_http_request, retriever, progress_bar=True)
     saved_file, resp = retriever()
 
     # Make sure folder exists
@@ -212,8 +258,8 @@ def _retrieve_zip(retriever, filename):
     return local_path_zip_dir, resp
 
 
-def _download_file(filename):
-    """Download a file from https://github.com/pyvista/vtk-data/master/Data.
+def _download_file(filename, progress_bar=False):
+    """Download a file from https://github.com/pyvista/vtk-data/tree/master/Data.
 
     If ``pyvista.VTK_DATA_PATH`` is set, then the remote repository is expected
     to be a local git repository.
@@ -221,8 +267,12 @@ def _download_file(filename):
     Parameters
     ----------
     filename : str
-        Path within https://github.com/pyvista/vtk-data/master/Data to download
+        Path within https://github.com/pyvista/vtk-data/tree/master/Data to download
         the file from.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. This is ignored
+        when ``VTK_DATA_PATH`` is set.
 
     Examples
     --------
@@ -243,7 +293,7 @@ def _download_file(filename):
     """
     if pyvista.VTK_DATA_PATH is None:
         url = _get_vtk_file_url(filename)
-        retriever = partial(_http_request, url)
+        retriever = partial(_http_request, url, progress_bar=progress_bar)
     else:
         if not os.path.isdir(pyvista.VTK_DATA_PATH):
             raise FileNotFoundError(
@@ -260,7 +310,7 @@ def _download_file(filename):
     return _retrieve_file(retriever, filename)
 
 
-def _download_and_read(filename, texture=False, file_format=None, load=True):
+def _download_and_read(filename, texture=False, file_format=None, load=True, progress_bar=False):
     """Download and read a file.
 
     Parameters
@@ -278,13 +328,17 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
 
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. This is ignored
+        when ``VTK_DATA_PATH`` is set.
+
     Returns
     -------
     pyvista.DataSet or str
         Dataset or path to the file depending on the ``load`` parameter.
 
     """
-    saved_file, _ = _download_file(filename)
+    saved_file, _ = _download_file(filename, progress_bar=progress_bar)
     if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
         raise ValueError('Cannot download and read an archive file')
 
@@ -2621,7 +2675,28 @@ def download_thermal_probes(load=True):  # pragma: no cover
 
 
 def download_carburator(load=True):  # pragma: no cover
-    """Download scan of a carburator.
+    """Download scan of a carburetor.
+
+    .. deprecated:: 0.37.0
+       Please use :func:`pyvista.examples.downloads.download_carburetor` instead
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    """
+    return _download_and_read("carburetor.ply", load=load)
+
+
+def download_carburetor(load=True):  # pragma: no cover
+    """Download scan of a carburetor.
 
     Parameters
     ----------
@@ -2637,7 +2712,7 @@ def download_carburator(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_carburator()
+    >>> dataset = examples.download_carburetor()
     >>> dataset.plot()
 
     """
@@ -2801,7 +2876,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
     ...     [ 4.10000000e-01, -2.90000000e-01, -8.60000000e-01]
     ... ]
     >>> dataset = examples.download_damavand_volcano()
-    >>> dataset.plot(cpos=cpos, cmap="reds", show_scalar_bar=False)
+    >>> dataset.plot(cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True)
 
     See :ref:`volume_rendering_example` for an example using this dataset.
 
@@ -3060,6 +3135,122 @@ def download_cube_map_debug():  # pragma: no cover
     """
     path, _ = _download_file('cubemapDebug/cubemapDebug.zip')
     return pyvista.cubemap(image_paths=glob.glob(path, '*.jpg'))
+
+
+def download_cubemap_park():  # pragma: no cover
+    """Download a cubemap of a park.
+
+    Downloaded from http://www.humus.name/index.php?page=Textures
+    by David Eck, and converted to a smaller 512x512 size for use
+    with WebGL in his free, on-line textbook at
+    http://math.hws.edu/graphicsbook
+
+    This work is licensed under a Creative Commons Attribution 3.0 Unported
+    License.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing a skybox.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter(lighting=None)
+    >>> dataset = examples.download_cubemap_park()
+    >>> _ = pl.add_actor(dataset.to_skybox())
+    >>> pl.set_environment_texture(dataset, True)
+    >>> pl.camera_position = 'xy'
+    >>> pl.camera.zoom(0.4)
+    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    >>> pl.show()
+
+    """
+    path, _ = _download_file('cubemap_park/cubemap_park.zip')
+    return pyvista.cubemap(path)
+
+
+def download_cubemap_space_4k():  # pragma: no cover
+    """Download the 4k space cubemap.
+
+    This cubemap was generated by downloading the 4k image from: `Deep Star
+    Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
+    https://jaxry.github.io/panorama-to-cubemap/
+
+    See `vtk-data/Data/cubemap_space
+    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space>`_ for
+    more details.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing a skybox.
+
+    Examples
+    --------
+    Display the cubemap as both an environment texture and an actor.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> cubemap = examples.download_cubemap_space_4k()
+    >>> pl = pv.Plotter(lighting=None)
+    >>> _ = pl.add_actor(cubemap.to_skybox())
+    >>> pl.set_environment_texture(cubemap, True)
+    >>> pl.camera.zoom(0.4)
+    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
+    >>> pl.show()
+
+    """
+    path, _ = _download_file('cubemap_space/4k.zip')
+    return pyvista.cubemap(path)
+
+
+def download_cubemap_space_16k(progress_bar=False):  # pragma: no cover
+    """Download the 16k space cubemap.
+
+    This cubemap was generated by downloading the 16k image from: `Deep Star
+    Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
+    https://jaxry.github.io/panorama-to-cubemap/
+
+    See `vtk-data/Data/cubemap_space
+    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space>`_ for
+    more details.
+
+    Parameters
+    ----------
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing a skybox.
+
+    Notes
+    -----
+    This is a 38MB file and may take a while to download.
+
+    Examples
+    --------
+    Display the cubemap as both an environment texture and an actor. Note that
+    here we're displaying the 4k as the 16k is a bit too expensive to display
+    in the documentation.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> cubemap = examples.download_cubemap_space_4k()
+    >>> pl = pv.Plotter(lighting=None)
+    >>> _ = pl.add_actor(cubemap.to_skybox())
+    >>> pl.set_environment_texture(cubemap, True)
+    >>> pl.camera.zoom(0.4)
+    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
+    >>> pl.show()
+
+    """
+    path, _ = _download_file('cubemap_space/16k.zip', progress_bar=progress_bar)
+    return pyvista.cubemap(path)
 
 
 def download_backward_facing_step(load=True):  # pragma: no cover
@@ -3886,10 +4077,16 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> import pyvista
-    >>> dataset = examples.download_can()
-    >>> dataset.plot(scalars='VEL', smooth_shading=True)
+    >>> dataset = examples.download_can()  # doctest:+SKIP
+    >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
 
     """
+    if pyvista.vtk_version_info > (9, 1):
+        raise VTKVersionError(
+            'This example file is deprecated for VTK v9.2.0 and newer. '
+            'Use `download_can_crushed_hdf` instead.'
+        )
+
     can_0 = _download_and_read('hdf/can_0.hdf', load=load)
     if partial:
         return can_0
@@ -3903,6 +4100,40 @@ def download_can(partial=False, load=True):  # pragma: no cover
     if load:
         return pyvista.merge(cans)
     return cans
+
+
+def download_can_crushed_hdf(load=True):  # pragma: no cover
+    """Download the crushed can dataset.
+
+    File obtained from `Kitware <https://www.kitware.com/>`_. Used
+    for testing hdf files.
+
+    Originally built using VTK v9.2.0rc from:
+
+    ``VTK/build/ExternalData/Testing/Data/can-vtu.hdf``
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        Crushed can dataset or path depending on the value of ``load``.
+
+    Examples
+    --------
+    Plot the crushed can dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_can_crushed_hdf()
+    >>> dataset.plot(smooth_shading=True)
+
+    """
+    return _download_and_read('hdf/can-vtu.hdf', load=load)
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
@@ -3935,6 +4166,41 @@ def download_cgns_structured(load=True):  # pragma: no cover
 
     """
     filename, _ = _download_file('cgns/sqnz_s.adf.cgns')
+    if not load:
+        return filename
+    return pyvista.get_reader(filename).read()
+
+
+def download_tecplot_ascii(load=True):  # pragma: no cover
+    """Download the single block ASCII Tecplot dataset.
+
+    Originally downloaded from Paul Bourke's
+    `Sample file <http://paulbourke.net/dataformats/tp/sample.tp>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock
+        Multiblock format with only 1 data block, simple geometric shape.
+        If ``load`` is ``False``, then the path of the example Tecplot file
+        is returned.
+
+    Examples
+    --------
+    Plot the example Tecplot dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_tecplot_ascii()
+    >>> dataset.plot()
+
+    """
+    filename, _ = _download_file('tecplot_ascii.dat')
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
@@ -4088,3 +4354,553 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     """
     return _download_and_read("cellsnd.ascii.inp", load=load)
+
+
+def download_moonlanding_image(load=True):  # pragma: no cover
+    """Download the Moon landing image.
+
+    This is a noisy image originally obtained from `Scipy Lecture Notes
+    <https://scipy-lectures.org/index.html>`_ and can be used to demonstrate a
+    low pass filter.
+
+    See the `scipy-lectures license
+    <http://scipy-lectures.org/preface.html#license>`_ for more details
+    regarding this image's use and distribution.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        ``DataSet`` or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_moonlanding_image()
+    >>> dataset.plot(cpos='xy', cmap='gray', background='w', show_scalar_bar=False)
+
+    See :ref:`image_fft_example` for a full example using this dataset.
+
+    """
+    return _download_and_read('moonlanding.png', load=load)
+
+
+def download_angular_sector(load=True):  # pragma: no cover
+    """Download the angular sector dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_angular_sector()
+    >>> dataset.plot(scalars='PointId')
+
+    """
+    return _download_and_read('AngularSector.vtk', load=load)
+
+
+def download_mount_damavand(load=True):  # pragma: no cover
+    """Download the Mount Damavand dataset.
+
+    Visualize 3D models of Damavand Volcano, Alborz, Iran. This is a 2D map
+    with the altitude embedded as ``'z'`` cell data within the
+    :class:`pyvista.PolyData`.
+
+    Originally posted at `banesullivan/damavand-volcano
+    <https://github.com/banesullivan/damavand-volcano>`_.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the Damavand dataset and plot it after warping it by its altitude.
+
+    >>> from pyvista import examples
+    >>> dataset = examples.download_mount_damavand()
+    >>> dataset = dataset.cell_data_to_point_data()
+    >>> dataset = dataset.warp_by_scalar('z', factor=2)
+    >>> dataset.plot(cmap='gist_earth', show_scalar_bar=False)
+
+    """
+    return _download_and_read('AOI.Damavand.32639.vtp', load=load)
+
+
+def download_particles_lethe(load=True):  # pragma: no cover
+    """Download a particles dataset generated by `lethe <https://github.com/lethe-cfd/lethe>`_ .
+
+    See `PyVista discussions #1984
+    <https://github.com/pyvista/pyvista/discussions/1984>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the particles dataset and plot it after generating glyphs.
+
+    >>> from pyvista import examples
+    >>> particles = examples.download_particles_lethe()
+    >>> particles.plot(
+    ...     render_points_as_spheres=True,
+    ...     style='points',
+    ...     scalars='Velocity',
+    ...     background='w',
+    ...     scalar_bar_args={'color': 'k'},
+    ...     cmap='bwr'
+    ... )
+
+    """
+    return _download_and_read('lethe/result_particles.20000.0000.vtu', load=load)
+
+
+def download_gif_simple(load=True):  # pragma: no cover
+    """Download a simple three frame GIF.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the first frame of a simple GIF.
+
+    >>> from pyvista import examples
+    >>> grid = examples.download_gif_simple()
+    >>> grid.plot(
+    ...     scalars='frame0',
+    ...     rgb=True,
+    ...     background='w',
+    ...     show_scalar_bar=False,
+    ...     cpos='xy'
+    ... )
+
+    Plot the second frame.
+
+    >>> grid.plot(
+    ...     scalars='frame1',
+    ...     rgb=True,
+    ...     background='w',
+    ...     show_scalar_bar=False,
+    ...     cpos='xy'
+    ... )
+
+    """
+    return _download_and_read('gifs/sample.gif', load=load)
+
+
+def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
+    """Download a black vase scan created by Ivan Nikolov.
+
+    The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
+    Close-range SfM Software Performance under Varying Capturing Conditions
+    <https://data.mendeley.com/datasets/bzxk2n78s9/4>`_
+
+    Original datasets are under the CC BY 4.0 license.
+
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_black_vase()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fe489493520)
+      N Cells:      3136652
+      N Points:     1611789
+      X Bounds:     -1.092e+02, 1.533e+02
+      Y Bounds:     -1.200e+02, 1.415e+02
+      Z Bounds:     1.666e+01, 4.077e+02
+      N Arrays:     0
+
+    """
+    path, _ = _download_file('ivan-nikolov/blackVase.zip', progress_bar=progress_bar)
+    filename = os.path.join(path, 'blackVase.vtp')
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_ivan_angel(load=True, progress_bar=False):  # pragma: no cover
+    """Download a scan of an angel statue created by Ivan Nikolov.
+
+    The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
+    Close-range SfM Software Performance under Varying Capturing Conditions
+    <https://data.mendeley.com/datasets/bzxk2n78s9/4>`_
+
+    Original datasets are under the CC BY 4.0 license.
+
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_ivan_angel()
+    >>> cpos = [(-476.14, -393.73, 282.14),
+    ...         (-15.00, 11.25, 44.08),
+    ...         (0.26, 0.24, 0.93)]
+    >>> mesh.plot(cpos=cpos)
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7f6ed1345520)
+      N Cells:      4547716
+      N Points:     2297089
+      X Bounds:     -1.147e+02, 8.468e+01
+      Y Bounds:     -7.103e+01, 9.247e+01
+      Z Bounds:     -1.198e+02, 2.052e+02
+      N Arrays:     0
+
+    """
+    path, _ = _download_file('ivan-nikolov/Angel.zip', progress_bar=progress_bar)
+    filename = os.path.join(path, 'Angel.vtp')
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
+    """Download a scan of a bird bath created by Ivan Nikolov.
+
+    The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
+    Close-range SfM Software Performance under Varying Capturing Conditions
+    <https://data.mendeley.com/datasets/bzxk2n78s9/4>`_
+
+    Original datasets are under the CC BY 4.0 license.
+
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_bird_bath()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fe8caf2ba00)
+    N Cells:      3507935
+    N Points:     1831383
+    X Bounds:     -1.601e+02, 1.483e+02
+    Y Bounds:     -1.521e+02, 1.547e+02
+    Z Bounds:     -4.241e+00, 1.409e+02
+    N Arrays:     0
+
+    """
+    path, _ = _download_file('ivan-nikolov/birdBath.zip', progress_bar=progress_bar)
+    filename = os.path.join(path, 'birdBath.vtp')
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_owl(load=True, progress_bar=False):  # pragma: no cover
+    """Download a scan of an owl statue created by Ivan Nikolov.
+
+    The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
+    Close-range SfM Software Performance under Varying Capturing Conditions
+    <https://data.mendeley.com/datasets/bzxk2n78s9/4>`_
+
+    Original datasets are under the CC BY 4.0 license.
+
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_owl()
+    >>> cpos = [(-315.18, -402.21, 230.71),
+    ...         (6.06, -1.74, 101.48),
+    ...         (0.108, 0.226, 0.968)]
+    >>> mesh.plot(cpos=cpos)
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fe8caeeaee0)
+      N Cells:      2440707
+      N Points:     1221756
+      X Bounds:     -5.834e+01, 7.047e+01
+      Y Bounds:     -7.006e+01, 6.658e+01
+      Z Bounds:     1.676e+00, 2.013e+02
+      N Arrays:     0
+
+    """
+    path, _ = _download_file('ivan-nikolov/owl.zip', progress_bar=progress_bar)
+    filename = os.path.join(path, 'owl.vtp')
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
+    """Download a scan of a plastic vase created by Ivan Nikolov.
+
+    The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
+    Close-range SfM Software Performance under Varying Capturing Conditions
+    <https://data.mendeley.com/datasets/bzxk2n78s9/4>`_
+
+    Original datasets are under the CC BY 4.0 license.
+
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_plastic_vase()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fe8cadc14c0)
+      N Cells:      3570967
+      N Points:     1796805
+      X Bounds:     -1.364e+02, 1.929e+02
+      Y Bounds:     -1.677e+02, 1.603e+02
+      Z Bounds:     1.209e+02, 4.090e+02
+      N Arrays:     0
+
+    """
+    path, _ = _download_file('ivan-nikolov/plasticVase.zip', progress_bar=progress_bar)
+    filename = os.path.join(path, 'plasticVase.vtp')
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
+    """Download a scan of a sea vase created by Ivan Nikolov.
+
+    The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
+    Close-range SfM Software Performance under Varying Capturing Conditions
+    <https://data.mendeley.com/datasets/bzxk2n78s9/4>`_
+
+    Original datasets are under the CC BY 4.0 license.
+
+    For more details, see `Ivan Nikolov Datasets
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_sea_vase()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fe8b3862460)
+      N Cells:      3548473
+      N Points:     1810012
+      X Bounds:     -1.666e+02, 1.465e+02
+      Y Bounds:     -1.742e+02, 1.384e+02
+      Z Bounds:     -1.500e+02, 2.992e+02
+      N Arrays:     0
+
+    """
+    path, _ = _download_file('ivan-nikolov/seaVase.zip', progress_bar=progress_bar)
+    filename = os.path.join(path, 'seaVase.vtp')
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_cad_model_case(load=True, progress_bar=False):  # pragma: no cover
+    """Download a CAD model of a Raspberry PI 4 case.
+
+    The dataset was downloaded from `Thingiverse
+    <https://www.thingiverse.com/thing:4947746>`_
+
+    Original datasets are under the `Creative Commons - Attribution
+    <https://creativecommons.org/licenses/by/4.0/>`_ license.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_cad_model_case()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fd08f1faf40)
+      N Cells:      13702
+      N Points:     6801
+      X Bounds:     -6.460e-31, 9.000e+01
+      Y Bounds:     -3.535e-32, 1.480e+02
+      Z Bounds:     -7.287e-13, 2.000e+01
+      N Arrays:     1
+
+    """
+    filename, _ = _download_file(
+        'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', progress_bar=progress_bar
+    )
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+# verify example cache integrity
+_verify_cache_integrity()

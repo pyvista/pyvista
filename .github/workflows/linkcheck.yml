@@ -1,0 +1,44 @@
+name: LinkCheck - All files 🔗
+
+on:
+  schedule:
+    - cron: "0 5 * * 0" # Runs at 05:00 on Sunday.
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  doc:
+    name: Check Links
+    runs-on: ubuntu-latest
+    env:
+      PYVISTA_OFF_SCREEN: "True"
+      ALLOW_PLOTTING: true
+      SHELLOPTS: "errexit:pipefail"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: 'pip'
+          cache-dependency-path: requirements_docs.txt
+
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.0
+        with:
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+          version: 1.0
+
+      - name: Install OSMesa VTK
+        run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
+
+      - name: Install PyVista
+        run: pip install -e .
+
+      - name: Install Dependencies
+        run: pip install -r requirements_docs.txt
+
+      - name: LinkCheck
+        run: make -C doc linkcheck SPHINXOPTS="-W --keep-going --color"

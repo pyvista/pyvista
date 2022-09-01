@@ -60,7 +60,7 @@ articles = dict(
     discretize=Example(
         title="3D Rendering with Discretize",
         description="3D Rendering with Discretize",
-        link="http://discretize.simpeg.xyz/en/master/examples/plot_pyvista_laguna.html",
+        link="http://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html",
         image="discretize.png",
     ),
     open_foam=Example(
@@ -152,6 +152,24 @@ articles = dict(
         description="Ptera Software is a fast, easy-to-use, and open-source software package for analyzing flapping-wing flight.",
         link="https://github.com/camurban/pterasoftware",
         image="ptera_software.gif",
+    ),
+    geemap=Example(
+        title="geemap",
+        description="A Python package for interactive mapping with Google Earth Engine, ipyleaflet, and ipywidgets.",
+        link="https://geemap.org/",
+        image="geemap.gif",
+    ),
+    gmshmodel=Example(
+        title="GmshModel",
+        description="A mesh modeling interface to the Gmsh-Python-API",
+        link="https://gmshmodel.readthedocs.io/en/latest/",
+        image="gmsh_model.png",
+    ),
+    grad_descent_visualizer=Example(
+        title="Gradient Descent Visualizer",
+        description="A Python package used to visualize the gradient descent of function landscapes.",
+        link="https://github.com/JacobBumgarner/grad-descent-visualizer",
+        image="grad_descent_visualizer.gif",
     ),
     # entry=Example(title="",
     #     description="",

@@ -101,6 +101,7 @@ if VTK9:
         VTK_UNSIGNED_CHAR,
         buffer_shared,
         mutable,
+        reference,
         vtkAbstractArray,
         vtkBitArray,
         vtkCharArray,
@@ -229,6 +230,7 @@ if VTK9:
         vtkIntersectionPolyDataFilter,
         vtkOBBTree,
         vtkRectilinearGridToPointSet,
+        vtkRectilinearGridToTetrahedra,
         vtkShrinkFilter,
         vtkTableBasedClipDataSet,
         vtkTableToPolyData,
@@ -257,9 +259,16 @@ if VTK9:
         vtkRibbonFilter,
         vtkRotationalExtrusionFilter,
         vtkSelectEnclosedPoints,
+        vtkSubdivideTetra,
         vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
+
+    try:
+        from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
+    except ModuleNotFoundError:  # pragma: no cover
+        # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
+        pass
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
@@ -297,6 +306,7 @@ if VTK9:
         vtkPTSReader,
         vtkSTLReader,
         vtkSTLWriter,
+        vtkTecplotReader,
     )
     from vtkmodules.vtkIOImage import (
         vtkBMPReader,
@@ -400,12 +410,19 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
+    from vtkmodules.vtkImagingFourier import (
+        vtkImageButterworthHighPass,
+        vtkImageButterworthLowPass,
+        vtkImageFFT,
+        vtkImageRFFT,
+    )
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,
         vtkCamera,
         vtkCellPicker,
         vtkColorTransferFunction,
+        vtkCompositeDataDisplayAttributes,
         vtkCoordinate,
         vtkDataSetMapper,
         vtkImageActor,
@@ -436,7 +453,11 @@ if VTK9:
     from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
+        vtkCompositePolyDataMapper2,
+        vtkDepthOfFieldPass,
         vtkEDLShading,
+        vtkGaussianBlurPass,
+        vtkOpenGLFXAAPass,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,
         vtkOpenGLTexture,
@@ -444,6 +465,8 @@ if VTK9:
         vtkRenderStepsPass,
         vtkSequencePass,
         vtkShadowMapPass,
+        vtkSSAAPass,
+        vtkSSAOPass,
     )
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingVolume import (
@@ -457,6 +480,24 @@ if VTK9:
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
     # lazy import for some of the less used readers
+    def lazy_vtkOBJExporter():
+        """Lazy import of the vtkOBJExporter."""
+        from vtkmodules.vtkIOExport import vtkOBJExporter
+
+        return vtkOBJExporter()
+
+    def lazy_vtkVRMLImporter():
+        """Lazy import of the vtkVRMLImporter."""
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
+        return vtkVRMLImporter()
+
+    def lazy_vtkVRMLExporter():
+        """Lazy import of the vtkVRMLExporter."""
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
+        return vtkVRMLExporter()
+
     def lazy_vtkGL2PSExporter():
         """Lazy import of the vtkGL2PSExporter."""
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
@@ -537,6 +578,18 @@ else:  # pragma: no cover
     )
 
     # match the imports for VTK9
+    def lazy_vtkOBJExporter():
+        """Lazy import of the vtkOBJExporter."""
+        return vtk.vtkOBJExporter()
+
+    def lazy_vtkVRMLImporter():
+        """Lazy import of the vtkVRMLImporter."""
+        return vtk.vtkVRMLImporter()
+
+    def lazy_vtkVRMLExporter():
+        """Lazy import of the vtkVRMLExporter."""
+        return vtk.vtkVRMLExporter()
+
     def lazy_vtkGL2PSExporter():
         """Lazy import of the vtkGL2PSExporter."""
         return vtk.vtkGL2PSExporter()

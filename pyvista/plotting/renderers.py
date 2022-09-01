@@ -1,5 +1,6 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 import collections
+from weakref import proxy
 
 import numpy as np
 
@@ -26,7 +27,7 @@ class Renderers:
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
-        self._plotter = plotter
+        self._plotter = proxy(plotter)
         self._renderers = []
 
         # by default add border for multiple plots
@@ -417,6 +418,7 @@ class Renderers:
         >>> plotter.set_background('black')
         >>> plotter.background_color
         Color(name='black', hex='#000000ff')
+        >>> plotter.close()
 
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.

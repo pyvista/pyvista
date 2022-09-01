@@ -6,8 +6,8 @@ import numpy as np
 
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array, raise_not_matching
+from pyvista.utilities.misc import has_module
 
-from ._plotting import _has_matplotlib
 from .colors import Color, get_cmap_safe
 from .tools import normalize
 
@@ -80,24 +80,31 @@ def make_mapper(mapper_class):
         ):
             """Set the scalars on this mapper."""
             if cmap is None:  # Set default map if matplotlib is available
-                if _has_matplotlib():
+                if has_module('matplotlib'):
                     cmap = theme.cmap
+
+            if not isinstance(scalars, np.ndarray):
+                scalars = np.asarray(scalars)
 
             # Set the array title for when it is added back to the mesh
             if _custom_opac:
                 scalars_name = '__custom_rgba'
 
-            if not isinstance(scalars, np.ndarray):
-                scalars = np.asarray(scalars)
-
             _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):
-                # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
-                # TODO: If str array, digitive and annotate
-                cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
-                values = np.unique(scalars)
-                clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                scalars_name = f'{scalars_name}-digitized'
+
+                # we can rapidly handle bools
+                if scalars.dtype == np.bool_:
+                    cats = np.array([b'False', b'True'], dtype='|S5')
+                    values = np.array([0, 1])
+                    clim = [-0.5, 1.5]
+                else:
+                    # If str array, digitive and annotate
+                    cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
+                    values = np.unique(scalars)
+                    clim = [np.min(values) - 0.5, np.max(values) + 0.5]
+                    scalars_name = f'{scalars_name}-digitized'
+
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
@@ -124,7 +131,7 @@ def make_mapper(mapper_class):
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
                         scalars_name = f'{scalars_name}-normed'
                     elif component < scalars.shape[1] and component >= 0:
-                        scalars = scalars[:, component].copy()
+                        scalars = np.array(scalars[:, component]).copy()
                         scalars_name = f'{scalars_name}-{component}'
                     else:
                         raise ValueError(
@@ -180,7 +187,7 @@ def make_mapper(mapper_class):
 
                     check_colormap(cmap)
                 else:
-                    if not _has_matplotlib():
+                    if not has_module('matplotlib'):
                         cmap = None
                         logging.warning('Please install matplotlib for color maps.')
 
@@ -213,7 +220,7 @@ def make_mapper(mapper_class):
                 else:
                     table.SetHueRange(0.66667, 0.0)
 
-            added_scalar_info = self.configure_scalars_mode(
+            self.configure_scalars_mode(
                 scalars,
                 mesh,
                 scalars_name,
@@ -223,7 +230,7 @@ def make_mapper(mapper_class):
                 rgb or _custom_opac,
             )
 
-            return show_scalar_bar, n_colors, clim, added_scalar_info
+            return show_scalar_bar, n_colors, clim
 
         def configure_scalars_mode(
             self,
@@ -267,15 +274,6 @@ def make_mapper(mapper_class):
                 When ``True``, scalars are treated as RGB colors. When
                 ``False``, scalars are mapped to the color table.
 
-            Returns
-            -------
-            str or None
-                If the scalars do not exist within the dataset, this is the
-                name of the scalars array.
-
-            str
-                Association of the scalars, either ``'point'`` or ``'cell'``.
-
             """
             if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
                 use_points = preference == 'point'
@@ -285,23 +283,18 @@ def make_mapper(mapper_class):
                 use_cells = scalars.shape[0] == mesh.n_cells
 
             # Scalars interpolation approach
-            new_scalars_name = None
             if use_points:
                 if scalars_name not in mesh.point_data:
                     mesh.point_data.set_array(scalars, scalars_name, False)
-                    new_scalars_name = scalars_name
                 mesh.active_scalars_name = scalars_name
                 self.SetScalarModeToUsePointData()
             elif use_cells:
                 if scalars_name not in mesh.cell_data:
                     mesh.cell_data.set_array(scalars, scalars_name, False)
-                    new_scalars_name = scalars_name
                 mesh.active_scalars_name = scalars_name
                 self.SetScalarModeToUseCellData()
             else:
                 raise_not_matching(scalars, mesh)
-
-            assoc = 'point' if use_points else 'cell'
 
             self.GetLookupTable().SetNumberOfTableValues(n_colors)
             if interpolate_before_map:
@@ -310,8 +303,6 @@ def make_mapper(mapper_class):
                 self.SetColorModeToDirectScalars()
             else:
                 self.SetColorModeToMapScalars()
-
-            return new_scalars_name, assoc
 
         def set_custom_opacity(
             self, opacity, color, mesh, n_colors, preference, interpolate_before_map, rgb, theme

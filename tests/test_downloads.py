@@ -106,3 +106,17 @@ def test_delete_downloads(tmpdir):
         assert not os.path.isfile(tmp_file)
     finally:
         pyvista.EXAMPLES_PATH = old_path
+
+
+def test_delete_downloads_does_not_exist(tmpdir):
+    # change the path so we don't delete the examples cache
+    old_path = pyvista.EXAMPLES_PATH
+    new_path = str(tmpdir.join('doesnotexist'))
+
+    try:
+        # delete_downloads for a missing directory should not fail.
+        pyvista.EXAMPLES_PATH = new_path
+        assert not os.path.isdir(pyvista.EXAMPLES_PATH)
+        examples.delete_downloads()
+    finally:
+        pyvista.EXAMPLES_PATH = old_path

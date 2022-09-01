@@ -21,39 +21,40 @@ Reader Classes
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
     AVSucdReader
+    BMPReader
     BYUReader
     BinaryMarchingCubesReader
-    BMPReader
     CGNSReader
     DEMReader
     DICOMReader
     EnSightReader
     FacetReader
     FluentReader
+    GIFReader
     GLTFReader
     HDFReader
     HDRReader
     JPEGReader
-    MetaImageReader
     MFIXReader
+    MetaImageReader
     MultiBlockPlot3DReader
     NRRDReader
     OBJReader
     OpenFOAMReader
-    POpenFOAMReader
     PLYReader
     PNGReader
     PNMReader
+    POpenFOAMReader
     PTSReader
     PVDReader
     Plot3DMetaReader
-    SegYReader
     SLCReader
     STLReader
+    SegYReader
     TIFFReader
+    TecplotReader
     VTKDataSetReader
     VTKPDataSetReader
     XMLImageDataReader
@@ -65,7 +66,6 @@ Reader Classes
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
-
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
@@ -82,8 +82,19 @@ and setting time or iterations for reading.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    BaseReader
    PointCellDataSelection
    TimeReader
+
+
+Enumerations
+~~~~~~~~~~~~
+
+Enumerations are available to simplify inputs to certain readers.
+
+.. toctree::
+    :maxdepth: 2
+
+    enums
+

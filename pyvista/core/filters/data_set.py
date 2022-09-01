@@ -52,8 +52,7 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
-        if return_clipped:
-            alg.GenerateClippedOutputOn()
+        alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
         if return_clipped:
@@ -642,27 +641,38 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
-                output[i] = self[i].slice_orthogonal(
-                    x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour
+                output.append(
+                    self[i].slice_orthogonal(
+                        x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour
+                    )
                 )
             return output
-        output[0, 'YZ'] = self.slice(
-            normal='x',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='x',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'YZ',
         )
-        output[1, 'XZ'] = self.slice(
-            normal='y',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='y',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'XZ',
         )
-        output[2, 'XY'] = self.slice(
-            normal='z',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='z',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'XY',
         )
         return output
 
@@ -768,14 +778,16 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
-                output[i] = self[i].slice_along_axis(
-                    n=n,
-                    axis=ax_label,
-                    tolerance=tolerance,
-                    generate_triangles=generate_triangles,
-                    contour=contour,
-                    bounds=bounds,
-                    center=center,
+                output.append(
+                    self[i].slice_along_axis(
+                        n=n,
+                        axis=ax_label,
+                        tolerance=tolerance,
+                        generate_triangles=generate_triangles,
+                        contour=contour,
+                        bounds=bounds,
+                        center=center,
+                    )
                 )
             return output
         for i in range(n):
@@ -788,7 +800,7 @@ class DataSetFilters:
                 contour=contour,
                 progress_bar=progress_bar,
             )
-            output[i, f'slice{i}'] = slc
+            output.append(slc, f'slice{i}')
         return output
 
     def slice_along_line(self, line, generate_triangles=False, contour=False, progress_bar=False):
@@ -1466,9 +1478,10 @@ class DataSetFilters:
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str, numpy.ndarray, optional
-            Name or array of scalars to threshold on. Defaults to
-            currently active scalars.
+        scalars : str, collections.abc.Sequence, numpy.ndarray, optional
+            Name or array of scalars to threshold on. If this is an array, the
+            output of this filter will save them as ``"Contour Data"``.
+            Defaults to currently active scalars.
 
         compute_normals : bool, optional
             Compute normals for the dataset.
@@ -1539,7 +1552,7 @@ class DataSetFilters:
         >>> x, y, z = grid.points.T
         >>> values = f(x, y, z)
         >>> out = grid.contour(
-        ...     1, scalars=values, rng=[0, 0], method='flying_edges'
+        ...     1, scalars=values, rng=[0, 0], method='flying_edges',
         ... )
         >>> out.plot(color='tan', smooth_shading=True)
 
@@ -1557,10 +1570,25 @@ class DataSetFilters:
         else:
             raise ValueError(f"Method '{method}' is not supported")
 
-        if isinstance(scalars, np.ndarray):
-            scalars_name = 'Contour Input'
+        if rng is not None:
+            if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
+                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
+            rng_shape = np.shape(rng)
+            if rng_shape != (2,):
+                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
+            if rng[0] > rng[1]:
+                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
+
+        if isinstance(scalars, str):
+            scalars_name = scalars
+        elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
+            scalars_name = 'Contour Data'
             self[scalars_name] = scalars
-            scalars = scalars_name
+        elif scalars is not None:
+            raise TypeError(
+                f'Invalid type for `scalars` ({type(scalars)}). Should be either '
+                'a numpy.ndarray, a string, or None.'
+            )
 
         # Make sure the input has scalars to contour on
         if self.n_arrays < 1:
@@ -1573,22 +1601,24 @@ class DataSetFilters:
         # set the array to contour on
         if scalars is None:
             pyvista.set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            field, scalars_name = self.active_scalars_info
         else:
-            field = get_array_association(self, scalars, preference=preference)
+            field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
-            )
+            raise TypeError('Contour filter only works on point data.')
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars_name,
         )  # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars)
+                rng = self.get_data_range(scalars_name)
             alg.GenerateValues(isosurfaces, rng)
         elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
@@ -1597,7 +1627,14 @@ class DataSetFilters:
         else:
             raise TypeError('isosurfaces not understood.')
         _update_alg(alg, progress_bar, 'Computing Contour')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # some of these filters fail to correctly name the array
+        if scalars_name not in output.point_data:
+            if 'Unnamed_0' in output.point_data:
+                output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
+
+        return output
 
     def texture_map_to_plane(
         self,
@@ -1796,7 +1833,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(show_edges=True)
+        >>> surf.plot(show_edges=True, scalars='Area')
 
         """
         alg = _vtk.vtkCellSizeFilter()
@@ -2191,7 +2228,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> dataset = examples.load_uniform()
-        >>> dataset.set_active_scalars('Spatial Cell Data')
+        >>> _ = dataset.set_active_scalars('Spatial Cell Data')
         >>> threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
         >>> bodies = threshed.split_bodies()
         >>> len(bodies)
@@ -2408,7 +2445,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         These cell scalars can be applied to individual points to
         effectively smooth out the cell data onto the points.
@@ -2417,7 +2454,7 @@ class DataSetFilters:
         >>> surf = examples.load_airplane()
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
         >>> surf = surf.cell_data_to_point_data()
-        >>> surf.plot(smooth_shading=True)
+        >>> surf.plot(scalars='Area')
 
         """
         alg = _vtk.vtkCellDataToPointData()
@@ -4141,10 +4178,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        ind : np.ndarray
+        ind : numpy.ndarray
             Numpy array of cell indices to be extracted.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -4615,37 +4652,45 @@ class DataSetFilters:
 
         """
         alg = _vtk.vtkCellQuality()
-        measure_setters = {
-            'area': alg.SetQualityMeasureToArea,
-            'aspect_beta': alg.SetQualityMeasureToAspectBeta,
-            'aspect_frobenius': alg.SetQualityMeasureToAspectFrobenius,
-            'aspect_gamma': alg.SetQualityMeasureToAspectGamma,
-            'aspect_ratio': alg.SetQualityMeasureToAspectRatio,
-            'collapse_ratio': alg.SetQualityMeasureToCollapseRatio,
-            'condition': alg.SetQualityMeasureToCondition,
-            'diagonal': alg.SetQualityMeasureToDiagonal,
-            'dimension': alg.SetQualityMeasureToDimension,
-            'distortion': alg.SetQualityMeasureToDistortion,
-            'jacobian': alg.SetQualityMeasureToJacobian,
-            'max_angle': alg.SetQualityMeasureToMaxAngle,
-            'max_aspect_frobenius': alg.SetQualityMeasureToMaxAspectFrobenius,
-            'max_edge_ratio': alg.SetQualityMeasureToMaxEdgeRatio,
-            'med_aspect_frobenius': alg.SetQualityMeasureToMedAspectFrobenius,
-            'min_angle': alg.SetQualityMeasureToMinAngle,
-            'oddy': alg.SetQualityMeasureToOddy,
-            'radius_ratio': alg.SetQualityMeasureToRadiusRatio,
-            'relative_size_squared': alg.SetQualityMeasureToRelativeSizeSquared,
-            'scaled_jacobian': alg.SetQualityMeasureToScaledJacobian,
-            'shape': alg.SetQualityMeasureToShape,
-            'shape_and_size': alg.SetQualityMeasureToShapeAndSize,
-            'shear': alg.SetQualityMeasureToShear,
-            'shear_and_size': alg.SetQualityMeasureToShearAndSize,
-            'skew': alg.SetQualityMeasureToSkew,
-            'stretch': alg.SetQualityMeasureToStretch,
-            'taper': alg.SetQualityMeasureToTaper,
-            'volume': alg.SetQualityMeasureToVolume,
-            'warpage': alg.SetQualityMeasureToWarpage,
+        possible_measure_setters = {
+            'area': 'SetQualityMeasureToArea',
+            'aspect_beta': 'SetQualityMeasureToAspectBeta',
+            'aspect_frobenius': 'SetQualityMeasureToAspectFrobenius',
+            'aspect_gamma': 'SetQualityMeasureToAspectGamma',
+            'aspect_ratio': 'SetQualityMeasureToAspectRatio',
+            'collapse_ratio': 'SetQualityMeasureToCollapseRatio',
+            'condition': 'SetQualityMeasureToCondition',
+            'diagonal': 'SetQualityMeasureToDiagonal',
+            'dimension': 'SetQualityMeasureToDimension',
+            'distortion': 'SetQualityMeasureToDistortion',
+            'jacobian': 'SetQualityMeasureToJacobian',
+            'max_angle': 'SetQualityMeasureToMaxAngle',
+            'max_aspect_frobenius': 'SetQualityMeasureToMaxAspectFrobenius',
+            'max_edge_ratio': 'SetQualityMeasureToMaxEdgeRatio',
+            'med_aspect_frobenius': 'SetQualityMeasureToMedAspectFrobenius',
+            'min_angle': 'SetQualityMeasureToMinAngle',
+            'oddy': 'SetQualityMeasureToOddy',
+            'radius_ratio': 'SetQualityMeasureToRadiusRatio',
+            'relative_size_squared': 'SetQualityMeasureToRelativeSizeSquared',
+            'scaled_jacobian': 'SetQualityMeasureToScaledJacobian',
+            'shape': 'SetQualityMeasureToShape',
+            'shape_and_size': 'SetQualityMeasureToShapeAndSize',
+            'shear': 'SetQualityMeasureToShear',
+            'shear_and_size': 'SetQualityMeasureToShearAndSize',
+            'skew': 'SetQualityMeasureToSkew',
+            'stretch': 'SetQualityMeasureToStretch',
+            'taper': 'SetQualityMeasureToTaper',
+            'volume': 'SetQualityMeasureToVolume',
+            'warpage': 'SetQualityMeasureToWarpage',
         }
+
+        # we need to check if these quality measures exist as VTK API changes
+        measure_setters = {}
+        for name, attr in possible_measure_setters.items():
+            setter_candidate = getattr(alg, attr, None)
+            if setter_candidate:
+                measure_setters[name] = setter_candidate
+
         try:
             # Set user specified quality measure
             measure_setters[quality_measure]()
@@ -5145,7 +5190,8 @@ class DataSetFilters:
         Area or volume is also provided in point data.
 
         This filter uses the VTK `vtkIntegrateAttributes
-        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_.
+        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_
+        and requires VTK v9.1.0 or newer.
 
         Parameters
         ----------
@@ -5154,8 +5200,9 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGird
-            Mesh with 1 point and 1 vertex cell with integrated data in point and cell data.
+        pyvista.UnstructuredGrid
+            Mesh with 1 point and 1 vertex cell with integrated data in point
+            and cell data.
 
         Examples
         --------
@@ -5177,8 +5224,179 @@ class DataSetFilters:
         See the :ref:`integrate_example` for more examples using this filter.
 
         """
-        filter = _vtk.vtkIntegrateAttributes()
-        filter.SetInputData(self)
-        filter.SetDivideAllCellDataByVolume(False)
-        _update_alg(filter, progress_bar, 'Integrating Variables')
-        return _get_output(filter)
+        if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover
+            raise VTKVersionError('`integrate_data` requires VTK 9.1.0 or newer.')
+
+        alg = _vtk.vtkIntegrateAttributes()
+        alg.SetInputData(self)
+        alg.SetDivideAllCellDataByVolume(False)
+        _update_alg(alg, progress_bar, 'Integrating Variables')
+        return _get_output(alg)
+
+    def partition(self, n_partitions, generate_global_id=False, as_composite=True):
+        """Break down input dataset into a requested number of partitions.
+
+         Cells on boundaries are uniquely assigned to each partition without duplication.
+
+         It uses a kdtree implementation that builds balances the cell
+         centers among a requested number of partitions. The current implementation
+         only supports power-of-2 target partition. If a non-power of two value
+         is specified for ``n_partitions``, then the load balancing simply
+         uses the power-of-two greater than the requested value
+
+         For more details, see `vtkRedistributeDataSetFilter
+         <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
+
+         Parameters
+         ----------
+         n_partitions : int
+             Specify the number of partitions to split the input dataset
+             into. Current implementation results in a number of partitions equal
+             to the power of 2 greater than or equal to the chosen value.
+
+         generate_global_id : bool, default: False
+             Generate global cell ids if ``None`` are present in the input.  If
+             global cell ids are present in the input then this flag is
+             ignored.
+
+             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
+             of the output dataset(s).
+
+         as_composite : bool, default: False
+             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
+
+         Returns
+         -------
+        pyvista.MultiBlock or pyvista.UnstructuredGrid
+             UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
+
+         Notes
+         -----
+         This filter requires ``vtk>=9.0.0``.
+
+         Examples
+         --------
+         Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+         containing each partition.
+
+         >>> import pyvista as pv
+         >>> grid = pv.UniformGrid(dims=(5, 5, 5))
+         >>> out = grid.partition(4, as_composite=True)
+         >>> out.plot(multi_colors=True, show_edges=True)
+
+         Partition of the Stanford bunny.
+
+         >>> from pyvista import examples
+         >>> mesh = examples.download_bunny()
+         >>> out = mesh.partition(4, as_composite=True)
+         >>> out.plot(multi_colors=True, cpos='xy')
+
+        """
+        # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
+        # work correctly, returning the wrong number of partitions.
+        if pyvista.vtk_version_info < (9, 1, 0):
+            raise VTKVersionError('`partition` requires vtk>=9.1.0')  # pragma: no cover
+        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
+            raise VTKVersionError(
+                '`partition` requires vtkRedistributeDataSetFilter, but it '
+                f'was not found in VTK {pyvista.vtk_version_info}'
+            )  # pragma: no cover
+
+        alg = _vtk.vtkRedistributeDataSetFilter()
+        alg.SetInputData(self)
+        alg.SetNumberOfPartitions(n_partitions)
+        alg.SetPreservePartitionsInOutput(True)
+        alg.SetGenerateGlobalCellIds(generate_global_id)
+        alg.Update()
+
+        # pyvista does not yet support vtkPartitionedDataSet
+        part = alg.GetOutput()
+        datasets = [part.GetPartition(ii) for ii in range(part.GetNumberOfPartitions())]
+        output = pyvista.MultiBlock(datasets)
+        if not as_composite:
+            # note, SetPreservePartitionsInOutput does not work correctly in
+            # vtk 9.2.0, so instead we set it to True always and simply merge
+            # the result. See:
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
+            return pyvista.merge(list(output), merge_points=False)
+        return output
+
+    def explode(self, factor=0.1):
+        """Push each individual cell away from the center of the dataset.
+
+        Parameters
+        ----------
+        factor : float, default: 0.1
+            How much each cell will move from the center of the dataset
+            relative to its distance from it. Increase this number to push the
+            cells farther away.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid containing the exploded cells.
+
+        Notes
+        -----
+        This is similar to :func:`shrink <pyvista.DataSetFilters.shrink>`
+        except that it does not change the size of the cells.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> xrng = np.linspace(0, 1, 3)
+        >>> yrng = np.linspace(0, 2, 4)
+        >>> zrng = np.linspace(0, 3, 5)
+        >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
+        >>> exploded = grid.explode()
+        >>> exploded.plot(show_edges=True)
+
+        """
+        split = self.separate_cells()
+        if not isinstance(split, pyvista.UnstructuredGrid):
+            split = split.cast_to_unstructured_grid()
+
+        # VTK changed their cell indexing API in 9.0
+        if pyvista.vtk_version_info < (9, 0, 0):  # pragma: no cover
+            offset = split.offset.copy()
+            offset -= np.arange(offset.size)
+            offset = np.hstack((offset, split.n_points))
+        else:
+            offset = split.offset
+
+        vec = (split.cell_centers().points - split.center) * factor
+        split.points += np.repeat(vec, np.diff(offset), axis=0)
+        return split
+
+    def separate_cells(self):
+        """Return a copy of the dataset with separated cells with no shared points.
+
+        This method may be useful when datasets have scalars that need to be
+        associated to each point of each cell rather than either each cell or
+        just the points of the dataset.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid with isolated cells.
+
+        Examples
+        --------
+        Load the example hex beam and separate its cells. This increases the
+        total number of points in the dataset since points are no longer
+        shared.
+
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> grid.n_points
+        99
+        >>> sep_grid = grid.separate_cells()
+        >>> sep_grid.n_points
+        320
+
+        See the :ref:`point_cell_scalars_example` for a more detailed example
+        using this filter.
+
+        """
+        return self.shrink(1.0)

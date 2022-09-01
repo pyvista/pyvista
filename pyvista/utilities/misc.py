@@ -1,10 +1,36 @@
 """Miscellaneous pyvista functions."""
 from collections import namedtuple
+from functools import lru_cache
+import importlib
+import os
 import warnings
 
 import numpy as np
 
 from pyvista import _vtk
+
+
+def _set_plot_theme_from_env():
+    """Set plot theme from an environment variable."""
+    from pyvista.themes import _ALLOWED_THEMES, set_plot_theme
+
+    if 'PYVISTA_PLOT_THEME' in os.environ:
+        try:
+            theme = os.environ['PYVISTA_PLOT_THEME']
+            set_plot_theme(theme.lower())
+        except KeyError:
+            allowed = ', '.join([item.name for item in _ALLOWED_THEMES])
+            warnings.warn(
+                f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
+                f'Should be one of the following: {allowed}'
+            )
+
+
+@lru_cache(maxsize=None)
+def has_module(module_name):
+    """Return if a module can be imported."""
+    module_spec = importlib.util.find_spec(module_name)
+    return module_spec is not None
 
 
 def raise_has_duplicates(arr):
@@ -29,14 +55,20 @@ def _get_vtk_id_type():
     return np.int32
 
 
-class PyvistaDeprecationWarning(Warning):
+class PyVistaDeprecationWarning(Warning):
     """Non-supressed Depreciation Warning."""
 
     pass
 
 
-class PyvistaFutureWarning(Warning):
+class PyVistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
+
+    pass
+
+
+class PyVistaEfficiencyWarning(Warning):
+    """Efficiency warning."""
 
     pass
 

@@ -24,7 +24,7 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
-from pyvista.utilities.misc import PyvistaDeprecationWarning, has_duplicates, raise_has_duplicates
+from pyvista.utilities.misc import PyVistaDeprecationWarning, has_duplicates, raise_has_duplicates
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"
@@ -88,7 +88,7 @@ def test_read(tmpdir, use_pathlib):
     # Now test the standard_reader_routine
     for i, filename in enumerate(fnames):
         # Pass attrs to for the standard_reader_routine to be used
-        with pytest.warns(PyvistaDeprecationWarning):
+        with pytest.warns(PyVistaDeprecationWarning):
             obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
@@ -138,12 +138,12 @@ def test_read_force_ext(tmpdir):
 @mock.patch('pyvista.BaseReader.reader')
 def test_read_attrs(mock_reader, mock_read):
     """Test passing attrs in read."""
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read(ex.antfile, attrs={'test': 'test_arg'})
     mock_reader.test.assert_called_once_with('test_arg')
 
     mock_reader.reset_mock()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
     mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
 
@@ -184,7 +184,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
 
 @mock.patch('pyvista.utilities.fileio.read')
 def test_read_legacy(read_mock):
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read_legacy(ex.globefile, progress_bar=False)
     read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
 
@@ -204,45 +204,76 @@ def test_pyvista_read_exodus(read_exodus_mock):
 @mock.patch('pyvista.utilities.reader.BaseReader.path')
 def test_read_plot3d(path_mock, read_mock, auto_detect):
     # with grid only
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
     read_mock.assert_called_once()
 
     # with grid and q
     read_mock.reset_mock()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
     read_mock.assert_called_once()
 
 
-def test_get_array():
-    grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
-    # add array to both point/cell data with same name
-    carr = np.random.rand(grid.n_cells)
-    grid.cell_data.set_array(carr, 'test_data')
-    parr = np.random.rand(grid.n_points)
-    grid.point_data.set_array(parr, 'test_data')
-    # add other data
-    oarr = np.random.rand(grid.n_points)
-    grid.point_data.set_array(oarr, 'other')
-    farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid.field_data.set_array(farr, 'field_data')
-    assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
-    assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
-    assert np.allclose(oarr, helpers.get_array(grid, 'other'))
-    assert helpers.get_array(grid, 'foo') is None
-    assert helpers.get_array(grid, 'test_data', preference='field') is None
-    assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
+def test_get_array_cell(hexbeam):
+    carr = np.random.rand(hexbeam.n_cells)
+    hexbeam.cell_data.set_array(carr, 'test_data')
+
+    data = helpers.get_array(hexbeam, 'test_data', preference='cell')
+    assert np.allclose(carr, data)
+
+
+def test_get_array_point(hexbeam):
+    parr = np.random.rand(hexbeam.n_points)
+    hexbeam.point_data.set_array(parr, 'test_data')
+
+    data = helpers.get_array(hexbeam, 'test_data', preference='point')
+    assert np.allclose(parr, data)
+
+    oarr = np.random.rand(hexbeam.n_points)
+    hexbeam.point_data.set_array(oarr, 'other')
+
+    data = helpers.get_array(hexbeam, 'other')
+    assert np.allclose(oarr, data)
+
+
+def test_get_array_field(hexbeam):
+    hexbeam.clear_data()
+    # no preference
+    farr = np.random.rand(hexbeam.n_points * hexbeam.n_cells)
+    hexbeam.field_data.set_array(farr, 'data')
+    data = helpers.get_array(hexbeam, 'data')
+    assert np.allclose(farr, data)
+
+    # preference and multiple data
+    hexbeam.point_data.set_array(np.random.rand(hexbeam.n_points), 'data')
+
+    data = helpers.get_array(hexbeam, 'data', preference='field')
+    assert np.allclose(farr, data)
+
+
+def test_get_array_error(hexbeam):
+    parr = np.random.rand(hexbeam.n_points)
+    hexbeam.point_data.set_array(parr, 'test_data')
+
     # invalid inputs
     with pytest.raises(TypeError):
-        helpers.get_array(grid, 'test_data', preference={'invalid'})
+        helpers.get_array(hexbeam, 'test_data', preference={'invalid'})
     with pytest.raises(ValueError):
-        helpers.get_array(grid, 'test_data', preference='invalid')
-    with pytest.raises(ValueError):
-        helpers.get_array(grid, 'test_data', preference='row')
+        helpers.get_array(hexbeam, 'test_data', preference='invalid')
+    with pytest.raises(ValueError, match='`preference` must be'):
+        helpers.get_array(hexbeam, 'test_data', preference='row')
+
+
+def test_get_array_none(hexbeam):
+    arr = helpers.get_array(hexbeam, 'foo')
+    assert arr is None
+
+
+def get_array_vtk(hexbeam):
     # test raw VTK input
     grid_vtk = vtk.vtkUnstructuredGrid()
-    grid_vtk.DeepCopy(grid)
+    grid_vtk.DeepCopy(hexbeam)
     helpers.get_array(grid_vtk, 'test_data')
     helpers.get_array(grid_vtk, 'foo')
 

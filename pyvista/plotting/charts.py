@@ -1061,6 +1061,12 @@ class _Chart(DocSubs):
 
         Resize this chart such that it always occupies the specified
         geometry (matching the specified location and size).
+
+        Returns
+        -------
+        bool
+            ``True`` if the chart was resized, ``False`` otherwise.
+
         """
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
@@ -1068,9 +1074,11 @@ class _Chart(DocSubs):
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
-        if c_w != t_w or c_h != t_h:
+        resize = c_w != t_w or c_h != t_h
+        if resize:
             # Mismatch between current size and target size, so resize chart:
             self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+        return resize
 
     @property
     def _geometry(self):
@@ -4220,12 +4228,14 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         # Calculate target size from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
-        if c_w != t_w or c_h != t_h:
+        resize = c_w != t_w or c_h != t_h
+        if resize:
             # Mismatch between canvas size and target size, so resize figure:
             f_w = t_w / self._fig.dpi
             f_h = t_h / self._fig.dpi
             self._fig.set_size_inches(f_w, f_h)
             self.position = (self._loc[0] * r_w, self._loc[1] * r_h)
+        return resize
 
     def _redraw(self, event=None):
         """Redraw the chart."""
@@ -4243,8 +4253,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self.SetImage(img_data)
 
     def _render_event(self, *args, **kwargs):
-        self._resize()  # Update figure dimensions if needed
-        self._redraw()  # Redraw figure
+        if self._resize():  # Update figure dimensions if needed
+            self._redraw()  # Redraw figure when geometry has changed
 
     @property
     def _geometry(self):
@@ -4360,7 +4370,16 @@ class Charts:
         # needed.
         self._scene = None
         self._actor = None
-        self._renderer = renderer
+
+        # a weakref.proxy would be nice here, but that doesn't play
+        # nicely with SetRenderer, so instead we'll use a weak reference
+        # plus a property to call it
+        self.__renderer = weakref.ref(renderer)
+
+    @property
+    def _renderer(self):
+        """Return the weakly dereferenced renderer, maybe None."""
+        return self.__renderer()
 
     def _setup_scene(self):
         """Set up a new context scene and actor for these charts."""
@@ -4374,7 +4393,7 @@ class Charts:
     def deep_clean(self):
         """Remove all references to the chart objects and internal objects."""
         if self._scene is not None:
-            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_plot
+            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
                 self.remove_chart(chart)
             self._renderer.RemoveActor(self._actor)
@@ -4448,3 +4467,7 @@ class Charts:
         """Return an iterable of charts."""
         for chart in self._charts:
             yield chart
+
+    def __del__(self):
+        """Clean up before being destroyed."""
+        self.deep_clean()

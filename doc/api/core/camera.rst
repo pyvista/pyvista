@@ -1,3 +1,5 @@
+.. _cameras_api:
+
 Cameras
 =======
 The :class:`pyvista.Camera` class adds additional functionality and a
@@ -138,6 +140,5 @@ API reference
 ~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.Camera

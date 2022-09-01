@@ -66,6 +66,12 @@ def test_load_random_hills():
     assert mesh.n_cells
 
 
+def test_load_tetbeam():
+    mesh = examples.load_tetbeam()
+    assert mesh.n_cells
+    assert (mesh.celltypes == 10).all()
+
+
 if TEST_DOWNLOADS:
 
     def test_download_single_sphere_animation():
@@ -196,6 +202,12 @@ if TEST_DOWNLOADS:
     def test_download_cake_easy_texture():
         data = examples.download_cake_easy_texture()
         assert isinstance(data, vtk.vtkTexture)
+
+    def test_download_can_crushed_hdf():
+        path = examples.download_can_crushed_hdf(load=False)
+        assert os.path.isfile(path)
+        dataset = examples.download_can_crushed_hdf()
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
 
     def test_download_rectilinear_grid():
         data = examples.download_rectilinear_grid()
@@ -333,6 +345,11 @@ if TEST_DOWNLOADS:
         data = examples.download_carotid()
         assert data.n_cells
 
+    def test_download_carburetor():
+        data = examples.download_carburetor()
+        assert isinstance(data, pyvista.PolyData)
+        assert data.n_faces
+
     def test_download_blow():
         data = examples.download_blow()
         assert data.n_cells
@@ -420,5 +437,107 @@ if TEST_DOWNLOADS:
         dataset = examples.download_lucy(load=True)
         assert isinstance(dataset, pyvista.PolyData)
 
+    def test_angular_sector():
+        filename = examples.download_angular_sector(load=False)
+        assert os.path.isfile(filename)
 
-# End of download tests
+        dataset = examples.download_angular_sector(load=True)
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_mount_damavand():
+        filename = examples.download_mount_damavand(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_mount_damavand(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+
+    def test_download_cubemap_space_4k():
+        dataset = examples.download_cubemap_space_4k()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_download_cubemap_space_16k():
+        dataset = examples.download_cubemap_space_16k()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_particles_lethe():
+        filename = examples.download_particles_lethe(load=False)
+        assert os.path.isfile(filename)
+
+        dataset = examples.download_particles_lethe(load=True)
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+
+    def test_cubemap_park():
+        dataset = examples.download_cubemap_park()
+        assert isinstance(dataset, pyvista.Texture)
+
+    def test_gif_simple():
+        filename = examples.download_gif_simple(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('gif')
+
+        dataset = examples.download_gif_simple(load=True)
+        assert isinstance(dataset, pyvista.UniformGrid)
+        assert 'frame0' in dataset.point_data
+
+    def test_black_vase():
+        filename = examples.download_black_vase(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_black_vase(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_ivan_angel():
+        filename = examples.download_ivan_angel(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_ivan_angel(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_bird_bath():
+        filename = examples.download_bird_bath(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_bird_bath(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_owl():
+        filename = examples.download_owl(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_owl(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_plastic_vase():
+        filename = examples.download_plastic_vase(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_plastic_vase(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_sea_vase():
+        filename = examples.download_sea_vase(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_sea_vase(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points > 1_000_000
+
+    def test_cad_model_case():
+        filename = examples.download_cad_model_case(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_cad_model_case(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points == 7677
