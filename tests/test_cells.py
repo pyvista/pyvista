@@ -104,3 +104,31 @@ def test_cell_types():
     for cell_type in cell_types:
         if hasattr(vtk, "VTK_" + cell_type):
             assert getattr(pyvista.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
+
+
+def test_tetrahedron():
+    grid = pyvista.cells.Tetrahedron()
+    assert grid.celltypes[0] == pyvista.CellType.TETRA
+    assert grid.n_cells == 1
+    assert grid.n_points == 4
+
+
+def test_hexagonal_prism():
+    grid = pyvista.cells.HexagonalPrism()
+    assert grid.celltypes[0] == pyvista.CellType.HEXAGONAL_PRISM
+    assert grid.n_cells == 1
+    assert grid.n_points == 12
+
+
+def test_wedge():
+    grid = pyvista.cells.Wedge()
+    assert grid.celltypes[0] == pyvista.CellType.WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 6
+
+
+def test_pentagonal_prism():
+    grid = pyvista.cells.PentagonalPrism()
+    assert grid.celltypes[0] == pyvista.CellType.PENTAGONAL_PRISM
+    assert grid.n_cells == 1
+    assert grid.n_points == 10
