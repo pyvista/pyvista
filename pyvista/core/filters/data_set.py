@@ -1054,12 +1054,12 @@ class DataSetFilters:
             # just a single value
             if invert:
                 if pyvista.vtk_version_info >= (9, 1):
-                    alg.SetLowerThreshold(value)
+                    alg.SetUpperThreshold(value)
                 else:
                     alg.ThresholdByLower(value)
             else:
                 if pyvista.vtk_version_info >= (9, 1):
-                    alg.SetUpperThreshold(value)
+                    alg.SetLowerThreshold(value)
                 else:
                     alg.ThresholdByUpper(value)
         if component_mode == "component":
