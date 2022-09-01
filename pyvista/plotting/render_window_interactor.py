@@ -36,7 +36,7 @@ class RenderWindowInteractor:
         if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
 
-        # # Map of observers to events
+        # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = collections.defaultdict(list)
         self._click_event_callbacks = {
