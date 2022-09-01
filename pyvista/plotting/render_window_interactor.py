@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
+_CLASSES = {}
+
 
 class RenderWindowInteractor:
     """Wrap vtk.vtkRenderWindowInteractor.
@@ -24,14 +26,17 @@ class RenderWindowInteractor:
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
         """Initialize."""
+        self.__plotter = weakref.ref(plotter)
+
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
+
         self.interactor = interactor
         self.interactor.SetDesiredUpdateRate(desired_update_rate)
         if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
 
-        # Map of observers to events
+        # # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = collections.defaultdict(list)
         self._click_event_callbacks = {
@@ -42,10 +47,9 @@ class RenderWindowInteractor:
         self._MAX_CLICK_DELAY = 0.8  # seconds
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
 
-        # Set default style
+        # # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
-        self._plotter = plotter
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
@@ -53,6 +57,11 @@ class RenderWindowInteractor:
         self.track_click_position(
             self._toggle_context_style, side="left", double=True, viewport=True
         )
+
+    @property
+    def _plotter(self):
+        """Return the plotter."""
+        return self.__plotter()
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -584,7 +593,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
-                self._style_class.AddObserver(event, callback)
+                self._style_class.add_observer(event, callback)
 
         if shift_pans:
 
@@ -602,7 +611,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
-                self._style_class.AddObserver(event, callback)
+                self._style_class.add_observer(event, callback)
 
     def enable_rubber_band_style(self):
         """Set the interactive style to Rubber Band Picking.
@@ -783,6 +792,9 @@ class RenderWindowInteractor:
 
     def set_render_window(self, ren_win):
         """Set the render window."""
+        # edge_case: accept pyvista.RenderWindow
+        if hasattr(ren_win, '_ren_win'):
+            ren_win = ren_win._ren_win
         self.interactor.SetRenderWindow(ren_win)
 
     def process_events(self):
@@ -829,6 +841,20 @@ class RenderWindowInteractor:
             # #################################################################
 
             self.interactor.TerminateApp()
+            self.interactor = None
+
+    def close(self):
+        """Close out the render window interactor.
+
+        This will terminate the render window if it is not already closed.
+        """
+        self.remove_observers()
+        if self._style_class is not None:
+            self._style_class.remove_observers()
+            self._style_class = None
+
+        self.terminate_app()
+        self._click_event_callbacks = None
 
 
 def _style_factory(klass):
@@ -837,34 +863,54 @@ def _style_factory(klass):
     # swallow the release events
     # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
 
-    try:
-        from vtkmodules import vtkInteractionStyle
-    except ImportError:  # pragma: no cover
-        import vtk as vtkInteractionStyle
+    def _make_class(klass):
+        """Make the class."""
+        try:
+            from vtkmodules import vtkInteractionStyle
+        except ImportError:  # pragma: no cover
+            import vtk as vtkInteractionStyle
 
-    class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-        def __init__(self, parent):
-            super().__init__()
-            self._parent = weakref.ref(parent)
-            self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
-            self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+        class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
+            def __init__(self, parent):
+                super().__init__()
+                self._parent = weakref.ref(parent)
 
-        def _press(self, obj, event):
-            # Figure out which renderer has the event and disable the
-            # others
-            super().OnLeftButtonDown()
-            parent = self._parent()
-            if len(parent._plotter.renderers) > 1:
-                click_pos = parent.get_event_position()
-                for renderer in parent._plotter.renderers:
-                    interact = renderer.IsInViewport(*click_pos)
-                    renderer.SetInteractive(interact)
+                self._observers = []
+                self._observers.append(
+                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+                )
+                self._observers.append(
+                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+                )
 
-        def _release(self, obj, event):
-            super().OnLeftButtonUp()
-            parent = self._parent()
-            if len(parent._plotter.renderers) > 1:
-                for renderer in parent._plotter.renderers:
-                    renderer.SetInteractive(True)
+            def _press(self, obj, event):
+                # Figure out which renderer has the event and disable the
+                # others
+                super().OnLeftButtonDown()
+                parent = self._parent()
+                if len(parent.plotter.renderers) > 1:
+                    click_pos = parent.get_event_position()
+                    for renderer in parent.plotter.renderers:
+                        interact = renderer.IsInViewport(*click_pos)
+                        renderer.SetInteractive(interact)
 
-    return CustomStyle
+            def _release(self, obj, event):
+                super().OnLeftButtonUp()
+                parent = self._parent()
+                if len(parent.plotter.renderers) > 1:
+                    for renderer in parent.plotter.renderers:
+                        renderer.SetInteractive(True)
+
+            def add_observer(self, event, callback):
+                self._observers.append(self.AddObserver(event, callback))
+
+            def remove_observers(self):
+                for obs in self._observers:
+                    self.RemoveObserver(obs)
+
+        return CustomStyle
+
+    # cache classes
+    if klass not in _CLASSES:
+        _CLASSES[klass] = _make_class(klass)
+    return _CLASSES[klass]
