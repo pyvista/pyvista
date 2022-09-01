@@ -439,7 +439,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self, aa_type):
+    def enable_anti_aliasing(self, aa_type='fxaa'):
         """Enable anti-aliasing.
 
         Parameters
