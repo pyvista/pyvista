@@ -256,3 +256,38 @@ jobs:
 
       - name: Test Plotting
         run: python -m pytest -v tests/plotting
+
+  downstream:
+    # For now this is just MNE-Python, but others could be added
+    name: Test downstream packages
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      DISPLAY: ':99.0'
+      MNE_LOGGING_LEVEL: 'info'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
+      - run: ./mne-python/tools/setup_xvfb.sh
+      - run: ./mne-python/tools/github_actions_dependencies.sh
+      - run: pip install -ve .
+      - run: pip install -ve . && mne sys_info
+        working-directory: mne-python
+      - run: ./mne-python/tools/get_testing_version.sh
+      - uses: actions/cache@v3
+        with:
+          key: ${{ env.TESTING_VERSION }}
+          path: ~/mne_data
+      - run: ./mne-python/tools/github_actions_download.sh
+      - run: pytest mne/viz --cov=pyvista
+        working-directory: mne-python
+      # In theory this should be fine, too (codecov should combine all reports)
+      # if we copied the cov report up one directory
+      #- uses: codecov/codecov-action@v3
+      #  name: 'Upload coverage to CodeCov'
+      #  working-directory: mne-python
