@@ -243,6 +243,7 @@ if VTK9:
         vtkCompositeDataGeometryFilter,
         vtkDataSetSurfaceFilter,
         vtkGeometryFilter,
+        vtkRectilinearGridGeometryFilter,
         vtkStructuredGridGeometryFilter,
     )
     from vtkmodules.vtkFiltersHybrid import vtkPolyDataSilhouette
