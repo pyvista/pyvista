@@ -35,7 +35,7 @@ jobs:
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
-        run: pip install numpy scipy matplotlib pyvistaqt nibabel PyQt6 qtpy ipyvtklink ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery
+        run: pip install numpy scipy matplotlib pyvistaqt nibabel PyQt6 qtpy ipyvtklink ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat imageio-ffmpeg
       - name: Install PyVista
         run: pip install -ve .  # pyvista
       - name: Install MNE
