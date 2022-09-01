@@ -284,7 +284,7 @@ jobs:
           path: ~/mne_data
       - run: ./tools/github_actions_download.sh
         working-directory: mne-python
-      - run: pytest mne/viz --cov=pyvista --cov-report xml
+      - run: pytest --cov=pyvista --cov-report=xml mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends
         working-directory: mne-python
       # In theory this should be fine, too (codecov should combine all reports)
       # if we copied the cov report up one directory
