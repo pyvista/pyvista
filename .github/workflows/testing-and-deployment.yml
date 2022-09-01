@@ -271,7 +271,7 @@ jobs:
           python-version: '3.10'
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
-      - run: ./mne-python/tools/github_actions_dependencies.sh
+      - run: ./tools/github_actions_dependencies.sh
         working-directory: mne-python
       - run: pip install -ve .  # pyvista
       - run: pip install -ve . && mne sys_info  # mne
