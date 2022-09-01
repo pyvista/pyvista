@@ -45,10 +45,6 @@ jobs:
       - name: MNE Info
         run: mne sys_info -p
         working-directory: mne-python
-      - name: PyVista Report
-        run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          pip show pyvista
       - run: ./tools/get_testing_version.sh
         working-directory: mne-python
       - uses: actions/cache@v3
