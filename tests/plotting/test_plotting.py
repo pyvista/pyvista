@@ -2905,4 +2905,4 @@ def test_charts_sin():
     chart = pyvista.Chart2D()
     chart.scatter(x, y)
     chart.line(x, y, 'r')
-    chart.show(before_close_callback=verify_cache_image)
+    chart.show(dev_kwargs={'before_close_callback': verify_cache_image})

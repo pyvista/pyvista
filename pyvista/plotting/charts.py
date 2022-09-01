@@ -1364,7 +1364,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
-        **kwargs,
+        dev_kwargs=None,
     ):
         """Show this chart in a self contained plotter.
 
@@ -1405,7 +1405,7 @@ class _Chart(DocSubs):
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``.  Defaults to ``'w'``.
 
-        **kwargs : dict, optional
+        dev_kwargs : dict, optional
             Optional developer keyword arguments.
 
         Returns
@@ -1434,7 +1434,7 @@ class _Chart(DocSubs):
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,
-            **kwargs,
+            **dev_kwargs,
         )
 
 
