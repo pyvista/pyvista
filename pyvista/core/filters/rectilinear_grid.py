@@ -1,7 +1,7 @@
 """Filters module with the class to manage filters/algorithms for rectilinear grid datasets."""
 
 import collections
-from typing import List, Optional, Sequence, Union
+from typing import Sequence, Union
 
 import numpy as np
 
@@ -107,60 +107,4 @@ class RectilinearGridFilters:
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Converting to tetrahedra')
-        return _get_output(alg)
-
-    def extract_geometry_extent(
-        self, extent: Optional[List[int]] = None, progress_bar: bool = False
-    ):
-        """Extract geometry for an extent of a rectilinear grid.
-
-        vtkRectilinearGridGeometryFilter is a filter that extracts geometry
-        from a rectilinear grid. By specifying appropriate i-j-k indices, it
-        is possible to extract a point, a curve, a surface, or a "volume".
-        The volume is actually a (n x m x o) region of points.
-
-        The extent specification is zero-offset. That is, the first k-plane
-        in a 50x50x50 rectilinear grid is given by (0,49, 0,49, 0,0).
-
-        Warning
-        -------
-        If you don't know the dimensions of the input dataset, you can use
-        a large number to specify extent (the number will be clamped
-        appropriately). For example, if the dataset dimensions are 50x50x50,
-        and you want a the fifth k-plane, you can use the extents
-        (0,100, 0,100, 4,4). The 100 will automatically be clamped to 49.
-
-        Parameters
-        ----------
-        extent : sequence, optional
-            The extent of the output geometry.
-            (imin, imax, jmin, jmax, kmin, kmax).
-
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the tetrahedral cells.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> rect = examples.load_uniform().cast_to_rectilinear_grid()
-        >>> geom = rect.extract_geometry_extent()
-        >>> geom.plot()
-
-        Now, extract a subset using an extent. We will extract 0-5 for i and j
-        but the full extent for k.
-
-        >>> sub = rect.extract_geometry_extent(extent=(0, 5, 0, 5, 0, 100))
-        >>> geom.plot()
-
-        """
-        alg = _vtk.vtkRectilinearGridGeometryFilter()
-        alg.SetInputData(self)
-        if extent is not None:
-            alg.SetExtent(extent)
-        _update_alg(alg, progress_bar, 'Extracting rectilinear grid geometry')
         return _get_output(alg)

@@ -1,6 +1,6 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
-from typing import Union
+from typing import List, Optional, Union
 import warnings
 
 import numpy as np
@@ -1261,7 +1261,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, progress_bar=False):
+    def extract_geometry(self, extent: Optional[List[int]] = None, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1272,6 +1272,10 @@ class DataSetFilters:
 
         Parameters
         ----------
+        extent : sequence, optional
+            Specify a (xmin,xmax, ymin,ymax, zmin,zmax) bounding box
+            to clip data.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1301,6 +1305,9 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
+        if extent is not None:
+            alg.SetExtent(extent)
+            alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
