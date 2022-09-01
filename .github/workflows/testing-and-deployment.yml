@@ -276,12 +276,14 @@ jobs:
       - run: pip install -ve .  # pyvista
       - run: pip install -ve . && mne sys_info  # mne
         working-directory: mne-python
-      - run: ./mne-python/tools/get_testing_version.sh
+      - run: ./tools/get_testing_version.sh
+        working-directory: mne-python
       - uses: actions/cache@v3
         with:
           key: ${{ env.TESTING_VERSION }}
           path: ~/mne_data
-      - run: ./mne-python/tools/github_actions_download.sh
+      - run: ./tools/github_actions_download.sh
+        working-directory: mne-python
       - run: pytest mne/viz --cov=pyvista --cov-report xml
         working-directory: mne-python
       # In theory this should be fine, too (codecov should combine all reports)
