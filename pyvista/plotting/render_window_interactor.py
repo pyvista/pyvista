@@ -30,7 +30,6 @@ class RenderWindowInteractor:
 
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
-
         self.interactor = interactor
         self.interactor.SetDesiredUpdateRate(desired_update_rate)
         if not light_follow_camera:
