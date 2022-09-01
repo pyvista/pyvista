@@ -123,6 +123,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_rectlinear_edge_case',
     'test_scalars_by_name',
     'test_user_annotations_scalar_bar_volume',
+    'test_volume_rendering_from_helper',
 }
 
 # these images vary between Linux/Windows and MacOS
