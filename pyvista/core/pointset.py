@@ -1363,9 +1363,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     From arrays (VTK >= 9). Here we create a single tetrahedron.
 
-    >>> from pyvista import Celltypes
     >>> cells = [4, 0, 1, 2, 3]
-    >>> celltypes = [pv.CellType.TETRA]
+    >>> celltypes = [pyvista.CellType.TETRA]
     >>> points = [
     ...     [1.0, 1.0, 1.0],
     ...     [1.0, -1.0, -1.0],
@@ -1414,9 +1413,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._check_for_consistency()
 
         elif len(args) == 3:  # and VTK9:
-            arg0_is_seq = isinstance(args[0], collections.Sequence)
-            arg1_is_seq = isinstance(args[1], collections.Sequence)
-            arg2_is_seq = isinstance(args[2], collections.Sequence)
+            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
@@ -1425,10 +1424,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 raise TypeError('All input types must be sequences.')
 
         elif len(args) == 4:  # pragma: no cover
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            arg2_is_arr = isinstance(args[2], np.ndarray)
-            arg3_is_arr = isinstance(args[3], np.ndarray)
+            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.Sequence))
+            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.Sequence))
+            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.Sequence))
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)

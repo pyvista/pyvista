@@ -106,6 +106,69 @@ def test_cell_types():
             assert getattr(pyvista.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
 
 
+def test_empty():
+    grid = pyvista.cells.Empty()
+    assert grid.celltypes[0] == pyvista.CellType.EMPTY_CELL
+    assert grid.n_cells == 1
+    assert grid.n_points == 0
+
+
+def test_vertex():
+    grid = pyvista.cells.Vertex()
+    assert grid.celltypes[0] == pyvista.CellType.VERTEX
+    assert grid.n_cells == 1
+    assert grid.n_points == 1
+
+
+def test_poly_vertex():
+    grid = pyvista.cells.PolyVertex()
+    assert grid.celltypes[0] == pyvista.CellType.POLY_VERTEX
+    assert grid.n_cells == 1
+    assert grid.n_points >= 1
+
+
+def test_line():
+    grid = pyvista.cells.Line()
+    assert grid.celltypes[0] == pyvista.CellType.LINE
+    assert grid.n_cells == 1
+    assert grid.n_points == 2
+
+
+def test_poly_line():
+    grid = pyvista.cells.PolyLine()
+    assert grid.celltypes[0] == pyvista.CellType.POLY_LINE
+    assert grid.n_cells == 1
+    assert grid.n_points >= 1
+
+
+def test_triangle():
+    grid = pyvista.cells.Triangle()
+    assert grid.celltypes[0] == pyvista.CellType.TRIANGLE
+    assert grid.n_cells == 1
+    assert grid.n_points == 3
+
+
+def test_triangle_strip():
+    grid = pyvista.cells.TriangleStrip()
+    assert grid.celltypes[0] == pyvista.CellType.TRIANGLE_STRIP
+    assert grid.n_cells == 1
+    assert grid.n_points >= 3
+
+
+def test_polygon():
+    grid = pyvista.cells.Polygon()
+    assert grid.celltypes[0] == pyvista.CellType.POLYGON
+    assert grid.n_cells == 1
+    assert grid.n_points == 6
+
+
+def test_Quadrilateral():
+    grid = pyvista.cells.Quadrilateral()
+    assert grid.celltypes[0] == pyvista.CellType.QUAD
+    assert grid.n_cells == 1
+    assert grid.n_points == 4
+
+
 def test_tetrahedron():
     grid = pyvista.cells.Tetrahedron()
     assert grid.celltypes[0] == pyvista.CellType.TETRA
@@ -120,6 +183,20 @@ def test_hexagonal_prism():
     assert grid.n_points == 12
 
 
+def test_hexahedron():
+    grid = pyvista.cells.Hexahedron()
+    assert grid.celltypes[0] == pyvista.CellType.HEXAHEDRON
+    assert grid.n_cells == 1
+    assert grid.n_points == 8
+
+
+def test_pyramid():
+    grid = pyvista.cells.Pyramid()
+    assert grid.celltypes[0] == pyvista.CellType.PYRAMID
+    assert grid.n_cells == 1
+    assert grid.n_points == 5
+
+
 def test_wedge():
     grid = pyvista.cells.Wedge()
     assert grid.celltypes[0] == pyvista.CellType.WEDGE
@@ -132,3 +209,10 @@ def test_pentagonal_prism():
     assert grid.celltypes[0] == pyvista.CellType.PENTAGONAL_PRISM
     assert grid.n_cells == 1
     assert grid.n_points == 10
+
+
+def test_voxel():
+    grid = pyvista.cells.Voxel()
+    assert grid.celltypes[0] == pyvista.CellType.VOXEL
+    assert grid.n_cells == 1
+    assert grid.n_points == 8

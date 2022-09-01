@@ -2756,6 +2756,11 @@ def test_tight_square(noise_2d):
     )
 
 
+def test_plot_cell():
+    grid = pyvista.cells.Tetrahedron()
+    pyvista.cells.plot_cell(grid, before_close_callback=verify_cache_image)
+
+
 def test_tight_square_padding():
     grid = pyvista.UniformGrid(dims=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
