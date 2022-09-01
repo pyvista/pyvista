@@ -47,7 +47,7 @@ class RenderWindowInteractor:
         self._MAX_CLICK_DELAY = 0.8  # seconds
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
 
-        # # Set default style
+        # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
 
