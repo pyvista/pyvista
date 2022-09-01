@@ -272,8 +272,9 @@ jobs:
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - run: ./mne-python/tools/github_actions_dependencies.sh
-      - run: pip install -ve .
-      - run: pip install -ve . && mne sys_info
+        working-directory: mne-python
+      - run: pip install -ve .  # pyvista
+      - run: pip install -ve . && mne sys_info  # mne
         working-directory: mne-python
       - run: ./mne-python/tools/get_testing_version.sh
       - uses: actions/cache@v3
