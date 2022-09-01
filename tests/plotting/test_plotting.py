@@ -1683,7 +1683,7 @@ def test_multiblock_volume_rendering(uniform):
 
 def test_array_volume_rendering(uniform):
     arr = uniform["Spatial Point Data"].reshape(uniform.dimensions)
-    pyvista.plot(arr, volume=True, opacity='linear')
+    pyvista.plot(arr, volume=True, opacity='linear', before_close_callback=verify_cache_image)
 
 
 def test_plot_compare_four():
