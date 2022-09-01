@@ -259,11 +259,8 @@ jobs:
 
   downstream:
     # For now this is just MNE-Python, but others could be added
-    name: Test downstream packages
+    name: Downstream packages
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash -el {0}
     env:
       DISPLAY: ':99.0'
       MNE_LOGGING_LEVEL: 'info'
@@ -284,10 +281,10 @@ jobs:
           key: ${{ env.TESTING_VERSION }}
           path: ~/mne_data
       - run: ./mne-python/tools/github_actions_download.sh
-      - run: pytest mne/viz --cov=pyvista
+      - run: pytest mne/viz --cov=pyvista --cov-report xml
         working-directory: mne-python
       # In theory this should be fine, too (codecov should combine all reports)
       # if we copied the cov report up one directory
       #- uses: codecov/codecov-action@v3
       #  name: 'Upload coverage to CodeCov'
-      #  working-directory: mne-python
+      #  directory: ./mne-python/
