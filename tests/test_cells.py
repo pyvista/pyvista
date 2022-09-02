@@ -216,3 +216,10 @@ def test_voxel():
     assert grid.celltypes[0] == pyvista.CellType.VOXEL
     assert grid.n_cells == 1
     assert grid.n_points == 8
+
+
+def test_pixel():
+    grid = pyvista.cells.Pixel()
+    assert grid.celltypes[0] == pyvista.CellType.PIXEL
+    assert grid.n_cells == 1
+    assert grid.n_points == 4

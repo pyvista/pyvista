@@ -405,6 +405,46 @@ def Polygon() -> UnstructuredGrid:
     return UnstructuredGrid(cells, [CellType.POLYGON], points)
 
 
+def Pixel() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single pixel.
+
+    This cell corresponds to the :attr:`pyvista.CellType.PIXEL` cell type.
+
+    Returns
+    -------
+    UnstructuredGrid
+        UnstructuredGrid containing a single pixel.
+
+    Examples
+    --------
+    Create and plot a single pixel.
+
+    >>> import pyvista as pv
+    >>> grid = pv.cells.Pixel()
+    >>> pv.cells.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([4, 0, 1, 2, 3])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0., 0., 0.],
+                     [1., 0., 0.],
+                     [0., 1., 0.],
+                     [1., 1., 0.]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.PIXEL
+    array([8], dtype=uint8)
+
+    """
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]]
+    cells = [len(points)] + list(range(len(points)))
+    return UnstructuredGrid(cells, [CellType.PIXEL], points)
+
+
 def Quadrilateral() -> UnstructuredGrid:
     """Create a :class:`pyvista.UnstructuredGrid` containing a single quadrilateral.
 
