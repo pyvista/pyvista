@@ -32,8 +32,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      # run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
-      - run: git clone --depth=1 https://github.com/larsoner/mne-python.git --branch try --single-branch
+      - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
         run: pip install numpy scipy matplotlib pyvistaqt nibabel PyQt6 qtpy ipyvtklink ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio-ffmpeg
