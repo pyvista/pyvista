@@ -9,6 +9,7 @@ import io
 import os
 import pathlib
 import platform
+import re
 import time
 import warnings
 
@@ -47,6 +48,8 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
+skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
+
 skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
@@ -58,6 +61,18 @@ IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
 
+
+def using_mesa():
+    """Determine if using mesa."""
+    pl = pyvista.Plotter(notebook=False, off_screen=True)
+    pl.show(auto_close=False)
+    gpu_info = pl.ren_win.ReportCapabilities()
+    pl.close()
+
+    regex = re.compile("OpenGL version string:(.+)\n")
+    return "Mesa" in regex.findall(gpu_info)[0]
+
+
 # always set on Windows CI
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -67,6 +82,7 @@ skip_mac = pytest.mark.skipif(
 skip_mac_flaky = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
 )
+skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 
 # Normal image warning/error thresholds (assumes using use_vtk)
@@ -2489,6 +2505,74 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_windows
+@skip_9_0_X
+def test_depth_of_field():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.enable_depth_of_field()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_9_0_X
+def test_blurring():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.add_blurring()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_ssaa_pass():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.enable_anti_aliasing('ssaa')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_mesa
+def test_ssao_pass():
+    ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
+    pl = pyvista.Plotter()
+    pl.add_mesh(ugrid)
+
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.enable_ssao()
+        return
+
+    pl.enable_ssao()
+    pl.show(before_close_callback=verify_cache_image, auto_close=False)
+
+    # ensure this fails when ssao disabled
+    pl.disable_ssao()
+    with pytest.raises(RuntimeError):
+        pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_mesa
+def test_ssao_pass_from_helper():
+    ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
+
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            ugrid.plot(ssao=True)
+        return
+
+    ugrid.plot(ssao=True, before_close_callback=verify_cache_image)
+
+
+@skip_windows
+def test_many_multi_pass():
+    pl = pyvista.Plotter(lighting=None)
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.add_light(pyvista.Light(position=(0, 0, 10)))
+    pl.enable_anti_aliasing('ssaa')
+    pl.enable_depth_of_field()
+    pl.add_blurring()
+    pl.enable_shadows()
+    pl.enable_eye_dome_lighting()
 
 
 def test_plot_composite_many_options(multiblock_poly):

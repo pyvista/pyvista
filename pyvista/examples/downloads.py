@@ -2675,7 +2675,28 @@ def download_thermal_probes(load=True):  # pragma: no cover
 
 
 def download_carburator(load=True):  # pragma: no cover
-    """Download scan of a carburator.
+    """Download scan of a carburetor.
+
+    .. deprecated:: 0.37.0
+       Please use :func:`pyvista.examples.downloads.download_carburetor` instead
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    """
+    return _download_and_read("carburetor.ply", load=load)
+
+
+def download_carburetor(load=True):  # pragma: no cover
+    """Download scan of a carburetor.
 
     Parameters
     ----------
@@ -2691,7 +2712,7 @@ def download_carburator(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_carburator()
+    >>> dataset = examples.download_carburetor()
     >>> dataset.plot()
 
     """
@@ -4825,6 +4846,57 @@ def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
     """
     path, _ = _download_file('ivan-nikolov/seaVase.zip', progress_bar=progress_bar)
     filename = os.path.join(path, 'seaVase.vtp')
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_cad_model_case(load=True, progress_bar=False):  # pragma: no cover
+    """Download a CAD model of a Raspberry PI 4 case.
+
+    The dataset was downloaded from `Thingiverse
+    <https://www.thingiverse.com/thing:4947746>`_
+
+    Original datasets are under the `Creative Commons - Attribution
+    <https://creativecommons.org/licenses/by/4.0/>`_ license.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_cad_model_case()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fd08f1faf40)
+      N Cells:      13702
+      N Points:     6801
+      X Bounds:     -6.460e-31, 9.000e+01
+      Y Bounds:     -3.535e-32, 1.480e+02
+      Z Bounds:     -7.287e-13, 2.000e+01
+      N Arrays:     1
+
+    """
+    filename, _ = _download_file(
+        'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', progress_bar=progress_bar
+    )
     if load:
         return pyvista.read(filename)
     return filename
