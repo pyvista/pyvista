@@ -1,24 +1,4 @@
-"""Contains a variety of cells to serve as examples.
-
-- [x] EMPTY_CELL
-- [x] VERTEX
-- [x] POLY_VERTEX
-- [x] LINE
-- [x] POLY_LINE
-- [x] TRIANGLE
-- [x] TRIANGLE_STRIP
-- [x] POLYGON
-- [x] PIXEL
-- [x] QUAD
-- [x] TETRA
-- [x] VOXEL
-- [x] HEXAHEDRON
-- [x] WEDGE
-- [x] PYRAMID
-- [x] PENTAGONAL_PRISM
-- [x] HEXAGONAL_PRISM
-
-"""
+"""Contains a variety of cells to serve as examples."""
 import pyvista
 from pyvista import CellType, UnstructuredGrid
 
