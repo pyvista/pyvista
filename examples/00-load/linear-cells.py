@@ -96,7 +96,7 @@ print(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 # :class:`pyvista.UnstructuredGrid`, it's quite straightforward to create an
 # unstructured grid with a one or more cells. If you need to reference point
 # ordering or additional, you can either read the source of `cells.py
-# <https://github.com/pyvista/pyvista/blob/main/pyvista/cells/cells.py`_ or
+# <https://github.com/pyvista/pyvista/blob/main/pyvista/cells/cells.py>`_ or
 # simply create a cell from the ``pyvista.cells`` module and inspect its attributes.
 
 points = [
