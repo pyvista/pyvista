@@ -1364,7 +1364,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
-        dev_kwargs=None,
+        dev_kwargs={},
     ):
         """Show this chart in a self contained plotter.
 
