@@ -2840,6 +2840,7 @@ def test_tight_square(noise_2d):
     )
 
 
+@skip_mesa  # because of opacity
 def test_plot_cell():
     grid = pyvista.cells.Tetrahedron()
     pyvista.cells.plot_cell(grid, before_close_callback=verify_cache_image)

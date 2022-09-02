@@ -15,8 +15,13 @@ For more details regarding what a :class:`pyvista.UnstructuredGrid` is, please
 see :ref:`point_sets_api`.
 
 """
+import numpy as np
 
 import pyvista as pv
+
+# random generator for examples
+rng = np.random.default_rng(2)
+
 
 ###############################################################################
 # Plot an example cell
@@ -158,10 +163,18 @@ add_cell_helper(
 add_cell_helper(pl, 'POLYGON', pv.cells.Polygon(), (1, 2), cpos='xy')
 add_cell_helper(pl, 'PIXEL', pv.cells.Pixel(), (1, 3), cpos='xy')
 
-add_cell_helper(pl, 'QUAD', pv.cells.Quadrilateral(), (2, 0))
+# make irregular
+quad_grid = pv.cells.Quadrilateral()
+quad_grid.points += rng.random((4, 3)) * 0.5
+
+add_cell_helper(pl, 'QUAD', quad_grid, (2, 0))
 add_cell_helper(pl, 'TETRA', pv.cells.Tetrahedron(), (2, 1))
 add_cell_helper(pl, 'VOXEL', pv.cells.Voxel(), (2, 2))
-add_cell_helper(pl, 'HEXAHEDRON', pv.cells.Hexahedron(), (2, 3))
+
+# make irregular
+hex_grid = pv.cells.Hexahedron()
+hex_grid.points += rng.random((8, 3)) * 0.4
+add_cell_helper(pl, 'HEXAHEDRON', hex_grid, (2, 3))
 
 add_cell_helper(pl, 'WEDGE', pv.cells.Wedge(), (3, 0))
 add_cell_helper(pl, 'PYRAMID', pv.cells.Pyramid(), (3, 1))
