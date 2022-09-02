@@ -107,6 +107,7 @@ VER_IMAGE_REGRESSION_WARNING = 1000
 # these images vary between Windows when using OSMesa and Linux/MacOS
 # and will not be verified
 WINDOWS_SKIP_IMAGE_CACHE = {
+    'test_array_volume_rendering',
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
