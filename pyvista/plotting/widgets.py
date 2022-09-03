@@ -1294,6 +1294,9 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        # avoid circular import
+        from ..core.filters.data_set import _set_threshold_limit
+
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', mesh.memory_address)
@@ -1323,10 +1326,7 @@ class WidgetHelper:
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
-            if invert:
-                alg.ThresholdByLower(value)
-            else:
-                alg.ThresholdByUpper(value)
+            _set_threshold_limit(alg, value, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 

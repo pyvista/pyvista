@@ -47,7 +47,7 @@ jobs:
       - name: Install pyvista and doctest requirements
         run: pip install . -r requirements_test.txt
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.0
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
         with:
           packages: libgl1-mesa-glx xvfb python-tk
           version: 1.0

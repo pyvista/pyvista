@@ -8,9 +8,9 @@ Create an irregular, unstructured grid from NumPy arrays.
 """
 
 import numpy as np
-import vtk
 
 import pyvista as pv
+from pyvista import CellType
 
 ###############################################################################
 # An unstructured grid can be created directly from NumPy arrays.
@@ -27,7 +27,7 @@ offset = np.array([0, 9])
 cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
 
 # cell type array. Contains the cell type of each cell
-cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON])
+cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON])
 
 # in this example, each cell uses separate points
 cell1 = np.array(
@@ -73,7 +73,7 @@ else:
 # added to the dictionary.
 cells_hex = np.arange(16).reshape([2, 8])
 # = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
-grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells_hex}, points)
+grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex}, points)
 
 # plot the grid (and suppress the camera position output)
 _ = grid.plot(show_edges=True)
@@ -135,9 +135,9 @@ cells = np.array(
     ]
 ).ravel()
 
-# each cell is a VTK_HEXAHEDRON
+# each cell is a HEXAHEDRON
 celltypes = np.empty(8, dtype=np.uint8)
-celltypes[:] = vtk.VTK_HEXAHEDRON
+celltypes[:] = CellType.HEXAHEDRON
 
 # the offset array points to the start of each cell (via flat indexing)
 offset = np.array([0, 9, 18, 27, 36, 45, 54, 63])
@@ -146,7 +146,7 @@ offset = np.array([0, 9, 18, 27, 36, 45, 54, 63])
 # sequentially access the cell array by first looking at each index of
 # cell array (based on the offset array), and then read the number of
 # points based on the first value of the cell.  In this case, the
-# VTK_HEXAHEDRON is described by 8 points.
+# HEXAHEDRON is described by 8 points.
 
 # for example, the 5th cell would be accessed by vtk with:
 start_of_cell = offset[4]
@@ -168,9 +168,9 @@ else:
     grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # Alternate versions:
-grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
+grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
 grid = pv.UnstructuredGrid(
-    {vtk.VTK_HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points
+    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points
 )
 
 # plot the grid (and suppress the camera position output)
@@ -202,8 +202,7 @@ cells = np.array(
     ]
 )
 
-# 10 is just vtk.VTK_TETRA
-celltypes = np.array([10, 10, 10, 10, 10, 10, 10, 10, 10, 10], dtype=np.uint8)
+celltypes = np.full(10, fill_value=CellType.TETRA, dtype=np.uint8)
 
 # These are the 10 points. The number of cells does not need to match the
 # number of points, they just happen to in this example
