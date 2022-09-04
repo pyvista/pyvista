@@ -9,6 +9,7 @@ import io
 import os
 import pathlib
 import platform
+import re
 import time
 import warnings
 
@@ -47,6 +48,8 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
+skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
+
 skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
@@ -58,6 +61,18 @@ IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
 
+
+def using_mesa():
+    """Determine if using mesa."""
+    pl = pyvista.Plotter(notebook=False, off_screen=True)
+    pl.show(auto_close=False)
+    gpu_info = pl.ren_win.ReportCapabilities()
+    pl.close()
+
+    regex = re.compile("OpenGL version string:(.+)\n")
+    return "Mesa" in regex.findall(gpu_info)[0]
+
+
 # always set on Windows CI
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -67,6 +82,7 @@ skip_mac = pytest.mark.skipif(
 skip_mac_flaky = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
 )
+skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 
 # Normal image warning/error thresholds (assumes using use_vtk)
@@ -91,6 +107,7 @@ VER_IMAGE_REGRESSION_WARNING = 1000
 # these images vary between Windows when using OSMesa and Linux/MacOS
 # and will not be verified
 WINDOWS_SKIP_IMAGE_CACHE = {
+    'test_array_volume_rendering',
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
@@ -107,6 +124,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_rectlinear_edge_case',
     'test_scalars_by_name',
     'test_user_annotations_scalar_bar_volume',
+    'test_volume_rendering_from_helper',
 }
 
 # these images vary between Linux/Windows and MacOS
@@ -1384,7 +1402,6 @@ def test_camera(sphere):
     plotter.view_xz(True)
     plotter.view_yz(True)
     plotter.show(before_close_callback=verify_cache_image)
-    plotter.camera_position = None
 
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -1630,33 +1647,44 @@ def test_image_properties():
     p.close()
 
 
-def test_volume_rendering():
-    # Really just making sure no errors are thrown
-    vol = examples.load_uniform()
-    vol.plot(volume=True, opacity='linear')
+def test_volume_rendering_from_helper(uniform):
+    uniform.plot(volume=True, opacity='linear', before_close_callback=verify_cache_image)
 
+
+def test_volume_rendering_from_plotter(uniform):
     plotter = pyvista.Plotter()
-    plotter.add_volume(vol, opacity='sigmoid', cmap='jet', n_colors=15)
-    plotter.show()
+    plotter.add_volume(uniform, opacity='sigmoid', cmap='jet', n_colors=15)
+    plotter.show(before_close_callback=verify_cache_image)
 
-    # Now test MultiBlock rendering
+
+@skip_windows
+def test_multiblock_volume_rendering(uniform):
+    ds_a = uniform.copy()
+    ds_b = uniform.copy()
+    ds_b.origin = (9.0, 0.0, 0.0)
+    ds_c = uniform.copy()
+    ds_c.origin = (0.0, 9.0, 0.0)
+    ds_d = uniform.copy()
+    ds_d.origin = (9.0, 9.0, 0.0)
+
     data = pyvista.MultiBlock(
         dict(
-            a=examples.load_uniform(),
-            b=examples.load_uniform(),
-            c=examples.load_uniform(),
-            d=examples.load_uniform(),
+            a=ds_a,
+            b=ds_b,
+            c=ds_c,
+            d=ds_d,
         )
     )
     data['a'].rename_array('Spatial Point Data', 'a')
     data['b'].rename_array('Spatial Point Data', 'b')
     data['c'].rename_array('Spatial Point Data', 'c')
     data['d'].rename_array('Spatial Point Data', 'd')
-    data.plot(volume=True, multi_colors=True)
+    data.plot(volume=True, multi_colors=True, before_close_callback=verify_cache_image)
 
-    # Check that NumPy arrays work
-    arr = vol["Spatial Point Data"].reshape(vol.dimensions)
-    pyvista.plot(arr, volume=True, opacity='linear')
+
+def test_array_volume_rendering(uniform):
+    arr = uniform["Spatial Point Data"].reshape(uniform.dimensions)
+    pyvista.plot(arr, volume=True, opacity='linear', before_close_callback=verify_cache_image)
 
 
 def test_plot_compare_four():
@@ -2491,6 +2519,74 @@ def test_add_text():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows
+@skip_9_0_X
+def test_depth_of_field():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.enable_depth_of_field()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_9_0_X
+def test_blurring():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.add_blurring()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_ssaa_pass():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.enable_anti_aliasing('ssaa')
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_mesa
+def test_ssao_pass():
+    ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
+    pl = pyvista.Plotter()
+    pl.add_mesh(ugrid)
+
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            pl.enable_ssao()
+        return
+
+    pl.enable_ssao()
+    pl.show(before_close_callback=verify_cache_image, auto_close=False)
+
+    # ensure this fails when ssao disabled
+    pl.disable_ssao()
+    with pytest.raises(RuntimeError):
+        pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_mesa
+def test_ssao_pass_from_helper():
+    ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
+
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(pyvista.core.errors.VTKVersionError):
+            ugrid.plot(ssao=True)
+        return
+
+    ugrid.plot(ssao=True, before_close_callback=verify_cache_image)
+
+
+@skip_windows
+def test_many_multi_pass():
+    pl = pyvista.Plotter(lighting=None)
+    pl.add_mesh(pyvista.Sphere(), show_edges=True)
+    pl.add_light(pyvista.Light(position=(0, 0, 10)))
+    pl.enable_anti_aliasing('ssaa')
+    pl.enable_depth_of_field()
+    pl.add_blurring()
+    pl.enable_shadows()
+    pl.enable_eye_dome_lighting()
+
+
 def test_plot_composite_many_options(multiblock_poly):
     # add composite data
     for block in multiblock_poly:
@@ -2814,3 +2910,22 @@ def test_backface_params():
     pl.add_mesh(mesh, **params, backface_params=backface_params)
     pl.view_xz()
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_remove_bounds_axes(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    actor = pl.show_bounds(grid='front', location='outer')
+    assert isinstance(actor, vtk.vtkActor)
+    pl.remove_bounds_axes()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_9_1_0
+def test_charts_sin():
+    x = np.linspace(0, 2 * np.pi, 20)
+    y = np.sin(x)
+    chart = pyvista.Chart2D()
+    chart.scatter(x, y)
+    chart.line(x, y, 'r')
+    chart.show(dev_kwargs={'before_close_callback': verify_cache_image})

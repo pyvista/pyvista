@@ -1,4 +1,4 @@
-"""Pyvista specific errors."""
+"""PyVista specific errors."""
 
 CAMERA_ERROR_MESSAGE = """Invalid camera description
 Camera description must be one of the following:
