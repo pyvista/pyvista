@@ -14,10 +14,6 @@ vscode:
 
 tasks:
   - init: |
-      # this needs to be a proj var
-      export PRE_COMMIT_HOME=/workspace/.precommit
-      [ ! -d venv ] && python -m venv venv
-      source venv/bin/activate
       pip install --no-cache-dir https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
       pip install --no-cache-dir -r requirements_test.txt
       pip install --no-cache-dir -r requirements_docs.txt
