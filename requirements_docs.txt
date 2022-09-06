@@ -7,7 +7,7 @@ imageio>=2.5.0
 ipygany==0.5.0
 ipyvtklink==0.2.2
 jupyter_sphinx==0.4.0
-jupyterlab==3.4.5
+jupyterlab==3.4.6
 lxml==4.9.1
 matplotlib==3.5.3
 meshio==5.3.4
@@ -29,5 +29,5 @@ sphinx-notfound-page==0.8.3
 sphinx-panels==0.6.0
 sphinx-toolbox==3.2.0
 sphinxcontrib-websupport==1.2.4
-trimesh==3.14.0
+trimesh==3.14.1
 typed-ast==1.5.4
