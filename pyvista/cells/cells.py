@@ -213,11 +213,11 @@ def PolyLine() -> UnstructuredGrid:
     Returns
     -------
     pyvista.UnstructuredGrid
-        UnstructuredGrid containing a single poly line.
+        UnstructuredGrid containing a single polyline.
 
     Examples
     --------
-    Create and plot a single poly line.
+    Create and plot a single polyline.
 
     >>> import pyvista as pv
     >>> grid = pv.cells.PolyLine()
