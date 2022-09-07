@@ -19,7 +19,7 @@ panel==0.13.1
 param==1.12.2  # due to panel bug
 pydata-sphinx-theme==0.10.1
 pypandoc==1.8.1
-pytest-sphinx==0.4.0
+pytest-sphinx==0.5.0
 pythreejs==2.4.1
 scipy==1.9.1
 sphinx-autobuild==2021.3.14
