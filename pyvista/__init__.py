@@ -22,7 +22,6 @@ from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 from pyvista.utilities.wrappers import _wrappers
-from pyvista.cells import *
 
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used

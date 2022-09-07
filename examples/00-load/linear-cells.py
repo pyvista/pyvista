@@ -18,6 +18,7 @@ see :ref:`point_sets_api`.
 import numpy as np
 
 import pyvista as pv
+from pyvista.examples import cells as example_cells, plot_cell
 
 # random generator for examples
 rng = np.random.default_rng(2)
@@ -30,8 +31,8 @@ rng = np.random.default_rng(2)
 # fundamental unit of each :class:`pyvista.UnstructuredGrid`. For example,
 # let's plot a simple :func:`Wedge <pyvista.cells.Wedge`.
 #
-grid = pv.cells.Wedge()
-pv.cells.plot_cell(grid)
+grid = example_cells.Wedge()
+example_cells.plot_cell(grid)
 
 
 ###############################################################################
@@ -61,14 +62,14 @@ grid.cells
 #    objects. To see a more efficient implement ion see
 #    :ref:`create_unstructured_example`.
 
-grid_a = pv.cells.Hexahedron()
+grid_a = example_cells.Hexahedron()
 grid_a.points += [0, 2.5, 0]
 
-grid_b = pv.cells.HexagonalPrism()
+grid_b = example_cells.HexagonalPrism()
 
 combined = grid_b + grid_a
 
-pv.cells.plot_cell(combined, cpos='iso')
+plot_cell(combined, cpos='iso')
 
 
 ###############################################################################
@@ -113,7 +114,7 @@ points = [
 ]
 cells = [len(points)] + list(range(len(points)))
 pyrmaid = pv.UnstructuredGrid(cells, [pv.CellType.PYRAMID], points)
-pv.cells.plot_cell(pyrmaid)
+example_cells.plot_cell(pyrmaid)
 
 
 ###############################################################################
@@ -151,35 +152,39 @@ def add_cell_helper(pl, text, grid, subplot, cpos=None):
 
 
 pl = pv.Plotter(shape=(4, 4))
-add_cell_helper(pl, 'VERTEX', pv.cells.Vertex(), (0, 0))
-add_cell_helper(pl, 'POLY_VERTEX', pv.cells.PolyVertex(), (0, 1))
-add_cell_helper(pl, 'LINE', pv.cells.Line(), (0, 2))
-add_cell_helper(pl, 'POLY_LINE', pv.cells.PolyLine(), (0, 3))
+add_cell_helper(pl, 'VERTEX', example_cells.Vertex(), (0, 0))
+add_cell_helper(pl, 'POLY_VERTEX', example_cells.PolyVertex(), (0, 1))
+add_cell_helper(pl, 'LINE', example_cells.Line(), (0, 2))
+add_cell_helper(pl, 'POLY_LINE', example_cells.PolyLine(), (0, 3))
 
-add_cell_helper(pl, 'TRIANGLE', pv.cells.Triangle(), (1, 0), cpos='xy')
+add_cell_helper(pl, 'TRIANGLE', example_cells.Triangle(), (1, 0), cpos='xy')
 add_cell_helper(
-    pl, 'TRIANGLE_STRIP', pv.cells.TriangleStrip().rotate_z(90, inplace=False), (1, 1), cpos='xy'
+    pl,
+    'TRIANGLE_STRIP',
+    example_cells.TriangleStrip().rotate_z(90, inplace=False),
+    (1, 1),
+    cpos='xy',
 )
-add_cell_helper(pl, 'POLYGON', pv.cells.Polygon(), (1, 2), cpos='xy')
-add_cell_helper(pl, 'PIXEL', pv.cells.Pixel(), (1, 3), cpos='xy')
+add_cell_helper(pl, 'POLYGON', example_cells.Polygon(), (1, 2), cpos='xy')
+add_cell_helper(pl, 'PIXEL', example_cells.Pixel(), (1, 3), cpos='xy')
 
 # make irregular
-quad_grid = pv.cells.Quadrilateral()
+quad_grid = example_cells.Quadrilateral()
 quad_grid.points += rng.random((4, 3)) * 0.5
 
 add_cell_helper(pl, 'QUAD', quad_grid, (2, 0))
-add_cell_helper(pl, 'TETRA', pv.cells.Tetrahedron(), (2, 1))
-add_cell_helper(pl, 'VOXEL', pv.cells.Voxel(), (2, 2))
+add_cell_helper(pl, 'TETRA', example_cells.Tetrahedron(), (2, 1))
+add_cell_helper(pl, 'VOXEL', example_cells.Voxel(), (2, 2))
 
 # make irregular
-hex_grid = pv.cells.Hexahedron()
+hex_grid = example_cells.Hexahedron()
 hex_grid.points += rng.random((8, 3)) * 0.4
 add_cell_helper(pl, 'HEXAHEDRON', hex_grid, (2, 3))
 
-add_cell_helper(pl, 'WEDGE', pv.cells.Wedge(), (3, 0))
-add_cell_helper(pl, 'PYRAMID', pv.cells.Pyramid(), (3, 1))
-add_cell_helper(pl, 'PENTAGONAL_PRISM', pv.cells.PentagonalPrism(), (3, 2))
-add_cell_helper(pl, 'HEXAGONAL_PRISM', pv.cells.HexagonalPrism(), (3, 3))
+add_cell_helper(pl, 'WEDGE', example_cells.Wedge(), (3, 0))
+add_cell_helper(pl, 'PYRAMID', example_cells.Pyramid(), (3, 1))
+add_cell_helper(pl, 'PENTAGONAL_PRISM', example_cells.PentagonalPrism(), (3, 2))
+add_cell_helper(pl, 'HEXAGONAL_PRISM', example_cells.HexagonalPrism(), (3, 3))
 
 pl.background_color = 'w'
 pl.enable_anti_aliasing()
