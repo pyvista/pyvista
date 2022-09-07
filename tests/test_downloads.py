@@ -6,7 +6,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.examples.downloads import _cache_version
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def write_sample_zip(path):
@@ -124,7 +124,7 @@ def test_delete_downloads_does_not_exist(tmpdir):
 
 
 def test_planets_deprecate_warnings():
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         examples.download_mars_jpg()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         examples.download_stars_jpg()
