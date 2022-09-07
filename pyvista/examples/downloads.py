@@ -25,7 +25,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 CACHE_VERSION = 2
 
@@ -3566,7 +3566,7 @@ def download_mars_jpg():
     """
     warnings.warn(
         "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_jpg with setting load False",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_mars_jpg(load=False)
 
@@ -3581,7 +3581,7 @@ def download_stars_jpg():
     """
     warnings.warn(
         "examples.download_stars_jpg is deprecated.  Use examples.planets.download_stars_jpg",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_stars_jpg(load=False)
 
