@@ -412,6 +412,8 @@ if VTK9:
         vtkXMLRectilinearGridWriter,
         vtkXMLStructuredGridReader,
         vtkXMLStructuredGridWriter,
+        vtkXMLTableWriter,
+        vtkXMLTableReader,
         vtkXMLUnstructuredGridReader,
         vtkXMLUnstructuredGridWriter,
         vtkXMLWriter,

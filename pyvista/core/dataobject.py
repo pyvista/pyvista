@@ -537,12 +537,28 @@ class DataObject:
     def __getstate__(self):
         """Support pickle. Serialize the VTK object to ASCII string."""
         state = self.__dict__.copy()
-        writer = _vtk.vtkDataSetWriter()
+
+        if isinstance(self, _vtk.vtkImageData):
+            writer = _vtk.vtkXMLImageDataWriter()
+        elif isinstance(self, _vtk.vtkStructuredGrid):
+            writer = _vtk.vtkXMLStructuredGridWriter()
+        elif isinstance(self, _vtk.vtkRectilinearGrid):
+            writer = _vtk.vtkXMLRectilinearGridWriter()
+        elif isinstance(self, _vtk.vtkUnstructuredGrid):
+            writer = _vtk.vtkXMLUnstructuredGridWriter()
+        elif isinstance(self, _vtk.vtkPolyData):
+            writer = _vtk.vtkXMLPolyDataWriter()
+        elif isinstance(self, _vtk.vtkTable):
+            writer = _vtk.vtkXMLTableWriter()
+        else:
+            raise ValueError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+
         writer.SetInputDataObject(self)
         writer.SetWriteToOutputString(True)
-        writer.SetFileTypeToBinary()
+        writer.SetDataModeToBinary()
+        writer.SetCompressorTypeToNone()
         writer.Write()
-        to_serialize = writer.GetOutputStdString()
+        to_serialize = writer.GetOutputString()
         state['vtk_serialized'] = to_serialize
         return state
 
@@ -550,12 +566,24 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         self.__dict__.update(state)
-        reader = _vtk.vtkDataSetReader()
+
+        if isinstance(self, _vtk.vtkImageData):
+            reader = _vtk.vtkXMLImageDataReader()
+        elif isinstance(self, _vtk.vtkStructuredGrid):
+            reader = _vtk.vtkXMLStructuredGridReader()
+        elif isinstance(self, _vtk.vtkRectilinearGrid):
+            reader = _vtk.vtkXMLRectilinearGridReader()
+        elif isinstance(self, _vtk.vtkUnstructuredGrid):
+            reader = _vtk.vtkXMLUnstructuredGridReader()
+        elif isinstance(self, _vtk.vtkPolyData):
+            reader = _vtk.vtkXMLPolyDataReader()
+        elif isinstance(self, _vtk.vtkTable):
+            reader = _vtk.vtkXMLTableReader()
+        else:
+            raise ValueError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
+
         reader.ReadFromInputStringOn()
-        if isinstance(vtk_serialized, bytes):
-            reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
-        elif isinstance(vtk_serialized, str):
-            reader.SetInputString(vtk_serialized)
+        reader.SetInputString(vtk_serialized)
         reader.Update()
         mesh = pyvista.wrap(reader.GetOutput())
 
