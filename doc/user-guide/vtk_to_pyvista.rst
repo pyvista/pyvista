@@ -281,7 +281,7 @@ example:
    import pyvista
    pyvista.set_jupyter_backend('pythreejs')
    pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.anti_aliasing = 'fxaa'
 
 
 .. jupyter-execute::

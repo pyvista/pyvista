@@ -1052,10 +1052,7 @@ class DataSetFilters:
             raise TypeError('Value must either be a single scalar or a sequence.')
         else:
             # just a single value
-            if invert:
-                alg.ThresholdByLower(value)
-            else:
-                alg.ThresholdByUpper(value)
+            _set_threshold_limit(alg, value, invert)
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
@@ -5394,3 +5391,22 @@ class DataSetFilters:
 
         """
         return self.shrink(1.0)
+
+
+def _set_threshold_limit(alg, value, invert):
+    """Set vtkThreshold limit.
+
+    Addresses VTK API deprication as pointed out in
+    https://github.com/pyvista/pyvista/issues/2850
+
+    """
+    if invert:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetUpperThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByLower(value)
+    else:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetLowerThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByUpper(value)

@@ -43,6 +43,7 @@ from .reader import (
     OBJReader,
     OpenFOAMReader,
     POpenFOAMReader,
+    Plot3DFunctionEnum,
     Plot3DMetaReader,
     PLYReader,
     PNGReader,

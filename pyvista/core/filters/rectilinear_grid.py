@@ -20,7 +20,7 @@ class RectilinearGridFilters:
         pass_cell_ids: bool = False,
         progress_bar: bool = False,
     ):
-        """Create a Tetrahedral mesh from a RectilinearGrid.
+        """Create a tetrahedral mesh structured grid.
 
         Parameters
         ----------
@@ -94,6 +94,15 @@ class RectilinearGridFilters:
                 raise ValueError(
                     f'`tetra_per_cell` should be either 5, 6, or 12, not {tetra_per_cell}'
                 )
+
+            # Edge case causing a seg-fault where grid is flat in one dimension
+            # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18650
+            if 1 in self.dimensions and tetra_per_cell == 12:  # type: ignore
+                raise RuntimeError(
+                    'Cannot split cells into 12 tetrahedrals when at least '  # type: ignore
+                    f'one dimension is 1. Dimensions are {self.dimensions}.'
+                )
+
             alg.SetTetraPerCell(tetra_per_cell)
 
         alg.SetInputData(self)

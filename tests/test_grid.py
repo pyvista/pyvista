@@ -12,7 +12,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import VTKVersionError
 from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -843,7 +843,7 @@ def test_create_uniform_grid_from_specs():
 
     # all args (deprecated)
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         grid = pyvista.UniformGrid(dims, origin, spacing)
         assert grid.dimensions == dims
@@ -852,7 +852,7 @@ def test_create_uniform_grid_from_specs():
 
     # just dims (deprecated)
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         grid = pyvista.UniformGrid(dims)
         assert grid.dimensions == dims
@@ -869,7 +869,7 @@ def test_create_uniform_grid_from_specs():
 
 def test_uniform_grid_invald_args():
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         pyvista.UniformGrid((1, 1, 1))
 
@@ -931,6 +931,12 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.n_points == grid.n_points
     assert rectilinear.n_arrays == grid.n_arrays
     assert rectilinear.bounds == grid.bounds
+
+
+def test_uniform_grid_to_tetrahedra():
+    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    ugrid = grid.to_tetrahedra()
+    assert ugrid.n_cells == 5
 
 
 def test_fft_and_rfft(noise_2d):
