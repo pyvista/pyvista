@@ -944,6 +944,9 @@ def wrap(dataset):
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
             mesh = pyvista.UniformGrid(dims=dataset.shape)
+            if isinstance(dataset, pyvista.pyvista_ndarray):
+                # this gets rid of pesky VTK reference since we're raveling this
+                dataset = np.array(dataset, copy=False)
             mesh['values'] = dataset.ravel(order='F')
             mesh.active_scalars_name = 'values'
             return mesh
