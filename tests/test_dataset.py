@@ -30,7 +30,7 @@ def test_invalid_overwrite(grid):
 
 def test_overwirte_deprecation(grid):
     mesh = type(grid)()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         mesh.overwrite(grid)
 
 
