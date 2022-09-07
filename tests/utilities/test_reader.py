@@ -384,21 +384,64 @@ def test_multiblockplot3dreader():
     # Reader doesn't yet support reusability
     reader = pyvista.MultiBlockPlot3DReader(filename)
     reader.add_q_files(q_filename)
+
+    reader.add_function(112)  # add by int
+    reader.add_function(pyvista.reader.Plot3DFunctionEnum.PRESSURE_GRADIENT)  # add by enum
+    reader.add_function(reader.KINETIC_ENERGY)  # add by class variable (alias to enum value)
+    reader.add_function(reader.ENTROPY)  # add ENTROPY by class variable
+    reader.remove_function(170)  # remove ENTROPY by int
+
+    reader.add_function(reader.ENTROPY)
+    reader.remove_function(reader.ENTROPY)  # remove by class variable
+
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    assert 'MachNumber' in mesh[0].point_data
+    assert 'PressureGradient' in mesh[0].point_data
+    assert 'KineticEnergy' in mesh[0].point_data
+    assert 'Entropy' not in mesh[0].point_data
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files([q_filename])
     mesh = reader.read()
     for m in mesh:
         assert len(m.array_names) > 0
 
     reader = pyvista.MultiBlockPlot3DReader(filename)
-    q_filename = reader.add_q_files([q_filename])
-    mesh = reader.read()
-    for m in mesh:
-        assert len(m.array_names) > 0
 
-    reader = pyvista.MultiBlockPlot3DReader(filename)
+    # get/set of `auto_detect_format`
     reader.auto_detect_format = False
     assert reader.auto_detect_format is False
     reader.auto_detect_format = True
     assert reader.auto_detect_format is True
+
+    # get/set of `preserve_intermediate_functions`
+    reader.preserve_intermediate_functions = False
+    assert reader.preserve_intermediate_functions is False
+    reader.preserve_intermediate_functions = True
+    assert reader.preserve_intermediate_functions is True
+
+    # get/set of `gamma`
+    reader.gamma = 1.5
+    assert reader.gamma == 1.5
+    reader.gamma = 99
+    assert reader.gamma == 99
+
+    # get/set of `r_gas_constant`
+    reader.r_gas_constant = 5
+    assert reader.r_gas_constant == 5
+    reader.r_gas_constant = 10
+    assert reader.r_gas_constant == 10
+
+    # check removing all functions
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files(q_filename)
+    reader.add_function(reader.ENTROPY)
+    reader.remove_all_functions()
+    mesh_no_functions = reader.read()
+    assert 'ENTROPY' not in mesh_no_functions[0].point_data
 
 
 def test_binarymarchingcubesreader():
