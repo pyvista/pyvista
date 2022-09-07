@@ -349,7 +349,7 @@ def load_saturn_ring_alpha(inner=0.25, outer=0.5, c_res=6):
     >>> plotter.show()
 
     """
-    disc = pyvista.Disc(*args, **kwargs)
+    disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
     disc.active_t_coords = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     disc.active_t_coords[:, 0] = radius / np.max(radius)
