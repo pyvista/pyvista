@@ -81,10 +81,8 @@ plotter.camera.zoom(1.5)
 plotter.show()
 
 ###############################################################################
-# `Textures in this pack are based on NASA <https://www.solarsystemscope.com/textures/>`_
-# elevation and imagery data. Colors and shades of the textures are tuned
-# according to true-color photos made by Messenger, Viking and Cassini
-# spacecrafts, and, of course, the Hubble Space Telescope.
+# We use the texture from
+# `Textures in this pack are based on NASA <https://www.solarsystemscope.com/textures/>`_ .
 
 plotter = pyvista.Plotter(shape=(3, 2))
 plotter.subplot(0, 0)
