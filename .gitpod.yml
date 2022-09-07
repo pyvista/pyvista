@@ -6,6 +6,8 @@ image:
 ports:
   - port: 5500
     onOpen: notify
+  - port: 6080
+    onOpen: open-preview
 
 vscode:
   extensions:
@@ -14,7 +16,6 @@ vscode:
 
 tasks:
   - init: |
-      pip install --no-cache-dir https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
       pip install --no-cache-dir -r requirements_test.txt
       pip install --no-cache-dir -r requirements_docs.txt
       pip install --no-cache-dir pre-commit
