@@ -132,6 +132,11 @@ def test_load_neptune():
     assert mesh.n_cells
     assert mesh.textures["atmosphere"]
 
+def test_load_pluto():
+    mesh = examples.planets.load_pluto()
+    assert mesh.n_cells
+    assert mesh.textures["surface"]
+
 
 if TEST_DOWNLOADS:
 

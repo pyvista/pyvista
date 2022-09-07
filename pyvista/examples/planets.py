@@ -317,18 +317,21 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_saturn_ring_alpha(*args, **kwargs):
+def load_saturn_ring_alpha(inner=0.25, outer=0.5, c_res=6):
     """Load a source for Saturn's rings with opacity.
 
     Arguments are passed on to :func:`pyvista.Disc`.
 
     Parameters
     ----------
-    *args
-        Variable length argument list.
+    inner : float, optional
+        The inner radius.
 
-    **kwargs
-        Arbitrary keyword arguments.
+    outer : float, optional
+        The outer radius.
+
+    c_res : int, optional
+        The number of points in the circumferential direction.
 
     Returns
     -------
@@ -429,6 +432,44 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     )
     atmosphere = download_neptune_jpg()
     sphere.textures["atmosphere"] = atmosphere
+    return sphere
+
+
+def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
+    """Load a Pluto source.
+
+    Parameters
+    ----------
+    radius : float, optional
+        Sphere radius.
+
+    lat_resolution : int, optional
+        Set the number of points in the latitude direction.
+
+    lon_resolution : int, optional
+        Set the number of points in the longitude direction.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Pluto dataset with texture.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> plotter = pyvista.Plotter()
+    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> plotter.add_background_image(image_path)
+    >>> _ = plotter.add_mesh(examples.planets.load_pluto())
+    >>> plotter.show()
+
+    """
+    sphere = _sphere_with_texture_map(
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    )
+    surface = examples.planets.download_pluto_jpg()
+    sphere.textures["surface"] = surface
     return sphere
 
 
@@ -686,6 +727,31 @@ def download_neptune_jpg(load=True):  # pragma: no cover
 
     """
     return _download_and_read('neptune.jpg', texture=True, load=load)
+
+
+def download_pluto_jpg(load=True):  # pragma: no cover
+    """Download and return the path of ``'pluto.png'``.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Read the file. Default ``True``, when ``False``, return the path to the
+        file.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> surface = examples.planets.download_pluto_jpg()
+    >>> surface.plot(cpos="xy")
+
+    """
+    return _download_and_read('pluto.png', texture=True, load=load)
 
 
 def download_stars_jpg(load=True):  # pragma: no cover

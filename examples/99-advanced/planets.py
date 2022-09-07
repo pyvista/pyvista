@@ -4,8 +4,6 @@
 3D Earth and Celestial Bodies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates high-resolution renderings of the Earth and the major celestial bodies
-in our solar system for astrodynamics applications.
 This example is inspired by `planet3D-MATLAB <https://github.com/tamaskis/planet3D-MATLAB>`_.
 
 
@@ -18,10 +16,10 @@ import pyvista
 from pyvista import examples
 
 ###############################################################################
-# Celestial bodies with the Milky Way in the background.
+# Celestial bodies with the stars in the background.
 
 
-# Light of the Sun in the +x axis direction.
+# Light of the Sun.
 light = pyvista.Light()
 light.set_direction_angle(30, -20)
 
@@ -29,23 +27,27 @@ light.set_direction_angle(30, -20)
 
 # https://tamaskis.github.io/files/Visualizing_Celestial_Bodies_in_3D.pdf
 # Mercury's radius is 2439.0 km
-mercury = examples.planets.load_mercury(radius=2439.0, lat_resolution=150, lon_resolution=300)
+# Set resolution.
+kwargs = dict(lat_resolution=150, lon_resolution=300)
+mercury = examples.planets.load_mercury(radius=2439.0, **kwargs)
 # Venus's radius is 6052.0 km
-venus = examples.planets.load_venus(radius=6052.0, lat_resolution=150, lon_resolution=300)
+venus = examples.planets.load_venus(radius=6052.0, **kwargs)
 # Mars's radius is 3397.2 km
-mars = examples.planets.load_mars(radius=3397.2, lat_resolution=150, lon_resolution=300)
+mars = examples.planets.load_mars(radius=3397.2, **kwargs)
 # Jupiter's radius is 71492.0 km
-jupiter = examples.planets.load_jupiter(radius=71492.0, lat_resolution=150, lon_resolution=300)
+jupiter = examples.planets.load_jupiter(radius=71492.0, **kwargs)
 # Saturn's radius is 60268.0 km
-saturn = examples.planets.load_saturn(radius=60268.0, lat_resolution=150, lon_resolution=300)
+saturn = examples.planets.load_saturn(radius=60268.0, **kwargs)
 # Saturn's rings range from 7000.0 km to 80000.0 km from the surface of the planet
 inner = 60268.0 + 7000.0
 outer = 60268.0 + 80000.0
 saturn_ring_alpha = examples.planets.load_saturn_ring_alpha(inner=inner, outer=outer, c_res=50)
 # Uranus's radius is 25559.0 km
-uranus = examples.planets.load_uranus(radius=25559.0, lat_resolution=150, lon_resolution=300)
+uranus = examples.planets.load_uranus(radius=25559.0, **kwargs)
 # Neptune's radius is 24764.0 km
-neptune = examples.planets.load_neptune(radius=24764.0, lat_resolution=150, lon_resolution=300)
+neptune = examples.planets.load_neptune(radius=24764.0, **kwargs)
+# Pluto's radius is 1151.0 km
+pluto = examples.planets.load_pluto(radius=1151.0, **kwargs)
 
 # Move planet position. (Numbers have no meaning. The planets are laid out for
 # easy viewing.)
@@ -66,14 +68,15 @@ cubemap = examples.download_cubemap_space_16k()
 _ = plotter.add_actor(cubemap.to_skybox())
 plotter.set_environment_texture(cubemap, True)
 plotter.add_light(light)
-plotter.add_mesh(mercury)
-plotter.add_mesh(venus)
-plotter.add_mesh(mars)
-plotter.add_mesh(jupiter)
-plotter.add_mesh(saturn)
-plotter.add_mesh(saturn_ring_alpha)
-plotter.add_mesh(uranus)
-plotter.add_mesh(neptune)
+plotter.add_mesh(mercury, smooth_shading=True)
+plotter.add_mesh(venus, smooth_shading=True)
+plotter.add_mesh(mars, smooth_shading=True)
+plotter.add_mesh(jupiter, smooth_shading=True)
+plotter.add_mesh(saturn, smooth_shading=True)
+plotter.add_mesh(saturn_ring_alpha, smooth_shading=True)
+plotter.add_mesh(uranus, smooth_shading=True)
+plotter.add_mesh(neptune, smooth_shading=True)
+plotter.add_mesh(pluto,  smooth_shading=True)
 plotter.camera.zoom(1.5)
 plotter.show()
 
@@ -86,19 +89,19 @@ plotter.show()
 plotter = pyvista.Plotter(shape=(3, 2))
 plotter.subplot(0, 0)
 plotter.add_text("Mercury")
-plotter.add_mesh(pyvista.read(examples.planets.download_mercury_jpg(load=False)), rgb=True)
+plotter.add_mesh(examples.planets.download_mercury_jpg(), rgb=True)
 plotter.subplot(0, 1)
 plotter.add_mesh(examples.planets.load_mercury())
 plotter.subplot(1, 0)
 plotter.add_text("Venus")
 plotter.add_mesh(
-    pyvista.read(examples.planets.download_venus_jpg(atmosphere=True, load=False)), rgb=True
+    examples.planets.download_venus_jpg(atmosphere=True), rgb=True
 )
 plotter.subplot(1, 1)
 plotter.add_mesh(examples.planets.load_venus(), texture="atmosphere")
 plotter.subplot(2, 0)
 plotter.add_text("Mars")
-plotter.add_mesh(pyvista.read(examples.planets.download_mars_jpg(load=False)), rgb=True)
+plotter.add_mesh(examples.planets.download_mars_jpg(), rgb=True)
 plotter.subplot(2, 1)
 plotter.add_mesh(examples.planets.load_mars())
 plotter.show(cpos="xy")

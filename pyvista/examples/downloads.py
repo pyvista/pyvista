@@ -3544,7 +3544,7 @@ def download_mars_jpg():
         Filename of the JPEG.
     """
     warnings.warn(
-        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_jpg",
+        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_jpg with setting load False",
         PyvistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_mars_jpg(load=False)
