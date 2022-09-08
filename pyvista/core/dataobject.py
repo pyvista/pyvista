@@ -579,7 +579,7 @@ class DataObject:
     def __setstate__(self, state):
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
-        pickle_format = state.pop('PICKLE_FORMAT')
+        pickle_format = state.pop('PICKLE_FORMAT', None)
         self.__dict__.update(state)
 
         if pickle_format.upper() == 'XML':
@@ -602,7 +602,7 @@ class DataObject:
             reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        elif pickle_format.upper() == 'LEGACY':
+        elif pickle_format is None or pickle_format.upper() == 'LEGACY':
             reader = _vtk.vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
