@@ -114,4 +114,4 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = "{:.3e}"
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT = 'XML'
+PICKLE_FORMAT = 'xml'

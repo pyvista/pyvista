@@ -537,13 +537,13 @@ class DataObject:
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
 
-        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT`.
-        - If `pyvista.PICKLE_FORMAT == 'XML'`, the data is serialized as an XML-formatted string.
-        - If `pyvista.PICKLE_FORMAT == 'LEGACY'`, the data is serialized to bytes in VTK's binary format.
+        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
+        - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
+        - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
         """
         state = self.__dict__.copy()
 
-        if pyvista.PICKLE_FORMAT.upper() == 'XML':
+        if pyvista.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
             # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
@@ -570,7 +570,7 @@ class DataObject:
             writer.Write()
             to_serialize = writer.GetOutputString()
 
-        elif pyvista.PICKLE_FORMAT.upper() == 'LEGACY':
+        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
             writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -589,11 +589,11 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
-            'PICKLE_FORMAT', 'LEGACY'  # backwards compatibility - assume 'LEGACY'
+            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'LEGACY'
         )
         self.__dict__.update(state)
 
-        if pickle_format.upper() == 'XML':
+        if pickle_format.lower() == 'xml':
             # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
             # settings down to the sub-readders. Until this is fixed, use the dataset-specific readers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
@@ -617,7 +617,7 @@ class DataObject:
             reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        elif pickle_format.upper() == 'LEGACY':
+        elif pickle_format.lower() == 'legacy':
             reader = _vtk.vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
