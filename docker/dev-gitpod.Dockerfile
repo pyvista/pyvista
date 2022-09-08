@@ -5,8 +5,8 @@ LABEL repo="https://github.com/pyvista/pyvista"
 RUN sudo apt-get update \
   && sudo apt-get install  -yq --no-install-recommends libxrender1
 
-RUN echo "[ ! -d /workspace/venv ] && python -m venv /workspace/venv" > $HOME/.bashrc.d/999-pyvista
-RUN echo "source /workspace/venv/bin/activate" >> $HOME/.bashrc.d/999-pyvista
+RUN echo "[ ! -d /workspace/pv-venv ] && python -m venv /workspace/pv-venv" > $HOME/.bashrc.d/999-pyvista
+RUN echo "source /workspace/pv-venv/bin/activate" >> $HOME/.bashrc.d/999-pyvista
 
 WORKDIR $HOME
 ENV PYVISTA_OFF_SCREEN=false
