@@ -2044,6 +2044,7 @@ class NIFTIReader(BaseReader):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
+
     """
 
     _class_reader = _vtk.vtkNIFTIImageReader
