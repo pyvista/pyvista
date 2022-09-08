@@ -813,7 +813,6 @@ def test_nifti_reader():
     assert reader.path == filename
 
     mesh = reader.read()
-
     assert all([mesh.n_points, mesh.n_cells])
 
 
