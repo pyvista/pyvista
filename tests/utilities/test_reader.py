@@ -806,6 +806,17 @@ def test_meta_image_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+def test_nifti_reader():
+    filename = examples.download_brain_atlas_with_sides(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.NIFTIReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+
+    assert all([mesh.n_points, mesh.n_cells])
+
+
 def test_nrrd_reader():
     filename = examples.download_beach(load=False)
     reader = pyvista.get_reader(filename)
