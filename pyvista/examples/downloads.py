@@ -1740,7 +1740,7 @@ def download_chest(load=True):  # pragma: no cover
 
 
 def download_brain_atlas_with_sides(load=True):  # pragma: no cover
-    """Download an image of an averaged brain with right-left label.
+    """Download an image of an averaged brain with a right-left label.
 
     Parameters
     ----------
