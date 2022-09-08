@@ -8,6 +8,5 @@ RUN sudo apt-get update \
 RUN echo "[ ! -d /workspace/pv-venv ] && python -m venv /workspace/pv-venv" > $HOME/.bashrc.d/999-pyvista
 RUN echo "source /workspace/pv-venv/bin/activate" >> $HOME/.bashrc.d/999-pyvista
 
-WORKDIR $HOME
 ENV PYVISTA_OFF_SCREEN=false
 ENV PRE_COMMIT_HOME=/workspace/.precommit
