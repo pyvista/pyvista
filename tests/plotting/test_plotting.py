@@ -2564,7 +2564,7 @@ def test_ssao_pass():
         pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_windows_mesa
+@skip_mesa
 def test_ssao_pass_from_helper():
     ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
 
