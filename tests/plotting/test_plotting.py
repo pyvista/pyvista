@@ -83,6 +83,7 @@ skip_mac = pytest.mark.skipif(
 skip_mac_flaky = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
 )
+skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -2535,6 +2536,7 @@ def test_blurring():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_mesa
 def test_ssaa_pass():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
