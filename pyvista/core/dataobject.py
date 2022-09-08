@@ -588,7 +588,9 @@ class DataObject:
     def __setstate__(self, state):
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
-        pickle_format = state.pop('PICKLE_FORMAT', 'LEGACY')  # backwards compatibility - assume 'LEGACY'
+        pickle_format = state.pop(
+            'PICKLE_FORMAT', 'LEGACY'  # backwards compatibility - assume 'LEGACY'
+        )
         self.__dict__.update(state)
 
         if pickle_format.upper() == 'XML':
