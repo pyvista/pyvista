@@ -1,7 +1,6 @@
 """An internal module for wrapping the use of mappers."""
 import logging
 import sys
-from typing import Optional
 
 import numpy as np
 
@@ -28,7 +27,32 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     @property
     def scalar_range(self) -> tuple:
-        """Return or the scalar range of this mapper."""
+        """Return or set the scalar range.
+
+        Examples
+        --------
+        Return the scalar range of a mapper.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, scalars=mesh.points[:, 2])
+        >>> actor.mapper.scalar_range
+        (-0.5, 0.5)
+        >>> pl.close()
+
+        Return the scalar range of a composite dataset. In this example it's
+        set to its default value of ``(0.0, 1.0)``.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.scalar_range
+        (0.0, 1.0)
+        >>> pl.close()
+
+        """
         return self.GetScalarRange()
 
     @scalar_range.setter
@@ -38,12 +62,286 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             self.lookup_table.SetRange(*clim)
 
     @property
-    def lookup_table(self) -> Optional[pv._vtk.vtkLookupTable]:
+    def lookup_table(self) -> pv._vtk.vtkLookupTable:
+        """Return or set the lookup table.
+
+        Examples
+        --------
+        Return the lookup table of a composite dataset mapper.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset)
+        >>> mapper.lookup_table  # doctest:+SKIP
+        <vtkmodules.vtkCommonCore.vtkLookupTable(0x2d4c6e0) at 0x7fce74a89fa0>
+
+        """
         return self.GetLookupTable()
 
     @lookup_table.setter
-    def lookup_table(self, lut):
-        self.SetLookupTable(lut)
+    def lookup_table(self, table):
+        return self.SetLookupTable(table)
+
+    @property
+    def color_mode(self) -> str:
+        """Return or set the color mode.
+
+        Either ``'direct'``, or ``'map'``.
+
+        * ``'direct'`` - All integer types are treated as colors with values in
+          the range 0-255 and floating types are treated as colors with values
+          in the range 0.0-1.0
+        * ``'map'`` - All scalar data will be mapped through the lookup table.
+
+        """
+        mode = self.GetColorModeAsString().lower()
+        if mode == 'mapscalars':
+            return 'map'
+        return 'direct'
+
+    @color_mode.setter
+    def color_mode(self, value: str):
+        if value == 'direct':
+            self.SetColorModeToDirectScalars()
+        elif value == 'map':
+            self.SetColorModeToMapScalars()
+        else:
+            raise ValueError('color mode must be either "default", "direct" or "map"')
+
+    @property
+    def interpolate_before_map(self) -> bool:
+        """Return or set the interpolation of scalars before mapping.
+
+        Enabling makes for a smoother scalars display.  When ``False``,
+        OpenGL will interpolate the mapped colors which can result in
+        showing colors that are not present in the color map.
+
+        Examples
+        --------
+        Disable interpolation before mapping.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ... )
+        >>> mapper.interpolate_before_map = False
+        >>> pl.show()
+
+        Enable interpolation before mapping.
+
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ... )
+        >>> mapper.interpolate_before_map = True
+        >>> pl.show()
+
+        See :ref:`interpolate_before_mapping_example` for additional
+        explanation regarding this attribute.
+
+        """
+        return bool(self.GetInterpolateScalarsBeforeMapping())
+
+    @interpolate_before_map.setter
+    def interpolate_before_map(self, value: bool):
+        self.SetInterpolateScalarsBeforeMapping(value)
+
+    @property
+    def array_name(self) -> str:
+        """Return or set the array name or number and component to color by.
+
+        Examples
+        --------
+        Show the name of the active scalars in the mapper.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['my_scalars'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, scalars='my_scalars')
+        >>> actor.mapper.array_name
+        'my_scalars'
+        >>> pl.close()
+
+        """
+        return self.GetArrayName()
+
+    @array_name.setter
+    def array_name(self, name: str):
+        """Return or set the array name or number and component to color by."""
+        self.SetArrayName(name)
+
+    @property
+    def scalar_map_mode(self) -> str:
+        """Return or set the scalar map mode.
+
+        Examples
+        --------
+        Show that the scalar map mode is set to ``'point'`` when setting the
+        active scalars to point data.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
+        >>> mapper.scalar_map_mode
+        'point'
+        >>> pl.close()
+
+        """
+        # map vtk strings to more sensible strings
+        vtk_to_pv = {
+            'Default': 'default',
+            'UsePointData': 'point',
+            'UseCellData': 'cell',
+            'UsePointFieldData': 'point_field',
+            'UseCellFieldData': 'cell_field',
+            'UseFieldData': 'field',
+        }
+        return vtk_to_pv[self.GetScalarModeAsString()]
+
+    @scalar_map_mode.setter
+    def scalar_map_mode(self, scalar_mode: str):
+        if scalar_mode == 'default':
+            self.SetScalarModeToDefault()
+        elif scalar_mode == 'point':
+            self.SetScalarModeToUsePointData()
+        elif scalar_mode == 'cell':
+            self.SetScalarModeToUseCellData()
+        elif scalar_mode == 'point_field':
+            self.SetScalarModeToUsePointFieldData()
+        elif scalar_mode == 'cell_field':
+            self.SetScalarModeToUseCellFieldData()
+        elif scalar_mode == 'field':
+            self.SetScalarModeToUseFieldData()
+        else:
+            raise ValueError(
+                f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
+                '"default", "point", "cell", "point_field", "cell_field" or "field".'
+            )
+
+    @property
+    def scalar_visibility(self) -> bool:
+        """Return or set the scalar visibility.
+
+        Examples
+        --------
+        Show that scalar visibility is ``False``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
+        >>> actor.mapper.scalar_visibility
+        False
+        >>> pl.close()
+
+        Show that scalar visibility is ``True``.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
+        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
+        >>> mapper.scalar_visibility
+        True
+        >>> pl.close()
+
+        """
+        return bool(self.GetScalarVisibility())
+
+    @scalar_visibility.setter
+    def scalar_visibility(self, value: bool):
+        return self.SetScalarVisibility(value)
+
+    def update(self):
+        """Update this mapper."""
+        self.Update()
+
+
+class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
+    """Wrap _vtk.vtkDataSetMapper."""
+
+    def __init__(self, dataset=None, theme=None):
+        """Initialize this class."""
+        super().__init__(theme)
+        if dataset is not None:
+            self.dataset = dataset
+
+    @property
+    def dataset(self):
+        """Return or set the dataset assigned to this mapper."""
+        return self.GetInputAsDataSet()
+
+    @dataset.setter
+    def dataset(self, obj: 'pv.core.dataset.DataSet'):
+        return self.SetInputData(obj)
+
+    def _configure_scalars_mode(
+        self,
+        scalars,
+        scalars_name,
+        n_colors,
+        preference,
+        direct_scalars_color_mode,
+    ):
+        """Configure scalar mode.
+
+        Parameters
+        ----------
+        scalars : numpy.ndarray
+            Array of scalars to assign to the mapper.
+
+        scalars_name : str
+            If the name of this array exists, scalars is ignored. Otherwise,
+            the scalars will be added to the existing dataset and this
+            parameter is the name to assign the scalars.
+
+        n_colors : int
+            Number of colors.
+
+        preference : str
+            Either ``'point'`` or ``'cell'``.
+
+        direct_scalars_color_mode : bool
+            When ``True``, scalars are treated as RGB colors. When
+            ``False``, scalars are mapped to the color table.
+
+        """
+        if scalars.shape[0] == self.dataset.n_points and scalars.shape[0] == self.dataset.n_cells:
+            use_points = preference == 'point'
+            use_cells = not use_points
+        else:
+            use_points = scalars.shape[0] == self.dataset.n_points
+            use_cells = scalars.shape[0] == self.dataset.n_cells
+
+        # Scalars interpolation approach
+        if use_points:
+            if scalars_name not in self.dataset.point_data:
+                self.dataset.point_data.set_array(scalars, scalars_name, False)
+            self.dataset.active_scalars_name = scalars_name
+            self.scalar_map_mode = 'point'
+        elif use_cells:
+            if scalars_name not in self.dataset.cell_data:
+                self.dataset.cell_data.set_array(scalars, scalars_name, False)
+            self.dataset.active_scalars_name = scalars_name
+            self.scalar_map_mode = 'cell'
+        else:
+            raise_not_matching(scalars, self.dataset)
+
+        self.lookup_table.SetNumberOfTableValues(n_colors)
+        if direct_scalars_color_mode:
+            self.color_mode = 'direct'
+        else:
+            self.color_mode = 'map'
 
     def set_scalars(
         self,
@@ -317,99 +615,6 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             rgb or custom_opac,
         )
 
-    def _configure_scalars_mode(
-        self,
-        scalars,
-        scalars_name,
-        n_colors,
-        preference,
-        direct_scalars_color_mode,
-    ):
-        """Configure scalar mode.
-
-        Parameters
-        ----------
-        scalars : numpy.ndarray
-            Array of scalars to assign to the mapper.
-
-        scalars_name : str
-            If the name of this array exists, scalars is ignored. Otherwise,
-            the scalars will be added to the existing dataset and this
-            parameter is the name to assign the scalars.
-
-        n_colors : int
-            Number of colors.
-
-        preference : str
-            Either ``'point'`` or ``'cell'``.
-
-        direct_scalars_color_mode : bool
-            When ``True``, scalars are treated as RGB colors. When
-            ``False``, scalars are mapped to the color table.
-
-        """
-        if scalars.shape[0] == self.dataset.n_points and scalars.shape[0] == self.dataset.n_cells:
-            use_points = preference == 'point'
-            use_cells = not use_points
-        else:
-            use_points = scalars.shape[0] == self.dataset.n_points
-            use_cells = scalars.shape[0] == self.dataset.n_cells
-
-        # Scalars interpolation approach
-        if use_points:
-            if scalars_name not in self.dataset.point_data:
-                self.dataset.point_data.set_array(scalars, scalars_name, False)
-            self.dataset.active_scalars_name = scalars_name
-            self.scalar_map_mode = 'point'
-        elif use_cells:
-            if scalars_name not in self.dataset.cell_data:
-                self.dataset.cell_data.set_array(scalars, scalars_name, False)
-            self.dataset.active_scalars_name = scalars_name
-            self.scalar_map_mode = 'cell'
-        else:
-            raise_not_matching(scalars, self.dataset)
-
-        self.lookup_table.SetNumberOfTableValues(n_colors)
-        if direct_scalars_color_mode:
-            self.color_mode = 'direct'
-        else:
-            self.color_mode = 'map'
-
-    @property
-    def color_mode(self) -> str:
-        """Return or set the color mode.
-
-        Either ``'direct'``, or ``'map'``.
-
-        * ``'direct'`` - All integer types are treated as colors with values in
-          the range 0-255 and floating types are treated as colors with values
-          in the range 0.0-1.0
-        * ``'map'`` - All scalar data will be mapped through the lookup table.
-
-        """
-        mode = self.GetColorModeAsString().lower()
-        if mode == 'mapscalars':
-            return 'map'
-        return 'direct'
-
-    @color_mode.setter
-    def color_mode(self, value: str):
-        if value == 'direct':
-            self.SetColorModeToDirectScalars()
-        elif value == 'map':
-            self.SetColorModeToMapScalars()
-        else:
-            raise ValueError('color mode must be either "default", "direct" or "map"')
-
-    @property
-    def interpolate_before_map(self) -> bool:
-        """Return or set interpolation before mapping."""
-        return bool(self.GetInterpolateScalarsBeforeMapping())
-
-    @interpolate_before_map.setter
-    def interpolate_before_map(self, value: bool):
-        self.SetInterpolateScalarsBeforeMapping(value)
-
     def set_custom_opacity(self, opacity, color, n_colors, preference, rgb):
         """Set custom opacity.
 
@@ -446,83 +651,6 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetColorModeToDirectScalars()
         return self._configure_scalars_mode(rgba, '', n_colors, preference, True)
 
-    def __del__(self):
-        self._lut = None
-
-    @property
-    def array_name(self) -> str:
-        """Return or set the array name or number and component to color by."""
-        return self.GetArrayName()
-
-    @array_name.setter
-    def array_name(self, name: str):
-        """Return or set the array name or number and component to color by."""
-        self.SetArrayName(name)
-
-    @property
-    def scalar_map_mode(self) -> str:
-        """Return or set the scalar map mode."""
-        # map vtk strings to more sensible strings
-        vtk_to_pv = {
-            'Default': 'default',
-            'UsePointData': 'point',
-            'UseCellData': 'cell',
-            'UsePointFieldData': 'point_field',
-            'UseCellFieldData': 'cell_field',
-            'UseFieldData': 'field',
-        }
-        return vtk_to_pv[self.GetScalarModeAsString()]
-
-    @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: str):
-        if scalar_mode == 'default':
-            self.SetScalarModeToDefault()
-        elif scalar_mode == 'point':
-            self.SetScalarModeToUsePointData()
-        elif scalar_mode == 'cell':
-            self.SetScalarModeToUseCellData()
-        elif scalar_mode == 'point_field':
-            self.SetScalarModeToUsePointFieldData()
-        elif scalar_mode == 'cell_field':
-            self.SetScalarModeToUseCellFieldData()
-        elif scalar_mode == 'field':
-            self.SetScalarModeToUseFieldData()
-        else:
-            raise ValueError(
-                f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
-                '"default", "point", "cell", "point_field", "cell_field" or "field".'
-            )
-
-    @property
-    def scalar_visibility(self) -> bool:
-        """Return or set the scalar visibility."""
-        return self.GetScalarVisibility()
-
-    @scalar_visibility.setter
-    def scalar_visibility(self, value: bool):
-        self.SetScalarVisibility(value)
-
-    @property
-    def dataset(self):
-        """Return or set the dataset assigned to this mapper."""
-        return self.GetInputAsDataSet()
-
-    @dataset.setter
-    def dataset(self, new_dataset: 'pv.core.dataset.DataSet'):
-        return self.SetInputData(new_dataset)
-
-    def update(self):
-        """Update this mapper."""
-        self.Update()
-
-
-class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
-    """Wrap _vtk.vtkDataSetMapper."""
-
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme)
-
 
 @abstract_class
 class _BaseVolumeMapper(_BaseMapper):
@@ -533,6 +661,15 @@ class _BaseVolumeMapper(_BaseMapper):
         super().__init__(theme)
         self._lut = None
         self._scalar_range = None
+
+    @property
+    def dataset(self):
+        """Return or set the dataset assigned to this mapper."""
+        return self.GetInputAsDataSet()
+
+    @dataset.setter
+    def dataset(self, new_dataset: 'pv.core.dataset.DataSet'):
+        return self.SetInputData(new_dataset)
 
     @property
     def lookup_table(self):
@@ -552,6 +689,9 @@ class _BaseVolumeMapper(_BaseMapper):
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
         self._scalar_range = clim
+
+    def __del__(self):
+        self._lut = None
 
 
 class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):

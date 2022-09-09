@@ -41,6 +41,7 @@ from ._plotting import (
     process_opacity,
 )
 from ._property import Property
+from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs
@@ -2249,8 +2250,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the composite dataset.
+        pyvista.Actor
+            Actor of the composite dataset.
 
         pyvista.CompositePolyDataMapper
             Composite PolyData mapper.
@@ -2332,6 +2333,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper = CompositePolyDataMapper(
             dataset,
+            theme=self._theme,
             color_missing_with_nan=color_missing_with_nan,
             interpolate_before_map=interpolate_before_map,
         )
@@ -2406,7 +2408,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     cmap,
                     flip_scalars,
                     categories,
-                    self._theme,
                     log_scale,
                 )
             else:
@@ -2776,8 +2777,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the mesh.
+        pyvista.plotting.actor.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -2829,7 +2830,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...            show_edges=True)
 
         """
-        self.mapper = DataSetMapper(self.theme)
+        self.mapper = DataSetMapper(theme=self.theme)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
@@ -3000,8 +3001,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper.dataset = self.mesh
         self.mapper.interpolate_before_map = interpolate_before_map
 
-        actor = _vtk.vtkActor()
-        actor.SetMapper(self.mapper)
+        actor = Actor(mapper=self.mapper)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -3016,7 +3016,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError(
                     'Input mesh does not have texture coordinates to support the texture.'
                 )
-            actor.SetTexture(texture)
+            actor.texture = texture
             # Set color to white by default when using a texture
             if color is None:
                 color = 'white'
@@ -3068,7 +3068,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.scalar_visibility = False
 
         # Set actor properties ================================================
-        prop = Property(
+        actor.prop = Property(
             self._theme,
             interpolation=interpolation,
             metallic=metallic,
@@ -3089,12 +3089,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
         if isinstance(opacity, (float, int)):
-            prop.opacity = opacity
-        actor.SetProperty(prop)
+            actor.prop.opacity = opacity
 
         # legend label
         if label is not None:
-            self._add_legend_label(actor, label, scalars, prop.color)
+            self._add_legend_label(actor, label, scalars, actor.prop.color)
 
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
@@ -3306,8 +3305,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the volume.
+        pyvista.Actor
+            Actor of the volume.
 
         Examples
         --------
@@ -4435,27 +4434,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         lines = pyvista.lines_from_points(lines)
 
-        # Create mapper and add lines
-        mapper = _vtk.vtkDataSetMapper()
-        mapper.SetInputData(lines)
-
-        rgb_color = Color(color)
-
-        # Create actor
-        actor = _vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetLineWidth(width)
-        actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(rgb_color.float_rgb)
-        actor.GetProperty().SetColor(rgb_color.float_rgb)
-        actor.GetProperty().LightingOff()
+        actor = Actor(mapper=DataSetMapper(lines))
+        actor.prop.line_width = width
+        actor.prop.show_edges = True
+        actor.prop.edge_color = color
+        actor.prop.color = color
+        actor.prop.lighting = False
 
         # legend label
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [lines, label, rgb_color]
+            self.renderer._labels[addr] = [lines, label, Color(color)]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
@@ -4757,7 +4748,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
+        pyvista.Actor
             Actor of the mesh.
 
         Examples
@@ -4796,8 +4787,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the arrows.
+        pyvista.Actor
+            Actor of the arrows.
 
         Examples
         --------
