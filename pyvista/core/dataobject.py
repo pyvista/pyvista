@@ -589,13 +589,13 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
-            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'LEGACY'
+            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'legacy'
         )
         self.__dict__.update(state)
 
         if pickle_format.lower() == 'xml':
             # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
-            # settings down to the sub-readders. Until this is fixed, use the dataset-specific readers
+            # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             readers = {
                 _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
