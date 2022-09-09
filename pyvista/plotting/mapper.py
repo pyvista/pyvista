@@ -18,8 +18,6 @@ from pyvista.utilities.misc import has_module
 from .colors import Color, get_cmap_safe
 from .tools import normalize
 
-# class _BaseMapper(_vtk.vtkAbstractMapper):
-
 
 @abstract_class
 class _BaseMapper(_vtk.vtkAbstractMapper):
