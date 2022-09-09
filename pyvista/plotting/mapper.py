@@ -1,345 +1,588 @@
 """An internal module for wrapping the use of mappers."""
 import logging
 import sys
+from typing import Optional
 
 import numpy as np
 
+import pyvista as pv
 from pyvista import _vtk
-from pyvista.utilities import convert_array, convert_string_array, raise_not_matching
+from pyvista.utilities import (
+    abstract_class,
+    convert_array,
+    convert_string_array,
+    raise_not_matching,
+)
 from pyvista.utilities.misc import has_module
 
 from .colors import Color, get_cmap_safe
 from .tools import normalize
 
+# class _BaseMapper(_vtk.vtkAbstractMapper):
 
-def make_mapper(mapper_class):
-    """Wrap a mapper.
 
-    This makes a mapper wrapped with a few convenient tools for managing
-    mappers with scalar bars in a consistent way since not all mapper classes
-    have scalar ranges and lookup tables.
-    """
+@abstract_class
+class _BaseMapper(_vtk.vtkAbstractMapper):
+    """Base Mapper with methods common to other mappers."""
 
-    class MapperHelper(mapper_class):
-        """A helper that dynamically inherits the mapper's class."""
+    def __init__(self, theme, **kwargs):
+        self._theme = theme
 
-        def __init__(self, *args, **kwargs):
-            self._scalar_range = None
-            self._lut = None
+    @property
+    def scalar_range(self) -> tuple:
+        """Return or the scalar range of this mapper."""
+        return self.GetScalarRange()
 
-        @property
-        def scalar_range(self):
-            if hasattr(self, 'GetScalarRange'):
-                self._scalar_range = self.GetScalarRange()
-            return self._scalar_range
+    @scalar_range.setter
+    def scalar_range(self, clim):
+        self.SetScalarRange(*clim)
+        if self.lookup_table is not None:
+            self.lookup_table.SetRange(*clim)
 
-        @scalar_range.setter
-        def scalar_range(self, clim):
-            if hasattr(self, 'SetScalarRange'):
-                self.SetScalarRange(*clim)
-            if self.lookup_table is not None:
-                self.lookup_table.SetRange(*clim)
-            self._scalar_range = clim
+    @property
+    def lookup_table(self) -> Optional[pv._vtk.vtkLookupTable]:
+        return self.GetLookupTable()
 
-        @property
-        def lookup_table(self):
-            if hasattr(self, 'GetLookupTable'):
-                self._lut = self.GetLookupTable()
-            return self._lut
+    @lookup_table.setter
+    def lookup_table(self, lut):
+        self.SetLookupTable(lut)
 
-        @lookup_table.setter
-        def lookup_table(self, lut):
-            if hasattr(self, 'SetLookupTable'):
-                self.SetLookupTable(lut)
-            self._lut = lut
+    def set_scalars(
+        self,
+        scalars,
+        scalars_name,
+        n_colors=256,
+        scalar_bar_args=None,
+        rgb=None,
+        component=None,
+        preference='point',
+        custom_opac=False,
+        annotations=None,
+        log_scale=False,
+        nan_color=None,
+        above_color=None,
+        below_color=None,
+        cmap=None,
+        flip_scalars=False,
+        opacity=None,
+        categories=False,
+        clim=None,
+    ):
+        """Set the scalars on this mapper.
 
-        def set_scalars(
-            self,
-            mesh,
-            scalars,
-            scalars_name,
-            scalar_bar_args,
-            rgb,
-            component,
-            preference,
-            interpolate_before_map,
-            _custom_opac,
-            annotations,
-            log_scale,
-            nan_color,
-            above_color,
-            below_color,
-            cmap,
-            flip_scalars,
-            opacity,
-            categories,
-            n_colors,
-            clim,
-            theme,
-            show_scalar_bar,
-        ):
-            """Set the scalars on this mapper."""
-            if cmap is None:  # Set default map if matplotlib is available
-                if has_module('matplotlib'):
-                    cmap = theme.cmap
+        scalars : numpy.ndarray
+            Array of scalars to assign to the mapper.
 
-            if not isinstance(scalars, np.ndarray):
-                scalars = np.asarray(scalars)
+        scalars_name : str
+            If the name of this array exists, scalars is ignored. Otherwise,
+            the scalars will be added to the existing dataset and this
+            parameter is the name to assign the scalars.
 
-            # Set the array title for when it is added back to the mesh
-            if _custom_opac:
-                scalars_name = '__custom_rgba'
+        n_colors : int, default: 256
+            Number of colors to use when displaying scalars.
 
-            _using_labels = False
-            if not np.issubdtype(scalars.dtype, np.number):
+        scalar_bar_args : dict, optional
+            Dictionary of keyword arguments to pass when adding the
+            scalar bar to the scene. For options, see
+            :func:`pyvista.BasePlotter.add_scalar_bar`.
 
-                # we can rapidly handle bools
-                if scalars.dtype == np.bool_:
-                    cats = np.array([b'False', b'True'], dtype='|S5')
-                    values = np.array([0, 1])
-                    clim = [-0.5, 1.5]
+        rgb : bool, default: False
+            If an 2 dimensional array is passed as the scalars, plot
+            those values as RGB(A) colors. ``rgba`` is also an
+            accepted alias for this.  Opacity (the A) is optional.  If
+            a scalars array ending with ``"_rgba"`` is passed, the default
+            becomes ``True``.  This can be overridden by setting this
+            parameter to ``False``.
+
+        component : int, optional
+            Set component of vector valued scalars to plot.  Must be
+            nonnegative, if supplied. If ``None``, the magnitude of
+            the vector is plotted.
+
+        preference : str, default: 'Point'
+            When ``dataset.n_points == dataset.n_cells`` and setting scalars,
+            this parameter sets how the scalars will be mapped to the mesh.
+            Can be either ``'point'`` or ``'cell'``.
+
+        custom_opac : bool, default: False
+            Use custom opacity.
+
+        annotations : dict, optional
+            Pass a dictionary of annotations. Keys are the float
+            values in the scalars range to annotate on the scalar bar
+            and the values are the the string annotations.
+
+        log_scale : bool, default: False
+            Use log scale when mapping data to colors. Scalars less
+            than zero are mapped to the smallest representable
+            positive float.
+
+        nan_color : color_like
+            The color to use for all ``NaN`` values in the plotted
+            scalar array.
+
+        above_color : color_like, optional
+            Solid color for values below the scalars range
+            (``clim``). This will automatically set the scalar bar
+            ``above_label`` to ``'Above'``.
+
+        below_color : color_like, optional
+            Solid color for values below the scalars range
+            (``clim``). This will automatically set the scalar bar
+            ``below_label`` to ``'Below'``.
+
+        cmap : str, list, optional
+            Name of the Matplotlib colormap to use when mapping the
+            ``scalars``.  See available Matplotlib colormaps.  Only
+            applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an
+            accepted alias for this. If ``colorcet`` or ``cmocean``
+            are installed, their colormaps can be specified by name.
+
+            You can also specify a list of colors to override an
+            existing colormap with a custom one.  For example, to
+            create a three color colormap you might specify
+            ``['green', 'red', 'blue']``.
+
+        flip_scalars : bool, default: False
+            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            this as well.
+
+        opacity : str or numpy.ndarray, optional
+            Opacity mapping for the scalars array.
+            A string can also be specified to map the scalars range to a
+            predefined opacity transfer function (options include: 'linear',
+            'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
+            transfer function that is an array either ``n_colors`` in length or
+            shorter.
+
+        categories : bool, default: False
+            If set to ``True``, then the number of unique values in the scalar
+            array will be used as the ``n_colors`` argument.
+
+        clim : 2 item list, optional
+            Color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``(-1, 2)``.
+
+        """
+        if scalar_bar_args is None:
+            scalar_bar_args = {'n_colors': n_colors}
+
+        if cmap is None:  # Set default map if matplotlib is available
+            if has_module('matplotlib'):
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
                 else:
-                    # If str array, digitive and annotate
-                    cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
-                    values = np.unique(scalars)
-                    clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                    scalars_name = f'{scalars_name}-digitized'
+                    cmap = self._theme.cmap
 
-                n_colors = len(cats)
-                scalar_bar_args.setdefault('n_labels', 0)
-                _using_labels = True
+        if not isinstance(scalars, np.ndarray):
+            scalars = np.asarray(scalars)
 
-            # Use only the real component if an array is complex
-            if np.issubdtype(scalars.dtype, np.complexfloating):
-                scalars = scalars.astype(float)
-                scalars_name = f'{scalars_name}-real'
+        # Set the array title for when it is added back to the mesh
+        if custom_opac:
+            scalars_name = '__custom_rgba'
 
-            if rgb:
-                show_scalar_bar = False
-                if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
-                    raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+        _using_labels = False
+        if not np.issubdtype(scalars.dtype, np.number):
 
-            if scalars.ndim != 1:
-                if rgb:
-                    pass
-                elif scalars.ndim == 2 and (
-                    scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells
-                ):
-                    if not isinstance(component, (int, type(None))):
-                        raise TypeError('component must be either None or an integer')
-                    if component is None:
-                        scalars = np.linalg.norm(scalars.copy(), axis=1)
-                        scalars_name = f'{scalars_name}-normed'
-                    elif component < scalars.shape[1] and component >= 0:
-                        scalars = np.array(scalars[:, component]).copy()
-                        scalars_name = f'{scalars_name}-{component}'
-                    else:
-                        raise ValueError(
-                            'Component must be nonnegative and less than the '
-                            f'dimensionality of the scalars array: {scalars.shape[1]}'
-                        )
-                else:
-                    scalars = scalars.ravel()
-
+            # we can rapidly handle bools
             if scalars.dtype == np.bool_:
-                scalars = scalars.astype(np.float_)
+                cats = np.array([b'False', b'True'], dtype='|S5')
+                values = np.array([0, 1])
+                clim = [-0.5, 1.5]
+            else:
+                # If str array, digitive and annotate
+                cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
+                values = np.unique(scalars)
+                clim = [np.min(values) - 0.5, np.max(values) + 0.5]
+                scalars_name = f'{scalars_name}-digitized'
 
-            table = self.GetLookupTable()
+            n_colors = len(cats)
+            scalar_bar_args.setdefault('n_labels', 0)
+            _using_labels = True
 
-            if _using_labels:
-                table.SetAnnotations(convert_array(values), convert_string_array(cats))
+        # Use only the real component if an array is complex
+        if np.issubdtype(scalars.dtype, np.complexfloating):
+            scalars = scalars.astype(float)
+            scalars_name = f'{scalars_name}-real'
 
-            if isinstance(annotations, dict):
-                for val, anno in annotations.items():
-                    table.SetAnnotation(float(val), str(anno))
-
-            # Set scalars range
-            if clim is None:
-                clim = [np.nanmin(scalars), np.nanmax(scalars)]
-            elif isinstance(clim, (int, float)):
-                clim = [-clim, clim]
-
-            if log_scale:
-                if clim[0] <= 0:
-                    clim = [sys.float_info.min, clim[1]]
-                table.SetScaleToLog10()
-
-            if np.any(clim) and not rgb:
-                self.scalar_range = clim[0], clim[1]
-
-            table.SetNanColor(Color(nan_color).float_rgba)
-            if above_color:
-                table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*Color(above_color).float_rgba)
-                scalar_bar_args.setdefault('above_label', 'Above')
-            if below_color:
-                table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*Color(below_color).float_rgba)
-                scalar_bar_args.setdefault('below_label', 'Below')
-
-            if cmap is not None:
-                # have to add the attribute to pass it onward to some classes
-                if isinstance(cmap, str):
-                    self.cmap = cmap
-                # ipygany uses different colormaps
-                if theme.jupyter_backend == 'ipygany':
-                    from ..jupyter.pv_ipygany import check_colormap
-
-                    check_colormap(cmap)
+        if scalars.ndim != 1:
+            if rgb:
+                pass
+            elif scalars.ndim == 2 and (
+                scalars.shape[0] == self.dataset.n_points
+                or scalars.shape[0] == self.dataset.n_cells
+            ):
+                if not isinstance(component, (int, type(None))):
+                    raise TypeError('component must be either None or an integer')
+                if component is None:
+                    scalars = np.linalg.norm(scalars.copy(), axis=1)
+                    scalars_name = f'{scalars_name}-normed'
+                elif component < scalars.shape[1] and component >= 0:
+                    scalars = np.array(scalars[:, component]).copy()
+                    scalars_name = f'{scalars_name}-{component}'
                 else:
-                    if not has_module('matplotlib'):
-                        cmap = None
-                        logging.warning('Please install matplotlib for color maps.')
+                    raise ValueError(
+                        'Component must be nonnegative and less than the '
+                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                    )
+            else:
+                scalars = scalars.ravel()
 
-                    cmap = get_cmap_safe(cmap)
-                    if categories:
-                        if categories is True:
-                            n_colors = len(np.unique(scalars))
-                        elif isinstance(categories, int):
-                            n_colors = categories
-                    ctable = cmap(np.linspace(0, 1, n_colors)) * 255
-                    ctable = ctable.astype(np.uint8)
-                    # Set opactities
-                    if isinstance(opacity, np.ndarray) and not _custom_opac:
-                        ctable[:, -1] = opacity
-                    if flip_scalars:
-                        ctable = np.ascontiguousarray(ctable[::-1])
-                    table.SetTable(_vtk.numpy_to_vtk(ctable))
-                    if _custom_opac:
-                        # need to round the colors here since we're
-                        # directly displaying the colors
-                        hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                        scalars = np.round(hue * n_colors) / n_colors
-                        scalars = cmap(scalars) * 255
-                        scalars[:, -1] *= opacity
-                        scalars = scalars.astype(np.uint8)
+        if scalars.dtype == np.bool_:
+            scalars = scalars.astype(np.float_)
 
-            else:  # no cmap specified
+        table = self.lookup_table
+        if _using_labels:
+            table.SetAnnotations(convert_array(values), convert_string_array(cats))
+
+        if isinstance(annotations, dict):
+            for val, anno in annotations.items():
+                table.SetAnnotation(float(val), str(anno))
+
+        # Set scalars range
+        if clim is None:
+            clim = [np.nanmin(scalars), np.nanmax(scalars)]
+        elif isinstance(clim, (int, float)):
+            clim = [-clim, clim]
+
+        if log_scale:
+            if clim[0] <= 0:
+                clim = [sys.float_info.min, clim[1]]
+            table.SetScaleToLog10()
+
+        if np.any(clim) and not rgb:
+            self.scalar_range = clim[0], clim[1]
+
+        table.SetNanColor(Color(nan_color).float_rgba)
+        if above_color:
+            table.SetUseAboveRangeColor(True)
+            table.SetAboveRangeColor(*Color(above_color).float_rgba)
+            scalar_bar_args.setdefault('above_label', 'Above')
+        if below_color:
+            table.SetUseBelowRangeColor(True)
+            table.SetBelowRangeColor(*Color(below_color).float_rgba)
+            scalar_bar_args.setdefault('below_label', 'Below')
+
+        if cmap is not None:
+            # have to add the attribute to pass it onward to some classes
+            if isinstance(cmap, str):
+                self.cmap = cmap
+            # ipygany uses different colormaps
+            if self._theme is None:
+                jupyter_backend = pv.global_theme.jupyter_backend
+            else:
+                jupyter_backend = self._theme.jupyter_backend
+            if jupyter_backend == 'ipygany':
+                from ..jupyter.pv_ipygany import check_colormap
+
+                check_colormap(cmap)
+            else:
+                if not has_module('matplotlib'):
+                    cmap = None
+                    logging.warning('Please install matplotlib for color maps.')
+
+                cmap = get_cmap_safe(cmap)
+                if categories:
+                    if categories is True:
+                        n_colors = len(np.unique(scalars))
+                    elif isinstance(categories, int):
+                        n_colors = categories
+                ctable = cmap(np.linspace(0, 1, n_colors)) * 255
+                ctable = ctable.astype(np.uint8)
+                # Set opactities
+                if isinstance(opacity, np.ndarray) and not custom_opac:
+                    ctable[:, -1] = opacity
                 if flip_scalars:
-                    table.SetHueRange(0.0, 0.66667)
-                else:
-                    table.SetHueRange(0.66667, 0.0)
+                    ctable = np.ascontiguousarray(ctable[::-1])
+                table.SetTable(_vtk.numpy_to_vtk(ctable))
+                if custom_opac:
+                    # need to round the colors here since we're
+                    # directly displaying the colors
+                    hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
+                    scalars = np.round(hue * n_colors) / n_colors
+                    scalars = cmap(scalars) * 255
+                    scalars[:, -1] *= opacity
+                    scalars = scalars.astype(np.uint8)
 
-            self.configure_scalars_mode(
-                scalars,
-                mesh,
-                scalars_name,
-                n_colors,
-                preference,
-                interpolate_before_map,
-                rgb or _custom_opac,
-            )
+        else:  # no cmap specified
+            if flip_scalars:
+                table.SetHueRange(0.0, 0.66667)
+            else:
+                table.SetHueRange(0.66667, 0.0)
 
-            return show_scalar_bar, n_colors, clim
-
-        def configure_scalars_mode(
-            self,
+        self._configure_scalars_mode(
             scalars,
-            mesh,
             scalars_name,
             n_colors,
             preference,
-            interpolate_before_map,
-            direct_scalars_color_mode,
-        ):
-            """Configure scalar mode.
+            rgb or custom_opac,
+        )
 
-            Parameters
-            ----------
-            scalars : numpy.ndarray
-                Array of scalars to assign to the mapper.
+    def _configure_scalars_mode(
+        self,
+        scalars,
+        scalars_name,
+        n_colors,
+        preference,
+        direct_scalars_color_mode,
+    ):
+        """Configure scalar mode.
 
-            mesh : pyvista.Dataset
-                Dataset to assign the scalars to.
+        Parameters
+        ----------
+        scalars : numpy.ndarray
+            Array of scalars to assign to the mapper.
 
-            scalars_name : str
-                If the name of this array exists, scalars is
-                ignored. Otherwise, the scalars will be added to ``mesh`` and
-                this parameter is the name to assign the scalars.
+        scalars_name : str
+            If the name of this array exists, scalars is ignored. Otherwise,
+            the scalars will be added to the existing dataset and this
+            parameter is the name to assign the scalars.
 
-            n_colors : int
-                Number of colors.
+        n_colors : int
+            Number of colors.
 
-            preference : str
-                Either ``'point'`` or ``'cell'``.
+        preference : str
+            Either ``'point'`` or ``'cell'``.
 
-            interpolate_before_map : bool
-                When ``True`` scalars will be interpolated within polygons and
-                color mapping will happen on a per-pixel basis.  When
-                ``False``, Colors are interpolated after being mapped. This
-                option avoids color interpolation by using a one dimensional
-                texture map for the colors.
+        direct_scalars_color_mode : bool
+            When ``True``, scalars are treated as RGB colors. When
+            ``False``, scalars are mapped to the color table.
 
-            direct_scalars_color_mode : bool
-                When ``True``, scalars are treated as RGB colors. When
-                ``False``, scalars are mapped to the color table.
+        """
+        if scalars.shape[0] == self.dataset.n_points and scalars.shape[0] == self.dataset.n_cells:
+            use_points = preference == 'point'
+            use_cells = not use_points
+        else:
+            use_points = scalars.shape[0] == self.dataset.n_points
+            use_cells = scalars.shape[0] == self.dataset.n_cells
 
-            """
-            if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
-                use_points = preference == 'point'
-                use_cells = not use_points
-            else:
-                use_points = scalars.shape[0] == mesh.n_points
-                use_cells = scalars.shape[0] == mesh.n_cells
+        # Scalars interpolation approach
+        if use_points:
+            if scalars_name not in self.dataset.point_data:
+                self.dataset.point_data.set_array(scalars, scalars_name, False)
+            self.dataset.active_scalars_name = scalars_name
+            self.scalar_mode = 'point'
+        elif use_cells:
+            if scalars_name not in self.dataset.cell_data:
+                self.dataset.cell_data.set_array(scalars, scalars_name, False)
+            self.dataset.active_scalars_name = scalars_name
+            self.scalar_mode = 'cell'
+        else:
+            raise_not_matching(scalars, self.dataset)
 
-            # Scalars interpolation approach
-            if use_points:
-                if scalars_name not in mesh.point_data:
-                    mesh.point_data.set_array(scalars, scalars_name, False)
-                mesh.active_scalars_name = scalars_name
-                self.SetScalarModeToUsePointData()
-            elif use_cells:
-                if scalars_name not in mesh.cell_data:
-                    mesh.cell_data.set_array(scalars, scalars_name, False)
-                mesh.active_scalars_name = scalars_name
-                self.SetScalarModeToUseCellData()
-            else:
-                raise_not_matching(scalars, mesh)
+        self.lookup_table.SetNumberOfTableValues(n_colors)
+        if direct_scalars_color_mode:
+            self.color_mode = 'direct'
+        else:
+            self.color_mode = 'map'
 
-            self.GetLookupTable().SetNumberOfTableValues(n_colors)
-            if interpolate_before_map:
-                self.InterpolateScalarsBeforeMappingOn()
-            if direct_scalars_color_mode:
-                self.SetColorModeToDirectScalars()
-            else:
-                self.SetColorModeToMapScalars()
+    @property
+    def color_mode(self) -> str:
+        """Return or set the color mode.
 
-        def set_custom_opacity(
-            self, opacity, color, mesh, n_colors, preference, interpolate_before_map, rgb, theme
-        ):
-            """Set custom opacity.
+        Either ``'direct'``, or ``'map'``.
 
-            Returns
-            -------
-            str or None
-                If the scalars do not exist within the dataset, this is the
-                name of the scalars array.
+        * ``'direct'`` - All integer types are treated as colors with values in
+          the range 0-255 and floating types are treated as colors with values
+          in the range 0.0-1.0
+        * ``'map'`` - All scalar data will be mapped through the lookup table.
 
-            str
-                Association of the scalars, either ``'point'`` or ``'cell'``.
+        """
+        mode = self.GetColorModeAsString().lower()
+        if mode == 'mapscalars':
+            return 'map'
+        return 'direct'
 
-            """
-            # create a custom RGBA array to supply our opacity to
-            if opacity.size == mesh.n_points:
-                rgba = np.empty((mesh.n_points, 4), np.uint8)
-            elif opacity.size == mesh.n_cells:
-                rgba = np.empty((mesh.n_cells, 4), np.uint8)
-            else:  # pragma: no cover
-                raise ValueError(
-                    f"Opacity array size ({opacity.size}) does not equal "
-                    f"the number of points ({mesh.n_points}) or the "
-                    f"number of cells ({mesh.n_cells})."
-                )
-
-            rgba[:, :-1] = Color(color, default_color=theme.color).int_rgb
-            rgba[:, -1] = np.around(opacity * 255)
-
+    @color_mode.setter
+    def color_mode(self, value: str):
+        if value == 'direct':
             self.SetColorModeToDirectScalars()
-            return self.configure_scalars_mode(
-                rgba, mesh, '', n_colors, preference, interpolate_before_map, True
+        elif value == 'map':
+            self.SetColorModeToMapScalars()
+        else:
+            raise ValueError('color mode must be either "default", "direct" or "map"')
+
+    @property
+    def interpolate_before_map(self) -> bool:
+        """Return or set interpolation before mapping."""
+        return bool(self.GetInterpolateScalarsBeforeMapping())
+
+    @interpolate_before_map.setter
+    def interpolate_before_map(self, value: bool):
+        self.SetInterpolateScalarsBeforeMapping(value)
+
+    def set_custom_opacity(self, opacity, color, n_colors, preference, rgb):
+        """Set custom opacity.
+
+        Returns
+        -------
+        str or None
+            If the scalars do not exist within the dataset, this is the
+            name of the scalars array.
+
+        str
+            Association of the scalars, either ``'point'`` or ``'cell'``.
+
+        """
+        # create a custom RGBA array to supply our opacity to
+        if opacity.size == self.dataset.n_points:
+            rgba = np.empty((self.dataset.n_points, 4), np.uint8)
+        elif opacity.size == self.dataset.n_cells:
+            rgba = np.empty((self.dataset.n_cells, 4), np.uint8)
+        else:  # pragma: no cover
+            raise ValueError(
+                f"Opacity array size ({opacity.size}) does not equal "
+                f"the number of points ({self.dataset.n_points}) or the "
+                f"number of cells ({self.dataset.n_cells})."
             )
 
-        def __del__(self):
-            self._lut = None
+        if self._theme is not None:
+            default_color = self._theme.color
+        else:
+            default_color = pv.global_theme.color
 
-    return MapperHelper()
+        rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
+        rgba[:, -1] = np.around(opacity * 255)
+
+        self.SetColorModeToDirectScalars()
+        return self._configure_scalars_mode(rgba, '', n_colors, preference, True)
+
+    def __del__(self):
+        self._lut = None
+
+    @property
+    def array_name(self) -> str:
+        """Return or set the array name or number and component to color by."""
+        return self.GetArrayName()
+
+    @array_name.setter
+    def array_name(self, name: str):
+        """Return or set the array name or number and component to color by."""
+        self.SetArrayName(name)
+
+    @property
+    def scalar_map_mode(self) -> str:
+        """Return or set the scalar map mode."""
+        # map vtk strings to more sensible strings
+        vtk_to_pv = {
+            'Default': 'default',
+            'UsePointData': 'point',
+            'UseCellData': 'cell',
+            'UsePointFieldData': 'point_field',
+            'UseCellFieldData': 'cell_field',
+            'UseFieldData': 'field',
+        }
+        return vtk_to_pv[self.GetScalarModeAsString()]
+
+    @scalar_map_mode.setter
+    def scalar_map_mode(self, scalar_mode: str):
+        if scalar_mode == 'default':
+            self.SetScalarModeToDefault()
+        elif scalar_mode == 'point':
+            self.SetScalarModeToUsePointData()
+        elif scalar_mode == 'cell':
+            self.SetScalarModeToUseCellData()
+        elif scalar_mode == 'point_field':
+            self.SetScalarModeToUsePointFieldData()
+        elif scalar_mode == 'cell_field':
+            self.SetScalarModeToUseCellFieldData()
+        elif scalar_mode == 'field':
+            self.SetScalarModeToUseFieldData()
+        else:
+            raise ValueError(
+                f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
+                '"default", "point", "cell", "point_field", "cell_field" or "field".'
+            )
+
+    @property
+    def scalar_visibility(self) -> bool:
+        """Return or set the scalar visibility."""
+        return self.GetScalarVisibility()
+
+    @scalar_visibility.setter
+    def scalar_visibility(self, value: bool):
+        self.SetScalarVisibility(value)
+
+    @property
+    def dataset(self):
+        """Return or set the dataset assigned to this mapper."""
+        return self.GetInputAsDataSet()
+
+    @dataset.setter
+    def dataset(self, new_dataset: 'pv.core.dataset.DataSet'):
+        return self.SetInputData(new_dataset)
+
+    def update(self):
+        """Update this mapper."""
+        self.Update()
+
+
+class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
+    """Wrap _vtk.vtkDataSetMapper."""
+
+    def __init__(self, theme=None):
+        """Initialize this class."""
+        super().__init__(theme)
+
+
+@abstract_class
+class _BaseVolumeMapper(_BaseMapper):
+    """Volume mapper class to override methods and attributes for to volume mappers."""
+
+    def __init__(self, theme=None):
+        """Initialize this class."""
+        super().__init__(theme)
+        self._lut = None
+        self._scalar_range = None
+
+    @property
+    def lookup_table(self):
+        return self._lut
+
+    @lookup_table.setter
+    def lookup_table(self, lut):
+        self._lut = lut
+
+    @property
+    def scalar_range(self):
+        """Return or set the scalar range."""
+        return self._scalar_range
+
+    @scalar_range.setter
+    def scalar_range(self, clim):
+        if self.lookup_table is not None:
+            self.lookup_table.SetRange(*clim)
+        self._scalar_range = clim
+
+
+class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
+
+    def __init__(self, theme=None):
+        """Initialize this class."""
+        super().__init__(theme)
+
+
+class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
+
+    def __init__(self, theme=None):
+        """Initialize this class."""
+        super().__init__(theme)
+
+
+class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
+
+    def __init__(self, theme=None):
+        """Initialize this class."""
+        super().__init__(theme)
+
+
+class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkSmartVolumeMapper."""
+
+    def __init__(self, theme=None):
+        """Initialize this class."""
+        super().__init__(theme)
