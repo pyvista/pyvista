@@ -362,12 +362,12 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             if scalars_name not in self.dataset.point_data:
                 self.dataset.point_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
-            self.scalar_mode = 'point'
+            self.scalar_map_mode = 'point'
         elif use_cells:
             if scalars_name not in self.dataset.cell_data:
                 self.dataset.cell_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
-            self.scalar_mode = 'cell'
+            self.scalar_map_mode = 'cell'
         else:
             raise_not_matching(scalars, self.dataset)
 
