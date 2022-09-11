@@ -43,16 +43,6 @@ try:
 except:  # noqa: E722
     ffmpeg_failed = True
 
-# These tests fail with mesa opengl on windows
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-
-skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-
-skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
-
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
-)
 
 # Reset image cache with new images
 glb_reset_image_cache = False
@@ -74,6 +64,17 @@ def using_mesa():
 
 
 # always set on Windows CI
+# These tests fail with mesa opengl on windows
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+skip_windows_mesa = pytest.mark.skipif(
+    using_mesa() and os.name == 'nt', reason='Does not display correctly within OSMesa on Windows'
+)
+skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
+skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
+)
+
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
 skip_mac = pytest.mark.skipif(
@@ -83,7 +84,6 @@ skip_mac_flaky = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
 )
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
-
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -2536,6 +2536,7 @@ def test_blurring():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_mesa
 def test_ssaa_pass():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
@@ -2543,7 +2544,7 @@ def test_ssaa_pass():
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_mesa
+@skip_windows_mesa
 def test_ssao_pass():
     ugrid = pyvista.UniformGrid(dims=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pyvista.Plotter()
@@ -2850,6 +2851,12 @@ def test_tight_square(noise_2d):
         zoom='tight',
         before_close_callback=verify_cache_image,
     )
+
+
+@skip_windows_mesa  # due to opacity
+def test_plot_cell():
+    grid = examples.cells.Tetrahedron()
+    examples.plot_cell(grid, before_close_callback=verify_cache_image)
 
 
 def test_tight_square_padding():
