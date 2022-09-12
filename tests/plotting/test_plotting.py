@@ -2914,3 +2914,9 @@ def test_charts_sin():
     chart.scatter(x, y)
     chart.line(x, y, 'r')
     chart.show(dev_kwargs={'before_close_callback': verify_cache_image})
+
+
+def test_wireframe_color(sphere):
+    sphere.plot(
+        lighting=False, color='b', style='wireframe', before_close_callback=verify_cache_image
+    )
