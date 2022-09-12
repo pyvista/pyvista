@@ -52,3 +52,33 @@ demonstrate features.
    Don't animate or morph them, don't apply Boolean operators to them, and don't simulate nasty things happening to them (like breaking, exploding, melting, etc.).
    Choose another model for these sorts of experiments.
    (You can do anything you want to the Stanford bunny or the armadillo.)
+
+
+Cells
+-----
+PyVista contains several functions that create single cell
+:class:`pyvista.UnstructuredGrid` objects that can be used to learn about VTK
+cell types.
+
+.. currentmodule:: pyvista.examples.cells
+
+.. autosummary::
+   :toctree: _autosummary
+
+   plot_cell   
+   Empty
+   Vertex
+   PolyVertex
+   Line
+   PolyLine
+   Triangle
+   TriangleStrip
+   Polygon
+   Quadrilateral
+   Tetrahedron
+   Voxel
+   Hexahedron
+   Wedge
+   Pyramid
+   PentagonalPrism
+   HexagonalPrism

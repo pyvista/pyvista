@@ -1741,6 +1741,30 @@ def download_chest(load=True):  # pragma: no cover
     return _download_and_read('MetaIO/ChestCT-SHORT.mha', load=load)
 
 
+def download_brain_atlas_with_sides(load=True):  # pragma: no cover
+    """Download an image of an averaged brain with a right-left label.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_brain_atlas_with_sides()
+    >>> dataset.slice(normal='z').plot(cpos='xy')
+
+    """
+    return _download_and_read('avg152T1_RL_nifti.nii.gz', load=load)
+
+
 def download_prostate(load=True):  # pragma: no cover
     """Download prostate dataset.
 

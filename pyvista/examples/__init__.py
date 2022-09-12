@@ -6,3 +6,4 @@ from . import planets
 from . import gltf
 from . import hdr
 from . import vrml
+from .cells import plot_cell
