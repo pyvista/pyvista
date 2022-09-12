@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def voxelize(mesh, density=None, check_surface=True):
@@ -105,7 +105,7 @@ def single_triangle():  # pragma: no cover
     """Create a single PolyData triangle."""
     warnings.warn(
         "Use of `single_triangle` is deprecated. Use `pyvista.Triangle` instead.",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     points = np.zeros((3, 3))
     points[1] = [1, 0, 0]

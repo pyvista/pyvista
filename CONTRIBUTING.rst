@@ -566,7 +566,7 @@ created the following will occur:
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 10. Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro-cf-autotick-bot>`_
+    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.

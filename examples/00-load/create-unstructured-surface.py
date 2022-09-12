@@ -1,5 +1,5 @@
 """
-.. _ref_create_unstructured:
+.. _create_unstructured_example:
 
 Creating an Unstructured Grid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -8,9 +8,9 @@ Create an irregular, unstructured grid from NumPy arrays.
 """
 
 import numpy as np
-import vtk
 
 import pyvista as pv
+from pyvista import CellType
 
 ###############################################################################
 # An unstructured grid can be created directly from NumPy arrays.
@@ -27,7 +27,7 @@ offset = np.array([0, 9])
 cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
 
 # cell type array. Contains the cell type of each cell
-cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON])
+cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON])
 
 # in this example, each cell uses separate points
 cell1 = np.array(
@@ -57,12 +57,15 @@ cell2 = np.array(
 )
 
 # points of the cell array
-points = np.vstack((cell1, cell2))
+points = np.vstack((cell1, cell2)).astype(float)
 
 # create the unstructured grid directly from the numpy arrays
 # The offset is optional and will be either calculated if not given (VTK version < 9),
 # or is not necessary anymore (VTK version >= 9)
-grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
+if pv.vtk_version_info < (9,):
+    grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
+else:
+    grid = pv.UnstructuredGrid(cells, cell_type, points)
 
 # For cells of fixed sizes (like the mentioned Hexahedra), it is also possible to use the
 # simplified dictionary interface. This automatically calculates the cell array with types
@@ -70,7 +73,7 @@ grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
 # added to the dictionary.
 cells_hex = np.arange(16).reshape([2, 8])
 # = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
-grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells_hex}, points)
+grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex}, points)
 
 # plot the grid (and suppress the camera position output)
 _ = grid.plot(show_edges=True)
@@ -132,9 +135,9 @@ cells = np.array(
     ]
 ).ravel()
 
-# each cell is a VTK_HEXAHEDRON
+# each cell is a HEXAHEDRON
 celltypes = np.empty(8, dtype=np.uint8)
-celltypes[:] = vtk.VTK_HEXAHEDRON
+celltypes[:] = CellType.HEXAHEDRON
 
 # the offset array points to the start of each cell (via flat indexing)
 offset = np.array([0, 9, 18, 27, 36, 45, 54, 63])
@@ -143,7 +146,7 @@ offset = np.array([0, 9, 18, 27, 36, 45, 54, 63])
 # sequentially access the cell array by first looking at each index of
 # cell array (based on the offset array), and then read the number of
 # points based on the first value of the cell.  In this case, the
-# VTK_HEXAHEDRON is described by 8 points.
+# HEXAHEDRON is described by 8 points.
 
 # for example, the 5th cell would be accessed by vtk with:
 start_of_cell = offset[4]
@@ -159,12 +162,15 @@ print(indices_in_cell)
 # grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # if you are not using VTK 9.0 or newer, you must use the offset array
-grid = pv.UnstructuredGrid(offset, cells, celltypes, points)
+if pv.vtk_version_info < (9,):
+    grid = pv.UnstructuredGrid(offset, cells, celltypes, points)
+else:
+    grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # Alternate versions:
-grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
+grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
 grid = pv.UnstructuredGrid(
-    {vtk.VTK_HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points
+    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points
 )
 
 # plot the grid (and suppress the camera position output)
@@ -196,8 +202,7 @@ cells = np.array(
     ]
 )
 
-# 10 is just vtk.VTK_TETRA
-celltypes = np.array([10, 10, 10, 10, 10, 10, 10, 10, 10, 10], dtype=np.uint8)
+celltypes = np.full(10, fill_value=CellType.TETRA, dtype=np.uint8)
 
 # These are the 10 points. The number of cells does not need to match the
 # number of points, they just happen to in this example
@@ -225,10 +230,5 @@ grid.plot(show_edges=True)
 # For fun, let's separate all the cells and plot out the individual cells. Shift
 # them a little bit from the center to create an "exploded view".
 
-split_cells = pv.MultiBlock()
-for index in range(10):
-    single_cell = grid.extract_cells([index])
-    single_cell.points += (np.array(single_cell.center) - np.array(grid.center)) * 0.5
-    split_cells.append(single_cell)
-
-split_cells.plot(show_edges=True)
+split_cells = grid.explode(0.5)
+split_cells.plot(show_edges=True, ssao=True)

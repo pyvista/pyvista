@@ -883,3 +883,13 @@ def test_download_gltf_avocado():
     assert os.path.isfile(filename)
     pl = pv.Plotter()
     pl.import_gltf(filename)
+
+
+def test_cad_model_case():
+    filename = examples.download_cad_model_case(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vtp')
+
+    dataset = examples.download_cad_model_case(load=True)
+    assert isinstance(dataset, pv.PolyData)
+    assert dataset.n_points == 7677

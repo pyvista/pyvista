@@ -32,7 +32,7 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, has_module, uses_egl
+from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import (
     USE_SCALAR_BAR_ARGS,
@@ -78,10 +78,9 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
-        if not p._closed:
-            p.close()
-        p.deep_clean()
+    for pl in list(_ALL_PLOTTERS.values()):
+        if not pl._closed:
+            pl.close()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -259,7 +258,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Add self to open plotters
+        # Track all active plotters. This has the side effect of ensuring that plotters are not
+        # collected until `close()`. See https://github.com//pull/3216
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         _ALL_PLOTTERS[self._id_name] = self
 
@@ -275,10 +275,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
-
-        # set antialiasing based on theme
-        if self.theme.antialiasing:
-            self.enable_anti_aliasing()
 
         self._initialized = True
 
@@ -929,7 +925,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enable the default light-kit lighting.
 
         See:
-        https://www.researchgate.net/publication/2926068
+        https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization
 
         This will replace all pre-existing lights in the renderer.
 
@@ -968,16 +964,117 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    @wraps(Renderer.enable_anti_aliasing)
-    def enable_anti_aliasing(self, *args, **kwargs):
-        """Wrap ``Renderer.enable_anti_aliasing``."""
-        for renderer in self.renderers:
-            renderer.enable_anti_aliasing(*args, **kwargs)
+    def enable_anti_aliasing(self, aa_type='fxaa', multi_samples=None, all_renderers=True):
+        """Enable anti-aliasing.
 
-    @wraps(Renderer.disable_anti_aliasing)
-    def disable_anti_aliasing(self, *args, **kwargs):
-        """Wrap ``Renderer.disable_anti_aliasing``."""
-        self.renderer.disable_anti_aliasing(*args, **kwargs)
+        This tends to make edges appear softer and less pixelated.
+
+        Parameters
+        ----------
+        aa_type : str, optional
+            Anti-aliasing type. See the notes below. One of the following:
+
+            * ``"ssaa"`` - Super-Sample Anti-Aliasing
+            * ``"msaa"`` - Multi-Sample Anti-Aliasing
+            * ``"fxaa"`` - Fast Approximate Anti-Aliasing
+
+        multi_samples : int, optional
+            The number of multi-samples when ``aa_type`` is ``"msaa"``. Note
+            that using this setting automatically enables this for all
+            renderers. Defaults to the theme multi_samples.
+
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        Notes
+        -----
+        SSAA, or Super-Sample Anti-Aliasing is a brute force method of
+        anti-aliasing. It results in the best image quality but comes at a
+        tremendous resource cost. SSAA works by rendering the scene at a higher
+        resolution. The final image is produced by downsampling the
+        massive source image using an averaging filter. This acts as a low pass
+        filter which removes the high frequency components that would cause
+        jaggedness.
+
+        MSAA, or Multi-Sample Anti-Aliasing is an optimization of SSAA that
+        reduces the amount of pixel shader evaluations that need to be computed
+        by focusing on overlapping regions of the scene. The result is
+        anti-aliasing along edges that is on par with SSAA and less
+        anti-aliasing along surfaces as these make up the bulk of SSAA
+        computations. MSAA is substantially less computationally expensive than
+        SSAA and results in comparable image quality.
+
+        FXAA, or Fast Approximate Anti-Aliasing is an Anti-Aliasing technique
+        that is performed entirely in post processing. FXAA operates on the
+        rasterized image rather than the scene geometry. As a consequence,
+        forcing FXAA or using FXAA incorrectly can result in the FXAA filter
+        smoothing out parts of the visual overlay that are usually kept sharp
+        for reasons of clarity as well as smoothing out textures. FXAA is
+        inferior to MSAA but is almost free computationally and is thus
+        desirable on low end platforms.
+
+        Examples
+        --------
+        Enable super-sample anti-aliasing (SSAA).
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_anti_aliasing('ssaa')
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        See :ref:`anti_aliasing_example` for a full example demonstrating
+        VTK's anti-aliasing approaches.
+
+        """
+        # apply MSAA to entire render window
+        if aa_type == 'msaa':
+            if not hasattr(self, 'ren_win'):
+                raise AttributeError('The render window has been closed.')
+            if multi_samples is None:
+                multi_samples = self._theme.multi_samples
+            self.ren_win.SetMultiSamples(multi_samples)
+            return
+        elif aa_type not in ['ssaa', 'fxaa']:
+            raise ValueError(
+                f'Invalid `aa_type` "{aa_type}". Should be either "fxaa", "ssaa", or "msaa"'
+            )
+
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.enable_anti_aliasing(aa_type)
+        else:
+            self.renderer.enable_anti_aliasing(aa_type)
+
+    def disable_anti_aliasing(self, all_renderers=True):
+        """Disable anti-aliasing.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_anti_aliasing()
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        See :ref:`anti_aliasing_example` for a full example demonstrating
+        VTK's anti-aliasing approaches.
+
+        """
+        self.ren_win.SetMultiSamples(0)
+
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.disable_anti_aliasing()
+        else:
+            self.renderer.disable_anti_aliasing()
 
     @wraps(Renderer.set_focus)
     def set_focus(self, *args, render=True, **kwargs):
@@ -1051,6 +1148,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
+    @wraps(Renderer.enable_ssao)
+    def enable_ssao(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_ssao``."""
+        return self.renderer.enable_ssao(*args, **kwargs)
+
+    @wraps(Renderer.disable_ssao)
+    def disable_ssao(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_ssao``."""
+        return self.renderer.disable_ssao(*args, **kwargs)
+
     @wraps(Renderer.enable_shadows)
     def enable_shadows(self, *args, **kwargs):
         """Wrap ``Renderer.enable_shadows``."""
@@ -1115,6 +1222,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def set_scale(self, *args, **kwargs):
         """Wrap ``Renderer.set_scale``."""
         return self.renderer.set_scale(*args, **kwargs)
+
+    @wraps(Renderer.enable_depth_of_field)
+    def enable_depth_of_field(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_depth_of_field``."""
+        return self.renderer.enable_depth_of_field(*args, **kwargs)
+
+    @wraps(Renderer.disable_depth_of_field)
+    def disable_depth_of_field(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_depth_of_field``."""
+        return self.renderer.disable_depth_of_field(*args, **kwargs)
+
+    @wraps(Renderer.add_blurring)
+    def add_blurring(self, *args, **kwargs):
+        """Wrap ``Renderer.add_blurring``."""
+        return self.renderer.add_blurring(*args, **kwargs)
+
+    @wraps(Renderer.remove_blurring)
+    def remove_blurring(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_blurring``."""
+        return self.renderer.remove_blurring(*args, **kwargs)
 
     @wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs):
@@ -3209,7 +3336,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = scalar_bar_args.copy()
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
+            warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if show_scalar_bar is None:
@@ -3847,7 +3974,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
-        self.clear()
+        self.scalar_bars.clear()
+        self.mesh = None
+        self.mapper = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -3858,8 +3987,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._clear_ren_win()
 
         if self.iren is not None:
-            self.iren.remove_observers()
-            self.iren.terminate_app()
+            self.iren.close()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
@@ -3874,6 +4002,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             except BaseException:
                 pass
 
+        # Remove the global reference to this plotter unless building the
+        # gallery to allow it to collect.
+        if not pyvista.BUILDING_GALLERY:
+            if _ALL_PLOTTERS is not None:
+                _ALL_PLOTTERS.pop(self._id_name, None)
+
         # this helps managing closed plotters
         self._closed = True
 
@@ -3883,8 +4017,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        if getattr(self, 'mapper', None) is not None:
-            self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
         self.textActor = None
@@ -5612,12 +5744,9 @@ class Plotter(BasePlotter):
             window_size = self._theme.window_size
         self.__prior_window_size = window_size
 
-        if multi_samples is None:
-            multi_samples = self._theme.multi_samples
-
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
-        self.ren_win.SetMultiSamples(multi_samples)
+        self.ren_win.SetMultiSamples(0)
         self.ren_win.SetBorders(True)
         if line_smoothing:
             self.ren_win.LineSmoothingOn()
@@ -5674,6 +5803,10 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # set anti_aliasing based on theme
+        if self.theme.anti_aliasing:
+            self.enable_anti_aliasing(self.theme.anti_aliasing)
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
@@ -5917,6 +6050,10 @@ class Plotter(BasePlotter):
 
         self.render()
 
+        # initial double render needed for certain passes when offscreen
+        if self.off_screen and 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes:
+            self.render()
+
         # This has to be after the first render for some reason
         if title is None:
             title = self.title
@@ -5927,6 +6064,7 @@ class Plotter(BasePlotter):
         # Keep track of image for sphinx-gallery
         if pyvista.BUILDING_GALLERY or screenshot:
             # always save screenshots for sphinx_gallery
+
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
@@ -6106,8 +6244,11 @@ class Plotter(BasePlotter):
         return actor
 
 
-# Tracks created plotters.  At the end of the file as we need to
+# Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
+#
+# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
+# when True, BasePlotter.
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 

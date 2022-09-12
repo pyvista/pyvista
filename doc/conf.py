@@ -66,6 +66,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.autosummary",
+    "enum_tools.autoenum",
     "notfound.extension",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
@@ -210,6 +211,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.count$',
     r'\.MultiBlock\.index$',
     r'\.MultiBlock\.remove$',
+    # Enumerations
+    r'\.Plot3DFunctionEnum$',
 }
 
 
@@ -219,7 +222,7 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'python': ('https://docs.python.org/3', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
@@ -292,6 +295,13 @@ language = 'en'
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", "_templates*"]
 
+# Pages are not detected correct by ``make linkcheck``
+linkcheck_ignore = [
+    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
+    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
+    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
+]
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
 
@@ -302,7 +312,7 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-class ResetPyvista:
+class ResetPyVista:
     """Reset pyvista module to default settings."""
 
     def __call__(self, gallery_conf, fname):
@@ -316,10 +326,10 @@ class ResetPyvista:
         pyvista.set_plot_theme('document')
 
     def __repr__(self):
-        return 'ResetPyvista'
+        return 'ResetPyVista'
 
 
-reset_pyvista = ResetPyvista()
+reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed

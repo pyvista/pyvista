@@ -86,6 +86,7 @@ FETCHER = pooch.create(
         'DICOM_Stack/data.zip': None,
         'Disc_BiQuadraticQuads_0_0.vtu': None,
         'EarthModels/Coastlines_Los_Alamos.vtp': None,
+        'avg152T1_RL_nifti.nii.gz': None,
         'EarthModels/ETOPO_10min_Ice.vtp': None,
         'EarthModels/ETOPO_10min_Ice_only-land.vtp': None,
         'EnSight.zip': None,
@@ -133,6 +134,7 @@ FETCHER = pooch.create(
         'bolt.slc': None,
         'brain.vtk': None,
         'bunny.ply': None,
+        'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp': None,
         'cake_easy.jpg': None,
         'cake_easy.jpg': None,
         'carburetor.ply': None,
@@ -256,13 +258,15 @@ FETCHER = pooch.create(
 )
 
 
-def file_from_files(target_file, fnames):
+def file_from_files(target_path, fnames):
     """Return the full path of a single file within a list of files.
 
     Parameters
     ----------
-    target_file : str
-        File base name to find.
+    target_path : str
+        Path of the file to match the end of. If you need to match a file
+        relative to the root directory of the archive, start the path with
+        ``"unzip"``.
 
     fnames : list
         List of filenames.
@@ -273,10 +277,22 @@ def file_from_files(target_file, fnames):
         Entry in ``fnames`` matching ``filename``.
 
     """
+    found_fnames = []
     for fname in fnames:
-        if os.path.basename(fname) == target_file:
-            return fname
-    raise FileNotFoundError(f'Missing {target_file}')
+        # ignore mac hidden directories
+        if '/__MACOSX/' in fname:
+            continue
+        if fname.endswith(target_path):
+            found_fnames.append(fname)
+
+    if len(found_fnames) > 1:
+        raise RuntimeError(
+            f'Ambigious "{target_path}". Multiple matches found:\n' + '\n'.join(found_fnames)
+        )
+    elif len(found_fnames) == 1:
+        return found_fnames[0]
+
+    raise FileNotFoundError(f'Missing "{target_path}" from archive.')
 
 
 def _file_copier(input_file, output_file, pooch):
@@ -334,6 +350,9 @@ def _download_archive(filename, target_file=None, progress_bar=False):  # pragma
 
     target_file : str, optional
         Target file to return within the archive.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file.
 
     Returns
     -------
@@ -1796,6 +1815,30 @@ def download_chest(load=True):  # pragma: no cover
     return _download_and_read('MetaIO/ChestCT-SHORT.mha', load=load)
 
 
+def download_brain_atlas_with_sides(load=True):  # pragma: no cover
+    """Download an image of an averaged brain with a right-left label.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_brain_atlas_with_sides()
+    >>> dataset.slice(normal='z').plot(cpos='xy')
+
+    """
+    return _download_and_read('avg152T1_RL_nifti.nii.gz', load=load)
+
+
 def download_prostate(load=True):  # pragma: no cover
     """Download prostate dataset.
 
@@ -2729,7 +2772,28 @@ def download_thermal_probes(load=True):  # pragma: no cover
 
 
 def download_carburator(load=True):  # pragma: no cover
-    """Download scan of a carburator.
+    """Download scan of a carburetor.
+
+    .. deprecated:: 0.37.0
+       Please use :func:`pyvista.examples.downloads.download_carburetor` instead
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    """
+    return _download_and_read("carburetor.ply", load=load)
+
+
+def download_carburetor(load=True):  # pragma: no cover
+    """Download scan of a carburetor.
 
     Parameters
     ----------
@@ -2745,7 +2809,7 @@ def download_carburator(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_carburator()
+    >>> dataset = examples.download_carburetor()
     >>> dataset.plot()
 
     """
@@ -3828,7 +3892,7 @@ def download_wavy(load=True):  # pragma: no cover
     See :ref:`reader_example` for an example using this dataset.
 
     """
-    filename = _download_archive('PVD/wavy.zip', 'wavy.pvd')
+    filename = _download_archive('PVD/wavy.zip', 'unzip/wavy.pvd')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3999,7 +4063,7 @@ def download_cavity(load=True):  # pragma: no cover
     See :ref:`openfoam_example` for a full example using this dataset.
 
     """
-    filename = _download_archive('OpenFOAM.zip', target_file='case.foam')
+    filename = _download_archive('OpenFOAM.zip', target_file='cavity/case.foam')
     if not load:
         return filename
     return pyvista.OpenFOAMReader(filename).read()
@@ -4904,3 +4968,51 @@ def download_dikhololo_night():  # pragma: no cover
     texture.SetMipmap(True)
     texture.SetInterpolate(True)
     return texture
+
+
+def download_cad_model_case(load=True, progress_bar=False):  # pragma: no cover
+    """Download a CAD model of a Raspberry PI 4 case.
+
+    The dataset was downloaded from `Thingiverse
+    <https://www.thingiverse.com/thing:4947746>`_
+
+    Original datasets are under the `Creative Commons - Attribution
+    <https://creativecommons.org/licenses/by/4.0/>`_ license.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    progress_bar : bool, default: False
+        Display a progress_bar bar when downloading the file. Requires ``tqdm``.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_cad_model_case()
+    >>> mesh.plot()
+
+    Return the statistics of the dataset.
+
+    >>> mesh  # doctest:+SKIP
+    PolyData (0x7fd08f1faf40)
+      N Cells:      13702
+      N Points:     6801
+      X Bounds:     -6.460e-31, 9.000e+01
+      Y Bounds:     -3.535e-32, 1.480e+02
+      Z Bounds:     -7.287e-13, 2.000e+01
+      N Arrays:     1
+
+    """
+    return _download_and_read(
+        'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load, progress_bar=progress_bar
+    )

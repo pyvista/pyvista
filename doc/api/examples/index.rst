@@ -59,6 +59,7 @@ demonstrate features.
    (You can do anything you want to the Stanford bunny or the armadillo.)
 
 
+
 Downloads Cache and Data Sources
 --------------------------------
 If you have an internet connection and a normal user account, PyVista should be
@@ -104,3 +105,33 @@ directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
 
    git clone https://github.com/pyvista/vtk-data.git
    export VTK_DATA_PATH=/home/alex/python/vtk-data/Data
+
+
+Cells
+-----
+PyVista contains several functions that create single cell
+:class:`pyvista.UnstructuredGrid` objects that can be used to learn about VTK
+cell types.
+
+.. currentmodule:: pyvista.examples.cells
+
+.. autosummary::
+   :toctree: _autosummary
+
+   plot_cell   
+   Empty
+   Vertex
+   PolyVertex
+   Line
+   PolyLine
+   Triangle
+   TriangleStrip
+   Polygon
+   Quadrilateral
+   Tetrahedron
+   Voxel
+   Hexahedron
+   Wedge
+   Pyramid
+   PentagonalPrism
+   HexagonalPrism
