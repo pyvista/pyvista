@@ -4005,7 +4005,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
         if not pyvista.BUILDING_GALLERY:
-            _ALL_PLOTTERS.pop(self._id_name, None)
+            if _ALL_PLOTTERS is not None:
+                _ALL_PLOTTERS.pop(self._id_name, None)
 
         # this helps managing closed plotters
         self._closed = True
