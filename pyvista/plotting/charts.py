@@ -4401,7 +4401,8 @@ class Charts:
             charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
                 self.remove_chart(chart)
-            self._renderer.RemoveActor(self._actor)
+            if self._renderer is not None:
+                self._renderer.RemoveActor(self._actor)
         self._scene = None
         self._actor = None
 

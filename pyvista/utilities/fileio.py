@@ -19,8 +19,16 @@ def _get_ext_force(filename, force_ext=None):
 
 
 def get_ext(filename):
-    """Extract the extension of the filename."""
-    ext = os.path.splitext(filename)[1].lower()
+    """Extract the extension of the filename.
+
+    For files with the .gz suffix, the previous extension is returned as well.
+    This is needed e.g. for the compressed NIFTI format (.nii.gz).
+    """
+    base, ext = os.path.splitext(filename)
+    ext = ext.lower()
+    if ext == ".gz":
+        ext_pre = os.path.splitext(base)[1].lower()
+        ext = f"{ext_pre}{ext}"
     return ext
 
 
