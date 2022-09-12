@@ -21,6 +21,7 @@ from pyvista.utilities import (
     check_valid_vector,
     errors,
     fileio,
+    get_ext,
     helpers,
     transformations,
 )
@@ -67,6 +68,19 @@ def test_createvectorpolydata():
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
+
+
+@pytest.mark.parametrize(
+    'path, target_ext',
+    [
+        ("/data/mesh.stl", ".stl"),
+        ("/data/image.nii.gz", '.nii.gz'),
+        ("/data/other.gz", ".gz"),
+    ],
+)
+def test_get_ext(path, target_ext):
+    ext = get_ext(path)
+    assert ext == target_ext
 
 
 @pytest.mark.parametrize('use_pathlib', [True, False])

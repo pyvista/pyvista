@@ -374,6 +374,7 @@ if VTK9:
         vtkHDRReader,
         vtkJPEGReader,
         vtkMetaImageReader,
+        vtkNIFTIImageReader,
         vtkNrrdReader,
         vtkPNGReader,
         vtkPNMReader,

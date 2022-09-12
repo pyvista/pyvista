@@ -69,6 +69,10 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
     +----------------+---------------------------------------------+
+    | ``.nii``       | :class:`pyvista.NIFTIReader`                |
+    +----------------+---------------------------------------------+
+    | ``.nii.gz``    | :class:`pyvista.NIFTIReader`                |
+    +----------------+---------------------------------------------+
     | ``.nhdr``      | :class:`pyvista.NRRDReader`                 |
     +----------------+---------------------------------------------+
     | ``.nrrd``      | :class:`pyvista.NRRDReader`                 |
@@ -2027,6 +2031,25 @@ class MetaImageReader(BaseReader):
     _class_reader = _vtk.vtkMetaImageReader
 
 
+class NIFTIReader(BaseReader):
+    """NIFTI Reader for .nii and .nii.gz files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_brain_atlas_with_sides(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'avg152T1_RL_nifti.nii.gz'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkNIFTIImageReader
+
+
 class NRRDReader(BaseReader):
     """NRRDReader for .nrrd and .nhdr files.
 
@@ -2327,6 +2350,8 @@ CLASS_READERS = {
     '.hdr': HDRReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.nii': NIFTIReader,
+    '.nii.gz': NIFTIReader,
     '.nhdr': NRRDReader,
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
