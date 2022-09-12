@@ -473,7 +473,7 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def download_sun_jpg(load=True, texture=False):  # pragma: no cover
+def download_sun_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'sun.jpg'``.
 
     Parameters
@@ -501,7 +501,7 @@ def download_sun_jpg(load=True, texture=False):  # pragma: no cover
     return _download_and_read('sun.jpg', texture=texture, load=load)
 
 
-def download_moon_jpg(load=True, texture=False):  # pragma: no cover
+def download_moon_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'moon.jpg'``.
 
     Parameters
@@ -529,7 +529,7 @@ def download_moon_jpg(load=True, texture=False):  # pragma: no cover
     return _download_and_read('moon.jpg', texture=texture, load=load)
 
 
-def download_mercury_jpg(load=True, texture=False):  # pragma: no cover
+def download_mercury_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'mercury.jpg'``.
 
     Parameters
@@ -557,7 +557,7 @@ def download_mercury_jpg(load=True, texture=False):  # pragma: no cover
     return _download_and_read('mercury.jpg', texture=texture, load=load)
 
 
-def download_venus_jpg(atmosphere=True, load=True, texture=False):  # pragma: no cover
+def download_venus_jpg(atmosphere=True, texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'venus.jpg'``.
 
     Parameters
@@ -591,7 +591,7 @@ def download_venus_jpg(atmosphere=True, load=True, texture=False):  # pragma: no
         return _download_and_read('venus_surface.jpg', load=load, texture=texture)
 
 
-def download_mars_jpg(load=True, texture=False):  # pragma: no cover
+def download_mars_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'mars.jpg'``.
 
     Parameters
@@ -784,7 +784,7 @@ def download_pluto_jpg(texture=False, load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('pluto.png', texture=texture, load=load)
+    return _download_and_read('pluto.jpg', texture=texture, load=load)
 
 
 def download_stars_jpg(texture=False, load=True):  # pragma: no cover
