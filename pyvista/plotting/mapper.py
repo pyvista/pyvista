@@ -25,6 +25,18 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     def __init__(self, theme, **kwargs):
         self._theme = theme
 
+    def copy(self, deep=True):
+        """Create a copy of this mapper."""
+        new_mapper = type(self)()
+        if deep:
+            new_mapper.dataset = self.dataset
+            new_mapper.scalar_map_mode = self.scalar_map_mode
+            new_mapper.scalar_range = self.scalar_range
+            new_mapper.scalar_visibility = self.scalar_visibility
+        else:
+            new_mapper.ShallowCopy(self)
+        return new_mapper
+
     @property
     def scalar_range(self) -> tuple:
         """Return or set the scalar range.
@@ -650,6 +662,23 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
         self.SetColorModeToDirectScalars()
         return self._configure_scalars_mode(rgba, '', n_colors, preference, True)
+
+    def __repr__(self):
+        """Representation of the mapper."""
+        mapper_attr = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Scalar visibility:           {self.scalar_visibility}',
+            f'  Scalar range:                {self.scalar_range}',
+            f'  Interpolate before mapping:  {self.interpolate_before_map}',
+            f'  Scalar map mode:             {self.scalar_map_mode}',
+            f'  Color mode:                  {self.color_mode}',
+            '',
+        ]
+
+        mapper_attr.append('Attached dataset:')
+        mapper_attr.append(str(self.dataset))
+
+        return '\n'.join(mapper_attr)
 
 
 @abstract_class

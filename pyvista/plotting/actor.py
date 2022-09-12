@@ -5,10 +5,17 @@ import weakref
 import pyvista as pv
 
 from ._property import Property
+from .mapper import _BaseMapper
 
 
 class Actor(pv._vtk.vtkActor):
     """Wrap vtkActor.
+
+    This class represents the geometry & properties in a rendered
+    scene. Normally, a :class:`pyvista.Actor` is constructed from
+    :func:`pyvista.Plotter.add_mesh`, but there may be times where is is more
+    convenient to construct an actor directly from a
+    :class:`pyvista.DataSetMapper`.
 
     Parameters
     ----------
@@ -28,6 +35,20 @@ class Actor(pv._vtk.vtkActor):
     >>> actor = pv.Actor(mapper=mapper)
     >>> actor
 
+    Change the actor properties and plot the actor.
+
+    >>> actor.prop.color = 'blue'
+    >>> actor.plot()
+
+    Create an actor using the :class:`pyvista.Plotter` and then change the
+    visibility of the actor.
+
+    >>> pl = pv.Plotter()
+    >>> actor = pl.add_mesh(mesh)
+    >>> actor.visibility = False
+    >>> actor.visibility
+    False
+
     """
 
     _renderer = None
@@ -41,8 +62,20 @@ class Actor(pv._vtk.vtkActor):
             self.prop = Property()
 
     @property
-    def mapper(self):
-        """Return or set the mapper of the actor."""
+    def mapper(self) -> _BaseMapper:
+        """Return or set the mapper of the actor.
+
+        Examples
+        --------
+        Create an actor and assign a mapper to it.
+
+        >>> import pyvista as pv
+        >>> dataset = pv.Sphere()
+        >>> actor = pv.Actor()
+        >>> actor.mapper = pv.DataSetMapper(dataset)
+        >>> actor.mapper
+
+        """
         return self.GetMapper()
 
     @mapper.setter
@@ -102,14 +135,28 @@ class Actor(pv._vtk.vtkActor):
         self._renderer = obj
 
     @property
-    def address(self):
+    def memory_address(self):
         """Return the memory address of this actor."""
         return self.GetAddressAsString("")
 
     @property
-    def pickable(self):
-        """Return or set actor pickability."""
-        return self.GetPickable()
+    def pickable(self) -> bool:
+        """Return or set actor pickability.
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then make the
+        actor unpickable.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.pickable = False
+        >>> actor.pickable
+        False
+
+        """
+        return bool(self.GetPickable())
 
     @pickable.setter
     def pickable(self, value):
@@ -117,30 +164,59 @@ class Actor(pv._vtk.vtkActor):
 
     @property
     def visibility(self) -> bool:
-        """Return or set actor visibility."""
-        return self.GetVisibility()
+        """Return or set actor visibility.
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then change the
+        visibility of the actor.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.visibility = False
+        >>> actor.visibility
+        False
+
+        """
+        return bool(self.GetVisibility())
 
     @visibility.setter
     def visibility(self, value: bool):
         return self.SetVisibility(value)
 
     @property
-    def scale(self) -> float:
-        """Return or set actor scale."""
+    def scale(self) -> tuple:
+        """Return or set actor scale.
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then change the
+        scale of the actor.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.scale = (2.0, 2.0, 2.0)
+        >>> actor.scale
+        (2.0, 2.0, 2.0)
+
+        """
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: float):
+    def scale(self, value: tuple):
         return self.SetScale(value)
 
     def plot(self):
         """Plot just the actor.
 
-        This may be useful for interrogating individual actors.
+        This may be useful when interrogating or debugging individual actors.
 
         Examples
         --------
-        Create an actor, change its properties, and plot it.
+        Create an actor without the :class:`pyvista.Plotter`, change its
+        properties, and plot it.
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
@@ -155,15 +231,162 @@ class Actor(pv._vtk.vtkActor):
         pl.add_actor(self)
         pl.show()
 
-    def __str__(self):
+    @property
+    def position(self):
+        """Return or set the actor position.
+
+        Examples
+        --------
+        Change the position of an actor. Note how this does not change the
+        position of the underlying dataset, just the relative location of the
+        actor in the :class:`pyvista.Plotter`.
+
+        >>> import pyvista as pv
+        >>> mesh = pyvista.Sphere()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(mesh, color='r')
+        >>> actor.position = (0, 0, 1)  # shifts the red sphere up
+        >>> pl.show()
+
+        """
+        return self.GetPosition()
+
+    @position.setter
+    def position(self, value: tuple):
+        self.SetPosition(value)
+
+    def rotate_x(self, angle: float):
+        """Rotate the actor about the x axis.
+
+        Parameters
+        ----------
+        angle : float
+            Angle to rotate the actor about the x axis in degrees.
+
+        Examples
+        --------
+        Rotate the actor about the x axis 45 degrees. Note how this does not
+        change the location of the underlying dataset.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(
+        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ... )
+        >>> actor.rotate_x(45)
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        """
+        self.RotateZ(angle)
+
+    def rotate_y(self, angle: float):
+        """Rotate the actor about the y axis.
+
+        Parameters
+        ----------
+        angle : float
+            Angle to rotate the actor about the y axis in degrees.
+
+        Examples
+        --------
+        Rotate the actor about the y axis 45 degrees. Note how this does not
+        change the location of the underlying dataset.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(
+        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ... )
+        >>> actor.rotate_y(45)
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        """
+        self.RotateZ(angle)
+
+    def rotate_z(self, angle: float):
+        """Rotate the actor about the z axis.
+
+        Parameters
+        ----------
+        angle : float
+            Angle to rotate the actor about the z axis in degrees.
+
+        Examples
+        --------
+        Rotate the actor about the Z axis 45 degrees. Note how this does not
+        change the location of the underlying dataset.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(
+        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ... )
+        >>> actor.rotate_z(45)
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        """
+        self.RotateZ(angle)
+
+    def copy(self, deep=True):
+        """Create a copy of this actor.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            Create a shallow or deep copy of the actor. A deep copy will have a
+            new property and mapper, while a shallow copy will use the mapper
+            and property of this actor.
+
+        Examples
+        --------
+        Create an actor of a cube by adding it to a :class:`pyvista.Plotter`
+        and then copy the actor, change the properties, and add it back to the
+        :class:`pyvista.Plotter`.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, color='b')
+        >>> new_actor = actor.copy()
+        >>> new_actor.prop.style = 'wireframe'
+        >>> new_actor.prop.line_width = 5
+        >>> new_actor.prop.color = 'r'
+        >>> new_actor.prop.lighting = False
+        >>> _ = pl.add_actor(new_actor)
+        >>> pl.show()
+
+        """
+        new_actor = Actor()
+        if deep:
+            new_actor.mapper = self.mapper.copy()
+            new_actor.prop = self.prop.copy()
+        else:
+            new_actor.ShallowCopy(self)
+        return new_actor
+
+    def __repr__(self):
         """Representation of the actor."""
-        return '\n'.join(
-            [
-                f'Actor {self.address} Attributes',
-                f'Visible:   {self.visibility}',
-                f'Pickable:  {self.pickable}',
-                f'Scale:     {self.scale}',
-                '',
-                str(self.prop),
-            ]
-        )
+        attr = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Position:                   {self.position}',
+            f'  Pickable:                   {self.pickable}',
+            f'  Scale:                      {self.scale}',
+            f'  Visible:                    {self.visibility}',
+            f'  Has mapper:                 {self.mapper is not None}',
+            '',
+            repr(self.prop),
+        ]
+        if self.mapper is not None:
+            attr.append('')
+            attr.append(repr(self.mapper))
+        return '\n'.join(attr)

@@ -1155,6 +1155,12 @@ class Property(_vtk.vtkProperty):
         pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
 
+    def copy(self) -> 'Property':
+        """Create a deep copy of this property."""
+        new_prop = Property()
+        new_prop.DeepCopy(self)
+        return new_prop
+
     def __setattr__(self, name, value):
         """Do not allow setting attributes."""
         if hasattr(self, name):
@@ -1165,14 +1171,23 @@ class Property(_vtk.vtkProperty):
                 f'{self.__class__.__name__}'
             )
 
-    def __str__(self):
+    def __repr__(self):
         """Representation of this property."""
         props = [
-            'Property',
-            f'Color:     {self.color}',
+            f'{type(self).__name__} ({hex(id(self))})',
         ]
 
-        if hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            props.append(f'Anisotropy:    {self.anisotropy}')
+        for attr in dir(self):
+            if not attr.startswith('_') and attr[0].islower():
+                name = ' '.join(attr.split('_')).capitalize() + ':'
+                try:
+                    value = getattr(self, attr)
+                except AttributeError:
+                    continue
+                if callable(value):
+                    continue
+                if isinstance(value, str):
+                    value = f'"{value}"'
+                props.append(f'  {name:28s} {value}')
 
         return '\n'.join(props)
