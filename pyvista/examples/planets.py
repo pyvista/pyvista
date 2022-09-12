@@ -120,7 +120,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_moon_jpg()
+    surface = download_moon_jpg(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
@@ -158,7 +158,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_mercury_jpg()
+    surface = download_mercury_jpg(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
@@ -196,9 +196,9 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_venus_jpg(atmosphere=False)
+    surface = download_venus_jpg(atmosphere=False, texture=True)
     sphere.textures["surface"] = surface
-    atmosphere = download_venus_jpg()
+    atmosphere = download_venus_jpg(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -236,7 +236,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_mars_jpg()
+    surface = examples.planets.download_mars_jpg(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
@@ -274,7 +274,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_jupiter_jpg()
+    atmosphere = download_jupiter_jpg(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -312,7 +312,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_saturn_jpg()
+    atmosphere = download_saturn_jpg(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -354,7 +354,7 @@ def load_saturn_ring_alpha(inner=0.25, outer=0.5, c_res=6):
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     disc.active_t_coords[:, 0] = radius / np.max(radius)
     disc.active_t_coords[:, 1] = 0.0
-    atmosphere = download_saturn_ring_alpha_png()
+    atmosphere = download_saturn_ring_alpha_png(texture=True)
     disc.textures["atmosphere"] = atmosphere
     return disc
 
@@ -392,7 +392,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_uranus_jpg()
+    atmosphere = download_uranus_jpg(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -430,7 +430,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_neptune_jpg()
+    atmosphere = download_neptune_jpg(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -468,16 +468,19 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_pluto_jpg()
+    surface = examples.planets.download_pluto_jpg(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
 
-def download_sun_jpg(load=True):  # pragma: no cover
+def download_sun_jpg(load=True, texture=False):  # pragma: no cover
     """Download and return the path of ``'sun.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -495,14 +498,17 @@ def download_sun_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('sun.jpg', texture=True, load=load)
+    return _download_and_read('sun.jpg', texture=texture, load=load)
 
 
-def download_moon_jpg(load=True):  # pragma: no cover
+def download_moon_jpg(load=True, texture=False):  # pragma: no cover
     """Download and return the path of ``'moon.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -520,14 +526,17 @@ def download_moon_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('moon.jpg', texture=True, load=load)
+    return _download_and_read('moon.jpg', texture=texture, load=load)
 
 
-def download_mercury_jpg(load=True):  # pragma: no cover
+def download_mercury_jpg(load=True, texture=False):  # pragma: no cover
     """Download and return the path of ``'mercury.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -545,16 +554,19 @@ def download_mercury_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('mercury.jpg', texture=True, load=load)
+    return _download_and_read('mercury.jpg', texture=texture, load=load)
 
 
-def download_venus_jpg(atmosphere=True, load=True):  # pragma: no cover
+def download_venus_jpg(atmosphere=True, load=True, texture=False):  # pragma: no cover
     """Download and return the path of ``'venus.jpg'``.
 
     Parameters
     ----------
     atmosphere : bool, optional
         Load the atmosphere texture when ``True``.
+
+    texture : bool, optional
+        ``True`` when file being read is a texture.
 
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
@@ -574,16 +586,19 @@ def download_venus_jpg(atmosphere=True, load=True):  # pragma: no cover
 
     """
     if atmosphere:
-        return _download_and_read('venus_atmosphere.jpg', texture=True, load=load)
+        return _download_and_read('venus_atmosphere.jpg', load=load, texture=texture)
     else:
-        return _download_and_read('venus_surface.jpg', texture=True, load=load)
+        return _download_and_read('venus_surface.jpg', load=load, texture=texture)
 
 
-def download_mars_jpg(load=True):  # pragma: no cover
+def download_mars_jpg(load=True, texture=False):  # pragma: no cover
     """Download and return the path of ``'mars.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -601,14 +616,17 @@ def download_mars_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('mars.jpg', texture=True, load=load)
+    return _download_and_read('mars.jpg', load=load, texture=texture)
 
 
-def download_jupiter_jpg(load=True):  # pragma: no cover
+def download_jupiter_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'jupiter.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -626,14 +644,17 @@ def download_jupiter_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('jupiter.jpg', texture=True, load=load)
+    return _download_and_read('jupiter.jpg', texture=texture, load=load)
 
 
-def download_saturn_jpg(load=True):  # pragma: no cover
+def download_saturn_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'saturn.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -651,14 +672,17 @@ def download_saturn_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('saturn.jpg', texture=True, load=load)
+    return _download_and_read('saturn.jpg', texture=texture, load=load)
 
 
-def download_saturn_ring_alpha_png(load=True):  # pragma: no cover
+def download_saturn_ring_alpha_png(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'saturn_ring_alpha.png'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -676,14 +700,17 @@ def download_saturn_ring_alpha_png(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('saturn_ring_alpha.png', texture=True, load=load)
+    return _download_and_read('saturn_ring_alpha.png', texture=texture, load=load)
 
 
-def download_uranus_jpg(load=True):  # pragma: no cover
+def download_uranus_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'uranus.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -701,14 +728,17 @@ def download_uranus_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('uranus.jpg', texture=True, load=load)
+    return _download_and_read('uranus.jpg', texture=texture, load=load)
 
 
-def download_neptune_jpg(load=True):  # pragma: no cover
+def download_neptune_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'neptune.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -726,14 +756,17 @@ def download_neptune_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('neptune.jpg', texture=True, load=load)
+    return _download_and_read('neptune.jpg', texture=texture, load=load)
 
 
-def download_pluto_jpg(load=True):  # pragma: no cover
+def download_pluto_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'pluto.png'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -751,14 +784,17 @@ def download_pluto_jpg(load=True):  # pragma: no cover
     >>> surface.plot(cpos="xy")
 
     """
-    return _download_and_read('pluto.png', texture=True, load=load)
+    return _download_and_read('pluto.png', texture=texture, load=load)
 
 
-def download_stars_jpg(load=True):  # pragma: no cover
+def download_stars_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'stars.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -780,14 +816,17 @@ def download_stars_jpg(load=True):  # pragma: no cover
     See :func:`load_mars` for another example using this dataset.
 
     """
-    return _download_and_read('stars.jpg', load=load)
+    return _download_and_read('stars.jpg', texture=texture, load=load)
 
 
-def download_milkyway_jpg(load=True):  # pragma: no cover
+def download_milkyway_jpg(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'milkyway.jpg'``.
 
     Parameters
     ----------
+    texture : bool, optional
+        ``True`` when file being read is a texture.
+
     load : bool, optional
         Read the file. Default ``True``, when ``False``, return the path to the
         file.
@@ -807,4 +846,4 @@ def download_milkyway_jpg(load=True):  # pragma: no cover
     >>> plotter.show()
 
     """
-    return _download_and_read('milkyway.jpg', load=load)
+    return _download_and_read('milkyway.jpg', texture=texture, load=load)
