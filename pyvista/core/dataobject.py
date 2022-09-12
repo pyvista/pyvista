@@ -535,28 +535,97 @@ class DataObject:
         self.CopyAttributes(dataset)
 
     def __getstate__(self):
-        """Support pickle. Serialize the VTK object to ASCII string."""
+        """Support pickle by serializing the VTK object data to something which can be pickled natively.
+
+        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
+        - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
+        - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
+        """
         state = self.__dict__.copy()
-        writer = _vtk.vtkDataSetWriter()
-        writer.SetInputDataObject(self)
-        writer.SetWriteToOutputString(True)
-        writer.SetFileTypeToBinary()
-        writer.Write()
-        to_serialize = writer.GetOutputStdString()
+
+        if pyvista.PICKLE_FORMAT.lower() == 'xml':
+            # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
+            # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+            writers = {
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
+                _vtk.vtkTable: _vtk.vtkXMLTableWriter,
+            }
+
+            for parent_type, writer_type in writers.items():
+                if isinstance(self, parent_type):
+                    writer = writer_type()
+                    break
+            else:
+                raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+
+            writer.SetInputDataObject(self)
+            writer.SetWriteToOutputString(True)
+            writer.SetDataModeToBinary()
+            writer.SetCompressorTypeToNone()
+            writer.Write()
+            to_serialize = writer.GetOutputString()
+
+        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
+            writer = _vtk.vtkDataSetWriter()
+            writer.SetInputDataObject(self)
+            writer.SetWriteToOutputString(True)
+            writer.SetFileTypeToBinary()
+            writer.Write()
+            to_serialize = writer.GetOutputStdString()
+
         state['vtk_serialized'] = to_serialize
+
+        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
+        # processes
+        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
     def __setstate__(self, state):
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
+        pickle_format = state.pop(
+            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'legacy'
+        )
         self.__dict__.update(state)
-        reader = _vtk.vtkDataSetReader()
-        reader.ReadFromInputStringOn()
-        if isinstance(vtk_serialized, bytes):
-            reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
-        elif isinstance(vtk_serialized, str):
+
+        if pickle_format.lower() == 'xml':
+            # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
+            # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+            readers = {
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
+                _vtk.vtkTable: _vtk.vtkXMLTableReader,
+            }
+
+            for parent_type, reader_type in readers.items():
+                if isinstance(self, parent_type):
+                    reader = reader_type()
+                    break
+            else:
+                raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
+
+            reader.ReadFromInputStringOn()
             reader.SetInputString(vtk_serialized)
-        reader.Update()
+            reader.Update()
+
+        elif pickle_format.lower() == 'legacy':
+            reader = _vtk.vtkDataSetReader()
+            reader.ReadFromInputStringOn()
+            if isinstance(vtk_serialized, bytes):
+                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+            elif isinstance(vtk_serialized, str):
+                reader.SetInputString(vtk_serialized)
+            reader.Update()
+
         mesh = pyvista.wrap(reader.GetOutput())
 
         # copy data
