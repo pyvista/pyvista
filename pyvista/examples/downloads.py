@@ -285,14 +285,14 @@ def file_from_files(target_path, fnames):
         if fname.endswith(target_path):
             found_fnames.append(fname)
 
-    if len(found_fnames) > 1:
-        raise RuntimeError(
-            f'Ambigious "{target_path}". Multiple matches found:\n' + '\n'.join(found_fnames)
-        )
-    elif len(found_fnames) == 1:
+    if len(found_fnames) == 1:
         return found_fnames[0]
 
-    raise FileNotFoundError(f'Missing "{target_path}" from archive.')
+    files_str = '\n'.join(found_fnames)
+    if len(found_fnames) > 1:
+        raise RuntimeError(f'Ambigious "{target_path}". Multiple matches found:\n{files_str}')
+
+    raise FileNotFoundError(f'Missing "{target_path}" from archive. Archive contains:\n{files_str}')
 
 
 def _file_copier(input_file, output_file, pooch):
