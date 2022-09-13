@@ -44,7 +44,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = pyvista.StructuredGrid(x, y, z)
     texture_coords = np.empty((sphere.n_points, 2))
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
-    texture_coords[:, 1] = theta.ravel('F') / theta.max()
+    texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
     sphere.active_t_coords = texture_coords
     return sphere
 
