@@ -82,7 +82,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_sun_jpg()
+    surface = download_sun_jpg(texture=True)
     sphere.textures["atmosphere"] = surface
     return sphere
 
