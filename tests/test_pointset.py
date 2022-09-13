@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 
@@ -18,6 +19,18 @@ def test_pointset_basic():
     assert pset.n_cells == 0
     assert 'PointSet' in str(pset)
     assert 'PointSet' in repr(pset)
+
+
+def test_pointset_from_vtk():
+    vtk_pset = vtk.vtkPointSet()
+    pset = pyvista.PointSet(vtk_pset)
+    assert pset.n_points == 0
+
+
+def test_pointset_wrap():
+    vtk_pset = vtk.vtkPointSet()
+    pset = pyvista.wrap(vtk_pset)
+    assert type(pset) is pyvista.PointSet
 
 
 def test_pointset(pointset):
