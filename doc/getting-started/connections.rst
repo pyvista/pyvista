@@ -20,6 +20,7 @@ Engineering
 * pyprocar_: A Python library for electronic structure pre/post-processing.
 * AeroSandbox_: Plug-and-play analysis tools for aerodynamics, propulsion, structures, trajectory design, and much more.
 * Ptera_: Software for analyzing flapping-wing flight.
+* PyViewFactor_: A tool for the numerical computation of radiation view factors, with applications in building physics, thermal comfort and heat transfer.
 
 
 Geosciences
@@ -75,3 +76,4 @@ Many More
 .. _DiSECt: https://github.com/NVlabs/DiSECt
 .. _torch-points3d: https://github.com/torch-points3d/torch-points3d
 .. _FEniCSx: https://github.com/FEniCS/dolfinx/
+.. _PyViewFactor: https://gitlab.com/arep-dev/pyViewFactor/
