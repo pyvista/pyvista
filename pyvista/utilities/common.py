@@ -7,7 +7,6 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.core.filters import _update_alg
 
 
 def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
@@ -179,6 +178,9 @@ def sample_function(
     See :ref:`perlin_noise_2d_example` for a full example using this function.
 
     """
+    # internal import to avoide circular dependency
+    from pyvista.core.filters import _update_alg
+
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
     samp.SetSampleDimensions(dim)

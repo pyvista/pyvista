@@ -1,4 +1,5 @@
 """Utilities routines."""
+from .common import perlin_noise, sample_function
 from .errors import (
     GPUInfo,
     Observer,
@@ -72,5 +73,3 @@ from .reader import (
     XMLMultiBlockDataReader,
     DICOMReader,
 )
-
-# from .common import perlin_noise, sample_function
