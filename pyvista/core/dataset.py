@@ -2131,7 +2131,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.copy_from(mesh)
 
