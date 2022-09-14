@@ -174,7 +174,7 @@ jobs:
       - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
         with:
           packages: libgl1-mesa-glx xvfb python-tk
-          version: 1.0
+          version: 3.0
 
       - name: Install Testing Requirements
         run: pip install -r requirements_test.txt

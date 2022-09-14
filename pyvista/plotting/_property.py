@@ -319,7 +319,7 @@ class Property(_vtk.vtkProperty):
 
     @color.setter
     def color(self, value):
-        self._color_set = value is None
+        self._color_set = value is not None
         rgb_color = Color(value, default_color=self._theme.color)
         self.SetColor(rgb_color.float_rgb)
 

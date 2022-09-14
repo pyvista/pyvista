@@ -78,10 +78,9 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
-        if not p._closed:
-            p.close()
-        p.deep_clean()
+    for pl in list(_ALL_PLOTTERS.values()):
+        if not pl._closed:
+            pl.close()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -259,7 +258,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Add self to open plotters
+        # Track all active plotters. This has the side effect of ensuring that plotters are not
+        # collected until `close()`. See https://github.com//pull/3216
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         _ALL_PLOTTERS[self._id_name] = self
 
@@ -3974,7 +3974,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
-        self.clear()
+        self.scalar_bars.clear()
+        self.mesh = None
+        self.mapper = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -3985,8 +3987,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._clear_ren_win()
 
         if self.iren is not None:
-            self.iren.remove_observers()
-            self.iren.terminate_app()
+            self.iren.close()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
@@ -4001,6 +4002,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             except BaseException:
                 pass
 
+        # Remove the global reference to this plotter unless building the
+        # gallery to allow it to collect.
+        if not pyvista.BUILDING_GALLERY:
+            if _ALL_PLOTTERS is not None:
+                _ALL_PLOTTERS.pop(self._id_name, None)
+
         # this helps managing closed plotters
         self._closed = True
 
@@ -4010,8 +4017,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        if getattr(self, 'mapper', None) is not None:
-            self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
         self.textActor = None
@@ -6239,8 +6244,11 @@ class Plotter(BasePlotter):
         return actor
 
 
-# Tracks created plotters.  At the end of the file as we need to
+# Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
+#
+# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
+# when True, BasePlotter.
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 

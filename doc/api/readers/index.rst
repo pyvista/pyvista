@@ -40,6 +40,7 @@ Reader Classes
     MFIXReader
     MetaImageReader
     MultiBlockPlot3DReader
+    NIFTIReader
     NRRDReader
     OBJReader
     OpenFOAMReader

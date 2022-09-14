@@ -253,6 +253,10 @@ if TEST_DOWNLOADS:
         data = examples.download_chest()
         assert data.n_cells
 
+    def test_download_brain_atlas_with_sides():
+        data = examples.download_brain_atlas_with_sides()
+        assert data.n_cells
+
     def test_download_prostate():
         data = examples.download_prostate()
         assert data.n_cells
