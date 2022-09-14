@@ -5,3 +5,4 @@ from pyvista.examples.examples import *
 from . import gltf
 from . import hdr
 from . import vrml
+from .cells import plot_cell

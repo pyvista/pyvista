@@ -39,6 +39,7 @@ from .reader import (
     MetaImageReader,
     MFIXReader,
     MultiBlockPlot3DReader,
+    NIFTIReader,
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
