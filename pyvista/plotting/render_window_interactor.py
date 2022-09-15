@@ -883,17 +883,17 @@ def _style_factory(klass):
                 # others
                 super().OnLeftButtonDown()
                 parent = self._parent()
-                if len(parent.plotter.renderers) > 1:
+                if len(parent._plotter.renderers) > 1:
                     click_pos = parent.get_event_position()
-                    for renderer in parent.plotter.renderers:
+                    for renderer in parent._plotter.renderers:
                         interact = renderer.IsInViewport(*click_pos)
                         renderer.SetInteractive(interact)
 
             def _release(self, obj, event):
                 super().OnLeftButtonUp()
                 parent = self._parent()
-                if len(parent.plotter.renderers) > 1:
-                    for renderer in parent.plotter.renderers:
+                if len(parent._plotter.renderers) > 1:
+                    for renderer in parent._plotter.renderers:
                         renderer.SetInteractive(True)
 
             def add_observer(self, event, callback):
