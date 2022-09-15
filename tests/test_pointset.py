@@ -23,14 +23,45 @@ def test_pointset_basic():
 
 def test_pointset_from_vtk():
     vtk_pset = vtk.vtkPointSet()
-    pset = pyvista.PointSet(vtk_pset)
-    assert pset.n_points == 0
+
+    np_points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+    points = pyvista.vtk_points(np_points, deep=False)
+    vtk_pset.SetPoints(points)
+
+    pset = pyvista.PointSet(vtk_pset, deep=False)
+    assert pset.n_points == 2
+
+    # test that data is shallow copied
+
+    np_points[:] = [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
+    assert np.array_equal(np_points, pset.points)
+
+    # test that data is deep copied
+
+    np_points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+    point_copy = np_points.copy()
+    points = pyvista.vtk_points(np_points, deep=False)
+    vtk_pset.SetPoints(points)
+
+    pset = pyvista.PointSet(vtk_pset, deep=True)
+
+    np_points[:] = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    assert not np.array_equal(np_points, pset.points)
+    assert np.array_equal(pset.points, point_copy)
 
 
 def test_pointset_wrap():
     vtk_pset = vtk.vtkPointSet()
+    np_points = np.array([[0.0, 0.0, 0.0]])
+    points = pyvista.vtk_points(np_points, deep=False)
+    vtk_pset.SetPoints(points)
+
     pset = pyvista.wrap(vtk_pset)
     assert type(pset) is pyvista.PointSet
+
+    # test that wrapping is shallow copied
+    pset.points[:] = np.array([[1.0, 0.0, 0.0]])
+    assert np.array_equal(vtk_pset.GetPoint(0), pset.points[0])
 
 
 def test_pointset(pointset):
