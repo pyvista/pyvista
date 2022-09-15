@@ -10,7 +10,6 @@ dependencies:
   - meshio
   - matplotlib
   - appdirs
-  - pyqt
   - imageio>=2.5.0
   - imageio-ffmpeg
   - colorcet
@@ -19,7 +18,7 @@ dependencies:
   - tqdm
   - pytest
   - pytest-cov
-  - pytest-qt
+  - pytest-xdist
   - codecov
   - hypothesis>=5.8.0
   - pip
