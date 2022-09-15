@@ -1,6 +1,9 @@
 """Wrap vtkActor."""
 
+from typing import Optional, Union
 import weakref
+
+import numpy as np
 
 import pyvista as pv
 
@@ -33,7 +36,14 @@ class Actor(pv._vtk.vtkActor):
     >>> mesh = pv.Sphere()
     >>> mapper = pv.DataSetMapper(mesh)
     >>> actor = pv.Actor(mapper=mapper)
-    >>> actor
+    >>> actor  # doctest:+SKIP
+    Actor (0x7f2a088164c0)
+      Position:                   (0.0, 0.0, 0.0)
+      Pickable:                   True
+      Scale:                      (1.0, 1.0, 1.0)
+      Visible:                    True
+      Has mapper:                 True
+    ...
 
     Change the actor properties and plot the actor.
 
@@ -73,7 +83,24 @@ class Actor(pv._vtk.vtkActor):
         >>> dataset = pv.Sphere()
         >>> actor = pv.Actor()
         >>> actor.mapper = pv.DataSetMapper(dataset)
-        >>> actor.mapper
+        >>> actor.mapper  # doctest:+SKIP
+        DataSetMapper (0x7f34dcec5040)
+          Scalar visibility:           True
+          Scalar range:                (0.0, 1.0)
+          Interpolate before mapping:  False
+          Scalar map mode:             default
+          Color mode:                  direct
+        <BLANKLINE>
+        Attached dataset:
+        PolyData (0x7f34dcec5f40)
+          N Cells:  1680
+          N Points: 842
+          N Strips: 0
+          X Bounds: -4.993e-01, 4.993e-01
+          Y Bounds: -4.965e-01, 4.965e-01
+          Z Bounds: -5.000e-01, 5.000e-01
+          N Arrays: 1
+        <BLANKLINE>
 
         """
         return self.GetMapper()
@@ -106,7 +133,30 @@ class Actor(pv._vtk.vtkActor):
 
     @property
     def texture(self):
-        """Return or set the actor texture."""
+        """Return or set the actor texture.
+
+        Notes
+        -----
+        The mapper dataset must have texture coordinates for the texture to be
+        used.
+
+        Examples
+        --------
+        Create an actor and add a texture to it. Note how the
+        :class:`pyvista.PolyData` has texture coordinates by default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> plane = pv.Plane()
+        >>> plane.active_t_coords is not None
+        True
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(plane)
+        >>> actor.texture = examples.download_masonry_texture()
+        >>> actor.texture  # doctest:+SKIP
+        <Texture(0x378c920) at 0x7f7af577e700>
+
+        """
         return self.GetTexture()
 
     @texture.setter
@@ -208,10 +258,15 @@ class Actor(pv._vtk.vtkActor):
     def scale(self, value: tuple):
         return self.SetScale(value)
 
-    def plot(self):
+    def plot(self, **kwargs):
         """Plot just the actor.
 
         This may be useful when interrogating or debugging individual actors.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Optional keyword arguments passed to :func:`pyvista.Plotter.show`.
 
         Examples
         --------
@@ -229,7 +284,7 @@ class Actor(pv._vtk.vtkActor):
         """
         pl = pv.Plotter()
         pl.add_actor(self)
-        pl.show()
+        pl.show(**kwargs)
 
     @property
     def position(self):
@@ -242,7 +297,7 @@ class Actor(pv._vtk.vtkActor):
         actor in the :class:`pyvista.Plotter`.
 
         >>> import pyvista as pv
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(mesh, color='r')
@@ -281,7 +336,7 @@ class Actor(pv._vtk.vtkActor):
         >>> pl.show()
 
         """
-        self.RotateZ(angle)
+        self.RotateX(angle)
 
     def rotate_y(self, angle: float):
         """Rotate the actor about the y axis.
@@ -308,7 +363,7 @@ class Actor(pv._vtk.vtkActor):
         >>> pl.show()
 
         """
-        self.RotateZ(angle)
+        self.RotateY(angle)
 
     def rotate_z(self, angle: float):
         """Rotate the actor about the z axis.
@@ -336,6 +391,53 @@ class Actor(pv._vtk.vtkActor):
 
         """
         self.RotateZ(angle)
+
+    @property
+    def orientation(self) -> tuple:
+        """Return or set the actor orientation.
+
+        Orientation is defined as the rotation from the global axes in degrees
+        about the actor's x, y, and z axes.
+
+        Examples
+        --------
+        Show that the orientation changes with rotation.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
+        >>> actor.rotate_x(90)
+        >>> actor.orientation  # doctest:+SKIP
+        (90, 0, 0)
+
+        Set the orientation directly.
+
+        >>> actor.orientation = (0, 45, 45)
+        >>> actor.orientation  # doctest:+SKIP
+        (0, 45, 45)
+
+        Reorient just the actor and plot it. Note how the actor is rotated
+        about its own axes as defined by its position.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(
+        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ... )
+        >>> actor.position = (0, 0, 1)
+        >>> actor.orientation = (45, 0, 0)
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        """
+        return self.GetOrientation()
+
+    @orientation.setter
+    def orientation(self, value: tuple):
+        self.SetOrientation(value)
 
     def copy(self, deep=True):
         """Create a copy of this actor.
@@ -376,12 +478,19 @@ class Actor(pv._vtk.vtkActor):
 
     def __repr__(self):
         """Representation of the actor."""
+        mat_info = 'Unset' if self.user_matrix is None else 'Set'
+        bnd = self.bounds
         attr = [
             f'{type(self).__name__} ({hex(id(self))})',
-            f'  Position:                   {self.position}',
+            f'  Center:                     {self.center}',
             f'  Pickable:                   {self.pickable}',
+            f'  Position:                   {self.position}',
             f'  Scale:                      {self.scale}',
             f'  Visible:                    {self.visibility}',
+            f'  X Bounds                    {bnd[0]:.3E}, {bnd[1]:.3E}',
+            f'  Y Bounds                    {bnd[2]:.3E}, {bnd[3]:.3E}',
+            f'  Z Bounds                    {bnd[4]:.3E}, {bnd[5]:.3E}',
+            f'  User matrix:                {mat_info}',
             f'  Has mapper:                 {self.mapper is not None}',
             '',
             repr(self.prop),
@@ -390,3 +499,116 @@ class Actor(pv._vtk.vtkActor):
             attr.append('')
             attr.append(repr(self.mapper))
         return '\n'.join(attr)
+
+    @property
+    def user_matrix(self) -> Optional[np.ndarray]:
+        """Return or set the orientation matrix.
+
+        Examples
+        --------
+        Apply a 4x4 translation to a wireframe actor. This 4x4 transformation
+        is effectively translates the actor by one unit in the Z direction,
+        rotates the actor about the Z axis by approximately 45 degrees, and
+        shrinks the actor by a factor of 0.5.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> actor = pl.add_mesh(
+        ...     mesh,
+        ...     color="r",
+        ...     style="wireframe",
+        ...     line_width=5,
+        ...     lighting=False,
+        ... )
+        >>> arr = np.array(
+        ...     [
+        ...         [0.707, -0.707, 0, 0],
+        ...         [0.707, 0.707, 0, 0],
+        ...         [0, 0, 1, 1.500001],
+        ...         [0, 0, 0, 2]
+        ...     ]
+        ... )
+        >>> actor.user_matrix = arr
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        """
+        mat = self.GetUserMatrix()
+        if mat is not None:
+            mat = pv.array_from_vtkmatrix(mat)
+        return mat
+
+    @user_matrix.setter
+    def user_matrix(self, value: Union[pv._vtk.vtkMatrix4x4, np.ndarray]):
+        if isinstance(value, np.ndarray):
+            value = pv.vtkmatrix_from_array(value)
+        self.SetUserMatrix(value)
+
+    @property
+    def bounds(self) -> tuple:
+        """Return the bounds of the actor.
+
+        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Cube(x_length=0.1, y_length=0.2, z_length=0.3)
+        >>> actor = pl.add_mesh(mesh)
+        >>> actor.bounds
+        (-0.05, 0.05, -0.1, 0.1, -0.15, 0.15)
+
+        """
+        return self.GetBounds()
+
+    @property
+    def center(self) -> tuple:
+        """Return the center of the actor.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere(center=(0.5, 0.5, 1)))
+        >>> actor.center  # doctest:+SKIP
+        (0.5, 0.5, 1)
+        """
+        return self.GetCenter()
+
+    @property
+    def backface_prop(self) -> Optional['pv.Property']:
+        """Return or set the backface property.
+
+        By default this property matches the frontface property
+        :attr:`Property.prop`. Once accessed or modified, this backface
+        property becomes independent of the frontface property.
+
+        Examples
+        --------
+        Create a sphere by a plane and color the inside of the clipped sphere
+        light blue using the ``backface_prop``.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> plane = pv.Plane(i_size=1.5, j_size=1.5)
+        >>> mesh = pv.Sphere().clip_surface(plane, invert=False)
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, smooth_shading=True)
+        >>> actor.backface_prop.color = 'lightblue'
+        >>> _ = pl.add_mesh(
+        ...     plane, opacity=0.25, show_edges=True, color='grey', lighting=False,
+        ... )
+        >>> pl.show()
+
+        """
+        if self.GetBackfaceProperty() is None:
+            self.SetBackfaceProperty(self.prop.copy())
+        return self.GetBackfaceProperty()
+
+    @backface_prop.setter
+    def backface_prop(self, value: 'pv.Property'):
+        self.SetBackfaceProperty(value)
