@@ -2121,7 +2121,7 @@ class DataSet(DataSetFilters, DataObject):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         .. deprecated:: 0.37.0
-            Use :attr:`DataSet.copy_from` instead.
+            Use :func:`DataSet.copy_from` instead.
 
         Parameters
         ----------
