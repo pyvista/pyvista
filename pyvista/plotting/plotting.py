@@ -3061,7 +3061,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 color,
                 n_colors,
                 preference,
-                rgb,
             )
             self.mapper.scalar_visibility = True
         else:

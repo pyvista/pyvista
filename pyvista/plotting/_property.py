@@ -1156,7 +1156,20 @@ class Property(_vtk.vtkProperty):
         pl.show(before_close_callback=before_close_callback)
 
     def copy(self) -> 'Property':
-        """Create a deep copy of this property."""
+        """Create a deep copy of this property.
+
+        Returns
+        -------
+        pyvista.Property
+            Deep copy of this property.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop_copy = prop.copy()
+
+        """
         new_prop = Property()
         new_prop.DeepCopy(self)
         return new_prop
@@ -1173,6 +1186,8 @@ class Property(_vtk.vtkProperty):
 
     def __repr__(self):
         """Representation of this property."""
+        from pyvista.core.errors import VTKVersionError
+
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
         ]
@@ -1182,7 +1197,7 @@ class Property(_vtk.vtkProperty):
                 name = ' '.join(attr.split('_')).capitalize() + ':'
                 try:
                     value = getattr(self, attr)
-                except AttributeError:
+                except VTKVersionError:  # pragma:no cover
                     continue
                 if callable(value):
                     continue

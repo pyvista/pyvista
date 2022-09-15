@@ -26,7 +26,7 @@ class Actor(pv._vtk.vtkActor):
         DataSetMapper.
 
     prop : pyvista.Property, optional
-        Property.
+        Property of the actor.
 
     Examples
     --------
@@ -37,23 +37,34 @@ class Actor(pv._vtk.vtkActor):
     >>> mapper = pv.DataSetMapper(mesh)
     >>> actor = pv.Actor(mapper=mapper)
     >>> actor  # doctest:+SKIP
-    Actor (0x7f2a088164c0)
-      Position:                   (0.0, 0.0, 0.0)
+    Actor (0x7f54c4d65ee0)
+      Center:                     (0.0, 0.0, 0.0)
       Pickable:                   True
+      Position:                   (0.0, 0.0, 0.0)
       Scale:                      (1.0, 1.0, 1.0)
       Visible:                    True
+      X Bounds                    -4.993E-01, 4.993E-01
+      Y Bounds                    -4.965E-01, 4.965E-01
+      Z Bounds                    -5.000E-01, 5.000E-01
+      User matrix:                Unset
       Has mapper:                 True
     ...
 
     Change the actor properties and plot the actor.
 
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
+    >>> mapper = pv.DataSetMapper(mesh)
+    >>> actor = pv.Actor(mapper=mapper)
     >>> actor.prop.color = 'blue'
     >>> actor.plot()
 
     Create an actor using the :class:`pyvista.Plotter` and then change the
     visibility of the actor.
 
+    >>> import pyvista as pv
     >>> pl = pv.Plotter()
+    >>> mesh = pv.Sphere()
     >>> actor = pl.add_mesh(mesh)
     >>> actor.visibility = False
     >>> actor.visibility
@@ -439,7 +450,7 @@ class Actor(pv._vtk.vtkActor):
     def orientation(self, value: tuple):
         self.SetOrientation(value)
 
-    def copy(self, deep=True):
+    def copy(self, deep=True) -> 'Actor':
         """Create a copy of this actor.
 
         Parameters
@@ -448,6 +459,11 @@ class Actor(pv._vtk.vtkActor):
             Create a shallow or deep copy of the actor. A deep copy will have a
             new property and mapper, while a shallow copy will use the mapper
             and property of this actor.
+
+        Returns
+        -------
+        pyvista.Actor
+            Deep or shallow copy of this actor.
 
         Examples
         --------

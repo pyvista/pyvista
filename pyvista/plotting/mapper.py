@@ -1,6 +1,7 @@
 """An internal module for wrapping the use of mappers."""
 import logging
 import sys
+from typing import Optional
 
 import numpy as np
 
@@ -280,16 +281,41 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
 
 class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
-    """Wrap _vtk.vtkDataSetMapper."""
+    """Wrap _vtk.vtkDataSetMapper.
 
-    def __init__(self, dataset=None, theme=None):
+    Parameters
+    ----------
+    dataset : pyvista.DataSet, optional
+        Dataset to assign to this mapper.
+
+    theme : pyvista.themes.DefaultTheme, optional
+        Plot-specific theme.
+
+    Examples
+    --------
+    Create a mapper outside :class:`pyvista.Plotter` and assign it to an
+    actor.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.Cube()
+    >>> mapper = pv.DataSetMapper(dataset=mesh)
+    >>> actor = pv.Actor(mapper=mapper)
+    >>> actor.plot()
+
+    """
+
+    def __init__(
+        self,
+        dataset: Optional['pv.DataSet'] = None,
+        theme: Optional['pv.themes.DefaultTheme'] = None,
+    ):
         """Initialize this class."""
         super().__init__(theme)
         if dataset is not None:
             self.dataset = dataset
 
     @property
-    def dataset(self):
+    def dataset(self) -> Optional['pv.DataSet']:
         """Return or set the dataset assigned to this mapper."""
         return self.GetInputAsDataSet()
 
@@ -378,6 +404,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     ):
         """Set the scalars on this mapper.
 
+        Parameters
+        ----------
         scalars : numpy.ndarray
             Array of scalars to assign to the mapper.
 
@@ -627,20 +655,27 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             rgb or custom_opac,
         )
 
-    def set_custom_opacity(self, opacity, color, n_colors, preference, rgb):
+    def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
 
-        Returns
-        -------
-        str or None
-            If the scalars do not exist within the dataset, this is the
-            name of the scalars array.
+        Parameters
+        ----------
+        opacity : numpy.ndarray
+            Opacity array to color the dataset. Array length must match either
+            the number of points or cells.
 
-        str
-            Association of the scalars, either ``'point'`` or ``'cell'``.
+        color : color_like
+            The color to use with the opacity array.
+
+        n_colors : int
+            Number of colors to use.
+
+        preference : str, default: 'point'
+            Either ``'point'`` or ``'cell'``. Used when the number of cells
+            matches the number of points.
 
         """
-        # create a custom RGBA array to supply our opacity to
+        # Create a custom RGBA array to supply our opacity to
         if opacity.size == self.dataset.n_points:
             rgba = np.empty((self.dataset.n_points, 4), np.uint8)
         elif opacity.size == self.dataset.n_cells:
@@ -660,8 +695,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
 
-        self.SetColorModeToDirectScalars()
-        return self._configure_scalars_mode(rgba, '', n_colors, preference, True)
+        self.color_mode = 'direct'
+        self._configure_scalars_mode(rgba, '', n_colors, preference, True)
 
     def __repr__(self):
         """Representation of the mapper."""
