@@ -2,7 +2,8 @@ name: pyvista-env
 channels:
   - conda-forge
 dependencies:
-  - python>=3.5
+  - python>=3.7
+  - jupyterlab
   - numpy
   - vtk
   - scooby>=0.5.1
@@ -28,5 +29,6 @@ dependencies:
   - panel
   - ipygany
   - ipyvtklink
+  - pythreejs
   - pip:
       - pytest-memprof
