@@ -2463,6 +2463,28 @@ def test_pointset_plot_as_points(pointset):
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_9_1_0
+def test_pointset_plot_vtk():
+    pointset = vtk.vtkPointSet()
+    points = pyvista.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
+    pointset.SetPoints(points)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(pointset, color='red', point_size=25)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_9_1_0
+def test_pointset_plot_as_points_vtk():
+    pointset = vtk.vtkPointSet()
+    points = pyvista.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
+    pointset.SetPoints(points)
+
+    pl = pyvista.Plotter()
+    pl.add_points(pointset, color='red', point_size=25)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
     path = str(tmpdir.join(basename))
