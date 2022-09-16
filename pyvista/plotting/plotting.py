@@ -3500,35 +3500,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper.scalar_range = clim
 
-        # Set colormap and build lookup table
-        table = _vtk.vtkLookupTable()
-        # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
-        # above/below colors not supported with volume rendering
+        if not has_module('matplotlib'):
+            raise ImportError('Please install matplotlib for volume rendering.')
+        if cmap is None:
+            cmap = self._theme.cmap
 
-        if isinstance(annotations, dict):
-            for val, anno in annotations.items():
-                table.SetAnnotation(float(val), str(anno))
+        cmap = get_cmap_safe(cmap)
+        if categories:
+            if categories is True:
+                n_colors = len(np.unique(scalars))
+            elif isinstance(categories, int):
+                n_colors = categories
 
-        if cmap is None:  # Set default map if matplotlib is available
-            if has_module('matplotlib'):
-                cmap = self._theme.cmap
-
-        if cmap is not None:
-            if not has_module('matplotlib'):
-                raise ImportError('Please install matplotlib for volume rendering.')
-
-            cmap = get_cmap_safe(cmap)
-            if categories:
-                if categories is True:
-                    n_colors = len(np.unique(scalars))
-                elif isinstance(categories, int):
-                    n_colors = categories
         if flip_scalars:
             cmap = cmap.reversed()
 
         color_tf = _vtk.vtkColorTransferFunction()
-        for ii in range(n_colors):
-            color_tf.AddRGBPoint(ii, *cmap(ii)[:-1])
+        for ii, value in enumerate(np.linspace(0, 255, n_colors, dtype=np.uint8)):
+            color_tf.AddRGBPoint(ii, *cmap(value)[:-1])
 
         # Set opacities
         if isinstance(opacity, (float, int)):
@@ -3543,14 +3532,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for ii in range(n_colors):
             opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
 
-        # Now put color tf and opacity tf into a lookup table for the scalar bar
-        table.SetNumberOfTableValues(n_colors)
-        lut = cmap(np.array(range(n_colors))) * 255
-        lut[:, 3] = opacity_values
-        lut = lut.astype(np.uint8)
-        table.SetTable(_vtk.numpy_to_vtk(lut))
-        table.SetRange(*clim)
-        self.mapper.lookup_table = table
+        # Set colormap and build lookup table
+        self.mapper.lookup_table._apply_cmap(cmap, n_colors)
+        self.mapper.lookup_table.values[:, 3] = opacity_values
+        self.mapper.lookup_table.table_range = clim
+        if isinstance(annotations, dict):
+            self.mapper.lookup_table.annotations = annotations
 
         self.mapper.dataset = volume
 

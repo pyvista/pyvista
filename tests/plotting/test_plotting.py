@@ -1934,7 +1934,7 @@ def test_bad_keyword_arguments():
         plotter.show()
 
 
-def test_cmap_list(sphere):
+def test_cmap_list_debug(sphere):
     n = sphere.n_points
     scalars = np.empty(n)
     scalars[: n // 3] = 0
@@ -2931,8 +2931,11 @@ def test_charts_sin():
 
 
 def test_lookup_table():
-    lut = pyvista.LookupTable()
-    lut.apply_cmap('blues')
+    lut = pyvista.LookupTable('viridis')
+    lut.n_values = 8
+    lut.below_range_color = 'black'
+    lut.above_range_color = 'grey'
+    lut.nan_color = 'r'
     lut.plot(before_close_callback=verify_cache_image)
 
 

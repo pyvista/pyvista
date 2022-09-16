@@ -174,7 +174,7 @@ def no_new_attr(cls):
             object.__setattr__(self, name, value)
         else:
             raise AttributeError(
-                f'Attribute {name} does not exist and cannot be added to type '
+                f'Attribute "{name}" does not exist and cannot be added to type '
                 f'{self.__class__.__name__}'
             )
 

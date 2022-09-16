@@ -1,5 +1,4 @@
 """An internal module for wrapping the use of mappers."""
-import logging
 import sys
 from typing import Optional
 
@@ -87,11 +86,27 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             self.lookup_table.SetRange(*clim)
 
     @property
-    def lookup_table(self) -> pv._vtk.vtkLookupTable:
+    def lookup_table(self) -> 'pv.LookupTable':
         """Return or set the lookup table.
 
         Examples
         --------
+        Return the lookup table of a dataset mapper.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, scalars=mesh.points[:, 2], cmap='bwr')
+        >>> actor.mapper.lookup_table  # doctest:+SKIP
+        LookupTable (0x7ff3be8d8c40)
+          Table Range:                (-0.5, 0.5)
+          N Values:                   256
+          Above Range Color:          None
+          Below Range Color:          None
+          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff')
+          Log Scale:                  False
+          Color Map:                  "From values array"
+
         Return the lookup table of a composite dataset mapper.
 
         >>> import pyvista as pv
@@ -390,7 +405,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         else:
             raise_not_matching(scalars, self.dataset)
 
-        self.lookup_table.SetNumberOfTableValues(n_colors)
+        self.lookup_table.n_values = n_colors
         if direct_scalars_color_mode:
             self.color_mode = 'direct'
         else:
@@ -583,13 +598,11 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if scalars.dtype == np.bool_:
             scalars = scalars.astype(np.float_)
 
-        table = self.lookup_table
         if _using_labels:
-            table.SetAnnotations(convert_array(values), convert_string_array(cats))
+            self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
         if isinstance(annotations, dict):
-            for val, anno in annotations.items():
-                table.SetAnnotation(float(val), str(anno))
+            self.lookup_table.annotations = annotations
 
         # Set scalars range
         if clim is None:
@@ -597,22 +610,20 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         elif isinstance(clim, (int, float)):
             clim = [-clim, clim]
 
+        self.lookup_table.log_scale = log_scale
         if log_scale:
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
-            table.scale = 'log'
 
         if np.any(clim) and not rgb:
             self.scalar_range = clim[0], clim[1]
 
-        table.SetNanColor(Color(nan_color).float_rgba)
+        self.lookup_table.nan_color = nan_color
         if above_color:
-            table.use_above_range_color = True
-            table.above_range_color = above_color
+            self.lookup_table.above_range_color = above_color
             scalar_bar_args.setdefault('above_label', 'Above')
         if below_color:
-            table.use_below_range_color = True
-            table.below_range_color = below_color
+            self.lookup_table.below_range_color = below_color
             scalar_bar_args.setdefault('below_label', 'Below')
 
         if cmap is not None:
@@ -629,37 +640,35 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
                 check_colormap(cmap)
             else:
-                if not has_module('matplotlib'):  # pragma: no cover
-                    cmap = None
-                    logging.warning('Please install matplotlib for color maps.')
-
-                cmap = get_cmap_safe(cmap)
                 if categories:
                     if categories is True:
                         n_colors = len(np.unique(scalars))
                     elif isinstance(categories, int):
                         n_colors = categories
-                ctable = cmap(np.linspace(0, 1, n_colors)) * 255
+
+                self.lookup_table._apply_cmap(cmap, n_colors)
+
                 # Set opactities
                 if isinstance(opacity, np.ndarray) and not custom_opac:
-                    ctable[:, -1] = opacity
+                    self.lookup_table.values[:, -1] = opacity
+
                 if flip_scalars:
-                    ctable = ctable[::-1]
-                table.values = ctable
+                    self.lookup_table.values[:] = self.lookup_table.values[::-1]
+
                 if custom_opac:
                     # need to round the colors here since we're
                     # directly displaying the colors
                     hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
                     scalars = np.round(hue * n_colors) / n_colors
-                    scalars = cmap(scalars) * 255
+                    scalars = get_cmap_safe(cmap)(scalars) * 255
                     scalars[:, -1] *= opacity
                     scalars = scalars.astype(np.uint8)
 
         else:  # no cmap specified
             if flip_scalars:
-                table.hue_range = (0.0, 0.66667)
+                self.lookup_table.hue_range = (0.0, 0.66667)
             else:
-                table.hue_range = (0.66667, 0.0)
+                self.lookup_table.hue_range = (0.66667, 0.0)
 
         self._configure_scalars_mode(
             scalars,
@@ -742,7 +751,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def __init__(self, theme=None):
         """Initialize this class."""
         super().__init__(theme)
-        self._lut = None
+        self._lut = LookupTable()
         self._scalar_range = None
 
     @property
