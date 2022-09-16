@@ -146,7 +146,7 @@ There are two important copyright guidelines:
 Please also take a look at our `Code of
 Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`_.
 
-Contributing to pyvista through GitHub
+Contributing to PyVista through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To submit new code to pyvista, first fork the `pyvista GitHub
@@ -255,6 +255,27 @@ dependencies listed in ``requirements_test.txt``,
 
 Then, if you have everything installed, you can run the various test
 suites.
+
+Using Gitpod workspace
+~~~~~~~~~~~~~~~~~~~~~~
+
+A prebuilt gitpod workspace is available for a quick start development
+environment. To start a workspace from the main branch of pyvista, go
+to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
+`Gitpod Getting Started
+<https://www.gitpod.io/docs/getting-started>`_ for more details.
+
+The workspace has vnc capability through the browser for
+interactive plotting.  The workspace also has prebuilt
+documentation with a live-viewer.  Hit the ``Go Live`` button
+and browse to ``doc/_build/html``. The workspace is also prebuilt to
+support pre-commit checks.
+
+Workspaces started from the ``pyvista/pyvista`` repo will often
+have prebuilt environments with dependencies installed. Workspaces
+started from forks may not have prebuilt images and will start
+building when starting a new workspace.  It is safe to stop, e.g.
+``Ctrl-C``, the documentation part of the build if unneeded.
 
 Unit Testing
 ~~~~~~~~~~~~
