@@ -2519,6 +2519,20 @@ def test_add_text():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_plot_categories_int(sphere):
+    sphere['data'] = sphere.points[:, 2]
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=5, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_categories_true(sphere):
+    sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=True, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 @skip_windows
 @skip_9_0_X
 def test_depth_of_field():
@@ -2914,6 +2928,12 @@ def test_charts_sin():
     chart.scatter(x, y)
     chart.line(x, y, 'r')
     chart.show(dev_kwargs={'before_close_callback': verify_cache_image})
+
+
+def test_lookup_table():
+    lut = pyvista.LookupTable()
+    lut.apply_cmap('blues')
+    lut.plot(before_close_callback=verify_cache_image)
 
 
 def test_plot_actor(sphere):

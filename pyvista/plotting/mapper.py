@@ -13,9 +13,10 @@ from pyvista.utilities import (
     convert_string_array,
     raise_not_matching,
 )
-from pyvista.utilities.misc import has_module
+from pyvista.utilities.misc import has_module, no_new_attr
 
 from .colors import Color, get_cmap_safe
+from .lookup_table import LookupTable
 from .tools import normalize
 
 
@@ -23,19 +24,30 @@ from .tools import normalize
 class _BaseMapper(_vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
+    _theme = None
+
     def __init__(self, theme, **kwargs):
         self._theme = theme
+        self.lookup_table = LookupTable()
 
-    def copy(self, deep=True):
-        """Create a copy of this mapper."""
+    def copy(self):
+        """Create a deep of this mapper.
+
+        Examples
+        --------
+        Create a copy of a :class:`pyvista.DataSetMapper`.
+
+        >>> import pyvista as pv
+        >>> mapper = pv.DataSetMapper(dataset=pv.Cube())
+        >>> mapper_copy = mapper.copy()
+
+        """
         new_mapper = type(self)()
-        if deep:
+        # even though this uses ShallowCopy, the new mapper no longer retains
+        # any connection with the original
+        new_mapper.ShallowCopy(self)
+        if hasattr(self, 'dataset'):
             new_mapper.dataset = self.dataset
-            new_mapper.scalar_map_mode = self.scalar_map_mode
-            new_mapper.scalar_range = self.scalar_range
-            new_mapper.scalar_visibility = self.scalar_visibility
-        else:
-            new_mapper.ShallowCopy(self)
         return new_mapper
 
     @property
@@ -94,7 +106,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     @lookup_table.setter
     def lookup_table(self, table):
-        return self.SetLookupTable(table)
+        self.SetLookupTable(table)
 
     @property
     def color_mode(self) -> str:
@@ -120,7 +132,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         elif value == 'map':
             self.SetColorModeToMapScalars()
         else:
-            raise ValueError('color mode must be either "default", "direct" or "map"')
+            raise ValueError('Color mode must be either "default", "direct" or "map"')
 
     @property
     def interpolate_before_map(self) -> bool:
@@ -280,6 +292,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.Update()
 
 
+@no_new_attr
 class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     """Wrap _vtk.vtkDataSetMapper.
 
@@ -303,6 +316,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     >>> actor.plot()
 
     """
+
+    _cmap = None
 
     def __init__(
         self,
@@ -585,36 +600,36 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if log_scale:
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
-            table.SetScaleToLog10()
+            table.scale = 'log'
 
         if np.any(clim) and not rgb:
             self.scalar_range = clim[0], clim[1]
 
         table.SetNanColor(Color(nan_color).float_rgba)
         if above_color:
-            table.SetUseAboveRangeColor(True)
-            table.SetAboveRangeColor(*Color(above_color).float_rgba)
+            table.use_above_range_color = True
+            table.above_range_color = above_color
             scalar_bar_args.setdefault('above_label', 'Above')
         if below_color:
-            table.SetUseBelowRangeColor(True)
-            table.SetBelowRangeColor(*Color(below_color).float_rgba)
+            table.use_below_range_color = True
+            table.below_range_color = below_color
             scalar_bar_args.setdefault('below_label', 'Below')
 
         if cmap is not None:
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
-                self.cmap = cmap
+                self._cmap = cmap
             # ipygany uses different colormaps
             if self._theme is None:
                 jupyter_backend = pv.global_theme.jupyter_backend
             else:
                 jupyter_backend = self._theme.jupyter_backend
-            if jupyter_backend == 'ipygany':
+            if jupyter_backend == 'ipygany':  # pragma: no cover
                 from ..jupyter.pv_ipygany import check_colormap
 
                 check_colormap(cmap)
             else:
-                if not has_module('matplotlib'):
+                if not has_module('matplotlib'):  # pragma: no cover
                     cmap = None
                     logging.warning('Please install matplotlib for color maps.')
 
@@ -625,13 +640,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     elif isinstance(categories, int):
                         n_colors = categories
                 ctable = cmap(np.linspace(0, 1, n_colors)) * 255
-                ctable = ctable.astype(np.uint8)
                 # Set opactities
                 if isinstance(opacity, np.ndarray) and not custom_opac:
                     ctable[:, -1] = opacity
                 if flip_scalars:
-                    ctable = np.ascontiguousarray(ctable[::-1])
-                table.SetTable(_vtk.numpy_to_vtk(ctable))
+                    ctable = ctable[::-1]
+                table.values = ctable
                 if custom_opac:
                     # need to round the colors here since we're
                     # directly displaying the colors
@@ -643,9 +657,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
         else:  # no cmap specified
             if flip_scalars:
-                table.SetHueRange(0.0, 0.66667)
+                table.hue_range = (0.0, 0.66667)
             else:
-                table.SetHueRange(0.66667, 0.0)
+                table.hue_range = (0.66667, 0.0)
 
         self._configure_scalars_mode(
             scalars,
@@ -654,6 +668,11 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             preference,
             rgb or custom_opac,
         )
+
+    @property
+    def cmap(self):
+        """Colormap assigned to this mapper."""
+        return self._cmap
 
     def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.

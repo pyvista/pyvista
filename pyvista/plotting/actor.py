@@ -6,11 +6,13 @@ import weakref
 import numpy as np
 
 import pyvista as pv
+from pyvista.utilities.misc import no_new_attr
 
 from ._property import Property
 from .mapper import _BaseMapper
 
 
+@no_new_attr
 class Actor(pv._vtk.vtkActor):
     """Wrap vtkActor.
 
@@ -173,16 +175,6 @@ class Actor(pv._vtk.vtkActor):
     @texture.setter
     def texture(self, obj):
         self.SetTexture(obj)
-
-    def __setattr__(self, name, value):
-        """Do not allow setting attributes."""
-        if hasattr(self, name):
-            object.__setattr__(self, name, value)
-        else:
-            raise AttributeError(
-                f'Attribute {name} does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
-            )
 
     @property
     def renderer(self):
