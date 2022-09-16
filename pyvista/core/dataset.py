@@ -2086,7 +2086,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def overwrite(self, mesh: _vtk.vtkDataSet):
+    def copy_from(self, mesh: _vtk.vtkDataSet):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -2102,7 +2102,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()
         >>> mesh_b = pyvista.Cube()
-        >>> mesh_a.overwrite(mesh_b)
+        >>> mesh_a.copy_from(mesh_b)
         >>> mesh_a == mesh_b
         True
 
@@ -2116,6 +2116,24 @@ class DataSet(DataSetFilters, DataObject):
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=True)
+
+    def overwrite(self, mesh: _vtk.vtkDataSet):
+        """Overwrite this dataset inplace with the new dataset's geometries and data.
+
+        .. deprecated:: 0.37.0
+            Use :func:`DataSet.copy_from` instead.
+
+        Parameters
+        ----------
+        mesh : vtk.vtkDataSet
+            The overwriting mesh.
+
+        """
+        warnings.warn(
+            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.copy_from(mesh)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
