@@ -544,7 +544,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Parameters
         ----------
-        cmap : str, colors.Colormap
+        cmap : str, list, colors.Colormap
             Colormap from matplotlib, colorcet, or cmocean.
 
         n_values : int, default: 256
@@ -677,7 +677,10 @@ class LookupTable(_vtk.vtkLookupTable):
     def _lookup_type(self) -> str:
         """Return the lookup type."""
         if self.cmap:
-            return f'"{self.cmap}"'
+            if hasattr(self.cmap, 'name'):
+                return f'{self.cmap.name}'  # type: ignore
+            else:
+                return f'{self.cmap}'
         elif self._values_manual:
             return 'From values array'
         else:
