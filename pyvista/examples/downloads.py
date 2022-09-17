@@ -288,10 +288,11 @@ def file_from_files(target_path, fnames):
     if len(found_fnames) == 1:
         return found_fnames[0]
 
-    files_str = '\n'.join(found_fnames)
     if len(found_fnames) > 1:
+        files_str = '\n'.join(found_fnames)
         raise RuntimeError(f'Ambigious "{target_path}". Multiple matches found:\n{files_str}')
 
+    files_str = '\n'.join(fnames)
     raise FileNotFoundError(f'Missing "{target_path}" from archive. Archive contains:\n{files_str}')
 
 
