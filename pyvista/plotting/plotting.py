@@ -2853,7 +2853,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
-        elif isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):

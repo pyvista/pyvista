@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
 
-import pyvista
 from pyvista import Color, LookupTable
-
-pyvista.OFF_SCREEN = False
 
 
 @pytest.fixture

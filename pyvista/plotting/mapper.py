@@ -401,10 +401,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         else:
             raise_not_matching(scalars, self.dataset)
 
-        if direct_scalars_color_mode:
-            self.color_mode = 'direct'
-        else:
-            self.color_mode = 'map'
+        self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
     def set_scalars(
         self,
