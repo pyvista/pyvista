@@ -1934,7 +1934,7 @@ def test_bad_keyword_arguments():
         plotter.show()
 
 
-def test_cmap_list_debug(sphere):
+def test_cmap_list(sphere):
     n = sphere.n_points
     scalars = np.empty(n)
     scalars[: n // 3] = 0

@@ -572,7 +572,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self._cmap = cmap
 
     @property
-    def values(self) -> np.ndarray:
+    def values(self) -> lookup_table_ndarray:
         """Return or set the lookup table values.
 
         This attribute is used when creating a custom lookup table. The table
@@ -591,10 +591,10 @@ class LookupTable(_vtk.vtkLookupTable):
         ...     [255, 0, 0, 255],
         ... ]
         >>> lut.values
-        array([[  0,   0,   0, 255],
-               [ 85,   0,   0, 255],
-               [170,   0,   0, 255],
-               [255,   0,   0, 255]], dtype=uint8)
+        lookup_table_ndarray([[  0,   0,   0, 255],
+                              [ 85,   0,   0, 255],
+                              [170,   0,   0, 255],
+                              [255,   0,   0, 255]], dtype=uint8)
         >>> lut.plot()
 
         """
