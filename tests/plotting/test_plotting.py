@@ -2938,6 +2938,12 @@ def test_charts_sin():
     chart.show(dev_kwargs={'before_close_callback': verify_cache_image})
 
 
+def test_plot_actor(sphere):
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
+    actor.plot(before_close_callback=verify_cache_image)
+
+
 def test_wireframe_color(sphere):
     sphere.plot(
         lighting=False, color='b', style='wireframe', before_close_callback=verify_cache_image
