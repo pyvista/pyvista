@@ -357,7 +357,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         self,
         scalars,
         scalars_name,
-        n_colors,
         preference,
         direct_scalars_color_mode,
     ):
@@ -372,9 +371,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             If the name of this array exists, scalars is ignored. Otherwise,
             the scalars will be added to the existing dataset and this
             parameter is the name to assign the scalars.
-
-        n_colors : int
-            Number of colors.
 
         preference : str
             Either ``'point'`` or ``'cell'``.
@@ -405,7 +401,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         else:
             raise_not_matching(scalars, self.dataset)
 
-        self.lookup_table.n_values = n_colors
         if direct_scalars_color_mode:
             self.color_mode = 'direct'
         else:
@@ -431,6 +426,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         opacity=None,
         categories=False,
         clim=None,
+        lookup_table=None,
     ):
         """Set the scalars on this mapper.
 
@@ -530,16 +526,14 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``(-1, 2)``.
 
+        lookup_table : pyvista.LookupTable
+            Use a custom lookup table instead of a color map. If this is set,
+            all parameters controlling the color map like ``cmap`` and
+            ``n_colors`` will be ignored.
+
         """
         if scalar_bar_args is None:
             scalar_bar_args = {'n_colors': n_colors}
-
-        if cmap is None:  # Set default map if matplotlib is available
-            if has_module('matplotlib'):
-                if self._theme is None:
-                    cmap = pv.global_theme.cmap
-                else:
-                    cmap = self._theme.cmap
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
@@ -548,8 +542,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if custom_opac:
             scalars_name = '__custom_rgba'
 
-        _using_labels = False
-        if not np.issubdtype(scalars.dtype, np.number):
+        if not np.issubdtype(scalars.dtype, np.number) and lookup_table is None:
 
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
@@ -557,7 +550,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 values = np.array([0, 1])
                 clim = [-0.5, 1.5]
             else:
-                # If str array, digitive and annotate
+                # If str array, digitize and annotate
                 cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
@@ -565,7 +558,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
             n_colors = len(cats)
             scalar_bar_args.setdefault('n_labels', 0)
-            _using_labels = True
+
+            self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
         # Use only the real component if an array is complex
         if np.issubdtype(scalars.dtype, np.complexfloating):
@@ -598,19 +592,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if scalars.dtype == np.bool_:
             scalars = scalars.astype(np.float_)
 
-        if _using_labels:
-            self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
-
-        if isinstance(annotations, dict):
-            self.lookup_table.annotations = annotations
-
         # Set scalars range
         if clim is None:
             clim = [np.nanmin(scalars), np.nanmax(scalars)]
         elif isinstance(clim, (int, float)):
             clim = [-clim, clim]
 
-        self.lookup_table.log_scale = log_scale
         if log_scale:
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
@@ -618,15 +605,17 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if np.any(clim) and not rgb:
             self.scalar_range = clim[0], clim[1]
 
-        self.lookup_table.nan_color = nan_color
-        if above_color:
-            self.lookup_table.above_range_color = above_color
-            scalar_bar_args.setdefault('above_label', 'Above')
-        if below_color:
-            self.lookup_table.below_range_color = below_color
-            scalar_bar_args.setdefault('below_label', 'Below')
+        if lookup_table is not None:
+            self.lookup_table = lookup_table
+        else:
+            # Set default map if matplotlib is available
+            if cmap is None:
+                if has_module('matplotlib'):
+                    if self._theme is None:
+                        cmap = pv.global_theme.cmap
+                    else:
+                        cmap = self._theme.cmap
 
-        if cmap is not None:
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
                 self._cmap = cmap
@@ -646,7 +635,16 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     elif isinstance(categories, int):
                         n_colors = categories
 
-                self.lookup_table._apply_cmap(cmap, n_colors)
+                if cmap is not None:
+                    self.lookup_table._apply_cmap(cmap, n_colors)
+                else:  # pragma: no cover
+                    # should be impossible to get to this point as VTK package
+                    # no requires matplotlib
+                    self.lookup_table.n_values = n_colors
+                    if flip_scalars:
+                        self.lookup_table.hue_range = (0.0, 0.66667)
+                    else:
+                        self.lookup_table.hue_range = (0.66667, 0.0)
 
                 # Set opactities
                 if isinstance(opacity, np.ndarray) and not custom_opac:
@@ -655,7 +653,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 if flip_scalars:
                     self.lookup_table.values[:] = self.lookup_table.values[::-1]
 
-                if custom_opac:
+                if custom_opac and cmap is not None:
                     # need to round the colors here since we're
                     # directly displaying the colors
                     hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
@@ -664,16 +662,21 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     scalars[:, -1] *= opacity
                     scalars = scalars.astype(np.uint8)
 
-        else:  # no cmap specified
-            if flip_scalars:
-                self.lookup_table.hue_range = (0.0, 0.66667)
-            else:
-                self.lookup_table.hue_range = (0.66667, 0.0)
+            # configure the lookup table
+            self.lookup_table.nan_color = nan_color
+            if above_color:
+                self.lookup_table.above_range_color = above_color
+                scalar_bar_args.setdefault('above_label', 'Above')
+            if below_color:
+                self.lookup_table.below_range_color = below_color
+                scalar_bar_args.setdefault('below_label', 'Below')
+            if isinstance(annotations, dict):
+                self.lookup_table.annotations = annotations
+            self.lookup_table.log_scale = log_scale
 
         self._configure_scalars_mode(
             scalars,
             scalars_name,
-            n_colors,
             preference,
             rgb or custom_opac,
         )
@@ -724,7 +727,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         rgba[:, -1] = np.around(opacity * 255)
 
         self.color_mode = 'direct'
-        self._configure_scalars_mode(rgba, '', n_colors, preference, True)
+        self.lookup_table.n_values = n_colors
+        self._configure_scalars_mode(rgba, '', preference, True)
 
     def __repr__(self):
         """Representation of the mapper."""

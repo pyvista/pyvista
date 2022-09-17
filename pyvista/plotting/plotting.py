@@ -1995,6 +1995,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
+        lookup_table=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2245,6 +2246,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
 
+        lookup_table : pyvista.LookupTable, optional
+            Use a custom lookup table instead of a color map. If this is set,
+            all parameters controlling the color map like ``cmap`` and
+            ``n_colors`` will be ignored.
+
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
@@ -2409,6 +2415,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     flip_scalars,
                     categories,
                     log_scale,
+                    lookup_table,
                 )
             else:
                 self.mapper.scalar_visibility = False
@@ -2483,6 +2490,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render=True,
         component=None,
         copy_mesh=False,
+        lookup_table=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2765,12 +2773,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the vector is plotted.
 
         copy_mesh : bool, optional
-            If ``True``, a copy of the mesh will be made before adding it to the plotter.
-            This is useful if e.g. you would like to add the same mesh to a plotter multiple
-            times and display different scalars. Setting ``copy_mesh`` to ``False`` is necessary
-            if you would like to update the mesh after adding it to the plotter and have these
-            updates rendered, e.g. by changing the active scalars or through an interactive widget.
-            Defaults to ``False``.
+            If ``True``, a copy of the mesh will be made before adding it to
+            the plotter.  This is useful if e.g. you would like to add the same
+            mesh to a plotter multiple times and display different
+            scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
+            would like to update the mesh after adding it to the plotter and
+            have these updates rendered, e.g. by changing the active scalars or
+            through an interactive widget.  Defaults to ``False``.
+
+        lookup_table : pyvista.LookupTable, optional
+            Use a custom lookup table instead of a color map. If this is set,
+            all parameters controlling the color map like ``cmap`` and
+            ``n_colors`` will be ignored.
 
         **kwargs : dict, optional
             Optional developer keyword arguments.
@@ -2887,6 +2901,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
+                lookup_table=lookup_table,
                 **kwargs,
             )
         elif copy_mesh:
@@ -3053,6 +3068,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity,
                 categories,
                 clim,
+                lookup_table,
             )
             self.mapper.scalar_visibility = True
         elif custom_opac:  # no scalars but custom opacity

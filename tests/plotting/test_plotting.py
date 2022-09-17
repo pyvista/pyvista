@@ -2640,6 +2640,13 @@ def test_plot_composite_categories(multiblock_poly):
     pl.show(before_close_callback=verify_cache_image)
 
 
+def test_plot_composite_lookup_table(multiblock_poly):
+    lut = pyvista.LookupTable('Greens', n_values=8)
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data_b', lookup_table=lut)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_plot_composite_preference_cell(multiblock_poly):
     """Show that we will plot cell data if both point and cell exist in all."""
     # use the first two datasets as the third is missing scalars
@@ -2937,6 +2944,14 @@ def test_lookup_table():
     lut.above_range_color = 'grey'
     lut.nan_color = 'r'
     lut.plot(before_close_callback=verify_cache_image)
+
+
+def test_plotter_lookup_table(sphere):
+    lut = pyvista.LookupTable('Reds')
+    lut.n_values = 3
+    sphere.plot(
+        scalars=sphere.points[:, 2], lookup_table=lut, before_close_callback=verify_cache_image
+    )
 
 
 def test_plot_actor(sphere):

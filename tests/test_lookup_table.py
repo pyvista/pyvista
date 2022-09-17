@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
 
+import pyvista
 from pyvista import Color, LookupTable
+
+pyvista.OFF_SCREEN = False
 
 
 @pytest.fixture
@@ -15,10 +18,18 @@ def lut_w_cmap():
 
 
 def test_values(lut):
-    values = np.array([[0, 0, 0, 0], [255, 255, 255, 255]])
+    values = [
+        [0, 0, 0, 255],
+        [85, 0, 0, 255],
+        [170, 0, 0, 255],
+        [255, 0, 0, 255],
+    ]
     lut.values = values
     assert lut.values.dtype == np.uint8
     assert np.allclose(lut.values, values)
+
+    with pytest.raises(RuntimeError, match='cannot be set'):
+        lut.n_values = 10
 
 
 def test_apply_cmap(lut):
@@ -122,6 +133,10 @@ def test_repr(lut):
     lut.cmap = 'viridis'
     assert 'viridis' in repr(lut)
 
+    # try a colorcet
+    lut.cmap = 'cet_fire'
+    assert 'fire' in repr(lut)
+
 
 def test_table_range(lut):
     table_range = (0.5, 1.0)
@@ -130,5 +145,12 @@ def test_table_range(lut):
 
 
 def test_table_cmap_list(lut):
-    lut.cmap = ['reds', 'greens', 'blues']
+    lut.cmap = ['red', 'green', 'blue']
     assert lut.n_values == 3
+
+
+def test_table_values_update(lut):
+    lut.cmap = 'Greens'
+    lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
+    assert lut.values.max() == 255
+    assert lut.values[:, 2].max() < 255

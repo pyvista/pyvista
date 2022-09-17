@@ -37,13 +37,6 @@ class lookup_table_ndarray(np.ndarray):
 
     def __array_finalize__(self, obj):
         """Finalize array (associate with parent metadata)."""
-        # this is necessary to ensure that views/slices of pyvista_ndarray
-        # objects stay associated with those of their parents.
-        #
-        # the VTKArray class uses attributes called `DataSet` and `Assocation`
-        # to hold this data. I don't know why this class doesn't use the same
-        # convention, but here we just map those over to the appropriate
-        # attributes of this class
         _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
             self.table = getattr(obj, 'table', None)
@@ -240,9 +233,18 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
+        Apply the single matplotlib color map ``"Oranges"``.
+
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
         >>> lut.cmap = 'Oranges'
+        >>> lut.plot()
+
+        Apply a list of colors as a colormap.
+
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
+        >>> lut.cmap = ['black', 'red', 'orange']
         >>> lut.plot()
 
         """
@@ -593,6 +595,7 @@ class LookupTable(_vtk.vtkLookupTable):
                [ 85,   0,   0, 255],
                [170,   0,   0, 255],
                [255,   0,   0, 255]], dtype=uint8)
+        >>> lut.plot()
 
         """
         return lookup_table_ndarray(self.GetTable(), table=self)
@@ -633,7 +636,9 @@ class LookupTable(_vtk.vtkLookupTable):
             self._apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            self.SetNumberOfTableValues(value)
+            raise RuntimeError(
+                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            )
         else:
             self.SetNumberOfColors(value)
             self.ForceBuild()
@@ -679,7 +684,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if self.cmap:
             if hasattr(self.cmap, 'name'):
                 return f'{self.cmap.name}'  # type: ignore
-            else:
+            else:  # pragma: no cover
                 return f'{self.cmap}'
         elif self._values_manual:
             return 'From values array'
