@@ -23,7 +23,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import check_valid_vector
-from pyvista.utilities.common import _coerce_pointslike_arg
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 
 NORMALS = {
     'x': [1, 0, 0],

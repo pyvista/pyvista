@@ -45,7 +45,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np
@@ -134,7 +134,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np

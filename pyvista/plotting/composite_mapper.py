@@ -13,6 +13,7 @@ from pyvista.utilities import convert_array, convert_string_array
 
 from ..utilities.misc import has_module, vtk_version_info
 from .colors import Color, get_cmap_safe
+from .mapper import _BaseMapper
 
 
 class BlockAttributes:
@@ -493,13 +494,16 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
             yield self[ii]
 
 
-class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
+class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     """Composite PolyData mapper.
 
     Parameters
     ----------
     dataset : pyvista.MultiBlock
         Multiblock dataset.
+
+    theme : pyvista.themes.DefaultTheme, optional
+        Plot-specific theme.
 
     color_missing_with_nan : bool, optional
         Color any missing values with the ``nan_color``. This is useful
@@ -514,9 +518,11 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     """
 
-    def __init__(self, dataset, color_missing_with_nan=None, interpolate_before_map=None):
+    def __init__(
+        self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None
+    ):
         """Initialize this composite mapper."""
-        super().__init__()
+        super().__init__(theme)
         self.SetInputDataObject(dataset)
 
         # this must be added to set the color, opacity, and visibility of
@@ -548,48 +554,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
         """
         return self._dataset
-
-    @property
-    def interpolate_before_map(self) -> bool:
-        """Return or set the interpolation of scalars before mapping.
-
-        Enabling makes for a smoother scalars display.  When ``False``,
-        OpenGL will interpolate the mapped colors which can result in
-        showing colors that are not present in the color map.
-
-        Examples
-        --------
-        Disable interpolation before mapping.
-
-        >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
-        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
-        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
-        >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(
-        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
-        ... )
-        >>> mapper.interpolate_before_map = False
-        >>> pl.show()
-
-        Enable interpolation before mapping.
-
-        >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(
-        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
-        ... )
-        >>> mapper.interpolate_before_map = True
-        >>> pl.show()
-
-        See :ref:`interpolate_before_mapping_example` for additional
-        explanation regarding this attribute.
-
-        """
-        return bool(self.GetInterpolateScalarsBeforeMapping())
-
-    @interpolate_before_map.setter
-    def interpolate_before_map(self, value: bool):
-        self.SetInterpolateScalarsBeforeMapping(value)
 
     @property
     def block_attr(self) -> CompositeAttributes:
@@ -657,80 +621,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
     def color_missing_with_nan(self, value: bool):
         self.SetColorMissingArraysWithNanColor(value)
 
-    @property
-    def lookup_table(self):
-        """Return or set the lookup table.
-
-        Examples
-        --------
-        Return the lookup table.
-
-        >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
-        >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.lookup_table  # doctest:+SKIP
-        <vtkmodules.vtkCommonCore.vtkLookupTable(0x2d4c6e0) at 0x7fce74a89fa0>
-
-        """
-        return self.GetLookupTable()
-
-    @lookup_table.setter
-    def lookup_table(self, table):
-        return self.SetLookupTable(table)
-
-    @property
-    def scalar_range(self):
-        """Return or set the scalar range.
-
-        Examples
-        --------
-        Return the scalar range. In this example it's set to its default value
-        of ``(0.0, 1.0)``.
-
-        >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
-        >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.scalar_range
-        (0.0, 1.0)
-        >>> pl.close()
-
-        """
-        return self.GetScalarRange()
-
-    @scalar_range.setter
-    def scalar_range(self, clim):
-        self.SetScalarRange(*clim)
-        if self.lookup_table is not None:
-            self.lookup_table.SetRange(*clim)
-        self._scalar_range = clim
-
-    @property
-    def scalar_visibility(self) -> bool:
-        """Return or set the scalar visibility.
-
-        Examples
-        --------
-        Show that scalar visibility is ``True``.
-
-        >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
-        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
-        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
-        >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data')
-        >>> mapper.scalar_visibility
-        True
-        >>> pl.close()
-
-        """
-        return bool(self.GetScalarVisibility())
-
-    @scalar_visibility.setter
-    def scalar_visibility(self, value: bool):
-        return self.SetScalarVisibility(value)
-
     def set_unique_colors(self):
         """Set each block of the dataset to a unique color.
 
@@ -761,57 +651,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         else:  # pragma: no cover
             logging.warning('Please install matplotlib for color cycles.')
 
-    @property
-    def scalar_map_mode(self) -> str:
-        """Return or set the scalar map mode.
-
-        Examples
-        --------
-        Show that the scalar map mode is set to ``'point'`` when setting the
-        active scalars to point data.
-
-        >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
-        >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
-        >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
-        >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
-        >>> mapper.scalar_map_mode
-        'point'
-        >>> pl.close()
-
-        """
-        # map vtk strings to more sensible strings
-        vtk_to_pv = {
-            'Default': 'default',
-            'UsePointData': 'point',
-            'UseCellData': 'cell',
-            'UsePointFieldData': 'point_field',
-            'UseCellFieldData': 'cell_field',
-            'UseFieldData': 'field',
-        }
-        return vtk_to_pv[self.GetScalarModeAsString()]
-
-    @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: str):
-        if scalar_mode == 'default':
-            self.SetScalarModeToDefault()
-        elif scalar_mode == 'point':
-            self.SetScalarModeToUsePointData()
-        elif scalar_mode == 'cell':
-            self.SetScalarModeToUseCellData()
-        elif scalar_mode == 'point_field':
-            self.SetScalarModeToUsePointFieldData()
-        elif scalar_mode == 'cell_field':
-            self.SetScalarModeToUseCellFieldData()
-        elif scalar_mode == 'field':
-            self.SetScalarModeToUseFieldData()
-        else:
-            raise ValueError(
-                f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
-                '"default", "point", "cell", "point_field", "cell_field" or "field".'
-            )
-
     def set_scalars(
         self,
         scalars_name,
@@ -828,7 +667,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
         cmap,
         flip_scalars,
         categories,
-        theme,
         log_scale,
     ):
         """Set the scalars of the mapper.
@@ -904,9 +742,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
             the scalar array will be used as the ``n_colors``
             argument.
 
-        theme : pyvista.themes.DefaultTheme
-            Plot-specific theme.
-
         log_scale : bool
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
@@ -965,7 +800,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
         if cmap is None:  # Set default map if matplotlib is available
             if has_module('matplotlib'):
-                cmap = theme.cmap
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
         if cmap is not None:
             cmap = get_cmap_safe(cmap)
@@ -1012,7 +850,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2):
 
     @nan_color.setter
     def nan_color(self, color):
-
         self.lookup_table.SetNanColor(Color(color).float_rgba)
 
     @property

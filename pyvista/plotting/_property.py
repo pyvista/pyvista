@@ -118,23 +118,21 @@ class Property(_vtk.vtkProperty):
 
     Examples
     --------
-    Create a vtk Actor and assign properties to it.
+    Create a :class:`pyvista.Actor` and assign properties to it.
 
-    >>> import vtk
     >>> import pyvista as pv
-    >>> prop = pv.Property(
+    >>> actor = pv.Actor()
+    >>> actor.prop = pv.Property(
     ...     color='r',
     ...     show_edges=True,
     ...     interpolation='Physically based rendering',
     ...     metallic=0.5,
     ...     roughness=0.1
     ... )
-    >>> actor = vtk.vtkActor()
-    >>> actor.SetProperty(prop)
 
     Visualize how the property would look when applied to a mesh.
 
-    >>> prop.plot()
+    >>> actor.prop.plot()
 
     Set custom properties not directly available in
     :func:`pyvista.Plotter.add_mesh`. Here, we set diffuse, ambient, and
@@ -142,7 +140,7 @@ class Property(_vtk.vtkProperty):
 
     >>> pl = pv.Plotter()
     >>> actor = pl.add_mesh(pv.Sphere())
-    >>> prop = actor.GetProperty()
+    >>> prop = actor.prop
     >>> prop.diffuse = 0.6
     >>> prop.diffuse_color = 'w'
     >>> prop.ambient = 0.3
@@ -152,6 +150,9 @@ class Property(_vtk.vtkProperty):
     >>> pl.show()
 
     """
+
+    _theme = None
+    _color_set = None
 
     def __init__(
         self,
@@ -272,7 +273,7 @@ class Property(_vtk.vtkProperty):
         if new_style == 'wireframe':
             self.SetRepresentationToWireframe()
             if not self._color_set:
-                self.color = self._theme.outline_color
+                self.color = self._theme.outline_color  # type: ignore
         elif new_style == 'points':
             self.SetRepresentationToPoints()
         elif new_style == 'surface':
@@ -979,8 +980,7 @@ class Property(_vtk.vtkProperty):
             self.BackfaceCullingOff()
         else:
             raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n'
-                '"backface", "frontface", or "None"'
+                f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"'
             )
 
     @property
@@ -1154,3 +1154,55 @@ class Property(_vtk.vtkProperty):
 
         pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
+
+    def copy(self) -> 'Property':
+        """Create a deep copy of this property.
+
+        Returns
+        -------
+        pyvista.Property
+            Deep copy of this property.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop_copy = prop.copy()
+
+        """
+        new_prop = Property()
+        new_prop.DeepCopy(self)
+        return new_prop
+
+    def __setattr__(self, name, value):
+        """Do not allow setting attributes."""
+        if hasattr(self, name):
+            object.__setattr__(self, name, value)
+        else:
+            raise AttributeError(
+                f'Attribute {name} does not exist and cannot be added to type '
+                f'{self.__class__.__name__}'
+            )
+
+    def __repr__(self):
+        """Representation of this property."""
+        from pyvista.core.errors import VTKVersionError
+
+        props = [
+            f'{type(self).__name__} ({hex(id(self))})',
+        ]
+
+        for attr in dir(self):
+            if not attr.startswith('_') and attr[0].islower():
+                name = ' '.join(attr.split('_')).capitalize() + ':'
+                try:
+                    value = getattr(self, attr)
+                except VTKVersionError:  # pragma:no cover
+                    continue
+                if callable(value):
+                    continue
+                if isinstance(value, str):
+                    value = f'"{value}"'
+                props.append(f'  {name:28s} {value}')
+
+        return '\n'.join(props)
