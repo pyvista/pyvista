@@ -29,22 +29,26 @@ CACHE_VERSION = 3
 # If available, a local vtk-data instance will be used for examples
 if 'VTK_DATA_PATH' in os.environ:  # pragma: no cover
     _path = os.environ['VTK_DATA_PATH']
-    if not os.path.isdir(_path):
-        warnings.warn(f"VTK_DATA_PATH: {_path} is an invalid path")
+
     if not os.path.basename(_path) == 'Data':
         expected_path = os.path.join(_path, 'Data')
         warnings.warn(
             f'As of 0.37.0, VTK_DATA_PATH: {_path} is '
             'expected to end with the "Data" directory. For example:\n'
             f'{expected_path}\n\n'
-            'VTK_DATA_PATH will be ignored.'
+            'In the future, this invalid path will be ignored.'
         )
+        _path = expected_path
+
+    if not os.path.isdir(_path):
+        warnings.warn(f"VTK_DATA_PATH: {_path} is an invalid path and will be ignored")
     else:
         # pooch assumes this is a URL so we have to take care of this
         if not _path.endswith('/'):
             _path = _path + '/'
         SOURCE = _path
         _FILE_CACHE = True
+
 else:
     SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
     _FILE_CACHE = False
@@ -4330,7 +4334,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     return reader.read()
 
 
-def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:
+def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)

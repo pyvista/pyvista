@@ -2,7 +2,9 @@ import os
 
 import pytest
 
+import pyvista as pv
 from pyvista import examples
+from pyvista.examples import downloads
 
 
 def test_delete_downloads(tmpdir):
@@ -41,6 +43,8 @@ def test_file_from_files(tmpdir):
         os.path.join(path, 'tmp2.txt'),
         os.path.join(path, 'tmp1.txt'),
         os.path.join(path, 'tmp0.txt'),
+        os.path.join(path, 'tmp', 'tmp2.txt'),
+        os.path.join(path, '/__MACOSX/'),
     ]
 
     with pytest.raises(FileNotFoundError):
@@ -48,6 +52,9 @@ def test_file_from_files(tmpdir):
 
     fname = examples.downloads.file_from_files('tmp1.txt', fnames)
     assert fname == fnames[1]
+
+    with pytest.raises(RuntimeError, match='Ambigious'):
+        fname = examples.downloads.file_from_files('tmp2.txt', fnames)
 
 
 def test_file_copier(tmpdir):
@@ -62,3 +69,28 @@ def test_file_copier(tmpdir):
 
     with pytest.raises(FileNotFoundError):
         examples.downloads._file_copier('not a file', output_file, None)
+
+
+def test_local_file_cache(tmpdir):
+    """Ensure that pyvista.examples.downloads can work with a local cache."""
+    basename = os.path.basename(examples.mapfile)
+    dirname = os.path.dirname(examples.mapfile)
+    downloads.FETCHER.registry[basename] = None
+
+    try:
+        downloads.FETCHER.base_url = dirname + '/'
+        downloads.FETCHER.registry[basename] = None
+        downloads._FILE_CACHE = True
+        filename = downloads._download_and_read(basename, load=False)
+        assert os.path.isfile(filename)
+
+        dataset = downloads._download_and_read(basename, load=True)
+        assert isinstance(dataset, pv.DataSet)
+        texture = downloads._download_and_read(basename, texture=True)
+        assert isinstance(texture, pv.Texture)
+        os.remove(filename)
+
+    finally:
+        downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+        downloads._FILE_CACHE = False
+        downloads.FETCHER.registry.pop(basename, None)
