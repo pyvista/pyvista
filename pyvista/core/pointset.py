@@ -1386,7 +1386,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     >>> grid = pyvista.UnstructuredGrid(cells, celltypes, points)
     >>> grid.plot(show_edges=True)
 
-    See the :ref:`create_unstructured_example` example for a more more details
+    See the :ref:`create_unstructured_example` example for a more details
     on creating unstructured grids within PyVista.
 
     """
