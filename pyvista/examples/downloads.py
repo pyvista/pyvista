@@ -271,7 +271,7 @@ def file_from_files(target_path, fnames):
     target_path : str
         Path of the file to match the end of. If you need to match a file
         relative to the root directory of the archive, start the path with
-        ``"unzip"``. Path must be a posix-lixe path.
+        ``"unzip"``. Path must be a posix-like path.
 
     fnames : list
         List of filenames.
@@ -286,7 +286,7 @@ def file_from_files(target_path, fnames):
     for fname in fnames:
         # always convert windows paths
         if os.name == 'nt':  # pragma: no cover
-            fname = str(PureWindowsPath(fname))
+            fname = PureWindowsPath(fname).as_posix()
         # ignore mac hidden directories
         if '/__MACOSX/' in fname:
             continue
