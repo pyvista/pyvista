@@ -5,7 +5,7 @@ Sphinx<4.6.0
 cmocean<2.1
 codecov<2.2.0
 colorcet<3.1.0
-hypothesis<6.54.6
+hypothesis<6.54.7
 imageio-ffmpeg<0.5.0
 imageio<2.23.0
 ipygany<0.6.0
