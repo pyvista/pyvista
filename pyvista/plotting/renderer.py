@@ -2749,7 +2749,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
 
     def disable_ssao(self):
-        """Disable surface space ambient occulusion (SSAO)."""
+        """Disable surface space ambient occlusion (SSAO)."""
         self._render_passes.disable_ssao_pass()
 
     def get_pick_position(self):
