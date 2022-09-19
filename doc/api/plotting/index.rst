@@ -27,6 +27,8 @@ all plotting functionality in PyVista.
    Plotter
    Renderer
    Property
+   Actor
+   DataSetMapper
 
 
 Composite Plotting Reference

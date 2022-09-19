@@ -1,4 +1,4 @@
-"""Pyvista specific errors."""
+"""PyVista specific errors."""
 
 
 class MissingDataError(ValueError):

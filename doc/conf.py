@@ -66,6 +66,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.autosummary",
+    "enum_tools.autoenum",
     "notfound.extension",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
@@ -95,15 +96,12 @@ coverage_additional_modules = [
     'pyvista.plotting.theme',
     'pyvista.plotting.tools',
     'pyvista.plotting.widgets',
-    'pyvista.core.common_data',
-    'pyvista.core.common_data',
     'pyvista.core.composite',
     'pyvista.core.dataobject',
     'pyvista.core.datasetattributes',
     'pyvista.core.dataset',
     'pyvista.core.errors',
     'pyvista.core.grid',
-    'pyvista.core.imaging',
     'pyvista.core.objects',
     'pyvista.core.pointset',
     'pyvista.core.pyvista_ndarray',
@@ -115,6 +113,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.unstructured_grid',
     'pyvista.demos',
     'pyvista.examples.examples',
+    'pyvista.utilities.common',
     'pyvista.utilities.features',
     'pyvista.utilities.fileio',
     'pyvista.utilities.geometric_objects',
@@ -210,6 +209,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.count$',
     r'\.MultiBlock\.index$',
     r'\.MultiBlock\.remove$',
+    # Enumerations
+    r'\.Plot3DFunctionEnum$',
 }
 
 
@@ -219,7 +220,7 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'python': ('https://docs.python.org/3', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
@@ -309,7 +310,7 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-class ResetPyvista:
+class ResetPyVista:
     """Reset pyvista module to default settings."""
 
     def __call__(self, gallery_conf, fname):
@@ -323,10 +324,10 @@ class ResetPyvista:
         pyvista.set_plot_theme('document')
 
     def __repr__(self):
-        return 'ResetPyvista'
+        return 'ResetPyVista'
 
 
-reset_pyvista = ResetPyvista()
+reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed

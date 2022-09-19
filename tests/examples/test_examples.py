@@ -253,6 +253,10 @@ if TEST_DOWNLOADS:
         data = examples.download_chest()
         assert data.n_cells
 
+    def test_download_brain_atlas_with_sides():
+        data = examples.download_brain_atlas_with_sides()
+        assert data.n_cells
+
     def test_download_prostate():
         data = examples.download_prostate()
         assert data.n_cells
@@ -344,6 +348,11 @@ if TEST_DOWNLOADS:
     def test_download_carotid():
         data = examples.download_carotid()
         assert data.n_cells
+
+    def test_download_carburetor():
+        data = examples.download_carburetor()
+        assert isinstance(data, pyvista.PolyData)
+        assert data.n_faces
 
     def test_download_blow():
         data = examples.download_blow()
@@ -527,3 +536,12 @@ if TEST_DOWNLOADS:
         dataset = examples.download_sea_vase(load=True)
         assert isinstance(dataset, pyvista.PolyData)
         assert dataset.n_points > 1_000_000
+
+    def test_cad_model_case():
+        filename = examples.download_cad_model_case(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtp')
+
+        dataset = examples.download_cad_model_case(load=True)
+        assert isinstance(dataset, pyvista.PolyData)
+        assert dataset.n_points == 7677

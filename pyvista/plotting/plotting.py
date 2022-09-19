@@ -32,7 +32,7 @@ from pyvista.utilities import (
     wrap,
 )
 
-from ..utilities.misc import PyvistaDeprecationWarning, has_module, uses_egl
+from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import (
     USE_SCALAR_BAR_ARGS,
@@ -41,10 +41,17 @@ from ._plotting import (
     process_opacity,
 )
 from ._property import Property
+from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs
-from .mapper import make_mapper
+from .mapper import (
+    DataSetMapper,
+    FixedPointVolumeRayCastMapper,
+    GPUVolumeRayCastMapper,
+    OpenGLGPUVolumeRayCastMapper,
+    SmartVolumeMapper,
+)
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
@@ -78,10 +85,9 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
-        if not p._closed:
-            p.close()
-        p.deep_clean()
+    for pl in list(_ALL_PLOTTERS.values()):
+        if not pl._closed:
+            pl.close()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -259,7 +265,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Add self to open plotters
+        # Track all active plotters. This has the side effect of ensuring that plotters are not
+        # collected until `close()`. See https://github.com//pull/3216
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         _ALL_PLOTTERS[self._id_name] = self
 
@@ -275,10 +282,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
-
-        # set antialiasing based on theme
-        if self.theme.antialiasing:
-            self.enable_anti_aliasing()
 
         self._initialized = True
 
@@ -571,7 +574,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             mapper = actor.GetMapper()
                             if mapper is None:
                                 continue
-                            dataset = mapper.GetInputAsDataSet()
+                            dataset = mapper.dataset
                             if not isinstance(dataset, pyvista.PolyData):
                                 warnings.warn(
                                     'Plotter contains non-PolyData datasets. These have been '
@@ -968,16 +971,117 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    @wraps(Renderer.enable_anti_aliasing)
-    def enable_anti_aliasing(self, *args, **kwargs):
-        """Wrap ``Renderer.enable_anti_aliasing``."""
-        for renderer in self.renderers:
-            renderer.enable_anti_aliasing(*args, **kwargs)
+    def enable_anti_aliasing(self, aa_type='fxaa', multi_samples=None, all_renderers=True):
+        """Enable anti-aliasing.
 
-    @wraps(Renderer.disable_anti_aliasing)
-    def disable_anti_aliasing(self, *args, **kwargs):
-        """Wrap ``Renderer.disable_anti_aliasing``."""
-        self.renderer.disable_anti_aliasing(*args, **kwargs)
+        This tends to make edges appear softer and less pixelated.
+
+        Parameters
+        ----------
+        aa_type : str, optional
+            Anti-aliasing type. See the notes below. One of the following:
+
+            * ``"ssaa"`` - Super-Sample Anti-Aliasing
+            * ``"msaa"`` - Multi-Sample Anti-Aliasing
+            * ``"fxaa"`` - Fast Approximate Anti-Aliasing
+
+        multi_samples : int, optional
+            The number of multi-samples when ``aa_type`` is ``"msaa"``. Note
+            that using this setting automatically enables this for all
+            renderers. Defaults to the theme multi_samples.
+
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        Notes
+        -----
+        SSAA, or Super-Sample Anti-Aliasing is a brute force method of
+        anti-aliasing. It results in the best image quality but comes at a
+        tremendous resource cost. SSAA works by rendering the scene at a higher
+        resolution. The final image is produced by downsampling the
+        massive source image using an averaging filter. This acts as a low pass
+        filter which removes the high frequency components that would cause
+        jaggedness.
+
+        MSAA, or Multi-Sample Anti-Aliasing is an optimization of SSAA that
+        reduces the amount of pixel shader evaluations that need to be computed
+        by focusing on overlapping regions of the scene. The result is
+        anti-aliasing along edges that is on par with SSAA and less
+        anti-aliasing along surfaces as these make up the bulk of SSAA
+        computations. MSAA is substantially less computationally expensive than
+        SSAA and results in comparable image quality.
+
+        FXAA, or Fast Approximate Anti-Aliasing is an Anti-Aliasing technique
+        that is performed entirely in post processing. FXAA operates on the
+        rasterized image rather than the scene geometry. As a consequence,
+        forcing FXAA or using FXAA incorrectly can result in the FXAA filter
+        smoothing out parts of the visual overlay that are usually kept sharp
+        for reasons of clarity as well as smoothing out textures. FXAA is
+        inferior to MSAA but is almost free computationally and is thus
+        desirable on low end platforms.
+
+        Examples
+        --------
+        Enable super-sample anti-aliasing (SSAA).
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_anti_aliasing('ssaa')
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        See :ref:`anti_aliasing_example` for a full example demonstrating
+        VTK's anti-aliasing approaches.
+
+        """
+        # apply MSAA to entire render window
+        if aa_type == 'msaa':
+            if not hasattr(self, 'ren_win'):
+                raise AttributeError('The render window has been closed.')
+            if multi_samples is None:
+                multi_samples = self._theme.multi_samples
+            self.ren_win.SetMultiSamples(multi_samples)
+            return
+        elif aa_type not in ['ssaa', 'fxaa']:
+            raise ValueError(
+                f'Invalid `aa_type` "{aa_type}". Should be either "fxaa", "ssaa", or "msaa"'
+            )
+
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.enable_anti_aliasing(aa_type)
+        else:
+            self.renderer.enable_anti_aliasing(aa_type)
+
+    def disable_anti_aliasing(self, all_renderers=True):
+        """Disable anti-aliasing.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_anti_aliasing()
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        See :ref:`anti_aliasing_example` for a full example demonstrating
+        VTK's anti-aliasing approaches.
+
+        """
+        self.ren_win.SetMultiSamples(0)
+
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.disable_anti_aliasing()
+        else:
+            self.renderer.disable_anti_aliasing()
 
     @wraps(Renderer.set_focus)
     def set_focus(self, *args, render=True, **kwargs):
@@ -1051,6 +1155,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
+    @wraps(Renderer.enable_ssao)
+    def enable_ssao(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_ssao``."""
+        return self.renderer.enable_ssao(*args, **kwargs)
+
+    @wraps(Renderer.disable_ssao)
+    def disable_ssao(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_ssao``."""
+        return self.renderer.disable_ssao(*args, **kwargs)
+
     @wraps(Renderer.enable_shadows)
     def enable_shadows(self, *args, **kwargs):
         """Wrap ``Renderer.enable_shadows``."""
@@ -1115,6 +1229,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def set_scale(self, *args, **kwargs):
         """Wrap ``Renderer.set_scale``."""
         return self.renderer.set_scale(*args, **kwargs)
+
+    @wraps(Renderer.enable_depth_of_field)
+    def enable_depth_of_field(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_depth_of_field``."""
+        return self.renderer.enable_depth_of_field(*args, **kwargs)
+
+    @wraps(Renderer.disable_depth_of_field)
+    def disable_depth_of_field(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_depth_of_field``."""
+        return self.renderer.disable_depth_of_field(*args, **kwargs)
+
+    @wraps(Renderer.add_blurring)
+    def add_blurring(self, *args, **kwargs):
+        """Wrap ``Renderer.add_blurring``."""
+        return self.renderer.add_blurring(*args, **kwargs)
+
+    @wraps(Renderer.remove_blurring)
+    def remove_blurring(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_blurring``."""
+        return self.renderer.remove_blurring(*args, **kwargs)
 
     @wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs):
@@ -2116,8 +2250,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the composite dataset.
+        pyvista.Actor
+            Actor of the composite dataset.
 
         pyvista.CompositePolyDataMapper
             Composite PolyData mapper.
@@ -2199,6 +2333,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper = CompositePolyDataMapper(
             dataset,
+            theme=self._theme,
             color_missing_with_nan=color_missing_with_nan,
             interpolate_before_map=interpolate_before_map,
         )
@@ -2273,7 +2408,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     cmap,
                     flip_scalars,
                     categories,
-                    self._theme,
                     log_scale,
                 )
             else:
@@ -2643,8 +2777,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the mesh.
+        pyvista.plotting.actor.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -2696,7 +2830,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...            show_edges=True)
 
         """
-        self.mapper = make_mapper(_vtk.vtkDataSetMapper)
+        self.mapper = DataSetMapper(theme=self.theme)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
@@ -2705,7 +2839,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
-        elif isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):
@@ -2799,6 +2933,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             **kwargs,
         )
+
         if silhouette:
             if isinstance(silhouette, dict):
                 self.add_silhouette(mesh, silhouette)
@@ -2824,7 +2959,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         original_scalar_name = None
         scalars_name = 'Data'
         if isinstance(scalars, str):
-            self.mapper.SetArrayName(scalars)
+            self.mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None:
@@ -2842,10 +2977,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             if field == FieldAssociation.POINT:
                 mesh.point_data.active_scalars_name = original_scalar_name
-                self.mapper.SetScalarModeToUsePointData()
+                self.mapper.scalar_map_mode = 'point'
             elif field == FieldAssociation.CELL:
                 mesh.cell_data.active_scalars_name = original_scalar_name
-                self.mapper.SetScalarModeToUseCellData()
+                self.mapper.scalar_map_mode = 'cell'
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2853,18 +2988,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mesh, scalars, texture, split_sharp_edges, feature_angle, preference
             )
 
+        if rgb:
+            show_scalar_bar = False
+            if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
+                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+
         if mesh.n_points < 1:
             raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
         # set main values
         self.mesh = mesh
-        self.mapper.SetInputData(self.mesh)
-        self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-        if interpolate_before_map:
-            self.mapper.InterpolateScalarsBeforeMappingOn()
+        self.mapper.dataset = self.mesh
+        self.mapper.interpolate_before_map = interpolate_before_map
 
-        actor = _vtk.vtkActor()
-        actor.SetMapper(self.mapper)
+        actor = Actor(mapper=self.mapper)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -2879,13 +3016,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError(
                     'Input mesh does not have texture coordinates to support the texture.'
                 )
-            actor.SetTexture(texture)
+            actor.texture = texture
             # Set color to white by default when using a texture
             if color is None:
                 color = 'white'
             if scalars is None:
                 show_scalar_bar = False
-            self.mapper.SetScalarModeToUsePointFieldData()
+            self.mapper.scalar_visibility = False
 
             # see https://github.com/pyvista/pyvista/issues/950
             mesh.set_active_scalars(None)
@@ -2897,15 +3034,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars formatting ==================================================
         if scalars is not None:
-            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
-                mesh,
+            self.mapper.set_scalars(
                 scalars,
                 scalars_name,
+                n_colors,
                 scalar_bar_args,
                 rgb,
                 component,
                 preference,
-                interpolate_before_map,
                 custom_opac,
                 annotations,
                 log_scale,
@@ -2916,27 +3052,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 flip_scalars,
                 opacity,
                 categories,
-                n_colors,
                 clim,
-                self._theme,
-                show_scalar_bar,
             )
+            self.mapper.scalar_visibility = True
         elif custom_opac:  # no scalars but custom opacity
             self.mapper.set_custom_opacity(
                 opacity,
                 color,
-                mesh,
                 n_colors,
                 preference,
-                interpolate_before_map,
-                rgb,
-                self._theme,
             )
+            self.mapper.scalar_visibility = True
         else:
-            self.mapper.SetScalarModeToUseFieldData()
+            self.mapper.scalar_visibility = False
 
         # Set actor properties ================================================
-        prop = Property(
+        actor.prop = Property(
             self._theme,
             interpolation=interpolation,
             metallic=metallic,
@@ -2957,12 +3088,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
         if isinstance(opacity, (float, int)):
-            prop.opacity = opacity
-        actor.SetProperty(prop)
+            actor.prop.opacity = opacity
 
         # legend label
         if label is not None:
-            self._add_legend_label(actor, label, scalars, prop.color)
+            self._add_legend_label(actor, label, scalars, actor.prop.color)
 
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
@@ -3174,8 +3304,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the volume.
+        pyvista.Actor
+            Actor of the volume.
 
         Examples
         --------
@@ -3209,7 +3339,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = scalar_bar_args.copy()
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
+            warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if show_scalar_bar is None:
@@ -3332,25 +3462,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = scalars.ravel()
 
         # Define mapper, volume, and add the correct properties
-        mappers = {
-            'fixed_point': _vtk.vtkFixedPointVolumeRayCastMapper,
-            'gpu': _vtk.vtkGPUVolumeRayCastMapper,
-            'open_gl': _vtk.vtkOpenGLGPUVolumeRayCastMapper,
-            'smart': _vtk.vtkSmartVolumeMapper,
+        mappers_lookup = {
+            'fixed_point': FixedPointVolumeRayCastMapper,
+            'gpu': GPUVolumeRayCastMapper,
+            'open_gl': OpenGLGPUVolumeRayCastMapper,
+            'smart': SmartVolumeMapper,
         }
-        if not isinstance(mapper, str) or mapper not in mappers.keys():
+        if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
             raise TypeError(
-                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers.keys())}"
+                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
             )
-        self.mapper = make_mapper(mappers[mapper])
+        self.mapper = mappers_lookup[mapper](self._theme)
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
             volume.point_data.set_array(scalars, title, True)
-            self.mapper.SetScalarModeToUsePointData()
+            self.mapper.scalar_mode = 'point'
         elif scalars.shape[0] == volume.n_cells:
             volume.cell_data.set_array(scalars, title, True)
-            self.mapper.SetScalarModeToUseCellData()
+            self.mapper.scalar_mode = 'cell'
         else:
             raise_not_matching(scalars, volume)
 
@@ -3422,7 +3552,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         table.SetRange(*clim)
         self.mapper.lookup_table = table
 
-        self.mapper.SetInputData(volume)
+        self.mapper.dataset = volume
 
         blending = blending.lower()
         if blending in ['additive', 'add', 'sum']:
@@ -3441,7 +3571,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Please choose one of "additive", '
                 '"composite", "minimum" or "maximum".'
             )
-        self.mapper.Update()
+        self.mapper.update()
 
         self.volume = _vtk.vtkVolume()
         self.volume.SetMapper(self.mapper)
@@ -3535,7 +3665,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             alg.SetFeatureAngle(silhouette_params["feature_angle"])
         else:
             alg.SetEnableFeatureAngle(False)
-        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(silhouette_params["color"]).float_rgb)
@@ -3847,7 +3977,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
-        self.clear()
+        self.scalar_bars.clear()
+        self.mesh = None
+        self.mapper = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -3858,8 +3990,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._clear_ren_win()
 
         if self.iren is not None:
-            self.iren.remove_observers()
-            self.iren.terminate_app()
+            self.iren.close()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
@@ -3874,6 +4005,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             except BaseException:
                 pass
 
+        # Remove the global reference to this plotter unless building the
+        # gallery to allow it to collect.
+        if not pyvista.BUILDING_GALLERY:
+            if _ALL_PLOTTERS is not None:
+                _ALL_PLOTTERS.pop(self._id_name, None)
+
         # this helps managing closed plotters
         self._closed = True
 
@@ -3883,8 +4020,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        if getattr(self, 'mapper', None) is not None:
-            self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
         self.textActor = None
@@ -4299,27 +4434,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         lines = pyvista.lines_from_points(lines)
 
-        # Create mapper and add lines
-        mapper = _vtk.vtkDataSetMapper()
-        mapper.SetInputData(lines)
-
-        rgb_color = Color(color)
-
-        # Create actor
-        actor = _vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetLineWidth(width)
-        actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(rgb_color.float_rgb)
-        actor.GetProperty().SetColor(rgb_color.float_rgb)
-        actor.GetProperty().LightingOff()
+        actor = Actor(mapper=DataSetMapper(lines))
+        actor.prop.line_width = width
+        actor.prop.show_edges = True
+        actor.prop.edge_color = color
+        actor.prop.color = color
+        actor.prop.lighting = False
 
         # legend label
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [lines, label, rgb_color]
+            self.renderer._labels[addr] = [lines, label, Color(color)]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
@@ -4621,7 +4748,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
+        pyvista.Actor
             Actor of the mesh.
 
         Examples
@@ -4660,8 +4787,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the arrows.
+        pyvista.Actor
+            Actor of the arrows.
 
         Examples
         --------
@@ -5612,12 +5739,9 @@ class Plotter(BasePlotter):
             window_size = self._theme.window_size
         self.__prior_window_size = window_size
 
-        if multi_samples is None:
-            multi_samples = self._theme.multi_samples
-
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
-        self.ren_win.SetMultiSamples(multi_samples)
+        self.ren_win.SetMultiSamples(0)
         self.ren_win.SetBorders(True)
         if line_smoothing:
             self.ren_win.LineSmoothingOn()
@@ -5674,6 +5798,10 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # set anti_aliasing based on theme
+        if self.theme.anti_aliasing:
+            self.enable_anti_aliasing(self.theme.anti_aliasing)
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
@@ -5917,6 +6045,10 @@ class Plotter(BasePlotter):
 
         self.render()
 
+        # initial double render needed for certain passes when offscreen
+        if self.off_screen and 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes:
+            self.render()
+
         # This has to be after the first render for some reason
         if title is None:
             title = self.title
@@ -5927,6 +6059,7 @@ class Plotter(BasePlotter):
         # Keep track of image for sphinx-gallery
         if pyvista.BUILDING_GALLERY or screenshot:
             # always save screenshots for sphinx_gallery
+
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
@@ -6098,7 +6231,7 @@ class Plotter(BasePlotter):
         alg.SetModelBounds(bounds)
         alg.SetFocalPoint(focal_point)
         alg.AllOn()
-        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(color).float_rgb)
@@ -6106,8 +6239,11 @@ class Plotter(BasePlotter):
         return actor
 
 
-# Tracks created plotters.  At the end of the file as we need to
+# Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
+#
+# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
+# when True, BasePlotter.
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 

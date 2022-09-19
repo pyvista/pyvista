@@ -1,14 +1,15 @@
 Sphinx==4.5.0
 cmocean==2.0
 colorcet==3.0.0
+enum-tools==0.9.0.post1
 imageio-ffmpeg==0.4.7
 imageio>=2.5.0
 ipygany==0.5.0
 ipyvtklink==0.2.2
 jupyter_sphinx==0.4.0
-jupyterlab==3.4.5
+jupyterlab==3.4.7
 lxml==4.9.1
-matplotlib==3.5.3
+matplotlib==3.6.0
 meshio==5.3.4
 mypy-extensions==0.4.3
 mypy==0.971
@@ -16,9 +17,9 @@ numpydoc==1.4.0
 osmnx==1.2.2
 panel==0.13.1
 param==1.12.2  # due to panel bug
-pydata-sphinx-theme==0.9.0
+pydata-sphinx-theme==0.10.1
 pypandoc==1.8.1
-pytest-sphinx==0.4.0
+pytest-sphinx==0.5.0
 pythreejs==2.4.1
 scipy==1.9.1
 sphinx-autobuild==2021.3.14
@@ -26,6 +27,8 @@ sphinx-copybutton==0.5.0
 sphinx-design==0.2.0
 sphinx-gallery==0.11.1
 sphinx-notfound-page==0.8.3
+sphinx-panels==0.6.0
+sphinx-toolbox==3.2.0
 sphinxcontrib-websupport==1.2.4
-trimesh==3.14.0
+trimesh==3.14.1
 typed-ast==1.5.4

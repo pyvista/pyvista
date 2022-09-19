@@ -125,10 +125,50 @@ if VTK9:
         vtkWeakReference,
     )
     from vtkmodules.vtkCommonDataModel import (
+        VTK_BIQUADRATIC_QUAD,
+        VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
+        VTK_BIQUADRATIC_QUADRATIC_WEDGE,
+        VTK_BIQUADRATIC_TRIANGLE,
+        VTK_CONVEX_POINT_SET,
+        VTK_CUBIC_LINE,
+        VTK_EMPTY_CELL,
+        VTK_HEXAGONAL_PRISM,
         VTK_HEXAHEDRON,
+        VTK_HIGHER_ORDER_EDGE,
+        VTK_HIGHER_ORDER_HEXAHEDRON,
+        VTK_HIGHER_ORDER_POLYGON,
+        VTK_HIGHER_ORDER_PYRAMID,
+        VTK_HIGHER_ORDER_QUAD,
+        VTK_HIGHER_ORDER_TETRAHEDRON,
+        VTK_HIGHER_ORDER_TRIANGLE,
+        VTK_HIGHER_ORDER_WEDGE,
+        VTK_LAGRANGE_CURVE,
+        VTK_LAGRANGE_HEXAHEDRON,
+        VTK_LAGRANGE_PYRAMID,
+        VTK_LAGRANGE_QUADRILATERAL,
+        VTK_LAGRANGE_TETRAHEDRON,
+        VTK_LAGRANGE_TRIANGLE,
+        VTK_LAGRANGE_WEDGE,
+        VTK_LINE,
+        VTK_PARAMETRIC_CURVE,
+        VTK_PARAMETRIC_HEX_REGION,
+        VTK_PARAMETRIC_QUAD_SURFACE,
+        VTK_PARAMETRIC_SURFACE,
+        VTK_PARAMETRIC_TETRA_REGION,
+        VTK_PARAMETRIC_TRI_SURFACE,
+        VTK_PENTAGONAL_PRISM,
+        VTK_PIXEL,
+        VTK_POLY_LINE,
+        VTK_POLY_VERTEX,
+        VTK_POLYGON,
+        VTK_POLYHEDRON,
         VTK_PYRAMID,
         VTK_QUAD,
+        VTK_QUADRATIC_EDGE,
         VTK_QUADRATIC_HEXAHEDRON,
+        VTK_QUADRATIC_LINEAR_QUAD,
+        VTK_QUADRATIC_LINEAR_WEDGE,
+        VTK_QUADRATIC_POLYGON,
         VTK_QUADRATIC_PYRAMID,
         VTK_QUADRATIC_QUAD,
         VTK_QUADRATIC_TETRA,
@@ -136,6 +176,10 @@ if VTK9:
         VTK_QUADRATIC_WEDGE,
         VTK_TETRA,
         VTK_TRIANGLE,
+        VTK_TRIANGLE_STRIP,
+        VTK_TRIQUADRATIC_HEXAHEDRON,
+        VTK_VERTEX,
+        VTK_VOXEL,
         VTK_WEDGE,
         vtkCellArray,
         vtkCellLocator,
@@ -172,6 +216,21 @@ if VTK9:
         vtkTable,
         vtkUnstructuredGrid,
     )
+
+    try:
+        from vtkmodules.vtkCommonDataModel import (
+            VTK_BEZIER_CURVE,
+            VTK_BEZIER_HEXAHEDRON,
+            VTK_BEZIER_PYRAMID,
+            VTK_BEZIER_QUADRILATERAL,
+            VTK_BEZIER_TETRAHEDRON,
+            VTK_BEZIER_TRIANGLE,
+            VTK_BEZIER_WEDGE,
+            VTK_TRIQUADRATIC_PYRAMID,
+        )
+    except ImportError:  # pragma: no cover
+        pass
+
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
@@ -315,6 +374,7 @@ if VTK9:
         vtkHDRReader,
         vtkJPEGReader,
         vtkMetaImageReader,
+        vtkNIFTIImageReader,
         vtkNrrdReader,
         vtkPNGReader,
         vtkPNMReader,
@@ -353,6 +413,8 @@ if VTK9:
         vtkXMLRectilinearGridWriter,
         vtkXMLStructuredGridReader,
         vtkXMLStructuredGridWriter,
+        vtkXMLTableReader,
+        vtkXMLTableWriter,
         vtkXMLUnstructuredGridReader,
         vtkXMLUnstructuredGridWriter,
         vtkXMLWriter,
@@ -417,6 +479,7 @@ if VTK9:
         vtkImageRFFT,
     )
     from vtkmodules.vtkRenderingCore import (
+        vtkAbstractMapper,
         vtkActor,
         vtkActor2D,
         vtkCamera,
@@ -454,7 +517,10 @@ if VTK9:
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
         vtkCompositePolyDataMapper2,
+        vtkDepthOfFieldPass,
         vtkEDLShading,
+        vtkGaussianBlurPass,
+        vtkOpenGLFXAAPass,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,
         vtkOpenGLTexture,
@@ -462,6 +528,8 @@ if VTK9:
         vtkRenderStepsPass,
         vtkSequencePass,
         vtkShadowMapPass,
+        vtkSSAAPass,
+        vtkSSAOPass,
     )
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingVolume import (
