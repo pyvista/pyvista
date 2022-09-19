@@ -16,7 +16,7 @@ class Actor(pv._vtk.vtkActor):
 
     This class represents the geometry & properties in a rendered
     scene. Normally, a :class:`pyvista.Actor` is constructed from
-    :func:`pyvista.Plotter.add_mesh`, but there may be times where is is more
+    :func:`pyvista.Plotter.add_mesh`, but there may be times where it is more
     convenient to construct an actor directly from a
     :class:`pyvista.DataSetMapper`.
 
