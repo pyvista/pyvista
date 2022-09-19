@@ -55,33 +55,42 @@ Getting Started
 Installation
 ============
 
+
+.. grid:: 2
+
+    .. grid-item-card:: Working with conda?
+        :columns: auto
+
+        PyVista is available on `conda-forge
+        <https://anaconda.org/conda-forge/pyvista>`_
+
+        ++++++++++++++++++++++
+
+       .. code-block:: bash
+
+          conda install -c conda-forge pyvista
+
+
+
+    .. grid-item-card:: Prefer pip?
+       :columns: auto
+
+       PyVista can be installed via pip from `PyPI <https://pypi.org/project/pyvista>`__.
+
+       ++++
+
+       .. code-block:: bash
+
+          pip install pyvista
+
+
 .. grid:: 1 2 2 2
     :gutter: 2
     :card: + install-card
 
-    Working with conda?
-    ^^^^^^^^^^^^^^^^^^^
-
-    PyVista is available on `conda-forge <https://anaconda.org/conda-forge/pyvista>`_
-
-    ++++++++++++++++++++++
-
-    .. code-block:: bash
-
-        conda install -c conda-forge pyvista
-
-    ---
 
     Prefer pip?
     ^^^^^^^^^^^
-
-    PyVista can be installed via pip from `PyPI <https://pypi.org/project/pyvista>`__.
-
-    ++++
-
-    .. code-block:: bash
-
-        pip install pyvista
 
     ---
     :column: col-12 p-3
