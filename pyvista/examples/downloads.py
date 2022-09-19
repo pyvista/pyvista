@@ -4551,6 +4551,42 @@ def download_gif_simple(load=True):  # pragma: no cover
     return _download_and_read('gifs/sample.gif', load=load)
 
 
+def download_fea_bracket(load=True):  # pragma: no cover
+    """Download the finite element solution of a bracket.
+
+    Contains von-mises equivalent cell stress assuming a vertical (y-axis) load.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot equivalent cell stress.
+
+    >>> from pyvista import examples
+    >>> grid = examples.download_fea_bracket()
+    >>> grid.plot()
+
+    Plot the point stress using the ``'jet'`` color map. Convert the cell data
+    to point data.
+
+    >>> from pyvista import examples
+    >>> grid = examples.download_fea_bracket()
+    >>> grid = grid.cell_data_to_point_data()
+    >>> grid.plot(smooth_shading=True, split_sharp_edges=True, cmap='jet')
+
+    """
+    return _download_and_read('fea/kiefer/dataset.vtu', load=load)
+
+
 def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
     """Download a black vase scan created by Ivan Nikolov.
 

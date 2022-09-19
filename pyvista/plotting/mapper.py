@@ -82,8 +82,6 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     @scalar_range.setter
     def scalar_range(self, clim):
         self.SetScalarRange(*clim)
-        if self.lookup_table is not None:
-            self.lookup_table.SetRange(*clim)
 
     @property
     def lookup_table(self) -> 'pv.LookupTable':
@@ -604,7 +602,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
         if lookup_table is not None:
             self.lookup_table = lookup_table
+            self.scalar_range = self.lookup_table.table_range
         else:
+            self.lookup_table.table_range = self.scalar_range
             # Set default map if matplotlib is available
             if cmap is None:
                 if has_module('matplotlib'):

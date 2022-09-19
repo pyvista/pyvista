@@ -1040,6 +1040,8 @@ class WidgetHelper:
         title_opacity=1.0,
         title_color=None,
         fmt=None,
+        slider_width=None,
+        tube_width=None,
     ):
         """Add a slider bar widget.
 
@@ -1105,6 +1107,12 @@ class WidgetHelper:
             String formatter used to format numerical data. Defaults
             to ``None``.
 
+        slider_width : float, optional
+            Normalized width of the slider. Defaults to the theme's slider width.
+
+        tube_width : float, optional
+            Normalized width of the tube. Defaults to the theme's tube width.
+
         Returns
         -------
         vtk.vtkSliderWidget
@@ -1129,6 +1137,9 @@ class WidgetHelper:
         ... )
         >>> pl.show()
         """
+        if self.iren is None:
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
+
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
@@ -1177,6 +1188,11 @@ class WidgetHelper:
             slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
             slider_rep.SetEndCapLength(slider_style.cap_length)
             slider_rep.SetEndCapWidth(slider_style.cap_width)
+
+        if slider_width is not None:
+            slider_rep.SetSliderWidth(slider_width)
+        if tube_width is not None:
+            slider_rep.SetTubeWidth(tube_width)
 
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()

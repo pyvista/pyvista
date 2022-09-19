@@ -721,15 +721,16 @@ class LookupTable(_vtk.vtkLookupTable):
         mesh = pv.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.table_range
 
-        pl = pv.Plotter(window_size=(800, 180))
+        pl = pv.Plotter(window_size=(800, 230))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
 
         scalar_bar_kwargs = {
             'color': 'k',
-            'title': self._lookup_type,
+            'title': self._lookup_type + '\n',
             'outline': False,
+            'title_font_size': 40,
         }
         label_level = 0
         if self.below_range_color:
@@ -746,7 +747,7 @@ class LookupTable(_vtk.vtkLookupTable):
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
         scalar_bar.SetPosition2(0.95, 0.9 - label_level * 0.1)
-        scalar_bar.SetTextPad(8)
+        # scalar_bar.SetTextPad(-10)
         scalar_bar.SetDrawNanAnnotation(self._nan_color_set)
 
         pl.background_color = kwargs.pop('background', 'w')
