@@ -1,4 +1,5 @@
 import os
+from pathlib import PureWindowsPath
 
 import pytest
 
@@ -51,7 +52,10 @@ def test_file_from_files(tmpdir):
         fname = examples.downloads.file_from_files('potato.txt', fnames)
 
     fname = examples.downloads.file_from_files('tmp1.txt', fnames)
-    assert fname == fnames[1]
+    if os.name == 'nt':
+        assert PureWindowsPath(fname).as_posix() == fnames[1]
+    else:
+        assert fname == fnames[1]
 
     with pytest.raises(RuntimeError, match='Ambigious'):
         fname = examples.downloads.file_from_files('tmp2.txt', fnames)

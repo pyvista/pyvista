@@ -10,6 +10,7 @@ Examples
 >>> mesh.plot()
 
 """
+import logging
 import os
 from pathlib import PureWindowsPath
 import shutil
@@ -19,10 +20,16 @@ import warnings
 import numpy as np
 import pooch
 from pooch import Unzip
+from pooch.utils import get_logger
 
 import pyvista
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
+
+# disable pooch verbose logging
+POOCH_LOGGER = get_logger()
+POOCH_LOGGER.setLevel(logging.CRITICAL)
+
 
 CACHE_VERSION = 3
 
