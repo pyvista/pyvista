@@ -21,49 +21,66 @@ Highlights of the API include:
    readers/index
    examples/index
 
-.. grid:: 1 2 2 2
-    :gutter: 2
+..
+   :classes: btn-outline-primary btn-block stretched-link
 
-    Core API
-    ^^^^^^^^
+.. card:: Core API
+   :link: core-api-index
+   :link-type: ref
 
-    Learn more anout PyVista's different mesh types and direct access to common VTK filters.
+   Learn more anout PyVista's different mesh types and direct access to common
+   VTK filters.
 
-    .. button-ref:: core/index
-        :text: Core API
-        :classes: btn-outline-primary btn-block stretched-link
+   .. jupyter-execute::
 
-    ---
+      >>> import pyvista as pv
+      >>> mesh = pv.Sphere()
+      >>> sliced = mesh.slice()
+      >>> sliced.length
 
-    Plotting API
-    ^^^^^^^^^^^^
 
-    Explore PyVista's robust plotting interface for visualizing the core data structures.
+.. card:: Plotting API
+   :link: plotting-api-index
+   :link-type: ref
 
-    .. button-ref:: plotting/index
-        :text: Plotting API
-        :classes: btn-outline-primary btn-block stretched-link
+   Explore PyVista's robust plotting interface for visualizing the core data
+   structures.
 
-    ---
+   .. jupyter-execute::
+      
+      >>> import pyvista as pv
+      >>> mesh = pv.Cube()
+      >>> pl = pv.Plotter()
+      >>> actor = pl.add_mesh(mesh, scalars=mesh.points)
+      >>> actor.prop
 
-    File API
-    ^^^^^^^^
+.. card:: Readers
+   :link: reader_api
+   :link-type: ref
 
-    Use PyVista's Reader classes to read data files.
+   Use PyVista's Reader classes to read data files using
+   :func:`pyvista.get_reader`.
 
-    .. button-ref:: readers/index
-        :text: Readers
-        :classes: btn-outline-primary btn-block stretched-link
+   .. jupyter-execute::
 
-    ---
+      >>> import pyvista as pv
+      >>> from pyvista import examples
+      >>> reader = pv.get_reader(examples.hexbeamfile)
+      >>> reader
+   
 
-    Utilities
-    ^^^^^^^^^
+.. card:: Utilities
+   :link: utilities-api-index
+   :link-type: ref
 
-    Utilize PyVista's helper modules, conversion tools, and geometric object creation routines.
+   Utilize PyVista's helper modules, conversion tools, and geometric object
+   creation routines.
 
-    .. button-ref:: utilities/index
-        :text: Utilities
-        :classes: btn-outline-primary btn-block stretched-link
+   .. jupyter-execute::
+
+      >>> import pyvista as pv
+      >>> mesh = pv.ParametricSuperEllipsoid(xradius=0.1)
+      >>> mesh
+
 
 .. _matplotlib: https://matplotlib.org/
