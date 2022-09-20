@@ -3,6 +3,12 @@
 Once downloaded, these datasets are stored locally allowing for the
 rapid reuse of these datasets.
 
+Files are all hosted in https://github.com/pyvista/vtk-data/ and are downloaded
+using the ``download_file`` function. If you add a file to the example data
+repository, you should add a ``download-<dataset>`` method here which will
+rendered on `downloads
+<https://docs.pyvista.org/api/examples/_autosummary/pyvista.examples.downloads.html>`_.
+
 Examples
 --------
 >>> from pyvista import examples
@@ -38,15 +44,8 @@ if 'VTK_DATA_PATH' in os.environ:  # pragma: no cover
     _path = os.environ['VTK_DATA_PATH']
 
     if not os.path.basename(_path) == 'Data':
-        expected_path = os.path.join(_path, 'Data')
-        warnings.warn(
-            f'As of 0.37.0, VTK_DATA_PATH: {_path} is '
-            'expected to end with the "Data" directory. For example:\n'
-            f'{expected_path}\n\n'
-            'In the future, this invalid path will be ignored.'
-        )
-        _path = expected_path
-
+        # append 'Data' if user does not provide it
+        _path = os.path.join(_path, 'Data')
     if not os.path.isdir(_path):
         warnings.warn(f"VTK_DATA_PATH: {_path} is an invalid path and will be ignored")
     else:
@@ -82,190 +81,13 @@ else:
                 'examples cache with the PYVISTA_USERDATA_PATH environment variable.'
             )
 
+# Note that our fetcher doesn't have a registry (or we have an empty registry)
+# with hashes because we don't want to have to add in all of them individually
+# to the registry since we're not (at the moment) concerned about hashes.
 FETCHER = pooch.create(
     path=PATH,
     base_url=SOURCE,
-    registry={
-        '250.vtk': None,
-        '42400-IDGH.stl': None,
-        'AOI.Damavand.32639.vtp': None,
-        'AngularSector.vtk': None,
-        'Armadillo.ply': None,
-        'BJ34_GeoTifv1-04_crater_clip.tif': None,
-        'Bunny.vtp': None,
-        'Cellsnd.ascii.inp': None,
-        'DICOM_KNEE.dcm': None,
-        'DICOM_Stack/data.zip': None,
-        'Disc_BiQuadraticQuads_0_0.vtu': None,
-        'EarthModels/Coastlines_Los_Alamos.vtp': None,
-        'avg152T1_RL_nifti.nii.gz': None,
-        'EarthModels/ETOPO_10min_Ice.vtp': None,
-        'EarthModels/ETOPO_10min_Ice_only-land.vtp': None,
-        'EnSight.zip': None,
-        'EnSight/CylinderCrossflow/cylinder_Re35.case': None,
-        'EnSight/CylinderCrossflow/cylinder_Re35.geo': None,
-        'EnSight/CylinderCrossflow/cylinder_Re35.scl1': None,
-        'EnSight/CylinderCrossflow/cylinder_Re35.scl2': None,
-        'EnSight/CylinderCrossflow/cylinder_Re35.vel': None,
-        'EnSight/naca.bin.case': None,
-        'EnSight/naca.gold.bin.DENS_1': None,
-        'EnSight/naca.gold.bin.DENS_3': None,
-        'EnSight/naca.gold.bin.geo': None,
-        'Gourds.png': None,
-        'Gourds.png': None,
-        'Gourds.pnm': None,
-        'Gourds2.jpg': None,
-        'Gourds2.jpg': None,
-        'HeadMRVolume.mhd': None,
-        'HeadMRVolume.raw': None,
-        'Human.vtp': None,
-        'InterpolatingOnSTL_final.stl': None,
-        'MetaIO/ChestCT-SHORT.mha': None,
-        'ObliqueCone.vtp': None,
-        'OpenFOAM.zip': None,
-        'PVD/paraview/dualSphereAnimation.zip': None,
-        'PVD/paraview/singleSphereAnimation.zip': None,
-        'PVD/wavy.zip': None,
-        'Pileated.jpg': None,
-        'Pileated.jpg': None,
-        'QuadraticPyramid.vtu': None,
-        'RectilinearGrid.vtr': None,
-        'Ruapehu_mag_dem_15m_NZTM.vtk': None,
-        'SainteHelens.dem': None,
-        'SampleStructGrid.vtk': None,
-        'StructuredGrid.vts': None,
-        'Tetrahedron.vtu': None,
-        'Torso.vtp': None,
-        'TriQuadraticHexahedron.vtu': None,
-        'a_grid.vtk': None,
-        'alphachannel.png': None,
-        'antarctica_velocity.vtp': None,
-        'beach.nrrd': None,
-        'blow.vtk': None,
-        'bolt.slc': None,
-        'bolt.slc': None,
-        'brain.vtk': None,
-        'bunny.ply': None,
-        'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp': None,
-        'cake_easy.jpg': None,
-        'cake_easy.jpg': None,
-        'carburetor.ply': None,
-        'carotid.vtk': None,
-        'cellsnd.ascii.inp': None,
-        'cgns/multi.cgns': None,
-        'cgns/sqnz_s.adf.cgns': None,
-        'clown.facet': None,
-        'cow.vtp': None,
-        'cowHead.vtp': None,
-        'cubemap_park/cubemap_park.zip': None,
-        'cubemap_space/16k.zip': None,
-        'cubemap_space/4k.zip': None,
-        'damavand-volcano.vtk': None,
-        'dc-inversion.zip': None,
-        'dc-inversion.zip': None,
-        'dikhololo_night_4k.hdr': None,
-        'dolfin_fine.xml': None,
-        'doorman/doorman.obj': None,
-        'dragon.ply': None,
-        'drill.obj': None,
-        'embryo.slc': None,
-        'emote.jpg': None,
-        'emote.jpg': None,
-        'faults.vtk': None,
-        'filledContours.vtp': None,
-        'fran_cut.vtk': None,
-        'froggy/frog.mhd': None,
-        'froggy/frog.zraw': None,
-        'fsu/footbones.ply': None,
-        'fsu/stratocaster.ply': None,
-        'gears.stl': None,
-        'gifs/sample.gif': None,
-        'gpr-example/data.npy': None,
-        'gpr-example/path.txt': None,
-        'hdf/can-vtu.hdf': None,
-        'hdf/can_0.hdf': None,
-        'hdf/can_1.hdf': None,
-        'hdf/can_2.hdf': None,
-        'honolulu.vtk': None,
-        'horse.vtp': None,
-        'horsePoints.vtp': None,
-        'ironProt.vtk': None,
-        'ivan-nikolov/Angel.zip': None,
-        'ivan-nikolov/birdBath.zip': None,
-        'ivan-nikolov/blackVase.zip': None,
-        'ivan-nikolov/owl.zip': None,
-        'ivan-nikolov/plasticVase.zip': None,
-        'ivan-nikolov/seaVase.zip': None,
-        'k.vtk': None,
-        'kafadar-lidar-interp.vtp': None,
-        'kitchen.vtk': None,
-        'lethe/result_particles.20000.0000.vtu': None,
-        'lobster.ply': None,
-        'louis.ply': None,
-        'lucy.ply': None,
-        'man_face.stl': None,
-        'mars.jpg': None,
-        'masonry.bmp': None,
-        'mesh_fs8.exo': None,
-        'model_with_variance.vtu': None,
-        'moonlanding.png': None,
-        'motor.g': None,
-        'mug.e': None,
-        'multi-bin.f': None,
-        'multi-bin.q': None,
-        'multi-bin.xyz': None,
-        'multi.p3d': None,
-        'nefertiti.ply.zip': None,
-        'notch_disp.vtu': None,
-        'notch_stress.vtk': None,
-        'nut.slc': None,
-        'office.binary.vtk': None,
-        'osmnx_graph.p': None,
-        'parched_canal_4k.hdr': None,
-        'pepper.ply': None,
-        'pine_root.tri': None,
-        'polyline.vtk': None,
-        'probes.vtp': None,
-        'prostate.img': None,
-        'puppy.jpg': None,
-        'puppy.jpg': None,
-        'pvtu_blood_vessels/blood_vessels.zip': None,
-        'room_surface_mesh.obj': None,
-        'shark.ply': None,
-        'skybox-nz.jpg': None,
-        'skybox-nz.jpg': None,
-        'skybox2-negx': None,
-        'skybox2-negx.jpg': None,
-        'skybox2-negy': None,
-        'skybox2-negy.jpg': None,
-        'skybox2-negz': None,
-        'skybox2-negz.jpg': None,
-        'skybox2-posx': None,
-        'skybox2-posx.jpg': None,
-        'skybox2-posy': None,
-        'skybox2-posy.jpg': None,
-        'skybox2-posz': None,
-        'skybox2-posz.jpg': None,
-        'sparsePoints.txt': None,
-        'spider.ply': None,
-        'stars.jpg': None,
-        'teapot.g': None,
-        'tecplot_ascii.dat': None,
-        'tensors.vtk': None,
-        'tigerfighter.obj': None,
-        'trumpet.obj': None,
-        'turbineblade.ply': None,
-        'uGridEx.vtk': None,
-        'urn.stl': None,
-        'usa.vtk': None,
-        'usa_image.jpg': None,
-        'vrml/sextant.wrl': None,
-        'vrml/teapot.wrl': None,
-        'vtk.png': None,
-        'vtk.vtp': None,
-        'vw_knee.slc': None,
-        'woman.stl': None,
-    },
+    registry={},
     retry_if_failed=3,
 )
 
@@ -319,7 +141,10 @@ def _file_copier(input_file, output_file, pooch):
 
 
 def download_file(filename, progress_bar=False):
-    """Download a single file from the VTK data repository.
+    """Download a single file from the PyVista vtk-data repository.
+
+    You can add an example file at `pyvista/vtk_data
+    <https://github.com/pyvista/vtk-data>`_.
 
     Parameters
     ----------
@@ -345,6 +170,15 @@ def download_file(filename, progress_bar=False):
     '/home/user/.cache/pyvista_3/puppy.jpg'
 
     """
+    try:  # should the file already exist within fetcher's registry
+        return _download_file(filename, progress_bar)
+    except:  # otherwise simply add the file to the registry
+        FETCHER.registry[filename] = None
+        return _download_file(filename, progress_bar)
+
+
+def _download_file(filename, progress_bar):
+    """Download a file using pooch."""
     return FETCHER.fetch(
         filename,
         processor=Unzip() if filename.endswith('.zip') else None,

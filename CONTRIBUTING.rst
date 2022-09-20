@@ -472,6 +472,53 @@ This effectively invokes ``SPHINXOPTS=-j`` and can be especially useful for
 multi-core computers when ``FULL_DOC_BUILD=TRUE``
 
 
+
+Contributing to the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Documentation for PyVista is generated from three sources:
+
+- Docstrings from the classes, functions, and modules of ``pyvista`` using
+  `sphinx.ext.autodoc
+  <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_.
+- Restructured test from ``doc/``
+- Gallery examples from ``examples/``
+
+General usage and API descriptions should be placed within ``doc/api`` and
+the docstrings.  Full gallery examples should be placed in ``examples``.
+
+
+Adding a New Example
+^^^^^^^^^^^^^^^^^^^^
+PyVista's examples come in two formats: basic code snippets demonstrating the
+functionality of an individual method, or a full gallery example displaying one
+or more concepts.  Small code samples and snippets are contained in the
+``doc/api`` directory or within our documentation strings, while the full
+gallery examples, meant to be run as individual downloadable scripts, are
+contained in the ``examples`` directory at the root of this repository.
+
+To add a fully fledged, standalone example, add your example to the
+``examples`` directory within one of the applicable subdirectories.  Should
+none of the existing directories match the category of your example, create a
+new directory with a ``README.txt`` describing the new category.  Additionally,
+as these examples are built using the sphinx gallery extension, follow coding
+guidelines as established by `Sphinx-Gallery
+<https://sphinx-gallery.github.io/stable/index.html>`_.
+
+For more details see :ref:`add_example_example`.
+
+
+Add a new Example File
+^^^^^^^^^^^^^^^^^^^^^^
+If you have a dataset that you need for your gallery example, add it to
+`pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_ and follow the
+directions there and in ``downloads.py``. This enables:
+
+.. code::
+
+   >>> from pyvista import examples
+   >>> dataset = examples.download_my_dataset()
+
+
 Creating a New Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
