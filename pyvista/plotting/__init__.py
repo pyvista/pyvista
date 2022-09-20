@@ -31,6 +31,8 @@ from .widgets import WidgetHelper
 from .lights import Light
 from .camera import Camera
 from .axes import Axes
+from .actor import Actor
+from .mapper import DataSetMapper
 
 
 class QtDeprecationError(Exception):

@@ -372,10 +372,9 @@ def create_axes_orientation_box(
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = _vtk.vtkActor()
-        cube_actor.SetMapper(cube_mapper)
-        cube_actor.GetProperty().BackfaceCullingOn()
-        cube_actor.GetProperty().SetOpacity(opacity)
+        cube_actor = pyvista.Actor(mapper=cube_mapper)
+        cube_actor.prop.culling = 'back'
+        cube_actor.prop.opacity = opacity
 
         prop_assembly = _vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)

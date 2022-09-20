@@ -351,7 +351,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     Parameters
     ----------
-    points : Sequence, optional
+    var_inp : vtk.vtkPointSet, Sequence, optional
+        Flexible input type.  Can be a ``vtk.vtkPointSet``, in which case
+        this PointSet object will be copied if ``deep=True`` and will
+        be a shallow copy if ``deep=False``.
+
         List, numpy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
 
@@ -403,11 +407,19 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
         return super().__new__(cls, *args, **kwargs)
 
-    def __init__(self, points=None, deep=False, force_float=True):
+    def __init__(self, var_inp=None, deep=False, force_float=True):
         """Initialize the pointset."""
         super().__init__()
-        if points is not None:
-            self.SetPoints(pyvista.vtk_points(points, deep=deep, force_float=force_float))
+
+        if var_inp is None:
+            return
+        elif isinstance(var_inp, _vtk.vtkPointSet):
+            if deep:
+                self.deep_copy(var_inp)
+            else:
+                self.shallow_copy(var_inp)
+        else:
+            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
 
     def __repr__(self):
         """Return the standard representation."""
@@ -1374,7 +1386,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     >>> grid = pyvista.UnstructuredGrid(cells, celltypes, points)
     >>> grid.plot(show_edges=True)
 
-    See the :ref:`create_unstructured_example` example for a more more details
+    See the :ref:`create_unstructured_example` example for more details
     on creating unstructured grids within PyVista.
 
     """
