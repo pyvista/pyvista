@@ -21,6 +21,7 @@ from pyvista.utilities import (
     check_valid_vector,
     errors,
     fileio,
+    get_ext,
     helpers,
     transformations,
 )
@@ -67,6 +68,19 @@ def test_createvectorpolydata():
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
+
+
+@pytest.mark.parametrize(
+    'path, target_ext',
+    [
+        ("/data/mesh.stl", ".stl"),
+        ("/data/image.nii.gz", '.nii.gz'),
+        ("/data/other.gz", ".gz"),
+    ],
+)
+def test_get_ext(path, target_ext):
+    ext = get_ext(path)
+    assert ext == target_ext
 
 
 @pytest.mark.parametrize('use_pathlib', [True, False])
@@ -848,3 +862,14 @@ def test_copy_vtk_array():
     arr.SetValue(1, new_value)
     assert value_1 == arr_copy.GetValue(1)
     assert new_value == arr_copy_shallow.GetValue(1)
+
+
+def test_set_pickle_format():
+    pyvista.set_pickle_format('legacy')
+    assert pyvista.PICKLE_FORMAT == 'legacy'
+
+    pyvista.set_pickle_format('xml')
+    assert pyvista.PICKLE_FORMAT == 'xml'
+
+    with pytest.raises(ValueError):
+        pyvista.set_pickle_format('invalid_format')

@@ -194,7 +194,7 @@ and plots the meshes with various colors.
 Unstructured Grid Creation
 --------------------------
 
-See :ref:`ref_create_unstructured` for an example on how to create an
+See :ref:`create_unstructured_example` for an example on how to create an
 unstructured grid from NumPy arrays.
 
 

@@ -1266,5 +1266,5 @@ class PickingHelper:
 
         # remove any picking text
         if hasattr(self, 'renderers'):
-            self.remove_actor(self._picking_text)
+            self.remove_actor(self._picking_text, render=False)
         self._picking_text = None

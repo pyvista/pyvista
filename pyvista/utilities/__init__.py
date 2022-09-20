@@ -1,4 +1,5 @@
 """Utilities routines."""
+from .common import perlin_noise, sample_function
 from .errors import (
     GPUInfo,
     Observer,
@@ -39,6 +40,7 @@ from .reader import (
     MetaImageReader,
     MFIXReader,
     MultiBlockPlot3DReader,
+    NIFTIReader,
     NRRDReader,
     OBJReader,
     OpenFOAMReader,

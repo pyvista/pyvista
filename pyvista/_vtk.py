@@ -374,6 +374,7 @@ if VTK9:
         vtkHDRReader,
         vtkJPEGReader,
         vtkMetaImageReader,
+        vtkNIFTIImageReader,
         vtkNrrdReader,
         vtkPNGReader,
         vtkPNMReader,
@@ -412,6 +413,8 @@ if VTK9:
         vtkXMLRectilinearGridWriter,
         vtkXMLStructuredGridReader,
         vtkXMLStructuredGridWriter,
+        vtkXMLTableReader,
+        vtkXMLTableWriter,
         vtkXMLUnstructuredGridReader,
         vtkXMLUnstructuredGridWriter,
         vtkXMLWriter,
@@ -476,6 +479,7 @@ if VTK9:
         vtkImageRFFT,
     )
     from vtkmodules.vtkRenderingCore import (
+        vtkAbstractMapper,
         vtkActor,
         vtkActor2D,
         vtkCamera,

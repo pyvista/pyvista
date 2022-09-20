@@ -96,15 +96,12 @@ coverage_additional_modules = [
     'pyvista.plotting.theme',
     'pyvista.plotting.tools',
     'pyvista.plotting.widgets',
-    'pyvista.core.common_data',
-    'pyvista.core.common_data',
     'pyvista.core.composite',
     'pyvista.core.dataobject',
     'pyvista.core.datasetattributes',
     'pyvista.core.dataset',
     'pyvista.core.errors',
     'pyvista.core.grid',
-    'pyvista.core.imaging',
     'pyvista.core.objects',
     'pyvista.core.pointset',
     'pyvista.core.pyvista_ndarray',
@@ -116,6 +113,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.unstructured_grid',
     'pyvista.demos',
     'pyvista.examples.examples',
+    'pyvista.utilities.common',
     'pyvista.utilities.features',
     'pyvista.utilities.fileio',
     'pyvista.utilities.geometric_objects',
@@ -222,7 +220,7 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'python': ('https://docs.python.org/3', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),

@@ -1,5 +1,6 @@
 """Tests for pyvista.core.dataset."""
 
+import multiprocessing
 import pickle
 
 from hypothesis import HealthCheck, assume, given, settings
@@ -25,7 +26,13 @@ def grid():
 
 def test_invalid_overwrite(grid):
     with pytest.raises(TypeError):
-        grid.overwrite(pyvista.Plane())
+        grid.copy_from(pyvista.Plane())
+
+
+def test_overwrite_deprecation(grid):
+    mesh = type(grid)()
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.overwrite(grid)
 
 
 @composite
@@ -1131,7 +1138,9 @@ def test_point_is_inside_cell():
     assert np.array_equal(in_cell, np.array([True, False]))
 
 
-def test_serialize_deserialize(datasets):
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_serialize_deserialize(datasets, pickle_format):
+    pyvista.set_pickle_format(pickle_format)
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
@@ -1164,6 +1173,21 @@ def test_serialize_deserialize(datasets):
             arr_have = dataset_2.field_data[name]
             arr_expected = dataset.field_data[name]
             assert arr_have == pytest.approx(arr_expected)
+
+
+def n_points(dataset):
+    # used in multiprocessing test
+    return dataset.n_points
+
+
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_multiprocessing(datasets, pickle_format):
+    # exercise pickling via multiprocessing
+    pyvista.set_pickle_format(pickle_format)
+    with multiprocessing.Pool(2) as p:
+        res = p.map(n_points, datasets)
+    for res, dataset in zip(res, datasets):
+        assert res == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
