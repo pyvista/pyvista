@@ -1966,6 +1966,8 @@ class WidgetHelper:
         Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
+        if self.iren is None:  # pragma: no cover
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
