@@ -53,7 +53,7 @@ def test_file_from_files(tmpdir):
 
     fname = examples.downloads.file_from_files('tmp1.txt', fnames)
     if os.name == 'nt':
-        assert PureWindowsPath(fname).as_posix() == fnames[1]
+        assert PureWindowsPath(fname) == PureWindowsPath(fnames[1])
     else:
         assert fname == fnames[1]
 
