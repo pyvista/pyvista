@@ -41,7 +41,7 @@ catalan.plot(color='dodgerblue', backface_params=backface_params, smooth_shading
 
 
 ###############################################################################
-# In the case of non-orientable surfaces adding specific backface properties can
+# In the case of non-orientable surfaces, adding specific backface properties can
 # make the non-orientable quality very obvious by the emergence of "seams"
 # where the face properties are discontinuous.
 
