@@ -2774,12 +2774,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         copy_mesh : bool, optional
             If ``True``, a copy of the mesh will be made before adding it to
-            the plotter.  This is useful if e.g. you would like to add the same
+            the plotter.  This is useful if you would like to add the same
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
             have these updates rendered, e.g. by changing the active scalars or
-            through an interactive widget.  Defaults to ``False``.
+            through an interactive widget. This should only be set to ``True``
+            with caution. Defaults to ``False``.
 
         lookup_table : pyvista.LookupTable, optional
             Use a custom lookup table instead of a color map. If this is set,

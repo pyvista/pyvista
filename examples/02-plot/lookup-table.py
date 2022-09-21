@@ -13,7 +13,6 @@ the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 import pyvista as pv
 from pyvista import examples
 
-pv.set_plot_theme('document')
 
 # download an example dataset
 bracket = examples.download_fea_bracket().cell_data_to_point_data()

@@ -689,7 +689,7 @@ class LookupTable(_vtk.vtkLookupTable):
         elif self._values_manual:
             return 'From values array'
         else:
-            return 'VTK lookup table'
+            return 'PyVista Lookup Table'
 
     def plot(self, **kwargs):
         """Plot this lookup table.
