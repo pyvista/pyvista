@@ -1,7 +1,7 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
 
-Sphinx<4.6.0
+Sphinx<5.2.0
 cmocean<2.1
 codecov<2.2.0
 colorcet<3.1.0
