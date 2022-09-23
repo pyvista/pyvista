@@ -29,5 +29,5 @@ sphinx-notfound-page==0.8.3
 sphinx-panels==0.6.0
 sphinx-toolbox==3.2.0
 sphinxcontrib-websupport==1.2.4
-trimesh==3.15.1
+trimesh==3.15.2
 typed-ast==1.5.4
