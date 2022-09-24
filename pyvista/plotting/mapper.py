@@ -317,7 +317,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         theme: Optional['pv.themes.DefaultTheme'] = None,
     ):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
         if dataset is not None:
             self.dataset = dataset
 
@@ -729,7 +729,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
     def __init__(self, theme=None):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
         self._lut = None
         self._scalar_range = None
 
@@ -770,7 +770,7 @@ class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _Base
 
     def __init__(self, theme=None):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
 
 
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
@@ -778,7 +778,7 @@ class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
 
     def __init__(self, theme=None):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
 
 
 class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
@@ -786,7 +786,7 @@ class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVo
 
     def __init__(self, theme=None):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
 
 
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
@@ -794,4 +794,4 @@ class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
 
     def __init__(self, theme=None):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)

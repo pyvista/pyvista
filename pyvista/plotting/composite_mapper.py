@@ -522,7 +522,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None
     ):
         """Initialize this composite mapper."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
         self.SetInputDataObject(dataset)
 
         # this must be added to set the color, opacity, and visibility of
