@@ -33,11 +33,18 @@ meshes.plot(color='aquamarine', backface_params=backface_params, smooth_shading=
 # self-intersecting surfaces. For instance :func:`Catalan's minimal surface
 # <pyvista.ParametricCatalanMinimal>` has a complex shape, and coloring the
 # front and backfaces differently helps viewers comprehend the intricate
-# structure of the surface.
+# structure of the surface. This example also demonstrates use of the
+# :attr:`backface_prop <pyvista.Actor.backface_prop>` property of the
+# :class:`pyvista.Actor` class.
 
 catalan = pv.ParametricCatalanMinimal()
-backface_params = dict(color='forestgreen', specular=1.0, specular_power=50.0)
-catalan.plot(color='dodgerblue', backface_params=backface_params, smooth_shading=True)
+plotter = pv.Plotter()
+actor = plotter.add_mesh(catalan, color='dodgerblue', smooth_shading=True)
+bprop = actor.backface_prop
+bprop.color = 'forestgreen'
+bprop.specular = 1.0
+bprop.specular_power = 50.0
+plotter.show()
 
 
 ###############################################################################
