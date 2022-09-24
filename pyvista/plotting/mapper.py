@@ -27,7 +27,14 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self._theme = theme
 
     def copy(self, deep=True):
-        """Create a copy of this mapper."""
+        """Create a copy of this mapper.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            Whether to return a deep or a shallow copy.
+
+        """
         new_mapper = type(self)()
         if deep:
             new_mapper.dataset = self.dataset
