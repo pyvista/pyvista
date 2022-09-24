@@ -23,10 +23,10 @@ from .tools import normalize
 class _BaseMapper(_vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
-    def __init__(self, theme, **kwargs):
+    def __init__(self, theme=None, **kwargs):
         self._theme = theme
 
-    def copy(self, deep=True):
+    def copy(self, deep=True) -> '_BaseMapper':
         """Create a copy of this mapper.
 
         Parameters
