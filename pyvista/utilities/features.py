@@ -67,9 +67,11 @@ def voxelize(mesh, density=None, check_surface=True):
     ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(
-        mesh.extract_surface(), tolerance=0.0, check_surface=check_surface
-    )
+    surface = mesh.extract_surface()
+    if not surface.is_all_triangles:
+        # reduce chance for artifacts, see gh-1743
+        surface.triangulate(inplace=True)
+    selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
     mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
