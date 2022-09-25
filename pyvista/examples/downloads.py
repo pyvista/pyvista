@@ -3589,10 +3589,10 @@ def download_mars_jpg():
         Filename of the JPEG.
     """
     warnings.warn(
-        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_jpg with setting load False",
+        "examples.download_mars_texture is deprecated.  Use examples.planets.download_mars_texture with setting load False",
         PyVistaDeprecationWarning,
     )
-    return pyvista.examples.planets.download_mars_jpg(load=False)
+    return pyvista.examples.planets.download_mars_texture(load=False)
 
 
 def download_stars_jpg():
@@ -3604,10 +3604,10 @@ def download_stars_jpg():
         Filename of the JPEG.
     """
     warnings.warn(
-        "examples.download_stars_jpg is deprecated.  Use examples.planets.download_stars_jpg",
+        "examples.download_stars_texture is deprecated.  Use examples.planets.download_stars_texture",
         PyVistaDeprecationWarning,
     )
-    return pyvista.examples.planets.download_stars_jpg(load=False)
+    return pyvista.examples.planets.download_stars_texture(load=False)
 
 
 def download_notch_stress(load=True):  # pragma: no cover

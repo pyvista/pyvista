@@ -73,7 +73,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_sun())
     >>> plotter.show()
@@ -82,7 +82,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_sun_jpg(texture=True)
+    surface = download_sun_texture(texture=True)
     sphere.textures["atmosphere"] = surface
     return sphere
 
@@ -111,7 +111,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_moon())
     >>> plotter.show()
@@ -120,7 +120,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_moon_jpg(texture=True)
+    surface = download_moon_texture(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
@@ -149,7 +149,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_mercury())
     >>> plotter.show()
@@ -158,7 +158,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_mercury_jpg(texture=True)
+    surface = download_mercury_texture(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
@@ -187,7 +187,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_venus())
     >>> plotter.show()
@@ -196,9 +196,9 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_venus_jpg(atmosphere=False, texture=True)
+    surface = download_venus_texture(atmosphere=False, texture=True)
     sphere.textures["surface"] = surface
-    atmosphere = download_venus_jpg(texture=True)
+    atmosphere = download_venus_texture(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -227,7 +227,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_mars())
     >>> plotter.show()
@@ -236,7 +236,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_mars_jpg(texture=True)
+    surface = examples.planets.download_mars_texture(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
@@ -265,7 +265,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_jupiter())
     >>> plotter.show()
@@ -274,7 +274,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_jupiter_jpg(texture=True)
+    atmosphere = download_jupiter_texture(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -303,7 +303,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_saturn())
     >>> plotter.show()
@@ -312,7 +312,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_saturn_jpg(texture=True)
+    atmosphere = download_saturn_texture(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -343,7 +343,7 @@ def load_saturn_ring_alpha(inner=0.25, outer=0.5, c_res=6):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_saturn_ring_alpha())
     >>> plotter.show()
@@ -383,7 +383,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_uranus())
     >>> plotter.show()
@@ -392,7 +392,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_uranus_jpg(texture=True)
+    atmosphere = download_uranus_texture(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -421,7 +421,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_neptune())
     >>> plotter.show()
@@ -430,7 +430,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_neptune_jpg(texture=True)
+    atmosphere = download_neptune_texture(texture=True)
     sphere.textures["atmosphere"] = atmosphere
     return sphere
 
@@ -459,7 +459,7 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista
     >>> from pyvista import examples
     >>> plotter = pyvista.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> _ = plotter.add_mesh(examples.planets.load_pluto())
     >>> plotter.show()
@@ -468,12 +468,12 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_pluto_jpg(texture=True)
+    surface = examples.planets.download_pluto_texture(texture=True)
     sphere.textures["surface"] = surface
     return sphere
 
 
-def download_sun_jpg(texture=False, load=True):  # pragma: no cover
+def download_sun_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'sun.jpg'``.
 
     Parameters
@@ -494,14 +494,14 @@ def download_sun_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_sun_jpg()
+    >>> surface = examples.planets.download_sun_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('sun.jpg', texture=texture, load=load)
 
 
-def download_moon_jpg(texture=False, load=True):  # pragma: no cover
+def download_moon_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'moon.jpg'``.
 
     Parameters
@@ -522,14 +522,14 @@ def download_moon_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_moon_jpg()
+    >>> surface = examples.planets.download_moon_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('moon.jpg', texture=texture, load=load)
 
 
-def download_mercury_jpg(texture=False, load=True):  # pragma: no cover
+def download_mercury_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'mercury.jpg'``.
 
     Parameters
@@ -550,14 +550,14 @@ def download_mercury_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_mercury_jpg()
+    >>> surface = examples.planets.download_mercury_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('mercury.jpg', texture=texture, load=load)
 
 
-def download_venus_jpg(atmosphere=True, texture=False, load=True):  # pragma: no cover
+def download_venus_texture(atmosphere=True, texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'venus.jpg'``.
 
     Parameters
@@ -581,7 +581,7 @@ def download_venus_jpg(atmosphere=True, texture=False, load=True):  # pragma: no
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_venus_jpg()
+    >>> surface = examples.planets.download_venus_texture()
     >>> surface.plot(cpos="xy")
 
     """
@@ -591,7 +591,7 @@ def download_venus_jpg(atmosphere=True, texture=False, load=True):  # pragma: no
         return _download_and_read('venus_surface.jpg', load=load, texture=texture)
 
 
-def download_mars_jpg(texture=False, load=True):  # pragma: no cover
+def download_mars_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'mars.jpg'``.
 
     Parameters
@@ -612,14 +612,14 @@ def download_mars_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_mars_jpg()
+    >>> surface = examples.planets.download_mars_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('mars.jpg', load=load, texture=texture)
 
 
-def download_jupiter_jpg(texture=False, load=True):  # pragma: no cover
+def download_jupiter_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'jupiter.jpg'``.
 
     Parameters
@@ -640,14 +640,14 @@ def download_jupiter_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_jupiter_jpg()
+    >>> surface = examples.planets.download_jupiter_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('jupiter.jpg', texture=texture, load=load)
 
 
-def download_saturn_jpg(texture=False, load=True):  # pragma: no cover
+def download_saturn_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'saturn.jpg'``.
 
     Parameters
@@ -668,7 +668,7 @@ def download_saturn_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_saturn_jpg()
+    >>> surface = examples.planets.download_saturn_texture()
     >>> surface.plot(cpos="xy")
 
     """
@@ -703,7 +703,7 @@ def download_saturn_ring_alpha_png(texture=False, load=True):  # pragma: no cove
     return _download_and_read('saturn_ring_alpha.png', texture=texture, load=load)
 
 
-def download_uranus_jpg(texture=False, load=True):  # pragma: no cover
+def download_uranus_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'uranus.jpg'``.
 
     Parameters
@@ -724,14 +724,14 @@ def download_uranus_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_uranus_jpg()
+    >>> surface = examples.planets.download_uranus_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('uranus.jpg', texture=texture, load=load)
 
 
-def download_neptune_jpg(texture=False, load=True):  # pragma: no cover
+def download_neptune_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'neptune.jpg'``.
 
     Parameters
@@ -752,14 +752,14 @@ def download_neptune_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_neptune_jpg()
+    >>> surface = examples.planets.download_neptune_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('neptune.jpg', texture=texture, load=load)
 
 
-def download_pluto_jpg(texture=False, load=True):  # pragma: no cover
+def download_pluto_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'pluto.png'``.
 
     Parameters
@@ -780,14 +780,14 @@ def download_pluto_jpg(texture=False, load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista
-    >>> surface = examples.planets.download_pluto_jpg()
+    >>> surface = examples.planets.download_pluto_texture()
     >>> surface.plot(cpos="xy")
 
     """
     return _download_and_read('pluto.jpg', texture=texture, load=load)
 
 
-def download_stars_jpg(texture=False, load=True):  # pragma: no cover
+def download_stars_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'stars.jpg'``.
 
     Parameters
@@ -809,7 +809,7 @@ def download_stars_jpg(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> plotter = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_jpg(load=False)
+    >>> image_path = examples.planets.download_stars_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> plotter.show()
 
@@ -819,7 +819,7 @@ def download_stars_jpg(texture=False, load=True):  # pragma: no cover
     return _download_and_read('stars.jpg', texture=texture, load=load)
 
 
-def download_milkyway_jpg(texture=False, load=True):  # pragma: no cover
+def download_milkyway_texture(texture=False, load=True):  # pragma: no cover
     """Download and return the path of ``'milkyway.jpg'``.
 
     Parameters
@@ -841,7 +841,7 @@ def download_milkyway_jpg(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> plotter = pv.Plotter()
-    >>> image_path = examples.planets.download_milkyway_jpg(load=False)
+    >>> image_path = examples.planets.download_milkyway_texture(load=False)
     >>> plotter.add_background_image(image_path)
     >>> plotter.show()
 
