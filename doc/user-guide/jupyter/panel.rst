@@ -69,7 +69,7 @@ Alternatively, you can set the backend globally:
     sphere.active_t_coords[:, 0] = 0.5 + np.arctan2(-sphere.points[:, 0], sphere.points[:, 1])/(2 * math.pi)
     sphere.active_t_coords[:, 1] = 0.5 + np.arcsin(sphere.points[:, 2]) / math.pi
 
-    tex = examples.planets.download_mars_jpg()
+    tex = examples.planets.download_mars_texture()
 
     # with a black background
     pl = pyvista.Plotter(window_size=[500, 500])
