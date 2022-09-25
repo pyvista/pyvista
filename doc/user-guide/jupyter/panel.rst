@@ -78,6 +78,7 @@ Alternatively, you can set the backend globally:
     pl.add_mesh(sphere, smooth_shading=False)
     pl.show()
 
+
 Configuration Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If running on a headless environment (e.g. Google Colab, your own VM),
