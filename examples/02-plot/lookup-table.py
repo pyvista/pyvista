@@ -68,11 +68,11 @@ lut.plot()
 ###############################################################################
 # Plot the bracket with the custom colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# You can set assign the lookup table when using ``add_mesh``.
+# You can set assign the lookup table when using ``add_mesh`` with ``cmap=``.
 
 
 pl = pv.Plotter()
-actor = pl.add_mesh(bracket, lookup_table=lut, lighting=False)
+actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
 pl.show()
 
 
@@ -99,7 +99,7 @@ lut.plot()
 # the plot.
 
 pl = pv.Plotter()
-actor = pl.add_mesh(bracket, lookup_table=lut, lighting=False)
+actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
 pl.show()
 
 
@@ -114,7 +114,7 @@ pl.show()
 
 
 pl = pv.Plotter()
-actor = pl.add_mesh(bracket, lookup_table=lut, lighting=False)
+actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
 pl.add_text('Alpha Range Demo')
 
 
@@ -223,7 +223,7 @@ def make_double_slider(attr, idx):
 
 
 pl = pv.Plotter()
-actor = pl.add_mesh(bracket, lookup_table=lut, lighting=False)
+actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
 make_double_slider('alpha_range', 0)
 make_double_slider('hue_range', 1)
 make_double_slider('value_range', 2)
