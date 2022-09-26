@@ -2067,7 +2067,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str, list, or pyvista.LookupTable, default :attr:`pyvista.themes.DefaultTheme.cmap`
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``. Requires
@@ -2582,7 +2582,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str, list, or pyvista.LookupTable, default :attr:`pyvista.themes.DefaultTheme.cmap`
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``. Requires
@@ -3205,12 +3205,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
 
-        cmap : str, optional
-            Name of the Matplotlib colormap to us when mapping the ``scalars``.
-            See available Matplotlib colormaps.  Only applicable for when
-            displaying ``scalars``. Requires Matplotlib to be installed.
-            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-            ``cmocean`` are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
+
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -3508,44 +3517,40 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper.scalar_range = clim
 
-        if not has_module('matplotlib'):
-            raise ImportError('Please install matplotlib for volume rendering.')
-        if cmap is None:
-            cmap = self._theme.cmap
+        if isinstance(cmap, pyvista.LookupTable):
+            self.mapper.lookup_table = cmap
+        else:
+            if cmap is None:
+                if not has_module('matplotlib'):
+                    raise ImportError('Please install matplotlib for color maps.')
 
-        cmap = get_cmap_safe(cmap)
-        if categories:
-            if categories is True:
-                n_colors = len(np.unique(scalars))
-            elif isinstance(categories, int):
-                n_colors = categories
+                cmap = self._theme.cmap
 
-        if flip_scalars:
-            cmap = cmap.reversed()
+            cmap = get_cmap_safe(cmap)
+            if categories:
+                if categories is True:
+                    n_colors = len(np.unique(scalars))
+                elif isinstance(categories, int):
+                    n_colors = categories
 
-        color_tf = _vtk.vtkColorTransferFunction()
-        for ii, value in enumerate(np.linspace(0, 255, n_colors, dtype=np.uint8)):
-            color_tf.AddRGBPoint(ii, *cmap(value)[:-1])
+            if flip_scalars:
+                cmap = cmap.reversed()
 
-        # Set opacities
-        if isinstance(opacity, (float, int)):
-            opacity_values = [opacity] * n_colors
-        elif isinstance(opacity, str):
-            opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
-        elif isinstance(opacity, (np.ndarray, list, tuple)):
-            opacity = np.array(opacity)
-            opacity_values = opacity_transfer_function(opacity, n_colors)
+            # Set opacities
+            if isinstance(opacity, (float, int)):
+                opacity_values = [opacity] * n_colors
+            elif isinstance(opacity, str):
+                opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
+            elif isinstance(opacity, (np.ndarray, list, tuple)):
+                opacity = np.array(opacity)
+                opacity_values = opacity_transfer_function(opacity, n_colors)
 
-        opacity_tf = _vtk.vtkPiecewiseFunction()
-        for ii in range(n_colors):
-            opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
-
-        # Set colormap and build lookup table
-        self.mapper.lookup_table._apply_cmap(cmap, n_colors)
-        self.mapper.lookup_table.values[:, 3] = opacity_values
-        self.mapper.lookup_table.scalar_range = clim
-        if isinstance(annotations, dict):
-            self.mapper.lookup_table.annotations = annotations
+            # Set colormap and build lookup table
+            self.mapper.lookup_table._apply_cmap(cmap, n_colors)
+            self.mapper.lookup_table.values[:, 3] = opacity_values
+            self.mapper.lookup_table.scalar_range = clim
+            if isinstance(annotations, dict):
+                self.mapper.lookup_table.annotations = annotations
 
         self.mapper.dataset = volume
 
@@ -3563,7 +3568,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             raise ValueError(
                 f'Blending mode {blending!r} invalid. '
-                'Please choose one of "additive", '
+                'Please choose either "additive", '
                 '"composite", "minimum" or "maximum".'
             )
         self.mapper.update()
@@ -3572,8 +3577,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.volume.SetMapper(self.mapper)
 
         prop = _vtk.vtkVolumeProperty()
-        prop.SetColor(color_tf)
-        prop.SetScalarOpacity(opacity_tf)
+        prop.SetColor(self.mapper.lookup_table.to_color_tf())
+        prop.SetScalarOpacity(self.mapper.lookup_table.to_opacity_tf())
         prop.SetAmbient(ambient)
         prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
         prop.SetShade(shade)

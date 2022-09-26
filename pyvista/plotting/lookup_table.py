@@ -721,7 +721,7 @@ class LookupTable(_vtk.vtkLookupTable):
         mesh = pv.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pv.Plotter(window_size=(800, 230))
+        pl = pv.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
@@ -752,3 +752,89 @@ class LookupTable(_vtk.vtkLookupTable):
 
         pl.background_color = kwargs.pop('background', 'w')
         pl.show(**kwargs)
+
+    def to_color_tf(self) -> _vtk.vtkColorTransferFunction:
+        """Return the VTK color transfer function of this table.
+
+        Returns
+        -------
+        vtk.vtkColorTransferFunction
+            VTK color transfer function.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> lut = pyvista.LookupTable()
+        >>> tf = lut.to_color_tf()
+        >>> tf  # doctest:+SKIP
+        <vtkmodules.vtkRenderingCore.vtkColorTransferFunction(0x339bd40) at 0x7ffabf634700>
+
+        """
+        color_tf = _vtk.vtkColorTransferFunction()
+        mn, mx = self.scalar_range
+        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
+            color_tf.AddRGBPoint(ii, *self.map_value(value, False))
+        return color_tf
+
+    def to_opacity_tf(self):
+        """Return the opacity transfer function of this table.
+
+        Returns
+        -------
+        vtk.vtkPiecewiseFunction
+            Piecewise function of the opacity of this color table.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> lut = pyvista.LookupTable()
+        >>> tf = lut.to_opacity_tf()
+        >>> tf  # doctest:+SKIP
+        <vtkmodules.vtkCommonDataModel.vtkPiecewiseFunction(0x32fa410) at 0x7fe963d6d5e0>
+
+        """
+        opacity_tf = _vtk.vtkPiecewiseFunction()
+        for ii, value in enumerate(self.values[:, 3]):
+            opacity_tf.AddPoint(ii, value / self.n_values)
+        return opacity_tf
+
+    def map_value(self, value: float, opacity: bool = True) -> tuple:
+        """Map a single value through the lookup table, returning an RBG(A) color.
+
+        Parameters
+        ----------
+        value : float
+            Scalar value to map to an RGB(A) color.
+
+        opacity : bool, default: True
+            Map the opacity as well.
+
+        Returns
+        -------
+        tuple
+            Mapped RGB(A) color.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> lut = pyvista.LookupTable()
+        >>> rgba_color = lut.map_value(0.0)
+        >>> rgba_color
+        (1.0, 0.0, 0.0, 1.0)
+
+        """
+        color = [0.0, 0.0, 0.0]
+        self.GetColor(value, color)
+        if opacity:
+            color.append(self.GetOpacity(value))
+        return tuple(color)
+
+    def __call__(self, value):
+        """Implement a matplotlib colormap-like call."""
+        if isinstance(value, (int, float)):
+            return self.map_value(value)
+        else:
+            try:
+                return np.array([self.map_value(item) for item in value])
+            except:
+                raise TypeError('LookupTable __call__ expects a single value or an iterable.')

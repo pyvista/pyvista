@@ -2984,6 +2984,15 @@ def test_plotter_lookup_table(sphere):
     sphere.plot(scalars=sphere.points[:, 2], cmap=lut, before_close_callback=verify_cache_image)
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_lookup_table(uniform):
+    lut = pyvista.LookupTable()
+    lut.alpha_range = (0, 1)
+    pl = pyvista.Plotter()
+    pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_plot_actor(sphere):
     pl = pyvista.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)

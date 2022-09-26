@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import vtk
 
 from pyvista import Color, LookupTable
 
@@ -151,3 +152,21 @@ def test_table_values_update(lut):
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
     assert lut.values.max() == 255
     assert lut.values[:, 2].max() < 255
+
+
+def test_to_tf(lut):
+    tf = lut.to_color_tf()
+    assert isinstance(tf, vtk.vtkColorTransferFunction)
+
+
+def test_map_value(lut):
+    assert lut.map_value(0.5) == (0.0, 1.0, 0.0, 1.0)
+
+
+def test_call(lut):
+    n_values = 10
+    arr = lut(np.linspace(0, 1, n_values))
+    assert isinstance(arr, np.ndarray)
+    assert arr.shape[0] == n_values
+
+    assert lut.map_value(0.5) == lut.map_value(0.5)
