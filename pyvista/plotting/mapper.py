@@ -602,9 +602,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
         if lookup_table is not None:
             self.lookup_table = lookup_table
-            self.scalar_range = self.lookup_table.table_range
+            self.scalar_range = self.lookup_table.scalar_range
         else:
-            self.lookup_table.table_range = self.scalar_range
+            self.lookup_table.scalar_range = self.scalar_range
             # Set default map if matplotlib is available
             if cmap is None:
                 if has_module('matplotlib'):

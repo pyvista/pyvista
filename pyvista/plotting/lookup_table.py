@@ -259,7 +259,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """Use log scale.
 
         When ``True`` the lookup table is a log scale to
-        :attr:`LookupTable.table_range`. Otherwise, it is linear scale.
+        :attr:`LookupTable.scalar_range`. Otherwise, it is linear scale.
 
         Examples
         --------
@@ -268,7 +268,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
         >>> lut.log_scale = True
-        >>> lut.table_range = (1, 100)
+        >>> lut.scalar_range = (1, 100)
         >>> lut.plot()
 
         """
@@ -281,7 +281,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def __repr__(self):
         """Return the representation."""
         lines = [f'{type(self).__name__} ({hex(id(self))})']
-        lines.append(f'  Table Range:                {self.table_range}')
+        lines.append(f'  Table Range:                {self.scalar_range}')
         lines.append(f'  N Values:                   {self.n_values}')
         lines.append(f'  Above Range Color:          {self.above_range_color}')
         lines.append(f'  Below Range Color:          {self.below_range_color}')
@@ -299,7 +299,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return '\n'.join(lines)
 
     @property
-    def table_range(self) -> tuple:
+    def scalar_range(self) -> tuple:
         """Return or set the table range.
 
         This is the range of scalars which will be mapped to colors. Values
@@ -311,15 +311,15 @@ class LookupTable(_vtk.vtkLookupTable):
         --------
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.table_range = (0, 10)
-        >>> lut.table_range
+        >>> lut.scalar_range = (0, 10)
+        >>> lut.scalar_range
         (0.0, 10.0)
 
         """
         return self.GetTableRange()
 
-    @table_range.setter
-    def table_range(self, value: tuple):
+    @scalar_range.setter
+    def scalar_range(self, value: tuple):
         self.SetTableRange(value)
 
     @property
@@ -473,7 +473,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def above_range_color(self) -> Optional[Color]:
         """Return or set the above range color.
 
-        Any values above :attr:`LookupTable.table_range` will be rendered with this
+        Any values above :attr:`LookupTable.scalar_range` will be rendered with this
         color.
 
         Examples
@@ -509,7 +509,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def below_range_color(self) -> Optional[Color]:
         """Return or set the below range color.
 
-        Any values below :attr:`LookupTable.table_range` will be rendered with this
+        Any values below :attr:`LookupTable.scalar_range` will be rendered with this
         color.
 
         Examples
@@ -719,7 +719,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         # need a trivial polydata for this
         mesh = pv.PolyData(np.zeros((2, 3)))
-        mesh['Lookup Table'] = self.table_range
+        mesh['Lookup Table'] = self.scalar_range
 
         pl = pv.Plotter(window_size=(800, 230))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)

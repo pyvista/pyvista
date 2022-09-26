@@ -2068,18 +2068,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str or list, default :attr:`pyvista.themes.DefaultTheme.cmap`
-            Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
-            are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
 
-            You can also specify a list of colors to override an
-            existing colormap with a custom one.  For example, to
-            create a three color colormap you might specify
-            ``['green', 'red', 'blue']``.
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         label : str, optional
             String label to use when adding a legend to the scene with
@@ -2245,11 +2248,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             would like to update the mesh after adding it to the plotter and
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
-
-        lookup_table : pyvista.LookupTable, optional
-            Use a custom lookup table instead of a color map. If this is set,
-            all parameters controlling the color map like ``cmap`` and
-            ``n_colors`` will be ignored.
 
         **kwargs : dict, optional
             Optional developer keyword arguments.
@@ -3552,7 +3550,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Set colormap and build lookup table
         self.mapper.lookup_table._apply_cmap(cmap, n_colors)
         self.mapper.lookup_table.values[:, 3] = opacity_values
-        self.mapper.lookup_table.table_range = clim
+        self.mapper.lookup_table.scalar_range = clim
         if isinstance(annotations, dict):
             self.mapper.lookup_table.annotations = annotations
 

@@ -13,7 +13,6 @@ the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 import pyvista as pv
 from pyvista import examples
 
-
 # download an example dataset
 bracket = examples.download_fea_bracket().cell_data_to_point_data()
 bracket
@@ -60,7 +59,7 @@ pl.show()
 # and color values above and below the range.
 
 lut = pv.LookupTable(cmap='magma')
-lut.table_range = (5, 15)
+lut.scalar_range = (5, 15)
 lut.below_range_color = pv.Color('grey', opacity=0.5)
 lut.above_range_color = 'r'
 lut.plot()
@@ -89,7 +88,7 @@ lut.value_range = (0.35, 1)  # dark grey to white
 lut.hue_range = (0.35, 0.7)  # green to cyna
 lut.saturation_range = (0.75, 0.5)  # reduce saturation near the upper end
 lut.alpha_range = (0.0, 0.9)  #
-lut.table_range = (2, 18)
+lut.scalar_range = (2, 18)
 lut.plot()
 
 
@@ -166,7 +165,7 @@ lut.value_range = (0.3, 0.75)
 lut.hue_range = (0.0, 0.095)
 lut.saturation_range = (0.0, 0.67)
 lut.alpha_range = (0.0, 1.0)
-lut.table_range = (2, 18)
+lut.scalar_range = (2, 18)
 
 scalars_rng = (bracket.active_scalars.min(), bracket.active_scalars.max())
 
@@ -182,7 +181,7 @@ def make_double_slider(attr, idx):
             pl.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(max_value)
         setattr(lut, attr, (min_value, max_value))
 
-        if attr == 'table_range':
+        if attr == 'scalar_range':
             actor.mapper.scalar_range = getattr(lut, attr)
 
     def set_max(max_value):
@@ -193,10 +192,10 @@ def make_double_slider(attr, idx):
             pl.slider_widgets[idx * 2].GetRepresentation().SetValue(min_value)
         setattr(lut, attr, (min_value, max_value))
 
-        if attr == 'table_range':
+        if attr == 'scalar_range':
             actor.mapper.scalar_range = getattr(lut, attr)
 
-    if attr == 'table_range':
+    if attr == 'scalar_range':
         rng = scalars_rng
     else:
         rng = (0, 1)
@@ -229,7 +228,7 @@ make_double_slider('alpha_range', 0)
 make_double_slider('hue_range', 1)
 make_double_slider('value_range', 2)
 make_double_slider('saturation_range', 3)
-make_double_slider('table_range', 4)
+make_double_slider('scalar_range', 4)
 
 pl.camera_position = [(9.021, 5.477, 7.780), (-0.679, 1.349, 0.874), (-0.498, -0.228, 0.836)]
 cpos = pl.show(return_cpos=True)

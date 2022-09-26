@@ -2980,7 +2980,7 @@ def test_lookup_table():
 def test_plotter_lookup_table(sphere):
     lut = pyvista.LookupTable('Reds')
     lut.n_values = 3
-    lut.table_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
+    lut.scalar_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
     sphere.plot(
         scalars=sphere.points[:, 2], lookup_table=lut, before_close_callback=verify_cache_image
     )

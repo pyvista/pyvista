@@ -122,7 +122,7 @@ def test_log_scale(lut):
 
 
 def test_repr(lut):
-    assert 'VTK' in repr(lut)
+    assert 'PyVista' in repr(lut)
 
     lut.values = lut.values**0.5
     assert 'From values' in repr(lut)
@@ -135,10 +135,10 @@ def test_repr(lut):
     assert 'fire' in repr(lut)
 
 
-def test_table_range(lut):
-    table_range = (0.5, 1.0)
-    lut.table_range = table_range
-    assert lut.table_range == table_range
+def test_scalar_range(lut):
+    scalar_range = (0.5, 1.0)
+    lut.scalar_range = scalar_range
+    assert lut.scalar_range == scalar_range
 
 
 def test_table_cmap_list(lut):
