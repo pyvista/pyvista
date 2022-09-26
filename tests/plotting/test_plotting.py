@@ -2668,7 +2668,7 @@ def test_plot_composite_categories(multiblock_poly):
 def test_plot_composite_lookup_table(multiblock_poly):
     lut = pyvista.LookupTable('Greens', n_values=8)
     pl = pyvista.Plotter()
-    pl.add_composite(multiblock_poly, scalars='data_b', lookup_table=lut)
+    pl.add_composite(multiblock_poly, scalars='data_b', cmap=lut)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2981,9 +2981,7 @@ def test_plotter_lookup_table(sphere):
     lut = pyvista.LookupTable('Reds')
     lut.n_values = 3
     lut.scalar_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
-    sphere.plot(
-        scalars=sphere.points[:, 2], lookup_table=lut, before_close_callback=verify_cache_image
-    )
+    sphere.plot(scalars=sphere.points[:, 2], cmap=lut, before_close_callback=verify_cache_image)
 
 
 def test_plot_actor(sphere):

@@ -421,7 +421,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         opacity=None,
         categories=False,
         clim=None,
-        lookup_table=None,
     ):
         """Set the scalars on this mapper.
 
@@ -488,18 +487,21 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        cmap : str, list, optional
+        cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
-            are installed, their colormaps can be specified by name.
+            ``scalars``.  See available Matplotlib colormaps.  Only applicable
+            for when displaying ``scalars``. Requires Matplotlib to be
+            installed.  ``colormap`` is also an accepted alias for this. If
+            ``colorcet`` or ``cmocean`` are installed, their colormaps can be
+            specified by name.
 
-            You can also specify a list of colors to override an
-            existing colormap with a custom one.  For example, to
-            create a three color colormap you might specify
-            ``['green', 'red', 'blue']``.
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         flip_scalars : bool, default: False
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -521,11 +523,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``(-1, 2)``.
 
-        lookup_table : pyvista.LookupTable
-            Use a custom lookup table instead of a color map. If this is set,
-            all parameters controlling the color map like ``cmap`` and
-            ``n_colors`` will be ignored.
-
         """
         if scalar_bar_args is None:
             scalar_bar_args = {'n_colors': n_colors}
@@ -537,7 +534,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if custom_opac:
             scalars_name = '__custom_rgba'
 
-        if not np.issubdtype(scalars.dtype, np.number) and lookup_table is None:
+        if not np.issubdtype(scalars.dtype, np.number) and not isinstance(cmap, pv.LookupTable):
 
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
@@ -600,8 +597,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if np.any(clim) and not rgb:
             self.scalar_range = clim[0], clim[1]
 
-        if lookup_table is not None:
-            self.lookup_table = lookup_table
+        if isinstance(cmap, pv.LookupTable):
+            self.lookup_table = cmap
             self.scalar_range = self.lookup_table.scalar_range
         else:
             self.lookup_table.scalar_range = self.scalar_range

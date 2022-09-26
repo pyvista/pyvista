@@ -1995,7 +1995,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
-        lookup_table=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2413,7 +2412,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     flip_scalars,
                     categories,
                     log_scale,
-                    lookup_table,
                 )
             else:
                 self.mapper.scalar_visibility = False
@@ -2488,7 +2486,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render=True,
         component=None,
         copy_mesh=False,
-        lookup_table=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2585,18 +2582,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str, list, optional
-            Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
-            are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
 
-            You can also specify a list of colors to override an
-            existing colormap with a custom one.  For example, to
-            create a three color colormap you might specify
-            ``['green', 'red', 'blue']``.
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         label : str, optional
             String label to use when adding a legend to the scene with
@@ -2780,11 +2780,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             through an interactive widget. This should only be set to ``True``
             with caution. Defaults to ``False``.
 
-        lookup_table : pyvista.LookupTable, optional
-            Use a custom lookup table instead of a color map. If this is set,
-            all parameters controlling the color map like ``cmap`` and
-            ``n_colors`` will be ignored.
-
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
@@ -2900,7 +2895,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
-                lookup_table=lookup_table,
                 **kwargs,
             )
         elif copy_mesh:
@@ -3067,7 +3061,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity,
                 categories,
                 clim,
-                lookup_table,
             )
             self.mapper.scalar_visibility = True
         elif custom_opac:  # no scalars but custom opacity

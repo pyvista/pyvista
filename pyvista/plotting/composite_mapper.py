@@ -668,7 +668,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         flip_scalars,
         categories,
         log_scale,
-        lookup_table,
     ):
         """Set the scalars of the mapper.
 
@@ -726,12 +725,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        cmap : str, list
+        cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
+            ``scalars``.  See available Matplotlib colormaps.  Only applicable
+            for when displaying ``scalars``. Requires Matplotlib to be
+            installed.  ``colormap`` is also an accepted alias for this. If
+            ``colorcet`` or ``cmocean`` are installed, their colormaps can be
+            specified by name.
+
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
             are installed, their colormaps can be specified by name.
 
         flip_scalars : bool
@@ -747,11 +755,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
             positive float.
-
-        lookup_table : pyvista.LookupTable
-            Use a custom lookup table instead of a color map. If this is set,
-            all parameters controlling the color map like ``cmap`` and
-            ``n_colors`` will be ignored.
 
         Returns
         -------
@@ -782,8 +785,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
-        if lookup_table is not None:
-            self.lookup_table = lookup_table
+        if isinstance(cmap, pv.LookupTable):
+            self.lookup_table = cmap
         else:
             if dtype == np.bool_:
                 cats = np.array([b'False', b'True'], dtype='|S5')
