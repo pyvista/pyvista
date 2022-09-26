@@ -490,7 +490,7 @@ the docstrings.  Full gallery examples should be placed in ``examples``.
 Adding a New Example
 ^^^^^^^^^^^^^^^^^^^^
 PyVista's examples come in two formats: basic code snippets demonstrating the
-functionality of an individual method, or a full gallery example displaying one
+functionality of an individual method or a full gallery example displaying one
 or more concepts.  Small code samples and snippets are contained in the
 ``doc/api`` directory or within our documentation strings, while the full
 gallery examples, meant to be run as individual downloadable scripts, are
