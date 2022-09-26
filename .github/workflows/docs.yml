@@ -54,7 +54,7 @@ jobs:
       - name: PyVista Report
         run: |
           python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.PATH)") >> $GITHUB_ENV
+          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v3
