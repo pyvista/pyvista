@@ -46,10 +46,10 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
     sphere.active_t_coords = texture_coords
-    return sphere
+    return sphere.extract_surface(pass_pointid=False, pass_cellid=False)
 
 
-def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the Sun as a textured sphere.
 
     Parameters
@@ -87,7 +87,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the Moon as a textured sphere.
 
     Parameters
@@ -125,7 +125,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Mercury as a textured sphere.
 
     Parameters
@@ -163,7 +163,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Venus as a textured sphere.
 
     Parameters
@@ -203,7 +203,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Mars as a textured Sphere.
 
     Parameters
@@ -241,7 +241,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Jupiter as a textured sphere.
 
     Parameters
@@ -279,7 +279,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Saturn as a textured sphere.
 
     Parameters
@@ -317,7 +317,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):
+def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     """Load the planet Saturn's rings.
 
     Arguments are passed on to :func:`pyvista.Disc`.
@@ -359,7 +359,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):
     return disc
 
 
-def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Uranus as a textured sphere.
 
     Parameters
@@ -397,7 +397,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Neptune as a textured sphere.
 
     Parameters
@@ -435,7 +435,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     return sphere
 
 
-def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the dwarf planet Pluto as a textured sphere.
 
     Parameters
@@ -500,7 +500,7 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('sun.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/sun.jpg', texture=texture, load=load)
 
 
 def download_moon_surface(texture=False, load=True):  # pragma: no cover
@@ -530,7 +530,7 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('moon.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/moon.jpg', texture=texture, load=load)
 
 
 def download_mercury_surface(texture=False, load=True):  # pragma: no cover
@@ -560,7 +560,7 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('mercury.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/mercury.jpg', texture=texture, load=load)
 
 
 def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma: no cover
@@ -594,9 +594,9 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
 
     """
     if atmosphere:
-        return _download_and_read('venus_atmosphere.jpg', load=load, texture=texture)
+        return _download_and_read('solar_textures/venus_atmosphere.jpg', load=load, texture=texture)
     else:
-        return _download_and_read('venus_surface.jpg', load=load, texture=texture)
+        return _download_and_read('solar_textures/venus_surface.jpg', load=load, texture=texture)
 
 
 def download_mars_surface(texture=False, load=True):  # pragma: no cover
@@ -626,7 +626,7 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('mars.jpg', load=load, texture=texture)
+    return _download_and_read('solar_textures/mars.jpg', load=load, texture=texture)
 
 
 def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
@@ -656,7 +656,7 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('jupiter.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/jupiter.jpg', texture=texture, load=load)
 
 
 def download_saturn_surface(texture=False, load=True):  # pragma: no cover
@@ -686,7 +686,7 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('saturn.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/saturn.jpg', texture=texture, load=load)
 
 
 def download_saturn_rings(texture=False, load=True):  # pragma: no cover
@@ -715,7 +715,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(cpos='xy')
 
     """
-    return _download_and_read('saturn_ring_alpha.png', texture=texture, load=load)
+    return _download_and_read('solar_textures/saturn_ring_alpha.png', texture=texture, load=load)
 
 
 def download_uranus_surface(texture=False, load=True):  # pragma: no cover
@@ -745,7 +745,7 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('uranus.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/uranus.jpg', texture=texture, load=load)
 
 
 def download_neptune_surface(texture=False, load=True):  # pragma: no cover
@@ -775,7 +775,7 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('neptune.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/neptune.jpg', texture=texture, load=load)
 
 
 def download_pluto_surface(texture=False, load=True):  # pragma: no cover
@@ -805,14 +805,14 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('pluto.jpg', texture=texture, load=load)
+    return _download_and_read('solar_textures/pluto.jpg', texture=texture, load=load)
 
 
 def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
     """Download the night sky stars texture.
 
-    Textures obtained from `Solar Textures
-    <https://www.solarsystemscope.com/textures/>`_.
+    Textures obtained from `tamaskis/planet3D-MATLAB
+    <https://github.com/tamaskis/planet3D-MATLAB>`_.
 
     Parameters
     ----------
@@ -842,14 +842,14 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
     See :func:`load_mars` for another example using this dataset.
 
     """
-    return _download_and_read('stars.jpg', texture=texture, load=load)
+    return _download_and_read('planet3d-matlab/stars.jpg', texture=texture, load=load)
 
 
 def download_milkyway_sky_background(texture=False, load=True):  # pragma: no cover
     """Download the sky texture of the Milky Way galaxy.
 
-    Textures obtained from `Solar Textures
-    <https://www.solarsystemscope.com/textures/>`_.
+    Textures obtained from `tamaskis/planet3D-MATLAB
+    <https://github.com/tamaskis/planet3D-MATLAB>`_.
 
     Parameters
     ----------
@@ -877,4 +877,4 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
     >>> pl.show()
 
     """
-    return _download_and_read('milkyway.jpg', texture=texture, load=load)
+    return _download_and_read('planet3d-matlab/milkyway.jpg', texture=texture, load=load)
