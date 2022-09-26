@@ -1,7 +1,7 @@
 """
 .. _lookup_table_example:
 
-Anti-Aliasing
+Lookup Tables
 ~~~~~~~~~~~~~
 Demonstrate the usage of a lookup table within PyVista
 
