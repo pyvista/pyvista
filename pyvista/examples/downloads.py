@@ -3607,7 +3607,7 @@ def download_stars_jpg():
         "examples.download_stars_texture is deprecated.  Use examples.planets.download_stars_sky_background with load=False",
         PyVistaDeprecationWarning,
     )
-    return pyvista.examples.planets.download_stars_texture(load=False)
+    return pyvista.examples.planets.download_stars_sky_background(load=False)
 
 
 def download_notch_stress(load=True):  # pragma: no cover
