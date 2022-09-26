@@ -50,7 +50,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Sun source.
+    """Load the Sun as a textured sphere.
 
     Parameters
     ----------
@@ -88,7 +88,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Moon source.
+    """Load the Moon as a textured sphere.
 
     Parameters
     ----------
@@ -126,7 +126,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Mercury source.
+    """Load the planet Mercury as a textured sphere.
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Venus source.
+    """Load the planet Venus as a textured sphere.
 
     Parameters
     ----------
@@ -204,7 +204,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Mars source.
+    """Load the planet Mars as a textured Sphere.
 
     Parameters
     ----------
@@ -242,7 +242,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Jupiter source.
+    """Load the planet Jupiter as a textured sphere.
 
     Parameters
     ----------
@@ -280,7 +280,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Saturn source.
+    """Load the planet Saturn as a textured sphere.
 
     Parameters
     ----------
@@ -318,7 +318,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_saturn_ring_alpha(inner=0.25, outer=0.5, c_res=6):
-    """Load a source for Saturn's rings with opacity.
+    """Load the planet Saturn's rings.
 
     Arguments are passed on to :func:`pyvista.Disc`.
 
@@ -360,7 +360,7 @@ def load_saturn_ring_alpha(inner=0.25, outer=0.5, c_res=6):
 
 
 def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Uranus source.
+    """Load the planet Uranus as a textured sphere.
 
     Parameters
     ----------
@@ -398,7 +398,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Neptune source.
+    """Load the planet Neptune as a textured sphere.
 
     Parameters
     ----------
@@ -436,7 +436,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
-    """Load a Pluto source.
+    """Load the dwarf planet Pluto as a textured sphere.
 
     Parameters
     ----------
@@ -474,7 +474,9 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def download_sun_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'sun.jpg'``.
+    """Download and potentially load the Sun's texture.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -502,7 +504,9 @@ def download_sun_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_moon_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'moon.jpg'``.
+    """Download and optionally load the texture of the Earth's Moon.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -530,7 +534,9 @@ def download_moon_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_mercury_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'mercury.jpg'``.
+    """Download and optionally load the texture of planet Mercury.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -558,7 +564,9 @@ def download_mercury_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_venus_texture(atmosphere=True, texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'venus.jpg'``.
+    """Download and optionally load the texture of the Planet Venus.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -592,7 +600,9 @@ def download_venus_texture(atmosphere=True, texture=False, load=True):  # pragma
 
 
 def download_mars_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'mars.jpg'``.
+    """Download and optionally load the texture of the planet Mars.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -620,7 +630,9 @@ def download_mars_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_jupiter_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'jupiter.jpg'``.
+    """Download and optionally load the texture of the planet Jupiter.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -648,7 +660,9 @@ def download_jupiter_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_saturn_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'saturn.jpg'``.
+    """Download and optionally load the texture of the planet Saturn.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -676,7 +690,9 @@ def download_saturn_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_saturn_ring_alpha_png(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'saturn_ring_alpha.png'``.
+    """Download and optionally load the texture of the planet Saturn.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -704,7 +720,9 @@ def download_saturn_ring_alpha_png(texture=False, load=True):  # pragma: no cove
 
 
 def download_uranus_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'uranus.jpg'``.
+    """Download and optionally load the texture of the planet Uranus.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -732,7 +750,9 @@ def download_uranus_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_neptune_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'neptune.jpg'``.
+    """Download and optionally load the texture of the planet Neptune.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -760,7 +780,9 @@ def download_neptune_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_pluto_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'pluto.png'``.
+    """Download and optionally load the texture of the dwarf planet Pluto.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -788,7 +810,9 @@ def download_pluto_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_stars_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'stars.jpg'``.
+    """Download and optionally load a sky stars texture.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
@@ -820,7 +844,9 @@ def download_stars_texture(texture=False, load=True):  # pragma: no cover
 
 
 def download_milkyway_texture(texture=False, load=True):  # pragma: no cover
-    """Download and return the path of ``'milkyway.jpg'``.
+    """Download and optionally load the sky texture of the Milky Way galaxy.
+
+    Textures obtained from `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
     Parameters
     ----------
