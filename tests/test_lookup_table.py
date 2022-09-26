@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import vtk
 
+import pyvista as pv
 from pyvista import Color, LookupTable
 
 
@@ -38,9 +39,51 @@ def test_apply_cmap(lut):
     assert lut.n_values == n_values
 
 
-def test_cmap_init():
+def test_init_cmap():
     new_lut = LookupTable('gray', n_values=2, flip=True)
     assert np.allclose([[254, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
+
+
+def test_init_values():
+    new_lut = LookupTable(values=[[254, 255, 255, 255], [0, 0, 0, 255]])
+    assert np.allclose([[254, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
+
+
+def test_init_custom():
+    value_range = (0.1, 0.2)
+    hue_range = (0.2, 0.3)
+    alpha_range = (0.3, 0.4)
+    scalar_range = (1, 9)
+    ramp = 'linear'
+    nan_color = Color('r')
+    above_range_color = Color('b')
+    below_range_color = Color('g')
+    log_scale = True
+    annotations = {0: 'low', 4.5: 'medium', 9: 'high'}
+
+    new_lut = LookupTable(
+        value_range=value_range,
+        hue_range=hue_range,
+        alpha_range=alpha_range,
+        scalar_range=scalar_range,
+        ramp=ramp,
+        nan_color=nan_color,
+        above_range_color=above_range_color,
+        below_range_color=below_range_color,
+        log_scale=log_scale,
+        annotations=annotations,
+    )
+
+    assert new_lut.value_range == value_range
+    assert new_lut.hue_range == hue_range
+    assert new_lut.alpha_range == alpha_range
+    assert new_lut.scalar_range == scalar_range
+    assert new_lut.ramp == ramp
+    assert new_lut.nan_color == nan_color
+    assert new_lut.above_range_color == above_range_color
+    assert new_lut.below_range_color == below_range_color
+    assert new_lut.log_scale == log_scale
+    assert new_lut.annotations == annotations
 
 
 def test_annotations(lut):
@@ -96,6 +139,9 @@ def test_below_range_color(lut):
     assert lut.below_range_color is None
     assert not lut.GetUseBelowRangeColor()
 
+    lut.below_range_color = True
+    assert lut.below_range_color == pv.global_theme.below_range_color
+
 
 def test_above_range_color(lut):
     lut.above_range_color = 'r'
@@ -105,6 +151,9 @@ def test_above_range_color(lut):
     lut.above_range_color = None
     assert lut.above_range_color is None
     assert not lut.GetUseAboveRangeColor()
+
+    lut.above_range_color = True
+    assert lut.above_range_color == pv.global_theme.above_range_color
 
 
 def test_ramp(lut):

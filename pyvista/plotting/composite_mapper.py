@@ -818,7 +818,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                         cmap = self._theme.cmap
 
             if cmap is not None:
-                self.lookup_table._apply_cmap(cmap, n_colors, flip_scalars)
+                self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)
             else:  # pragma: no cover
                 if flip_scalars:
                     self.lookup_table.SetHueRange(0.0, 0.66667)

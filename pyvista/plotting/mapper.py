@@ -630,7 +630,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                         n_colors = categories
 
                 if cmap is not None:
-                    self.lookup_table._apply_cmap(cmap, n_colors)
+                    self.lookup_table.apply_cmap(cmap, n_colors)
                 else:  # pragma: no cover
                     # should be impossible to get to this point as VTK package
                     # no requires matplotlib

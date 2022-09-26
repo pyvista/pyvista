@@ -3546,7 +3546,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity_values = opacity_transfer_function(opacity, n_colors)
 
             # Set colormap and build lookup table
-            self.mapper.lookup_table._apply_cmap(cmap, n_colors)
+            self.mapper.lookup_table.apply_cmap(cmap, n_colors)
             self.mapper.lookup_table.values[:, 3] = opacity_values
             self.mapper.lookup_table.scalar_range = clim
             if isinstance(annotations, dict):

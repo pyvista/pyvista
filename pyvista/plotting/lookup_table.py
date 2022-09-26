@@ -1,5 +1,5 @@
 """Wrap vtkLookupTable."""
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -8,6 +8,8 @@ from pyvista import _vtk
 from pyvista.plotting.colors import Color, get_cmap_safe
 from pyvista.utilities.helpers import convert_array
 from pyvista.utilities.misc import has_module, no_new_attr
+
+from .._typing import color_like
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
@@ -93,7 +95,8 @@ class LookupTable(_vtk.vtkLookupTable):
     Parameters
     ----------
     cmap : str, colors.Colormap, optional
-        Color map from ``matplotlib``, ``colorcet``, or ``cmocean``.
+        Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
+        ``cmap`` or ``values`` can be set, but not both.
 
     n_values : int, default: 256
         Number of colors in the color map.
@@ -101,6 +104,50 @@ class LookupTable(_vtk.vtkLookupTable):
     flip : bool, default: False
         Flip the direction of cmap. Most colormaps allow ``*_r`` suffix to do this
         as well.
+
+    values : numpy.ndarray, optional
+        Lookup table values. Either ``values`` or ``cmap`` can be set, but not
+        both.
+
+    value_range : tuple, optional
+        The range of the brightness of the mapped lookup table. This range is
+        only used when creating custom color maps and will be ignored if
+        ``cmap`` is set.
+
+    hue_range : tuple, optional
+        Lookup table hue range. This range is only used when creating custom
+        color maps and will be ignored if ``cmap`` is set.
+
+    alpha_range : tuple, optional
+        Lookup table alpha (transparency) range. This range is only used when
+        creating custom color maps and will be ignored if ``cmap`` is set.
+
+    scalar_range : tuple, optional
+        The range of scalars which will be mapped to colors. Values outside of
+        this range will be colored according to
+        :attr`LookupTable.below_range_color` and
+        :attr`LookupTable.above_range_color`.
+
+    log_scale : bool, optional
+        Use a log scale when mapping scalar values.
+
+    nan_color : color_like, optional
+        Color to render any values that are NANs.
+
+    above_range_color : color_like, optional
+        Color to render any values above :attr:`LookupTable.scalar_range`.
+
+    below_range_color : color_like, optional
+        Color to render any values below :attr:`LookupTable.scalar_range`.
+
+    ramp : str, optional
+        The shape of the table ramp. This range is only used when creating
+        custom color maps and will be ignored if ``cmap`` is set.
+
+    annotations : dict, optional
+        A dictionary of annotations. Keys are the float values in the scalars
+        range to annotate on the scalar bar and the values are the the string
+        annotations.
 
     Examples
     --------
@@ -146,12 +193,54 @@ class LookupTable(_vtk.vtkLookupTable):
     _cmap = None
     _values_manual = False
 
-    def __init__(self, cmap=None, n_values=256, flip=False):
+    def __init__(
+        self,
+        cmap=None,
+        n_values=256,
+        flip=False,
+        values=None,
+        value_range=None,
+        hue_range=None,
+        alpha_range=None,
+        scalar_range=None,
+        log_scale=None,
+        nan_color=None,
+        above_range_color=None,
+        below_range_color=None,
+        ramp=None,
+        annotations=None,
+    ):
         """Initialize the lookup table."""
+        if cmap is not None and values is not None:
+            raise ValueError('Cannot set both `cmap` and `values`.')
+
         if cmap is not None:
-            self._apply_cmap(cmap, n_values=n_values, flip=flip)
+            self.apply_cmap(cmap, n_values=n_values, flip=flip)
+        elif values is not None:
+            self.values = values
         else:
-            self.n_values = 256
+            self.n_values = n_values
+            if value_range is not None:
+                self.value_range = value_range
+            if hue_range is not None:
+                self.hue_range = hue_range
+            if alpha_range is not None:
+                self.alpha_range = alpha_range
+            if ramp is not None:
+                self.ramp = ramp
+
+        if nan_color is not None:
+            self.nan_color = nan_color
+        if above_range_color is not None:
+            self.above_range_color = above_range_color
+        if below_range_color is not None:
+            self.below_range_color = below_range_color
+        if scalar_range is not None:
+            self.scalar_range = scalar_range
+        if log_scale is not None:
+            self.log_scale = log_scale
+        if annotations is not None:
+            self.annotations = annotations
 
     @property
     def value_range(self) -> Optional[tuple]:
@@ -188,7 +277,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @value_range.setter
     def value_range(self, value: tuple):
         self.SetValueRange(value)
-        self._rebuild()
+        self.rebuild()
 
     @property
     def hue_range(self) -> Optional[tuple]:
@@ -225,7 +314,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @hue_range.setter
     def hue_range(self, value: tuple):
         self.SetHueRange(value)
-        self._rebuild()
+        self.rebuild()
 
     @property
     def cmap(self) -> Optional[str]:
@@ -252,7 +341,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     @cmap.setter
     def cmap(self, value):
-        self._apply_cmap(value, self.n_values)
+        self.apply_cmap(value, self.n_values)
 
     @property
     def log_scale(self) -> bool:
@@ -350,7 +439,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @alpha_range.setter
     def alpha_range(self, value: tuple):
         self.SetAlphaRange(value)
-        self._rebuild()
+        self.rebuild()
 
     @property
     def saturation_range(self) -> tuple:
@@ -380,10 +469,20 @@ class LookupTable(_vtk.vtkLookupTable):
     @saturation_range.setter
     def saturation_range(self, value: tuple):
         self.SetSaturationRange(value)
-        self._rebuild()
+        self.rebuild()
 
-    def _rebuild(self):
-        """Clear the color map and recompute the values table."""
+    def rebuild(self):
+        """Clear the color map and recompute the values table.
+
+        This called automatically when setting values like
+        :attr:`LookupTable.value_range`.
+
+        Notes
+        -----
+        This will reset any colormap set with :func:`LookupTable.apply_cmap` or
+        :attr:`LookupTable.values`.
+
+        """
         self._cmap = None
         self._values_manual = False
         self.ForceBuild()
@@ -467,7 +566,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.SetRamp(RAMP_MAP_INV[value])
         except KeyError:
             raise ValueError(f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}')
-        self._rebuild()
+        self.rebuild()
 
     @property
     def above_range_color(self) -> Optional[Color]:
@@ -498,9 +597,12 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value):
-        if value is None:
+    def above_range_color(self, value: Union[bool, color_like]):
+        if value in (None, False):
             self.SetUseAboveRangeColor(False)
+        elif value is True:
+            self.SetAboveRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
+            self.SetUseAboveRangeColor(True)
         else:
             self.SetAboveRangeColor(*Color(value).float_rgba)
             self.SetUseAboveRangeColor(True)
@@ -534,14 +636,17 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value):
-        if value is None:
+    def below_range_color(self, value: Union[bool, color_like]):
+        if value in (None, False):
             self.SetUseBelowRangeColor(False)
+        elif value is True:
+            self.SetBelowRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
+            self.SetUseBelowRangeColor(True)
         else:
             self.SetBelowRangeColor(*Color(value).float_rgba)
             self.SetUseBelowRangeColor(True)
 
-    def _apply_cmap(self, cmap, n_values=256, flip=False):
+    def apply_cmap(self, cmap, n_values=256, flip=False):
         """Assign a colormap to this lookup table.
 
         Parameters
@@ -633,7 +738,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @n_values.setter
     def n_values(self, value: int):
         if self._cmap is not None:
-            self._apply_cmap(self._cmap, value)
+            self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             raise RuntimeError(

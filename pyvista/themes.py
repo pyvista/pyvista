@@ -1119,6 +1119,8 @@ class DefaultTheme(_ThemeConfig):
         '_auto_close',
         '_cmap',
         '_color',
+        '_above_range_color',
+        '_below_range_color',
         '_nan_color',
         '_edge_color',
         '_outline_color',
@@ -1165,6 +1167,8 @@ class DefaultTheme(_ThemeConfig):
         self._cmap = 'viridis'
         self._color = Color('white')
         self._nan_color = Color('darkgray')
+        self._above_range_color = Color('grey')
+        self._below_range_color = Color('grey')
         self._edge_color = Color('black')
         self._outline_color = Color('white')
         self._floor_color = Color('gray')
@@ -1241,6 +1245,44 @@ class DefaultTheme(_ThemeConfig):
     @hidden_line_removal.setter
     def hidden_line_removal(self, value: bool):
         self._hidden_line_removal = value
+
+    @property
+    def above_range_color(self) -> Color:
+        """Return or set the default above range color.
+
+        Examples
+        --------
+        Set the above range color to red.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.above_range_color = 'r'
+        Color(name='red', hex='#ff0000ff')
+
+        """
+        return self._above_range_color
+
+    @above_range_color.setter
+    def above_range_color(self, value: color_like):
+        self._above_range_color = Color(value)
+
+    @property
+    def below_range_color(self) -> Color:
+        """Return or set the default below range color.
+
+        Examples
+        --------
+        Set the below range color to blue.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.below_range_color = 'b'
+        Color(name='blue', hex='#0000ffff')
+
+        """
+        return self._below_range_color
+
+    @below_range_color.setter
+    def below_range_color(self, value: color_like):
+        self._below_range_color = Color(value)
 
     @property
     def return_cpos(self) -> bool:
