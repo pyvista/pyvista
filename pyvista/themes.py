@@ -1256,6 +1256,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.above_range_color = 'r'
+        >>> pyvista.global_theme.above_range_color
         Color(name='red', hex='#ff0000ff')
 
         """
@@ -1275,6 +1276,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.below_range_color = 'b'
+        >>> pyvista.global_theme.below_range_color
         Color(name='blue', hex='#0000ffff')
 
         """
