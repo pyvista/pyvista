@@ -2,10 +2,10 @@
 
 import pooch
 
-from .downloads import PATH
+from .downloads import USER_DATA_PATH
 
 GLTF_FETCHER = pooch.create(
-    path=PATH,
+    path=USER_DATA_PATH,
     base_url='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
     registry={
         'Avocado/glTF-Binary/Avocado.glb': None,

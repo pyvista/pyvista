@@ -497,11 +497,12 @@ gallery examples, meant to be run as individual downloadable scripts, are
 contained in the ``examples`` directory at the root of this repository.
 
 To add a fully fledged, standalone example, add your example to the
-``examples`` directory within one of the applicable subdirectories.  Should
-none of the existing directories match the category of your example, create a
-new directory with a ``README.txt`` describing the new category.  Additionally,
-as these examples are built using the sphinx gallery extension, follow coding
-guidelines as established by `Sphinx-Gallery
+``examples`` directory in the root directory of the `PyVista Repository
+<https://github.com/pyvista/pyvista/>`_ within one of the applicable
+subdirectories.  Should none of the existing directories match the category of
+your example, create a new directory with a ``README.txt`` describing the new
+category.  Additionally, as these examples are built using the sphinx gallery
+extension, follow coding guidelines as established by `Sphinx-Gallery
 <https://sphinx-gallery.github.io/stable/index.html>`_.
 
 For more details see :ref:`add_example_example`.
@@ -511,7 +512,17 @@ Add a new Example File
 ^^^^^^^^^^^^^^^^^^^^^^
 If you have a dataset that you need for your gallery example, add it to
 `pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_ and follow the
-directions there and in ``downloads.py``. This enables:
+directions there. You will then need to add a new function to download the
+dataset ``pyvista/examples/downloads.py``. This might be as easy as:
+
+.. code:: python
+
+   def download_my_dataset(load=True):
+       """Download my new dataset."""
+       return _download_and_read('mydata/my_new_dataset.vtk', load=load)
+
+
+Which enables:
 
 .. code::
 

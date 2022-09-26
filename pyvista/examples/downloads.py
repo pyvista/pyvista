@@ -6,8 +6,7 @@ rapid reuse of these datasets.
 Files are all hosted in https://github.com/pyvista/vtk-data/ and are downloaded
 using the ``download_file`` function. If you add a file to the example data
 repository, you should add a ``download-<dataset>`` method here which will
-rendered on `downloads
-<https://docs.pyvista.org/api/examples/_autosummary/pyvista.examples.downloads.html>`_.
+rendered on this page.
 
 Examples
 --------
@@ -40,20 +39,18 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 CACHE_VERSION = 3
 
 # If available, a local vtk-data instance will be used for examples
-if 'VTK_DATA_PATH' in os.environ:  # pragma: no cover
-    _path = os.environ['VTK_DATA_PATH']
+if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
+    _path = os.environ['PYVISTA_VTK_DATA']
 
     if not os.path.basename(_path) == 'Data':
         # append 'Data' if user does not provide it
         _path = os.path.join(_path, 'Data')
-    if not os.path.isdir(_path):
-        warnings.warn(f"VTK_DATA_PATH: {_path} is an invalid path and will be ignored")
-    else:
-        # pooch assumes this is a URL so we have to take care of this
-        if not _path.endswith('/'):
-            _path = _path + '/'
-        SOURCE = _path
-        _FILE_CACHE = True
+
+    # pooch assumes this is a URL so we have to take care of this
+    if not _path.endswith('/'):
+        _path = _path + '/'
+    SOURCE = _path
+    _FILE_CACHE = True
 
 else:
     SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
@@ -64,20 +61,21 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
     if not os.path.isdir(os.environ['PYVISTA_USERDATA_PATH']):
         warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH')
     else:
-        PATH = os.environ['PYVISTA_USERDATA_PATH']
+        USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
 else:
     # use default pooch path
-    PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+    USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
 
     # provide helpful message if pooch path is inaccessible
-    if not os.path.isdir(PATH):  # pragma: no cover
+    if not os.path.isdir(USER_DATA_PATH):  # pragma: no cover
         try:
-            os.makedirs(PATH, exist_ok=True)
-            if not os.access(PATH, os.W_OK):
+            os.makedirs(USER_DATA_PATH, exist_ok=True)
+            if not os.access(USER_DATA_PATH, os.W_OK):
                 raise OSError
         except (PermissionError, OSError):
+            # Warn, don't raise just in case there's an environment issue.
             warnings.warn(
-                f'Unable to access {PATH}. Manually specify the PyVista'
+                f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
                 'examples cache with the PYVISTA_USERDATA_PATH environment variable.'
             )
 
@@ -85,7 +83,7 @@ else:
 # with hashes because we don't want to have to add in all of them individually
 # to the registry since we're not (at the moment) concerned about hashes.
 FETCHER = pooch.create(
-    path=PATH,
+    path=USER_DATA_PATH,
     base_url=SOURCE,
     registry={},
     retry_if_failed=3,
@@ -136,7 +134,7 @@ def file_from_files(target_path, fnames):
 def _file_copier(input_file, output_file, pooch):
     """Copy a file from a local directory to the output path."""
     if not os.path.isfile(input_file):
-        raise FileNotFoundError(f"'{input_file}' not found within VTK_DATA_PATH '{SOURCE}'")
+        raise FileNotFoundError(f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'")
     shutil.copy(input_file, output_file)
 
 
@@ -172,7 +170,7 @@ def download_file(filename, progress_bar=False):
     """
     try:  # should the file already exist within fetcher's registry
         return _download_file(filename, progress_bar)
-    except:  # otherwise simply add the file to the registry
+    except ValueError:  # otherwise simply add the file to the registry
         FETCHER.registry[filename] = None
         return _download_file(filename, progress_bar)
 
@@ -219,24 +217,17 @@ def _download_archive(filename, target_file=None, progress_bar=False):  # pragma
 def delete_downloads():
     """Delete all downloaded examples to free space or update the files.
 
-    Returns
-    -------
-    bool
-        Returns ``True``.
-
     Examples
     --------
     Delete all local downloads.
 
     >>> from pyvista import examples
     >>> examples.delete_downloads()  # doctest:+SKIP
-    True
 
     """
-    if os.path.isdir(PATH):
-        shutil.rmtree(PATH)
-    os.makedirs(PATH)
-    return True
+    if os.path.isdir(USER_DATA_PATH):
+        shutil.rmtree(USER_DATA_PATH)
+    os.makedirs(USER_DATA_PATH)
 
 
 def _download_and_read(filename, texture=False, file_format=None, load=True, progress_bar=False):
@@ -4459,7 +4450,7 @@ def download_black_vase(load=True, progress_bar=False):  # pragma: no cover
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4515,7 +4506,7 @@ def download_ivan_angel(load=True, progress_bar=False):  # pragma: no cover
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4574,7 +4565,7 @@ def download_bird_bath(load=True, progress_bar=False):  # pragma: no cover
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4630,7 +4621,7 @@ def download_owl(load=True, progress_bar=False):  # pragma: no cover
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4689,7 +4680,7 @@ def download_plastic_vase(load=True, progress_bar=False):  # pragma: no cover
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------
@@ -4745,7 +4736,7 @@ def download_sea_vase(load=True, progress_bar=False):  # pragma: no cover
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/ivan-nikolov>`_
+    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
     Parameters
     ----------

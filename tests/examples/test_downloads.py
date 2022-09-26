@@ -10,32 +10,32 @@ from pyvista.examples import downloads
 
 def test_delete_downloads(tmpdir):
     # change the path so we don't delete the examples cache
-    old_path = examples.downloads.PATH
+    old_path = examples.downloads.USER_DATA_PATH
     try:
-        examples.downloads.PATH = str(tmpdir.mkdir("tmpdir"))
-        assert os.path.isdir(examples.downloads.PATH)
-        tmp_file = os.path.join(examples.downloads.PATH, 'tmp.txt')
+        examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir("tmpdir"))
+        assert os.path.isdir(examples.downloads.USER_DATA_PATH)
+        tmp_file = os.path.join(examples.downloads.USER_DATA_PATH, 'tmp.txt')
         with open(tmp_file, 'w') as fid:
             fid.write('test')
         examples.delete_downloads()
-        assert os.path.isdir(examples.downloads.PATH)
+        assert os.path.isdir(examples.downloads.USER_DATA_PATH)
         assert not os.path.isfile(tmp_file)
     finally:
-        examples.downloads.PATH = old_path
+        examples.downloads.USER_DATA_PATH = old_path
 
 
 def test_delete_downloads_does_not_exist(tmpdir):
     # change the path so we don't delete the examples cache
-    old_path = examples.downloads.PATH
+    old_path = examples.downloads.USER_DATA_PATH
     new_path = str(tmpdir.join('doesnotexist'))
 
     try:
         # delete_downloads for a missing directory should not fail.
-        examples.downloads.PATH = new_path
-        assert not os.path.isdir(examples.downloads.PATH)
+        examples.downloads.USER_DATA_PATH = new_path
+        assert not os.path.isdir(examples.downloads.USER_DATA_PATH)
         examples.delete_downloads()
     finally:
-        examples.downloads.PATH = old_path
+        examples.downloads.USER_DATA_PATH = old_path
 
 
 def test_file_from_files(tmpdir):

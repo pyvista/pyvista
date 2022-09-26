@@ -73,6 +73,8 @@ dataset
 #    Unless ``sphinx_gallery_thumbnail_number = <int>`` is included at the top
 #    of the example script, first figure (this one) will be used for the
 #    gallery thumbnail image.
+#
+#    Also note that this image number uses one based indexing.
 
 dataset.plot(text='Example Figure')
 
