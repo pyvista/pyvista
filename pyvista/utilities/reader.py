@@ -2000,7 +2000,7 @@ class JPEGReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.planets.download_mars_texture(load=False)
+    >>> filename = examples.planets.download_mars_surface(load=False)
     >>> filename.split("/")[-1]  # omit the path
     'mars.jpg'
     >>> reader = pyvista.get_reader(filename)
