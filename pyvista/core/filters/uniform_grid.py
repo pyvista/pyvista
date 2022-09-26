@@ -45,7 +45,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np
@@ -134,7 +134,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np
@@ -750,11 +750,9 @@ class UniformGridFilters(DataSetFilters):
             else:
                 raise MissingDataError('FFT filters require point scalars.')
 
-        scalars = self.point_data.active_scalars
-
-        meets_req = scalars.ndim == 2 and scalars.shape[1] == 2
-        if not meets_req:
+        if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
             raise ValueError(
                 'Active scalars must be complex data for this filter, represented '
-                'as an array with `dtype=numpy.complex128`.'
+                'as an array with a datatype of `numpy.complex64` or '
+                '`numpy.complex128`.'
             )

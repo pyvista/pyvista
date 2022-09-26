@@ -12,7 +12,12 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
-from pyvista.utilities.misc import _get_vtk_id_type, vtk_version_info, _set_plot_theme_from_env
+from pyvista.utilities.misc import (
+    _get_vtk_id_type,
+    vtk_version_info,
+    _set_plot_theme_from_env,
+    set_pickle_format,
+)
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
@@ -98,15 +103,15 @@ except Exception as e:
     )
     EXAMPLES_PATH = ''
 
-# verify example cache integrity
-from pyvista.examples.downloads import _verify_cache_integrity
-
-_verify_cache_integrity()
-
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
+# theme to use by default for the plot directive
+PLOT_DIRECTIVE_THEME = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter
 FLOAT_FORMAT = "{:.3e}"
+
+# Serialization format to be used when pickling `DataObject`
+PICKLE_FORMAT = 'xml'

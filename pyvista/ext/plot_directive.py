@@ -113,8 +113,8 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
-# must enable BUILDING_GALLERY to to keep windows active
-# enable offscreen to hide figures when generating them
+# must enable BUILDING_GALLERY to keep windows active
+# enable offscreen to hide figures when generating them.
 import pyvista
 
 pyvista.BUILDING_GALLERY = True
@@ -323,6 +323,8 @@ def _run_code(code, code_path, ns=None, function_name=None):
         return ns
 
     try:
+        if pyvista.PLOT_DIRECTIVE_THEME is not None:
+            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err

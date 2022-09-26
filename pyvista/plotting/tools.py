@@ -11,7 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyvistaDeprecationWarning
+from pyvista.utilities import PyVistaDeprecationWarning
 
 from .colors import Color
 
@@ -372,10 +372,9 @@ def create_axes_orientation_box(
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = _vtk.vtkActor()
-        cube_actor.SetMapper(cube_mapper)
-        cube_actor.GetProperty().BackfaceCullingOn()
-        cube_actor.GetProperty().SetOpacity(opacity)
+        cube_actor = pyvista.Actor(mapper=cube_mapper)
+        cube_actor.prop.culling = 'back'
+        cube_actor.prop.opacity = opacity
 
         prop_assembly = _vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)
@@ -570,7 +569,7 @@ def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
     # Deprecated on v0.34.0, estimated removal on v0.37.0
     warnings.warn(
         "The usage of `parse_color` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     color_valid = True
     if color is None:

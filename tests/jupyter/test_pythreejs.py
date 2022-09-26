@@ -9,7 +9,6 @@ except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista
-from pyvista._vtk import VTK9
 from pyvista.jupyter import pv_pythreejs
 
 
@@ -46,6 +45,28 @@ def test_export_to_html(sphere, tmpdir):
 
     # at least a single instance of lighting
     assert 'DirectionalLightModel' in raw
+
+
+def test_export_to_html_composite(tmpdir):
+    filename = str(tmpdir.join('tmp.html'))
+
+    blocks = pyvista.MultiBlock()
+    blocks.append(pyvista.Sphere())
+    blocks.append(pyvista.Cube(center=(0, 0, -1)))
+
+    pl = pyvista.Plotter()
+    actor, mapper = pl.add_composite(blocks, show_edges=False, color='red')
+
+    # override the color of the sphere
+    mapper.block_attr[1].color = 'b'
+    mapper.block_attr[1].opacity = 0.5
+
+    pl.export_html(filename)
+
+    # ensure modified block attributes have been outputted
+    raw = open(filename).read()
+    assert f'"opacity": {mapper.block_attr[1].opacity}' in raw
+    assert f'"color": "{mapper.block_attr[1].color.hex_rgb}"' in raw
 
 
 def test_segment_poly_cells(spline):
@@ -111,7 +132,7 @@ def test_cast_to_min_size(max_index):
             buf_attr = pv_pythreejs.cast_to_min_size(np.arange(1000), max_index)
 
 
-@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
+@pytest.mark.needs_vtk9
 def test_pbr(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_cells), pbr=True)

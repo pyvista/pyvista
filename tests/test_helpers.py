@@ -154,6 +154,14 @@ def test_skybox(tmpdir):
         pyvista.cubemap_from_filenames(image_paths=['/path'])
 
 
+def test_numpy_to_texture():
+    tex_im = np.ones((1024, 1024, 3), dtype=np.float64) * 255
+    with pytest.warns(UserWarning, match='np.uint8'):
+        tex = pyvista.numpy_to_texture(tex_im)
+    assert isinstance(tex, pyvista.Texture)
+    assert tex.to_array().dtype == np.uint8
+
+
 def test_array_association():
     # TODO: cover vtkTable/ROW association case
     mesh = pyvista.PolyData()
@@ -314,3 +322,30 @@ def test_set_default_active_scalarrs():
     with pytest.raises(AmbiguousDataError):
         pyvista.set_default_active_scalars(mesh)
     assert mesh.active_scalars_name is None
+
+
+def test_vtk_points_deep_shallow():
+
+    points = np.array([[0.0, 0.0, 0.0]])
+    vtk_points = pyvista.vtk_points(points, deep=False)
+
+    assert vtk_points.GetNumberOfPoints() == 1
+    assert np.array_equal(vtk_points.GetPoint(0), points[0])
+
+    # test shallow copy
+    vtk_points.SetPoint(0, [1.0, 1.0, 1.0])
+
+    assert np.array_equal(vtk_points.GetPoint(0), points[0])
+    assert np.array_equal(vtk_points.GetPoint(0), [1.0, 1.0, 1.0])
+
+    # test deep copy
+
+    points = np.array([[0.0, 0.0, 0.0]])
+    vtk_points = pyvista.vtk_points(points, deep=True)
+
+    vtk_points.SetPoint(0, [1.0, 1.0, 1.0])
+
+    assert not np.array_equal(vtk_points.GetPoint(0), points[0])
+    assert np.array_equal(points[0], [0.0, 0.0, 0.0])
+
+    # TODO: test force_float

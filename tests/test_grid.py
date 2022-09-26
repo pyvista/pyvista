@@ -12,7 +12,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import VTKVersionError
 from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -55,6 +55,10 @@ def test_init_from_unstructured(hexbeam):
     grid = pyvista.UnstructuredGrid(hexbeam, deep=True)
     grid.points += 1
     assert not np.any(grid.points == hexbeam.points)
+
+    grid = pyvista.UnstructuredGrid(hexbeam)
+    grid.points += 1
+    assert np.array_equal(grid.points, hexbeam.points)
 
 
 def test_init_from_numpy_arrays():
@@ -475,6 +479,8 @@ def test_merge_invalid(hexbeam, sphere):
 def test_init_structured_raise():
     with pytest.raises(TypeError, match="Invalid parameters"):
         pyvista.StructuredGrid(['a', 'b', 'c'])
+    with pytest.raises(ValueError, match="Too many args"):
+        pyvista.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
 
 def test_init_structured(struct_grid):
@@ -487,8 +493,13 @@ def test_init_structured(struct_grid):
     assert np.allclose(struct_grid.y, y)
     assert np.allclose(struct_grid.z, z)
 
+    grid_a = pyvista.StructuredGrid(grid, deep=True)
+    grid_a.points += 1
+    assert not np.any(grid_a.points == grid.points)
+
     grid_a = pyvista.StructuredGrid(grid)
-    assert np.allclose(grid_a.points, grid.points)
+    grid_a.points += 1
+    assert np.array_equal(grid_a.points, grid.points)
 
 
 @pytest.fixture
@@ -832,7 +843,7 @@ def test_create_uniform_grid_from_specs():
 
     # all args (deprecated)
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         grid = pyvista.UniformGrid(dims, origin, spacing)
         assert grid.dimensions == dims
@@ -841,7 +852,7 @@ def test_create_uniform_grid_from_specs():
 
     # just dims (deprecated)
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         grid = pyvista.UniformGrid(dims)
         assert grid.dimensions == dims
@@ -858,7 +869,7 @@ def test_create_uniform_grid_from_specs():
 
 def test_uniform_grid_invald_args():
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         pyvista.UniformGrid((1, 1, 1))
 
@@ -920,6 +931,12 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.n_points == grid.n_points
     assert rectilinear.n_arrays == grid.n_arrays
     assert rectilinear.bounds == grid.bounds
+
+
+def test_uniform_grid_to_tetrahedra():
+    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    ugrid = grid.to_tetrahedra()
+    assert ugrid.n_cells == 5
 
 
 def test_fft_and_rfft(noise_2d):
@@ -1149,7 +1166,7 @@ def test_set_extent():
     assert np.array_equal(uni_grid.extent, extent)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
@@ -1165,7 +1182,7 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_init():
     grid = examples.load_explicit_structured()
     assert isinstance(grid, pyvista.ExplicitStructuredGrid)
@@ -1178,7 +1195,7 @@ def test_ExplicitStructuredGrid_init():
     assert 'N Arrays' in str(grid)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     block_i = np.fromstring(
         '''
@@ -1224,7 +1241,7 @@ def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     assert np.array_equal(grid.cell_data['BLOCK_K'], block_k)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_save():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
@@ -1237,7 +1254,7 @@ def test_ExplicitStructuredGrid_save():
     os.remove('grid.vtu')
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_hide_cells():
     ghost = np.asarray(
         '''
@@ -1264,7 +1281,7 @@ def test_ExplicitStructuredGrid_hide_cells():
     assert np.array_equal(grid.cell_data['vtkGhostType'], ghost)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_show_cells():
     grid = examples.load_explicit_structured()
     grid.hide_cells(range(80, 120), inplace=True)
@@ -1280,7 +1297,7 @@ def test_ExplicitStructuredGrid_show_cells():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 0
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_dimensions():
     grid = examples.load_explicit_structured()
     assert isinstance(grid.dimensions, tuple)
@@ -1289,7 +1306,7 @@ def test_ExplicitStructuredGrid_dimensions():
     assert grid.dimensions == (5, 6, 7)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_visible_bounds():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
@@ -1299,7 +1316,7 @@ def test_ExplicitStructuredGrid_visible_bounds():
     assert grid.visible_bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_cell_id():
     grid = examples.load_explicit_structured()
 
@@ -1313,7 +1330,7 @@ def test_ExplicitStructuredGrid_cell_id():
     assert np.array_equal(ind, [19, 31, 41, 54])
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_cell_coords():
     grid = examples.load_explicit_structured()
 
@@ -1328,7 +1345,7 @@ def test_ExplicitStructuredGrid_cell_coords():
     assert np.array_equal(coords, [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_neighbors():
     grid = examples.load_explicit_structured()
 
@@ -1348,7 +1365,7 @@ def test_ExplicitStructuredGrid_neighbors():
     assert indices == [1, 4, 20]
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_compute_connectivity():
     connectivity = np.asarray(
         '''
@@ -1376,7 +1393,7 @@ def test_ExplicitStructuredGrid_compute_connectivity():
     assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+@pytest.mark.needs_vtk9
 def test_ExplicitStructuredGrid_compute_connections():
     connections = np.asarray(
         '''
@@ -1400,3 +1417,46 @@ def test_ExplicitStructuredGrid_compute_connections():
     grid.compute_connections(inplace=True)
     assert 'number_of_connections' in grid.cell_data
     assert np.array_equal(grid.cell_data['number_of_connections'], connections)
+
+
+@pytest.mark.needs_vtk9
+def test_ExplicitStructuredGrid_raise_init():
+    with pytest.raises(ValueError, match="Too many args"):
+        pyvista.ExplicitStructuredGrid(1, 2, True)
+
+
+def test_copy_no_copy_wrap_object(datasets):
+    for dataset in datasets:
+        # different dataset types have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset)
+        new_dataset["data"] += 1
+        assert np.array_equal(new_dataset["data"], dataset["data"])
+
+    for dataset in datasets:
+        # different dataset types have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset, deep=True)
+        new_dataset["data"] += 1
+        assert not np.any(new_dataset["data"] == dataset["data"])
+
+
+@pytest.mark.needs_vtk9
+def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
+    for dataset in datasets_vtk9:
+        # different dataset tyoes have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset)
+        new_dataset["data"] += 1
+        assert np.array_equal(new_dataset["data"], dataset["data"])
+
+    for dataset in datasets_vtk9:
+        # different dataset tyoes have different copy behavior for points
+        # use point data which is common
+        dataset["data"] = np.ones(dataset.n_points)
+        new_dataset = type(dataset)(dataset, deep=True)
+        new_dataset["data"] += 1
+        assert not np.any(new_dataset["data"] == dataset["data"])

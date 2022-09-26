@@ -1,6 +1,6 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
-from typing import Union
+from typing import Optional, Sequence, Union
 import warnings
 
 import numpy as np
@@ -163,10 +163,10 @@ class DataSetFilters:
         )
         if inplace:
             if return_clipped:
-                self.overwrite(result[0])
+                self.copy_from(result[0])
                 return self, result[1]
             else:
-                self.overwrite(result)
+                self.copy_from(result)
                 return self
         return result
 
@@ -423,7 +423,7 @@ class DataSetFilters:
         result0 = _get_output(alg)
 
         if inplace:
-            self.overwrite(result0)
+            self.copy_from(result0)
             result0 = self
 
         if both:
@@ -641,27 +641,38 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
-                output[i] = self[i].slice_orthogonal(
-                    x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour
+                output.append(
+                    self[i].slice_orthogonal(
+                        x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour
+                    )
                 )
             return output
-        output[0, 'YZ'] = self.slice(
-            normal='x',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='x',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'YZ',
         )
-        output[1, 'XZ'] = self.slice(
-            normal='y',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='y',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'XZ',
         )
-        output[2, 'XY'] = self.slice(
-            normal='z',
-            origin=[x, y, z],
-            generate_triangles=generate_triangles,
-            progress_bar=progress_bar,
+        output.append(
+            self.slice(
+                normal='z',
+                origin=[x, y, z],
+                generate_triangles=generate_triangles,
+                progress_bar=progress_bar,
+            ),
+            'XY',
         )
         return output
 
@@ -767,14 +778,16 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
-                output[i] = self[i].slice_along_axis(
-                    n=n,
-                    axis=ax_label,
-                    tolerance=tolerance,
-                    generate_triangles=generate_triangles,
-                    contour=contour,
-                    bounds=bounds,
-                    center=center,
+                output.append(
+                    self[i].slice_along_axis(
+                        n=n,
+                        axis=ax_label,
+                        tolerance=tolerance,
+                        generate_triangles=generate_triangles,
+                        contour=contour,
+                        bounds=bounds,
+                        center=center,
+                    )
                 )
             return output
         for i in range(n):
@@ -787,7 +800,7 @@ class DataSetFilters:
                 contour=contour,
                 progress_bar=progress_bar,
             )
-            output[i, f'slice{i}'] = slc
+            output.append(slc, f'slice{i}')
         return output
 
     def slice_along_line(self, line, generate_triangles=False, contour=False, progress_bar=False):
@@ -1039,10 +1052,7 @@ class DataSetFilters:
             raise TypeError('Value must either be a single scalar or a sequence.')
         else:
             # just a single value
-            if invert:
-                alg.ThresholdByLower(value)
-            else:
-                alg.ThresholdByUpper(value)
+            _set_threshold_limit(alg, value, invert)
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
@@ -1248,7 +1258,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, progress_bar=False):
+    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1259,6 +1269,10 @@ class DataSetFilters:
 
         Parameters
         ----------
+        extent : sequence, optional
+            Specify a (xmin,xmax, ymin,ymax, zmin,zmax) bounding box
+            to clip data.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1288,6 +1302,9 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
+        if extent is not None:
+            alg.SetExtent(extent)
+            alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
@@ -2179,7 +2196,7 @@ class DataSetFilters:
         """
         mesh = DataSetFilters.connectivity(self, largest=True, progress_bar=False)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -2209,7 +2226,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> dataset = examples.load_uniform()
-        >>> dataset.set_active_scalars('Spatial Cell Data')
+        >>> _ = dataset.set_active_scalars('Spatial Cell Data')
         >>> threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
         >>> bodies = threshed.split_bodies()
         >>> len(bodies)
@@ -2312,7 +2329,7 @@ class DataSetFilters:
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -2386,7 +2403,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Warping by Vector')
         warped_mesh = _get_output(alg)
         if inplace:
-            self.overwrite(warped_mesh)
+            self.copy_from(warped_mesh)
             return self
         else:
             return warped_mesh
@@ -2599,7 +2616,7 @@ class DataSetFilters:
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -4159,10 +4176,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        ind : np.ndarray
+        ind : numpy.ndarray
             Numpy array of cell indices to be extracted.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -5100,7 +5117,7 @@ class DataSetFilters:
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
         if inplace:
-            self.overwrite(res)
+            self.copy_from(res)
             return self
 
         # The output from the transform filter contains a shallow copy
@@ -5110,7 +5127,7 @@ class DataSetFilters:
             output = pyvista.StructuredGrid()
         else:
             output = self.__class__()
-        output.overwrite(res)
+        output.copy_from(res)
         return output
 
     def reflect(
@@ -5181,7 +5198,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGird
+        pyvista.UnstructuredGrid
             Mesh with 1 point and 1 vertex cell with integrated data in point
             and cell data.
 
@@ -5213,3 +5230,190 @@ class DataSetFilters:
         alg.SetDivideAllCellDataByVolume(False)
         _update_alg(alg, progress_bar, 'Integrating Variables')
         return _get_output(alg)
+
+    def partition(self, n_partitions, generate_global_id=False, as_composite=True):
+        """Break down input dataset into a requested number of partitions.
+
+         Cells on boundaries are uniquely assigned to each partition without duplication.
+
+         It uses a kdtree implementation that builds balances the cell
+         centers among a requested number of partitions. The current implementation
+         only supports power-of-2 target partition. If a non-power of two value
+         is specified for ``n_partitions``, then the load balancing simply
+         uses the power-of-two greater than the requested value
+
+         For more details, see `vtkRedistributeDataSetFilter
+         <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
+
+         Parameters
+         ----------
+         n_partitions : int
+             Specify the number of partitions to split the input dataset
+             into. Current implementation results in a number of partitions equal
+             to the power of 2 greater than or equal to the chosen value.
+
+         generate_global_id : bool, default: False
+             Generate global cell ids if ``None`` are present in the input.  If
+             global cell ids are present in the input then this flag is
+             ignored.
+
+             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
+             of the output dataset(s).
+
+         as_composite : bool, default: False
+             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
+
+         Returns
+         -------
+        pyvista.MultiBlock or pyvista.UnstructuredGrid
+             UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
+
+         Notes
+         -----
+         This filter requires ``vtk>=9.0.0``.
+
+         Examples
+         --------
+         Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+         containing each partition.
+
+         >>> import pyvista as pv
+         >>> grid = pv.UniformGrid(dims=(5, 5, 5))
+         >>> out = grid.partition(4, as_composite=True)
+         >>> out.plot(multi_colors=True, show_edges=True)
+
+         Partition of the Stanford bunny.
+
+         >>> from pyvista import examples
+         >>> mesh = examples.download_bunny()
+         >>> out = mesh.partition(4, as_composite=True)
+         >>> out.plot(multi_colors=True, cpos='xy')
+
+        """
+        # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
+        # work correctly, returning the wrong number of partitions.
+        if pyvista.vtk_version_info < (9, 1, 0):
+            raise VTKVersionError('`partition` requires vtk>=9.1.0')  # pragma: no cover
+        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
+            raise VTKVersionError(
+                '`partition` requires vtkRedistributeDataSetFilter, but it '
+                f'was not found in VTK {pyvista.vtk_version_info}'
+            )  # pragma: no cover
+
+        alg = _vtk.vtkRedistributeDataSetFilter()
+        alg.SetInputData(self)
+        alg.SetNumberOfPartitions(n_partitions)
+        alg.SetPreservePartitionsInOutput(True)
+        alg.SetGenerateGlobalCellIds(generate_global_id)
+        alg.Update()
+
+        # pyvista does not yet support vtkPartitionedDataSet
+        part = alg.GetOutput()
+        datasets = [part.GetPartition(ii) for ii in range(part.GetNumberOfPartitions())]
+        output = pyvista.MultiBlock(datasets)
+        if not as_composite:
+            # note, SetPreservePartitionsInOutput does not work correctly in
+            # vtk 9.2.0, so instead we set it to True always and simply merge
+            # the result. See:
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
+            return pyvista.merge(list(output), merge_points=False)
+        return output
+
+    def explode(self, factor=0.1):
+        """Push each individual cell away from the center of the dataset.
+
+        Parameters
+        ----------
+        factor : float, default: 0.1
+            How much each cell will move from the center of the dataset
+            relative to its distance from it. Increase this number to push the
+            cells farther away.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid containing the exploded cells.
+
+        Notes
+        -----
+        This is similar to :func:`shrink <pyvista.DataSetFilters.shrink>`
+        except that it does not change the size of the cells.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> xrng = np.linspace(0, 1, 3)
+        >>> yrng = np.linspace(0, 2, 4)
+        >>> zrng = np.linspace(0, 3, 5)
+        >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
+        >>> exploded = grid.explode()
+        >>> exploded.plot(show_edges=True)
+
+        """
+        split = self.separate_cells()
+        if not isinstance(split, pyvista.UnstructuredGrid):
+            split = split.cast_to_unstructured_grid()
+
+        # VTK changed their cell indexing API in 9.0
+        if pyvista.vtk_version_info < (9, 0, 0):  # pragma: no cover
+            offset = split.offset.copy()
+            offset -= np.arange(offset.size)
+            offset = np.hstack((offset, split.n_points))
+        else:
+            offset = split.offset
+
+        vec = (split.cell_centers().points - split.center) * factor
+        split.points += np.repeat(vec, np.diff(offset), axis=0)
+        return split
+
+    def separate_cells(self):
+        """Return a copy of the dataset with separated cells with no shared points.
+
+        This method may be useful when datasets have scalars that need to be
+        associated to each point of each cell rather than either each cell or
+        just the points of the dataset.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid with isolated cells.
+
+        Examples
+        --------
+        Load the example hex beam and separate its cells. This increases the
+        total number of points in the dataset since points are no longer
+        shared.
+
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> grid.n_points
+        99
+        >>> sep_grid = grid.separate_cells()
+        >>> sep_grid.n_points
+        320
+
+        See the :ref:`point_cell_scalars_example` for a more detailed example
+        using this filter.
+
+        """
+        return self.shrink(1.0)
+
+
+def _set_threshold_limit(alg, value, invert):
+    """Set vtkThreshold limit.
+
+    Addresses VTK API deprication as pointed out in
+    https://github.com/pyvista/pyvista/issues/2850
+
+    """
+    if invert:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetUpperThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByLower(value)
+    else:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetLowerThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByUpper(value)
