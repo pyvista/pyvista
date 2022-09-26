@@ -487,12 +487,16 @@ def dataset_to_mesh(
         )
 
     elif rep_type == 'Points':
-        meshes.append(to_tjs_points(dataset, mapper, prop))
+        meshes.append(
+            to_tjs_points(dataset, prop, coloring, lookup_table, color=color, opacity=opacity)
+        )
 
     if has_verts:
         # extract just vertices
         poly_points = dataset.extract_cells(dataset.verts[1::2])
-        meshes.append(to_tjs_points(poly_points, mapper, prop))
+        meshes.append(
+            to_tjs_points(poly_points, prop, coloring, lookup_table, color=color, opacity=opacity)
+        )
 
     if rep_type not in ['Surface', 'Points']:
         if has_faces:
