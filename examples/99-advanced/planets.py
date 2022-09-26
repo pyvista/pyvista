@@ -11,7 +11,7 @@ This example is inspired by `planet3D-MATLAB <https://github.com/tamaskis/planet
    The purpose of this example is to demonstrate plotting celestial bodies and
    may lack astronomical precision. There maybe inaccuracies in the
    representation, so please take care when reusing or repurposing this example.
-   
+
    Please take a look at libraries like `astropy <https://www.astropy.org/>`_
    if you wish to use Python for astronomical calculations.
 
@@ -47,7 +47,7 @@ neptune = examples.planets.load_neptune(radius=24764.0, **kwargs)
 pluto = examples.planets.load_pluto(radius=1151.0, **kwargs)
 
 # Move planets to a nice position for the plotter. These numbers are not grounded in
-# reality and are for demonstration purposes only. 
+# reality and are for demonstration purposes only.
 mercury.translate((0.0, 0.0, 0.0), inplace=True)
 venus.translate((-15000.0, 0.0, 0.0), inplace=True)
 mars.translate((-45000.0, 0.0, 0.0), inplace=True)
