@@ -203,6 +203,43 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     return sphere
 
 
+def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
+    """Load the planet Earth as a textured sphere.
+
+    Parameters
+    ----------
+    radius : float, default: 1.0
+        Sphere radius.
+
+    lat_resolution : int, default: 50
+        Set the number of points in the latitude direction.
+
+    lon_resolution : int, default: 100
+        Set the number of points in the longitude direction.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Earth dataset with texture.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> pl = pv.Plotter()
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> pl.add_background_image(image_path)
+    >>> _ = pl.add_mesh(examples.planets.load_earth())
+    >>> pl.show()
+
+    """
+    sphere = _sphere_with_texture_map(
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    )
+    sphere.textures["surface"] = examples.load_globe_texture()
+    return sphere
+
+
 def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Mars as a textured Sphere.
 

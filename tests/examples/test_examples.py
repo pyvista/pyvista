@@ -79,6 +79,13 @@ def test_sphere_with_texture_map():
     assert sphere['Texture Coordinates'].shape == (sphere.n_points, 2)
 
 
+def test_load_earth():
+    mesh = pyvista.examples.planets.load_earth()
+    assert isinstance(mesh, pyvista.PolyData)
+    assert mesh.n_cells
+    assert mesh.textures["surface"]
+
+
 if TEST_DOWNLOADS:
 
     def test_download_single_sphere_animation():
