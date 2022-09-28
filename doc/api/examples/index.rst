@@ -42,6 +42,7 @@ demonstrate features.
 
    examples.examples
    examples.downloads
+   examples.planets
    demos.demos
 
 .. warning::
