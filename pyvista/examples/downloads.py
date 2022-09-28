@@ -3589,7 +3589,7 @@ def download_mars_jpg():
         Filename of the JPEG.
     """
     warnings.warn(
-        "examples.download_mars_texture is deprecated.  Use examples.planets.download_mars_surface with load=False",
+        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with load=False",
         PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_mars_surface(load=False)
@@ -3604,7 +3604,7 @@ def download_stars_jpg():
         Filename of the JPEG.
     """
     warnings.warn(
-        "examples.download_stars_texture is deprecated.  Use examples.planets.download_stars_sky_background with load=False",
+        "examples.download_stars_jpg is deprecated.  Use examples.planets.download_stars_sky_background with load=False",
         PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_stars_sky_background(load=False)
