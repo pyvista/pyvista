@@ -670,8 +670,13 @@ class LookupTable(_vtk.vtkLookupTable):
 
         cmap = get_cmap_safe(cmap)
         values = cmap(np.linspace(0, 1, n_values)) * 255
+
         if flip:
             values = values[::-1]
+
+        # reuse the opacity
+        values[:, -1] = self.values[:, -1]
+
         self.values = values
         self._values_manual = False
         self._cmap = cmap
