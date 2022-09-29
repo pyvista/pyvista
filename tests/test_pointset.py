@@ -106,3 +106,13 @@ def test_filters_return_pointset(sphere):
     pointset = sphere.cast_to_pointset()
     clipped = pointset.clip()
     assert isinstance(clipped, pyvista.PointSet)
+
+
+@pytest.mark.parametrize(
+    "force_float,expected_data_type", [(False, vtk.VTK_LONG_LONG), (True, vtk.VTK_FLOAT)]
+)
+def test_pointset_force_float(force_float, expected_data_type):
+    np_points = np.array([[1, 2, 3]])
+    pset = pyvista.PointSet(np_points, force_float=force_float)
+
+    assert pset.points.GetDataType() == expected_data_type
