@@ -497,6 +497,15 @@ if TEST_DOWNLOADS:
         assert isinstance(dataset, pyvista.UniformGrid)
         assert 'frame0' in dataset.point_data
 
+    def test_fea_bracket():
+        filename = examples.download_fea_bracket(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtu')
+
+        dataset = examples.download_fea_bracket(load=True)
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+        assert 'Equivalent (von-Mises) Stress (psi)' in dataset.cell_data
+
     def test_black_vase():
         filename = examples.download_black_vase(load=False)
         assert os.path.isfile(filename)
