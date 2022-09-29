@@ -1,0 +1,4 @@
+pyvista
+matplotlib
+trame
+trame-vtk
