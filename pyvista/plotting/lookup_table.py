@@ -1,15 +1,16 @@
 """Wrap vtkLookupTable."""
-from typing import Optional, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.plotting.colors import Color, get_cmap_safe
 from pyvista.utilities.helpers import convert_array
 from pyvista.utilities.misc import has_module, no_new_attr
 
 from .._typing import color_like
+from .colors import Color, get_cmap_safe
+from .tools import opacity_transfer_function
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
@@ -192,6 +193,7 @@ class LookupTable(_vtk.vtkLookupTable):
     _nan_color_set = False
     _cmap = None
     _values_manual = False
+    _opacity_parm: Tuple[Any, bool, str] = (None, False, 'quadratic')
 
     def __init__(
         self,
@@ -646,8 +648,11 @@ class LookupTable(_vtk.vtkLookupTable):
             self.SetBelowRangeColor(*Color(value).float_rgba)
             self.SetUseBelowRangeColor(True)
 
-    def apply_cmap(self, cmap, n_values=256, flip=False):
+    def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
         """Assign a colormap to this lookup table.
+
+        This can be used instead of :attr:`LookupTable.cmap` when you need to
+        set the number of values at the same time as the color map.
 
         Parameters
         ----------
@@ -660,6 +665,15 @@ class LookupTable(_vtk.vtkLookupTable):
         flip : bool, default: False
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
             this as well.
+
+        Examples
+        --------
+        Apply ``matplotlib``'s ``'cividis'`` color map.
+
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
+        >>> lut.apply_cmap('cividis', n_values=32)
+        >>> lut.plot()
 
         """
         if not has_module('matplotlib'):  # pragma: no cover
@@ -674,12 +688,65 @@ class LookupTable(_vtk.vtkLookupTable):
         if flip:
             values = values[::-1]
 
-        # reuse the opacity
-        values[:, -1] = self.values[:, -1]
-
         self.values = values
         self._values_manual = False
+
+        # reapply the opacity
+        if self._opacity_parm[0] is not None:
+            self.apply_opacity(*self._opacity_parm)
+
         self._cmap = cmap
+
+    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
+        """Assign custom opacity to this lookup table.
+
+        Parameters
+        ----------
+        opacity : list(float) or str
+            The opacity mapping to use. Can be a ``str`` name of a predefined
+            mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
+            ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
+            reverse that mapping.  This can also be a custom array/list of
+            values that will be interpolated across the ``n_color`` range for
+            user defined mappings.
+
+        interpolate : bool, default: True
+            Flag on whether or not to interpolate the opacity mapping for all
+            colors.
+
+        kind : str, default: 'quadratic'
+            The interepolation kind if ``interpolate`` is ``True`` and
+            ``scipy`` is available. Options are:
+
+            - ``'linear'``
+            - ``'nearest'``
+            - ``'zero'``
+            - ``'slinear'``
+            - ``'quadratic'``
+            - ``'cubic'``
+            - ``'previous'``
+            - ``'next'``
+
+        Examples
+        --------
+        Apply a user defined opacity custom opacity to a lookup table and plot the
+        random hills example.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_random_hills()
+        >>> lut = pv.LookupTable(cmap='viridis')
+        >>> lut.apply_opacity([1.0, 0.4, 0.0, 0.4, 0.9])
+        >>> lut.scalar_range = (mesh.active_scalars.min(), mesh.active_scalars.max())
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, cmap=lut)
+        >>> pl.show()
+
+        """
+        self.values[:, -1] = opacity_transfer_function(
+            opacity, self.n_values, interpolate=interpolate, kind=kind
+        )
+        self._opacity_parm = (opacity, interpolate, kind)
 
     @property
     def values(self) -> lookup_table_ndarray:
