@@ -43,7 +43,7 @@ def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndar
     else:
         raise ValueError(
             f"Unexpected value for direction {view}\n"
-            "    Expected: 'xy', 'yx', 'xz', 'xz', 'yz', 'zy'"
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
         )
 
     if negative:
