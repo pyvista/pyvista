@@ -4,6 +4,7 @@ This test module tests any functionality that requires plotting.
 See the image regression notes in doc/extras/developer_notes.rst
 
 """
+from functools import partial
 import inspect
 import io
 import os
@@ -164,7 +165,12 @@ def get_cmd_opt(pytestconfig):
     glb_fail_extra_image_cache = pytestconfig.getoption('fail_extra_image_cache')
 
 
-def verify_cache_image(plotter):
+@pytest.fixture()
+def test_name(request):
+    return request.node.nodeid.split('::')[-1]
+
+
+def verify_cache_image(plotter, name=None):
     """Either store or validate an image.
 
     This is function should only be called within a pytest
@@ -189,18 +195,24 @@ def verify_cache_image(plotter):
 
     # since each test must contain a unique name, we can simply
     # use the function test to name the image
-    stack = inspect.stack()
-    for item in stack:
-        if item.function == 'check_gc':
-            return
-        if item.function[:5] == 'test_':
-            test_name = item.function
-            break
+    if name is None:
+        stack = inspect.stack()
+        for item in stack:
+            if item.function == 'check_gc':
+                return
+            if item.function[:5] == 'test_':
+                test_name = item.function[5:]
+                break
+        else:
+            raise RuntimeError(
+                'Unable to identify calling test function.  This function '
+                'should only be used within a pytest environment.'
+            )
     else:
-        raise RuntimeError(
-            'Unable to identify calling test function.  This function '
-            'should only be used within a pytest environment.'
-        )
+        if name[:5] == 'test_':
+            test_name = name[5:]
+        else:
+            test_name = name
 
     if test_name in HIGH_VARIANCE_TESTS:
         allowed_error = VER_IMAGE_REGRESSION_ERROR
@@ -217,7 +229,7 @@ def verify_cache_image(plotter):
         return
 
     # cached image name
-    image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
+    image_filename = os.path.join(IMAGE_CACHE_DIR, test_name + '.png')
 
     if glb_ignore_image_cache:
         return
@@ -2948,3 +2960,15 @@ def test_wireframe_color(sphere):
     sphere.plot(
         lighting=False, color='b', style='wireframe', before_close_callback=verify_cache_image
     )
+
+
+@pytest.mark.parametrize('direction', ['xy', 'yx', 'xz', 'zx', 'yz', 'zy'])
+@pytest.mark.parametrize('negative', [False, True])
+def test_view_xyz(direction, negative, colorful_tetrahedron, test_name):
+    """Test various methods like view_xy."""
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
+    getattr(pl, f"view_{direction}")(negative=negative)
+    pl.add_axes()
+    pl.show(before_close_callback=partial(verify_cache_image, name=test_name))

@@ -13,6 +13,7 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import uses_egl
 
+from ._utilities import view_vectors
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
@@ -2385,11 +2386,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, 1])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xy'))
 
     def view_yx(self, negative=False):
         """View the YX plane.
@@ -2412,11 +2409,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, -1])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yx'))
 
     def view_xz(self, negative=False):
         """View the XZ plane.
@@ -2439,11 +2432,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, -1, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xz'))
 
     def view_zx(self, negative=False):
         """View the ZX plane.
@@ -2466,11 +2455,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 1, 0])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zx'))
 
     def view_yz(self, negative=False):
         """View the YZ plane.
@@ -2493,11 +2478,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([1, 0, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yz'))
 
     def view_zy(self, negative=False):
         """View the ZY plane.
@@ -2520,11 +2501,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([-1, 0, 0])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zy'))
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
