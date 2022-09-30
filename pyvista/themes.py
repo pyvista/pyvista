@@ -1147,6 +1147,7 @@ class DefaultTheme(_ThemeConfig):
         '_enable_camera_orientation_widget',
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
+        '_before_close_callback',
     ]
 
     def __init__(self):
@@ -1192,6 +1193,7 @@ class DefaultTheme(_ThemeConfig):
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
+        self._before_close_callback = None
 
         # Grab system flag for anti-aliasing
         try:

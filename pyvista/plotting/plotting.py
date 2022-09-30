@@ -5969,7 +5969,10 @@ class Plotter(BasePlotter):
 
         """
         # developer keyword argument: runs a function immediately prior to ``close``
-        self._before_close_callback = kwargs.pop('before_close_callback', None)
+        before_close_callback = kwargs.pop('before_close_callback', None)
+        if before_close_callback is None:
+            before_close_callback = pyvista.global_theme._before_close_callback
+        self._before_close_callback = before_close_callback
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
 
