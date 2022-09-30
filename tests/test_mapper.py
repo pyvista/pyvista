@@ -49,9 +49,37 @@ def test_color_mode(dataset_mapper):
     dataset_mapper.color_mode = 'map'
     assert dataset_mapper.color_mode == 'map'
 
+    with pytest.raises(ValueError, match='Color mode must be either'):
+        dataset_mapper.color_mode = 'invalid'
+
 
 def test_set_scalars(dataset_mapper):
     scalars = dataset_mapper.dataset.points[:, 2]
     n_colors = 128
     dataset_mapper.set_scalars(scalars, 'z', n_colors=n_colors)
     assert dataset_mapper.lookup_table.GetNumberOfTableValues() == n_colors
+
+
+def test_array_name(dataset_mapper):
+    name = 'scalars'
+    dataset_mapper.array_name = name
+    assert dataset_mapper.array_name == name
+
+
+def test_do_not_set_attributes(dataset_mapper):
+    with pytest.raises(AttributeError, match='cannot be added to type'):
+        dataset_mapper.not_an_attribute = None
+
+
+def test_copy(dataset_mapper, sphere):
+    dataset_mapper.dataset = sphere
+    dataset_mapper.interpolate_before_map = False
+    dataset_mapper.scalar_range = (2, 5)
+    map_cp = dataset_mapper.copy()
+    assert isinstance(map_cp, DataSetMapper)
+    assert map_cp is not dataset_mapper
+    assert map_cp.scalar_range == dataset_mapper.scalar_range
+    assert map_cp.dataset is dataset_mapper.dataset
+
+    map_cp.scalar_range = (5, 10)
+    assert map_cp.scalar_range != dataset_mapper.scalar_range

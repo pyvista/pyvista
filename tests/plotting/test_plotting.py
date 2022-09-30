@@ -115,12 +115,15 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
+    'test_plot_composite_bool',
+    'test_plot_composite_lookup_table',
     'test_plot_composite_poly_component_nested_multiblock',
     'test_plot_composite_poly_scalars_cell',
     'test_plot_composite_preference_cell',
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
+    'test_plotter_lookup_table',
     'test_rectlinear_edge_case',
     'test_scalars_by_name',
     'test_user_annotations_scalar_bar_volume',
@@ -2543,6 +2546,20 @@ def test_add_text():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_plot_categories_int(sphere):
+    sphere['data'] = sphere.points[:, 2]
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=5, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_categories_true(sphere):
+    sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=True, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 @skip_windows
 @skip_9_0_X
 def test_depth_of_field():
@@ -2647,6 +2664,13 @@ def test_plot_composite_raise(sphere, multiblock_poly):
 def test_plot_composite_categories(multiblock_poly):
     pl = pyvista.Plotter()
     pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_lookup_table(multiblock_poly):
+    lut = pyvista.LookupTable('Greens', n_values=8)
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data_b', cmap=lut)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2938,6 +2962,37 @@ def test_charts_sin():
     chart.scatter(x, y)
     chart.line(x, y, 'r')
     chart.show(dev_kwargs={'before_close_callback': verify_cache_image})
+
+
+def test_lookup_table():
+    lut = pyvista.LookupTable('viridis')
+    lut.n_values = 8
+    lut.below_range_color = 'black'
+    lut.above_range_color = 'grey'
+    lut.nan_color = 'r'
+
+    # There are minor variations within 9.0.3 that slightly invalidate the
+    # image cache.
+    if pyvista.vtk_version_info != (9, 0, 3):
+        lut.plot(before_close_callback=verify_cache_image)
+    else:
+        lut.plot()
+
+
+def test_plotter_lookup_table(sphere):
+    lut = pyvista.LookupTable('Reds')
+    lut.n_values = 3
+    lut.scalar_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
+    sphere.plot(scalars=sphere.points[:, 2], cmap=lut, before_close_callback=verify_cache_image)
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_lookup_table(uniform):
+    lut = pyvista.LookupTable()
+    lut.alpha_range = (0, 1)
+    pl = pyvista.Plotter()
+    pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_plot_actor(sphere):
