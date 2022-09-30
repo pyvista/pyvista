@@ -922,7 +922,7 @@ class LookupTable(_vtk.vtkLookupTable):
         Examples
         --------
         >>> import pyvista
-        >>> lut = pv.LookupTable()
+        >>> lut = pyvista.LookupTable()
         >>> rgba_color = lut.map_value(0.0)
         >>> rgba_color
         (1.0, 0.0, 0.0, 1.0)
