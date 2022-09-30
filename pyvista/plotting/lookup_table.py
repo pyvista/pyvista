@@ -702,13 +702,16 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Parameters
         ----------
-        opacity : list(float) or str
+        opacity : float, list(float), str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
             ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
-            reverse that mapping.  This can also be a custom array/list of
+            reverse that mapping.  This can also be a custom array or list of
             values that will be interpolated across the ``n_color`` range for
-            user defined mappings.
+            user defined mappings. Values must be between 0 and 1.
+
+            If an ``int``, simply applies the same opacity across the entire
+            colormap and must be between 0 and 1.
 
         interpolate : bool, default: True
             Flag on whether or not to interpolate the opacity mapping for all
@@ -743,9 +746,17 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> pl.show()
 
         """
-        self.values[:, -1] = opacity_transfer_function(
-            opacity, self.n_values, interpolate=interpolate, kind=kind
-        )
+        if isinstance(opacity, (float, int)):
+            if opacity < 0 or opacity > 1:
+                raise ValueError(f'Opacity must bet between 0 and 1, got {opacity}')
+            self.values[:, -1] = opacity * 255
+        elif len(opacity) == self.n_values:
+            # no interpolation is necessary
+            self.values[:, -1] = np.array(opacity, copy=False).copy()
+        else:
+            self.values[:, -1] = opacity_transfer_function(
+                opacity, self.n_values, interpolate=interpolate, kind=kind
+            )
         self._opacity_parm = (opacity, interpolate, kind)
 
     @property

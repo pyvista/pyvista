@@ -231,3 +231,13 @@ def test_custom_opacity(lut):
     # ensure opacity is not reset when changing the colormap
     lut.cmap = 'jet'
     assert not (lut.values[:, -1] == 255).all()
+
+    lut.apply_opacity(0)
+    assert np.allclose(lut.values[:, -1], 0)
+    lut.apply_opacity(0.5)
+    assert np.allclose(lut.values[:, -1], int(255 * 0.5))
+    lut.apply_opacity(1)
+    assert np.allclose(lut.values[:, -1], 255)
+
+    with pytest.raises(ValueError, match='between 0 and 1'):
+        lut.apply_opacity(-0.1)

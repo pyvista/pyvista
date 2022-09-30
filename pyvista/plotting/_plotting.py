@@ -141,14 +141,14 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
 
     Returns
     -------
-    _custom_opac : bool
+    custom_opac : bool
         If using custom opacity.
 
     opacity : numpy.ndarray
         Array containing the opacity.
 
     """
-    _custom_opac = False
+    custom_opac = False
     if isinstance(opacity, str):
         try:
             # Get array from mesh
@@ -157,7 +157,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
                 warnings.warn("Opacity scalars contain values over 1")
             if np.any(opacity < 0):
                 warnings.warn("Opacity scalars contain values less than 0")
-            _custom_opac = True
+            custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
             opacity = opacity_transfer_function(opacity, n_colors)
@@ -170,7 +170,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
             # User could pass an array of opacities for every point/cell
-            _custom_opac = True
+            custom_opac = True
         else:
             opacity = opacity_transfer_function(opacity, n_colors)
 
@@ -180,7 +180,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         elif isinstance(opacity, np.ndarray):
             opacity = 255 - opacity
 
-    return _custom_opac, opacity
+    return custom_opac, opacity
 
 
 def _common_arg_parser(
