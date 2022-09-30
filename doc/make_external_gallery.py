@@ -5,35 +5,13 @@ import os
 
 def format_icon(title, description, link, image):
     body = r"""
+   .. grid-item-card:: {}
+      :link: {}
+      :text-align: center
 
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="{}">
-
-.. only:: html
-
-    .. figure:: ../images/external-examples/{}
-       :target: {}
-
-       {}
-
-
-
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   {} <{}>
-
-
-
+      .. image:: ../images/external-examples/{}
 """
-    content = body.format(description, image, link, title, title, link)
+    content = body.format(title, link, image)
     return content
 
 
@@ -206,7 +184,7 @@ If so, please consider sharing your work here submitting a PR at
 https://github.com/pyvista and we would be glad to add it!
 
 
-
+.. grid:: 3
 """
         )
         # Reverse to put the latest items at the top
