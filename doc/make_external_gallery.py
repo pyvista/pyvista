@@ -187,7 +187,8 @@ def make_example_gallery():
 
     with StringIO() as new_fid:
         new_fid.write(
-            """
+            """.. _external_examples:
+
 External Examples
 =================
 

@@ -1,4 +1,4 @@
-Sphinx==4.5.0
+Sphinx==5.2.3
 cmocean==2.0
 colorcet==3.0.0
 enum-tools==0.9.0.post1
