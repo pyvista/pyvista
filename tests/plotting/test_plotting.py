@@ -181,6 +181,11 @@ def verify_cache_image(plotter, name=None):
     Assign this only once for each test you'd like to validate the
     previous image of.  This will not work with parameterized tests.
 
+    Parameters
+    ----------
+    name : str, optional
+        Provide a test name to use for the filename to store.
+
     Example Usage:
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -201,7 +206,7 @@ def verify_cache_image(plotter, name=None):
             if item.function == 'check_gc':
                 return
             if item.function[:5] == 'test_':
-                test_name = item.function[5:]
+                test_name = item.function
                 break
         else:
             raise RuntimeError(
@@ -209,10 +214,7 @@ def verify_cache_image(plotter, name=None):
                 'should only be used within a pytest environment.'
             )
     else:
-        if name[:5] == 'test_':
-            test_name = name[5:]
-        else:
-            test_name = name
+        test_name = name
 
     if test_name in HIGH_VARIANCE_TESTS:
         allowed_error = VER_IMAGE_REGRESSION_ERROR
@@ -229,7 +231,7 @@ def verify_cache_image(plotter, name=None):
         return
 
     # cached image name
-    image_filename = os.path.join(IMAGE_CACHE_DIR, test_name + '.png')
+    image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
 
     if glb_ignore_image_cache:
         return
