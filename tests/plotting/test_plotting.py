@@ -167,7 +167,7 @@ def get_cmd_opt(pytestconfig):
 
 @pytest.fixture()
 def test_name(request):
-    return request.node.nodeid.split('::')[-1]
+    return request.node.name
 
 
 def verify_cache_image(plotter, name=None):
@@ -2979,7 +2979,7 @@ def test_view_xyz(direction, negative, colorful_tetrahedron, test_name):
 @pytest.mark.parametrize('view', ['xy', 'yx', 'xz', 'zx', 'yz', 'zy'])
 @pytest.mark.parametrize('negative', [False, True])
 def test_tight_direction(view, negative, colorful_tetrahedron, test_name):
-    """Test various methods like view_xy."""
+    """Test camera.tight() with various views like xy."""
 
     pl = pyvista.Plotter()
     pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")

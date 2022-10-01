@@ -11,6 +11,7 @@ def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndar
     ----------
     view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
         Plane to return vectors for.
+
     negative : bool
         Whether to view from opposite direction.  Default ``False``.
 
@@ -18,6 +19,7 @@ def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndar
     -------
     direction: List
         [x, y, z] vector that points in the viewing direction
+
     viewup: List
         [x, y, z] vector that points to the viewup direction
 

@@ -714,7 +714,7 @@ class Camera(_vtk.vtkCamera):
         focal_point = position.copy()
         # set focal point to 0 in viewing direction
         focal_point -= np.abs(direction * focal_point)
-        # offset position from foral point by dist in viewing direction
+        # offset position from focal point by dist in viewing direction
         position += -1 * np.abs(direction) * position + dist * direction
 
         self.SetViewUp(*viewup)

@@ -2386,7 +2386,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xy'))
+        self.view_vector(*view_vectors('xy'), negative=negative)
 
     def view_yx(self, negative=False):
         """View the YX plane.
