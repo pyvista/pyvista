@@ -650,6 +650,13 @@ class Camera(_vtk.vtkCamera):
     def tight(self, padding=0.0, adjust_render_window=True, view='xy', negative=False):
         """Adjust the camera position so that the actors fill the entire renderer.
 
+        The camera view direction is reoriented to be normal to the ``view``
+        plane. When ``negative=False``, The first letter of ``view`` refers
+        to the axis that points to the right. The second letter of ``view``
+        refers to axis that points up.  When ``negative=True``, the first
+        letter refers to the axis that points left.  The up direction is
+        unchanged.
+
         Parameters
         ----------
         padding : float, optional
