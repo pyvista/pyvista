@@ -348,4 +348,10 @@ def test_vtk_points_deep_shallow():
     assert not np.array_equal(vtk_points.GetPoint(0), points[0])
     assert np.array_equal(points[0], [0.0, 0.0, 0.0])
 
-    # TODO: test force_float
+
+@pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
+def test_vtk_points_force_float(force_float, expected_data_type):
+    np_points = np.array([[1, 2, 3]], dtype=np.int64)
+    pset = pyvista.PointSet(np_points, force_float=force_float)
+
+    assert pset.points.dtype == expected_data_type
