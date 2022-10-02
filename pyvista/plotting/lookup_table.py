@@ -474,7 +474,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def rebuild(self):
         """Clear the color map and recompute the values table.
 
-        This called automatically when setting values like
+        This is called automatically when setting values like
         :attr:`LookupTable.value_range`.
 
         Notes
