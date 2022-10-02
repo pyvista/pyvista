@@ -4726,11 +4726,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(labels, str):
             raise TypeError('labels must be a string name of the scalars array to use')
         if fmt is None:
-            fmt = self._theme.font.fmt
-        if fmt is None:
             fmt = '%.6e'
         scalars = points.point_data[labels]
-        phrase = f'{preamble} %.3e'
+        phrase = f'{preamble} ' + fmt
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
