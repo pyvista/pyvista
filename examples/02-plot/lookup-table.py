@@ -23,7 +23,7 @@ bracket
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's plot using the default color map, "viridis". Internally, PyVista
 # will automatically create a lookup table to map the scalars (stored here
-# within `point_data`, to RGBA colors. This is shown here as a nested attribute
+# within `point_data`, to RGBA colors). This is shown here as a nested attribute
 # to the :class:`pyvista.DataSetMapper` and it has a helpful ``repr`` method:
 
 pl = pv.Plotter()
@@ -45,7 +45,7 @@ actor.mapper.lookup_table.plot()
 ###############################################################################
 # Plot the DataSet
 # ~~~~~~~~~~~~~~~~
-# Lets plot the dataset using the automatically generated lookup table.
+# Let's plot the dataset using the automatically generated lookup table.
 
 pl = pv.Plotter()
 pl.add_mesh(bracket)
@@ -53,7 +53,7 @@ pl.show()
 
 
 ###############################################################################
-# Create a Custom Lookup Table using a matplotlib Color Map
+# Create a Custom Lookup Table using a Matplotlib Color Map
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a lookup table with a narrow table range (same as ``clim``)
 # and color values above and below the range.
