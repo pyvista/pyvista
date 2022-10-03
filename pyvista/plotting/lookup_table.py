@@ -710,15 +710,16 @@ class LookupTable(_vtk.vtkLookupTable):
             values that will be interpolated across the ``n_color`` range for
             user defined mappings. Values must be between 0 and 1.
 
-            If an ``int``, simply applies the same opacity across the entire
-            colormap and must be between 0 and 1.
+            If a ``float``, simply applies the same opacity across the entire
+            colormap and must be between 0 and 1. Note that ``int`` values are
+            interpreted as if they were floats.
 
         interpolate : bool, default: True
             Flag on whether or not to interpolate the opacity mapping for all
             colors.
 
         kind : str, default: 'quadratic'
-            The interepolation kind if ``interpolate`` is ``True`` and
+            The interpolation kind if ``interpolate`` is ``True`` and
             ``scipy`` is available. Options are:
 
             - ``'linear'``
@@ -732,7 +733,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        Apply a user defined opacity custom opacity to a lookup table and plot the
+        Apply a user defined custom opacity to a lookup table and plot the
         random hills example.
 
         >>> import pyvista as pv
@@ -748,7 +749,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         if isinstance(opacity, (float, int)):
             if opacity < 0 or opacity > 1:
-                raise ValueError(f'Opacity must bet between 0 and 1, got {opacity}')
+                raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
             # no interpolation is necessary
