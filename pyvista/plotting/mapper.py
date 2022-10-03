@@ -642,7 +642,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
                 # Set opactities
                 if isinstance(opacity, np.ndarray) and not custom_opac:
-                    self.lookup_table.values[:, -1] = opacity
+                    self.lookup_table.apply_opacity(opacity)
 
                 if flip_scalars:
                     self.lookup_table.values[:] = self.lookup_table.values[::-1]
