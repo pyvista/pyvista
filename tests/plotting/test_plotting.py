@@ -3005,6 +3005,7 @@ def test_wireframe_color(sphere):
     )
 
 
+@skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
     p = pyvista.Plotter()
