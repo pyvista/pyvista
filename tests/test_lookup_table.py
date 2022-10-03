@@ -229,8 +229,9 @@ def test_custom_opacity(lut):
     assert np.array_equal(values_copy[:, :-1], lut.values[:, :-1])
 
     # ensure opacity is not reset when changing the colormap
+    opac_orig = lut.values[:, -1].copy()
     lut.cmap = 'jet'
-    assert not (lut.values[:, -1] == 255).all()
+    assert np.array_equal(lut.values[:, -1], opac_orig)
 
     lut.apply_opacity(0)
     assert np.array_equiv(lut.values[:, -1], 0)
