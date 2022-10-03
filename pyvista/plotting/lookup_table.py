@@ -720,7 +720,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         kind : str, default: 'quadratic'
             The interpolation kind if ``interpolate`` is ``True`` and
-            ``scipy`` is available. Options are:
+            ``scipy`` is available. If ``scipy`` is not available, linear
+            interpolation is always used. Options are:
 
             - ``'linear'``
             - ``'nearest'``
