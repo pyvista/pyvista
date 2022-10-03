@@ -322,7 +322,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        Apply the single matplotlib color map ``"Oranges"``.
+        Apply the single Matplotlib color map ``"Oranges"``.
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
@@ -474,7 +474,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def rebuild(self):
         """Clear the color map and recompute the values table.
 
-        This called automatically when setting values like
+        This is called automatically when setting values like
         :attr:`LookupTable.value_range`.
 
         Notes
@@ -652,7 +652,7 @@ class LookupTable(_vtk.vtkLookupTable):
         Parameters
         ----------
         cmap : str, list, colors.Colormap
-            Colormap from matplotlib, colorcet, or cmocean.
+            Colormap from Matplotlib, colorcet, or cmocean.
 
         n_values : int, default: 256
             Number of colors in the color map.
@@ -663,7 +663,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if not has_module('matplotlib'):  # pragma: no cover
-            raise ModuleNotFoundError('Install matplotlib to use color maps.')
+            raise ModuleNotFoundError('Install Matplotlib to use color maps.')
 
         if isinstance(cmap, list):
             n_values = len(cmap)
@@ -935,7 +935,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return tuple(color)
 
     def __call__(self, value):
-        """Implement a matplotlib colormap-like call."""
+        """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)
         else:
