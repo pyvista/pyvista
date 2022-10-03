@@ -224,20 +224,20 @@ def test_call(lut):
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')
-    assert not (lut.values[:, -1] == 255).all()
+    assert not np.array_equiv(lut.values[:, -1], 255)
     # check RGB isn't changed when applying an opacity
-    assert np.allclose(values_copy[:, :-1], lut.values[:, :-1])
+    assert np.array_equal(values_copy[:, :-1], lut.values[:, :-1])
 
     # ensure opacity is not reset when changing the colormap
     lut.cmap = 'jet'
     assert not (lut.values[:, -1] == 255).all()
 
     lut.apply_opacity(0)
-    assert np.allclose(lut.values[:, -1], 0)
+    assert np.array_equiv(lut.values[:, -1], 0)
     lut.apply_opacity(0.5)
-    assert np.allclose(lut.values[:, -1], int(255 * 0.5))
+    assert np.array_equiv(lut.values[:, -1], int(255 * 0.5))
     lut.apply_opacity(1)
-    assert np.allclose(lut.values[:, -1], 255)
+    assert np.array_equiv(lut.values[:, -1], 255)
 
     with pytest.raises(ValueError, match='between 0 and 1'):
         lut.apply_opacity(-0.1)
