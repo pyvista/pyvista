@@ -3010,6 +3010,6 @@ def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
     p = pyvista.Plotter()
     p.add_mesh(mesh, scalars="Spatial Point Data", show_edges=True)
-    p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=36, fmt=r'%.3f')
+    p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=36, fmt='%.3f')
     p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
     p.show(before_close_callback=verify_cache_image)
