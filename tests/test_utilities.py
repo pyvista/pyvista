@@ -314,7 +314,7 @@ def test_voxelize():
     assert vox.n_cells
 
 
-def test_voxelize_non_uniform_desnity():
+def test_voxelize_non_uniform_density():
     mesh = pyvista.PolyData(ex.load_uniform().points)
     vox = pyvista.voxelize(mesh, [0.5, 0.3, 0.2])
     assert vox.n_cells
