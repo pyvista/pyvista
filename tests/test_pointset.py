@@ -153,7 +153,6 @@ def test_flip_x():
                 [4.0, 5.0, 6.0],
                 [1.0, 8.0, 9.0],
             ],
-            dtype=np.float32,
         ),
     )
 
@@ -170,7 +169,6 @@ def test_flip_y():
                 [4.0, 5.0, 6.0],
                 [7.0, 2.0, 9.0],
             ],
-            dtype=np.float32,
         ),
     )
 
@@ -187,7 +185,6 @@ def test_flip_z():
                 [4.0, 5.0, 6.0],
                 [7.0, 8.0, 3.0],
             ],
-            dtype=np.float32,
         ),
     )
 
@@ -204,7 +201,6 @@ def test_flip_normal():
                 [4.0, 5.0, 6.0],
                 [1.0, 2.0, 3.0],
             ],
-            dtype=np.float32,
         ),
     )
 
@@ -213,33 +209,25 @@ def test_rotate_x():
     np_points = np.array([1, 1, 1])
     pset = pyvista.PointSet(np_points)
     pset.rotate_x(45, inplace=True)
-    assert np.allclose(
-        pset.points, np.array([[1.0000000e00, 1.1102230e-16, 1.4142135e00]], dtype=np.float32)
-    )
+    assert np.allclose(pset.points, [1.0, 0.0, 1.4142135])
 
 
 def test_rotate_y():
     np_points = np.array([1, 1, 1])
     pset = pyvista.PointSet(np_points)
     pset.rotate_y(45, inplace=True)
-    assert np.allclose(
-        pset.points, np.array([[1.4142135e00, 1.0000000e00, 1.1102230e-16]], dtype=np.float32)
-    )
+    assert np.allclose(pset.points, [1.4142135, 1.0, 0.0])
 
 
 def test_rotate_z():
     np_points = np.array([1, 1, 1])
     pset = pyvista.PointSet(np_points)
     pset.rotate_z(45, inplace=True)
-    assert np.allclose(
-        pset.points, np.array([[1.1102230e-16, 1.4142135e00, 1.0000000e00]], dtype=np.float32)
-    )
+    assert np.allclose(pset.points, [0.0, 1.4142135, 1.0])
 
 
 def test_rotate_vector():
     np_points = np.array([1, 1, 1])
     pset = pyvista.PointSet(np_points)
     pset.rotate_vector([1, 2, 1], 45, inplace=True)
-    assert np.allclose(
-        pset.points, np.array([[1.1910441, 1.0976311, 0.6136938]], dtype=np.float32)
-    )
+    assert np.allclose(pset.points, [1.1910441, 1.0976311, 0.6136938])
