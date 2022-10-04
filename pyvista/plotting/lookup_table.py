@@ -749,7 +749,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if isinstance(opacity, (float, int)):
-            if opacity < 0 or opacity > 1:
+            if not 0 <= opacity <= 1:
                 raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
