@@ -47,19 +47,17 @@ jobs:
       - name: Install pyvista and doctest requirements
         run: pip install . -r requirements_test.txt
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
-        with:
-          packages: libgl1-mesa-glx xvfb python-tk
-          version: 3.0
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@v1
 
       - name: Software Report
         run: |
-          xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
 
       - name: Test Package Docstrings
-        run: xvfb-run pytest -v --doctest-modules pyvista
+        run: pytest -v --doctest-modules pyvista
 
       - name: Test Package Docstrings with Local Namespace
-        run: xvfb-run make doctest-modules-local-namespace
+        run: make doctest-modules-local-namespace

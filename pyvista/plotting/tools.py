@@ -435,6 +435,12 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         available. Options are ('linear', 'nearest', 'zero', 'slinear',
         'quadratic', 'cubic', 'previous', 'next'.
 
+    Returns
+    -------
+    numpy.ndarray
+        Array of ``numpy.uint8`` values ``n_colors`` long containing the
+        [0-255] opacity mapping values.
+
     Examples
     --------
     >>> import pyvista as pv
