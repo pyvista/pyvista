@@ -502,11 +502,18 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
-def test_wireframe(datasets):
+def test_extract_all_edges(datasets):
     for dataset in datasets:
-        wire = dataset.extract_all_edges(progress_bar=True)
-        assert wire is not None
-        assert isinstance(wire, pyvista.PolyData)
+        edges = dataset.extract_all_edges()
+        assert edges is not None
+        assert isinstance(edges, pyvista.PolyData)
+
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(VTKVersionError):
+            datasets[0].extract_all_edges(use_all_points=True)
+    else:
+        edges = datasets[0].extract_all_edges(use_all_points=True)
+        assert edges.n_lines
 
 
 @skip_py2_nobind

@@ -1308,13 +1308,22 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    def extract_all_edges(self, progress_bar=False):
+    def extract_all_edges(self, use_all_points=False, progress_bar=False):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
 
         Parameters
         ----------
+        use_all_points : bool, default: False
+            Indicates whether all of the points of the input mesh should exist
+            in the output. When ``True`` enables point renumbering.  If set to
+            ``True``, then a threaded approach is used which avoids the use of
+            a point locator and is quicker.
+
+            By default this is set to ``False``, and unused points are omitted
+            from the output.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1339,6 +1348,11 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
+        if use_all_points:
+            try:
+                alg.SetUseAllPoints(use_all_points)
+            except AttributeError:  # pragma: no cover
+                raise VTKVersionError('This version of VTK does not support `use_all_points=True`.')
         _update_alg(alg, progress_bar, 'Extracting All Edges')
         return _get_output(alg)
 
