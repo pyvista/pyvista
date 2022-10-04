@@ -719,18 +719,11 @@ class LookupTable(_vtk.vtkLookupTable):
             colors.
 
         kind : str, default: 'quadratic'
-            The interpolation kind if ``interpolate`` is ``True`` and
-            ``scipy`` is available. If ``scipy`` is not available, linear
-            interpolation is always used. Options are:
+            The interpolation kind if ``interpolate`` is ``True`` and ``scipy``
+            is available. See :class:`scipy.interpolate.interp1d` for the
+            available interpolation kinds.
 
-            - ``'linear'``
-            - ``'nearest'``
-            - ``'zero'``
-            - ``'slinear'``
-            - ``'quadratic'``
-            - ``'cubic'``
-            - ``'previous'``
-            - ``'next'``
+            If ``scipy`` is not available, ``'linear'`` interpolation is used.
 
         Examples
         --------
@@ -754,7 +747,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
             # no interpolation is necessary
-            self.values[:, -1] = np.array(opacity, copy=False).copy()
+            self.values[:, -1] = np.array(opacity)
         else:
             self.values[:, -1] = opacity_transfer_function(
                 opacity, self.n_values, interpolate=interpolate, kind=kind
