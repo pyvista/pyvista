@@ -18,6 +18,7 @@ meshio<5.4.0
 numpydoc==1.4.0
 panel<0.14.0
 param<1.13.0
+pooch<1.7.0
 pytest-cov<4.1.0
 pytest-memprof<0.3.0
 pytest-xdist<2.6.0

@@ -52,7 +52,7 @@ jobs:
 
       - name: Software Report
         run: |
-          python -c "import pyvista; print(pyvista.Report()); print('Examples path:', pyvista.EXAMPLES_PATH)"
+          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
 
