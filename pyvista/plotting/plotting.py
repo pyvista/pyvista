@@ -4690,8 +4690,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : numpy.ndarray or pyvista.DataSet
-            An ``n x 3`` numpy.ndarray or pyvista dataset with points.
+        points : pyvista.DataSet
+            A pyvista dataset with points.
 
         labels : str, optional
             String name of the point data array to use.
