@@ -431,7 +431,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         Flag on whether or not to interpolate the opacity mapping for all colors
 
     kind : str
-        The interepolation kind if ``interpolate`` is true and ``scipy`` is
+        The interpolation kind if ``interpolate`` is true and ``scipy`` is
         available. Options are ('linear', 'nearest', 'zero', 'slinear',
         'quadratic', 'cubic', 'previous', 'next'.
 
