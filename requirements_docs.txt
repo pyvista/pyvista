@@ -1,6 +1,6 @@
 Sphinx==4.5.0
 cmocean==2.0
-colorcet==3.0.0
+colorcet==3.0.1
 enum-tools==0.9.0.post1
 imageio-ffmpeg==0.4.7
 imageio>=2.5.0
