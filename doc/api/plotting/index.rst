@@ -29,6 +29,7 @@ all plotting functionality in PyVista.
    Property
    Actor
    DataSetMapper
+   LookupTable
 
 
 Composite Plotting Reference

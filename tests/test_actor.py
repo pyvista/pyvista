@@ -1,8 +1,14 @@
+import platform
+
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import examples
+
+skip_mac = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+)
 
 
 @pytest.fixture()
@@ -56,6 +62,7 @@ def test_actor_copy_shallow(actor):
     assert actor_copy.mapper is actor.mapper
 
 
+@skip_mac
 def test_actor_texture(actor):
     texture = examples.download_masonry_texture()
     actor.texture = texture

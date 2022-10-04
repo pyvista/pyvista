@@ -72,6 +72,20 @@ def test_load_tetbeam():
     assert (mesh.celltypes == 10).all()
 
 
+def test_sphere_with_texture_map():
+    sphere = pyvista.examples.planets._sphere_with_texture_map()
+    assert isinstance(sphere, pyvista.PolyData)
+    assert 'Texture Coordinates' in sphere.point_data
+    assert sphere['Texture Coordinates'].shape == (sphere.n_points, 2)
+
+
+def test_load_earth():
+    mesh = pyvista.examples.planets.load_earth()
+    assert isinstance(mesh, pyvista.PolyData)
+    assert mesh.n_cells
+    assert mesh.textures["surface"]
+
+
 if TEST_DOWNLOADS:
 
     def test_download_single_sphere_animation():
@@ -483,6 +497,15 @@ if TEST_DOWNLOADS:
         assert isinstance(dataset, pyvista.UniformGrid)
         assert 'frame0' in dataset.point_data
 
+    def test_fea_bracket():
+        filename = examples.download_fea_bracket(load=False)
+        assert os.path.isfile(filename)
+        assert filename.endswith('vtu')
+
+        dataset = examples.download_fea_bracket(load=True)
+        assert isinstance(dataset, pyvista.UnstructuredGrid)
+        assert 'Equivalent (von-Mises) Stress (psi)' in dataset.cell_data
+
     def test_black_vase():
         filename = examples.download_black_vase(load=False)
         assert os.path.isfile(filename)
@@ -545,3 +568,59 @@ if TEST_DOWNLOADS:
         dataset = examples.download_cad_model_case(load=True)
         assert isinstance(dataset, pyvista.PolyData)
         assert dataset.n_points == 7677
+
+    def test_load_sun():
+        mesh = examples.planets.load_sun()
+        assert mesh.n_cells
+        assert mesh.textures["atmosphere"]
+
+    def test_load_moon():
+        mesh = examples.planets.load_moon()
+        assert mesh.n_cells
+        assert mesh.textures["surface"]
+
+    def test_load_mercury():
+        mesh = examples.planets.load_mercury()
+        assert mesh.n_cells
+        assert mesh.textures["surface"]
+
+    def test_load_venus():
+        mesh = examples.planets.load_venus()
+        assert mesh.n_cells
+        assert mesh.textures["surface"]
+        assert mesh.textures["atmosphere"]
+
+    def test_load_mars():
+        mesh = examples.planets.load_mars()
+        assert mesh.n_cells
+        assert mesh.textures["surface"]
+
+    def test_load_jupiter():
+        mesh = examples.planets.load_jupiter()
+        assert mesh.n_cells
+        assert mesh.textures["atmosphere"]
+
+    def test_load_saturn():
+        mesh = examples.planets.load_saturn()
+        assert mesh.n_cells
+        assert mesh.textures["atmosphere"]
+
+    def test_load_saturn_rings():
+        mesh = examples.planets.load_saturn_rings()
+        assert mesh.n_cells
+        assert mesh.textures["atmosphere"]
+
+    def test_load_uranus():
+        mesh = examples.planets.load_uranus()
+        assert mesh.n_cells
+        assert mesh.textures["atmosphere"]
+
+    def test_load_neptune():
+        mesh = examples.planets.load_neptune()
+        assert mesh.n_cells
+        assert mesh.textures["atmosphere"]
+
+    def test_load_pluto():
+        mesh = examples.planets.load_pluto()
+        assert mesh.n_cells
+        assert mesh.textures["surface"]
