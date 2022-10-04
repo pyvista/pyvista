@@ -25,6 +25,7 @@ Highlights of the API include:
 .. card:: Core API
    :link: core-api-index
    :link-type: ref
+   :class-title: pyvista-card-title
 
    Learn more anout PyVista's different mesh types and direct access to common
    VTK filters.
@@ -40,6 +41,7 @@ Highlights of the API include:
 .. card:: Plotting API
    :link: plotting-api-index
    :link-type: ref
+   :class-title: pyvista-card-title
 
    Explore PyVista's robust plotting interface for visualizing the core data
    structures.
@@ -55,6 +57,7 @@ Highlights of the API include:
 .. card:: Readers
    :link: reader_api
    :link-type: ref
+   :class-title: pyvista-card-title
 
    Use PyVista's Reader classes to read data files using
    :func:`pyvista.get_reader`.
@@ -70,6 +73,7 @@ Highlights of the API include:
 .. card:: Utilities
    :link: utilities-api-index
    :link-type: ref
+   :class-title: pyvista-card-title
 
    Utilize PyVista's helper modules, conversion tools, and geometric object
    creation routines.
