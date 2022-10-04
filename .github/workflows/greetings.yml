@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/first-interaction@v1
+        continue-on-error: true
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           issue-message: 'Hi and welcome! Thanks for posting your first issue in the PyVista project! Someone from `@pyvista/developers` will chime in before too long. If your question is support related, we may transfer it to the [Discussions](https://github.com/pyvista/pyvista/discussions).'
