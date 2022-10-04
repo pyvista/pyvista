@@ -2922,11 +2922,11 @@ def test_tight_wide():
 def test_backface_params():
     mesh = pyvista.ParametricCatalanMinimal()
 
-    with pytest.raises(TypeError, match='pyvista.Property or a dict'):
-        mesh.plot(backface_params='invalid')
+    with pytest.raises(TypeError, match="pyvista.Property or a dict"):
+        mesh.plot(backface_params="invalid")
 
-    params = dict(color='blue', smooth_shading=True)
-    backface_params = dict(color='red', specular=1.0, specular_power=50.0)
+    params = dict(color="blue", smooth_shading=True)
+    backface_params = dict(color="red", specular=1.0, specular_power=50.0)
     backface_prop = pyvista.Property(**backface_params)
 
     # check Property can be passed
