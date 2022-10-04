@@ -718,7 +718,7 @@ class LookupTable(_vtk.vtkLookupTable):
             colors.
 
         kind : str, default: 'quadratic'
-            The interepolation kind if ``interpolate`` is ``True`` and
+            The interpolation kind if ``interpolate`` is ``True`` and
             ``scipy`` is available. Options are:
 
             - ``'linear'``
