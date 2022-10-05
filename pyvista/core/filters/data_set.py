@@ -2456,15 +2456,6 @@ class DataSetFilters:
         >>> surf.plot(scalars='Area')
 
         """
-        if pass_cell_data is None:
-            pass_cell_data = False
-            warnings.warn(
-                'The default value of the ``pass_cell_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
-
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
@@ -2549,15 +2540,6 @@ class DataSetFilters:
         >>> sphere.plot()
 
         """
-        if pass_point_data is None:
-            pass_point_data = False
-            warnings.warn(
-                'The default value of the ``pass_point_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
-
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
