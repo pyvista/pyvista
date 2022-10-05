@@ -3536,18 +3536,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if flip_scalars:
                 cmap = cmap.reversed()
 
-            # Set opacities
-            if isinstance(opacity, (float, int)):
-                opacity_values = [opacity] * n_colors
-            elif isinstance(opacity, str):
-                opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
-            elif isinstance(opacity, (np.ndarray, list, tuple)):
-                opacity = np.array(opacity)
-                opacity_values = opacity_transfer_function(opacity, n_colors)
-
             # Set colormap and build lookup table
             self.mapper.lookup_table.apply_cmap(cmap, n_colors)
-            self.mapper.lookup_table.values[:, 3] = opacity_values
+            self.mapper.lookup_table.apply_opacity(opacity)
             self.mapper.lookup_table.scalar_range = clim
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
@@ -4730,7 +4721,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if fmt is None:
             fmt = '%.6e'
         scalars = points.point_data[labels]
-        phrase = f'{preamble} %.3e'
+        phrase = f'{preamble} {fmt}'
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 

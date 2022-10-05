@@ -1,17 +1,21 @@
 """glTF examples."""
 
-from .downloads import _retrieve_file
+import pooch
 
-GLTF_SAMPLES_ROOT_URL = (
-    'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/'
+from .downloads import USER_DATA_PATH
+
+GLTF_FETCHER = pooch.create(
+    path=USER_DATA_PATH,
+    base_url='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
+    registry={
+        'Avocado/glTF-Binary/Avocado.glb': None,
+        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': None,
+        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': None,
+        'GearboxAssy/glTF-Binary/GearboxAssy.glb': None,
+        'SheenChair/glTF-Binary/SheenChair.glb': None,
+    },
+    retry_if_failed=3,
 )
-
-
-def _download_file(end_url):  # pragma: no cover
-    """Download a gltf example file."""
-    basename = end_url.split('/')[-1]
-    filename, _ = _retrieve_file(GLTF_SAMPLES_ROOT_URL + end_url, basename)
-    return filename
 
 
 def download_damaged_helmet():  # pragma: no cover
@@ -36,7 +40,7 @@ def download_damaged_helmet():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
+    return GLTF_FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
 
 
 def download_sheen_chair():  # pragma: no cover
@@ -61,7 +65,7 @@ def download_sheen_chair():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('SheenChair/glTF-Binary/SheenChair.glb')
+    return GLTF_FETCHER.fetch('SheenChair/glTF-Binary/SheenChair.glb')
 
 
 def download_gearbox():  # pragma: no cover
@@ -84,7 +88,7 @@ def download_gearbox():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('GearboxAssy/glTF-Binary/GearboxAssy.glb')
+    return GLTF_FETCHER.fetch('GearboxAssy/glTF-Binary/GearboxAssy.glb')
 
 
 def download_avocado():  # pragma: no cover
@@ -107,11 +111,11 @@ def download_avocado():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('Avocado/glTF-Binary/Avocado.glb')
+    return GLTF_FETCHER.fetch('Avocado/glTF-Binary/Avocado.glb')
 
 
 def download_milk_truck():  # pragma: no cover
-    """Download the avocado example.
+    """Download the milk truck example.
 
     Files hosted at https://github.com/KhronosGroup/glTF-Sample-Models
 
@@ -130,4 +134,4 @@ def download_milk_truck():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
+    return GLTF_FETCHER.fetch('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
