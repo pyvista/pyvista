@@ -1324,6 +1324,8 @@ class DataSetFilters:
             By default this is set to ``False``, and unused points are omitted
             from the output.
 
+            This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1352,7 +1354,10 @@ class DataSetFilters:
             try:
                 alg.SetUseAllPoints(use_all_points)
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError('This version of VTK does not support `use_all_points=True`.')
+                raise VTKVersionError(
+                    'This version of VTK does not support `use_all_points=True`. '
+                    'VTK v9.1 or newer is required.'
+                )
         _update_alg(alg, progress_bar, 'Extracting All Edges')
         return _get_output(alg)
 
