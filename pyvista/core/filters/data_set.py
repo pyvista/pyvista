@@ -2768,8 +2768,8 @@ class DataSetFilters:
         self,
         points,
         tolerance=None,
-        pass_cell_arrays=True,
-        pass_point_arrays=True,
+        pass_cell_data=True,
+        pass_point_data=True,
         categorical=False,
         progress_bar=False,
         locator=None,
@@ -2789,10 +2789,10 @@ class DataSetFilters:
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
-        pass_cell_arrays : bool, optional
+        pass_cell_data : bool, optional
             Preserve source mesh's original cell data arrays.
 
-        pass_point_arrays : bool, optional
+        pass_point_data : bool, optional
             Preserve source mesh's original point data arrays.
 
         categorical : bool, optional
@@ -2830,8 +2830,8 @@ class DataSetFilters:
         alg = _vtk.vtkProbeFilter()
         alg.SetInputData(points)
         alg.SetSourceData(self)
-        alg.SetPassCellArrays(pass_cell_arrays)
-        alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetPassCellArrays(pass_cell_data)
+        alg.SetPassPointArrays(pass_point_data)
         alg.SetCategoricalData(categorical)
 
         if tolerance is not None:
@@ -2851,7 +2851,7 @@ class DataSetFilters:
         self,
         target,
         tolerance=None,
-        pass_cell_arrays=True,
+        pass_cell_data=True,
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
@@ -2871,7 +2871,7 @@ class DataSetFilters:
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
-        pass_cell_arrays : bool, optional
+        pass_cell_data : bool, optional
             Preserve source mesh's original cell data arrays.
 
         pass_point_data : bool, optional
@@ -2910,7 +2910,7 @@ class DataSetFilters:
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetSourceData(target)
-        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetCategoricalData(categorical)
         if tolerance is not None:
