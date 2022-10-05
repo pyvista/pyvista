@@ -21,7 +21,6 @@ from pyvista.utilities import (
     wrap,
 )
 from pyvista.utilities.cells import numpy_to_idarr
-from pyvista.utilities.misc import PyVistaFutureWarning
 
 
 @abstract_class
@@ -2826,27 +2825,8 @@ class DataSetFilters:
         True
 
         """
-        if pass_cell_data is None:
-            pass_cell_data = False
-            warnings.warn(
-                'The default value of the ``pass_cell_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
-
-        if pass_point_data is None:
-            pass_point_data = False
-            warnings.warn(
-                'The default value of the ``pass_point_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
-
         if not pyvista.is_pyvista_dataset(points):
             points = pyvista.wrap(points)
-
         alg = _vtk.vtkProbeFilter()
         alg.SetInputData(points)
         alg.SetSourceData(self)
@@ -2924,27 +2904,8 @@ class DataSetFilters:
         See :ref:`resampling_example` for more examples using this filter.
 
         """
-        if pass_cell_data is None:
-            pass_cell_data = False
-            warnings.warn(
-                'The default value of the ``pass_cell_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
-
-        if pass_point_data is None:
-            pass_point_data = False
-            warnings.warn(
-                'The default value of the ``pass_point_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
-
         if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
-
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
@@ -3054,24 +3015,6 @@ class DataSetFilters:
         """
         if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
-
-        if pass_cell_data is None:
-            pass_cell_data = False
-            warnings.warn(
-                'The default value of the ``pass_cell_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
-
-        if pass_point_data is None:
-            pass_point_data = False
-            warnings.warn(
-                'The default value of the ``pass_point_data`` keyword argument will change in ' 
-                'a future version to ``True`` to match the behavior of VTK. We recommend ' 
-                'passing the keyword explicitly to prevent future surprises.',
-                PyVistaFutureWarning
-            )
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
