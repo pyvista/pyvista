@@ -33,6 +33,7 @@ from .camera import Camera
 from .axes import Axes
 from .actor import Actor
 from .mapper import DataSetMapper
+from .lookup_table import LookupTable
 
 
 class QtDeprecationError(Exception):

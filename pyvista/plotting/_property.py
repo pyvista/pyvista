@@ -3,6 +3,7 @@ from functools import lru_cache
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.utilities.misc import no_new_attr
 
 from .colors import Color
 
@@ -16,6 +17,7 @@ def _check_supports_pbr():
         raise VTKVersionError('Physically based rendering requires VTK 9 or newer.')
 
 
+@no_new_attr
 class Property(_vtk.vtkProperty):
     """Wrap vtkProperty and expose it pythonically.
 
@@ -1173,16 +1175,6 @@ class Property(_vtk.vtkProperty):
         new_prop = Property()
         new_prop.DeepCopy(self)
         return new_prop
-
-    def __setattr__(self, name, value):
-        """Do not allow setting attributes."""
-        if hasattr(self, name):
-            object.__setattr__(self, name, value)
-        else:
-            raise AttributeError(
-                f'Attribute {name} does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
-            )
 
     def __repr__(self):
         """Representation of this property."""
