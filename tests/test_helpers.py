@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import trimesh
 import vtk
+from vtk.util import numpy_support
 
 import pyvista
 from pyvista import _vtk
@@ -348,4 +349,11 @@ def test_vtk_points_deep_shallow():
     assert not np.array_equal(vtk_points.GetPoint(0), points[0])
     assert np.array_equal(points[0], [0.0, 0.0, 0.0])
 
-    # TODO: test force_float
+
+@pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
+def test_vtk_points_force_float(force_float, expected_data_type):
+    np_points = np.array([[1, 2, 3]], dtype=np.int64)
+    vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+    as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
+
+    assert as_numpy.dtype == expected_data_type
