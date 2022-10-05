@@ -56,6 +56,15 @@ def voxelize(mesh, density=None, check_surface=True):
     if isinstance(density, (list, set, tuple)):
         density_x, density_y, density_z = density
 
+    # check and pre-process input mesh
+    surface = mesh.extract_geometry()  # filter preserves topology
+    if not surface.faces.size:
+        # we have a point cloud or an empty mesh
+        raise ValueError('Input mesh must have faces for voxelization.')
+    if not surface.is_all_triangles:
+        # reduce chance for artifacts, see gh-1743
+        surface.triangulate(inplace=True)
+
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x = np.arange(x_min, x_max, density_x)
     y = np.arange(y_min, y_max, density_y)
@@ -67,10 +76,6 @@ def voxelize(mesh, density=None, check_surface=True):
     ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
-    surface = mesh.extract_surface()
-    if not surface.is_all_triangles:
-        # reduce chance for artifacts, see gh-1743
-        surface.triangulate(inplace=True)
     selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
     mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
