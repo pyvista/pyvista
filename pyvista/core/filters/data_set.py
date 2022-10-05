@@ -2927,7 +2927,7 @@ class DataSetFilters:
         strategy='null_value',
         null_value=0.0,
         n_points=None,
-        pass_cell_arrays=True,
+        pass_cell_data=True,
         pass_point_data=True,
         progress_bar=False,
     ):
@@ -2976,7 +2976,7 @@ class DataSetFilters:
             in favor of an N closest points approach. This typically has poorer
             results.
 
-        pass_cell_arrays : bool, optional
+        pass_cell_data : bool, optional
             Preserve input mesh's original cell data arrays.
 
         pass_point_data : bool, optional
@@ -3048,7 +3048,7 @@ class DataSetFilters:
         else:
             raise ValueError(f'strategy `{strategy}` not supported.')
         interpolator.SetPassPointArrays(pass_point_data)
-        interpolator.SetPassCellArrays(pass_cell_arrays)
+        interpolator.SetPassCellArrays(pass_cell_data)
         _update_alg(interpolator, progress_bar, 'Interpolating')
         return _get_output(interpolator)
 
