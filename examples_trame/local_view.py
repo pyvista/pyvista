@@ -18,7 +18,6 @@ mesh = examples.load_random_hills()
 
 plotter = pv.Plotter(off_screen=True)
 actor = plotter.add_mesh(mesh)
-plotter.view_isometric()
 plotter.set_background('lightgrey')
 
 
