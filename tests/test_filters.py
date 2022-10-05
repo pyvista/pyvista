@@ -508,7 +508,7 @@ def test_extract_all_edges(datasets):
         assert edges is not None
         assert isinstance(edges, pyvista.PolyData)
 
-    if pyvista.vtk_version_info < (9,):
+    if pyvista.vtk_version_info < (9, 1):
         with pytest.raises(VTKVersionError):
             datasets[0].extract_all_edges(use_all_points=True)
     else:
