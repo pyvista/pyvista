@@ -36,15 +36,14 @@ def voxelize(mesh, density=None, check_surface=True):
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = pv.PolyData(examples.load_uniform().points)
-    >>> vox = pv.voxelize(mesh, density=0.5)
-    >>> vox.plot()
+    >>> mesh = examples.download_bunny_coarse().clean()
+    >>> vox = pv.voxelize(mesh, density=0.01)
+    >>> vox.plot(show_edges=True)
 
     Create a voxelized mesh using unequal density dimensions.
 
-    >>> mesh = pv.PolyData(examples.load_uniform().points)
-    >>> vox = pv.voxelize(mesh, density=[0.5, 0.9, 1.4])
-    >>> vox.plot()
+    >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
+    >>> vox.plot(show_edges=True)
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
