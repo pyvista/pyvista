@@ -9,7 +9,6 @@ dependencies:
   - scooby>=0.5.1
   - meshio
   - matplotlib
-  - appdirs
   - imageio>=2.5.0
   - imageio-ffmpeg
   - colorcet
@@ -29,5 +28,6 @@ dependencies:
   - ipygany
   - ipyvtklink
   - pythreejs
+  - pooch
   - pip:
       - pytest-memprof
