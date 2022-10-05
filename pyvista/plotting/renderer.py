@@ -13,11 +13,11 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import uses_egl
 
-from ._utilities import view_vectors
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
+from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 

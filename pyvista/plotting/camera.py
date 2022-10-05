@@ -8,7 +8,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
-from ._utilities import view_vectors
+from .helpers import view_vectors
 
 
 class Camera(_vtk.vtkCamera):
