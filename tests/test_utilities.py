@@ -318,14 +318,14 @@ def test_voxelize_non_uniform_density(uniform):
     assert vox.n_cells
 
 
-def test_voxelize_throws_when_density_is_not_length_3(uniform):
+def test_voxelize_throws_when_density_is_not_length_3(rectilinear):
     with pytest.raises(ValueError, match='not enough values to unpack'):
-        pyvista.voxelize(uniform, [0.5, 0.3])
+        pyvista.voxelize(rectilinear, [0.5, 0.3])
 
 
-def test_voxelize_throws_point_cloud(uniform):
+def test_voxelize_throws_point_cloud(hexbeam):
     with pytest.raises(ValueError, match='must have faces'):
-        mesh = pyvista.PolyData(uniform.points)
+        mesh = pyvista.PolyData(hexbeam.points)
         pyvista.voxelize(mesh)
 
 
