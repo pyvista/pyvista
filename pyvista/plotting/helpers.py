@@ -170,7 +170,7 @@ def plot(
         Width of the border in pixels when enabled.
 
     ssao : bool, optional
-        Enable surface space ambient occulusion (SSAO). See
+        Enable surface space ambient occlusion (SSAO). See
         :func:`Plotter.enable_ssao` for more details.
 
     **kwargs : optional keyword arguments
