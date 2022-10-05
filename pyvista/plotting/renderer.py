@@ -2386,7 +2386,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xy'), negative=negative)
+        self.view_vector(*view_vectors('xy', negative=negative))
 
     def view_yx(self, negative=False):
         """View the YX plane.
@@ -2409,7 +2409,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yx'))
+        self.view_vector(*view_vectors('yx', negative=negative))
 
     def view_xz(self, negative=False):
         """View the XZ plane.
@@ -2432,7 +2432,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xz'))
+        self.view_vector(*view_vectors('xz', negative=negative))
 
     def view_zx(self, negative=False):
         """View the ZX plane.
@@ -2455,7 +2455,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zx'))
+        self.view_vector(*view_vectors('zx', negative=negative))
 
     def view_yz(self, negative=False):
         """View the YZ plane.
@@ -2478,7 +2478,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yz'))
+        self.view_vector(*view_vectors('yz', negative=negative))
 
     def view_zy(self, negative=False):
         """View the ZY plane.
@@ -2501,7 +2501,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zy'))
+        self.view_vector(*view_vectors('zy', negative=negative))
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
