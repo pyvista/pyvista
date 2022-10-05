@@ -1387,7 +1387,7 @@ class MultiBlockPlot3DReader(BaseReader):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> filename, _  = examples.downloads._download_file('multi-bin.xyz')
+        >>> filename  = examples.download_file('multi-bin.xyz')
         >>> reader = pyvista.reader.MultiBlockPlot3DReader(filename)
         >>> reader.add_function(112)  # add a function by its integer value
         >>> reader.add_function(reader.PRESSURE_COEFFICIENT)  # add a function by enumeration via class variable alias
@@ -2000,7 +2000,7 @@ class JPEGReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_mars_jpg()
+    >>> filename = examples.planets.download_mars_surface(load=False)
     >>> filename.split("/")[-1]  # omit the path
     'mars.jpg'
     >>> reader = pyvista.get_reader(filename)

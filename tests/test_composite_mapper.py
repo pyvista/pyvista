@@ -60,20 +60,6 @@ def test_scalar_map_mode_values(value, composite_mapper):
     assert composite_mapper.scalar_map_mode == value
 
 
-def test_nan_color(composite_mapper):
-    isinstance(composite_mapper.nan_color, pv.Color)
-
-
-def test_above_range_color(composite_mapper):
-    composite_mapper.above_range_color = 'r'
-    isinstance(composite_mapper.above_range_color, pv.Color)
-
-
-def test_below_range_color(composite_mapper):
-    composite_mapper.below_range_color = 'r'
-    isinstance(composite_mapper.below_range_color, pv.Color)
-
-
 def test_composite_mapper_non_poly(multiblock_all):
     # should run without raising
     pl = pv.Plotter()
