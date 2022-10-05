@@ -705,28 +705,26 @@ class Camera(_vtk.vtkCamera):
 
         self._renderer.ComputeAspect()
         aspect = self._renderer.GetAspect()
-        angle = np.pi * self.view_angle / 180.0
 
-        distance_object = np.array([(x1 - x0), (y1 - y0), (z1 - z0)])
-        position = np.array([x0, y0, z0]) + distance_object / 2
+        position0 = np.array([x0, y0, z0])
+        position1 = np.array([x1, y1, z1])
+        objects_size = position1 - position0
+        position = position0 + objects_size / 2
 
         direction, viewup = view_vectors(view, negative)
         horizontal = np.cross(direction, viewup)
 
-        vert_dist = np.abs(np.dot(distance_object, viewup))
-        horiz_dist = np.abs(np.dot(distance_object, horizontal))
+        vert_dist = np.abs(np.dot(objects_size, viewup))
+        horiz_dist = np.abs(np.dot(objects_size, horizontal))
 
-        dist = max(horiz_dist / aspect[0], vert_dist) / np.sin(angle / 2) / 2
-
-        focal_point = position.copy()
-        # set focal point to 0 in viewing direction
-        focal_point -= np.abs(direction * focal_point)
-        # offset position from focal point by dist in viewing direction
-        position += -1 * np.abs(direction) * position + dist * direction
+        # set focal point to objects center
+        # offset camera position from objects center by dist in opposite of viewing direction
+        dist = 1
+        camera_position = position + dist * direction
 
         self.SetViewUp(*viewup)
-        self.SetPosition(*position)
-        self.SetFocalPoint(*focal_point)
+        self.SetPosition(*camera_position)
+        self.SetFocalPoint(*position)
 
         ps = max(horiz_dist / aspect[0], vert_dist) / 2
         self.parallel_scale = ps * (1 + padding)
