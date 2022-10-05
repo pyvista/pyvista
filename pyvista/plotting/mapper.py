@@ -768,30 +768,22 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme=theme)
+    pass
 
 
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme=theme)
+    pass
 
 
 class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme=theme)
+    pass
 
 
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme=theme)
+    pass
