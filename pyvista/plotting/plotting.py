@@ -1362,6 +1362,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Properties from Renderer ####
 
     @property
+    def actors(self):
+        """Return the actors of the active renderer."""
+        return self.renderer.actors
+
+    @property
     def camera(self):
         """Return the active camera of the active renderer."""
         if not self.camera_set:
@@ -5797,6 +5802,10 @@ class Plotter(BasePlotter):
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
         log.debug('Plotter init stop')
+
+    @property
+    def render_window(self):
+        return self.ren_win
 
     def show(
         self,
