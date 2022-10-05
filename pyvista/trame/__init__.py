@@ -34,3 +34,5 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
         """Create a trame local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         VtkLocalView.__init__(self, self._plotter.ren_win, ref=ref, **kwargs)
+        # CRITICAL to initialize the client render window
+        self._server.controller.on_server_ready.add(self.update)
