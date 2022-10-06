@@ -154,6 +154,22 @@ def noise_2d():
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
 
 
+@fixture()
+def texture():
+    # create a basic texture by plotting a sphere and converting the image
+    # buffer to a texture
+    pl = pyvista.Plotter(window_size=(300, 200), lighting=None)
+    mesh = pyvista.Sphere()
+    pl.add_mesh(mesh, scalars=range(mesh.n_points), show_scalar_bar=False)
+    pl.background_color = 'w'
+    return pyvista.Texture(pl.screenshot())
+
+
+@fixture()
+def image(texture):
+    return texture.to_image()
+
+
 def pytest_addoption(parser):
     parser.addoption("--reset_image_cache", action='store_true', default=False)
     parser.addoption("--ignore_image_cache", action='store_true', default=False)

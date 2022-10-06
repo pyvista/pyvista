@@ -13,22 +13,17 @@ mesh.
 import pyvista as pv
 from pyvista import examples
 
+###############################################################################
 # Load the elevation data as a surface
 elevation = examples.download_crater_topo().warp_by_scalar()
-# Load the topographic map from a GeoTiff
-topo_map = examples.download_crater_imagery()
-
 elevation
 
-import matplotlib as mpl
 
 ###############################################################################
-# Let's inspect the imagery that we just loaded
-import matplotlib.pyplot as plt
+# Load the topographic map from a GeoTiff
+topo_map = examples.download_crater_imagery()
+topo_map.plot()
 
-mpl.rcParams['figure.dpi'] = 500
-
-plt.imshow(topo_map.to_array())
 
 ###############################################################################
 # Once you have a topography mesh loaded as a surface mesh
@@ -43,13 +38,16 @@ local = elevation.clip_box(bounds, invert=False)
 # Apply texturing coordinates to associate the image to the surface
 local.texture_map_to_plane(use_bounds=True, inplace=True)
 
+
 ###############################################################################
 # Now display it! Note that the imagery is aligned as we expect.
 local.plot(texture=topo_map, cpos="xy")
 
+
 ###############################################################################
 # And here is a 3D perspective!
-local.plot(texture=topo_map)
+local.plot(texture=topo_map, zoom=2.0)
+
 
 ###############################################################################
 # We could also display the entire region by extracting the surrounding region
@@ -59,13 +57,15 @@ local.plot(texture=topo_map)
 surrounding = elevation.clip_box(bounds, invert=True)
 
 # Display with a shading technique
-p = pv.Plotter()
-p.add_mesh(local, texture=topo_map)
-p.add_mesh(surrounding, color="white")
-p.enable_eye_dome_lighting()
-p.camera_position = [
+pl = pv.Plotter()
+pl.add_mesh(local, texture=topo_map)
+pl.add_mesh(surrounding, color="white")
+pl.enable_eye_dome_lighting()
+pl.camera_position = [
     (1831100.0, 5642142.0, 8168.0),
     (1820841.0, 5648745.0, 1104.0),
     (-0.435, 0.248, 0.865),
 ]
-p.show()
+pl.enable_anti_aliasing('ssaa')
+pl.camera.zoom(1.5)
+pl.show()

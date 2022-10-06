@@ -213,7 +213,7 @@ def load_globe_texture():
     --------
     >>> from pyvista import examples
     >>> dataset = examples.load_globe_texture()
-    >>> dataset.plot()
+    >>> texture.plot(zoom='tight')
 
     """
     return pyvista.read_texture(mapfile)

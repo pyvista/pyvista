@@ -336,14 +336,14 @@ def download_puppy_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet or str
-        DataSet or filename depending on ``load``.
+    pyvista.Texture or str
+        Texture or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_puppy_texture()
-    >>> dataset.plot(cpos="xy")
+    >>> texture = examples.download_puppy_texture()
+    >>> texture.plot(zoom='tight')
 
     See :ref:`ref_texture_example` for an example using this
     dataset.
@@ -1227,7 +1227,7 @@ def download_bird_texture(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_bird_texture()
-    >>> dataset.plot(cpos="xy")
+    >>> dataset.plot()
 
     """
     return _download_and_read('Pileated.jpg', texture=True, load=load)
@@ -1352,8 +1352,8 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_cake_easy_texture()
-    >>> dataset.plot(cpos="xy")
+    >>> texture = examples.download_cake_easy_texture()
+    >>> texture.plot()
 
     """
     return _download_and_read('cake_easy.jpg', texture=True, load=load)
@@ -1431,14 +1431,14 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet or str
-        DataSet or filename depending on ``load``.
+    pyvista.Texture or str
+        Texture or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_gourds_texture()
-    >>> dataset.plot(cpos="xy")
+    >>> texture = examples.download_gourds_texture()
+    >>> texture.plot()
 
     """
     if zoom:
@@ -1846,8 +1846,8 @@ def download_emoji_texture(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_emoji_texture()
-    >>> dataset.plot(cpos="xy")
+    >>> texture = examples.download_emoji_texture()
+    >>> texture.plot()
 
     """
     return _download_and_read('emote.jpg', texture=True, load=load)
@@ -2057,7 +2057,7 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_sky_box_nz_texture()
-    >>> dataset.plot(cpos="xy")
+    >>> dataset.plot()
 
     """
     return _download_and_read('skybox-nz.jpg', texture=True, load=load)
@@ -2754,18 +2754,16 @@ def download_crater_imagery(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [  66.,  73. , -382.6],
-    ...     [  66.,  73. ,    0. ],
-    ...     [  -0.,  -1. ,    0. ]
-    ... ]
     >>> dataset = examples.download_crater_imagery()
-    >>> dataset.plot(cpos=cpos)
+    >>> dataset.plot()
 
     See :ref:`ref_topo_map_example` for an example using this dataset.
 
     """
-    return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True, load=load)
+    var = _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True, load=load)
+    if load:
+        return var.flip_y()
+    return var
 
 
 def download_dolfin(load=True):  # pragma: no cover
@@ -3048,6 +3046,95 @@ def download_sky_box_cube_map():  # pragma: no cover
         download_file(image)
 
     return pyvista.cubemap(str(FETCHER.path), prefix)
+
+
+def download_sky_texture(direction='negx', load=True):  # pragma: no cover
+    """Download a single sky image from one of six directions.
+
+    Parameters
+    ----------
+    direction : str, optional
+        Direction. Should be one of the following:
+
+        * ``"negx"``
+        * ``"negy"``
+        * ``"negz"``
+        * ``"posx"``
+        * ``"posy"``
+        * ``"posz"``
+
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid
+        Image of the sky in the specified direction.
+
+    Examples
+    --------
+    Download and plot an example skybox image.
+
+    >>> from pyvista import examples
+    >>> image = examples.download_sky_texture(direction='nx')
+    >>> image.plot(rgba=True, cpos='xy')
+
+    Just download the file and return the filename.
+
+    >>> import os
+    >>> filename = examples.download_sky_texture(direction='nx', load=False)
+    >>> os.path.basename(filename)
+    'skybox-nx.jpg'
+
+    """
+    allowed_directions = {'negx', 'negy', 'negz', 'posx', 'posy', 'posz'}
+    if direction not in allowed_directions:
+        raise ValueError(
+            f'Invalid direction "{direction}". Should be one of the following: '
+            f'{allowed_directions}'
+        )
+    filename = download_file(f'skybox/skybox-{direction}.jpg')
+    if not load:
+        return filename
+    return pyvista.read(filename)
+
+
+def download_sky_cubemap(load=True):  # pragma: no cover
+    """Download a cubemap containing a sunset over a hurricane.
+
+    These skybox images were downloaded from `lorensen/VTKExamples
+    <https://github.com/lorensen/VTKExamples>`_ and are licensed under the
+    Apache License 2.0, which is included in this directory.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.Texture or list
+        Texture containing a cubemap when ``load=True``, or a list of file
+        paths when ``load=False``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> cubemap = examples.download_sky_cubemap()
+    >>> cubemap
+    Texture (0x7f1886abf6a0)
+      Components:       3
+      Cube Map:         True
+      Dimensions:       1024, 1024
+
+    """
+    fnames = _download_archive('skybox/skybox-lorensen.zip')
+    path = os.path.dirname(fnames[0])
+    if load:
+        return pyvista.cubemap(path, 'skybox-')
+    return fnames
 
 
 def download_cubemap_park():  # pragma: no cover

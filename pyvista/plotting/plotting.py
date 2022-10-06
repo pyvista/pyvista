@@ -2998,7 +2998,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if rgb:
             show_scalar_bar = False
-            if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
+            if scalars.ndim == 1 or scalars.shape[-1] not in [3, 4]:
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
         if mesh.n_points < 1:

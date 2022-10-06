@@ -160,7 +160,7 @@ def test_numpy_to_texture():
     with pytest.warns(UserWarning, match='np.uint8'):
         tex = pyvista.numpy_to_texture(tex_im)
     assert isinstance(tex, pyvista.Texture)
-    assert tex.to_array().dtype == np.uint8
+    assert tex.image_data.dtype == np.uint8
 
 
 def test_array_association():
@@ -353,7 +353,11 @@ def test_vtk_points_deep_shallow():
 @pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
-    vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+    if force_float:
+        with pytest.warns(UserWarning, match='float type'):
+            vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+    else:
+        vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
     as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
 
     assert as_numpy.dtype == expected_data_type

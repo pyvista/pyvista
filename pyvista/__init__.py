@@ -73,3 +73,6 @@ FLOAT_FORMAT = "{:.3e}"
 
 # Serialization format to be used when pickling `DataObject`
 PICKLE_FORMAT = 'xml'
+
+# grid type
+GRID_TYPE = (RectilinearGrid, StructuredGrid, UniformGrid)

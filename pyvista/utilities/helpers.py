@@ -117,7 +117,9 @@ def convert_string_array(arr, name=None):
 
     """
     if isinstance(arr, np.ndarray):
-        # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
+        # VTK default fonts only support ASCII.
+        # See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
+        arr = arr.ravel()
         if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
             raise ValueError(
                 'String array contains non-ASCII characters that are not supported by VTK.'
@@ -944,10 +946,7 @@ def wrap(dataset):
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
             mesh = pyvista.UniformGrid(dims=dataset.shape)
-            if isinstance(dataset, pyvista.pyvista_ndarray):
-                # this gets rid of pesky VTK reference since we're raveling this
-                dataset = np.array(dataset, copy=False)
-            mesh['values'] = dataset.ravel(order='F')
+            mesh['values'] = dataset
             mesh.active_scalars_name = 'values'
             return mesh
         else:
@@ -1147,7 +1146,7 @@ def raise_not_matching(scalars, dataset):
             f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
         )
 
-    if isinstance(dataset, pyvista.UniformGrid) and scalars.ndim != 1:
+    if isinstance(dataset, pyvista.GRID_TYPE) and scalars.ndim != 1:
         raise ValueError(
             f'Shape of the scalars {scalars.shape[:3]} '
             f'must match either the dimensionality of points {dataset.dimensions} '
@@ -1164,7 +1163,9 @@ def raise_not_matching(scalars, dataset):
 def ravel_grid_array(dataset: 'pyvista.DataSet', data: np.ndarray):
     """Ravel data associated with a pyvista.StructuredGrid or pyvista.Grid.
 
-    Returns a 1D or 2D shaped array.
+    Returns a 1D or 2D shaped array. If ``data`` contains 3 or fewer
+    dimensions, the output array will be 1D. If ``data`` contains 4 dimensions,
+    the output array will be 2D.
 
     Parameters
     ----------

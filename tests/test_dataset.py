@@ -1386,7 +1386,7 @@ def test_flip_x():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_x()
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pyvista.UniformGrid)
     with pytest.warns(PyVistaDeprecationWarning):
         flip_x1.flip_x(point=(0, 0, 0))
 
@@ -1401,7 +1401,7 @@ def test_flip_y():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_y()
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pyvista.UniformGrid)
     with pytest.warns(PyVistaDeprecationWarning):
         flip_y1.flip_y(point=(0, 0, 0))
 
@@ -1416,7 +1416,7 @@ def test_flip_z():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_z()
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pyvista.UniformGrid)
     with pytest.warns(PyVistaDeprecationWarning):
         flip_z1.flip_z(point=(0, 0, 0))
 

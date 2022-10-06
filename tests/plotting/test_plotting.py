@@ -1248,15 +1248,15 @@ def test_plot_texture():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_plot_texture_alone(tmpdir):
-    """Test adding a texture to a plot"""
-    path = str(tmpdir.mkdir("tmpdir"))
-    image = Image.new('RGB', (10, 10), color='blue')
-    filename = os.path.join(path, 'tmp.jpg')
-    image.save(filename)
+def test_plot_texture_alone(texture):
+    """Test plotting directly from the Texture class."""
+    texture.plot(before_close_callback=verify_cache_image)
 
-    texture = pyvista.read_texture(filename)
-    texture.plot(rgba=True, before_close_callback=verify_cache_image)
+
+def test_plot_texture_alone_grayscale(texture):
+    """Test plotting a grayscale texture directly from the Texture class."""
+    texture_grey = texture.to_grayscale()
+    texture_grey.plot(before_close_callback=verify_cache_image)
 
 
 def test_plot_texture_associated():
@@ -1270,7 +1270,7 @@ def test_plot_texture_associated():
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
-    texture = pyvista.numpy_to_texture(imageio.imread(examples.mapfile))
+    texture = pyvista.numpy_to_texture(imageio.imread(examples.mapfile)).flip_y()
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=texture)
     plotter.show(before_close_callback=verify_cache_image)
@@ -1688,7 +1688,7 @@ def test_multiblock_volume_rendering(uniform):
 
 
 def test_array_volume_rendering(uniform):
-    arr = uniform["Spatial Point Data"].reshape(uniform.dimensions)
+    arr = uniform["Spatial Point Data"]
     pyvista.plot(arr, volume=True, opacity='linear', before_close_callback=verify_cache_image)
 
 

@@ -13,7 +13,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
+from pyvista.utilities import FieldAssociation, is_pyvista_dataset, ravel_grid_array, wrap
 
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
@@ -996,13 +996,14 @@ class MultiBlock(
         # Verify array consistency
         dims: Set[int] = set()
         dtypes: Set[np.dtype] = set()
-        for block in self:
-            for field, scalars, _ in data_assoc:
-                # only check for the active field association
-                if field != field_asc:
-                    continue
-                dims.add(scalars.ndim)
-                dtypes.add(scalars.dtype)
+        for field, scalars, block in data_assoc:
+            # only check for the active field association
+            if field != field_asc:
+                continue
+            if isinstance(block, pyvista.GRID_TYPE):
+                scalars = ravel_grid_array(block, scalars)
+            dims.add(scalars.ndim)
+            dtypes.add(scalars.dtype)
 
         if len(dims) > 1:
             raise ValueError(f'Inconsistent dimensions {dims} in active scalars.')

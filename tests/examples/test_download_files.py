@@ -895,6 +895,28 @@ def test_cad_model_case():
     assert dataset.n_points == 7677
 
 
+def test_download_sky_texture():
+    with pytest.raises(ValueError, match='Invalid direction'):
+        examples.download_sky_texture(direction='not a direction')
+
+    direction = 'negy'
+    filename = examples.download_sky_texture(direction=direction, load=False)
+    assert direction in filename
+
+    dataset = examples.download_sky_texture(load=True)
+    assert isinstance(dataset, pv.UniformGrid)
+
+
+def test_download_sky_cubemap():
+    filenames = examples.download_sky_cubemap(load=False)
+    assert len(filenames) == 6
+    assert os.path.isfile(filenames[0])
+    assert filenames[0].endswith('jpg')
+
+    dataset = examples.download_sky_cubemap(load=True)
+    assert isinstance(dataset, pv.Texture)
+
+
 def test_load_sun():
     mesh = examples.planets.load_sun()
     assert mesh.n_cells

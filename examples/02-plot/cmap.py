@@ -80,7 +80,7 @@ mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'
 # If you still wish to have control of the separation of values, you
 # can do this by creating a scalar array and passing that to the
 # plotter along with the the colormap
-scalars = np.empty(mesh.n_points)
+scalars = np.empty(mesh.dimensions)
 scalars[mesh['values'] >= 80] = 4  # red
 scalars[mesh['values'] < 80] = 3  # grey
 scalars[mesh['values'] < 55] = 2  # yellow
