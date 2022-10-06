@@ -838,7 +838,9 @@ def test_plot_list():
     sphere_b = pyvista.Sphere(1.0)
     sphere_c = pyvista.Sphere(2.0)
     pyvista.plot(
-        [sphere_a, sphere_b, sphere_c], style='wireframe', before_close_callback=verify_cache_image
+        [sphere_a, sphere_b, sphere_c],
+        style='wireframe',
+        before_close_callback=verify_cache_image,
     )
 
 
@@ -855,9 +857,9 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-def test_make_movie(sphere):
+def test_make_movie(sphere, tmpdir):
     # Make temporary file
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.mp4')
+    filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
     plotter = pyvista.Plotter()
@@ -1813,7 +1815,7 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
     mapping = pyvista.opacity_transfer_function('sigmoid_10', n)
     assert len(mapping) == n
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         mapping = pyvista.opacity_transfer_function('foo', n)
     with pytest.raises(RuntimeError):
         mapping = pyvista.opacity_transfer_function(np.linspace(0, 1, 2 * n), n)
