@@ -530,6 +530,15 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
+        if isinstance(self.dataset, (pv.Grid, pv.StructuredGrid)):
+            if scalars.ndim == 3:
+                scalars = scalars.ravel(order='F')
+            elif scalars.ndim == 4:
+                scalars = scalars.reshape((-1, scalars.shape[-1]), order='F')
+
+            if isinstance(opacity, np.ndarray):
+                opacity = opacity.ravel(order='F')
+
         # Set the array title for when it is added back to the mesh
         if custom_opac:
             scalars_name = '__custom_rgba'

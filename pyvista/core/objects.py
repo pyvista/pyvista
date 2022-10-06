@@ -460,13 +460,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         image = self.to_image()
-
-        if image.active_scalars.ndim > 1:
-            shape = (image.dimensions[1], image.dimensions[0], self.n_components)
-        else:
-            shape = (image.dimensions[1], image.dimensions[0])
-
-        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
+        return np.flip(image.active_scalars, axis=1).swapaxes(1, 0)
 
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""

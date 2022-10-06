@@ -10,7 +10,13 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
-from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
+from pyvista.core.filters import (
+    RectilinearGridFilters,
+    UniformGridFilters,
+    _get_output,
+    _update_alg,
+)
+from pyvista.errors import MissingDataError
 from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
@@ -29,7 +35,7 @@ class Grid(DataSet):
 
     @property
     def dimensions(self) -> Tuple[int, int, int]:
-        """Return the grid's dimensions.
+        """Return the grid's point dimensions.
 
         These are effectively the number of points along each of the
         three dataset axes.
@@ -57,6 +63,19 @@ class Grid(DataSet):
         """Set the dataset dimensions."""
         self.SetDimensions(*dims)
         self.Modified()
+
+    @property
+    def _cell_dimensions(self) -> Tuple[int, int, int]:
+        """Return the grid's cell dimensions."""
+        return helpers.get_cell_dimensions(self)
+
+    def _reshape_point_array(self, array):
+        """Reshape point data to a 3-D matrix."""
+        return array.reshape(self.dimensions, order='F')
+
+    def _reshape_cell_array(self, array):
+        """Reshape cell data to a 3-D matrix."""
+        return array.reshape(self._cell_dimensions, order='F')
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -397,7 +416,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return _get_output(alg)
 
 
-class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
+class UniformGrid(_vtk.vtkImageData, UniformGridFilters, Grid):
     """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in one of several ways:
@@ -794,6 +813,110 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         grid.field_data.update(self.field_data)
         grid.copy_meta_from(self, deep=True)
         return grid
+
+    def _flip(self, axis: int, inplace: bool = False):
+        """Flip (mirror) this image inplace along the specified axis.
+
+        Parameters
+        ----------
+        axis : int
+            Axis about to flip.  0 for the X axis, 1 for the Y axis, 2 for the
+            Z axis.
+
+        inplace : bool, default: False
+            Updates the :class:`pyvista.UniformGrid` in-place.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Flipped UniformGrid.
+        """
+        try:
+            pyvista.set_default_active_scalars(self)
+        except:
+            raise MissingDataError('Cannot flip a UniformGrid without active scalars.') from None
+
+        alg = _vtk.vtkImageFlip()
+        alg.SetInputDataObject(self)
+        alg.SetFilteredAxis(axis)
+        _update_alg(alg)
+        output = _get_output(alg)
+
+        if inplace:
+            self.overwrite(output)
+            return self
+        return output
+
+    def flip_x(self, point=None, transform_all_input_vectors=None, inplace=False):
+        """Flip the UniformGrid about the x-axis.
+
+        The coordinates and dimensions of the UniformGrid will remain the same,
+        but the content of the UniformGrid will be flipped.
+
+        Parameters
+        ----------
+        point : None, optional
+            Placeholder for compatibility with :class:`pyvista.DataSet`. Ignored.
+
+        transform_all_input_vectors : None, optional
+            Placeholder for compatibility with :class:`pyvista.DataSet`. Ignored.
+
+        inplace : bool, optional
+            Updates the :class:`pyvista.UniformGrid` in-place.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Flipped dataset.
+        """
+        return self._flip(0, inplace)
+
+    def flip_y(self, point=None, transform_all_input_vectors=None, inplace=False):
+        """Flip the UniformGrid about the y-axis.
+
+        The coordinates and dimensions of the UniformGrid will remain the same,
+        but the content of the UniformGrid will be flipped.
+
+        Parameters
+        ----------
+        point : None, optional
+            Placeholder for compatibility with :class:`pyvista.DataSet`. Ignored.
+
+        transform_all_input_vectors : None, optional
+            Placeholder for compatibility with :class:`pyvista.DataSet`. Ignored.
+
+        inplace : bool, optional
+            Updates the :class:`pyvista.UniformGrid` in-place.
+        Returns
+        -------
+        pyvista.UniformGrid
+            Flipped dataset.
+        """
+        return self._flip(1, inplace)
+
+    def flip_z(self, point=None, transform_all_input_vectors=None, inplace=False):
+        """Flip the UniformGrid about the z-axis.
+
+        The coordinates and dimensions of the UniformGrid will remain the same,
+        but the content of the UniformGrid will be flipped.
+
+        Parameters
+        ----------
+        point : None, optional
+            Placeholder for compatibility with :class:`pyvista.DataSet`. Ignored.
+
+        transform_all_input_vectors : None, optional
+            Placeholder for compatibility with :class:`pyvista.DataSet`. Ignored.
+
+        inplace : bool, default: False
+            Updates the :class:`pyvista.UniformGrid` in-place.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Flipped dataset.
+        """
+        return self._flip(2, inplace)
 
     @property
     def extent(self) -> tuple:

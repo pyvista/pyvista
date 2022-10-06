@@ -157,8 +157,8 @@ class StructuredGridFilters(DataSetFilters):
         # concatenate point arrays, cutting off duplicate
         new_point_data = {}
         for name, point_array in self.point_data.items():
-            arr_1 = self._reshape_point_array(point_array)
-            arr_2 = other._reshape_point_array(other.point_data[name])
+            arr_1 = point_array
+            arr_2 = other.point_data[name]
             if not np.array_equal(
                 np.take(arr_1, indices=-1, axis=axis), np.take(arr_2, indices=0, axis=axis)
             ):

@@ -1479,12 +1479,12 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     Active Texture  : None
     Active Normals  : None
     Contains arrays :
-        Density                 float64    (2928,)
-        Momentum                float64    (2928, 3)            VECTORS
-        EnergyStagnationDensity float64    (2928,)
-        ViscosityEddy           float64    (2928,)
-        TurbulentDistance       float64    (2928,)
-        TurbulentSANuTilde      float64    (2928,)
+        Density                 float64    (1, 122, 24)
+        Momentum                float64    (1, 122, 24, 3)      VECTORS
+        EnergyStagnationDensity float64    (1, 122, 24)
+        ViscosityEddy           float64    (1, 122, 24)
+        TurbulentDistance       float64    (1, 122, 24)
+        TurbulentSANuTilde      float64    (1, 122, 24)
 
     """
 

@@ -13,7 +13,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyVistaDeprecationWarning, abstract_class
+from pyvista.utilities import PyVistaDeprecationWarning, abstract_class, get_cell_dimensions
 from pyvista.utilities.cells import (
     CellArray,
     create_mixed_cells,
@@ -2118,6 +2118,11 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()
+
+    @property
+    def _cell_dimensions(self) -> Tuple[int, int, int]:
+        """Return the grid's cell dimensions."""
+        return get_cell_dimensions(self)
 
     @property
     def x(self):

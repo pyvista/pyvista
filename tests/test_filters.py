@@ -1834,7 +1834,7 @@ def test_gaussian_smooth_output_type():
 def test_gaussian_smooth_constant_data():
     point_data = np.ones((10, 10, 10))
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     volume_smoothed = volume.gaussian_smooth()
     assert np.allclose(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
 
@@ -1843,7 +1843,7 @@ def test_gaussian_smooth_outlier():
     point_data = np.ones((10, 10, 10))
     point_data[4, 4, 4] = 100
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     volume_smoothed = volume.gaussian_smooth()
     assert volume_smoothed.get_data_range()[1] < volume.get_data_range()[1]
 
@@ -1852,8 +1852,8 @@ def test_gaussian_smooth_cell_data_specified():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
+    volume.cell_data['cell_data'] = cell_data
     with pytest.raises(ValueError):
         volume.gaussian_smooth(scalars='cell_data')
 
@@ -1862,8 +1862,8 @@ def test_gaussian_smooth_cell_data_active():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
+    volume.cell_data['cell_data'] = cell_data
     volume.set_active_scalars('cell_data')
     with pytest.raises(ValueError):
         volume.gaussian_smooth()
@@ -1880,7 +1880,7 @@ def test_median_smooth_output_type():
 def test_median_smooth_constant_data():
     point_data = np.ones((10, 10, 10))
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     volume_smoothed = volume.median_smooth()
     assert np.array_equal(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
 
@@ -1890,9 +1890,9 @@ def test_median_smooth_outlier():
     point_data_outlier = point_data.copy()
     point_data_outlier[4, 4, 4] = 100
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     volume_outlier = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume_outlier.point_data['point_data'] = point_data_outlier.flatten(order='F')
+    volume_outlier.point_data['point_data'] = point_data_outlier
     volume_outlier_smoothed = volume_outlier.median_smooth()
     assert np.array_equal(
         volume.point_data['point_data'], volume_outlier_smoothed.point_data['point_data']
@@ -1903,7 +1903,7 @@ def test_image_dilate_erode_output_type():
     point_data = np.zeros((10, 10, 10))
     point_data[4, 4, 4] = 1
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     volume_dilate_erode = volume.image_dilate_erode()
     assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
     volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
@@ -1918,11 +1918,9 @@ def test_image_dilate_erode_dilation():
     point_data_dilated[3:6, 4, 3:6] = 1
     point_data_dilated[4, 3:6, 3:6] = 1
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     volume_dilated = volume.image_dilate_erode()  # default is binary dilation
-    assert np.array_equal(
-        volume_dilated.point_data['point_data'], point_data_dilated.flatten(order='F')
-    )
+    assert np.array_equal(volume_dilated.point_data['point_data'], point_data_dilated)
 
 
 def test_image_dilate_erode_erosion():
@@ -1930,19 +1928,17 @@ def test_image_dilate_erode_erosion():
     point_data[4, 4, 4] = 1
     point_data_eroded = np.zeros((10, 10, 10))
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
-    assert np.array_equal(
-        volume_eroded.point_data['point_data'], point_data_eroded.flatten(order='F')
-    )
+    assert np.array_equal(volume_eroded.point_data['point_data'], point_data_eroded)
 
 
 def test_image_dilate_erode_cell_data_specified():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
+    volume.cell_data['cell_data'] = cell_data
     with pytest.raises(ValueError):
         volume.image_dilate_erode(scalars='cell_data')
 
@@ -1951,8 +1947,8 @@ def test_image_dilate_erode_cell_data_active():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
-    volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
+    volume.cell_data['cell_data'] = cell_data
     volume.set_active_scalars('cell_data')
     with pytest.raises(ValueError):
         volume.image_dilate_erode()
@@ -1993,16 +1989,14 @@ def test_image_threshold_upper(in_value, out_value):
     point_data[in_value_mask] = 100  # the only 'in' value
     point_data[~in_value_mask] = -100  # out values
     volume = pyvista.UniformGrid(dims=array_shape)
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     point_data_thresholded = point_data.copy()
     if in_value is not None:
         point_data_thresholded[in_value_mask] = in_value
     if out_value is not None:
         point_data_thresholded[~in_value_mask] = out_value
     volume_thresholded = volume.image_threshold(threshold, in_value=in_value, out_value=out_value)
-    assert np.array_equal(
-        volume_thresholded.point_data['point_data'], point_data_thresholded.flatten(order='F')
-    )
+    assert np.array_equal(volume_thresholded.point_data['point_data'], point_data_thresholded)
 
 
 @pytest.mark.parametrize('in_value', [1, None])
@@ -2019,16 +2013,14 @@ def test_image_threshold_between(in_value, out_value):
     point_data[~in_value_mask] = 100  # out values
     point_data[low_value_location] = -100  # add a value below the threshold also
     volume = pyvista.UniformGrid(dims=array_shape)
-    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.point_data['point_data'] = point_data
     point_data_thresholded = point_data.copy()
     if in_value is not None:
         point_data_thresholded[in_value_mask] = in_value
     if out_value is not None:
         point_data_thresholded[~in_value_mask] = out_value
     volume_thresholded = volume.image_threshold(threshold, in_value=in_value, out_value=out_value)
-    assert np.array_equal(
-        volume_thresholded.point_data['point_data'], point_data_thresholded.flatten(order='F')
-    )
+    assert np.array_equal(volume_thresholded.point_data['point_data'], point_data_thresholded)
 
 
 def test_extract_subset_structured():
@@ -2240,25 +2232,25 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
         for i in range(num_cell_arrays):
-            assert dataset.cell_data[f'C{i}'][:, 0] == pytest.approx(
-                transformed.cell_data[f'C{i}'][:, 0]
+            assert dataset.cell_data[f'C{i}'][..., 0] == pytest.approx(
+                transformed.cell_data[f'C{i}'][..., 0]
             )
-            assert dataset.cell_data[f'C{i}'][:, 2] == pytest.approx(
-                -transformed.cell_data[f'C{i}'][:, 1]
+            assert dataset.cell_data[f'C{i}'][..., 2] == pytest.approx(
+                -transformed.cell_data[f'C{i}'][..., 1]
             )
-            assert dataset.cell_data[f'C{i}'][:, 1] == pytest.approx(
-                transformed.cell_data[f'C{i}'][:, 2]
+            assert dataset.cell_data[f'C{i}'][..., 1] == pytest.approx(
+                transformed.cell_data[f'C{i}'][..., 2]
             )
 
         for i in range(num_point_data):
-            assert dataset.point_data[f'P{i}'][:, 0] == pytest.approx(
-                transformed.point_data[f'P{i}'][:, 0]
+            assert dataset.point_data[f'P{i}'][..., 0] == pytest.approx(
+                transformed.point_data[f'P{i}'][..., 0]
             )
-            assert dataset.point_data[f'P{i}'][:, 2] == pytest.approx(
-                -transformed.point_data[f'P{i}'][:, 1]
+            assert dataset.point_data[f'P{i}'][..., 2] == pytest.approx(
+                -transformed.point_data[f'P{i}'][..., 1]
             )
-            assert dataset.point_data[f'P{i}'][:, 1] == pytest.approx(
-                transformed.point_data[f'P{i}'][:, 2]
+            assert dataset.point_data[f'P{i}'][..., 1] == pytest.approx(
+                transformed.point_data[f'P{i}'][..., 2]
             )
 
 
@@ -2347,10 +2339,10 @@ def test_reflect_mesh_with_vectors(datasets):
             )
 
         # assert other vector fields are reflected
-        assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
-        assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
-        assert np.allclose(dataset.point_data['P'][:, 0], -reflected.point_data['P'][:, 0])
-        assert np.allclose(dataset.point_data['P'][:, 1:], reflected.point_data['P'][:, 1:])
+        assert np.allclose(dataset.cell_data['C'][..., 0], -reflected.cell_data['C'][..., 0])
+        assert np.allclose(dataset.cell_data['C'][..., 1:], reflected.cell_data['C'][..., 1:])
+        assert np.allclose(dataset.point_data['P'][..., 0], -reflected.point_data['P'][..., 0])
+        assert np.allclose(dataset.point_data['P'][..., 1:], reflected.point_data['P'][..., 1:])
 
 
 @pytest.mark.parametrize(

@@ -1789,6 +1789,14 @@ def test_opacity_mismatched_fail(uniform):
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+def test_plot_uniform(uniform):
+    """Plot a gridded dataset with a multi-dimensional array."""
+    data = np.arange(uniform.n_points).reshape(uniform.dimensions)
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform, scalars=data, smooth_shading=True, split_sharp_edges=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_opacity_by_array_preference():
     tetra = pyvista.Tetrahedron()  # 4 points, 4 cells
     opacities = np.linspace(0.2, 0.8, tetra.n_points)
@@ -1904,8 +1912,8 @@ def test_plot_string_array():
     mesh = examples.load_uniform()
     labels = np.empty(mesh.n_cells, dtype='<U10')
     labels[:] = 'High'
-    labels[mesh['Spatial Cell Data'] < 300] = 'Medium'
-    labels[mesh['Spatial Cell Data'] < 100] = 'Low'
+    labels[mesh['Spatial Cell Data'].ravel() < 300] = 'Medium'
+    labels[mesh['Spatial Cell Data'].ravel() < 100] = 'Low'
     mesh['labels'] = labels
     p = pyvista.Plotter()
     p.add_mesh(mesh, scalars='labels')
