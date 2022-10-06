@@ -2971,6 +2971,17 @@ def test_tight_direction(view, negative, colorful_tetrahedron, test_name):
     pl.show(before_close_callback=partial(verify_cache_image, name=test_name))
 
 
+def test_tight_multiple_objects():
+    pl = pyvista.Plotter()
+    pl.add_mesh(
+        pyvista.Cone(center=(0.0, -2.0, 0.0), direction=(0.0, -1.0, 0.0), height=1.0, radius=1.0)
+    )
+    pl.add_mesh(pyvista.Sphere(center=(0.0, 0.0, 0.0)))
+    pl.camera.tight()
+    pl.add_axes()
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_remove_bounds_axes(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
