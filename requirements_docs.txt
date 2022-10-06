@@ -24,7 +24,7 @@ pythreejs==2.4.1
 scipy==1.9.1
 sphinx-autobuild==2021.3.14
 sphinx-copybutton==0.5.0
-sphinx-design==0.2.0
+sphinx-design==0.3.0
 sphinx-gallery==0.11.1
 sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.2.0
