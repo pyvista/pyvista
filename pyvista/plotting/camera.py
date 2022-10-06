@@ -714,8 +714,8 @@ class Camera(_vtk.vtkCamera):
         direction, viewup = view_vectors(view, negative)
         horizontal = np.cross(direction, viewup)
 
-        vert_dist = np.abs(np.dot(objects_size, viewup))
-        horiz_dist = np.abs(np.dot(objects_size, horizontal))
+        vert_dist = abs(objects_size @ viewup)
+        horiz_dist = abs(objects_size @ horizontal)
 
         # set focal point to objects center
         # offset camera position from objects center by dist in opposite of viewing direction
