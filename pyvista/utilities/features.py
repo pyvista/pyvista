@@ -54,6 +54,8 @@ def voxelize(mesh, density=None, check_surface=True):
         density_x, density_y, density_z = [density] * 3
     elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
         density_x, density_y, density_z = density
+    else:
+        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology

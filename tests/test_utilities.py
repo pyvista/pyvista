@@ -316,11 +316,17 @@ def test_voxelize(uniform):
 def test_voxelize_non_uniform_density(uniform):
     vox = pyvista.voxelize(uniform, [0.5, 0.3, 0.2])
     assert vox.n_cells
+    vox = pyvista.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
+    assert vox.n_cells
 
 
-def test_voxelize_throws_when_density_is_not_length_3(rectilinear):
+def test_voxelize_invalid_density(rectilinear):
+    # test error when density is not length-3
     with pytest.raises(ValueError, match='not enough values to unpack'):
         pyvista.voxelize(rectilinear, [0.5, 0.3])
+    # test error when density is not an array-like
+    with pytest.raises(TypeError, match='expected number or array-like'):
+        pyvista.voxelize(rectilinear, {0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
