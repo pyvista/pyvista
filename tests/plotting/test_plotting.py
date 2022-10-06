@@ -2959,6 +2959,18 @@ def test_tight_wide():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@pytest.mark.parametrize('view', ['xy', 'yx', 'xz', 'zx', 'yz', 'zy'])
+@pytest.mark.parametrize('negative', [False, True])
+def test_tight_direction(view, negative, colorful_tetrahedron, test_name):
+    """Test camera.tight() with various views like xy."""
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
+    pl.camera.tight(view=view, negative=negative)
+    pl.add_axes()
+    pl.show(before_close_callback=partial(verify_cache_image, name=test_name))
+
+
 def test_remove_bounds_axes(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -3029,18 +3041,6 @@ def test_view_xyz(direction, negative, colorful_tetrahedron, test_name):
     pl = pyvista.Plotter()
     pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
     getattr(pl, f"view_{direction}")(negative=negative)
-    pl.add_axes()
-    pl.show(before_close_callback=partial(verify_cache_image, name=test_name))
-
-
-@pytest.mark.parametrize('view', ['xy', 'yx', 'xz', 'zx', 'yz', 'zy'])
-@pytest.mark.parametrize('negative', [False, True])
-def test_tight_direction(view, negative, colorful_tetrahedron, test_name):
-    """Test camera.tight() with various views like xy."""
-
-    pl = pyvista.Plotter()
-    pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
-    pl.camera.tight(view=view, negative=negative)
     pl.add_axes()
     pl.show(before_close_callback=partial(verify_cache_image, name=test_name))
 
