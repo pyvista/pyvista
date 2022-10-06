@@ -657,6 +657,8 @@ class Camera(_vtk.vtkCamera):
         letter refers to the axis that points left.  The up direction is
         unchanged.
 
+        Parallel projection is enabled when using this function.
+
         Parameters
         ----------
         padding : float, optional
@@ -675,7 +677,7 @@ class Camera(_vtk.vtkCamera):
 
         Notes
         -----
-        This resets the view direction to look at a plane.
+        This resets the view direction to look at a plane with parallel projection.
 
         Examples
         --------
