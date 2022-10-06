@@ -14,7 +14,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
-    density : float or list
+    density : float, np.ndarray or collections.abc.Sequence
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
         Defaults to 1/100th of the mesh length.
@@ -50,9 +50,9 @@ def voxelize(mesh, density=None, check_surface=True):
         mesh = pyvista.wrap(mesh)
     if density is None:
         density = mesh.length / 100
-    if isinstance(density, (int, float)):
+    if isinstance(density, (int, float, np.number)):
         density_x, density_y, density_z = [density] * 3
-    if isinstance(density, (list, set, tuple)):
+    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
         density_x, density_y, density_z = density
 
     # check and pre-process input mesh
