@@ -717,8 +717,9 @@ class Camera(_vtk.vtkCamera):
         vert_dist = abs(objects_size @ viewup)
         horiz_dist = abs(objects_size @ horizontal)
 
-        # set focal point to objects center
+        # set focal point to objects' center
         # offset camera position from objects center by dist in opposite of viewing direction
+        # (actual distance doesn't matter due to parallel projection)
         dist = 1
         camera_position = position + dist * direction
 
