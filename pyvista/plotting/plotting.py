@@ -4690,11 +4690,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : pyvista.DataSet
-            A pyvista dataset with points.
+        points : numpy.ndarray or pyvista.DataSet
+            An ``n x 3`` numpy.ndarray or pyvista dataset with points.
 
-        labels : str, optional
-            String name of the point data array to use.
+        labels : list or str
+            List of scalars of labels.  Must be the same length as points. If a
+            string name is given with a :class:`pyvista.DataSet` input for
+            points, then these are fetched.
 
         fmt : str, optional
             String formatter used to format numerical data.
@@ -4712,15 +4714,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
             VTK label actor.  Can be used to change properties of the labels.
 
         """
-        if not is_pyvista_dataset(points):
-            raise TypeError(f'input points must be a pyvista dataset, not: {type(points)}')
-        if not isinstance(labels, str):
-            raise TypeError('labels must be a string name of the scalars array to use')
+        if not is_pyvista_dataset(points) and not isinstance(points, np.ndarray):
+            raise TypeError(
+                f'input points must be a numpy.ndarray or a pyvista dataset, not: {type(points)}'
+            )
+        if not isinstance(labels, (str, list)):
+            raise TypeError(
+                'labels must be a string name of the scalars array to use or list of scalars'
+            )
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
             fmt = '%.6e'
-        scalars = points.point_data[labels]
+        if isinstance(points, np.ndarray):
+            scalars = labels
+        elif is_pyvista_dataset(points):
+            scalars = points.point_data[labels]
+        else:
+            raise TypeError(f'Points type not usable: {type(points)}')
         phrase = f'{preamble} {fmt}'
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
