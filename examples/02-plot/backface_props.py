@@ -16,6 +16,7 @@ depend on the orientation of the surface normals:
 import numpy as np
 
 import pyvista as pv
+from pyvista import examples
 
 mesh = pv.ParametricEllipsoid(min_v=np.pi / 2 - 0.2, max_v=np.pi / 2 + 0.2)
 
@@ -77,6 +78,28 @@ plotter.open_gif('mobius_semiopaque.gif')
 viewup = [0, 0, 1]
 orbit = plotter.generate_orbital_path(n_points=24, shift=0.0, viewup=viewup)
 plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
+
+
+###############################################################################
+# Apply Backface Properties to Textured Meshes
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Backface textures can also be applied to meshes that have textures applied to
+# them. For this example we load the globe texture with
+# :func:`pyvista.examples.load_globe`, clip it, and then apply a different
+# color to the interior surface.
+#
+# The lighting has been disabled for this example to demonstrate how you can
+# make the interior of the surface appear occuluded without any directional
+# lighting simply by providing a different color for backface.
+
+globe = examples.load_globe()
+clipped = globe.clip(normal='z', value=4.37e9)
+
+pl = pv.Plotter()
+pl.add_mesh(
+    clipped, backface_params={'color': [0.2, 0.2, 0.2]}, lighting=False, smooth_shading=True
+)
+pl.show()
 
 
 ###############################################################################
