@@ -80,8 +80,8 @@ grid = pv.StructuredGrid()
 grid.points = points
 grid.dimensions = nsamples, ntraces, 1
 
-# Add the data array - note the ordering!
-grid["values"] = data.ravel(order="F")
+# Add the data array
+grid["values"] = data
 
 ###############################################################################
 # And now we can plot it! or process or do anything, because it is a PyVista

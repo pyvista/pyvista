@@ -202,18 +202,18 @@ def load_globe():
 
 
 def load_globe_texture():
-    """Load a vtk.vtkTexture that can be applied to the globe source.
+    """Load a texture that can be applied to the globe source.
 
     Returns
     -------
     pyvista.Texture
-        Dataset.
+        Texture of the globe.
 
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.load_globe_texture()
-    >>> texture.plot(zoom='tight')
+    >>> texture = examples.load_globe_texture()
+    >>> texture.plot()
 
     """
     return pyvista.read_texture(mapfile)

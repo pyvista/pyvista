@@ -887,10 +887,12 @@ class UniformGrid(_vtk.vtkImageData, UniformGridFilters, Grid):
 
         inplace : bool, optional
             Updates the :class:`pyvista.UniformGrid` in-place.
+
         Returns
         -------
         pyvista.UniformGrid
             Flipped dataset.
+
         """
         return self._flip(1, inplace)
 

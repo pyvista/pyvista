@@ -11,11 +11,18 @@ from .dataset import DataObject
 
 
 class Texture(_vtk.vtkTexture, DataObject):
-    """A helper class for vtkTextures.
+    """Wrap vtk.Texture.
+
+    Textures can be used to apply images to surfaces, as in the case of
+    :ref:`ref_texture_example`.
+
+    They can also be used for environment textures to affect the lighting of
+    the scene, or even as a environment cubemap as in the case of
+    :ref:`pbr_example` and :ref:`planets_example`.
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, list, optional
+    uinput : str, vtkImageData, vtkTexture, numpy.ndarray, list, optional
         Filename, ``vtkImagedata``, ``vtkTexture``, :class:`numpy.ndarray` or a
         list of images to create a cubemap. If a list of images, must be of the
         same size and in the following order:
@@ -28,7 +35,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         * -Z
 
     **kwargs : dict, optional
-        Optional arguments when reading from a file.
+        Optional arguments when reading from a file. Generally unused.
 
     Examples
     --------
@@ -214,6 +221,16 @@ class Texture(_vtk.vtkTexture, DataObject):
     def rotate_cw(self, inplace=False):
         """Rotate this texture 90 degrees clockwise.
 
+        Parameters
+        ----------
+        inplace : bool, default: False
+            Operate on this texture in-situ.
+
+        Returns
+        -------
+        pyvista.Texture
+            Rotated texture. This texture if ``inplace=True``.
+
         Examples
         --------
         >>> from pyvista import examples
@@ -230,6 +247,16 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def rotate_ccw(self, inplace=False):
         """Rotate this texture 90 degrees counter-clockwise.
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            Operate on this texture in-situ.
+
+        Returns
+        -------
+        pyvista.Texture
+            Rotated texture. This texture if ``inplace=True``.
 
         Examples
         --------
@@ -250,8 +277,8 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.UniformGrid
-            Texture represented as a uniform grid.
+        pyvista.UniformGrid or None
+            Texture represented as a :class:`pyvista.UniformGrid` if set.
 
         Examples
         --------
@@ -269,30 +296,18 @@ class Texture(_vtk.vtkTexture, DataObject):
           N Arrays:     1
 
         """
-        input_dataset = self.GetInput()
-        if isinstance(input_dataset, pyvista.UniformGrid):
-            return input_dataset
-
-        # this results in a copy
-        return pyvista.wrap(input_dataset)
+        return self.GetInput()
 
     def to_array(self):
         """Return the texture as an array.
 
+        .. deprecated:: 0.37.0
+           ``to_array`` is deprecated. Use :attr:`Texture.image_data` instead.
+
         Returns
         -------
-        pyvista_ndarray
-            Texture data as a numpy array.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> texture = examples.download_masonry_texture()
-        >>> arr = texture.to_array()
-        >>> arr.shape
-        (256, 256, 3)
-        >>> arr.dtype
-        dtype('uint8')
+        pyvista.pyvista_ndarray
+            Texture data as an array.
 
         """
         # Deprecated on v0.35.0, estimated removal on v0.37.0
@@ -301,10 +316,20 @@ class Texture(_vtk.vtkTexture, DataObject):
         )
         return self.image_data
 
-    def plot(self, *args, **kwargs):
+    def plot(self, **kwargs):
         """Plot the texture as an image.
 
         If the texture is a cubemap, it will be displayed as a skybox.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Optional keyworld arguments. See :func:`pyvista.plot`.
+
+        Returns
+        -------
+        various or None
+            See the returns section of :func:`pyvista.plot`.
 
         Examples
         --------
@@ -314,7 +339,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         if self.cube_map:
-            return self._plot_skybox(*args, **kwargs)
+            return self._plot_skybox(**kwargs)
         kwargs.setdefault('zoom', 'tight')
         kwargs.setdefault('lighting', False)
         kwargs.setdefault('rgba', self.n_components > 1)
@@ -322,13 +347,13 @@ class Texture(_vtk.vtkTexture, DataObject):
         kwargs.setdefault('show_scalar_bar', False)
         if self.n_components == 1:
             kwargs.setdefault('cmap', 'gray')
-        return self.to_image().plot(*args, **kwargs)
+        return self.to_image().plot(**kwargs)
 
-    def _plot_skybox(self, *args, **kwargs):
+    def _plot_skybox(self, **kwargs):
         """Plot this texture as a skybox."""
         cpos = kwargs.pop('cpos', 'xy')
         zoom = kwargs.pop('zoom', 0.5)
-        pl = pyvista.Plotter(*args, **kwargs)
+        pl = pyvista.Plotter(**kwargs)
         pl.add_actor(self.to_skybox())
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
@@ -336,18 +361,11 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     @property
     def cube_map(self):
-        """Return ``True`` if cube mapping is enabled and ``False`` otherwise.
-
-        Is this texture a cube map, if so it needs 6 inputs, one for
-        each side of the cube. You must set this before connecting the
-        inputs.  The inputs must all have the same size, data type,
-        and depth.
-        """
+        """Return ``True`` if cube mapping is enabled and ``False`` otherwise."""
         return self.GetCubeMap()
 
     @cube_map.setter
     def cube_map(self, flag):
-        """Enable cube mapping if ``flag`` is True, disable it otherwise."""
         self.SetCubeMap(flag)
 
     def copy(self, deep=True):
@@ -366,7 +384,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture(self.to_image().copy(deep=deep))
 
     def to_skybox(self):
-        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
+        """Return the texture as a ``vtk.vtkSkybox`` if cube mapping is enabled.
 
         Returns
         -------
@@ -375,10 +393,23 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Examples
         --------
+        Add a skybox to a plotter scene.
+
+        Note how this texture is intentionally not mapped onto the sphere despite
+        using physically based rendering. For this to be the case texture would
+        have to also be added to the :class:`pyvista.Plotter` with
+        :func`:pyvista.Plotter.set_environment_texture`.
+
+        >>> import pyvista
         >>> from pyvista import examples
-        >>> texture = examples.download_sky_box_cube_map()  # doctest:+SKIP
-        >>> texture.to_skybox()  # doctest:+SKIP
-        <vtkmodules.vtkRenderingOpenGL2.vtkOpenGLSkybox(0x464dbb0) at 0x7f3130fab1c0>
+        >>> texture = examples.download_sky_cubemap()
+        >>> skybox = texture.to_skybox()
+        >>> pl = pv.Plotter()
+        >>> pl.add_actor(skybox)
+        >>> pl.add_mesh(pyvista.Sphere(), pbr=True, metallic=1.0)
+        >>> pl.camera_position = 'xy'
+        >>> pl.camera.zoom(0.5)
+        >>> pl.show()
 
         """
         if not self.cube_map:
@@ -448,6 +479,16 @@ class Texture(_vtk.vtkTexture, DataObject):
     def flip_x(self, inplace=False):
         """Flip the texture in the x direction.
 
+        Parameters
+        ----------
+        inplace : bool, default: False
+            Operate on this texture in-situ.
+
+        Returns
+        -------
+        pyvista.Texture
+            Flipped texture. This texture if ``inplace=True``.
+
         Examples
         --------
         >>> from pyvista import examples
@@ -463,6 +504,16 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def flip_y(self, inplace=False):
         """Flip the texture in the y direction.
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            Operate on this texture in-situ.
+
+        Returns
+        -------
+        pyvista.Texture
+            Flipped texture. This texture if ``inplace=True``.
 
         Examples
         --------

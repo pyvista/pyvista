@@ -3069,23 +3069,23 @@ def download_sky_texture(direction='negx', load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid
-        Image of the sky in the specified direction.
+    pyvista.Texture
+        Texture of the sky in the specified direction.
 
     Examples
     --------
     Download and plot an example skybox image.
 
     >>> from pyvista import examples
-    >>> image = examples.download_sky_texture(direction='nx')
-    >>> image.plot(rgba=True, cpos='xy')
+    >>> texture = examples.download_sky_texture(direction='negz').flip_y()
+    >>> texture.plot()
 
     Just download the file and return the filename.
 
     >>> import os
-    >>> filename = examples.download_sky_texture(direction='nx', load=False)
+    >>> filename = examples.download_sky_texture(direction='negz', load=False)
     >>> os.path.basename(filename)
-    'skybox-nx.jpg'
+    'skybox-negz.jpg'
 
     """
     allowed_directions = {'negx', 'negy', 'negz', 'posx', 'posy', 'posz'}
@@ -3097,7 +3097,7 @@ def download_sky_texture(direction='negx', load=True):  # pragma: no cover
     filename = download_file(f'skybox/skybox-{direction}.jpg')
     if not load:
         return filename
-    return pyvista.read(filename)
+    return pyvista.Texture(filename)
 
 
 def download_sky_cubemap(load=True):  # pragma: no cover
@@ -3123,7 +3123,7 @@ def download_sky_cubemap(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cubemap = examples.download_sky_cubemap()
-    >>> cubemap
+    >>> cubemap  # doctest:+SKIP
     Texture (0x7f1886abf6a0)
       Components:       3
       Cube Map:         True

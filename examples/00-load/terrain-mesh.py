@@ -64,7 +64,7 @@ yy = np.repeat(terrain.y, len(z_cells), axis=-1)
 zz = np.repeat(terrain.z, len(z_cells), axis=-1) - np.cumsum(z_cells).reshape((1, 1, -1))
 
 mesh = pv.StructuredGrid(xx, yy, zz)
-mesh["Elevation"] = zz.ravel(order="F")
+mesh["Elevation"] = zz
 mesh
 
 ###############################################################################
