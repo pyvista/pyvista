@@ -400,13 +400,13 @@ class Texture(_vtk.vtkTexture, DataObject):
         have to also be added to the :class:`pyvista.Plotter` with
         :func`:pyvista.Plotter.set_environment_texture`.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> texture = examples.download_sky_cubemap()
         >>> skybox = texture.to_skybox()
         >>> pl = pv.Plotter()
         >>> pl.add_actor(skybox)
-        >>> pl.add_mesh(pyvista.Sphere(), pbr=True, metallic=1.0)
+        >>> pl.add_mesh(pv.Sphere(), pbr=True, metallic=1.0)
         >>> pl.camera_position = 'xy'
         >>> pl.camera.zoom(0.5)
         >>> pl.show()
