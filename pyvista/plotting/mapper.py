@@ -25,7 +25,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     _theme = None
 
-    def __init__(self, theme, **kwargs):
+    def __init__(self, theme=None, **kwargs):
         self._theme = theme
         self.lookup_table = LookupTable()
 
@@ -44,7 +44,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> mapper_copy = mapper.copy()
 
         """
-        new_mapper = type(self)(self._theme)
+        new_mapper = type(self)()
         # even though this uses ShallowCopy, the new mapper no longer retains
         # any connection with the original
         new_mapper.ShallowCopy(self)
@@ -751,7 +751,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
     def __init__(self, theme=None):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
         self._lut = LookupTable()
         self._scalar_range = None
 
