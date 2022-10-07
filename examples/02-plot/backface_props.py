@@ -103,5 +103,26 @@ pl.show()
 
 
 ###############################################################################
+# Backface Properties and Physically Based Rendering
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Note that backfaces are automatically culled when physically based rendering
+# is enabled, regardless of the settings of backface parameters.
+
+sphere = pv.Sphere()
+clipped_sphere = sphere.clip(normal='z', value=0.4)
+
+pl = pv.Plotter()
+pl.set_environment_texture(examples.download_sky_box_cube_map())
+pl.add_mesh(
+    clipped,
+    backface_params={'color': 'r'},
+    pbr=True,
+    metallic=1.0,
+    roughness=0.2,
+)
+pl.show()
+
+
+###############################################################################
 # See also the :ref:`sphere_eversion_example` example which relies on
 # distinguishing the inside and the outside of a sphere.
