@@ -41,11 +41,11 @@ mesh_g["gradient"]
 
 def gradients_to_dict(arr):
     """A helper method to label the gradients into a dictionary."""
-    keys = np.array(
-        ["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"]
-    )
-    keys = keys.reshape((3, 3))[:, : arr.shape[1]].ravel()
-    return dict(zip(keys, mesh_g["gradient"].T))
+    keys = ["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"]
+    grad = {}
+    for i, key in enumerate(keys[: arr.shape[-1]]):
+        grad[key] = mesh_g["gradient"][..., i]
+    return grad
 
 
 gradients = gradients_to_dict(mesh_g["gradient"])
@@ -75,7 +75,7 @@ p.show()
 
 ###############################################################################
 # And there you have it, the gradients for a vector field! We could also do
-# this for a scalar  field like for the ``scalars`` field in the given dataset.
+# this for a scalar field like for the ``scalars`` field in the given dataset.
 mesh_g = mesh.compute_derivative(scalars="scalars")
 
 gradients = gradients_to_dict(mesh_g["gradient"])

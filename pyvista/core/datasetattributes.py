@@ -1163,12 +1163,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             rand                    float64    (10, 10, 10)         SCALARS
 
         """
-        from pyvista import Grid, StructuredGrid
+        from pyvista import GRID_TYPE
 
         # allow mapping of Grid arrays to non-grid
         if isinstance(array_dict, DataSetAttributes):
-            if isinstance(array_dict.dataset, (StructuredGrid, Grid)) and not isinstance(
-                self.dataset, (StructuredGrid, Grid)
+            if isinstance(array_dict.dataset, GRID_TYPE) and not isinstance(
+                self.dataset, GRID_TYPE
             ):
                 for name, array in array_dict.items():
                     self[name] = helpers.ravel_grid_array(array_dict.dataset, array).copy()
