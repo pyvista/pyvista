@@ -12,4 +12,3 @@ routines in PyVista.
    plot_arrows
    set_plot_theme
    create_axes_orientation_box
-   create_axes_marker
