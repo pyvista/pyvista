@@ -4714,7 +4714,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             VTK label actor.  Can be used to change properties of the labels.
 
         """
-        if not is_pyvista_dataset(points) or not isinstance(points, np.ndarray):
+        if not is_pyvista_dataset(points) and not isinstance(points, np.ndarray):
             raise TypeError(
                 f'input points must be a numpy.ndarray or a pyvista dataset, not: {type(points)}'
             )
