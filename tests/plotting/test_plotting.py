@@ -1253,6 +1253,11 @@ def test_plot_texture_alone(texture):
     texture.plot(before_close_callback=verify_cache_image)
 
 
+def test_plot_cubemap_alone(cubemap):
+    """Test plotting directly from the Texture class."""
+    cubemap.plot(before_close_callback=verify_cache_image)
+
+
 def test_plot_texture_alone_grayscale(texture):
     """Test plotting a grayscale texture directly from the Texture class."""
     texture_grey = texture.to_grayscale()

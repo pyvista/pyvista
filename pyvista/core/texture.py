@@ -366,14 +366,14 @@ class Texture(_vtk.vtkTexture, DataObject):
         """Plot this texture as a skybox."""
         cpos = kwargs.pop('cpos', 'xy')
         zoom = kwargs.pop('zoom', 0.5)
-        kwargs.setdefault('lighting', None)
-        pl = pyvista.Plotter(**kwargs)
+        lighting = kwargs.pop('lighting', None)
+        pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
         pl.set_environment_texture(self, True)
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
-        pl.show()
+        pl.show(**kwargs)
 
     @property
     def cube_map(self):
