@@ -3024,7 +3024,7 @@ def test_add_point_scalar_labels_list():
     labels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
 
     with pytest.raises(TypeError):
-        plotter.add_point_scalar_labels(points, points=False)
+        plotter.add_point_scalar_labels(points=False)
     with pytest.raises(TypeError):
         plotter.add_point_scalar_labels(points, labels=False)
 
