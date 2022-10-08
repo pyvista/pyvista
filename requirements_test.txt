@@ -16,7 +16,7 @@ itkwidgets<0.33.0; python_version < '3.10'
 matplotlib<3.7.0
 meshio<5.4.0
 numpydoc==1.4.0
-panel<0.14.0
+panel<0.15.0
 param<1.13.0
 pooch<1.7.0
 pytest-cov<4.1.0
