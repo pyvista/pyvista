@@ -3137,6 +3137,38 @@ def download_sky_cubemap(load=True):  # pragma: no cover
     return fnames
 
 
+def download_cube_map_debug():  # pragma: no cover
+    """Download a debug cube map texture.
+
+    Textures obtained from `BabylonJS/Babylon.js
+    <https://github.com/BabylonJS/Babylon.js>`_ and licensed under Apache2.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing a skybox.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> texture = examples.download_sky_box_cube_map()
+    >>> texture.plot(zoom=0.4)
+
+    """
+    fnames = download_file('cubemapDebug/cubemapDebug.zip')
+    dirname = os.path.dirname(fnames[0])
+    return pyvista.Texture(
+        [
+            pyvista.read(os.path.join(dirname, '_px.jpg')).flip_x(),
+            pyvista.read(os.path.join(dirname, '_nx.jpg')).flip_x(),
+            pyvista.read(os.path.join(dirname, '_py.jpg')).flip_x(),
+            pyvista.read(os.path.join(dirname, '_ny.jpg')).flip_x(),
+            pyvista.read(os.path.join(dirname, '_pz.jpg')).flip_x(),
+            pyvista.read(os.path.join(dirname, '_nz.jpg')).flip_x(),
+        ]
+    )
+
+
 def download_cubemap_park():  # pragma: no cover
     """Download a cubemap of a park.
 

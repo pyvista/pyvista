@@ -77,22 +77,26 @@ def test_texture_grayscale():
     assert texture.n_components == 1
 
 
-@pytest.mark.parametrize('inplace', [False])
+@pytest.mark.parametrize('inplace', [False, True])
 def test_texture_rotate_cw(texture, inplace):
     orig_dim = texture.dimensions
     orig_data = texture.image_data.copy()
 
     texture_rot = texture.rotate_cw(inplace)
+    if inplace:
+        assert texture_rot is texture
     assert texture_rot.dimensions == orig_dim[::-1]
     assert np.allclose(np.rot90(orig_data), texture_rot.image_data)
 
 
-@pytest.mark.parametrize('inplace', [False])
+@pytest.mark.parametrize('inplace', [False, True])
 def test_texture_rotate_ccw(texture, inplace):
     orig_dim = texture.dimensions
     orig_data = texture.image_data.copy()
 
     texture_rot = texture.rotate_ccw(inplace)
+    if inplace:
+        assert texture_rot is texture
     assert texture_rot.dimensions == orig_dim[::-1]
     assert np.allclose(np.rot90(orig_data, k=3), texture_rot.image_data)
 
@@ -101,6 +105,12 @@ def test_image_data():
     texture = pyvista.Texture()
     with pytest.raises(ValueError, match='Third dimension'):
         texture.image_data = np.zeros((10, 10, 2))
+
+    with pytest.raises(TypeError):
+        texture.image_data = [1, 2, 3]
+
+    with pytest.raises(ValueError, match='must be nn by nm'):
+        texture.image_data = np.zeros(10)
 
 
 def test_texture_repr(texture):
@@ -125,3 +135,10 @@ def test_texture_to_grayscale(texture):
 
     # no change when already converted
     assert bw_texture.to_grayscale() is bw_texture
+
+
+def test_from_vtk_imagedata():
+    idata = vtk.vtkImageData()
+    idata.SetDimensions(3, 4, 1)
+    tex = pyvista.Texture(idata)
+    assert tex.dimensions == idata.GetDimensions()[:2]

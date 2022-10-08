@@ -558,10 +558,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             narray = narray.squeeze()
 
         # import here to avoid circular import
-        from pyvista import Grid, StructuredGrid
+        from pyvista import GRID_TYPE
 
         # if structured, must reshape to match shape of array
-        if isinstance(self.dataset, (Grid, StructuredGrid)):
+        if isinstance(self.dataset, GRID_TYPE):
             try:
                 # permit reshaping arrays with multiple components.
                 dim = list(self.dataset.dimensions)
@@ -572,17 +572,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if narray.shape[-1] == 1:
                     narray = narray.squeeze(-1)
             except ValueError:
-                try:
-                    dim = list(self.dataset._cell_dimensions)
-                    dim.append(-1)
-                    narray = np.atleast_3d(narray.reshape(dim, order='F'))
-                    if narray.shape[-1] == 1:
-                        narray = narray.squeeze(-1)
-                except ValueError:
-                    raise ValueError(
-                        f'Unable to reshape array to {self.dataset.dimensions} for '
-                        f'points or {self.dataset._cell_dimensions} for cells.'
-                    ) from None
+                dim = list(self.dataset._cell_dimensions)
+                dim.append(-1)
+                narray = np.atleast_3d(narray.reshape(dim, order='F'))
+                if narray.shape[-1] == 1:
+                    narray = narray.squeeze(-1)
         return narray
 
     def set_array(
@@ -837,9 +831,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             data = tmparray
 
         # import here to avoid circular import
-        from pyvista import Grid, StructuredGrid
+        from pyvista import GRID_TYPE
 
-        if isinstance(self.dataset, (Grid, StructuredGrid)):
+        if isinstance(self.dataset, GRID_TYPE):
             data = helpers.ravel_grid_array(self.dataset, data)
 
         if data.shape[0] != array_len:

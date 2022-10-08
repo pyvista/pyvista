@@ -1974,10 +1974,7 @@ class DataSet(DataSetFilters, DataObject):
             self.cell_data[name] = scalars
         elif isinstance(self, pyvista.GRID_TYPE):
             # support multi-dimensional data within structured datasets
-            if scalars.ndim == 2:
-                shp = (scalars.shape[0], scalars.shape[1], 1)
-            else:
-                shp = scalars.shape
+            shp = scalars.shape
             if shp == self.dimensions:
                 self.point_data[name] = scalars
             elif shp == self._cell_dimensions:

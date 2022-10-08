@@ -1053,26 +1053,37 @@ def test_grid_cell_dimensions():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_grid_flip_x(uniform, inplace):
-    flipped = uniform.flip_x(inplace)
-    flipped_array = flipped.point_data['Spatial Point Data']
     array = uniform.point_data['Spatial Point Data']
+    flipped = uniform.flip_x(inplace=inplace)
+    if inplace:
+        assert flipped is uniform
+    flipped_array = flipped.point_data['Spatial Point Data']
     assert np.allclose(array[::-1], flipped_array)
 
 
-@pytest.mark.parametrize('inplace', [True, False])
-def test_grid_flip_y(uniform, inplace):
-    flipped = uniform.flip_y(inplace)
+def test_grid_flip_y(uniform):
+    flipped = uniform.flip_y()
     flipped_array = flipped.point_data['Spatial Point Data']
     array = uniform.point_data['Spatial Point Data']
     assert np.allclose(array[:, ::-1], flipped_array)
 
 
-@pytest.mark.parametrize('inplace', [True, False])
-def test_grid_flip_z(uniform, inplace):
-    flipped = uniform.flip_z(inplace)
+def test_grid_flip_z(uniform):
+    flipped = uniform.flip_z()
     flipped_array = flipped.point_data['Spatial Point Data']
     array = uniform.point_data['Spatial Point Data']
     assert np.allclose(array[..., ::-1], flipped_array)
+
+
+def test_grid_flip_no_active(uniform):
+    uniform.clear_data()
+    with pytest.raises(MissingDataError, match='active scalars'):
+        uniform.flip_x()
+
+
+def test_grid_not_matching(uniform):
+    with pytest.raises(ValueError, match='must match'):
+        uniform['data'] = [1, 2, 3]
 
 
 def test_grid_points():

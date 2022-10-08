@@ -69,14 +69,6 @@ class Grid(DataSet):
         """Return the grid's cell dimensions."""
         return helpers.get_cell_dimensions(self)
 
-    def _reshape_point_array(self, array):
-        """Reshape point data to a 3-D matrix."""
-        return array.reshape(self.dimensions, order='F')
-
-    def _reshape_cell_array(self, array):
-        """Reshape cell data to a 3-D matrix."""
-        return array.reshape(self._cell_dimensions, order='F')
-
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = DataSet._get_attrs(self)
@@ -843,7 +835,7 @@ class UniformGrid(_vtk.vtkImageData, UniformGridFilters, Grid):
         output = _get_output(alg)
 
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 

@@ -5050,7 +5050,7 @@ class DataSetFilters:
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
-            if isinstance(self, (pyvista.Grid, pyvista.StructuredGrid)):
+            if isinstance(self, pyvista.GRID_TYPE):
                 point_vectors = [name for name, data in self.point_data.items() if data.ndim == 4]
                 cell_vectors = [name for name, data in self.cell_data.items() if data.ndim == 4]
             else:

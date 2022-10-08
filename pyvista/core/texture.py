@@ -96,6 +96,9 @@ class Texture(_vtk.vtkTexture, DataObject):
             self._from_image_data(uinput)
         elif isinstance(uinput, str):
             self._from_file(filename=uinput, **kwargs)
+        elif 'PIL' in str(type(uinput)):
+            self._from_array(np.array(uinput))
+            self.flip_y(inplace=True)
         elif isinstance(uinput, list):
             # Create a cubemap
 
@@ -149,9 +152,10 @@ class Texture(_vtk.vtkTexture, DataObject):
             if image.n_points < 2:  # pragma: no cover
                 raise ValueError("Problem reading the image with VTK.")
 
-            # to have textures match imageio's format, flip_x
+            # to have textures match imageio's format, flip_y
             self._from_image_data(image.flip_y())
-        except (KeyError, ValueError):
+        except (KeyError, ValueError):  # pragma: no cover
+            # as backup, use imageio
             from imageio import imread
 
             self._from_array(imread(filename))
@@ -163,6 +167,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     def _from_image_data(self, image):
         """Initialize or update from a UniformGrid."""
         if not isinstance(image, pyvista.UniformGrid):
+            # always ensure it's wrapped
             image = pyvista.UniformGrid(image)
         self.SetInputDataObject(image)
         self.Update()
@@ -319,7 +324,8 @@ class Texture(_vtk.vtkTexture, DataObject):
     def plot(self, **kwargs):
         """Plot the texture as an image.
 
-        If the texture is a cubemap, it will be displayed as a skybox.
+        If the texture is a cubemap, it will be displayed as a skybox with a
+        sphere in the center reflecting the environment.
 
         Parameters
         ----------
@@ -333,9 +339,16 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Examples
         --------
+        Plot a simple texture.
+
         >>> from pyvista import examples
         >>> texture = examples.download_masonry_texture()
         >>> texture.plot()
+
+        Plot a cubemap as a skybox.
+
+        >>> cube_map = examples.download_dikhololo_night()
+        >>> cube_map.plot()
 
         """
         if self.cube_map:
@@ -353,8 +366,11 @@ class Texture(_vtk.vtkTexture, DataObject):
         """Plot this texture as a skybox."""
         cpos = kwargs.pop('cpos', 'xy')
         zoom = kwargs.pop('zoom', 0.5)
+        kwargs.setdefault('lighting', None)
         pl = pyvista.Plotter(**kwargs)
         pl.add_actor(self.to_skybox())
+        pl.set_environment_texture(self, True)
+        pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         pl.show()

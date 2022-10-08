@@ -640,3 +640,11 @@ def test_uniform_grid_setter_cell_data(uniform_grid):
     uniform_grid.cell_data['cell_data_d'] = data.reshape((uniform_grid._cell_dimensions))
     assert uniform_grid.cell_data['cell_data_c'].shape == uniform_grid._cell_dimensions
     np.allclose(uniform_grid.cell_data['cell_data_c'], uniform_grid.cell_data['cell_data_d'])
+
+
+def test_uniform_grid_update_non_grid(uniform_grid):
+    grid = uniform_grid.cast_to_unstructured_grid()
+    grid.point_data.clear()
+    grid.point_data.update(uniform_grid.point_data)
+
+    assert grid.point_data == uniform_grid.cast_to_unstructured_grid().point_data
