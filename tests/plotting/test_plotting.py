@@ -3023,5 +3023,10 @@ def test_add_point_scalar_labels_list():
     points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0.5], [1, 1, 1]])
     labels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
 
+    with pytest.raises(TypeError):
+        plotter.add_point_scalar_labels(points, points=False)
+    with pytest.raises(TypeError):
+        plotter.add_point_scalar_labels(points, labels=False)
+
     plotter.add_point_scalar_labels(points, labels)
     plotter.show(before_close_callback=verify_cache_image)
