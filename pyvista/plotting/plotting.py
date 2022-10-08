@@ -4714,7 +4714,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             VTK label actor.  Can be used to change properties of the labels.
 
         """
-        if not is_pyvista_dataset(points) and not isinstance(points, np.ndarray):
+        if not is_pyvista_dataset(points) or not isinstance(points, np.ndarray):
             raise TypeError(
                 f'input points must be a numpy.ndarray or a pyvista dataset, not: {type(points)}'
             )
@@ -4730,8 +4730,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = labels
         elif is_pyvista_dataset(points):
             scalars = points.point_data[labels]
-        else:
-            raise TypeError(f'Points type not usable: {type(points)}')
         phrase = f'{preamble} {fmt}'
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
