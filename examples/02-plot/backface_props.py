@@ -89,7 +89,7 @@ plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 # color to the interior surface.
 #
 # The lighting has been disabled for this example to demonstrate how you can
-# make the interior of the surface appear occuluded without any directional
+# make the interior of the surface appear occluded without any directional
 # lighting simply by providing a different color for backface.
 
 globe = examples.load_globe()
