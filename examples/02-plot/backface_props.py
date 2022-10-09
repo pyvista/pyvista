@@ -85,8 +85,8 @@ plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Backface textures can also be applied to meshes that have textures applied to
 # them. For this example we load the globe texture with
-# :func:`pyvista.examples.load_globe`, clip it, and then apply a different
-# color to the interior surface.
+# :func:`pyvista.examples.load_globe() <pyvista.examples.examples.load_globe>`,
+# clip it, and then apply a different color to the interior surface.
 #
 # The lighting has been disabled for this example to demonstrate how you can
 # make the interior of the surface appear occluded without any directional
