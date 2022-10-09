@@ -41,10 +41,17 @@ from ._plotting import (
     process_opacity,
 )
 from ._property import Property
+from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs
-from .mapper import make_mapper
+from .mapper import (
+    DataSetMapper,
+    FixedPointVolumeRayCastMapper,
+    GPUVolumeRayCastMapper,
+    OpenGLGPUVolumeRayCastMapper,
+    SmartVolumeMapper,
+)
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
@@ -567,7 +574,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             mapper = actor.GetMapper()
                             if mapper is None:
                                 continue
-                            dataset = mapper.GetInputAsDataSet()
+                            dataset = mapper.dataset
                             if not isinstance(dataset, pyvista.PolyData):
                                 warnings.warn(
                                     'Plotter contains non-PolyData datasets. These have been '
@@ -2060,18 +2067,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str or list, default :attr:`pyvista.themes.DefaultTheme.cmap`
-            Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
-            are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
 
-            You can also specify a list of colors to override an
-            existing colormap with a custom one.  For example, to
-            create a three color colormap you might specify
-            ``['green', 'red', 'blue']``.
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         label : str, optional
             String label to use when adding a legend to the scene with
@@ -2243,8 +2253,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the composite dataset.
+        pyvista.Actor
+            Actor of the composite dataset.
 
         pyvista.CompositePolyDataMapper
             Composite PolyData mapper.
@@ -2326,6 +2336,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper = CompositePolyDataMapper(
             dataset,
+            theme=self._theme,
             color_missing_with_nan=color_missing_with_nan,
             interpolate_before_map=interpolate_before_map,
         )
@@ -2400,7 +2411,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     cmap,
                     flip_scalars,
                     categories,
-                    self._theme,
                     log_scale,
                 )
             else:
@@ -2572,18 +2582,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str, list, optional
-            Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
-            are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
 
-            You can also specify a list of colors to override an
-            existing colormap with a custom one.  For example, to
-            create a three color colormap you might specify
-            ``['green', 'red', 'blue']``.
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         label : str, optional
             String label to use when adding a legend to the scene with
@@ -2758,20 +2771,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the vector is plotted.
 
         copy_mesh : bool, optional
-            If ``True``, a copy of the mesh will be made before adding it to the plotter.
-            This is useful if e.g. you would like to add the same mesh to a plotter multiple
-            times and display different scalars. Setting ``copy_mesh`` to ``False`` is necessary
-            if you would like to update the mesh after adding it to the plotter and have these
-            updates rendered, e.g. by changing the active scalars or through an interactive widget.
-            Defaults to ``False``.
+            If ``True``, a copy of the mesh will be made before adding it to
+            the plotter.  This is useful if you would like to add the same
+            mesh to a plotter multiple times and display different
+            scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
+            would like to update the mesh after adding it to the plotter and
+            have these updates rendered, e.g. by changing the active scalars or
+            through an interactive widget. This should only be set to ``True``
+            with caution. Defaults to ``False``.
 
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the mesh.
+        pyvista.plotting.actor.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -2823,7 +2838,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...            show_edges=True)
 
         """
-        self.mapper = make_mapper(_vtk.vtkDataSetMapper)
+        self.mapper = DataSetMapper(theme=self.theme)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
@@ -2832,7 +2847,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
-        elif isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):
@@ -2926,6 +2941,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             **kwargs,
         )
+
         if silhouette:
             if isinstance(silhouette, dict):
                 self.add_silhouette(mesh, silhouette)
@@ -2951,7 +2967,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         original_scalar_name = None
         scalars_name = 'Data'
         if isinstance(scalars, str):
-            self.mapper.SetArrayName(scalars)
+            self.mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None:
@@ -2969,10 +2985,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             if field == FieldAssociation.POINT:
                 mesh.point_data.active_scalars_name = original_scalar_name
-                self.mapper.SetScalarModeToUsePointData()
+                self.mapper.scalar_map_mode = 'point'
             elif field == FieldAssociation.CELL:
                 mesh.cell_data.active_scalars_name = original_scalar_name
-                self.mapper.SetScalarModeToUseCellData()
+                self.mapper.scalar_map_mode = 'cell'
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2980,18 +2996,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mesh, scalars, texture, split_sharp_edges, feature_angle, preference
             )
 
+        if rgb:
+            show_scalar_bar = False
+            if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
+                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+
         if mesh.n_points < 1:
             raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
         # set main values
         self.mesh = mesh
-        self.mapper.SetInputData(self.mesh)
-        self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-        if interpolate_before_map:
-            self.mapper.InterpolateScalarsBeforeMappingOn()
+        self.mapper.dataset = self.mesh
+        self.mapper.interpolate_before_map = interpolate_before_map
 
-        actor = _vtk.vtkActor()
-        actor.SetMapper(self.mapper)
+        actor = Actor(mapper=self.mapper)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -3006,13 +3024,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError(
                     'Input mesh does not have texture coordinates to support the texture.'
                 )
-            actor.SetTexture(texture)
+            actor.texture = texture
             # Set color to white by default when using a texture
             if color is None:
                 color = 'white'
             if scalars is None:
                 show_scalar_bar = False
-            self.mapper.SetScalarModeToUsePointFieldData()
+            self.mapper.scalar_visibility = False
 
             # see https://github.com/pyvista/pyvista/issues/950
             mesh.set_active_scalars(None)
@@ -3024,15 +3042,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars formatting ==================================================
         if scalars is not None:
-            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
-                mesh,
+            self.mapper.set_scalars(
                 scalars,
                 scalars_name,
+                n_colors,
                 scalar_bar_args,
                 rgb,
                 component,
                 preference,
-                interpolate_before_map,
                 custom_opac,
                 annotations,
                 log_scale,
@@ -3043,27 +3060,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 flip_scalars,
                 opacity,
                 categories,
-                n_colors,
                 clim,
-                self._theme,
-                show_scalar_bar,
             )
+            self.mapper.scalar_visibility = True
         elif custom_opac:  # no scalars but custom opacity
             self.mapper.set_custom_opacity(
                 opacity,
                 color,
-                mesh,
                 n_colors,
                 preference,
-                interpolate_before_map,
-                rgb,
-                self._theme,
             )
+            self.mapper.scalar_visibility = True
         else:
-            self.mapper.SetScalarModeToUseFieldData()
+            self.mapper.scalar_visibility = False
 
         # Set actor properties ================================================
-        prop = Property(
+        actor.prop = Property(
             self._theme,
             interpolation=interpolation,
             metallic=metallic,
@@ -3084,12 +3096,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
         if isinstance(opacity, (float, int)):
-            prop.opacity = opacity
-        actor.SetProperty(prop)
+            actor.prop.opacity = opacity
 
         # legend label
         if label is not None:
-            self._add_legend_label(actor, label, scalars, prop.color)
+            self._add_legend_label(actor, label, scalars, actor.prop.color)
 
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
@@ -3194,12 +3205,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
 
-        cmap : str, optional
-            Name of the Matplotlib colormap to us when mapping the ``scalars``.
-            See available Matplotlib colormaps.  Only applicable for when
-            displaying ``scalars``. Requires Matplotlib to be installed.
-            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-            ``cmocean`` are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
+
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -3301,8 +3321,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the volume.
+        pyvista.Actor
+            Actor of the volume.
 
         Examples
         --------
@@ -3459,25 +3479,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = scalars.ravel()
 
         # Define mapper, volume, and add the correct properties
-        mappers = {
-            'fixed_point': _vtk.vtkFixedPointVolumeRayCastMapper,
-            'gpu': _vtk.vtkGPUVolumeRayCastMapper,
-            'open_gl': _vtk.vtkOpenGLGPUVolumeRayCastMapper,
-            'smart': _vtk.vtkSmartVolumeMapper,
+        mappers_lookup = {
+            'fixed_point': FixedPointVolumeRayCastMapper,
+            'gpu': GPUVolumeRayCastMapper,
+            'open_gl': OpenGLGPUVolumeRayCastMapper,
+            'smart': SmartVolumeMapper,
         }
-        if not isinstance(mapper, str) or mapper not in mappers.keys():
+        if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
             raise TypeError(
-                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers.keys())}"
+                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
             )
-        self.mapper = make_mapper(mappers[mapper])
+        self.mapper = mappers_lookup[mapper](self._theme)
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
             volume.point_data.set_array(scalars, title, True)
-            self.mapper.SetScalarModeToUsePointData()
+            self.mapper.scalar_mode = 'point'
         elif scalars.shape[0] == volume.n_cells:
             volume.cell_data.set_array(scalars, title, True)
-            self.mapper.SetScalarModeToUseCellData()
+            self.mapper.scalar_mode = 'cell'
         else:
             raise_not_matching(scalars, volume)
 
@@ -3497,22 +3517,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper.scalar_range = clim
 
-        # Set colormap and build lookup table
-        table = _vtk.vtkLookupTable()
-        # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
-        # above/below colors not supported with volume rendering
+        if isinstance(cmap, pyvista.LookupTable):
+            self.mapper.lookup_table = cmap
+        else:
+            if cmap is None:
+                if not has_module('matplotlib'):
+                    raise ImportError('Please install matplotlib for color maps.')
 
-        if isinstance(annotations, dict):
-            for val, anno in annotations.items():
-                table.SetAnnotation(float(val), str(anno))
-
-        if cmap is None:  # Set default map if matplotlib is available
-            if has_module('matplotlib'):
                 cmap = self._theme.cmap
-
-        if cmap is not None:
-            if not has_module('matplotlib'):
-                raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
             if categories:
@@ -3520,36 +3532,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     n_colors = len(np.unique(scalars))
                 elif isinstance(categories, int):
                     n_colors = categories
-        if flip_scalars:
-            cmap = cmap.reversed()
 
-        color_tf = _vtk.vtkColorTransferFunction()
-        for ii in range(n_colors):
-            color_tf.AddRGBPoint(ii, *cmap(ii)[:-1])
+            if flip_scalars:
+                cmap = cmap.reversed()
 
-        # Set opacities
-        if isinstance(opacity, (float, int)):
-            opacity_values = [opacity] * n_colors
-        elif isinstance(opacity, str):
-            opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
-        elif isinstance(opacity, (np.ndarray, list, tuple)):
-            opacity = np.array(opacity)
-            opacity_values = opacity_transfer_function(opacity, n_colors)
+            # Set colormap and build lookup table
+            self.mapper.lookup_table.apply_cmap(cmap, n_colors)
+            self.mapper.lookup_table.apply_opacity(opacity)
+            self.mapper.lookup_table.scalar_range = clim
+            if isinstance(annotations, dict):
+                self.mapper.lookup_table.annotations = annotations
 
-        opacity_tf = _vtk.vtkPiecewiseFunction()
-        for ii in range(n_colors):
-            opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
-
-        # Now put color tf and opacity tf into a lookup table for the scalar bar
-        table.SetNumberOfTableValues(n_colors)
-        lut = cmap(np.array(range(n_colors))) * 255
-        lut[:, 3] = opacity_values
-        lut = lut.astype(np.uint8)
-        table.SetTable(_vtk.numpy_to_vtk(lut))
-        table.SetRange(*clim)
-        self.mapper.lookup_table = table
-
-        self.mapper.SetInputData(volume)
+        self.mapper.dataset = volume
 
         blending = blending.lower()
         if blending in ['additive', 'add', 'sum']:
@@ -3565,17 +3559,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             raise ValueError(
                 f'Blending mode {blending!r} invalid. '
-                'Please choose one of "additive", '
+                'Please choose either "additive", '
                 '"composite", "minimum" or "maximum".'
             )
-        self.mapper.Update()
+        self.mapper.update()
 
         self.volume = _vtk.vtkVolume()
         self.volume.SetMapper(self.mapper)
 
         prop = _vtk.vtkVolumeProperty()
-        prop.SetColor(color_tf)
-        prop.SetScalarOpacity(opacity_tf)
+        prop.SetColor(self.mapper.lookup_table.to_color_tf())
+        prop.SetScalarOpacity(self.mapper.lookup_table.to_opacity_tf())
         prop.SetAmbient(ambient)
         prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
         prop.SetShade(shade)
@@ -3662,7 +3656,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             alg.SetFeatureAngle(silhouette_params["feature_angle"])
         else:
             alg.SetEnableFeatureAngle(False)
-        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(silhouette_params["color"]).float_rgb)
@@ -4431,27 +4425,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         lines = pyvista.lines_from_points(lines)
 
-        # Create mapper and add lines
-        mapper = _vtk.vtkDataSetMapper()
-        mapper.SetInputData(lines)
-
-        rgb_color = Color(color)
-
-        # Create actor
-        actor = _vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetLineWidth(width)
-        actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(rgb_color.float_rgb)
-        actor.GetProperty().SetColor(rgb_color.float_rgb)
-        actor.GetProperty().LightingOff()
+        actor = Actor(mapper=DataSetMapper(lines))
+        actor.prop.line_width = width
+        actor.prop.show_edges = True
+        actor.prop.edge_color = color
+        actor.prop.color = color
+        actor.prop.lighting = False
 
         # legend label
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [lines, label, rgb_color]
+            self.renderer._labels[addr] = [lines, label, Color(color)]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
@@ -4735,7 +4721,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if fmt is None:
             fmt = '%.6e'
         scalars = points.point_data[labels]
-        phrase = f'{preamble} %.3e'
+        phrase = f'{preamble} {fmt}'
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
@@ -4753,7 +4739,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
+        pyvista.Actor
             Actor of the mesh.
 
         Examples
@@ -4792,8 +4778,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the arrows.
+        pyvista.Actor
+            Actor of the arrows.
 
         Examples
         --------
@@ -6236,7 +6222,7 @@ class Plotter(BasePlotter):
         alg.SetModelBounds(bounds)
         alg.SetFocalPoint(focal_point)
         alg.AllOn()
-        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(color).float_rgb)

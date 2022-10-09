@@ -485,3 +485,13 @@ def test_antialiasing_deprication(default_theme):
         default_theme.antialiasing
     with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
         default_theme.antialiasing = True
+
+
+def test_above_range_color(default_theme):
+    default_theme.above_range_color = 'r'
+    assert isinstance(default_theme.above_range_color, pyvista.Color)
+
+
+def test_below_range_color(default_theme):
+    default_theme.below_range_color = 'b'
+    assert isinstance(default_theme.below_range_color, pyvista.Color)

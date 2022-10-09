@@ -55,11 +55,11 @@ def get_coloring(mapper, dataset):
 
     """
     coloring = 'NoColors'
-    if mapper.GetScalarModeAsString() == 'UsePointData':
+    if mapper.scalar_map_mode == 'point':
         scalars = dataset.point_data.active_scalars
         if scalars is not None:
             coloring = 'VertexColors'
-    elif mapper.GetScalarModeAsString() == 'UseCellData':
+    elif mapper.scalar_map_mode == 'cell':
         scalars = dataset.cell_data.active_scalars
         if scalars is not None:
             coloring = 'FaceColors'

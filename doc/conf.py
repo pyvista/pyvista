@@ -62,21 +62,22 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.autosummary",
     "enum_tools.autoenum",
-    "notfound.extension",
-    "sphinx_copybutton",
-    "sphinx_gallery.gen_gallery",
-    "sphinx.ext.extlinks",
     "jupyter_sphinx",
-    "sphinx_panels",
-    "pyvista.ext.plot_directive",
-    "pyvista.ext.coverage",
+    "notfound.extension",
     "numpydoc",
+    "pyvista.ext.coverage",
+    "pyvista.ext.plot_directive",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_gallery.gen_gallery",
+    "sphinxcontrib.asciinema",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -96,15 +97,12 @@ coverage_additional_modules = [
     'pyvista.plotting.theme',
     'pyvista.plotting.tools',
     'pyvista.plotting.widgets',
-    'pyvista.core.common_data',
-    'pyvista.core.common_data',
     'pyvista.core.composite',
     'pyvista.core.dataobject',
     'pyvista.core.datasetattributes',
     'pyvista.core.dataset',
     'pyvista.core.errors',
     'pyvista.core.grid',
-    'pyvista.core.imaging',
     'pyvista.core.objects',
     'pyvista.core.pointset',
     'pyvista.core.pyvista_ndarray',
@@ -116,6 +114,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.unstructured_grid',
     'pyvista.demos',
     'pyvista.examples.examples',
+    'pyvista.utilities.common',
     'pyvista.utilities.features',
     'pyvista.utilities.fileio',
     'pyvista.utilities.geometric_objects',
@@ -468,7 +467,9 @@ panels_add_bootstrap_css = False
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
+html_css_files = [
+    'cards.css',  # used in card CSS
+]
 
 # -- Options for HTMLHelp output ------------------------------------------
 

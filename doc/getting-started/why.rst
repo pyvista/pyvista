@@ -1,3 +1,5 @@
+.. _why_pyvista:
+
 Why PyVista?
 ============
 
@@ -67,6 +69,7 @@ requires a few lines of code.
 |    iren.Start()                           |                                     |
 |    del iren, renWin                       |                                     |
 +-------------------------------------------+-------------------------------------+
+
 
 The PyVista data model and API allows you to rapidly load meshes and
 handles much of the "grunt work" of setting up plots, connecting

@@ -479,6 +479,7 @@ if VTK9:
         vtkImageRFFT,
     )
     from vtkmodules.vtkRenderingCore import (
+        vtkAbstractMapper,
         vtkActor,
         vtkActor2D,
         vtkCamera,

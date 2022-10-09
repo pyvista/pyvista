@@ -13,6 +13,7 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import uses_egl
 
+from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
@@ -670,7 +671,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        actor : vtk.vtkActor
+        actor : vtk.vtkActor or pyvista.Actor
             The actor.
 
         actor_properties : vtk.Properties
@@ -681,7 +682,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
-            actor = _vtk.vtkActor()
+            actor = Actor()
             actor.SetMapper(uinput)
         else:
             actor = uinput
@@ -844,12 +845,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             mesh = actor.copy()
             mesh.clear_data()
             mapper.SetInputData(mesh)
-            actor = _vtk.vtkActor()
-            actor.SetMapper(mapper)
-            prop = actor.GetProperty()
+            actor = pyvista.Actor(mapper=mapper)
             if color is not None:
-                prop.SetColor(Color(color).float_rgb)
-            prop.SetOpacity(opacity)
+                actor.prop.color = color
+            actor.prop.opacity = opacity
         if hasattr(self, 'axes_widget'):
             # Delete the old one
             self.axes_widget.EnabledOff()
@@ -2750,7 +2749,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
 
     def disable_ssao(self):
-        """Disable surface space ambient occulusion (SSAO)."""
+        """Disable surface space ambient occlusion (SSAO)."""
         self._render_passes.disable_ssao_pass()
 
     def get_pick_position(self):

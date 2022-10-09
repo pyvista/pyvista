@@ -488,19 +488,32 @@ def test_outline_corners_composite(composite):
 
 def test_extract_geometry(datasets, composite):
     for dataset in datasets:
-        outline = dataset.extract_geometry(progress_bar=True)
-        assert outline is not None
-        assert isinstance(outline, pyvista.PolyData)
+        geom = dataset.extract_geometry(progress_bar=True)
+        assert geom is not None
+        assert isinstance(geom, pyvista.PolyData)
     # Now test composite data structures
     output = composite.extract_geometry()
     assert isinstance(output, pyvista.PolyData)
 
 
-def test_wireframe(datasets):
+def test_extract_geometry_extent(uniform):
+    geom = uniform.extract_geometry(extent=(0, 5, 0, 100, 0, 100))
+    assert isinstance(geom, pyvista.PolyData)
+    assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
+
+
+def test_extract_all_edges(datasets):
     for dataset in datasets:
-        wire = dataset.extract_all_edges(progress_bar=True)
-        assert wire is not None
-        assert isinstance(wire, pyvista.PolyData)
+        edges = dataset.extract_all_edges()
+        assert edges is not None
+        assert isinstance(edges, pyvista.PolyData)
+
+    if pyvista.vtk_version_info < (9, 1):
+        with pytest.raises(VTKVersionError):
+            datasets[0].extract_all_edges(use_all_points=True)
+    else:
+        edges = datasets[0].extract_all_edges(use_all_points=True)
+        assert edges.n_lines
 
 
 @skip_py2_nobind

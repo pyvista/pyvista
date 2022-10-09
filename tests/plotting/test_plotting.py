@@ -115,12 +115,15 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
+    'test_plot_composite_bool',
+    'test_plot_composite_lookup_table',
     'test_plot_composite_poly_component_nested_multiblock',
     'test_plot_composite_poly_scalars_cell',
     'test_plot_composite_preference_cell',
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
+    'test_plotter_lookup_table',
     'test_rectlinear_edge_case',
     'test_scalars_by_name',
     'test_user_annotations_scalar_bar_volume',
@@ -835,7 +838,9 @@ def test_plot_list():
     sphere_b = pyvista.Sphere(1.0)
     sphere_c = pyvista.Sphere(2.0)
     pyvista.plot(
-        [sphere_a, sphere_b, sphere_c], style='wireframe', before_close_callback=verify_cache_image
+        [sphere_a, sphere_b, sphere_c],
+        style='wireframe',
+        before_close_callback=verify_cache_image,
     )
 
 
@@ -852,9 +857,9 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-def test_make_movie(sphere):
+def test_make_movie(sphere, tmpdir):
     # Make temporary file
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.mp4')
+    filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
     plotter = pyvista.Plotter()
@@ -1810,7 +1815,7 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
     mapping = pyvista.opacity_transfer_function('sigmoid_10', n)
     assert len(mapping) == n
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         mapping = pyvista.opacity_transfer_function('foo', n)
     with pytest.raises(RuntimeError):
         mapping = pyvista.opacity_transfer_function(np.linspace(0, 1, 2 * n), n)
@@ -2463,6 +2468,28 @@ def test_pointset_plot_as_points(pointset):
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_9_1_0
+def test_pointset_plot_vtk():
+    pointset = vtk.vtkPointSet()
+    points = pyvista.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
+    pointset.SetPoints(points)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(pointset, color='red', point_size=25)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_9_1_0
+def test_pointset_plot_as_points_vtk():
+    pointset = vtk.vtkPointSet()
+    points = pyvista.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
+    pointset.SetPoints(points)
+
+    pl = pyvista.Plotter()
+    pl.add_points(pointset, color='red', point_size=25)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
     path = str(tmpdir.join(basename))
@@ -2517,6 +2544,20 @@ def test_add_text():
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_categories_int(sphere):
+    sphere['data'] = sphere.points[:, 2]
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=5, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_categories_true(sphere):
+    sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=True, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
 
 
 @skip_windows
@@ -2623,6 +2664,13 @@ def test_plot_composite_raise(sphere, multiblock_poly):
 def test_plot_composite_categories(multiblock_poly):
     pl = pyvista.Plotter()
     pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_composite_lookup_table(multiblock_poly):
+    lut = pyvista.LookupTable('Greens', n_values=8)
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data_b', cmap=lut)
     pl.show(before_close_callback=verify_cache_image)
 
 
@@ -2916,7 +2964,54 @@ def test_charts_sin():
     chart.show(dev_kwargs={'before_close_callback': verify_cache_image})
 
 
+def test_lookup_table():
+    lut = pyvista.LookupTable('viridis')
+    lut.n_values = 8
+    lut.below_range_color = 'black'
+    lut.above_range_color = 'grey'
+    lut.nan_color = 'r'
+
+    # There are minor variations within 9.0.3 that slightly invalidate the
+    # image cache.
+    if pyvista.vtk_version_info != (9, 0, 3):
+        lut.plot(before_close_callback=verify_cache_image)
+    else:
+        lut.plot()
+
+
+def test_plotter_lookup_table(sphere):
+    lut = pyvista.LookupTable('Reds')
+    lut.n_values = 3
+    lut.scalar_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
+    sphere.plot(scalars=sphere.points[:, 2], cmap=lut, before_close_callback=verify_cache_image)
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_lookup_table(uniform):
+    lut = pyvista.LookupTable()
+    lut.alpha_range = (0, 1)
+    pl = pyvista.Plotter()
+    pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_actor(sphere):
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
+    actor.plot(before_close_callback=verify_cache_image)
+
+
 def test_wireframe_color(sphere):
     sphere.plot(
         lighting=False, color='b', style='wireframe', before_close_callback=verify_cache_image
     )
+
+
+@skip_windows
+def test_add_point_scalar_labels_fmt():
+    mesh = examples.load_uniform().slice()
+    p = pyvista.Plotter()
+    p.add_mesh(mesh, scalars="Spatial Point Data", show_edges=True)
+    p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=36, fmt='%.3f')
+    p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
+    p.show(before_close_callback=verify_cache_image)
