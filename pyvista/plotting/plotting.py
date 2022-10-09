@@ -31,6 +31,7 @@ from pyvista.utilities import (
     raise_not_matching,
     wrap,
 )
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 
 from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
@@ -4714,10 +4715,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             VTK label actor.  Can be used to change properties of the labels.
 
         """
-        if not is_pyvista_dataset(points) and not isinstance(points, np.ndarray):
-            raise TypeError(
-                f'input points must be a numpy.ndarray or a pyvista dataset, not: {type(points)}'
-            )
+        if not is_pyvista_dataset(points):
+            points, _ = _coerce_pointslike_arg(points, copy=False)
         if not isinstance(labels, (str, list)):
             raise TypeError(
                 'labels must be a string name of the scalars array to use or list of scalars'
