@@ -4691,7 +4691,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : numpy.ndarray or pyvista.DataSet
+        points : Sequence(float) or np.ndarray or pyvista.DataSet
             An ``n x 3`` numpy.ndarray or pyvista dataset with points.
 
         labels : list or str
