@@ -11,7 +11,7 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
-from pyvista.utilities.misc import uses_egl
+from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
 from .actor import Actor
 from .camera import Camera
@@ -881,6 +881,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         box=None,
         box_args=None,
         viewport=(0, 0, 0.2, 0.2),
+        marker_args=None,
         **kwargs,
     ):
         """Add an interactive axes widget in the bottom left corner.
@@ -917,9 +918,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels_off : bool, optional
             Enable or disable the text labels for the axes.
 
-        marker_args : dict, optional 
-            DEPRECATED: Please use **kwargs for passing parameters for 
-            the orientation marker widget. See the parameters of :func:`pyvista.create_axes_marker`..
+        marker_args : dict, optional
+            .. deprecated:: 0.37.0
+               Please use ``**kwargs`` for passing parameters for the
+               orientation marker widget. See the parameters of
+               :func:`pyvista.create_axes_marker`.
 
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
@@ -932,6 +935,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         viewport : tuple, optional
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        **kwargs : dict, optional
+               Used for passing parameters for the orientation marker
+               widget. See the parameters of :func:`pyvista.create_axes_marker`.
 
         Returns
         -------
@@ -960,10 +967,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
-        >>> _ = pl.add_axes(line_width=5, cone_radius=0.6, shaft_length=0.7, tip_length=0.3, ambient=0.5, label_size=(0.4, 0.16))
+        >>> _ = pl.add_axes(
+        ...     line_width=5,
+        ...     cone_radius=0.6,
+        ...     shaft_length=0.7,
+        ...     tip_length=0.3,
+        ...     ambient=0.5,
+        ...     label_size=(0.4, 0.16)
+        ... )
         >>> pl.show()
 
         """
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
+        if marker_args is not None:
+            warnings.warn(
+                "Use of `marker_args` is deprecated. Use `**kwargs` instead.",
+                PyVistaDeprecationWarning,
+            )
+            kwargs.update(marker_args)
+
         if interactive is None:
             interactive = self._theme.interactive
         if hasattr(self, 'axes_widget'):
