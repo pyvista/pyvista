@@ -114,7 +114,7 @@ clipped_sphere = sphere.clip(normal='z', value=0.4)
 pl = pv.Plotter()
 pl.set_environment_texture(examples.download_sky_box_cube_map())
 pl.add_mesh(
-    clipped,
+    clipped_sphere,
     backface_params={'color': 'r'},
     pbr=True,
     metallic=1.0,
