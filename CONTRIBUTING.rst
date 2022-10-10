@@ -146,7 +146,7 @@ There are two important copyright guidelines:
 Please also take a look at our `Code of
 Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`_.
 
-Contributing to pyvista through GitHub
+Contributing to PyVista through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To submit new code to pyvista, first fork the `pyvista GitHub
@@ -255,6 +255,27 @@ dependencies listed in ``requirements_test.txt``,
 
 Then, if you have everything installed, you can run the various test
 suites.
+
+Using Gitpod workspace
+~~~~~~~~~~~~~~~~~~~~~~
+
+A prebuilt gitpod workspace is available for a quick start development
+environment. To start a workspace from the main branch of pyvista, go
+to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
+`Gitpod Getting Started
+<https://www.gitpod.io/docs/getting-started>`_ for more details.
+
+The workspace has vnc capability through the browser for
+interactive plotting.  The workspace also has prebuilt
+documentation with a live-viewer.  Hit the ``Go Live`` button
+and browse to ``doc/_build/html``. The workspace is also prebuilt to
+support pre-commit checks.
+
+Workspaces started from the ``pyvista/pyvista`` repo will often
+have prebuilt environments with dependencies installed. Workspaces
+started from forks may not have prebuilt images and will start
+building when starting a new workspace.  It is safe to stop, e.g.
+``Ctrl-C``, the documentation part of the build if unneeded.
 
 Unit Testing
 ~~~~~~~~~~~~
@@ -451,6 +472,64 @@ This effectively invokes ``SPHINXOPTS=-j`` and can be especially useful for
 multi-core computers when ``FULL_DOC_BUILD=TRUE``
 
 
+
+Contributing to the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Documentation for PyVista is generated from three sources:
+
+- Docstrings from the classes, functions, and modules of ``pyvista`` using
+  `sphinx.ext.autodoc
+  <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_.
+- Restructured test from ``doc/``
+- Gallery examples from ``examples/``
+
+General usage and API descriptions should be placed within ``doc/api`` and
+the docstrings.  Full gallery examples should be placed in ``examples``.
+
+
+Adding a New Example
+^^^^^^^^^^^^^^^^^^^^
+PyVista's examples come in two formats: basic code snippets demonstrating the
+functionality of an individual method or a full gallery example displaying one
+or more concepts.  Small code samples and snippets are contained in the
+``doc/api`` directory or within our documentation strings, while the full
+gallery examples, meant to be run as individual downloadable scripts, are
+contained in the ``examples`` directory at the root of this repository.
+
+To add a fully fledged, standalone example, add your example to the
+``examples`` directory in the root directory of the `PyVista Repository
+<https://github.com/pyvista/pyvista/>`_ within one of the applicable
+subdirectories.  Should none of the existing directories match the category of
+your example, create a new directory with a ``README.txt`` describing the new
+category.  Additionally, as these examples are built using the sphinx gallery
+extension, follow coding guidelines as established by `Sphinx-Gallery
+<https://sphinx-gallery.github.io/stable/index.html>`_.
+
+For more details see :ref:`add_example_example`.
+
+
+Add a new Example File
+^^^^^^^^^^^^^^^^^^^^^^
+If you have a dataset that you need for your gallery example, add it to
+`pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_ and follow the
+directions there. You will then need to add a new function to download the
+dataset ``pyvista/examples/downloads.py``. This might be as easy as:
+
+.. code:: python
+
+   def download_my_dataset(load=True):
+       """Download my new dataset."""
+       return _download_and_read('mydata/my_new_dataset.vtk', load=load)
+
+
+Which enables:
+
+.. code::
+
+   >>> from pyvista import examples
+   >>> dataset = examples.download_my_dataset()
+
+
 Creating a New Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -566,7 +645,7 @@ created the following will occur:
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 10. Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro-cf-autotick-bot>`_
+    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.

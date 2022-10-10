@@ -1,6 +1,6 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
-from typing import Union
+from typing import Optional, Sequence, Union
 import warnings
 
 import numpy as np
@@ -163,10 +163,10 @@ class DataSetFilters:
         )
         if inplace:
             if return_clipped:
-                self.overwrite(result[0])
+                self.copy_from(result[0])
                 return self, result[1]
             else:
-                self.overwrite(result)
+                self.copy_from(result)
                 return self
         return result
 
@@ -423,7 +423,7 @@ class DataSetFilters:
         result0 = _get_output(alg)
 
         if inplace:
-            self.overwrite(result0)
+            self.copy_from(result0)
             result0 = self
 
         if both:
@@ -1052,10 +1052,7 @@ class DataSetFilters:
             raise TypeError('Value must either be a single scalar or a sequence.')
         else:
             # just a single value
-            if invert:
-                alg.ThresholdByLower(value)
-            else:
-                alg.ThresholdByUpper(value)
+            _set_threshold_limit(alg, value, invert)
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
@@ -1261,7 +1258,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, progress_bar=False):
+    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1272,6 +1269,10 @@ class DataSetFilters:
 
         Parameters
         ----------
+        extent : sequence, optional
+            Specify a (xmin,xmax, ymin,ymax, zmin,zmax) bounding box
+            to clip data.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1301,16 +1302,30 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
+        if extent is not None:
+            alg.SetExtent(extent)
+            alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    def extract_all_edges(self, progress_bar=False):
+    def extract_all_edges(self, use_all_points=False, progress_bar=False):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
 
         Parameters
         ----------
+        use_all_points : bool, default: False
+            Indicates whether all of the points of the input mesh should exist
+            in the output. When ``True`` enables point renumbering.  If set to
+            ``True``, then a threaded approach is used which avoids the use of
+            a point locator and is quicker.
+
+            By default this is set to ``False``, and unused points are omitted
+            from the output.
+
+            This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1335,6 +1350,14 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
+        if use_all_points:
+            try:
+                alg.SetUseAllPoints(use_all_points)
+            except AttributeError:  # pragma: no cover
+                raise VTKVersionError(
+                    'This version of VTK does not support `use_all_points=True`. '
+                    'VTK v9.1 or newer is required.'
+                )
         _update_alg(alg, progress_bar, 'Extracting All Edges')
         return _get_output(alg)
 
@@ -2192,7 +2215,7 @@ class DataSetFilters:
         """
         mesh = DataSetFilters.connectivity(self, largest=True, progress_bar=False)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -2222,7 +2245,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> dataset = examples.load_uniform()
-        >>> dataset.set_active_scalars('Spatial Cell Data')
+        >>> _ = dataset.set_active_scalars('Spatial Cell Data')
         >>> threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
         >>> bodies = threshed.split_bodies()
         >>> len(bodies)
@@ -2325,7 +2348,7 @@ class DataSetFilters:
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -2399,7 +2422,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Warping by Vector')
         warped_mesh = _get_output(alg)
         if inplace:
-            self.overwrite(warped_mesh)
+            self.copy_from(warped_mesh)
             return self
         else:
             return warped_mesh
@@ -2612,7 +2635,7 @@ class DataSetFilters:
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -5113,7 +5136,7 @@ class DataSetFilters:
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
         if inplace:
-            self.overwrite(res)
+            self.copy_from(res)
             return self
 
         # The output from the transform filter contains a shallow copy
@@ -5123,7 +5146,7 @@ class DataSetFilters:
             output = pyvista.StructuredGrid()
         else:
             output = self.__class__()
-        output.overwrite(res)
+        output.copy_from(res)
         return output
 
     def reflect(
@@ -5290,6 +5313,11 @@ class DataSetFilters:
         # work correctly, returning the wrong number of partitions.
         if pyvista.vtk_version_info < (9, 1, 0):
             raise VTKVersionError('`partition` requires vtk>=9.1.0')  # pragma: no cover
+        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
+            raise VTKVersionError(
+                '`partition` requires vtkRedistributeDataSetFilter, but it '
+                f'was not found in VTK {pyvista.vtk_version_info}'
+            )  # pragma: no cover
 
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)
@@ -5389,3 +5417,22 @@ class DataSetFilters:
 
         """
         return self.shrink(1.0)
+
+
+def _set_threshold_limit(alg, value, invert):
+    """Set vtkThreshold limit.
+
+    Addresses VTK API deprication as pointed out in
+    https://github.com/pyvista/pyvista/issues/2850
+
+    """
+    if invert:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetUpperThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByLower(value)
+    else:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetLowerThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByUpper(value)

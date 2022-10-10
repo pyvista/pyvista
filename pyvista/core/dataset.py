@@ -26,9 +26,9 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.common import _coerce_pointslike_arg
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .._typing import Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
@@ -473,7 +473,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `DataSet.vectors` is deprecated. Use `DataSet.active_vectors` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_vectors
 
@@ -483,7 +483,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use of `DataSet.vectors` to add vector data is deprecated. "
             "Use `DataSet['vector_name'] = data`. "
             "Use `DataSet.active_vectors_name = 'vector_name' to make active.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         if array.ndim != 2:
             raise ValueError('vector array must be a 2-dimensional array')
@@ -506,7 +506,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_t_coords
 
@@ -514,7 +514,7 @@ class DataSet(DataSetFilters, DataObject):
     def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
         warnings.warn(
             "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_t_coords = t_coords  # type: ignore
 
@@ -641,16 +641,27 @@ class DataSet(DataSetFilters, DataObject):
             points or cells, it will prioritize an array matching this
             type.  Can be either ``'cell'`` or ``'point'``.
 
+        Returns
+        -------
+        pyvista.FieldAssociation
+            Association of the scalars matching ``name``.
+
+        numpy.ndarray
+            An array from the dataset matching ``name``.
+
         """
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
         if name is None:
             self.GetCellData().SetActiveScalars(None)
             self.GetPointData().SetActiveScalars(None)
-            return
+            return FieldAssociation.NONE, np.array([])
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
-            raise KeyError(f'Data named ({name}) is a field array which cannot be active.')
+            if name in self.field_data:
+                raise ValueError(f'Data named "{name}" is a field array which cannot be active.')
+            else:
+                raise KeyError(f'Data named "{name}" does not exist in this dataset.')
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             ret = self.GetPointData().SetActiveScalars(name)
@@ -661,10 +672,15 @@ class DataSet(DataSetFilters, DataObject):
 
         if ret < 0:
             raise ValueError(
-                f'Data field ({name}) with type ({field}) could not be set as the active scalars'
+                f'Data field "{name}" with type ({field}) could not be set as the active scalars'
             )
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
+
+        if field == FieldAssociation.POINT:
+            return field, self.point_data.active_scalars
+        else:  # must be cell
+            return field, self.cell_data.active_scalars
 
     def set_active_vectors(self, name: Optional[str], preference='point'):
         """Find the vectors by name and appropriately sets it as active.
@@ -1457,7 +1473,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `point_arrays` is deprecated. Use `point_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.point_data
 
@@ -1510,7 +1526,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.clear_point_data()
 
@@ -1542,7 +1558,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `clear_cell_arrays` is deprecated. Use `clear_cell_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.clear_cell_data()
 
@@ -1559,7 +1575,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `clear_arrays` is deprecated. Use `clear_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.clear_data()
 
@@ -1594,7 +1610,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `cell_arrays` is deprecated. Use `cell_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.cell_data
 
@@ -2003,6 +2019,8 @@ class DataSet(DataSetFilters, DataObject):
         attrs = []
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
+        if isinstance(self, pyvista.PolyData):
+            attrs.append(("N Strips", self.n_strips, "{}"))
         bds = self.bounds
         fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
         attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
@@ -2068,7 +2086,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def overwrite(self, mesh: _vtk.vtkDataSet):
+    def copy_from(self, mesh: _vtk.vtkDataSet):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -2084,7 +2102,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()
         >>> mesh_b = pyvista.Cube()
-        >>> mesh_a.overwrite(mesh_b)
+        >>> mesh_a.copy_from(mesh_b)
         >>> mesh_a == mesh_b
         True
 
@@ -2098,6 +2116,24 @@ class DataSet(DataSetFilters, DataObject):
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=True)
+
+    def overwrite(self, mesh: _vtk.vtkDataSet):
+        """Overwrite this dataset inplace with the new dataset's geometries and data.
+
+        .. deprecated:: 0.37.0
+            Use :func:`DataSet.copy_from` instead.
+
+        Parameters
+        ----------
+        mesh : vtk.vtkDataSet
+            The overwriting mesh.
+
+        """
+        warnings.warn(
+            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.copy_from(mesh)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.

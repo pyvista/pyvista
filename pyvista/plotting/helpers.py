@@ -37,6 +37,7 @@ def plot(
     border=None,
     border_color='k',
     border_width=2.0,
+    ssao=False,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
@@ -147,8 +148,8 @@ def plot(
 
     anti_aliasing : bool, optional
         Enable or disable anti-aliasing.  Defaults to the theme
-        setting :attr:`pyvista.global_theme.antialiasing
-        <pyvista.themes.DefaultTheme.antialiasing>`.
+        setting :attr:`pyvista.global_theme.anti_aliasing
+        <pyvista.themes.DefaultTheme.anti_aliasing>`.
 
     zoom : float, str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
@@ -167,6 +168,10 @@ def plot(
 
     border_width : float, optional
         Width of the border in pixels when enabled.
+
+    ssao : bool, optional
+        Enable surface space ambient occlusion (SSAO). See
+        :func:`Plotter.enable_ssao` for more details.
 
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
@@ -262,6 +267,8 @@ def plot(
     else:
         if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
             pl.add_volume(var_item, **kwargs)
+        elif isinstance(var_item, pyvista.MultiBlock):
+            pl.add_composite(var_item, **kwargs)
         else:
             pl.add_mesh(var_item, **kwargs)
 
@@ -285,6 +292,9 @@ def plot(
 
     if parallel_projection:
         pl.enable_parallel_projection()
+
+    if ssao:
+        pl.enable_ssao()
 
     if zoom is not None:
         pl.camera.zoom(zoom)

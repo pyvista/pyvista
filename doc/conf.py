@@ -62,20 +62,22 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.autosummary",
-    "notfound.extension",
-    "sphinx_copybutton",
-    "sphinx_gallery.gen_gallery",
-    "sphinx.ext.extlinks",
+    "enum_tools.autoenum",
     "jupyter_sphinx",
-    "sphinx_panels",
-    "pyvista.ext.plot_directive",
-    "pyvista.ext.coverage",
+    "notfound.extension",
     "numpydoc",
+    "pyvista.ext.coverage",
+    "pyvista.ext.plot_directive",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_gallery.gen_gallery",
+    "sphinxcontrib.asciinema",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -95,15 +97,12 @@ coverage_additional_modules = [
     'pyvista.plotting.theme',
     'pyvista.plotting.tools',
     'pyvista.plotting.widgets',
-    'pyvista.core.common_data',
-    'pyvista.core.common_data',
     'pyvista.core.composite',
     'pyvista.core.dataobject',
     'pyvista.core.datasetattributes',
     'pyvista.core.dataset',
     'pyvista.core.errors',
     'pyvista.core.grid',
-    'pyvista.core.imaging',
     'pyvista.core.objects',
     'pyvista.core.pointset',
     'pyvista.core.pyvista_ndarray',
@@ -115,6 +114,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.unstructured_grid',
     'pyvista.demos',
     'pyvista.examples.examples',
+    'pyvista.utilities.common',
     'pyvista.utilities.features',
     'pyvista.utilities.fileio',
     'pyvista.utilities.geometric_objects',
@@ -210,6 +210,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.count$',
     r'\.MultiBlock\.index$',
     r'\.MultiBlock\.remove$',
+    # Enumerations
+    r'\.Plot3DFunctionEnum$',
 }
 
 
@@ -219,7 +221,7 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'python': ('https://docs.python.org/3', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
@@ -292,6 +294,13 @@ language = 'en'
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", "_templates*"]
 
+# Pages are not detected correct by ``make linkcheck``
+linkcheck_ignore = [
+    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
+    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
+    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
+]
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
 
@@ -302,7 +311,7 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-class ResetPyvista:
+class ResetPyVista:
     """Reset pyvista module to default settings."""
 
     def __call__(self, gallery_conf, fname):
@@ -316,10 +325,10 @@ class ResetPyvista:
         pyvista.set_plot_theme('document')
 
     def __repr__(self):
-        return 'ResetPyvista'
+        return 'ResetPyVista'
 
 
-reset_pyvista = ResetPyvista()
+reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed
@@ -458,7 +467,9 @@ panels_add_bootstrap_css = False
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
+html_css_files = [
+    'cards.css',  # used in card CSS
+]
 
 # -- Options for HTMLHelp output ------------------------------------------
 

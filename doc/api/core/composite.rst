@@ -19,7 +19,7 @@ Create empty composite dataset
    pyvista.set_jupyter_backend('pythreejs')
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
-   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.anti_aliasing = 'fxaa'
    pyvista.global_theme.show_scalar_bar = False
 
 .. jupyter-execute::
@@ -105,7 +105,8 @@ PyVista tries to keep the keys ordered correctly when doing list operations.
 
 The dictionary like features are useful when reading in data from a file.  The
 keys are often more understandable to access the data than the index.
-:func:`pyvista.examples.download_cavity` is an OpenFoam dataset with a nested
+:func:`pyvista.examples.download_cavity()
+<pyvista.examples.downloads.download_cavity>` is an OpenFoam dataset with a nested
 ``MultiBlock`` structure.  There are two entries in the top-level object
 
 .. jupyter-execute::

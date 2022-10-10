@@ -1,5 +1,6 @@
 """Tests for pyvista.core.dataset."""
 
+import multiprocessing
 import pickle
 
 from hypothesis import HealthCheck, assume, given, settings
@@ -13,7 +14,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista
 from pyvista import Texture, examples
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -25,7 +26,13 @@ def grid():
 
 def test_invalid_overwrite(grid):
     with pytest.raises(TypeError):
-        grid.overwrite(pyvista.Plane())
+        grid.copy_from(pyvista.Plane())
+
+
+def test_overwrite_deprecation(grid):
+    mesh = type(grid)()
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.overwrite(grid)
 
 
 @composite
@@ -142,7 +149,7 @@ def test_field_data(grid):
     assert isinstance(grid.field_data['foo'], np.ndarray)
     assert np.allclose(grid.field_data['foo'], foo)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         grid.set_active_scalars('foo')
 
 
@@ -268,7 +275,7 @@ def test_translate_should_fail_given_none(grid):
 
 
 def test_translate_deprecation(grid):
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         grid.translate((0.0, 0.0, 0.0))
 
 
@@ -1131,7 +1138,9 @@ def test_point_is_inside_cell():
     assert np.array_equal(in_cell, np.array([True, False]))
 
 
-def test_serialize_deserialize(datasets):
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_serialize_deserialize(datasets, pickle_format):
+    pyvista.set_pickle_format(pickle_format)
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
@@ -1164,6 +1173,21 @@ def test_serialize_deserialize(datasets):
             arr_have = dataset_2.field_data[name]
             arr_expected = dataset.field_data[name]
             assert arr_have == pytest.approx(arr_expected)
+
+
+def n_points(dataset):
+    # used in multiprocessing test
+    return dataset.n_points
+
+
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_multiprocessing(datasets, pickle_format):
+    # exercise pickling via multiprocessing
+    pyvista.set_pickle_format(pickle_format)
+    with multiprocessing.Pool(2) as p:
+        res = p.map(n_points, datasets)
+    for res, dataset in zip(res, datasets):
+        assert res == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
@@ -1238,7 +1262,7 @@ def test_rotate_z():
 @pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
 def test_deprecation_rotate(sphere, method):
     meth = getattr(sphere, method)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         meth(30)
 
 
@@ -1322,7 +1346,7 @@ def test_transform_integers_vtkbug_present():
 
 
 def test_deprecation_vector(sphere):
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         sphere.rotate_vector([1, 1, 1], 33)
 
 
@@ -1348,7 +1372,7 @@ def test_scale():
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         scale1.scale(xyz)
 
 
@@ -1363,7 +1387,7 @@ def test_flip_x():
     mesh = examples.load_uniform()
     out = mesh.flip_x()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_x1.flip_x(point=(0, 0, 0))
 
 
@@ -1378,7 +1402,7 @@ def test_flip_y():
     mesh = examples.load_uniform()
     out = mesh.flip_y()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_y1.flip_y(point=(0, 0, 0))
 
 
@@ -1393,7 +1417,7 @@ def test_flip_z():
     mesh = examples.load_uniform()
     out = mesh.flip_z()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_z1.flip_z(point=(0, 0, 0))
 
 
@@ -1417,7 +1441,7 @@ def test_flip_normal():
     flip_normal6.flip_z(inplace=True)
     assert np.allclose(flip_normal5.points, flip_normal6.points)
 
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
 
     # Test non-point-based mesh doesn't fail

@@ -18,7 +18,7 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.utilities.misc import PyvistaFutureWarning
+from pyvista.utilities.misc import PyVistaFutureWarning
 
 
 @abstract_class
@@ -653,7 +653,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(trifilter)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -745,7 +745,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -869,7 +869,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -988,7 +988,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1086,7 +1086,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(tube)
         if inplace:
-            poly_data.overwrite(mesh)
+            poly_data.copy_from(mesh)
             return poly_data
         return mesh
 
@@ -1185,7 +1185,7 @@ class PolyDataFilters(DataSetFilters):
 
         submesh = _get_output(sfilter)
         if inplace:
-            self.overwrite(submesh)
+            self.copy_from(submesh)
             return self
 
         return submesh
@@ -1289,7 +1289,7 @@ class PolyDataFilters(DataSetFilters):
         submesh = _get_output(sfilter)
 
         if inplace:
-            self.overwrite(submesh)
+            self.copy_from(submesh)
             return self
 
         return submesh
@@ -1428,7 +1428,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1581,7 +1581,7 @@ class PolyDataFilters(DataSetFilters):
             mesh.GetCellData().SetActiveNormals('Normals')
 
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1674,7 +1674,7 @@ class PolyDataFilters(DataSetFilters):
         result = _get_output(alg)
 
         if inplace:
-            self.overwrite(result)
+            self.copy_from(result)
             return self
         else:
             return result
@@ -1730,7 +1730,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -1831,7 +1831,7 @@ class PolyDataFilters(DataSetFilters):
             raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -1930,7 +1930,7 @@ class PolyDataFilters(DataSetFilters):
             output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
 
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
 
         return output
@@ -2385,7 +2385,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Return vtk surface and reverse indexing array
         if inplace:
-            self.overwrite(newmesh)
+            self.copy_from(newmesh)
             return self, ridx
         return newmesh, ridx
 
@@ -2515,7 +2515,7 @@ class PolyDataFilters(DataSetFilters):
         # `.triangulate()` filter cleans those
         mesh = _get_output(alg).triangulate()
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -2794,7 +2794,7 @@ class PolyDataFilters(DataSetFilters):
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
-                PyvistaFutureWarning,
+                PyVistaFutureWarning,
             )
 
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -2805,7 +2805,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = _get_output(alg)
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -2929,7 +2929,7 @@ class PolyDataFilters(DataSetFilters):
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
-                PyvistaFutureWarning,
+                PyVistaFutureWarning,
             )
 
         if (
@@ -2959,7 +2959,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -3068,7 +3068,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding with trimming')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -3099,6 +3099,9 @@ class PolyDataFilters(DataSetFilters):
         extended. (If you wish to strip these use ``triangulate``
         filter to fragment the input into triangles and lines prior to
         running this filter.)
+
+        This filter implements `vtkStripper
+        <https://vtk.org/doc/nightly/html/classvtkStripper.html>`_
 
         Parameters
         ----------
