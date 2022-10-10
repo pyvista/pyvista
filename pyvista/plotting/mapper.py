@@ -29,13 +29,8 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self._theme = theme
         self.lookup_table = LookupTable()
 
-    def copy(self, deep=True) -> '_BaseMapper':
+    def copy(self) -> '_BaseMapper':
         """Create a copy of this mapper.
-
-        Parameters
-        ----------
-        deep : bool, optional
-            Whether to return a deep or a shallow copy.
 
         Examples
         --------
