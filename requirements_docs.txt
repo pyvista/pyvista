@@ -13,7 +13,7 @@ matplotlib==3.6.1
 meshio==5.3.4
 mypy-extensions==0.4.3
 mypy==0.982
-numpydoc==1.4.0
+numpydoc==1.5.0
 osmnx==1.2.2
 panel==0.14.0
 param==1.12.2  # due to panel bug
