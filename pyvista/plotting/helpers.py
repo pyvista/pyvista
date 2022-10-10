@@ -477,11 +477,11 @@ def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndar
 
     Returns
     -------
-    numpy.ndarray
-        [x, y, z] vector that points in the viewing direction
+    vec : numpy.ndarray
+        ``[x, y, z]`` vector that points in the viewing direction
 
-    numpy.ndarray
-        [x, y, z] vector that points to the viewup direction
+    viewup : numpy.ndarray
+        ``[x, y, z]`` vector that points to the viewup direction
 
     """
     if view == 'xy':
