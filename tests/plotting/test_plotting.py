@@ -2982,6 +2982,28 @@ def test_tight_multiple_objects():
     pl.show(before_close_callback=verify_cache_image)
 
 
+def test_backface_params():
+    mesh = pyvista.ParametricCatalanMinimal()
+
+    with pytest.raises(TypeError, match="pyvista.Property or a dict"):
+        mesh.plot(backface_params="invalid")
+
+    params = dict(color="blue", smooth_shading=True)
+    backface_params = dict(color="red", specular=1.0, specular_power=50.0)
+    backface_prop = pyvista.Property(**backface_params)
+
+    # check Property can be passed
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, **params, backface_params=backface_prop)
+    pl.close()
+
+    # check and cache dict
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, **params, backface_params=backface_params)
+    pl.view_xz()
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_remove_bounds_axes(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -3064,3 +3086,18 @@ def test_add_point_scalar_labels_fmt():
     p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=36, fmt='%.3f')
     p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
     p.show(before_close_callback=verify_cache_image)
+
+
+def test_add_point_scalar_labels_list():
+    plotter = pyvista.Plotter()
+
+    points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0.5], [1, 1, 1]])
+    labels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+
+    with pytest.raises(TypeError):
+        plotter.add_point_scalar_labels(points=False, labels=labels)
+    with pytest.raises(TypeError):
+        plotter.add_point_scalar_labels(points=points, labels=False)
+
+    plotter.add_point_scalar_labels(points, labels)
+    plotter.show(before_close_callback=verify_cache_image)
