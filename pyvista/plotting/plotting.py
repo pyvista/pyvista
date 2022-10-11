@@ -5894,11 +5894,11 @@ class Plotter(BasePlotter):
             screenshot in a separate call to ``show()`` or
             :func:`Plotter.screenshot`.
 
-        return_img : bool
+        return_img : bool, default: False
             Returns a numpy array representing the last image along
             with the camera position.
 
-        cpos : list(tuple(floats))
+        cpos : list(tuple(floats)), optional
             The camera position.  You can also set this with
             :attr:`Plotter.camera_position`.
 
@@ -6220,7 +6220,7 @@ class Plotter(BasePlotter):
 
         Parameters
         ----------
-        bounds : length 6 sequence
+        bounds : length 6 sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
             Specify the bounds in the format of:
 
             - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
