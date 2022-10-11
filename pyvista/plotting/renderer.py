@@ -981,7 +981,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         # Deprecated on v0.37.0, estimated removal on v0.40.0
-        if marker_args is not None:
+        if marker_args is not None:  # pragma: no cover
             warnings.warn(
                 "Use of `marker_args` is deprecated. Use `**kwargs` instead.",
                 PyVistaDeprecationWarning,
