@@ -744,8 +744,23 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     """Wrap vtkPointGaussianMapper."""
 
-    # def __init__(self, theme=None):
-    #     super().__init__(theme=theme)
+    @property
+    def emissive(self):
+        """Set or return emissive."""
+        return self.GetEmissive()
+
+    @emissive.setter
+    def emissive(self, value):
+        return self.SetEmissive(value)
+
+    @property
+    def scale_factor(self):
+        """Set or return the scale factor."""
+        return self.GetScaleFactor()
+
+    @scale_factor.setter
+    def scale_factor(self, value):
+        return self.SetScaleFactor(value)
 
 
 @abstract_class

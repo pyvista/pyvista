@@ -2488,7 +2488,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=0.5,
         render=True,
         component=None,
-        emissive=False,
+        emissive=True,
         gaussian_radius=None,
         copy_mesh=False,
         backface_params=None,
@@ -2777,11 +2777,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
-
-        gaussian_radius : float, optional
-            The radius of the gaussian blur for each point when using a ``style='points_gaussian'`` representation. A scale factor of
-            ``0.0`` indicates that the splats should be rendered as simple
-            points.
 
         emissive : bool, optional
             Treat the points/splats as emissive light sources. The default is
@@ -3127,10 +3122,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         if style == 'points_gaussian':
-            self.mapper.SetEmissive(emissive)
-            if gaussian_radius is None:
-                gaussian_radius = 0.7 / mesh.length
-            self.mapper.SetScaleFactor(gaussian_radius)
+            self.mapper.emissive = emissive
+            self.mapper.scale_factor = point_size * self.mapper.dataset.length / 1300
 
         if isinstance(opacity, (float, int)):
             prop_kwargs['opacity'] = opacity
@@ -4802,13 +4795,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
-    def add_points(self, points, **kwargs):
+    def add_points(self, points, style='points', **kwargs):
         """Add points to a mesh.
 
         Parameters
         ----------
         points : numpy.ndarray or pyvista.DataSet
             Array of points or the points from a pyvista object.
+
+        style : str, default: 'points'
+            Visualization style of the mesh.  One of the following:
+            ``style='points'``, ``style='points_gaussian'``.
+            ``'points_gaussian'`` can be improved with the ``emissive``,
+            ``gaussian_radius``, and ``render_points_as_spheres`` options.
 
         **kwargs : dict, optional
             See :func:`pyvista.BasePlotter.add_mesh` for optional
@@ -4831,9 +4830,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                       point_size=100.0)
         >>> pl.show()
 
+        Plot using the points_gaussian style
+
+        >>> points = np.random.random((10, 3))
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_points(points, style='points_gaussian')
+        >>> pl.show()
+
         """
-        kwargs['style'] = 'points'
-        return self.add_mesh(points, **kwargs)
+        if style not in ['points', 'points_gaussian']:
+            raise ValueError(
+                f'Invalid style {style} for add_points. Should be either "points" or '
+                '"points_gaussian".'
+            )
+        return self.add_mesh(points, style=style, **kwargs)
 
     def add_arrows(self, cent, direction, mag=1, **kwargs):
         """Add arrows to the plotter.
