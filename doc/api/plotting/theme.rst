@@ -13,7 +13,6 @@ PyVista.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    themes.DefaultTheme
    themes._SliderConfig

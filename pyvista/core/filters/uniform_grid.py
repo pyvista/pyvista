@@ -45,7 +45,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np
@@ -134,7 +134,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.common_data.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np
@@ -403,15 +403,15 @@ class UniformGridFilters(DataSetFilters):
             alg.ThresholdByUpper(threshold)
         # set the replacement values / modes
         if in_value is not None:
-            alg.ReplaceInOn()
+            alg.SetReplaceIn(True)
             alg.SetInValue(in_value)
         else:
-            alg.ReplaceInOff()
+            alg.SetReplaceIn(False)
         if out_value is not None:
-            alg.ReplaceOutOn()
+            alg.SetReplaceOut(True)
             alg.SetOutValue(out_value)
         else:
-            alg.ReplaceOutOff()
+            alg.SetReplaceOut(False)
         # run the algorithm
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         return _get_output(alg)
@@ -750,11 +750,9 @@ class UniformGridFilters(DataSetFilters):
             else:
                 raise MissingDataError('FFT filters require point scalars.')
 
-        scalars = self.point_data.active_scalars
-
-        meets_req = scalars.ndim == 2 and scalars.shape[1] == 2
-        if not meets_req:
+        if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
             raise ValueError(
                 'Active scalars must be complex data for this filter, represented '
-                'as an array with `dtype=numpy.complex128`.'
+                'as an array with a datatype of `numpy.complex64` or '
+                '`numpy.complex128`.'
             )

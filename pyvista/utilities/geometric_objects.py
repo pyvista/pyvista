@@ -23,7 +23,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import check_valid_vector
-from pyvista.utilities.common import _coerce_pointslike_arg
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -672,10 +672,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
         )
     src = _vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
-    if quads:
-        src.QuadsOn()
-    else:
-        src.QuadsOff()
+    src.SetQuads(quads)
     src.SetBounds(bounds)
     src.Update()
     return pyvista.wrap(src.GetOutput())

@@ -117,6 +117,11 @@ def convert_string_array(arr, name=None):
 
     """
     if isinstance(arr, np.ndarray):
+        # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
+        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+            raise ValueError(
+                'String array contains non-ASCII characters that are not supported by VTK.'
+            )
         vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
         for val in arr:
@@ -370,6 +375,14 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return arr
 
+    if not isinstance(preference, str):
+        raise TypeError('`preference` must be a string')
+    if preference not in ['cell', 'point', 'field']:
+        raise ValueError(
+            f'`preference` must be either "cell", "point", "field" for a '
+            f'{type(mesh)}, not "{preference}".'
+        )
+
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
@@ -379,10 +392,8 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
             return carr
         elif preference == FieldAssociation.POINT:
             return parr
-        elif preference == FieldAssociation.NONE:
+        else:  # must be field
             return farr
-        else:
-            raise ValueError(f'Data field ({preference}) not supported.')
 
     if parr is not None:
         return parr
@@ -933,6 +944,9 @@ def wrap(dataset):
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
             mesh = pyvista.UniformGrid(dims=dataset.shape)
+            if isinstance(dataset, pyvista.pyvista_ndarray):
+                # this gets rid of pesky VTK reference since we're raveling this
+                dataset = np.array(dataset, copy=False)
             mesh['values'] = dataset.ravel(order='F')
             mesh.active_scalars_name = 'values'
             return mesh
@@ -992,14 +1006,31 @@ def numpy_to_texture(image):
     Parameters
     ----------
     image : numpy.ndarray
-        Numpy image array.
+        Numpy image array. Texture datatype expected to be ``np.uint8``.
 
     Returns
     -------
-    vtkTexture
-        VTK texture.
+    pyvista.Texture
+        PyVista texture.
+
+    Examples
+    --------
+    Create an all white texture.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> tex_arr = np.ones((1024, 1024, 3), dtype=np.uint8) * 255
+    >>> tex = pv.numpy_to_texture(tex_arr)
 
     """
+    if image.dtype != np.uint8:
+        image = image.astype(np.uint8)
+        warnings.warn(
+            'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
+            'and converted to np.uint8.',
+            UserWarning,
+        )
+
     return pyvista.Texture(image)
 
 
@@ -1113,10 +1144,10 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.size}) must match number of rows ({dataset.n_rows}).'
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
         )
     raise ValueError(
-        f'Number of scalars ({scalars.size}) '
+        f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '
         f'or the number of cells ({dataset.n_cells}).'
     )

@@ -12,6 +12,7 @@ For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
 install PyVista with Anaconda.
 
+
 Dependencies
 ~~~~~~~~~~~~
 
@@ -53,6 +54,7 @@ To install all the additional packages that extend PyVista, install using
 
     pip install pyvista[all]
 
+.. asciinema:: 507562
 
 Anaconda
 ~~~~~~~~
@@ -63,6 +65,9 @@ Anaconda
 To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
+
+.. asciinema:: 507565
+
 
 Installing the Current Development Branch from GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,7 +85,7 @@ Alternatively, you can clone the repository with git and install it with pip.
 
    git clone https://github.com/pyvista/pyvista.git
    cd pyvista
-   pip install . -e
+   pip install -e .
 
 Note the development flag ``-e``.  This allows you to change pyvista
 in-place without having to reinstall it for each change.
@@ -163,7 +168,7 @@ See other examples and demos:
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#testing
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#user-content-testing
 
 
 Running on CI Services

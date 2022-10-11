@@ -20,10 +20,20 @@ def _is_vtk(obj):
 
 
 @pytest.fixture(autouse=True)
-def check_gc():
+def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
     before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
     yield
+
+    # Do not check for collection if the test session failed. Tests that fail
+    # also fail to cleanup their resources and this makes reading the unit test
+    # output more difficult.
+    #
+    # This applies to the entire session, so it's going to be the most useful
+    # when debugging tests with `pytest -x`
+    if request.session.testsfailed:
+        return
+
     pyvista.close_all()
 
     gc.collect()
@@ -31,3 +41,10 @@ def check_gc():
     assert len(after) == 0, 'Not all objects GCed:\n' + '\n'.join(
         sorted(o.__class__.__name__ for o in after)
     )
+
+
+@pytest.fixture()
+def colorful_tetrahedron():
+    mesh = pyvista.Tetrahedron()
+    mesh.cell_data["colors"] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
+    return mesh

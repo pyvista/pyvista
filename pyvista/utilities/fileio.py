@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -19,8 +19,16 @@ def _get_ext_force(filename, force_ext=None):
 
 
 def get_ext(filename):
-    """Extract the extension of the filename."""
-    ext = os.path.splitext(filename)[1].lower()
+    """Extract the extension of the filename.
+
+    For files with the .gz suffix, the previous extension is returned as well.
+    This is needed e.g. for the compressed NIFTI format (.nii.gz).
+    """
+    base, ext = os.path.splitext(filename)
+    ext = ext.lower()
+    if ext == ".gz":
+        ext_pre = os.path.splitext(base)[1].lower()
+        ext = f"{ext_pre}{ext}"
     return ext
 
 
@@ -70,7 +78,7 @@ def read_legacy(filename, progress_bar=False):
 
     """
     warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyvistaDeprecationWarning
+        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
     )
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     return read(filename, progress_bar=progress_bar)
@@ -152,7 +160,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
                 name = os.path.basename(str(each))
             else:
                 name = None
-            multi[-1, name] = read(each, attrs=attrs, file_format=file_format)
+            multi.append(read(each, attrs=attrs, file_format=file_format), name)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
@@ -209,7 +217,7 @@ def _apply_attrs_to_reader(reader, attrs):
     """
     warnings.warn(
         "attrs use is deprecated.  Use a Reader class for more flexible control",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)
@@ -399,7 +407,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
     """
     warnings.warn(
         "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
 
     filename = _process_filename(filename)
@@ -429,7 +437,8 @@ def from_meshio(mesh):
     for c in mesh.cells:
         vtk_type = meshio_to_vtk_type[c.type]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        cells.append(np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel())
+        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+        cells.append(np.hstack((fill_values, c.data)).ravel())
         cell_type += [vtk_type] * len(c.data)
         if not _vtk.VTK9:
             offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
@@ -440,19 +449,22 @@ def from_meshio(mesh):
 
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
+
+    # convert to 3D if points are 2D
     if points.shape[1] == 2:
-        points = np.hstack((points, np.zeros((len(points), 1))))
+        zero_points = np.zeros((len(points), 1), dtype=points.dtype)
+        points = np.hstack((points, zero_points))
 
     if _vtk.VTK9:
         grid = pyvista.UnstructuredGrid(
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )
     else:
         grid = pyvista.UnstructuredGrid(
             np.array(offset),
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )

@@ -1,4 +1,4 @@
-"""Pyvista Demos."""
+"""PyVista Demos."""
 from pyvista.demos.demos import (
     glyphs,
     plot_glyphs,
