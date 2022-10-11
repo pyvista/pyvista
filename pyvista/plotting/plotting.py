@@ -1,5 +1,6 @@
 """PyVista plotting module."""
 import collections.abc
+from copy import deepcopy
 import ctypes
 from functools import wraps
 import io
@@ -2487,6 +2488,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render=True,
         component=None,
         copy_mesh=False,
+        backface_params=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2780,6 +2782,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget. This should only be set to ``True``
             with caution. Defaults to ``False``.
+
+        backface_params : dict or pyvista.Property, optional
+            A :class:`pyvista.Property` or a dict of parameters to use for
+            backface rendering. This is useful for instance when the inside of
+            oriented surfaces has a different color than the outside. When a
+            :class:`pyvista.Property`, this is directly used for backface
+            rendering. When a dict, valid keys are :class:`pyvista.Property`
+            attributes, and values are corresponding values to use for the
+            given property. Omitted keys (or the default of
+            ``backface_params=None``) default to the corresponding frontface
+            properties.
 
         **kwargs : dict, optional
             Optional developer keyword arguments.
@@ -3076,8 +3089,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.scalar_visibility = False
 
         # Set actor properties ================================================
-        actor.prop = Property(
-            self._theme,
+        prop_kwargs = dict(
+            theme=self._theme,
             interpolation=interpolation,
             metallic=metallic,
             roughness=roughness,
@@ -3097,7 +3110,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
         if isinstance(opacity, (float, int)):
-            actor.prop.opacity = opacity
+            prop_kwargs['opacity'] = opacity
+        prop = Property(**prop_kwargs)
+        actor.SetProperty(prop)
+
+        if backface_params is not None:
+            if isinstance(backface_params, Property):
+                backface_prop = backface_params
+            elif isinstance(backface_params, dict):
+                # preserve omitted kwargs from frontface
+                backface_kwargs = deepcopy(prop_kwargs)
+                backface_kwargs.update(backface_params)
+                backface_prop = Property(**backface_kwargs)
+            else:
+                raise TypeError(
+                    'Backface params must be a pyvista.Property or a dict, '
+                    f'not {type(backface_params).__name__}.'
+                )
+            actor.backface_prop = backface_prop
 
         # legend label
         if label is not None:
