@@ -918,12 +918,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels_off : bool, optional
             Enable or disable the text labels for the axes.
 
-        marker_args : dict, optional
-            .. deprecated:: 0.37.0
-               Please use ``**kwargs`` for passing parameters for the
-               orientation marker widget. See the parameters of
-               :func:`pyvista.create_axes_marker`.
-
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
@@ -936,9 +930,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         viewport : tuple, optional
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
+        marker_args : dict, optional
+            Marker arguments.
+
+            .. deprecated:: 0.37.0
+               Use ``**kwargs`` for passing parameters for the orientation
+               marker widget. See the parameters of
+               :func:`pyvista.create_axes_marker`.
+
         **kwargs : dict, optional
-               Used for passing parameters for the orientation marker
-               widget. See the parameters of :func:`pyvista.create_axes_marker`.
+            Used for passing parameters for the orientation marker
+            widget. See the parameters of :func:`pyvista.create_axes_marker`.
 
         Returns
         -------
