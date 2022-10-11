@@ -2430,6 +2430,9 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_cell_arrays``.
+
         Returns
         -------
         pyvista.DataSet
@@ -2490,6 +2493,9 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_cell_arrays``.
+
         Returns
         -------
         pyvista.DataSet
@@ -2516,6 +2522,9 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_point_arrays``.
 
         Returns
         -------
@@ -2580,6 +2589,9 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_point_arrays``.
 
         Returns
         -------
@@ -2823,6 +2835,10 @@ class DataSetFilters:
             Prototype cell locator to perform the ``FindCell()``
             operation.  This requires VTK 9.0.0 or newer.
 
+        **kwargs : dict, optional
+            Depreciated keyword arguments ``pass_cell_arrays`` and
+            ``pass_point_arrays``.
+
         Returns
         -------
         pyvista.DataSet
@@ -2915,6 +2931,10 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword arguments ``pass_cell_arrays`` and
+            ``pass_point_arrays``.
 
         Returns
         -------
@@ -3029,6 +3049,10 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword arguments ``pass_cell_arrays`` and
+            ``pass_point_arrays``.
 
         Returns
         -------
