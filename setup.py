@@ -17,8 +17,10 @@ install_requires = [
     'imageio',
     'pillow',
     'appdirs',
+    'pooch',
     'scooby>=0.5.1',
     'vtk',
+    "typing-extensions; python_version < '3.8'",
 ]
 
 readme_file = os.path.join(filepath, 'README.rst')
@@ -54,10 +56,14 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
     package_data={
+        'pyvista': [
+            'py.typed',
+        ],
         'pyvista.examples': [
             'airplane.ply',
             'ant.ply',
@@ -79,9 +85,18 @@ setup(
     python_requires='>=3.7.*',
     install_requires=install_requires,
     extras_require={
-        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio>=5.2', 'ipyvtklink', 'pythreejs'],
+        'all': [
+            'matplotlib',
+            'colorcet',
+            'cmocean',
+            'meshio>=5.2',
+            'ipyvtklink',
+            'panel',
+            'pythreejs',
+        ],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
         'io': ['meshio>=5.2'],
-        'jupyter': ['ipyvtklink', 'pythreejs'],
+        'jupyter': ['ipyvtklink', 'panel', 'pythreejs'],
     },
+    zip_safe=False,
 )

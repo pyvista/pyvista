@@ -25,7 +25,7 @@ jobs:
     name: Mac OS Unit Testing
     strategy:
       matrix:
-        python-version: ['3.7', '3.8']
+        python-version: ['3.7', '3.10']
 
     steps:
       - uses: actions/checkout@v3
@@ -34,32 +34,23 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/Library/Caches/pip
-          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
-          restore-keys: |
-            Python-${{ runner.os }}-${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: requirements_test.txt
 
       - name: Install PyVista
         run: |
           pip install wheel
-          pip install -e .
-          python -c "import pyvista; print(pyvista.Report(gpu=False))"
-          python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
+          pip install .
+          python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Install test dependencies
-        run: |
-          pip install -r requirements_test.txt
+        run: pip install -r requirements_test.txt
 
       - name: Test Core API
-        run: |
-          pytest -v --ignore=tests/plotting
+        run: pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: |
-          pytest -v tests/plotting
+        run: pytest -v tests/plotting
 
 
   LinuxConda:
@@ -77,7 +68,7 @@ jobs:
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v1
 
-      - name: Cache Conda
+      - name: Cache Conda Packages
         uses: actions/cache@v3
         with:
           path: ~/anaconda3/pkgs
@@ -92,13 +83,23 @@ jobs:
           restore-keys: |
             Examples-1-
 
+      # See: https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community
+      - name: Install mamba
+        run: |
+          source /usr/share/miniconda/etc/profile.d/conda.sh
+          conda config --set channel_priority strict
+          conda update -n base conda
+          conda install -n base conda-libmamba-solver
+
+      - name: 'Workaround for mamba-org/mamba#488'
+        run: rm /usr/share/miniconda/pkgs/cache/*.json
+
       - name: Create Anaconda environment
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          conda config --set channel_priority strict
           sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
-          conda env create --quiet -n ${{ env.conda_env }} --file environment.yml
+          conda env create --quiet -n ${{ env.conda_env }} --file environment.yml --experimental-solver=libmamba
           conda activate ${{ env.conda_env }}
           conda list
 
@@ -109,10 +110,9 @@ jobs:
           pip install -e .
           which python
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
-          python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
+          python -c "from pyvista import examples; print(examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        continue-on-error: true
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
@@ -120,30 +120,28 @@ jobs:
           pytest -v --ignore=tests/plotting
 
       - name: Test Core Plotting
-        continue-on-error: true
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
           pytest -v tests/plotting --cov-report html
-
-      - name: Test Package Docstrings
-        continue-on-error: true
-        run: |
-          source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
-          pytest -v --doctest-modules pyvista
 
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+
+      # see discussion at https://github.com/pyvista/pyvista/issues/2867
       matrix:
-        python-version: ['3.7', '3.8', '3.9']
-        vtk-version: ['latest']
         include:
-          - python-version: '3.9'
+          - python-version: '3.7'
+            vtk-version: '8.1.2'
+          - python-version: '3.8'
             vtk-version: '9.0.3'
+          - python-version: '3.9'
+            vtk-version: '9.1'
+          - python-version: '3.10'
+            vtk-version: 'latest'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -153,13 +151,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.vtk-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
-          restore-keys: |
-            Python-${{ runner.os }}-${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: requirements_test.txt
 
       - uses: actions/cache@v3
         with:
@@ -178,25 +171,25 @@ jobs:
         if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
 
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
+        with:
+          packages: libgl1-mesa-glx xvfb python-tk
+          version: 3.0
+
       - name: Install Testing Requirements
-        run: |
-          sudo apt-get update
-          sudo apt-get install libgl1-mesa-glx xvfb python-tk -y
-          pip install -r requirements_test.txt
+        run: pip install -r requirements_test.txt
 
       - name: Software Report
         run: |
-          xvfb-run python -c "import pyvista; print(pyvista.Report())"
-          xvfb-run python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
+          xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
 
       - name: Unit Testing
-        run: |
-          xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
+        run: xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
 
       - uses: codecov/codecov-action@v3
-        if: matrix.python-version == '3.8'
+        if: matrix.python-version == '3.9'
         name: 'Upload coverage to CodeCov'
 
       - name: Check package
@@ -206,7 +199,7 @@ jobs:
           twine check dist/*
 
       - name: Upload to PyPi
-        if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags')
+        if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v*')
         run: |
           twine upload --skip-existing dist/pyvista*
         env:
@@ -216,13 +209,13 @@ jobs:
 
   windows:
     name: Windows Unit Testing
-    runs-on: windows-2019
+    runs-on: windows-latest
     env:
       CI_WINDOWS: true
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
     steps:
       - uses: actions/checkout@v3
 
@@ -230,22 +223,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Set pip cache dir as env variable
-        run: |
-          chcp 65001 #set code page to utf-8
-          echo ("PIP_CACHE_DIR=" + $(pip cache dir)) >> $env:GITHUB_ENV
-
-      - name: Restore pip cache dir
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
-          restore-keys: |
-            Python-${{ runner.os }}-${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: requirements_test.txt
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v1
@@ -254,13 +233,12 @@ jobs:
         run: |
           pip install wheel
           pip install .
-          python -c "import pyvista; print(pyvista.Report(gpu=False))"
-          python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
+          python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Set example data path as env variable
         run: |
           chcp 65001 #set code page to utf-8
-          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")) >> $env:GITHUB_ENV
+          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; from pyvista import examples; print(examples.USER_DATA_PATH)")) >> $env:GITHUB_ENV
 
       - name: Cache example data
         uses: actions/cache@v3
@@ -274,4 +252,7 @@ jobs:
         run: pip install -r requirements_test.txt
 
       - name: Test Core API
-        run: python -m pytest --cov -v .
+        run: python -m pytest -v --ignore=tests/plotting
+
+      - name: Test Plotting
+        run: python -m pytest -v tests/plotting

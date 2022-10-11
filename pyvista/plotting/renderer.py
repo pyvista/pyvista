@@ -13,9 +13,11 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import uses_egl
 
+from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
+from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 
 ACTOR_LOC_MAP = [
@@ -203,7 +205,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
-        self.parent = parent  # the plotter
+        self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
@@ -220,6 +222,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
+        self._render_passes = RenderPasses(self)
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -437,48 +440,50 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self):
-        """Enable anti-aliasing using FXAA.
+    def enable_anti_aliasing(self, aa_type='fxaa'):
+        """Enable anti-aliasing.
 
-        This tends to make edges appear softer and less pixelated.
-
-        Warnings
-        --------
-        Enabling this causes screenshots with vtk compiled with OSMesa to be
-        all black. This cannot be enabled when compiled with OSMesa (EGL). See
-        https://github.com/pyvista/pyvista/issues/2686 for more details.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.enable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
+        Parameters
+        ----------
+        aa_type : str
+            Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
-        if uses_egl():  # pragma: no cover
-            # only display the warning when not building documentation
-            if not pyvista.BUILDING_GALLERY:
-                warnings.warn(
-                    "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
-                )
-            return
+        if not isinstance(aa_type, str):
+            raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
+        aa_type = aa_type.lower()
+
+        if aa_type == 'fxaa':
+            if uses_egl():  # pragma: no cover
+                # only display the warning when not building documentation
+                if not pyvista.BUILDING_GALLERY:
+                    warnings.warn(
+                        "VTK compiled with OSMesa does not properly support "
+                        "FXAA anti-aliasing and SSAA will be used instead."
+                    )
+                self._render_passes.enable_ssaa_pass()
+                return
+            self._enable_fxaa()
+
+        elif aa_type == 'ssaa':
+            self._render_passes.enable_ssaa_pass()
+
+        else:
+            raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
+
+    def disable_anti_aliasing(self):
+        """Disable all anti-aliasing."""
+        self._render_passes.disable_ssaa_pass()
+        self.SetUseFXAA(False)
+        self.Modified()
+
+    def _enable_fxaa(self):
+        """Enable FXAA anti-aliasing."""
         self.SetUseFXAA(True)
         self.Modified()
 
-    def disable_anti_aliasing(self):
-        """Disable anti-aliasing.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.disable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
-
-        """
+    def _disable_fxaa(self):
+        """Disable FXAA anti-aliasing."""
         self.SetUseFXAA(False)
         self.Modified()
 
@@ -621,7 +626,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._actors
 
     def add_actor(
-        self, uinput, reset_camera=False, name=None, culling=False, pickable=True, render=True
+        self,
+        uinput,
+        reset_camera=False,
+        name=None,
+        culling=False,
+        pickable=True,
+        render=True,
+        remove_existing_actor=True,
     ):
         """Add an actor to render window.
 
@@ -653,19 +665,24 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the render window is being shown, trigger a render
             after adding the actor.
 
+        remove_existing_actor : bool, optional
+            Removes any existing actor if the named actor ``name`` is already
+            present.
+
         Returns
         -------
-        actor : vtk.vtkActor
+        actor : vtk.vtkActor or pyvista.Actor
             The actor.
 
         actor_properties : vtk.Properties
             Actor properties.
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False, render=False)
+        if name and remove_existing_actor:
+            rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
-            actor = _vtk.vtkActor()
+            actor = Actor()
             actor.SetMapper(uinput)
         else:
             actor = uinput
@@ -705,7 +722,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
-        self.ResetCameraClippingRange()
         self.Modified()
 
         prop = None
@@ -829,12 +845,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             mesh = actor.copy()
             mesh.clear_data()
             mapper.SetInputData(mesh)
-            actor = _vtk.vtkActor()
-            actor.SetMapper(mapper)
-            prop = actor.GetProperty()
+            actor = pyvista.Actor(mapper=mapper)
             if color is not None:
-                prop.SetColor(Color(color).float_rgb)
-            prop.SetOpacity(opacity)
+                actor.prop.color = color
+            actor.prop.opacity = opacity
         if hasattr(self, 'axes_widget'):
             # Delete the old one
             self.axes_widget.EnabledOff()
@@ -1116,15 +1130,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Bolds axis labels and numbers.  Default ``True``.
 
         font_size : float, optional
-            Sets the size of the label font.  Defaults to 16.
+            Sets the size of the label font. Defaults to
+            :attr:`pyvista.global_theme.font.size
+            <pyvista.themes._Font.size>`.
 
         font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
-            or ``'arial'``.
+            or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
+            <pyvista.themes._Font.family>`.
 
         color : color_like, optional
-            Color of all labels and axis titles.  Default white.
-            Either a string, rgb list, or hex color string.  For
+            Color of all labels and axis titles.  Defaults to
+            :attr:`pyvista.global_theme.font.color
+            <pyvista.themes._Font.color>`.
+
+            Either a string, RGB list, or hex color string.  For
             example:
 
             * ``color='white'``
@@ -1374,16 +1394,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set font
         font_family = parse_font_family(font_family)
-        for i in range(3):
-            cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetTitleTextProperty(i).SetColor(color.float_rgb)
-            cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
+        props = [
+            cube_axes_actor.GetTitleTextProperty(0),
+            cube_axes_actor.GetTitleTextProperty(1),
+            cube_axes_actor.GetTitleTextProperty(2),
+            cube_axes_actor.GetLabelTextProperty(0),
+            cube_axes_actor.GetLabelTextProperty(1),
+            cube_axes_actor.GetLabelTextProperty(2),
+        ]
 
-            cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetLabelTextProperty(i).SetColor(color.float_rgb)
-            cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
+        for prop in props:
+            prop.SetColor(color.float_rgb)
+            prop.SetFontFamily(font_family)
+            prop.SetBold(bold)
+
+        # Note: font_size does nothing as a property, use SetScreenSize instead
+        # Here, we normalize relative to 12 to give the user an illusion of
+        # just changing the font size relative to a font size of 12. 10 is used
+        # here since it's the default "screen size".
+        cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
@@ -1853,6 +1882,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 except KeyError:
                     pass
 
+        if self.__charts is not None:
+            self._charts.deep_clean()
         self.remove_all_lights()
         self.RemoveAllViewProps()
         self.Modified()
@@ -1920,13 +1951,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def set_viewup(self, vector):
+    def set_viewup(self, vector, reset=True):
         """Set camera viewup vector.
 
         Parameters
         ----------
         vector : sequence
             New 3 value camera viewup vector.
+
+        reset : bool, optional
+            Whether to reset the camera after setting the camera
+            position.
 
         Examples
         --------
@@ -1942,7 +1977,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
+
         self.camera.up = vector
+        if reset:
+            self.reset_camera()
+
         self.camera_set = True
         self.Modified()
 
@@ -2101,7 +2140,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        try:
+            self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        except (AttributeError, ReferenceError):
+            pass
         self.RemoveActor(actor)
 
         if name is None:
@@ -2256,6 +2298,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.ResetCamera(*bounds)
         else:
             self.ResetCamera()
+
+        self.reset_camera_clipping_range()
+
         if render:
             self.parent.render()
         self.Modified()
@@ -2489,6 +2534,99 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Enable this renderer's camera to be interactive."""
         self.SetInteractive(1)
 
+    def add_blurring(self):
+        """Add blurring.
+
+        This can be added several times to increase the degree of blurring.
+
+        Examples
+        --------
+        Add two blurring passes to the plotter and show it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.add_blurring()
+        >>> pl.add_blurring()
+        >>> pl.show()
+
+        See :ref:`blur_example` for a full example using this method.
+
+        """
+        self._render_passes.add_blur_pass()
+
+    def remove_blurring(self):
+        """Remove a single blurring pass.
+
+        You will need to run this multiple times to remove all blurring passes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.add_blurring()
+        >>> pl.remove_blurring()
+        >>> pl.show()
+
+        """
+        self._render_passes.remove_blur_pass()
+
+    def enable_depth_of_field(self, automatic_focal_distance=True):
+        """Enable depth of field plotting.
+
+        Parameters
+        ----------
+        automatic_focal_distance : bool, optional
+            Use automatic focal distance calculation. When enabled, the center
+            of the viewport will always be in focus regardless of where the
+            focal point is. Default ``True``.
+
+        Examples
+        --------
+        Create five spheres and demonstrate the effect of depth of field.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.background_color = "w"
+        >>> for i in range(5):
+        ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
+        ...     color = [0, 255 - i*20, 30 + i*50]
+        ...     _ = pl.add_mesh(
+        ...         mesh,
+        ...         show_edges=False,
+        ...         pbr=True,
+        ...         metallic=1.0,
+        ...         color=color
+        ...     )
+        >>> pl.camera.zoom(1.8)
+        >>> pl.camera_position = [
+        ...     (4.74, 0.959, 0.525),
+        ...     (0.363, 0.3116, 0.132),
+        ...     (-0.088, -0.0075, 0.996),
+        ... ]
+        >>> pl.enable_depth_of_field()
+        >>> pl.show()
+
+        See :ref:`depth_of_field_example` for a full example using this method.
+
+        """
+        self._render_passes.enable_depth_of_field_pass()
+
+    def disable_depth_of_field(self):
+        """Disable depth of field plotting.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.enable_depth_of_field()
+        >>> pl.disable_depth_of_field()
+
+        """
+        self._render_passes.disable_depth_of_field_pass()
+
     def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL).
 
@@ -2504,20 +2642,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.enable_eye_dome_lighting()
 
         """
-        if hasattr(self, 'edl_pass'):
-            return self
-        # create the basic VTK render steps
-        basic_passes = _vtk.vtkRenderStepsPass()
-        # blur the resulting image
-        # The blur delegates rendering the unblured image to the basic_passes
-        self.edl_pass = _vtk.vtkEDLShading()
-        self.edl_pass.SetDelegatePass(basic_passes)
-
-        # tell the renderer to use our render pass pipeline
-        self.glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
-        self.glrenderer.SetPass(self.edl_pass)
-        self.Modified()
-        return self.glrenderer
+        self._render_passes.enable_edl_pass()
 
     def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL).
@@ -2529,12 +2654,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.disable_eye_dome_lighting()
 
         """
-        if not hasattr(self, 'edl_pass'):
-            return
-        self.SetPass(None)
-        self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        del self.edl_pass
-        self.Modified()
+        self._render_passes.disable_edl_pass()
 
     def enable_shadows(self):
         """Enable shadows.
@@ -2567,24 +2687,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if self._shadow_pass is not None:
-            # shadows are already enabled for this renderer
-            return
-
-        shadows = _vtk.vtkShadowMapPass()
-
-        passes = _vtk.vtkRenderPassCollection()
-        passes.AddItem(shadows.GetShadowMapBakerPass())
-        passes.AddItem(shadows)
-
-        seq = _vtk.vtkSequencePass()
-        seq.SetPasses(passes)
-
-        # Tell the renderer to use our render pass pipeline
-        self._shadow_pass = _vtk.vtkCameraPass()
-        self._shadow_pass.SetDelegatePass(seq)
-        self.SetPass(self._shadow_pass)
-        self.Modified()
+        self._render_passes.enable_shadow_pass()
 
     def disable_shadows(self):
         """Disable shadows.
@@ -2596,15 +2699,58 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.disable_shadows()
 
         """
-        if self._shadow_pass is None:
-            # shadows are already disabled
-            return
+        self._render_passes.disable_shadow_pass()
 
-        self.SetPass(None)
-        if hasattr(self.parent, 'ren_win'):
-            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        self._shadow_pass = None
-        self.Modified()
+    def enable_ssao(self, radius=0.5, bias=0.005, kernel_size=256, blur=True):
+        """Enable surface space ambient occlusion (SSAO).
+
+        SSAO can approximate shadows more efficiently than ray-tracing
+        and produce similar results. Use this when you wish to plot the
+        occlusion effect that nearby meshes have on each other by blocking
+        nearby light sources.
+
+        See `Kitware: Screen-Space Ambient Occlusion
+        <https://www.kitware.com/ssao/>`_ for more details
+
+        Parameters
+        ----------
+        radius : float, default: 0.5
+            Neighbor pixels considered when computing the occlusion.
+
+        bias : float, default 0.005
+            Tolerance factor used when comparing pixel depth.
+
+        kernel_size : int, default: 256
+            Number of samples used. This controls the quality where a higher
+            number increases the quality at the expense of computation time.
+
+        blur : bool, default: True
+            Controls if occlusion buffer should be blurred before combining it
+            with the color buffer.
+
+        Examples
+        --------
+        Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
+        nearby each other and plot it without SSAO.
+
+        >>> import pyvista as pv
+        >>> ugrid = pv.UniformGrid(dims=(3, 2, 2)).to_tetrahedra(12)
+        >>> exploded = ugrid.explode()
+        >>> exploded.plot()
+
+        Enable SSAO with the default parameters.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(exploded)
+        >>> pl.enable_ssao()
+        >>> pl.show()
+
+        """
+        self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
+
+    def disable_ssao(self):
+        """Disable surface space ambient occlusion (SSAO)."""
+        self._render_passes.disable_ssao_pass()
 
     def get_pick_position(self):
         """Get the pick position/area as ``x0, y0, x1, y1``.
@@ -2658,10 +2804,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
         if use_gradient:
-            self.GradientBackgroundOn()
+            self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
         else:
-            self.GradientBackgroundOff()
+            self.SetGradientBackground(False)
         self.Modified()
 
     def set_environment_texture(self, texture, is_srgb=False):
@@ -2711,6 +2857,26 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetEnvironmentTexture(texture, is_srgb)
         self.Modified()
 
+    def remove_environment_texture(self):
+        """Remove the environment texture.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting=None)
+        >>> cubemap = examples.download_sky_box_cube_map()
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
+        >>> pl.set_environment_texture(cubemap)
+        >>> pl.remove_environment_texture()
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        """
+        self.UseImageBasedLightingOff()
+        self.SetEnvironmentTexture(None)
+        self.Modified()
+
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
@@ -2743,7 +2909,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.disable_shadows()
         if self.__charts is not None:
             self.__charts.deep_clean()
+            self.__charts = None
 
+        self._render_passes.deep_clean()
         self.remove_floors(render=render)
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
@@ -2965,9 +3133,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend.SetPosition2(size[0], size[1])
 
         if bcolor is None:
-            self._legend.UseBackgroundOff()
+            self._legend.SetUseBackground(False)
         else:
-            self._legend.UseBackgroundOn()
+            self._legend.SetUseBackground(True)
             self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)

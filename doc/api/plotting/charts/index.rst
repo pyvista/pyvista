@@ -9,7 +9,6 @@ version of at least 9.0 and in a future release will require
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Chart2D
    ChartBox
@@ -27,7 +26,6 @@ classes above.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Pen
    Brush

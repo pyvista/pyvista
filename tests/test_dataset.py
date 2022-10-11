@@ -1,5 +1,6 @@
 """Tests for pyvista.core.dataset."""
 
+import multiprocessing
 import pickle
 
 from hypothesis import HealthCheck, assume, given, settings
@@ -12,7 +13,8 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import Texture, examples
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -24,7 +26,13 @@ def grid():
 
 def test_invalid_overwrite(grid):
     with pytest.raises(TypeError):
-        grid.overwrite(pyvista.Plane())
+        grid.copy_from(pyvista.Plane())
+
+
+def test_overwrite_deprecation(grid):
+    mesh = type(grid)()
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.overwrite(grid)
 
 
 @composite
@@ -141,7 +149,7 @@ def test_field_data(grid):
     assert isinstance(grid.field_data['foo'], np.ndarray)
     assert np.allclose(grid.field_data['foo'], foo)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         grid.set_active_scalars('foo')
 
 
@@ -267,7 +275,7 @@ def test_translate_should_fail_given_none(grid):
 
 
 def test_translate_deprecation(grid):
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         grid.translate((0.0, 0.0, 0.0))
 
 
@@ -1083,6 +1091,14 @@ def test_cell_points(grid):
     assert points.shape[1] == 3
 
 
+def test_cell_point_ids(grid):
+    point_ids = grid.cell_point_ids(0)
+    assert isinstance(point_ids, list)
+    assert len(point_ids) == grid.cell_n_points(0)
+    assert all([isinstance(id, int) for id in point_ids])
+    assert all([0 <= id < grid.n_points for id in point_ids])
+
+
 def test_cell_bounds(grid):
     bounds = grid.cell_bounds(0)
     assert isinstance(bounds, tuple)
@@ -1094,7 +1110,37 @@ def test_cell_type(grid):
     assert isinstance(ctype, int)
 
 
-def test_serialize_deserialize(datasets):
+def test_point_is_inside_cell():
+    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
+    assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
+
+    assert grid.point_is_inside_cell(0, np.array([0.5, 0.5, 0.5]))
+
+    # cell ind out of range
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(100000, [0.5, 0.5, 0.5])
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(-1, [0.5, 0.5, 0.5])
+
+    # cell ind wrong type
+    with pytest.raises(TypeError):
+        grid.point_is_inside_cell(0.1, [0.5, 0.5, 0.5])
+
+    # point not well formed
+    with pytest.raises(TypeError):
+        grid.point_is_inside_cell(0, 0.5)
+    with pytest.raises(ValueError):
+        grid.point_is_inside_cell(0, [0.5, 0.5])
+
+    # multi-dimensional
+    in_cell = grid.point_is_inside_cell(0, [[0.5, 0.5, 0.5], [-0.5, -0.5, -0.5]])
+    assert np.array_equal(in_cell, np.array([True, False]))
+
+
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_serialize_deserialize(datasets, pickle_format):
+    pyvista.set_pickle_format(pickle_format)
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
@@ -1127,6 +1173,21 @@ def test_serialize_deserialize(datasets):
             arr_have = dataset_2.field_data[name]
             arr_expected = dataset.field_data[name]
             assert arr_have == pytest.approx(arr_expected)
+
+
+def n_points(dataset):
+    # used in multiprocessing test
+    return dataset.n_points
+
+
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_multiprocessing(datasets, pickle_format):
+    # exercise pickling via multiprocessing
+    pyvista.set_pickle_format(pickle_format)
+    with multiprocessing.Pool(2) as p:
+        res = p.map(n_points, datasets)
+    for res, dataset in zip(res, datasets):
+        assert res == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
@@ -1201,7 +1262,7 @@ def test_rotate_z():
 @pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
 def test_deprecation_rotate(sphere, method):
     meth = getattr(sphere, method)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         meth(30)
 
 
@@ -1285,7 +1346,7 @@ def test_transform_integers_vtkbug_present():
 
 
 def test_deprecation_vector(sphere):
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         sphere.rotate_vector([1, 1, 1], 33)
 
 
@@ -1311,7 +1372,7 @@ def test_scale():
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         scale1.scale(xyz)
 
 
@@ -1326,7 +1387,7 @@ def test_flip_x():
     mesh = examples.load_uniform()
     out = mesh.flip_x()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_x1.flip_x(point=(0, 0, 0))
 
 
@@ -1341,7 +1402,7 @@ def test_flip_y():
     mesh = examples.load_uniform()
     out = mesh.flip_y()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_y1.flip_y(point=(0, 0, 0))
 
 
@@ -1356,7 +1417,7 @@ def test_flip_z():
     mesh = examples.load_uniform()
     out = mesh.flip_z()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_z1.flip_z(point=(0, 0, 0))
 
 
@@ -1380,7 +1441,7 @@ def test_flip_normal():
     flip_normal6.flip_z(inplace=True)
     assert np.allclose(flip_normal5.points, flip_normal6.points)
 
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
 
     # Test non-point-based mesh doesn't fail
@@ -1411,3 +1472,70 @@ def test_cast_to_pointset(sphere, deep):
         assert not np.allclose(sphere.points, pointset.points)
     else:
         assert np.allclose(sphere.points, pointset.points)
+
+
+def test_partition(hexbeam):
+    if pyvista.vtk_version_info < (9, 1, 0):
+        with pytest.raises(VTKVersionError):
+            hexbeam.partition(2)
+        return
+    # split as composite
+    n_part = 2
+    out = hexbeam.partition(n_part)
+    assert isinstance(out, pyvista.MultiBlock)
+    assert len(out) == 2
+
+    # split as unstrucutred grid
+    out = hexbeam.partition(hexbeam.n_cells, as_composite=False)
+    assert isinstance(hexbeam, pyvista.UnstructuredGrid)
+    assert out.n_points > hexbeam.n_points
+
+
+def test_explode(datasets):
+    for dataset in datasets:
+        out = dataset.explode()
+        assert out.n_cells == dataset.n_cells
+        assert out.n_points > dataset.n_points
+
+
+def test_separate_cells(hexbeam):
+    assert hexbeam.n_points != hexbeam.n_cells * 8
+    sep_grid = hexbeam.separate_cells()
+    assert sep_grid.n_points == hexbeam.n_cells * 8
+
+
+def test_volume_area():
+    def assert_volume(grid):
+        assert np.isclose(grid.volume, 64.0)
+        assert np.isclose(grid.area, 0.0)
+
+    def assert_area(grid):
+        assert np.isclose(grid.volume, 0.0)
+        assert np.isclose(grid.area, 16.0)
+
+    # UniformGrid 3D size 4x4x4
+    vol_grid = pyvista.UniformGrid(dims=(5, 5, 5))
+    assert_volume(vol_grid)
+
+    # 2D grid size 4x4
+    surf_grid = pyvista.UniformGrid(dims=(5, 5, 1))
+    assert_area(surf_grid)
+
+    # UnstructuredGrid
+    assert_volume(vol_grid.cast_to_unstructured_grid())
+    assert_area(surf_grid.cast_to_unstructured_grid())
+
+    # StructuredGrid
+    assert_volume(vol_grid.cast_to_structured_grid())
+    assert_area(surf_grid.cast_to_structured_grid())
+
+    # Rectilinear
+    assert_volume(vol_grid.cast_to_rectilinear_grid())
+    assert_area(surf_grid.cast_to_rectilinear_grid())
+
+    # PolyData
+    # cube of size 4
+    # PolyData is special because it is a 2D surface that can enclose a volume
+    grid = pyvista.UniformGrid(dims=(5, 5, 5)).extract_surface()
+    assert np.isclose(grid.volume, 64.0)
+    assert np.isclose(grid.area, 96.0)

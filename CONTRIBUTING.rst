@@ -146,7 +146,7 @@ There are two important copyright guidelines:
 Please also take a look at our `Code of
 Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`_.
 
-Contributing to pyvista through GitHub
+Contributing to PyVista through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To submit new code to pyvista, first fork the `pyvista GitHub
@@ -198,6 +198,23 @@ automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
 
 
+Docstrings
+^^^^^^^^^^
+
+PyVista uses Python docstrings to create reference documentation for our Python
+APIs. Docstrings are read by developers, interactive Python users, and readers
+of our online documentation. This page describes how to write these docstrings
+for PyVista.
+
+* PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
+  `numpydoc Style Guide`_.
+* Be sure to describe all ``Parameters`` and ``Returns`` for all public
+  methods.
+* We strongly encourage you to add an example section. PyVista is a visual
+  library, so adding examples that show a plot will really help users figure
+  out what individual methods do.
+
+
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -217,6 +234,7 @@ changes any given branch is introducing before looking at the code.
    routines
 -  ``testing/``: improvements or changes to testing
 -  ``release/``: releases (see below)
+-  ``breaking-change/``: Changes that break backward compatibility
 
 Testing
 ^^^^^^^
@@ -237,6 +255,27 @@ dependencies listed in ``requirements_test.txt``,
 
 Then, if you have everything installed, you can run the various test
 suites.
+
+Using Gitpod workspace
+~~~~~~~~~~~~~~~~~~~~~~
+
+A prebuilt gitpod workspace is available for a quick start development
+environment. To start a workspace from the main branch of pyvista, go
+to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
+`Gitpod Getting Started
+<https://www.gitpod.io/docs/getting-started>`_ for more details.
+
+The workspace has vnc capability through the browser for
+interactive plotting.  The workspace also has prebuilt
+documentation with a live-viewer.  Hit the ``Go Live`` button
+and browse to ``doc/_build/html``. The workspace is also prebuilt to
+support pre-commit checks.
+
+Workspaces started from the ``pyvista/pyvista`` repo will often
+have prebuilt environments with dependencies installed. Workspaces
+started from forks may not have prebuilt images and will start
+building when starting a new workspace.  It is safe to stop, e.g.
+``Ctrl-C``, the documentation part of the build if unneeded.
 
 Unit Testing
 ~~~~~~~~~~~~
@@ -261,20 +300,6 @@ Run all code examples in the docstrings with:
 .. code:: bash
 
    python -m pytest -v --doctest-modules pyvista
-
-Build the documentation on Linux or Mac OS with:
-
-.. code:: bash
-
-   make -C doc html
-
-Build the documentation on Windows with:
-
-   cd doc
-   python -msphinx -M html . _build
-
-The generated documentation can be found in the ``doc/_build/html``
-directory.
 
 Style Checking
 ~~~~~~~~~~~~~~
@@ -377,8 +402,136 @@ exists, be sure to add the resulting image with
 
     git add tests/plotting/image_cache/*
 
+Building the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Build the documentation on Linux or Mac OS with:
+
+.. code:: bash
+
+   make -C doc html
+
+Build the documentation on Windows with:
+
+   cd doc
+   python -msphinx -M html . _build
+
+The generated documentation can be found in the ``doc/_build/html``
+directory.
+
+The first time you build the documentation locally will take a while as all the
+examples need to be built. After the first build, the documentation should take
+a fraction of the time.
+
+Clearing the local build
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you need to clear the locally built documentation, run:
+
+.. code:: bash
+
+   make -C doc clean
+
+This will clear out everything, including the examples gallery. If you only
+want to clear everything except the gallery examples, run:
+
+.. code:: bash
+
+   make -C doc clean-except-examples
+
+This will clear out the cache without forcing you to rebuild all the examples.
+
+Full documentation build
+^^^^^^^^^^^^^^^^^^^^^^^^
+By default, the documentation build places class documentation on single pages
+rather than generating a table and placing class methods and attributes on
+individual pages. Figures are also sized to ``(400, 300)`` rather than the
+default ``(1024, 768)``. This is to minimize the time it takes to build
+documentation locally. If you wish to generate the full documentation, enable
+it with::
+
+.. code:: bash
+
+   export FULL_DOC_BUILD=TRUE
+   make -C doc html
+
+This will generate the same documentation as rendered online, but as each
+individual class method and attribute will have its own documentation page, the
+documentation will take much longer to build. Additionally, inherited methods
+will have their docstrings rendered, whereas the non-full documentation build
+only generates methods belonging directly to that class.
+
+Parallel Documentation Build
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You can improve your documentation build time on Linux and Mac OS with:
+
+.. code:: bash
+
+   make -C doc phtml
+
+This effectively invokes ``SPHINXOPTS=-j`` and can be especially useful for
+multi-core computers when ``FULL_DOC_BUILD=TRUE``
+
+
+
+Contributing to the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Documentation for PyVista is generated from three sources:
+
+- Docstrings from the classes, functions, and modules of ``pyvista`` using
+  `sphinx.ext.autodoc
+  <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_.
+- Restructured test from ``doc/``
+- Gallery examples from ``examples/``
+
+General usage and API descriptions should be placed within ``doc/api`` and
+the docstrings.  Full gallery examples should be placed in ``examples``.
+
+
+Adding a New Example
+^^^^^^^^^^^^^^^^^^^^
+PyVista's examples come in two formats: basic code snippets demonstrating the
+functionality of an individual method or a full gallery example displaying one
+or more concepts.  Small code samples and snippets are contained in the
+``doc/api`` directory or within our documentation strings, while the full
+gallery examples, meant to be run as individual downloadable scripts, are
+contained in the ``examples`` directory at the root of this repository.
+
+To add a fully fledged, standalone example, add your example to the
+``examples`` directory in the root directory of the `PyVista Repository
+<https://github.com/pyvista/pyvista/>`_ within one of the applicable
+subdirectories.  Should none of the existing directories match the category of
+your example, create a new directory with a ``README.txt`` describing the new
+category.  Additionally, as these examples are built using the sphinx gallery
+extension, follow coding guidelines as established by `Sphinx-Gallery
+<https://sphinx-gallery.github.io/stable/index.html>`_.
+
+For more details see :ref:`add_example_example`.
+
+
+Add a new Example File
+^^^^^^^^^^^^^^^^^^^^^^
+If you have a dataset that you need for your gallery example, add it to
+`pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_ and follow the
+directions there. You will then need to add a new function to download the
+dataset ``pyvista/examples/downloads.py``. This might be as easy as:
+
+.. code:: python
+
+   def download_my_dataset(load=True):
+       """Download my new dataset."""
+       return _download_and_read('mydata/my_new_dataset.vtk', load=load)
+
+
+Which enables:
+
+.. code::
+
+   >>> from pyvista import examples
+   >>> dataset = examples.download_my_dataset()
+
+
 Creating a New Pull Request
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have tested your branch locally, create a pull request on
 `pyvista GitHub <https://github.com/pyvista/pyvista>`_ while merging to
@@ -415,8 +568,8 @@ The main features of our branching model are:
    version of the code base that is also reflected on PyPI/. Hotfixes
    from ``fix/`` branches should be merged both to main and to these
    branches. When necessary to create a new patch release these release
-   branches will have their ``__version__.py`` updated and be tagged
-   with a patched semantic version (e.g. ``0.24.1``). This triggers CI
+   branches will have their ``pyvista/_version.py`` updated and be tagged
+   with a semantic version (e.g. ``v0.24.1``). This triggers CI
    to push to PyPI, and allow us to rapidly push hotfixes for past
    versions of ``pyvista`` without having to worry about untested
    features.
@@ -424,7 +577,7 @@ The main features of our branching model are:
    will be created from ``main`` with the next incremented minor version
    (e.g. ``release/0.25``), which will be thoroughly tested. When deemed
    stable, the release branch will be tagged with the version
-   (``0.25.0`` in this case), and if necessary merged with main if any
+   (``v0.25.0`` in this case), and if necessary merged with main if any
    changes were pushed to it. Feature development then continues on
    ``main`` and any hotfixes will now be merged with this release. Older
    release branches should not be deleted so they can be patched as
@@ -451,16 +604,17 @@ created the following will occur:
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest
+       make doctest-modules
        make html -b linkcheck
 
 4.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
 
-5.  Update the version numbers in ``pyvista/_version.py`` and commit it.
-    Push the branch to GitHub and create a new PR for this release that
-    merges it to main. Development to main should be limited at this
-    point while effort is focused on the release.
+5.  Update the development version numbers in ``pyvista/_version.py``
+    and commit it (e.g. ``0, 26, 'dev0'``). Push the branch to GitHub
+    and create a new PR for this release that merges it to main.
+    Development to main should be limited at this point while effort
+    is focused on the release.
 
 6.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install
@@ -468,13 +622,14 @@ created the following will occur:
     have their hotfixes pushed to this release branch.
 
 7.  When the branch is deemed as stable for public release, the PR will
-    be merged to main and the ``main`` branch will be tagged with a
-    ``MAJOR.MINOR.0`` release. The release branch will not be deleted.
-    Tag the release with:
+    be merged to main. After update the version number in
+    ``release/MAJOR.MINOR`` branch, the ``release/MAJOR.MINOR`` branch
+    will be tagged with a ``vMAJOR.MINOR.0`` release. The release branch
+    will not be deleted. Tag the release with:
 
     .. code:: bash
 
-       git tag MAJOR.MINOR.0
+       git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
        git push origin --tags
 
 8.  Create a list of all changes for the release. It is often helpful to
@@ -490,7 +645,7 @@ created the following will occur:
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 10. Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro-cf-autotick-bot>`_
+    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
@@ -508,7 +663,7 @@ should not wait until a minor release. The steps for a patch release
    will generally be the latest release branch (e.g. ``release/0.25``).
 
 2. Update ``pyvista/_version.py`` with the next patch increment (e.g.
-   ``0.25.1``), commit it, and open a PR that merge with the release
+   ``v0.25.1``), commit it, and open a PR that merge with the release
    branch. This gives the ``pyvista`` community a chance to validate and
    approve the bugfix release. Any additional hotfixes should be outside
    of this PR.
@@ -524,3 +679,4 @@ should not wait until a minor release. The steps for a patch release
 
 
 .. _pre-commit: https://pre-commit.com/
+.. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html

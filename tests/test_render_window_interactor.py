@@ -15,6 +15,7 @@ def empty_callback():
     return
 
 
+@pytest.mark.needs_vtk_version(9, 1)
 def test_observers():
     pl = pyvista.Plotter()
 

@@ -1,10 +1,37 @@
 """Miscellaneous pyvista functions."""
 from collections import namedtuple
+from functools import lru_cache
+import importlib
+import os
 import warnings
 
 import numpy as np
 
+import pyvista
 from pyvista import _vtk
+
+
+def _set_plot_theme_from_env():
+    """Set plot theme from an environment variable."""
+    from pyvista.themes import _ALLOWED_THEMES, set_plot_theme
+
+    if 'PYVISTA_PLOT_THEME' in os.environ:
+        try:
+            theme = os.environ['PYVISTA_PLOT_THEME']
+            set_plot_theme(theme.lower())
+        except KeyError:
+            allowed = ', '.join([item.name for item in _ALLOWED_THEMES])
+            warnings.warn(
+                f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
+                f'Should be one of the following: {allowed}'
+            )
+
+
+@lru_cache(maxsize=None)
+def has_module(module_name):
+    """Return if a module can be imported."""
+    module_spec = importlib.util.find_spec(module_name)
+    return module_spec is not None
 
 
 def raise_has_duplicates(arr):
@@ -29,14 +56,20 @@ def _get_vtk_id_type():
     return np.int32
 
 
-class PyvistaDeprecationWarning(Warning):
+class PyVistaDeprecationWarning(Warning):
     """Non-supressed Depreciation Warning."""
 
     pass
 
 
-class PyvistaFutureWarning(Warning):
+class PyVistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
+
+    pass
+
+
+class PyVistaEfficiencyWarning(Warning):
+    """Efficiency warning."""
 
     pass
 
@@ -119,3 +152,31 @@ def can_create_mpl_figure():  # pragma: no cover
 
 
 vtk_version_info = VTKVersionInfo()
+
+
+def set_pickle_format(format: str):
+    """Set the format used to serialize :class:`pyvista.DataObject` when pickled."""
+    supported = {'xml', 'legacy'}
+    format = format.lower()
+    if format not in supported:
+        raise ValueError(
+            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
+        )
+    pyvista.PICKLE_FORMAT = format
+
+
+def no_new_attr(cls):
+    """Override __setattr__ to not permit new attributes."""
+
+    def __setattr__(self, name, value):
+        """Do not allow setting attributes."""
+        if hasattr(self, name):
+            object.__setattr__(self, name, value)
+        else:
+            raise AttributeError(
+                f'Attribute "{name}" does not exist and cannot be added to type '
+                f'{self.__class__.__name__}'
+            )
+
+    setattr(cls, '__setattr__', __setattr__)
+    return cls

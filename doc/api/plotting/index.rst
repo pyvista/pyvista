@@ -1,3 +1,5 @@
+.. _plotting-api-index:
+
 Plotting
 ========
 
@@ -23,10 +25,25 @@ all plotting functionality in PyVista.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Plotter
    Renderer
+   Property
+   Actor
+   DataSetMapper
+   LookupTable
+
+
+Composite Plotting Reference
+----------------------------
+These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   CompositePolyDataMapper
+   CompositeAttributes
+   BlockAttributes
 
 
 Charts API

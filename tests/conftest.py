@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.random import default_rng
-from pytest import fixture
+from pytest import fixture, mark, skip
 
 import pyvista
 from pyvista import examples
@@ -60,6 +60,11 @@ def hexbeam():
 
 
 @fixture()
+def tetbeam():
+    return examples.load_tetbeam()
+
+
+@fixture()
 def struct_grid():
     x, y, z = np.meshgrid(
         np.arange(-10, 10, 2, dtype=np.float32),
@@ -97,13 +102,99 @@ def datasets():
 
 
 @fixture()
+def multiblock_poly():
+    # format and order of data (including missing) is intentional
+    mesh_a = pyvista.Sphere(center=(0, 0, 0))
+    mesh_a['data_a'] = mesh_a.points[:, 0] * 10
+    mesh_a['data_b'] = mesh_a.points[:, 1] * 10
+    mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
+    mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
+
+    mesh_b = pyvista.Sphere(center=(1, 0, 0))
+    mesh_b['data_a'] = mesh_b.points[:, 0] * 10
+    mesh_b['data_b'] = mesh_b.points[:, 1] * 10
+    mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
+    mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
+
+    mesh_c = pyvista.Sphere(center=(2, 0, 0))
+    mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
+    mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
+
+    mblock = pyvista.MultiBlock()
+    mblock.append(mesh_a)
+    mblock.append(mesh_b)
+    mblock.append(mesh_c)
+    return mblock
+
+
+@fixture()
+def datasets_vtk9():
+    return [
+        examples.load_explicit_structured(),
+    ]
+
+
+@fixture()
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
 
 
+@fixture()
+def multiblock_all(datasets):
+    """Return datasets fixture combined in a pyvista multiblock."""
+    return pyvista.MultiBlock(datasets)
+
+
+@fixture()
+def noise_2d():
+    freq = [10, 5, 0]
+    noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
+    return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
+
+
 def pytest_addoption(parser):
     parser.addoption("--reset_image_cache", action='store_true', default=False)
     parser.addoption("--ignore_image_cache", action='store_true', default=False)
     parser.addoption("--fail_extra_image_cache", action='store_true', default=False)
+    parser.addoption("--test_downloads", action='store_true', default=False)
+
+
+def marker_names(item):
+    return [marker.name for marker in item.iter_markers()]
+
+
+def pytest_collection_modifyitems(config, items):
+    test_downloads = config.getoption("--test_downloads")
+
+    # skip all tests that need downloads
+    if not test_downloads:
+        skip_downloads = mark.skip("Downloads not enabled with --test_downloads")
+        for item in items:
+            if 'needs_download' in marker_names(item):
+                item.add_marker(skip_downloads)
+
+
+def pytest_runtest_setup(item):
+    """Custom setup to handle skips based on VTK version.
+
+    See pytest.mark.needs_vtk9 and pytest.mark.needs_vtk_version
+    in pytest.ini.
+
+    """
+    for item_mark in item.iter_markers('needs_vtk9'):
+        # this test needs VTK 9 or newer
+        if not pyvista._vtk.VTK9:
+            skip('Test needs VTK 9 or newer.')
+    for item_mark in item.iter_markers('needs_vtk_version'):
+        # this test needs the given VTK version
+        # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))
+        args = item_mark.args
+        if len(args) == 1 and isinstance(args[0], tuple):
+            version_needed = args[0]
+        else:
+            version_needed = args
+        if pyvista.vtk_version_info < version_needed:
+            version_str = '.'.join(map(str, version_needed))
+            skip(f'Test needs VTK {version_str} or newer.')
