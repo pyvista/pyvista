@@ -2489,7 +2489,7 @@ class PolyDataFilters(DataSetFilters):
         >>> circ1 = pv.Polygon(center=(-2, -3, 0), n_sides=30, radius=1)
         >>> comb = circ0 + circ1 + squar
         >>> tess = comb.delaunay_2d(edge_source=comb)
-        >>> tess.plot(cpos='xy')
+        >>> tess.plot(cpos='xy', show_edges=True)
 
         See :ref:`triangulated_surface` for more examples using this filter.
 
