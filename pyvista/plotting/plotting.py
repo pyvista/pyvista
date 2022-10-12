@@ -2773,14 +2773,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when ``True``.  Default ``True``.
 
-        component :  int, optional
+        component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
-        emissive : bool, optional
-            Treat the points/splats as emissive light sources. The default is
-            False. Only valid for ``style='points_gaussian'`` representation.
+        emissive : bool, default: False
+            Treat the points/splats as emissive light sources. Only valid for
+            ``style='points_gaussian'`` representation.
 
         copy_mesh : bool, optional
             If ``True``, a copy of the mesh will be made before adding it to
@@ -2816,10 +2816,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Add a sphere to the plotter and show it with a custom scalar
         bar title.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
         >>> plotter.show()
@@ -2828,16 +2828,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points and the number of cells are identical, we have to pass
         ``preference='cell'``.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [.5, .667, 0], [0.5, .33, 0.667]])
         >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
-        >>> mesh = pyvista.PolyData(vertices, faces)
+        >>> mesh = pv.PolyData(vertices, faces)
         >>> mesh.cell_data['colors'] = [[255, 255, 255],
         ...                               [0, 255, 0],
         ...                               [0, 0, 255],
         ...                               [255, 0, 0]]
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
         ...                      rgb=True, preference='cell')
         >>> plotter.camera_position='xy'
@@ -2848,7 +2848,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         in ``preference=='point'``, each cell face is individually
         colored.
 
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
         ...                      rgb=True, preference='point')
         >>> plotter.camera_position='xy'
@@ -2856,7 +2856,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot a plane with a constant color and vary its opacity by point.
 
-        >>> plane = pyvista.Plane()
+        >>> plane = pv.Plane()
         >>> plane.plot(color='b', opacity=np.linspace(0, 1, plane.n_points),
         ...            show_edges=True)
 
@@ -3114,6 +3114,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.mapper.scalar_visibility = False
 
+        # Set actor properties ================================================
         prop_kwargs = dict(
             theme=self._theme,
             interpolation=interpolation,
@@ -3148,21 +3149,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if render_points_as_spheres:
             if style == 'points_gaussian':
-                self.mapper.SetSplatShaderCode(
-                    "//VTK::Color::Impl\n"
-                    "float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n"
-                    "if (dist > 1.0) {\n"
-                    "  discard;\n"
-                    "} else {\n"
-                    f"  float scale = ({opacity} - dist);\n"
-                    "  ambientColor *= scale;\n"
-                    "  diffuseColor *= scale;\n"
-                    "}\n"
-                )
-                # maintain consistency with other approaches
+                self.mapper.use_circular_splat(opacity)
                 prop.opacity = 1.0
-                self.mapper.emissive = True
-                self.mapper.scale_factor *= 1.5
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
 

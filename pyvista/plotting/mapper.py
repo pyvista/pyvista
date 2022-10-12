@@ -766,22 +766,81 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     """Wrap vtkPointGaussianMapper."""
 
     @property
-    def emissive(self):
-        """Set or return emissive."""
-        return self.GetEmissive()
+    def emissive(self) -> bool:
+        """Set or return emissive.
+
+        This treats points as emissive light sources. Two points that overlap
+        will have their brightness combined.
+        """
+        return bool(self.GetEmissive())
 
     @emissive.setter
-    def emissive(self, value):
+    def emissive(self, value: bool):
         return self.SetEmissive(value)
 
     @property
-    def scale_factor(self):
-        """Set or return the scale factor."""
+    def scale_factor(self) -> float:
+        """Set or return the scale factor.
+
+        Ranges from 0 to 1. A value of 0 will cause the splats to be rendered
+        as simple points. Defaults to 1.0.
+
+        """
         return self.GetScaleFactor()
 
     @scale_factor.setter
-    def scale_factor(self, value):
+    def scale_factor(self, value: float):
         return self.SetScaleFactor(value)
+
+    def use_circular_splat(self, opacity: float = 1.0):
+        """Set the fragment shader code to create a circular splat.
+
+        Parameters
+        ----------
+        opacity : float, default: 1.0
+            Desired opacity between 0 and 1.
+
+        Notes
+        -----
+        This very close to ParaView's PointGaussianMapper, but uses opacity to
+        modify the scale as the opacity cannot be set from the actor's property.
+        """
+        self.SetSplatShaderCode(
+            "//VTK::Color::Impl\n"
+            "float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n"
+            "if (dist > 1.0) {\n"
+            "  discard;\n"
+            "} else {\n"
+            f"  float scale = ({opacity} - dist);\n"
+            "  ambientColor *= scale;\n"
+            "  diffuseColor *= scale;\n"
+            "}\n"
+        )
+        # maintain consistency with the default style
+        self.emissive = True
+        self.scale_factor *= 1.5
+
+    def use_default_splat(self):
+        """Clear the fragment shader and use the default splat."""
+        self.SetSplatShaderCode(None)
+        self.scale_factor /= 1.5
+
+    def __repr__(self):
+        """Representation of the gaussian mapper."""
+        mapper_attr = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Scalar visibility:           {self.scalar_visibility}',
+            f'  Scalar range:                {self.scalar_range}',
+            f'  Emissive:                    {self.emissive}',
+            f'  Scale Factor:                {self.scale_factor}',
+            f'  Using custom splat:          {self.GetSplatShaderCode() is None}',
+            '',
+        ]
+
+        mapper_attr.append('Attached dataset:')
+        mapper_attr.append(str(self.dataset))
+
+        return '\n'.join(mapper_attr)
 
 
 @abstract_class

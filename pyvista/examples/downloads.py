@@ -4397,7 +4397,7 @@ def download_gif_simple(load=True):  # pragma: no cover
 def download_cloud_dark_matter(load=True):  # pragma: no cover
     """Download a particles from a simulated dark matter halo.
 
-    This dataset contains 32,314 particles
+    This dataset contains 32,314 particles.
 
     Parameters
     ----------
@@ -4412,11 +4412,12 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 
     Examples
     --------
-    Download and plot the first frame of a simple GIF.
+    Download the dark matter cloud and display its representation.
 
     >>> import numpy as np
     >>> from pyvista import examples
     >>> pc = examples.download_cloud_dark_matter()
+    >>> pc  # doctest:+SKIP
     PointSet (0x7f97f718d460)
       N Cells:      0
       N Points:     32314
@@ -4465,7 +4466,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 
     Examples
     --------
-    Download and plot the first frame of a simple GIF.
+    Download the dark matter cloud and display its representation.
 
     >>> import numpy as np
     >>> from pyvista import examples
