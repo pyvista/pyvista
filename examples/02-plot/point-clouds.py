@@ -149,7 +149,7 @@ pl.show()
 cloud = examples.download_cloud_dark_matter()
 scalars = np.linalg.norm(cloud.points - cloud.center, axis=1)
 
-pl = pv.Plotter(off_screen=True)
+pl = pv.Plotter(off_screen=False)
 pl.add_mesh(
     cloud,
     style='points_gaussian',

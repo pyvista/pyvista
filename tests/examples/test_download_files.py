@@ -905,6 +905,16 @@ def test_download_cloud_dark_matter_dense():
     assert dataset.n_points == 2062256
 
 
+def test_download_stars_cloud_hyg():
+    filename = examples.download_stars_cloud_hyg(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vtp')
+
+    dataset = examples.download_stars_cloud_hyg(load=True)
+    assert isinstance(dataset, pv.PolyData)
+    assert dataset.n_points == 107857
+
+
 def test_cad_model_case():
     filename = examples.download_cad_model_case(load=False)
     assert os.path.isfile(filename)

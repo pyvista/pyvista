@@ -360,6 +360,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if self.color_mode == 'direct':
             return
 
+        self.dataset.point_data.pop('__rgba__', None)
         self._configure_scalars_mode(
             self.lookup_table(self.dataset.active_scalars),
             '__rgba__',
