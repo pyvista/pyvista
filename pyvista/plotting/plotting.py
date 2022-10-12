@@ -2869,7 +2869,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     style='points_gaussian',
         ...     opacity=0.5,
         ...     point_size=10,
-        ...     render_points_as_spheres=False
+        ...     render_points_as_spheres=False,
         ...     show_scalar_bar=False,
         ... )
 
