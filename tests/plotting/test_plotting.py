@@ -3076,6 +3076,43 @@ def test_view_xyz(direction, negative, colorful_tetrahedron, test_name):
 
 
 @skip_windows
+def test_plot_points_gaussian(sphere):
+    sphere.plot(
+        color='r',
+        style='points_gaussian',
+        render_points_as_spheres=False,
+        point_size=20,
+        opacity=0.5,
+        before_close_callback=verify_cache_image,
+    )
+
+
+@skip_windows
+def test_plot_points_gaussian_scalars(sphere):
+    sphere.plot(
+        scalars=sphere.points[:, 2],
+        style='points_gaussian',
+        render_points_as_spheres=False,
+        point_size=20,
+        opacity=0.5,
+        show_scalar_bar=False,
+        before_close_callback=verify_cache_image,
+    )
+
+
+@skip_windows
+def test_plot_points_gaussian_as_spheres(sphere):
+    sphere.plot(
+        color='b',
+        style='points_gaussian',
+        render_points_as_spheres=True,
+        point_size=20,
+        opacity=0.5,
+        before_close_callback=verify_cache_image,
+    )
+
+
+@skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
     p = pyvista.Plotter()
