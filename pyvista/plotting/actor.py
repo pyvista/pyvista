@@ -6,11 +6,13 @@ import weakref
 import numpy as np
 
 import pyvista as pv
+from pyvista.utilities.misc import no_new_attr
 
 from ._property import Property
 from .mapper import _BaseMapper
 
 
+@no_new_attr
 class Actor(pv._vtk.vtkActor):
     """Wrap vtkActor.
 
@@ -173,16 +175,6 @@ class Actor(pv._vtk.vtkActor):
     @texture.setter
     def texture(self, obj):
         self.SetTexture(obj)
-
-    def __setattr__(self, name, value):
-        """Do not allow setting attributes."""
-        if hasattr(self, name):
-            object.__setattr__(self, name, value)
-        else:
-            raise AttributeError(
-                f'Attribute {name} does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
-            )
 
     @property
     def renderer(self):
@@ -600,12 +592,19 @@ class Actor(pv._vtk.vtkActor):
         """Return or set the backface property.
 
         By default this property matches the frontface property
-        :attr:`Property.prop`. Once accessed or modified, this backface
-        property becomes independent of the frontface property.
+        :attr:`Actor.prop`. Once accessed or modified, this backface
+        property becomes independent of the frontface property. In
+        order to restore the fallback to frontface property, assign
+        ``None`` to the property.
+
+        Returns
+        -------
+        pyvista.Property
+            The object describing backfaces.
 
         Examples
         --------
-        Create a sphere by a plane and color the inside of the clipped sphere
+        Clip a sphere by a plane and color the inside of the clipped sphere
         light blue using the ``backface_prop``.
 
         >>> import numpy as np

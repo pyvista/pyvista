@@ -5,35 +5,14 @@ import os
 
 def format_icon(title, description, link, image):
     body = r"""
+   .. grid-item-card:: {}
+      :link: {}
+      :text-align: center
+      :class-title: pyvista-card-title
 
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="{}">
-
-.. only:: html
-
-    .. figure:: ../images/external-examples/{}
-       :target: {}
-
-       {}
-
-
-
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   {} <{}>
-
-
-
+      .. image:: ../images/external-examples/{}
 """
-    content = body.format(description, image, link, title, title, link)
+    content = body.format(title, link, image)
     return content
 
 
@@ -187,7 +166,8 @@ def make_example_gallery():
 
     with StringIO() as new_fid:
         new_fid.write(
-            """
+            """.. _external_examples:
+
 External Examples
 =================
 
@@ -195,16 +175,19 @@ Here are a list of longer, more technical examples of what PyVista can do!
 
 .. caution::
 
-    Please note that these examples link to external websites.
-    If any of these links are broken, please raise an issue on the repository.
+    Please note that these examples link to external websites.  If any of these
+    links are broken, please raise an `issue
+    <https://github.com/pyvista/pyvista/issues>`_.
 
 
-Do you have a technical processing workflow or visualization routine you
-would like to share?
-If so, please consider sharing your work here submitting a PR at
-https://github.com/pyvista and we would be glad to add it!
+Do you have a technical processing workflow or visualization routine you would
+like to share?  If so, please consider sharing your work here submitting a PR
+at `pyvista/pyvista <https://github.com/pyvista/pyvista/>`_ and we would be
+glad to add it!
 
 
+.. grid:: 3
+   :gutter: 1
 
 """
         )

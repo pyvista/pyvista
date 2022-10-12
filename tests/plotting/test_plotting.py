@@ -113,12 +113,15 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
+    'test_plot_composite_bool',
+    'test_plot_composite_lookup_table',
     'test_plot_composite_poly_component_nested_multiblock',
     'test_plot_composite_poly_scalars_cell',
     'test_plot_composite_preference_cell',
     'test_plot_helper_two_volumes',
     'test_plot_helper_volume',
     'test_plot_string_array',
+    'test_plotter_lookup_table',
     'test_rectlinear_edge_case',
     'test_scalars_by_name',
     'test_user_annotations_scalar_bar_volume',
@@ -189,7 +192,6 @@ class VerifyCacheImage:
         plotter.show()
 
         """
-
         if self.skip:
             return
 
@@ -858,10 +860,11 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-def test_make_movie(sphere, verify_cache_image):
+def test_make_movie(sphere, tmpdir, verify_cache_image):
     verify_cache_image.skip = True
+
     # Make temporary file
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.mp4')
+    filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
     plotter = pyvista.Plotter()
@@ -962,16 +965,13 @@ def test_hide_axes():
 def test_add_axes_parameters():
     plotter = pyvista.Plotter()
     plotter.add_axes()
-    marker_args = dict(
+    plotter.add_axes(
+        line_width=5,
         cone_radius=0.6,
         shaft_length=0.7,
         tip_length=0.3,
         ambient=0.5,
         label_size=(0.4, 0.16),
-    )
-    plotter.add_axes(
-        line_width=5,
-        marker_args=marker_args,
         viewport=(0, 0, 0.4, 0.4),
     )
     plotter.show()
@@ -1816,7 +1816,7 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
     mapping = pyvista.opacity_transfer_function('sigmoid_10', n)
     assert len(mapping) == n
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         mapping = pyvista.opacity_transfer_function('foo', n)
     with pytest.raises(RuntimeError):
         mapping = pyvista.opacity_transfer_function(np.linspace(0, 1, 2 * n), n)
@@ -2543,6 +2543,20 @@ def test_add_text():
     plotter.show()
 
 
+def test_plot_categories_int(sphere):
+    sphere['data'] = sphere.points[:, 2]
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=5, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_categories_true(sphere):
+    sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='data', categories=True, lighting=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 @skip_windows
 @skip_9_0_X
 def test_depth_of_field():
@@ -2648,6 +2662,13 @@ def test_plot_composite_categories(multiblock_poly):
     pl = pyvista.Plotter()
     pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
     pl.show()
+
+
+def test_plot_composite_lookup_table(multiblock_poly):
+    lut = pyvista.LookupTable('Greens', n_values=8)
+    pl = pyvista.Plotter()
+    pl.add_composite(multiblock_poly, scalars='data_b', cmap=lut)
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_plot_composite_preference_cell(multiblock_poly):
@@ -2921,6 +2942,51 @@ def test_tight_wide():
     pl.show()
 
 
+@pytest.mark.parametrize('view', ['xy', 'yx', 'xz', 'zx', 'yz', 'zy'])
+@pytest.mark.parametrize('negative', [False, True])
+def test_tight_direction(view, negative, colorful_tetrahedron):
+    """Test camera.tight() with various views like xy."""
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
+    pl.camera.tight(view=view, negative=negative)
+    pl.add_axes()
+    pl.show()
+
+
+def test_tight_multiple_objects():
+    pl = pyvista.Plotter()
+    pl.add_mesh(
+        pyvista.Cone(center=(0.0, -2.0, 0.0), direction=(0.0, -1.0, 0.0), height=1.0, radius=1.0)
+    )
+    pl.add_mesh(pyvista.Sphere(center=(0.0, 0.0, 0.0)))
+    pl.camera.tight()
+    pl.add_axes()
+    pl.show()
+
+
+def test_backface_params():
+    mesh = pyvista.ParametricCatalanMinimal()
+
+    with pytest.raises(TypeError, match="pyvista.Property or a dict"):
+        mesh.plot(backface_params="invalid")
+
+    params = dict(color="blue", smooth_shading=True)
+    backface_params = dict(color="red", specular=1.0, specular_power=50.0)
+    backface_prop = pyvista.Property(**backface_params)
+
+    # check Property can be passed
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, **params, backface_params=backface_prop)
+    pl.close()
+
+    # check and cache dict
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, **params, backface_params=backface_params)
+    pl.view_xz()
+    pl.show()
+
+
 def test_remove_bounds_axes(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -2940,6 +3006,38 @@ def test_charts_sin():
     chart.show()
 
 
+def test_lookup_table(verify_image_cache):
+    lut = pyvista.LookupTable('viridis')
+    lut.n_values = 8
+    lut.below_range_color = 'black'
+    lut.above_range_color = 'grey'
+    lut.nan_color = 'r'
+
+    # There are minor variations within 9.0.3 that slightly invalidate the
+    # image cache.
+    if pyvista.vtk_version_info != (9, 0, 3):
+        lut.plot()
+    else:
+        verify_image_cache.skip = True
+        lut.plot()
+
+
+def test_plotter_lookup_table(sphere):
+    lut = pyvista.LookupTable('Reds')
+    lut.n_values = 3
+    lut.scalar_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
+    sphere.plot(scalars=sphere.points[:, 2], cmap=lut)
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_lookup_table(uniform):
+    lut = pyvista.LookupTable()
+    lut.alpha_range = (0, 1)
+    pl = pyvista.Plotter()
+    pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pyvista.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
@@ -2948,3 +3046,40 @@ def test_plot_actor(sphere):
 
 def test_wireframe_color(sphere):
     sphere.plot(lighting=False, color='b', style='wireframe')
+
+
+@pytest.mark.parametrize('direction', ['xy', 'yx', 'xz', 'zx', 'yz', 'zy'])
+@pytest.mark.parametrize('negative', [False, True])
+def test_view_xyz(direction, negative, colorful_tetrahedron):
+    """Test various methods like view_xy."""
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
+    getattr(pl, f"view_{direction}")(negative=negative)
+    pl.add_axes()
+    pl.show()
+
+
+@skip_windows
+def test_add_point_scalar_labels_fmt():
+    mesh = examples.load_uniform().slice()
+    p = pyvista.Plotter()
+    p.add_mesh(mesh, scalars="Spatial Point Data", show_edges=True)
+    p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=36, fmt='%.3f')
+    p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
+    p.show()
+
+
+def test_add_point_scalar_labels_list():
+    plotter = pyvista.Plotter()
+
+    points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0.5], [1, 1, 1]])
+    labels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+
+    with pytest.raises(TypeError):
+        plotter.add_point_scalar_labels(points=False, labels=labels)
+    with pytest.raises(TypeError):
+        plotter.add_point_scalar_labels(points=points, labels=False)
+
+    plotter.add_point_scalar_labels(points, labels)
+    plotter.show()

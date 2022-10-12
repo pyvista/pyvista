@@ -127,7 +127,7 @@ def create_axes_marker(
     Parameters
     ----------
     label_color : color_like, optional
-        Unknown
+        Color of the label text.
 
     x_color : color_like, optional
         Color of the x axis text.
@@ -153,22 +153,54 @@ def create_axes_marker(
     line_width : float, optional
         The width of the marker lines.
 
-    cone_radius: float, optional
+    cone_radius : float, optional
         The radius of the axes arrow tips.
 
-    shaft_length: float, optional
+    shaft_length : float, optional
         The length of the axes arrow shafts.
 
-    ambient: float, optional
-        The ambient of the axes arrows.
+    tip_length : float, optional
+        Length of the tip.
 
-    label_size: sequence, optoinal
-        The width and height of the axes label actors.
+    ambient : float, optional
+        The ambient of the axes arrows. Value should be between 0 and 1.
+
+    label_size : sequence, optional
+        The width and height of the axes label actors. Values should be between
+        0 and 1. For example ``(0.2, 0.1)``.
 
     Returns
     -------
     vtk.vtkAxesActor
         Axes actor.
+
+    Examples
+    --------
+    Create the default axes marker.
+
+    >>> import pyvista as pv
+    >>> marker = pv.create_axes_marker()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(marker)
+    >>> pl.show()
+
+    Create an axes marker at the origin with custom colors and axis labels.
+
+    >>> import pyvista as pv
+    >>> marker = pv.create_axes_marker(
+    ...     line_width=4,
+    ...     ambient=0.0,
+    ...     x_color="#378df0",
+    ...     y_color="#ab2e5d",
+    ...     z_color="#f7fb9a",
+    ...     xlabel="X Axis",
+    ...     ylabel="Y Axis",
+    ...     zlabel="Z Axis",
+    ...     label_size=(0.1, 0.1),
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(marker)
+    >>> pl.show()
 
     """
     x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
@@ -419,21 +451,38 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     ----------
     mapping : list(float) or str
         The opacity mapping to use. Can be a ``str`` name of a predefined
-        mapping including 'linear', 'geom', 'sigmoid', 'sigmoid_3-10'.
-        Append an '_r' to any of those names to reverse that mapping.
-        This can also be a custom array/list of values that will be
-        interpolated across the ``n_color`` range for user defined mappings.
+        mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
+        ``'sigmoid_3-10'``. Append an ``'_r'`` to any of those names to
+        reverse that mapping. This can also be a custom array/list of values
+        that will be interpolated across the ``n_color`` range for user
+        defined mappings.
 
     n_colors : int
         The amount of colors that the opacities must be mapped to.
 
     interpolate : bool
-        Flag on whether or not to interpolate the opacity mapping for all colors
+        Flag on whether or not to interpolate the opacity mapping for all
+        colors.
 
     kind : str
-        The interepolation kind if ``interpolate`` is true and ``scipy`` is
-        available. Options are ('linear', 'nearest', 'zero', 'slinear',
-        'quadratic', 'cubic', 'previous', 'next'.
+        The interpolation kind if ``interpolate`` is ``True`` and ``scipy``
+        is available. If ``scipy`` is not available, linear interpolation
+        is always used. Options are:
+
+        - ``'linear'``
+        - ``'nearest'``
+        - ``'zero'``
+        - ``'slinear'``
+        - ``'quadratic'``
+        - ``'cubic'``
+        - ``'previous'``
+        - ``'next'``
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of ``numpy.uint8`` values ``n_colors`` long containing the
+        [0-255] opacity mapping values.
 
     Examples
     --------
@@ -472,7 +521,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise KeyError(f'opactiy transfer function ({mapping}) unknown.')
+            raise ValueError(
+                f'Opacity transfer function ({mapping}) unknown. '
+                f'Valid options: {list(transfer_func.keys())}'
+            ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:

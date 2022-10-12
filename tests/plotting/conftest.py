@@ -41,3 +41,10 @@ def check_gc(request):
     assert len(after) == 0, 'Not all objects GCed:\n' + '\n'.join(
         sorted(o.__class__.__name__ for o in after)
     )
+
+
+@pytest.fixture()
+def colorful_tetrahedron():
+    mesh = pyvista.Tetrahedron()
+    mesh.cell_data["colors"] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
+    return mesh

@@ -14,7 +14,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
-    density : float or list
+    density : float, np.ndarray or collections.abc.Sequence
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
         Defaults to 1/100th of the mesh length.
@@ -36,25 +36,35 @@ def voxelize(mesh, density=None, check_surface=True):
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = pv.PolyData(examples.load_uniform().points)
-    >>> vox = pv.voxelize(mesh, density=0.5)
-    >>> vox.plot()
+    >>> mesh = examples.download_bunny_coarse().clean()
+    >>> vox = pv.voxelize(mesh, density=0.01)
+    >>> vox.plot(show_edges=True)
 
     Create a voxelized mesh using unequal density dimensions.
 
-    >>> mesh = pv.PolyData(examples.load_uniform().points)
-    >>> vox = pv.voxelize(mesh, density=[0.5, 0.9, 1.4])
-    >>> vox.plot()
+    >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
+    >>> vox.plot(show_edges=True)
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = pyvista.wrap(mesh)
     if density is None:
         density = mesh.length / 100
-    if isinstance(density, (int, float)):
+    if isinstance(density, (int, float, np.number)):
         density_x, density_y, density_z = [density] * 3
-    if isinstance(density, (list, set, tuple)):
+    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
         density_x, density_y, density_z = density
+    else:
+        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+
+    # check and pre-process input mesh
+    surface = mesh.extract_geometry()  # filter preserves topology
+    if not surface.faces.size:
+        # we have a point cloud or an empty mesh
+        raise ValueError('Input mesh must have faces for voxelization.')
+    if not surface.is_all_triangles:
+        # reduce chance for artifacts, see gh-1743
+        surface.triangulate(inplace=True)
 
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x = np.arange(x_min, x_max, density_x)
@@ -67,9 +77,7 @@ def voxelize(mesh, density=None, check_surface=True):
     ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(
-        mesh.extract_surface(), tolerance=0.0, check_surface=check_surface
-    )
+    selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
     mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices

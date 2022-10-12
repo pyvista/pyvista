@@ -1068,6 +1068,10 @@ class _Chart(DocSubs):
             ``True`` if the chart was resized, ``False`` otherwise.
 
         """
+        # edge race case
+        if self._renderer is None:  # pragma: no cover
+            return
+
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self._geometry

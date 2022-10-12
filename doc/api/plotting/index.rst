@@ -1,3 +1,5 @@
+.. _plotting-api-index:
+
 Plotting
 ========
 
@@ -29,6 +31,7 @@ all plotting functionality in PyVista.
    Property
    Actor
    DataSetMapper
+   LookupTable
 
 
 Composite Plotting Reference
@@ -71,4 +74,3 @@ routines in PyVista.
    :maxdepth: 2
 
    conv_func
-
