@@ -2326,6 +2326,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             color,
             None,
             rgb,
+            style,
             **kwargs,
         )
 
@@ -2488,8 +2489,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=0.5,
         render=True,
         component=None,
-        emissive=True,
-        gaussian_radius=None,
+        emissive=False,
         copy_mesh=False,
         backface_params=None,
         **kwargs,
@@ -2525,8 +2525,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``style='surface'``, ``style='wireframe'``, ``style='points'``,
             ``style='points_gaussian'``. Defaults to ``'surface'``. Note that
             ``'wireframe'`` only shows a wireframe of the outer geometry.
-            ``'points_gaussian'`` can be improved with the ``emissive``,
-            ``gaussian_radius``, and ``render_points_as_spheres`` options.
+            ``'points_gaussian'`` can be modified with the ``emissive``,
+            ``render_points_as_spheres`` options.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name
@@ -2860,6 +2860,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plane.plot(color='b', opacity=np.linspace(0, 1, plane.n_points),
         ...            show_edges=True)
 
+        Plot the points of a sphere with gaussian smoothing while coloring by z
+        position.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.plot(
+        ...     scalars=mesh.points[:, 2],
+        ...     style='points_gaussian',
+        ...     opacity=0.5,
+        ...     point_size=10,
+        ...     render_points_as_spheres=False
+        ...     show_scalar_bar=False,
+        ... )
+
         """
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme)
@@ -2965,6 +2978,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             color,
             texture,
             rgb,
+            style,
             **kwargs,
         )
 
@@ -3114,7 +3128,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             color=color,
             style=style if style != 'points_gaussian' else 'points',
             edge_color=edge_color,
-            render_points_as_spheres=render_points_as_spheres,
             render_lines_as_tubes=render_lines_as_tubes,
             lighting=lighting,
             line_width=line_width,
@@ -3124,6 +3137,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if style == 'points_gaussian':
             self.mapper.emissive = emissive
             self.mapper.scale_factor = point_size * self.mapper.dataset.length / 1300
+            if not render_points_as_spheres and not emissive:
+                if opacity >= 1.0:
+                    opacity = 0.9999  # otherwise, weird triangles
 
         if isinstance(opacity, (float, int)):
             prop_kwargs['opacity'] = opacity
@@ -3138,13 +3154,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     "if (dist > 1.0) {\n"
                     "  discard;\n"
                     "} else {\n"
-                    "  float scale = (1.0 - dist);\n"
+                    f"  float scale = ({opacity} - dist);\n"
                     "  ambientColor *= scale;\n"
                     "  diffuseColor *= scale;\n"
                     "}\n"
                 )
+                # maintain consistency with other approaches
+                prop.opacity = 1.0
+                self.mapper.emissive = True
+                self.mapper.scale_factor *= 1.5
             else:
-                prop.SetRenderPointsAsSpheres(render_points_as_spheres)
+                prop.render_points_as_spheres = render_points_as_spheres
 
         if backface_params is not None:
             if isinstance(backface_params, Property):
@@ -4806,8 +4826,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         style : str, default: 'points'
             Visualization style of the mesh.  One of the following:
             ``style='points'``, ``style='points_gaussian'``.
-            ``'points_gaussian'`` can be improved with the ``emissive``,
-            ``gaussian_radius``, and ``render_points_as_spheres`` options.
+            ``'points_gaussian'`` can be controlled with the ``emissive`` and
+            ``render_points_as_spheres`` options.
 
         **kwargs : dict, optional
             See :func:`pyvista.BasePlotter.add_mesh` for optional
@@ -4830,7 +4850,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                       point_size=100.0)
         >>> pl.show()
 
-        Plot using the points_gaussian style
+        Plot using the ``'points_gaussian'`` style
 
         >>> points = np.random.random((10, 3))
         >>> pl = pyvista.Plotter()
@@ -5156,6 +5176,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         viewup=None,
         write_frames=False,
         threaded=False,
+        reset_clipping_range=False,
         progress_bar=False,
     ):
         """Orbit on the given path focusing on the focus point.
@@ -5170,7 +5191,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The point of focus the camera.
 
         step : float, optional
-            The timestep between flying to each camera position.
+            The timestep between flying to each camera position. Ignored when
+            the plotter run "off screen".
 
         viewup : list(float), optional
             The normal to the orbital plane.
@@ -5246,7 +5268,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     self.render()
                 sleep_time = step - (time.time() - tstart)
-                if sleep_time > 0:
+                if sleep_time > 0 and not self.off_screen:
                     time.sleep(sleep_time)
             if write_frames:
                 self.mwriter.close()

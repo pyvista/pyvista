@@ -349,6 +349,24 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     def dataset(self, obj: 'pv.core.dataset.DataSet'):
         return self.SetInputData(obj)
 
+    def as_rgba(self):
+        """Convert the active scalars to RGBA.
+
+        This method is used to convert the active scalars to a fixed RGBA array
+        and is used for certain mappers that do not support the "map" color
+        mode.
+
+        """
+        if self.color_mode == 'direct':
+            return
+
+        self._configure_scalars_mode(
+            self.lookup_table(self.dataset.active_scalars),
+            '__rgba__',
+            self.scalar_map_mode,
+            True,
+        )
+
     def _configure_scalars_mode(
         self,
         scalars,
@@ -672,6 +690,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             preference,
             rgb or custom_opac,
         )
+
+        if isinstance(self, PointGaussianMapper):
+            self.as_rgba()
 
     @property
     def cmap(self):
