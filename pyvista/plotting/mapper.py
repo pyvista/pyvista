@@ -32,6 +32,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     def copy(self) -> '_BaseMapper':
         """Create a copy of this mapper.
 
+        Returns
+        -------
+        pyvista.DataSetMapper
+            A copy of this dataset mapper.
+
         Examples
         --------
         >>> import pyvista as pv
