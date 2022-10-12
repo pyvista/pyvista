@@ -19,7 +19,7 @@ import pyvista
 from pyvista import examples
 
 helmet_file = examples.gltf.download_damaged_helmet()
-texture = examples.hdr.download_dikhololo_night()
+texture = examples.download_dikhololo_night()
 
 
 ###############################################################################

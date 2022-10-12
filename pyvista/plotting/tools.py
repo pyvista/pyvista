@@ -11,7 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyvistaDeprecationWarning
+from pyvista.utilities import PyVistaDeprecationWarning
 
 from .colors import Color
 
@@ -372,10 +372,9 @@ def create_axes_orientation_box(
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = _vtk.vtkActor()
-        cube_actor.SetMapper(cube_mapper)
-        cube_actor.GetProperty().BackfaceCullingOn()
-        cube_actor.GetProperty().SetOpacity(opacity)
+        cube_actor = pyvista.Actor(mapper=cube_mapper)
+        cube_actor.prop.culling = 'back'
+        cube_actor.prop.opacity = opacity
 
         prop_assembly = _vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)
@@ -420,21 +419,38 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     ----------
     mapping : list(float) or str
         The opacity mapping to use. Can be a ``str`` name of a predefined
-        mapping including 'linear', 'geom', 'sigmoid', 'sigmoid_3-10'.
-        Append an '_r' to any of those names to reverse that mapping.
-        This can also be a custom array/list of values that will be
-        interpolated across the ``n_color`` range for user defined mappings.
+        mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
+        ``'sigmoid_3-10'``. Append an ``'_r'`` to any of those names to
+        reverse that mapping. This can also be a custom array/list of values
+        that will be interpolated across the ``n_color`` range for user
+        defined mappings.
 
     n_colors : int
         The amount of colors that the opacities must be mapped to.
 
     interpolate : bool
-        Flag on whether or not to interpolate the opacity mapping for all colors
+        Flag on whether or not to interpolate the opacity mapping for all
+        colors.
 
     kind : str
-        The interepolation kind if ``interpolate`` is true and ``scipy`` is
-        available. Options are ('linear', 'nearest', 'zero', 'slinear',
-        'quadratic', 'cubic', 'previous', 'next'.
+        The interpolation kind if ``interpolate`` is ``True`` and ``scipy``
+        is available. If ``scipy`` is not available, linear interpolation
+        is always used. Options are:
+
+        - ``'linear'``
+        - ``'nearest'``
+        - ``'zero'``
+        - ``'slinear'``
+        - ``'quadratic'``
+        - ``'cubic'``
+        - ``'previous'``
+        - ``'next'``
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of ``numpy.uint8`` values ``n_colors`` long containing the
+        [0-255] opacity mapping values.
 
     Examples
     --------
@@ -473,7 +489,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise KeyError(f'opactiy transfer function ({mapping}) unknown.')
+            raise ValueError(
+                f'Opacity transfer function ({mapping}) unknown. '
+                f'Valid options: {list(transfer_func.keys())}'
+            ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -570,7 +589,7 @@ def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
     # Deprecated on v0.34.0, estimated removal on v0.37.0
     warnings.warn(
         "The usage of `parse_color` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     color_valid = True
     if color is None:

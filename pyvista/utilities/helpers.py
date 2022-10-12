@@ -944,6 +944,9 @@ def wrap(dataset):
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
             mesh = pyvista.UniformGrid(dims=dataset.shape)
+            if isinstance(dataset, pyvista.pyvista_ndarray):
+                # this gets rid of pesky VTK reference since we're raveling this
+                dataset = np.array(dataset, copy=False)
             mesh['values'] = dataset.ravel(order='F')
             mesh.active_scalars_name = 'values'
             return mesh
@@ -1003,14 +1006,31 @@ def numpy_to_texture(image):
     Parameters
     ----------
     image : numpy.ndarray
-        Numpy image array.
+        Numpy image array. Texture datatype expected to be ``np.uint8``.
 
     Returns
     -------
-    vtkTexture
-        VTK texture.
+    pyvista.Texture
+        PyVista texture.
+
+    Examples
+    --------
+    Create an all white texture.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> tex_arr = np.ones((1024, 1024, 3), dtype=np.uint8) * 255
+    >>> tex = pv.numpy_to_texture(tex_arr)
 
     """
+    if image.dtype != np.uint8:
+        image = image.astype(np.uint8)
+        warnings.warn(
+            'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
+            'and converted to np.uint8.',
+            UserWarning,
+        )
+
     return pyvista.Texture(image)
 
 
@@ -1124,10 +1144,10 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.size}) must match number of rows ({dataset.n_rows}).'
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
         )
     raise ValueError(
-        f'Number of scalars ({scalars.size}) '
+        f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '
         f'or the number of cells ({dataset.n_cells}).'
     )

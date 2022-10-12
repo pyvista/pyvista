@@ -17,9 +17,10 @@ install_requires = [
     'imageio',
     'pillow',
     'appdirs',
+    'pooch',
     'scooby>=0.5.1',
-    'vtk>=8.1.2, <=9.2.0; python_version < "3.10"',
-    'vtk~=9.2.0rc1; python_version == "3.10"',
+    'vtk',
+    "typing-extensions; python_version < '3.8'",
 ]
 
 readme_file = os.path.join(filepath, 'README.rst')
@@ -84,10 +85,18 @@ setup(
     python_requires='>=3.7.*',
     install_requires=install_requires,
     extras_require={
-        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio>=5.2', 'ipyvtklink', 'pythreejs'],
+        'all': [
+            'matplotlib',
+            'colorcet',
+            'cmocean',
+            'meshio>=5.2',
+            'ipyvtklink',
+            'panel',
+            'pythreejs',
+        ],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
         'io': ['meshio>=5.2'],
-        'jupyter': ['ipyvtklink', 'pythreejs'],
+        'jupyter': ['ipyvtklink', 'panel', 'pythreejs'],
     },
     zip_safe=False,
 )

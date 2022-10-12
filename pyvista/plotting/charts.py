@@ -1068,6 +1068,10 @@ class _Chart(DocSubs):
             ``True`` if the chart was resized, ``False`` otherwise.
 
         """
+        # edge race case
+        if self._renderer is None:  # pragma: no cover
+            return
+
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self._geometry
@@ -1364,6 +1368,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
+        dev_kwargs={},
     ):
         """Show this chart in a self contained plotter.
 
@@ -1404,6 +1409,9 @@ class _Chart(DocSubs):
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``.  Defaults to ``'w'``.
 
+        dev_kwargs : dict, optional
+            Optional developer keyword arguments.
+
         Returns
         -------
         np.ndarray
@@ -1430,6 +1438,7 @@ class _Chart(DocSubs):
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,
+            **dev_kwargs,
         )
 
 
@@ -4396,7 +4405,8 @@ class Charts:
             charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
                 self.remove_chart(chart)
-            self._renderer.RemoveActor(self._actor)
+            if self._renderer is not None:
+                self._renderer.RemoveActor(self._actor)
         self._scene = None
         self._actor = None
 
