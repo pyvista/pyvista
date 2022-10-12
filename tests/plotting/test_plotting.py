@@ -340,7 +340,7 @@ def test_pbr(sphere):
 @pytest.mark.needs_vtk9
 @skip_windows
 @skip_mac
-def test_set_environment_texture_cubemap(sphere):
+def test_set_environment_texture_cubemap(sphere, verify_cache_image):
     """Test set_environment_texture with a cubemap."""
     texture = examples.download_sky_box_cube_map()
 
@@ -353,7 +353,8 @@ def test_set_environment_texture_cubemap(sphere):
         pl.show()
     else:
         # image regression test only valid for previous versions
-        pl.show(before_close_callback=None)
+        verify_cache_image.skip = True
+        pl.show()
 
 
 @pytest.mark.needs_vtk9
@@ -1831,7 +1832,8 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
 
 
-def test_closing_and_mem_cleanup():
+def test_closing_and_mem_cleanup(verify_cache_image):
+    verify_cache_image.skip = True
     n = 5
     for _ in range(n):
         for _ in range(n):
@@ -2547,14 +2549,14 @@ def test_plot_categories_int(sphere):
     sphere['data'] = sphere.points[:, 2]
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars='data', categories=5, lighting=False)
-    pl.show(before_close_callback=verify_cache_image)
+    pl.show()
 
 
 def test_plot_categories_true(sphere):
     sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars='data', categories=True, lighting=False)
-    pl.show(before_close_callback=verify_cache_image)
+    pl.show()
 
 
 @skip_windows
@@ -2668,7 +2670,7 @@ def test_plot_composite_lookup_table(multiblock_poly):
     lut = pyvista.LookupTable('Greens', n_values=8)
     pl = pyvista.Plotter()
     pl.add_composite(multiblock_poly, scalars='data_b', cmap=lut)
-    pl.show(before_close_callback=verify_cache_image)
+    pl.show()
 
 
 def test_plot_composite_preference_cell(multiblock_poly):
@@ -3006,7 +3008,7 @@ def test_charts_sin():
     chart.show()
 
 
-def test_lookup_table(verify_image_cache):
+def test_lookup_table(verify_cache_image):
     lut = pyvista.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
@@ -3018,7 +3020,7 @@ def test_lookup_table(verify_image_cache):
     if pyvista.vtk_version_info != (9, 0, 3):
         lut.plot()
     else:
-        verify_image_cache.skip = True
+        verify_cache_image.skip = True
         lut.plot()
 
 
