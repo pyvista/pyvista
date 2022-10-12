@@ -471,7 +471,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : color_like
+        nan_color : color_like, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
