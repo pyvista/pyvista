@@ -404,12 +404,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        number_of_peels : int
+        number_of_peels : int, optional
             The maximum number of peeling layers. Initial value is 4
             and is set in the ``pyvista.global_theme``. A special value of
             0 means no maximum limit.  It has to be a positive value.
 
-        occlusion_ratio : float
+        occlusion_ratio : float, optional
             The threshold under which the depth peeling algorithm
             stops to iterate over peel layers. This is the ratio of
             the number of pixels that have been touched by the last
@@ -446,7 +446,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        aa_type : str
+        aa_type : str, default='fxaa'
             Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
@@ -1115,7 +1115,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock, optional
             Input mesh to draw bounds axes around.
 
         bounds : list or tuple, optional
@@ -1556,7 +1556,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset_camera : bool, optional
             Reset camera position when ``True`` to include all actors.
 
-        outline : bool
+        outline : bool, default=True
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
@@ -2243,7 +2243,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool
+        negative : bool, default=False
             View from the opposite direction.
 
         Returns
@@ -2297,9 +2297,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        render : bool
+        render : bool, default=True
             Trigger a render after resetting the camera.
-        bounds : iterable(int)
+        bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
