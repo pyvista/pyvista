@@ -107,13 +107,11 @@ def sample_function(
     bounds : length 6 sequence, default=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:
 
-        - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
-
-        Defaults to ``(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)``.
+        - ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
     dim : length 3 sequence, default=(50, 50, 50)
         Dimensions of the data on which to sample in the format of
-        ``(xdim, ydim, zdim)``.  Defaults to ``(50, 50, 50)``.
+        ``(xdim, ydim, zdim)``.
 
     compute_normals : bool, optional
         Enable or disable the computation of normals.  Default ``False``.
