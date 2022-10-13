@@ -1304,13 +1304,13 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
 
     Parameters
     ----------
-    semi_major_axis : float, optional
+    semi_major_axis : float, default: 0.5
         Semi-major axis of ellipse.
 
-    semi_minor_axis : float, optional
+    semi_minor_axis : float, default: 0.2
         Semi-minor axis of ellipse.
 
-    resolution : int, optional
+    resolution : int, default: 100
         Number of points on the ellipse.
 
     Returns
@@ -1321,9 +1321,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     Examples
     --------
     >>> import pyvista
-    >>> semi_major_axis = 8
-    >>> semi_minor_axis = 4
-    >>> ellipse = pyvista.Ellipse(semi_major_axis, semi_minor_axis)
+    >>> ellipse = pyvista.Ellipse(semi_major_axis=8, semi_minor_axis=4)
     >>> ellipse.plot(show_edges=True, line_width=5)
     """
     points = np.zeros((resolution, 3))
