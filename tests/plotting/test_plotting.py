@@ -3076,7 +3076,6 @@ def test_plot_points_gaussian(sphere):
         render_points_as_spheres=False,
         point_size=20,
         opacity=0.5,
-        before_close_callback=verify_cache_image,
     )
 
 
@@ -3089,7 +3088,6 @@ def test_plot_points_gaussian_scalars(sphere):
         point_size=20,
         opacity=0.5,
         show_scalar_bar=False,
-        before_close_callback=verify_cache_image,
     )
 
 
@@ -3101,7 +3099,6 @@ def test_plot_points_gaussian_as_spheres(sphere):
         render_points_as_spheres=True,
         point_size=20,
         opacity=0.5,
-        before_close_callback=verify_cache_image,
     )
 
 
