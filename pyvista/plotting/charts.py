@@ -1374,7 +1374,7 @@ class _Chart(DocSubs):
 
         Parameters
         ----------
-        off_screen : bool
+        off_screen : bool, optional
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up.  Defaults to active theme setting in
             :attr:`pyvista.global_theme.full_screen
@@ -4129,7 +4129,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     Parameters
     ----------
-    figure : matplotlib.figure.Figure
+    figure : matplotlib.figure.Figure, optional
         The matplotlib figure to draw.
 
     size : list or tuple, optional
