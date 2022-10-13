@@ -159,12 +159,26 @@ def multicomp_poly():
 # this must be a session fixture to ensure this runs before any other test
 @pytest.fixture(scope="session", autouse=True)
 def get_cmd_opt(pytestconfig):
-    VerifyCacheImage.reset_image_cache = pytestconfig.getoption('reset_image_cache')
-    VerifyCacheImage.ignore_image_cache = pytestconfig.getoption('ignore_image_cache')
-    VerifyCacheImage.fail_extra_image_cache = pytestconfig.getoption('fail_extra_image_cache')
+    VerifyImageCache.reset_image_cache = pytestconfig.getoption('reset_image_cache')
+    VerifyImageCache.ignore_image_cache = pytestconfig.getoption('ignore_image_cache')
+    VerifyImageCache.fail_extra_image_cache = pytestconfig.getoption('fail_extra_image_cache')
 
 
-class VerifyCacheImage:
+class VerifyImageCache:
+    """Control image caching for testing.
+
+    Image cache files are names according to ``test_name``.
+    Multiple calls to an instance of this class will append
+    `_X` to the name after the first one.  That is, files
+    ``{test_name}``, ``{test_name}_1``, and ``{test_name}_2``
+    will be saved if called 3 times.
+
+    Parameters
+    ----------
+    test_name : str
+        Name of test to save.  Sets name of image cache file.
+
+    """
 
     reset_image_cache = False
     ignore_image_cache = False
@@ -178,18 +192,10 @@ class VerifyCacheImage:
     def __call__(self, plotter):
         """Either store or validate an image.
 
-        This is function should only be called within a pytest
-        environment.  Pass it to either the ``Plotter.show()`` or the
-        ``pyvista.plot()`` functions as the before_close_callback keyword
-        arg.
-
-        Assign this only once for each test you'd like to validate the
-        previous image of.  This will not work with parameterized tests.
-
-        Example Usage:
-        plotter = pyvista.Plotter()
-        plotter.add_mesh(sphere)
-        plotter.show()
+        Parameters
+        ----------
+        plotter : pyvista.Plotter
+            The Plotter object that is being closed.
 
         """
         if self.skip:
@@ -249,10 +255,10 @@ class VerifyCacheImage:
 
 
 @pytest.fixture(autouse=True)
-def verify_cache_image(request):
-    verify_cache_image = VerifyCacheImage(request.node.name)
-    pyvista.global_theme.before_close_callback = verify_cache_image
-    return verify_cache_image
+def verify_image_cache(request):
+    verify_image_cache = VerifyImageCache(request.node.name)
+    pyvista.global_theme.before_close_callback = verify_image_cache
+    return verify_image_cache
 
 
 @pytest.mark.needs_vtk9
@@ -340,7 +346,7 @@ def test_pbr(sphere):
 @pytest.mark.needs_vtk9
 @skip_windows
 @skip_mac
-def test_set_environment_texture_cubemap(sphere, verify_cache_image):
+def test_set_environment_texture_cubemap(sphere, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     texture = examples.download_sky_box_cube_map()
 
@@ -353,7 +359,7 @@ def test_set_environment_texture_cubemap(sphere, verify_cache_image):
         pl.show()
     else:
         # image regression test only valid for previous versions
-        verify_cache_image.skip = True
+        verify_image_cache.skip = True
         pl.show()
 
 
@@ -402,7 +408,7 @@ def test_plot_update(sphere):
     pl.close()
 
 
-def test_plot(sphere, tmpdir, verify_cache_image):
+def test_plot(sphere, tmpdir, verify_image_cache):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
     scalars = np.arange(sphere.n_points)
@@ -426,7 +432,7 @@ def test_plot(sphere, tmpdir, verify_cache_image):
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
 
-    verify_cache_image.skip = True
+    verify_image_cache.skip = True
     filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
     pyvista.plot(sphere, screenshot=filename)
 
@@ -861,8 +867,8 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-def test_make_movie(sphere, tmpdir, verify_cache_image):
-    verify_cache_image.skip = True
+def test_make_movie(sphere, tmpdir, verify_image_cache):
+    verify_image_cache.skip = True
 
     # Make temporary file
     filename = str(tmpdir.join('tmp.mp4'))
@@ -1832,8 +1838,8 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
 
 
-def test_closing_and_mem_cleanup(verify_cache_image):
-    verify_cache_image.skip = True
+def test_closing_and_mem_cleanup(verify_image_cache):
+    verify_image_cache.skip = True
     n = 5
     for _ in range(n):
         for _ in range(n):
@@ -2880,14 +2886,14 @@ def test_bool_scalars(sphere):
 
 @skip_windows  # because of pbr
 @skip_9_1_0  # pbr required
-def test_property(verify_cache_image):
+def test_property(verify_image_cache):
     prop = pyvista.Property(interpolation='pbr', metallic=1.0)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
     if pyvista.vtk_version_info <= (9, 1):
         prop.plot()
     else:
-        verify_cache_image.skip = True
+        verify_image_cache.skip = True
         prop.plot()
 
 
@@ -3008,7 +3014,7 @@ def test_charts_sin():
     chart.show()
 
 
-def test_lookup_table(verify_cache_image):
+def test_lookup_table(verify_image_cache):
     lut = pyvista.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
@@ -3020,7 +3026,7 @@ def test_lookup_table(verify_cache_image):
     if pyvista.vtk_version_info != (9, 0, 3):
         lut.plot()
     else:
-        verify_cache_image.skip = True
+        verify_image_cache.skip = True
         lut.plot()
 
 
