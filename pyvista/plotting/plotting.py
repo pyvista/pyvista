@@ -1852,8 +1852,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if hasattr(self, 'ren_win'):
-            self.ren_win.StereoRenderOn()
             self.ren_win.SetStereoTypeToAnaglyph()
+            self.ren_win.StereoRenderOn()
 
     def disable_stereo_render(self):
         """Disable stereo rendering.
