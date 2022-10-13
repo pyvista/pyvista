@@ -1326,7 +1326,6 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     >>> ellipse = pyvista.Ellipse(semi_major_axis, semi_minor_axis)
     >>> ellipse.plot(show_edges=True, line_width=5)
     """
-
     points = np.zeros((resolution, 3))
     theta = np.linspace(0.0, 2.0 * np.pi, resolution)
     points[:, 0] = semi_major_axis * np.cos(theta)
