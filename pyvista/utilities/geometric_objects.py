@@ -1299,6 +1299,42 @@ def Circle(radius=0.5, resolution=100):
     return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
+def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
+    """Create a single PolyData ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
+
+    Parameters
+    ----------
+    semi_major_axis : float, optional
+        Semi-major axis of ellipse.
+
+    semi_minor_axis : float, optional
+        Semi-minor axis of ellipse.
+
+    resolution : int, optional
+        Number of points on the ellipse.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Ellipse mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> semi_major_axis = 8
+    >>> semi_minor_axis = 4
+    >>> ellipse = pyvista.Ellipse(semi_major_axis, semi_minor_axis)
+    >>> ellipse.plot(show_edges=True, line_width=5)
+    """
+
+    points = np.zeros((resolution, 3))
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
+    points[:, 0] = semi_major_axis * np.cos(theta)
+    points[:, 1] = semi_minor_axis * np.sin(theta)
+    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
+    return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
 def Superquadric(
     center=(0.0, 0.0, 0.0),
     scale=(1.0, 1.0, 1.0),
