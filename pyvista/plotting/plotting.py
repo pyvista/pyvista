@@ -5990,12 +5990,12 @@ class Plotter(BasePlotter):
 
         before_close_callback : Callable, optional
             Callback that is called before the plotter is closed.
-            This is useful to capture the state of the plotter after user
-            interaction or automatic screenshot capturing. The function takes
-            a single parameter, which is the plotter object before it closes.
+            The function takes a single parameter, which is the plotter object
+            before it closes. An example of use is to capture a screenshot after
+            interaction.
 
             def fun(plotter):
-                ...
+                plotter.screenshot('file.png')
 
         **kwargs : dict, optional
             Developer keyword arguments.
