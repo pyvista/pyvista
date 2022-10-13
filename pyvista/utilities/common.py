@@ -104,14 +104,14 @@ def sample_function(
         Implicit function to evaluate.  For example, the function
         generated from :func:`pyvista.perlin_noise`.
 
-    bounds : length 6 sequence
+    bounds : length 6 sequence, default=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:
 
         - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
 
         Defaults to ``(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)``.
 
-    dim : length 3 sequence
+    dim : length 3 sequence, default=(50, 50, 50)
         Dimensions of the data on which to sample in the format of
         ``(xdim, ydim, zdim)``.  Defaults to ``(50, 50, 50)``.
 
