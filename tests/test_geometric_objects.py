@@ -276,6 +276,7 @@ def test_circle():
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
     assert np.isclose(diameter, radius * 2.0, rtol=1e-3)
 
+
 def test_ellipse():
     semi_major_axis = 8.0
     semi_minor_axis = 4.0
