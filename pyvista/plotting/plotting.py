@@ -5164,7 +5164,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         viewup=None,
         write_frames=False,
         threaded=False,
-        reset_clipping_range=False,
         progress_bar=False,
     ):
         """Orbit on the given path focusing on the focus point.
