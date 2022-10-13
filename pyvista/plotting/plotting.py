@@ -1835,7 +1835,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.iren.enable_rubber_band_2d_style()
 
     def enable_stereo_render(self):
-        """Enable stereo rendering.
+        """Enable anaglyph stereo rendering.
 
         Disable this with :func:`disable_stereo_render
         <BasePlotter.disable_stereo_render>`
