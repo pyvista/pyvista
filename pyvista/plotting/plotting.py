@@ -5992,10 +5992,10 @@ class Plotter(BasePlotter):
             Callback that is called before the plotter is closed.
             The function takes a single parameter, which is the plotter object
             before it closes. An example of use is to capture a screenshot after
-            interaction.
+            interaction::
 
-            def fun(plotter):
-                plotter.screenshot('file.png')
+                def fun(plotter):
+                    plotter.screenshot('file.png')
 
         **kwargs : dict, optional
             Developer keyword arguments.
