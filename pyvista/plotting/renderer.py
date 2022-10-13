@@ -235,11 +235,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.add_border(border_color, border_width)
 
     @property
-    def actors(self):
-        """Return the dict of actors in the Renderer."""
-        return self._actors
-
-    @property
     def _charts(self):
         """Return the charts collection."""
         # lazy instantiation here to avoid creating the charts object unless needed.

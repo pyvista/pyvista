@@ -555,7 +555,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             raise VTKVersionError('Support for glTF requires VTK v9 or newer')
 
-        if not hasattr(self, "ren_win"):
+        if self.render_window is None:
             raise RuntimeError('This plotter has been closed and is unable to export the scene.')
 
         from vtkmodules.vtkIOExport import vtkGLTFExporter
@@ -642,7 +642,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vrml("sample")  # doctest:+SKIP
 
         """
-        if not hasattr(self, "ren_win"):
+        if self.render_window is None:
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
         exporter = _vtk.lazy_vtkVRMLExporter()
@@ -1037,7 +1037,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # apply MSAA to entire render window
         if aa_type == 'msaa':
-            if not hasattr(self, 'ren_win'):
+            if self.render_window is None:
                 raise AttributeError('The render window has been closed.')
             if multi_samples is None:
                 multi_samples = self._theme.multi_samples
@@ -1324,17 +1324,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.enable_depth_peeling)
     def enable_depth_peeling(self, *args, **kwargs):
         """Wrap ``Renderer.enable_depth_peeling``."""
-        if hasattr(self, 'ren_win'):
+        if self.render_window is not None:
             result = self.renderer.enable_depth_peeling(*args, **kwargs)
             if result:
                 self.ren_win.AlphaBitPlanesOn()
-        return result
+            return result
 
     @wraps(Renderer.disable_depth_peeling)
     def disable_depth_peeling(self):
         """Wrap ``Renderer.disable_depth_peeling``."""
-        if hasattr(self, 'ren_win'):
-            self.ren_win.AlphaBitPlanesOff()
+        if self.render_window is not None:
+            self.render_window.AlphaBitPlanesOff()
             return self.renderer.disable_depth_peeling()
 
     @wraps(Renderer.get_default_cam_pos)
@@ -1567,7 +1567,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
-        if not hasattr(self, 'ren_win'):
+        if self.render_window is None:
             raise AttributeError(
                 '\n\nTo retrieve an image after the render window '
                 'has been closed, set:\n\n'
@@ -1582,7 +1582,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         To retrieve an image after the render window has been closed,
         set: ``plotter.store_image = True`` before closing the plotter.
         """
-        if not hasattr(self, 'ren_win') and self.last_image is not None:
+        if self.render_window is None and self.last_image is not None:
             return self.last_image
 
         self._check_rendered()
@@ -1600,7 +1600,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Does nothing until ``show`` has been called.
         """
-        if hasattr(self, 'ren_win') and not self._first_time:
+        if self.render_window is not None and not self._first_time:
             log.debug('Rendering')
             self.ren_win.Render()
             self._rendered = True
@@ -1853,9 +1853,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        if hasattr(self, 'ren_win'):
-            self.ren_win.StereoRenderOn()
-            self.ren_win.SetStereoTypeToAnaglyph()
+        if self.render_window is not None:
+            self.render_window.StereoRenderOn()
+            self.render_window.SetStereoTypeToAnaglyph()
 
     def disable_stereo_render(self):
         """Disable stereo rendering.
@@ -1875,7 +1875,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        if hasattr(self, 'ren_win'):
+        if self.render_window is not None:
             self.ren_win.StereoRenderOff()
 
     def hide_axes_all(self):
@@ -3943,6 +3943,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _clear_ren_win(self):
         """Clear the render window."""
+        # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
             del self.ren_win
@@ -3981,8 +3982,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # this is an experimental feature
         if KILL_DISPLAY:  # pragma: no cover
             disp_id = None
-            if hasattr(self, 'ren_win'):
-                disp_id = self.ren_win.GetGenericDisplayId()
+            if self.render_window is not None:
+                disp_id = self.render_window.GetGenericDisplayId()
         self._clear_ren_win()
 
         if self.iren is not None:
@@ -4342,7 +4343,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         # allow no render window
-        if not hasattr(self, 'ren_win') and self.last_image_depth is not None:
+        if self.render_window is None and self.last_image_depth is not None:
             zval = self.last_image_depth.copy()
             if fill_value is not None:
                 zval[self._image_depth_null] = fill_value
@@ -4896,7 +4897,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.save_graphic("img.svg")  # doctest:+SKIP
 
         """
-        if not hasattr(self, 'ren_win'):
+        if self.render_window is None:
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
@@ -4977,7 +4978,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # This if statement allows you to save screenshots of closed plotters
         # This is needed for the sphinx-gallery to work
-        if not hasattr(self, 'ren_win'):
+        if self.render_window is None:
             # If plotter has been closed...
             # check if last_image exists
             if self.last_image is not None:
@@ -5198,7 +5199,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vtkjs("sample")  # doctest:+SKIP
 
         """
-        if not hasattr(self, 'ren_win'):
+        if self.render_window is None:
             raise RuntimeError('Export must be called before showing/closing the scene.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
@@ -5228,7 +5229,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if pyvista.vtk_version_info <= (8, 1, 2):
             raise pyvista.core.errors.VTKVersionError()
 
-        if not hasattr(self, "ren_win"):
+        if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
@@ -5805,6 +5806,12 @@ class Plotter(BasePlotter):
 
     @property
     def render_window(self):
+        """Access the vtkRenderWindow.
+
+        If the plotter is closed, this will return None.
+        """
+        if not hasattr(self, 'ren_win'):
+            return
         return self.ren_win
 
     def show(
@@ -6000,7 +6007,7 @@ class Plotter(BasePlotter):
 
             raise DeprecationError(txt)
 
-        if not hasattr(self, "ren_win"):
+        if self.render_window is None:
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
         if full_screen is None:

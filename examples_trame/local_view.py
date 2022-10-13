@@ -1,11 +1,10 @@
-import pyvista as pv
-from pyvista import examples
-
-from pyvista.trame import PyVistaLocalView
 from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout
 from trame.widgets import vuetify
 
+import pyvista as pv
+from pyvista import examples
+from pyvista.trame import PyVistaLocalView
 
 server = get_server()
 state, ctrl = server.state, server.controller

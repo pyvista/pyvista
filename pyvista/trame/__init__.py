@@ -8,7 +8,7 @@ class _BasePyVistaView:
         self.pyvista_initialize()
 
     def pyvista_initialize(self):
-        if not hasattr(self._plotter, 'ren_win'):
+        if self._plotter.render_window is None:
             raise RuntimeError(
                 'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
             )

@@ -116,7 +116,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
             if img._first_time:  # must be rendered first else segfault
                 img._on_first_render_request()
                 img.render()
-            if not hasattr(img, 'ren_win'):
+            if img.render_window is None:
                 raise RuntimeError(
                     'Unable to extract image from Plotter as it has already been closed.'
                 )
