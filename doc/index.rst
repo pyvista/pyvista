@@ -10,10 +10,6 @@
 
 |
 
-.. jupyter-execute::
-
-   from pyvista.demos import logo
-   logo.plot_logo(jupyter_backend='panel', show_note=True)
 
 Overview
 ********
