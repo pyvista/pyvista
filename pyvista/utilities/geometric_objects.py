@@ -139,10 +139,10 @@ def CylinderStructured(
     height : float, optional
         Height of the cylinder along its Z-axis.
 
-    center : sequence
+    center : sequence, default=(0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence
+    direction : sequence, default=(1.0, 0.0, 0.0)
         Direction cylinder Z-axis in ``[x, y, z]``.
 
     theta_resolution : int, optional
@@ -373,22 +373,22 @@ def Plane(
 
     Parameters
     ----------
-    center : list or tuple or np.ndarray
+    center : list or tuple or np.ndarray, default=(0, 0, 0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : list or tuple or np.ndarray, default=(0, 0, 1)
         Direction of the plane's normal in ``[x, y, z]``.
 
-    i_size : float
+    i_size : float, default=1
         Size of the plane in the i direction.
 
-    j_size : float
+    j_size : float, default=1
         Size of the plane in the j direction.
 
-    i_resolution : int
+    i_resolution : int, default=10
         Number of points on the plane in the i direction.
 
-    j_resolution : int
+    j_resolution : int, default=10
         Number of points on the plane in the j direction.
 
     Returns
@@ -801,7 +801,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
 
     Parameters
     ----------
-    center : iterable
+    center : iterable, default=(0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Middle of the axis of the disc.
 
     inner : float, optional
@@ -810,7 +810,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
     outer : float, optional
         The outer radius.
 
-    normal : iterable
+    normal : iterable, default=(0, 0, 1)
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
     r_res : int, optional
