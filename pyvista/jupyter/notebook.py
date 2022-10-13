@@ -104,7 +104,7 @@ def show_ipyvtk(plotter, return_viewer):
 
     # Have to leave the Plotter open for the widget to use
     disp = ViewInteractiveWidget(
-        plotter.ren_win,
+        plotter.render_window,
         on_close=plotter.close,
         transparent_background=plotter.image_transparent_background,
     )
@@ -137,7 +137,7 @@ def show_panel(plotter, return_viewer):
 
     axes_enabled = plotter.renderer.axes_enabled
     pan = pn.panel(
-        plotter.ren_win,
+        plotter.render_window,
         sizing_mode='stretch_width',
         orientation_widget=axes_enabled,
         enable_keybindings=False,

@@ -182,7 +182,7 @@ import pyvista; \
 plotter = pyvista.Plotter(notebook=False, off_screen=True); \
 plotter.add_mesh(pyvista.Sphere()); \
 plotter.show(auto_close=False); \
-gpu_info = plotter.ren_win.ReportCapabilities(); \
+gpu_info = plotter.render_window.ReportCapabilities(); \
 print(gpu_info); \
 plotter.close()\
 """

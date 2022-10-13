@@ -23,7 +23,11 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         VtkRemoteView.__init__(
-            self, self._plotter.ren_win, interactive_ratio=interactive_ratio, ref=ref, **kwargs
+            self,
+            self._plotter.render_window,
+            interactive_ratio=interactive_ratio,
+            ref=ref,
+            **kwargs,
         )
 
 
@@ -33,6 +37,6 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     def __init__(self, plotter, ref='view', **kwargs):
         """Create a trame local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
-        VtkLocalView.__init__(self, self._plotter.ren_win, ref=ref, **kwargs)
+        VtkLocalView.__init__(self, self._plotter.render_window, ref=ref, **kwargs)
         # CRITICAL to initialize the client render window
         self._server.controller.on_server_ready.add(self.update)

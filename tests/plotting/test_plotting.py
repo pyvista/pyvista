@@ -56,7 +56,7 @@ def using_mesa():
     """Determine if using mesa."""
     pl = pyvista.Plotter(notebook=False, off_screen=True)
     pl.show(auto_close=False)
-    gpu_info = pl.ren_win.ReportCapabilities()
+    gpu_info = pl.render_window.ReportCapabilities()
     pl.close()
 
     regex = re.compile("OpenGL version string:(.+)\n")

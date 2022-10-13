@@ -447,7 +447,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     output_dir = os.path.join(root_output_directory, timeStamp)
     mkdir_p(output_dir)
 
-    renderers = plotter.ren_win.GetRenderers()
+    renderers = plotter.render_window.GetRenderers()
 
     scDirs = []
     sceneComponents = []

@@ -788,9 +788,9 @@ class RenderWindowInteractor:
         """Initialize the interactor."""
         self.interactor.Initialize()
 
-    def set_render_window(self, ren_win):
+    def set_render_window(self, render_window):
         """Set the render window."""
-        self.interactor.SetRenderWindow(ren_win)
+        self.interactor.SetRenderWindow(render_window)
 
     def process_events(self):
         """Process events."""
