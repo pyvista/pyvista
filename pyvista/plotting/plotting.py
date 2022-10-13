@@ -1856,7 +1856,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.ren_win.StereoRenderOn()
 
     def disable_stereo_render(self):
-        """Disable stereo rendering.
+        """Disable anaglyph stereo rendering.
 
         Enable again with :func:`enable_stereo_render
         <BasePlotter.enable_stereo_render>`
