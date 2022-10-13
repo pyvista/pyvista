@@ -1011,7 +1011,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        radius : float
+        radius : float, optional
             Minimum tube radius (minimum because the tube radius may
             vary).
 

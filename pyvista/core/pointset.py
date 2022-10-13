@@ -1707,7 +1707,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Parameters
         ----------
-        deep : bool
+        deep : bool, default=False
             When ``True``, makes a copy of the points array.  Default
             ``False``.  Cells and cell types are always copied.
 
