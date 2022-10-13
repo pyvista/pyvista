@@ -251,7 +251,7 @@ class VerifyCacheImage:
 @pytest.fixture(autouse=True)
 def verify_cache_image(request):
     verify_cache_image = VerifyCacheImage(request.node.name)
-    pyvista.global_theme._before_close_callback = verify_cache_image
+    pyvista.global_theme.before_close_callback = verify_cache_image
     return verify_cache_image
 
 

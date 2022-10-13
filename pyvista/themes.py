@@ -33,11 +33,12 @@ pyvista.
 from enum import Enum
 import json
 import os
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 import warnings
 
 from ._typing import color_like
 from .plotting.colors import Color, get_cmap_safe
+from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
 from .utilities.misc import PyVistaDeprecationWarning
 
@@ -2146,6 +2147,15 @@ class DefaultTheme(_ThemeConfig):
             raise TypeError('Configuration type must be `_AxesConfig`.')
         self._axes = config
 
+    @property
+    def before_close_callback(self) -> Callable[[Plotter], None]:
+        """Return the default before_close_callback function for Plotter."""
+        return self._before_close_callback
+
+    @before_close_callback.setter
+    def before_close_callback(self, value: Callable[[Plotter], None]):
+        self._before_close_callback = value
+
     def restore_defaults(self):
         """Restore the theme defaults.
 
@@ -2199,6 +2209,7 @@ class DefaultTheme(_ThemeConfig):
             'Anti-Aliasing': '_anti_aliasing',
             'Split sharp edges': '_split_sharp_edges',
             'Sharp edges feat. angle': '_sharp_edges_feature_angle',
+            'Before close callback': '_before_close_callback',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
