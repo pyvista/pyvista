@@ -2686,7 +2686,7 @@ def test_plot_composite_preference_cell(multiblock_poly):
 
 
 @skip_windows  # because of opacity
-def test_plot_composite_poly_scalars_opacity(multiblock_poly):
+def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pyvista.Plotter()
 
     actor, mapper = pl.add_composite(
@@ -2706,6 +2706,7 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly):
     # 9.0.3 has a bug where VTK changes the edge visibility on blocks that are
     # also opaque. Don't verify the image of that version.
     if pyvista.vtk_version_info == (9, 0, 3):
+        verify_image_cache.skip = True
         pl.show()
     else:
         pl.show()
