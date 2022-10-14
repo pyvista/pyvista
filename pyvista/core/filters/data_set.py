@@ -950,7 +950,7 @@ class DataSetFilters:
 
         component : int, default=0
             When using ``component_mode='selected'``, this sets
-            which component to threshold on.  Default is ``0``.
+            which component to threshold on.
 
         Returns
         -------
@@ -3641,7 +3641,7 @@ class DataSetFilters:
         Parameters
         ----------
         target_reduction : float, default=0.5
-            Fraction of the original mesh to remove. Default is ``0.5``
+            Fraction of the original mesh to remove.
             TargetReduction is set to ``0.9``, this filter will try to reduce
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
