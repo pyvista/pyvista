@@ -74,7 +74,7 @@ pv.plot(points, style='points_gaussian', opacity=0.5, point_size=15)
 # Here's a plotter with four combinations of the options side-by-side so you
 # can see for yourself the different options available when plotting these
 # points. PyVista tries to achieve sensible defaults, but should you find these
-# insuffient for your needs, feel free to play around with the various options
+# insufficient for your needs, feel free to play around with the various options
 # and find something that works for you.
 
 pl = pv.Plotter(shape=(2, 2))
