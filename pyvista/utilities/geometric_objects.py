@@ -139,10 +139,10 @@ def CylinderStructured(
     height : float, optional
         Height of the cylinder along its Z-axis.
 
-    center : sequence
+    center : sequence, default=(0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence
+    direction : sequence, default=(1.0, 0.0, 0.0)
         Direction cylinder Z-axis in ``[x, y, z]``.
 
     theta_resolution : int, optional
@@ -373,22 +373,22 @@ def Plane(
 
     Parameters
     ----------
-    center : list or tuple or np.ndarray
+    center : list or tuple or np.ndarray, default=(0, 0, 0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : list or tuple or np.ndarray, default=(0, 0, 1)
         Direction of the plane's normal in ``[x, y, z]``.
 
-    i_size : float
+    i_size : float, default=1
         Size of the plane in the i direction.
 
-    j_size : float
+    j_size : float, default=1
         Size of the plane in the j direction.
 
-    i_resolution : int
+    i_resolution : int, default=10
         Number of points on the plane in the i direction.
 
-    j_resolution : int
+    j_resolution : int, default=10
         Number of points on the plane in the j direction.
 
     Returns
@@ -801,7 +801,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
 
     Parameters
     ----------
-    center : iterable
+    center : iterable, default=(0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Middle of the axis of the disc.
 
     inner : float, optional
@@ -810,7 +810,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
     outer : float, optional
         The outer radius.
 
-    normal : iterable
+    normal : iterable, default=(0, 0, 1)
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
     r_res : int, optional
@@ -1295,6 +1295,39 @@ def Circle(radius=0.5, resolution=100):
     theta = np.linspace(0.0, 2.0 * np.pi, resolution)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
+    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
+    return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
+def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
+    """Create a single PolyData ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
+
+    Parameters
+    ----------
+    semi_major_axis : float, default: 0.5
+        Semi-major axis of ellipse.
+
+    semi_minor_axis : float, default: 0.2
+        Semi-minor axis of ellipse.
+
+    resolution : int, default: 100
+        Number of points on the ellipse.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Ellipse mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> ellipse = pyvista.Ellipse(semi_major_axis=8, semi_minor_axis=4)
+    >>> ellipse.plot(show_edges=True, line_width=5)
+    """
+    points = np.zeros((resolution, 3))
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
+    points[:, 0] = semi_major_axis * np.cos(theta)
+    points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
 
