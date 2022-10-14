@@ -208,6 +208,12 @@ def test_remove_blurring(sphere):
     assert pl.renderer.GetPass() is None
 
 
+def test_add_points_invalid_style(sphere):
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError, match='Should be either "points"'):
+        pl.add_points(sphere, style='wireframe')
+
+
 def test_anti_aliasing_multiplot(sphere):
     pl = pyvista.Plotter(shape=(1, 2))
     pl.enable_anti_aliasing('fxaa', all_renderers=False)

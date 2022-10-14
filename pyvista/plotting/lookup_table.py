@@ -710,29 +710,24 @@ class LookupTable(_vtk.vtkLookupTable):
             values that will be interpolated across the ``n_color`` range for
             user defined mappings. Values must be between 0 and 1.
 
-            If an ``int``, simply applies the same opacity across the entire
-            colormap and must be between 0 and 1.
+            If a ``float``, simply applies the same opacity across the entire
+            colormap and must be between 0 and 1. Note that ``int`` values are
+            interpreted as if they were floats.
 
         interpolate : bool, default: True
             Flag on whether or not to interpolate the opacity mapping for all
             colors.
 
         kind : str, default: 'quadratic'
-            The interepolation kind if ``interpolate`` is ``True`` and
-            ``scipy`` is available. Options are:
+            The interpolation kind if ``interpolate`` is ``True`` and ``scipy``
+            is available. See :class:`scipy.interpolate.interp1d` for the
+            available interpolation kinds.
 
-            - ``'linear'``
-            - ``'nearest'``
-            - ``'zero'``
-            - ``'slinear'``
-            - ``'quadratic'``
-            - ``'cubic'``
-            - ``'previous'``
-            - ``'next'``
+            If ``scipy`` is not available, ``'linear'`` interpolation is used.
 
         Examples
         --------
-        Apply a user defined opacity custom opacity to a lookup table and plot the
+        Apply a user defined custom opacity to a lookup table and plot the
         random hills example.
 
         >>> import pyvista as pv
@@ -747,12 +742,12 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if isinstance(opacity, (float, int)):
-            if opacity < 0 or opacity > 1:
-                raise ValueError(f'Opacity must bet between 0 and 1, got {opacity}')
+            if not 0 <= opacity <= 1:
+                raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
             # no interpolation is necessary
-            self.values[:, -1] = np.array(opacity, copy=False).copy()
+            self.values[:, -1] = np.array(opacity)
         else:
             self.values[:, -1] = opacity_transfer_function(
                 opacity, self.n_values, interpolate=interpolate, kind=kind
