@@ -96,6 +96,7 @@ HIGH_VARIANCE_TESTS = {
     'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
     'test_opacity_by_array_user_transform',
     'test_pbr',
+    'test_plot',
     'test_set_environment_texture_cubemap',
     'test_set_viewup',
 }
@@ -106,9 +107,11 @@ VER_IMAGE_REGRESSION_WARNING = 1000
 # and will not be verified
 WINDOWS_SKIP_IMAGE_CACHE = {
     'test_array_volume_rendering',
+    'test_closing_and_mem_cleanup',
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
+    'test_milti_block_plot',
     'test_multi_plot_scalars',  # flaky
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
