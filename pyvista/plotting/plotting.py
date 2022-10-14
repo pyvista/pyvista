@@ -1870,7 +1870,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        if self.render_window is not None
+        if self.render_window is not None:
             self.ren_win.SetStereoTypeToAnaglyph()
             self.ren_win.StereoRenderOn()
 
