@@ -360,12 +360,8 @@ def test_set_environment_texture_cubemap(sphere, verify_image_cache):
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    if pyvista.vtk_version_info <= (9, 1):
-        pl.show()
-    else:
-        # image regression test only valid for previous versions
-        verify_image_cache.skip = True
-        pl.show()
+    verify_image_cache.skip = pyvista.vtk_version_info > (9, 1)
+    pl.show()
 
 
 @pytest.mark.needs_vtk9
@@ -1037,7 +1033,7 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.show()
 
 
-def test_set_background(request):
+def test_set_background():
     plotter = pyvista.Plotter()
     plotter.set_background('k')
     plotter.background_color = "yellow"
@@ -2710,11 +2706,8 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
 
     # 9.0.3 has a bug where VTK changes the edge visibility on blocks that are
     # also opaque. Don't verify the image of that version.
-    if pyvista.vtk_version_info == (9, 0, 3):
-        verify_image_cache.skip = True
-        pl.show()
-    else:
-        pl.show()
+    verify_image_cache.skip = pyvista.vtk_version_info == (9, 0, 3)
+    pl.show()
 
 
 def test_plot_composite_poly_scalars_cell(multiblock_poly):
@@ -2896,11 +2889,8 @@ def test_property(verify_image_cache):
     prop = pyvista.Property(interpolation='pbr', metallic=1.0)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    if pyvista.vtk_version_info <= (9, 1):
-        prop.plot()
-    else:
-        verify_image_cache.skip = True
-        prop.plot()
+    verify_image_cache.skip > (9, 2)
+    prop.plot()
 
 
 def test_tight_square(noise_2d):
@@ -3029,11 +3019,8 @@ def test_lookup_table(verify_image_cache):
 
     # There are minor variations within 9.0.3 that slightly invalidate the
     # image cache.
-    if pyvista.vtk_version_info != (9, 0, 3):
-        lut.plot()
-    else:
-        verify_image_cache.skip = True
-        lut.plot()
+    verify_image_cache.skip = pyvista.vtk_version_info == (9, 0, 3)
+    lut.plot()
 
 
 def test_plotter_lookup_table(sphere):
