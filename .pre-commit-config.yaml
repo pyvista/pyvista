@@ -27,6 +27,9 @@ repos:
       "doc examples examples_flask pyvista tests",
       "*.py *.rst *.md",
     ]
+    additional_dependencies: [
+      "tomli"
+    ]
 
 - repo: https://github.com/pycqa/pydocstyle
   rev: 6.1.1
