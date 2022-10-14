@@ -1854,7 +1854,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.iren.enable_rubber_band_2d_style()
 
     def enable_stereo_render(self):
-        """Enable stereo rendering.
+        """Enable anaglyph stereo rendering.
 
         Disable this with :func:`disable_stereo_render
         <BasePlotter.disable_stereo_render>`
@@ -1870,12 +1870,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        if self.render_window is not None:
-            self.render_window.StereoRenderOn()
-            self.render_window.SetStereoTypeToAnaglyph()
+        if self.render_window is not None
+            self.ren_win.SetStereoTypeToAnaglyph()
+            self.ren_win.StereoRenderOn()
 
     def disable_stereo_render(self):
-        """Disable stereo rendering.
+        """Disable anaglyph stereo rendering.
 
         Enable again with :func:`enable_stereo_render
         <BasePlotter.enable_stereo_render>`
