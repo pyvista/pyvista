@@ -203,16 +203,67 @@ Docstrings
 
 PyVista uses Python docstrings to create reference documentation for our Python
 APIs. Docstrings are read by developers, interactive Python users, and readers
-of our online documentation. This page describes how to write these docstrings
+of our online documentation. This section describes how to write these docstrings
 for PyVista.
 
-* PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
-  `numpydoc Style Guide`_.
+PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
+`numpydoc Style Guide`_ in all ways except for the following:
+
 * Be sure to describe all ``Parameters`` and ``Returns`` for all public
   methods.
 * We strongly encourage you to add an example section. PyVista is a visual
   library, so adding examples that show a plot will really help users figure
   out what individual methods do.
+* With optional parameters, use ``default: <value>`` instead of ``optional``
+  when the parameter has a default value instead of ``None``.
+
+Sample docstring follows:
+
+.. code:: python
+
+    def slice_x(self, x=None, generate_triangles=False):
+        """Create an orthogonal slice through the dataset in the x-direction.
+
+        Yields a MutliBlock dataset of the three slices.
+
+        Parameters
+        ----------
+        x : float, optional
+            The X location of the YZ slice.
+
+        generate_triangles : bool, default: False
+            If this is enabled, the output will be triangles. Otherwise the output
+            will be the intersection polygons.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
+
+        Examples
+        --------
+        Slice the random hills dataset with one orthogonal plane.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_orthogonal(5, generate_triangles=False)
+        >>> slices.plot(line_width=5)
+
+        See :ref:`slice_example` for more examples using this filter.
+
+        """
+
+Note the following:
+
+* The parameter definition of ``generate_triangles`` uses ``default: False``,
+  and does not include the default in the docstring's "description" section.
+* There is a newline between each parameter. This is different than
+  ``numpydoc``'s documentation where there are no lines between parameter
+  doc strings.
+* This docstring contains both a returns section and examples section.
+* Returns section does not include the parameter name if it has a single return.
+  Multiple returns (not shown) should have descriptive parameter names.
+* The examples section references the "full example" if it exists.
 
 
 Branch Naming Conventions
