@@ -2889,7 +2889,7 @@ def test_property(verify_image_cache):
     prop = pyvista.Property(interpolation='pbr', metallic=1.0)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip > (9, 2)
+    verify_image_cache.skip = pyvista.vtk_version_info > (9, 2)
     prop.plot()
 
 
