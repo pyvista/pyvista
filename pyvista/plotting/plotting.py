@@ -289,6 +289,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._initialized = True
 
     @property
+    def render_window(self):
+        """Access the vtkRenderWindow.
+
+        If the plotter is closed, this will return None.
+
+        Note
+        ----
+        Subclass must set ``ren_win`` on initialization.
+        """
+        if not hasattr(self, 'ren_win'):
+            return
+        return self.ren_win
+
+    @property
     def theme(self):
         """Return or set the theme used for this plotter.
 
@@ -5899,16 +5913,6 @@ class Plotter(BasePlotter):
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
         log.debug('Plotter init stop')
-
-    @property
-    def render_window(self):
-        """Access the vtkRenderWindow.
-
-        If the plotter is closed, this will return None.
-        """
-        if not hasattr(self, 'ren_win'):
-            return
-        return self.ren_win
 
     def show(
         self,
