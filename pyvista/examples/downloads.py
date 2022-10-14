@@ -4395,7 +4395,7 @@ def download_gif_simple(load=True):  # pragma: no cover
 
 
 def download_cloud_dark_matter(load=True):  # pragma: no cover
-    """Download a particles from a simulated dark matter halo.
+    """Download particles from a simulated dark matter halo.
 
     This dataset contains 32,314 particles.
 
