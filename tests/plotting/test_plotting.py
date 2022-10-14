@@ -111,8 +111,9 @@ WINDOWS_SKIP_IMAGE_CACHE = {
     'test_cmap_list',
     'test_collision_plot',
     'test_enable_stereo_render',
-    'test_milti_block_plot',
+    'test_multi_block_plot',
     'test_multi_plot_scalars',  # flaky
+    'test_plot',
     'test_plot_add_scalar_bar',
     'test_plot_cell_data',
     'test_plot_complex_value',
@@ -134,6 +135,7 @@ WINDOWS_SKIP_IMAGE_CACHE = {
 # these images vary between Linux/Windows and MacOS
 # and will not be verified for MacOS
 MACOS_SKIP_IMAGE_CACHE = {
+    'test_plot',
     'test_plot_show_grid_with_mesh',
     'test_property',
 }
