@@ -86,7 +86,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str
+        normal : tuple(float) or str, default='x'
             Length 3 tuple for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
@@ -527,12 +527,12 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str
+        normal : tuple(float) or str, default='x'
             Length 3 tuple for the normal vector direction. Can also be
             specified as a string conventional direction such as ``'x'`` for
             ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
 
-        origin : tuple(float)
+        origin : tuple(float), optional
             The center ``(x, y, z)`` coordinate of the plane on which
             the slice occurs.
 
@@ -695,7 +695,7 @@ class DataSetFilters:
         n : int, optional
             The number of slices to create.
 
-        axis : str or int
+        axis : str or int, default='x'
             The axis to generate the slices along. Perpendicular to the
             slices. Can be string name (``'x'``, ``'y'``, or ``'z'``) or
             axis index (``0``, ``1``, or ``2``).
@@ -948,9 +948,9 @@ class DataSetFilters:
             components to meet criteria.  'any' is when
             any component satisfies the criteria.
 
-        component : int
+        component : int, default=0
             When using ``component_mode='selected'``, this sets
-            which component to threshold on.  Default is ``0``.
+            which component to threshold on.
 
         Returns
         -------
@@ -1756,7 +1756,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        center : tuple(float)
+        center : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             center of the sphere. If ``None``, this will be automatically
             calculated.
@@ -1870,7 +1870,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        vertex : bool
+        vertex : bool, default=True
             Enable or disable the generation of vertex cells.
 
         progress_bar : bool, optional
@@ -2139,7 +2139,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        largest : bool
+        largest : bool, default=False
             Extract the largest connected part of the mesh.
 
         progress_bar : bool, optional
@@ -3640,8 +3640,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target_reduction : float
-            Fraction of the original mesh to remove. Default is ``0.5``
+        target_reduction : float, default=0.5
+            Fraction of the original mesh to remove.
             TargetReduction is set to ``0.9``, this filter will try to reduce
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
@@ -4584,7 +4584,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids
+        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids, optional
             Grids to merge to this grid.
 
         merge_points : bool, optional
@@ -4720,10 +4720,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        quality_measure : str
+        quality_measure : str, default='scaled_jacobian'
             The cell quality measure to use.
 
-        null_value : float
+        null_value : float, default=-1.0
             Float value for undefined quality. Undefined quality are qualities
             that could be addressed by this filter but is not well defined for
             the particular geometry of cell in question, e.g. a volume query
