@@ -42,12 +42,7 @@ try:
 except:  # noqa: E722
     ffmpeg_failed = True
 
-
-# Reset image cache with new images
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
-IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
-if not os.path.isdir(IMAGE_CACHE_DIR):
-    os.mkdir(IMAGE_CACHE_DIR)
 
 
 def using_mesa():
@@ -83,10 +78,6 @@ skip_mac_flaky = pytest.mark.skipif(
 )
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
-# Normal image warning/error thresholds (assumes using use_vtk)
-IMAGE_REGRESSION_ERROR = 500  # major differences
-IMAGE_REGRESSION_WARNING = 200  # minor differences
-
 # Image regression warning/error thresholds for releases after 9.0.1
 # TODO: once we have a stable release for VTK, remove these.
 HIGH_VARIANCE_TESTS = {
@@ -100,8 +91,6 @@ HIGH_VARIANCE_TESTS = {
     'test_set_environment_texture_cubemap',
     'test_set_viewup',
 }
-VER_IMAGE_REGRESSION_ERROR = 1000
-VER_IMAGE_REGRESSION_WARNING = 1000
 
 # these images vary between Windows when using OSMesa and Linux/MacOS
 # and will not be verified
@@ -189,8 +178,34 @@ class VerifyImageCache:
     ignore_image_cache = False
     fail_extra_image_cache = False
 
-    def __init__(self, test_name):
+    def __init__(
+        self,
+        test_name,
+        *,
+        cache_dir=None,
+        error_value=500,
+        warning_value=200,
+        var_error_value=1000,
+        var_warning_value=1000,
+    ):
         self.test_name = test_name
+
+        if cache_dir is None:
+            # Reset image cache with new images
+            this_path = pathlib.Path(__file__).parent.absolute()
+            self.cache_dir = os.path.join(this_path, 'image_cache')
+        else:
+            self.cache_dir = cache_dir
+
+        if not os.path.isdir(self.cache_dir):
+            os.mkdir(self.cache_dir)
+
+        self.error_value = error_value
+        self.warning_value = warning_value
+
+        self.var_error_value = var_error_value
+        self.var_warning_value = var_warning_value
+
         self.skip = False
         self.n_calls = 0
 
@@ -220,11 +235,11 @@ class VerifyImageCache:
         self.n_calls += 1
 
         if self.test_name in HIGH_VARIANCE_TESTS:
-            allowed_error = VER_IMAGE_REGRESSION_ERROR
-            allowed_warning = VER_IMAGE_REGRESSION_WARNING
+            allowed_error = self.var_error_value
+            allowed_warning = self.var_warning_value
         else:
-            allowed_error = IMAGE_REGRESSION_ERROR
-            allowed_warning = IMAGE_REGRESSION_WARNING
+            allowed_error = self.error_value
+            allowed_warning = self.warning_value
 
         # some tests fail when on Windows with OSMesa
         if os.name == 'nt' and self.test_name in WINDOWS_SKIP_IMAGE_CACHE:
@@ -234,7 +249,7 @@ class VerifyImageCache:
             return
 
         # cached image name
-        image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
+        image_filename = os.path.join(self.cache_dir, test_name[5:] + '.png')
 
         if not os.path.isfile(image_filename) and self.fail_extra_image_cache:
             raise RuntimeError(f"{image_filename} does not exist in image cache")
@@ -248,13 +263,13 @@ class VerifyImageCache:
         if error > allowed_error:
             raise RuntimeError(
                 f'{test_name} Exceeded image regression error of '
-                f'{IMAGE_REGRESSION_ERROR} with an image error of '
+                f'{allowed_error} with an image error of '
                 f'{error}'
             )
         if error > allowed_warning:
             warnings.warn(
                 f'{test_name} Exceeded image regression warning of '
-                f'{IMAGE_REGRESSION_WARNING} with an image error of '
+                f'{allowed_warning} with an image error of '
                 f'{error}'
             )
 
