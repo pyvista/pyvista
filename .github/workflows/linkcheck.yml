@@ -41,4 +41,15 @@ jobs:
         run: pip install -r requirements_docs.txt
 
       - name: LinkCheck
-        run: make -C doc linkcheck SPHINXOPTS="-W --keep-going --color"
+        run: |
+          make -C doc linkcheck SPHINXOPTS="-W --keep-going --color" > logs.txt || echo "OUTPUT=$(grep -E "broken" logs.txt | tr '\n' '@' | sed 's/@/<br>/g' | sed 's/broken/*\*`broken`\*\*/g' | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g')" >> $GITHUB_ENV
+
+      - name: Create Issue
+        if: "${{ env.OUTPUT != '' }}"
+        uses: dblock/create-a-github-issue@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/ISSUE_TEMPLATE/linkcheck_report.md
+
+      - run: echo {{ env.OUTPUT }}
