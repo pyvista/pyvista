@@ -1241,7 +1241,7 @@ def test_scalars_by_name():
     plotter.show()
 
 
-def test_multi_block_plot(request):
+def test_multi_block_plot():
     multi = pyvista.MultiBlock()
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
