@@ -2275,6 +2275,8 @@ class DefaultTheme(_ThemeConfig):
     def save(self, filename):
         """Serialize this theme to a json file.
 
+        ``before_close_callback`` is non-serializable and is omitted.
+
         Parameters
         ----------
         filename : str
@@ -2291,8 +2293,11 @@ class DefaultTheme(_ThemeConfig):
         >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
 
         """
+        data = self.to_dict()
+        # functions are not serializable
+        del data["before_close_callback"]
         with open(filename, 'w') as f:
-            json.dump(self.to_dict(), f)
+            json.dump(data, f)
 
     @property
     def use_ipyvtk(self):  # pragma: no cover
