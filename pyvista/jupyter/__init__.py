@@ -1,9 +1,19 @@
 """Jupyter notebook plotting module."""
 
+from turtle import back
 import pyvista
 from .itkplotter import PlotterITK
 
-ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'pythreejs', 'none']
+ALLOWED_BACKENDS = [
+    'ipyvtklink',
+    'panel',
+    'ipygany',
+    'static',
+    'pythreejs',
+    'trame',
+    'trame-server',
+    'none',
+]
 
 
 def _validate_jupyter_backend(backend):
@@ -61,6 +71,14 @@ def _validate_jupyter_backend(backend):
         # raises an import error when fail
         from pyvista.jupyter import pv_ipygany
 
+    if backend == 'trame' or backend == 'trame-server':
+        try:
+            from pyvista.trame.jupyter import show_trame
+        except ImportError:
+            raise ImportError(
+                'Please install `trame` and `jupyter-server-proxy` to use this feature.'
+            )
+
     if backend == 'none':
         backend = None
     return backend
@@ -103,6 +121,19 @@ def set_jupyter_backend(backend):
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
+        * ``'trame'`` : Export/serialize the scene graph to be rendered
+          with VTK.js client-side through ``trame``. Requires that a virtual
+          framebuffer be set up when displaying on a headless server and
+          requires ``trame`` and ``jupyter-server-proxy`` to be installed.
+
+        * ``'trame-server'``: Render remotely and stream the
+          resulting VTK images back to the client using ``trame``. This
+          replaces the ``'ipyvtklink'`` backend with better performance.
+          Supports all VTK methods, but suffers from lag due to remote
+          rendering. Requires that a virtual framebuffer be set up when
+          displaying on a headless server. Must have ``trame`` and
+        ``jupyter-server-proxy`` installed.
+
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
           will generate nothing on headless servers even with a
@@ -127,6 +158,14 @@ def set_jupyter_backend(backend):
     Enable the ipyvtklink backend.
 
     >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
+
+    Enable the trame client-side backend.
+
+    >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
+
+    Enable the trame server-side backend.
+
+    >>> pv.set_jupyter_backend('trame-server')  # doctest:+SKIP
 
     Just show static images.
 

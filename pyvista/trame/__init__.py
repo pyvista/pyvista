@@ -1,5 +1,11 @@
-"""Trame interface for PyVista."""
+"""Trame interface for PyVista.
+
+This requires trame v2.3.0
+
+"""
 from trame.widgets.vtk import VtkLocalView, VtkRemoteView
+
+CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
 
 class _BasePyVistaView:
@@ -9,9 +15,7 @@ class _BasePyVistaView:
 
     def pyvista_initialize(self):
         if self._plotter.render_window is None:
-            raise RuntimeError(
-                'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
-            )
+            raise RuntimeError(CLOSED_PLOTTER_ERROR)
         if not self._plotter.camera_set:
             self._plotter.view_isometric()
 

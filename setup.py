@@ -96,7 +96,8 @@ setup(
         ],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
         'io': ['meshio>=5.2'],
-        'jupyter': ['ipyvtklink', 'panel', 'pythreejs'],
+        'jupyter': ['ipyvtklink', 'panel', 'pythreejs', 'trame', 'jupyter-server-proxy'],
+        'trame': ['trame', 'jupyter-server-proxy'],
     },
     zip_safe=False,
 )
