@@ -1,10 +1,11 @@
 from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout, VAppLayout
-from trame.widgets import vuetify, html
+from trame.widgets import html, vuetify
 
 from pyvista.trame import PyVistaLocalView, PyVistaRemoteView
 
 UI_TITLE = "PyVista"
+
 
 def initialize(server, plotter, local_rendering=True):
     state, ctrl = server.state, server.controller

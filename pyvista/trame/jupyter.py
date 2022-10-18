@@ -1,12 +1,10 @@
+import asyncio
 import logging
 
-import asyncio
-from trame.app import get_server
 from trame.app import get_server, jupyter
 from trame_vtk.modules import vtk as vtk_module
 
-from pyvista.trame import CLOSED_PLOTTER_ERROR
-from pyvista.trame import ui
+from pyvista.trame import CLOSED_PLOTTER_ERROR, ui
 
 logger = logging.getLogger(__name__)
 
