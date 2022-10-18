@@ -59,7 +59,14 @@ def _show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwar
         on_ready()
 
 
-def show_trame(plotter, server=None, local_rendering=True, server_proxy=True, server_proxy_prefix=None, **kwargs):
+def show_trame(
+    plotter,
+    server=None,
+    local_rendering=True,
+    server_proxy=False,
+    server_proxy_prefix=None,
+    **kwargs,
+):
     """Run and display the trame application in jupyter's event loop
 
     The kwargs are forwarded to IPython.display.IFrame()
