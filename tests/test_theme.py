@@ -445,7 +445,7 @@ def test_save_before_close_callback(tmpdir, default_theme):
     assert dark_theme != pyvista.themes.DarkTheme()
     dark_theme.save(filename)
 
-    # fun ia stripped from the theme
+    # fun is stripped from the theme
     loaded_theme = pyvista.load_theme(filename)
     assert loaded_theme == pyvista.themes.DarkTheme()
 
