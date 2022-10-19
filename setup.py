@@ -35,6 +35,7 @@ setup(
         'pyvista.demos',
         'pyvista.jupyter',
         'pyvista.plotting',
+        'pyvista.trame',
         'pyvista.utilities',
         'pyvista.ext',
     ],
