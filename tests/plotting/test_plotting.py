@@ -187,6 +187,8 @@ class VerifyImageCache:
         warning_value=200,
         var_error_value=1000,
         var_warning_value=1000,
+        high_variance_tests=None,
+        skip_tests=None,
     ):
         self.test_name = test_name
 
@@ -206,6 +208,16 @@ class VerifyImageCache:
         self.var_error_value = var_error_value
         self.var_warning_value = var_warning_value
 
+        if high_variance_tests is not None:
+            self.high_variance_tester = re.compile(r"|".join(high_variance_tests))
+        else:
+            self.high_variance_tester = None
+
+        if skip_tests is not None:
+            self.skip_tester = re.compile(r"|".join(skip_tests))
+        else:
+            self.skip_tester = None
+
         self.skip = False
         self.n_calls = 0
 
@@ -221,11 +233,10 @@ class VerifyImageCache:
         if self.skip:
             return
 
-        # Image cache is only valid for VTK9+
-        if not VTK9:
+        if self.ignore_image_cache:
             return
 
-        if self.ignore_image_cache:
+        if self.skip_tester is not None and self.skip_tester.search(self.test_name):
             return
 
         if self.n_calls > 0:
@@ -234,19 +245,14 @@ class VerifyImageCache:
             test_name = self.test_name
         self.n_calls += 1
 
-        if self.test_name in HIGH_VARIANCE_TESTS:
+        if self.high_variance_tester is not None and self.high_variance_tester.search(
+            self.test_name
+        ):
             allowed_error = self.var_error_value
             allowed_warning = self.var_warning_value
         else:
             allowed_error = self.error_value
             allowed_warning = self.warning_value
-
-        # some tests fail when on Windows with OSMesa
-        if os.name == 'nt' and self.test_name in WINDOWS_SKIP_IMAGE_CACHE:
-            return
-        # high variation for MacOS
-        if platform.system() == 'Darwin' and self.test_name in MACOS_SKIP_IMAGE_CACHE:
-            return
 
         # cached image name
         image_filename = os.path.join(self.cache_dir, test_name[5:] + '.png')
@@ -276,7 +282,22 @@ class VerifyImageCache:
 
 @pytest.fixture(autouse=True)
 def verify_image_cache(request):
-    verify_image_cache = VerifyImageCache(request.node.name)
+    skip_tests = None
+    # some tests fail when on Windows with OSMesa
+    if os.name == 'nt':
+        skip_tests = WINDOWS_SKIP_IMAGE_CACHE
+    # high variation for MacOS
+    if platform.system() == 'Darwin':
+        skip_tests = MACOS_SKIP_IMAGE_CACHE
+
+    # Make sure that these tests are never run.
+    # Using VerifyImageCache.skip = True is not enough.
+    if not VTK9:
+        VerifyImageCache.ignore_image_cache = True
+
+    verify_image_cache = VerifyImageCache(
+        request.node.name, high_variance_tests=HIGH_VARIANCE_TESTS, skip_tests=skip_tests
+    )
     pyvista.global_theme.before_close_callback = verify_image_cache
     return verify_image_cache
 
