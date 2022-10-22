@@ -209,12 +209,12 @@ class VerifyImageCache:
         self.var_warning_value = var_warning_value
 
         if high_variance_tests is not None:
-            self.high_variance_tester = re.compile(r"|".join(high_variance_tests))
+            self.high_variance_tester = re.compile("|".join(high_variance_tests))
         else:
             self.high_variance_tester = None
 
         if skip_tests is not None:
-            self.skip_tester = re.compile(r"|".join(skip_tests))
+            self.skip_tester = re.compile("|".join(skip_tests))
         else:
             self.skip_tester = None
 
