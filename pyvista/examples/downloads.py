@@ -4996,7 +4996,6 @@ def download_cad_model_case(load=True, progress_bar=False):  # pragma: no cover
 
     Examples
     --------
-
     Download and plot the dataset.
 
     >>> from pyvista import examples
@@ -5034,7 +5033,3 @@ def download_dolfinx_mesh(load=True):  # pragma: no cover
 
     """
     return _download_and_read("dolfinx/mesh.xdmf", load=load)
-
-
-# verify example cache integrity
-_verify_cache_integrity()
