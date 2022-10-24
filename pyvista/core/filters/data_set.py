@@ -1,6 +1,6 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
-from typing import Union
+from typing import Optional, Sequence, Union
 import warnings
 
 import numpy as np
@@ -21,6 +21,7 @@ from pyvista.utilities import (
     wrap,
 )
 from pyvista.utilities.cells import numpy_to_idarr
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 @abstract_class
@@ -85,7 +86,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str
+        normal : tuple(float) or str, default='x'
             Length 3 tuple for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
@@ -163,10 +164,10 @@ class DataSetFilters:
         )
         if inplace:
             if return_clipped:
-                self.overwrite(result[0])
+                self.copy_from(result[0])
                 return self, result[1]
             else:
-                self.overwrite(result)
+                self.copy_from(result)
                 return self
         return result
 
@@ -423,7 +424,7 @@ class DataSetFilters:
         result0 = _get_output(alg)
 
         if inplace:
-            self.overwrite(result0)
+            self.copy_from(result0)
             result0 = self
 
         if both:
@@ -526,12 +527,12 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str
+        normal : tuple(float) or str, default='x'
             Length 3 tuple for the normal vector direction. Can also be
             specified as a string conventional direction such as ``'x'`` for
             ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
 
-        origin : tuple(float)
+        origin : tuple(float), optional
             The center ``(x, y, z)`` coordinate of the plane on which
             the slice occurs.
 
@@ -694,7 +695,7 @@ class DataSetFilters:
         n : int, optional
             The number of slices to create.
 
-        axis : str or int
+        axis : str or int, default='x'
             The axis to generate the slices along. Perpendicular to the
             slices. Can be string name (``'x'``, ``'y'``, or ``'z'``) or
             axis index (``0``, ``1``, or ``2``).
@@ -947,9 +948,9 @@ class DataSetFilters:
             components to meet criteria.  'any' is when
             any component satisfies the criteria.
 
-        component : int
+        component : int, default=0
             When using ``component_mode='selected'``, this sets
-            which component to threshold on.  Default is ``0``.
+            which component to threshold on.
 
         Returns
         -------
@@ -1052,10 +1053,7 @@ class DataSetFilters:
             raise TypeError('Value must either be a single scalar or a sequence.')
         else:
             # just a single value
-            if invert:
-                alg.ThresholdByLower(value)
-            else:
-                alg.ThresholdByUpper(value)
+            _set_threshold_limit(alg, value, invert)
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
@@ -1261,7 +1259,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, progress_bar=False):
+    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1272,6 +1270,10 @@ class DataSetFilters:
 
         Parameters
         ----------
+        extent : sequence, optional
+            Specify a (xmin,xmax, ymin,ymax, zmin,zmax) bounding box
+            to clip data.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1301,16 +1303,30 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
+        if extent is not None:
+            alg.SetExtent(extent)
+            alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    def extract_all_edges(self, progress_bar=False):
+    def extract_all_edges(self, use_all_points=False, progress_bar=False):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
 
         Parameters
         ----------
+        use_all_points : bool, default: False
+            Indicates whether all of the points of the input mesh should exist
+            in the output. When ``True`` enables point renumbering.  If set to
+            ``True``, then a threaded approach is used which avoids the use of
+            a point locator and is quicker.
+
+            By default this is set to ``False``, and unused points are omitted
+            from the output.
+
+            This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1335,6 +1351,14 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
+        if use_all_points:
+            try:
+                alg.SetUseAllPoints(use_all_points)
+            except AttributeError:  # pragma: no cover
+                raise VTKVersionError(
+                    'This version of VTK does not support `use_all_points=True`. '
+                    'VTK v9.1 or newer is required.'
+                )
         _update_alg(alg, progress_bar, 'Extracting All Edges')
         return _get_output(alg)
 
@@ -1732,7 +1756,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        center : tuple(float)
+        center : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             center of the sphere. If ``None``, this will be automatically
             calculated.
@@ -1846,7 +1870,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        vertex : bool
+        vertex : bool, default=True
             Enable or disable the generation of vertex cells.
 
         progress_bar : bool, optional
@@ -2115,7 +2139,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        largest : bool
+        largest : bool, default=False
             Extract the largest connected part of the mesh.
 
         progress_bar : bool, optional
@@ -2192,7 +2216,7 @@ class DataSetFilters:
         """
         mesh = DataSetFilters.connectivity(self, largest=True, progress_bar=False)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -2325,7 +2349,7 @@ class DataSetFilters:
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -2399,12 +2423,12 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Warping by Vector')
         warped_mesh = _get_output(alg)
         if inplace:
-            self.overwrite(warped_mesh)
+            self.copy_from(warped_mesh)
             return self
         else:
             return warped_mesh
 
-    def cell_data_to_point_data(self, pass_cell_data=False, progress_bar=False):
+    def cell_data_to_point_data(self, pass_cell_data=False, progress_bar=False, **kwargs):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -2424,6 +2448,9 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_cell_arrays``.
 
         Returns
         -------
@@ -2451,6 +2478,13 @@ class DataSetFilters:
         >>> surf.plot(scalars='Area')
 
         """
+        if pass_cell_data is False and 'pass_cell_arrays' in kwargs:  # pragma: no cover
+            pass_cell_data = kwargs.pop('pass_cell_arrays')
+            warnings.warn(
+                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        assert_empty_kwargs(**kwargs)
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
@@ -2460,7 +2494,7 @@ class DataSetFilters:
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ctp(self, pass_cell_data=False, progress_bar=False):
+    def ctp(self, pass_cell_data=False, progress_bar=False, **kwargs):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -2478,6 +2512,9 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_cell_arrays``.
+
         Returns
         -------
         pyvista.DataSet
@@ -2486,10 +2523,10 @@ class DataSetFilters:
 
         """
         return DataSetFilters.cell_data_to_point_data(
-            self, pass_cell_data=pass_cell_data, progress_bar=progress_bar
+            self, pass_cell_data=pass_cell_data, progress_bar=progress_bar, **kwargs
         )
 
-    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
+    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False, **kwargs):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -2504,6 +2541,9 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_point_arrays``.
 
         Returns
         -------
@@ -2535,6 +2575,13 @@ class DataSetFilters:
         >>> sphere.plot()
 
         """
+        if pass_point_data is False and 'pass_point_arrays' in kwargs:  # pragma: no cover
+            pass_point_data = kwargs.pop('pass_point_arrays')
+            warnings.warn(
+                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        assert_empty_kwargs(**kwargs)
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
@@ -2544,7 +2591,7 @@ class DataSetFilters:
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ptc(self, pass_point_data=False, progress_bar=False):
+    def ptc(self, pass_point_data=False, progress_bar=False, **kwargs):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
@@ -2562,6 +2609,9 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            Depreciated keyword argument ``pass_point_arrays``.
+
         Returns
         -------
         pyvista.DataSet
@@ -2570,7 +2620,7 @@ class DataSetFilters:
 
         """
         return DataSetFilters.point_data_to_cell_data(
-            self, pass_point_data=pass_point_data, progress_bar=progress_bar
+            self, pass_point_data=pass_point_data, progress_bar=progress_bar, **kwargs
         )
 
     def triangulate(self, inplace=False, progress_bar=False):
@@ -2612,7 +2662,7 @@ class DataSetFilters:
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -2764,11 +2814,12 @@ class DataSetFilters:
         self,
         points,
         tolerance=None,
-        pass_cell_arrays=True,
-        pass_point_arrays=True,
+        pass_cell_data=True,
+        pass_point_data=True,
         categorical=False,
         progress_bar=False,
         locator=None,
+        **kwargs,
     ):
         """Sample data values at specified point locations.
 
@@ -2785,10 +2836,10 @@ class DataSetFilters:
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
-        pass_cell_arrays : bool, optional
+        pass_cell_data : bool, optional
             Preserve source mesh's original cell data arrays.
 
-        pass_point_arrays : bool, optional
+        pass_point_data : bool, optional
             Preserve source mesh's original point data arrays.
 
         categorical : bool, optional
@@ -2802,6 +2853,10 @@ class DataSetFilters:
         locator : vtkAbstractCellLocator, optional
             Prototype cell locator to perform the ``FindCell()``
             operation.  This requires VTK 9.0.0 or newer.
+
+        **kwargs : dict, optional
+            Depreciated keyword arguments ``pass_cell_arrays`` and
+            ``pass_point_arrays``.
 
         Returns
         -------
@@ -2821,13 +2876,27 @@ class DataSetFilters:
         True
 
         """
+        if pass_cell_data is True and 'pass_cell_arrays' in kwargs:  # pragma: no cover
+            pass_cell_data = kwargs.pop('pass_cell_arrays')
+            warnings.warn(
+                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        if pass_point_data is True and 'pass_point_arrays' in kwargs:  # pragma: no cover
+            pass_point_data = kwargs.pop('pass_point_arrays')
+            warnings.warn(
+                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        assert_empty_kwargs(**kwargs)
+
         if not pyvista.is_pyvista_dataset(points):
             points = pyvista.wrap(points)
         alg = _vtk.vtkProbeFilter()
         alg.SetInputData(points)
         alg.SetSourceData(self)
-        alg.SetPassCellArrays(pass_cell_arrays)
-        alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetPassCellArrays(pass_cell_data)
+        alg.SetPassPointArrays(pass_point_data)
         alg.SetCategoricalData(categorical)
 
         if tolerance is not None:
@@ -2847,10 +2916,11 @@ class DataSetFilters:
         self,
         target,
         tolerance=None,
-        pass_cell_arrays=True,
+        pass_cell_data=True,
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        **kwargs,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -2867,7 +2937,7 @@ class DataSetFilters:
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
-        pass_cell_arrays : bool, optional
+        pass_cell_data : bool, optional
             Preserve source mesh's original cell data arrays.
 
         pass_point_data : bool, optional
@@ -2880,6 +2950,10 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword arguments ``pass_cell_arrays`` and
+            ``pass_point_arrays``.
 
         Returns
         -------
@@ -2900,13 +2974,26 @@ class DataSetFilters:
         See :ref:`resampling_example` for more examples using this filter.
 
         """
+        if pass_cell_data is True and 'pass_cell_arrays' in kwargs:  # pragma: no cover
+            pass_cell_data = kwargs.pop('pass_cell_arrays')
+            warnings.warn(
+                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        if pass_point_data is True and 'pass_point_arrays' in kwargs:  # pragma: no cover
+            pass_point_data = kwargs.pop('pass_point_arrays')
+            warnings.warn(
+                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        assert_empty_kwargs(**kwargs)
         if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetSourceData(target)
-        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetCategoricalData(categorical)
         if tolerance is not None:
@@ -2923,9 +3010,10 @@ class DataSetFilters:
         strategy='null_value',
         null_value=0.0,
         n_points=None,
-        pass_cell_arrays=True,
+        pass_cell_data=True,
         pass_point_data=True,
         progress_bar=False,
+        **kwargs,
     ):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -2972,7 +3060,7 @@ class DataSetFilters:
             in favor of an N closest points approach. This typically has poorer
             results.
 
-        pass_cell_arrays : bool, optional
+        pass_cell_data : bool, optional
             Preserve input mesh's original cell data arrays.
 
         pass_point_data : bool, optional
@@ -2980,6 +3068,10 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Depreciated keyword arguments ``pass_cell_arrays`` and
+            ``pass_point_arrays``.
 
         Returns
         -------
@@ -3011,6 +3103,20 @@ class DataSetFilters:
         """
         if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
+
+        if pass_cell_data is True and 'pass_cell_arrays' in kwargs:  # pragma: no cover
+            pass_cell_data = kwargs.pop('pass_cell_arrays')
+            warnings.warn(
+                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        if pass_point_data is True and 'pass_point_arrays' in kwargs:  # pragma: no cover
+            pass_point_data = kwargs.pop('pass_point_arrays')
+            warnings.warn(
+                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
+                PyVistaDeprecationWarning,
+            )
+        assert_empty_kwargs(**kwargs)
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
@@ -3044,7 +3150,7 @@ class DataSetFilters:
         else:
             raise ValueError(f'strategy `{strategy}` not supported.')
         interpolator.SetPassPointArrays(pass_point_data)
-        interpolator.SetPassCellArrays(pass_cell_arrays)
+        interpolator.SetPassCellArrays(pass_cell_data)
         _update_alg(interpolator, progress_bar, 'Interpolating')
         return _get_output(interpolator)
 
@@ -3534,8 +3640,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target_reduction : float
-            Fraction of the original mesh to remove. Default is ``0.5``
+        target_reduction : float, default=0.5
+            Fraction of the original mesh to remove.
             TargetReduction is set to ``0.9``, this filter will try to reduce
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
@@ -4478,7 +4584,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids
+        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids, optional
             Grids to merge to this grid.
 
         merge_points : bool, optional
@@ -4614,10 +4720,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        quality_measure : str
+        quality_measure : str, default='scaled_jacobian'
             The cell quality measure to use.
 
-        null_value : float
+        null_value : float, default=-1.0
             Float value for undefined quality. Undefined quality are qualities
             that could be addressed by this filter but is not well defined for
             the particular geometry of cell in question, e.g. a volume query
@@ -5113,7 +5219,7 @@ class DataSetFilters:
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
         if inplace:
-            self.overwrite(res)
+            self.copy_from(res)
             return self
 
         # The output from the transform filter contains a shallow copy
@@ -5123,7 +5229,7 @@ class DataSetFilters:
             output = pyvista.StructuredGrid()
         else:
             output = self.__class__()
-        output.overwrite(res)
+        output.copy_from(res)
         return output
 
     def reflect(
@@ -5394,3 +5500,22 @@ class DataSetFilters:
 
         """
         return self.shrink(1.0)
+
+
+def _set_threshold_limit(alg, value, invert):
+    """Set vtkThreshold limit.
+
+    Addresses VTK API deprecation as pointed out in
+    https://github.com/pyvista/pyvista/issues/2850
+
+    """
+    if invert:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetUpperThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByLower(value)
+    else:
+        if pyvista.vtk_version_info >= (9, 1):
+            alg.SetLowerThreshold(value)
+        else:  # pragma: no cover
+            alg.ThresholdByUpper(value)

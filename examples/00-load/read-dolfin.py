@@ -15,7 +15,7 @@ from pyvista import examples
 # Let's download an example FEniCS/Dolfin mesh from our example data
 # repository. This will download an XML Dolfin mesh and save it to PyVista's
 # data directory.
-saved_file, _ = examples.downloads._download_file("dolfin_fine.xml")
+saved_file = examples.download_file("dolfin_fine.xml")
 print(saved_file)
 
 ###############################################################################

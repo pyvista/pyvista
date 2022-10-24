@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.random import default_rng
-from pytest import fixture, skip
+from pytest import fixture, mark, skip
 
 import pyvista
 from pyvista import examples
@@ -158,6 +158,22 @@ def pytest_addoption(parser):
     parser.addoption("--reset_image_cache", action='store_true', default=False)
     parser.addoption("--ignore_image_cache", action='store_true', default=False)
     parser.addoption("--fail_extra_image_cache", action='store_true', default=False)
+    parser.addoption("--test_downloads", action='store_true', default=False)
+
+
+def marker_names(item):
+    return [marker.name for marker in item.iter_markers()]
+
+
+def pytest_collection_modifyitems(config, items):
+    test_downloads = config.getoption("--test_downloads")
+
+    # skip all tests that need downloads
+    if not test_downloads:
+        skip_downloads = mark.skip("Downloads not enabled with --test_downloads")
+        for item in items:
+            if 'needs_download' in marker_names(item):
+                item.add_marker(skip_downloads)
 
 
 def pytest_runtest_setup(item):
@@ -167,14 +183,14 @@ def pytest_runtest_setup(item):
     in pytest.ini.
 
     """
-    for mark in item.iter_markers('needs_vtk9'):
+    for item_mark in item.iter_markers('needs_vtk9'):
         # this test needs VTK 9 or newer
         if not pyvista._vtk.VTK9:
             skip('Test needs VTK 9 or newer.')
-    for mark in item.iter_markers('needs_vtk_version'):
+    for item_mark in item.iter_markers('needs_vtk_version'):
         # this test needs the given VTK version
         # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))
-        args = mark.args
+        args = item_mark.args
         if len(args) == 1 and isinstance(args[0], tuple):
             version_needed = args[0]
         else:

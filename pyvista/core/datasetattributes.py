@@ -8,7 +8,7 @@ import numpy as np
 from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
-from pyvista.utilities.misc import PyvistaDeprecationWarning, copy_vtk_array
+from pyvista.utilities.misc import PyVistaDeprecationWarning, copy_vtk_array
 
 from .._typing import Number
 from .pyvista_ndarray import pyvista_ndarray
@@ -291,7 +291,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "  - `DataSetAttributes.set_scalars`\n"
             "  - `DataSetAttributes.active_scalars_name`\n"
             "  - The [] operator",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_scalars_name = name
 
@@ -334,7 +334,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "deprecated.  Use:\n\n"
             "  - `DataSetAttributes.set_vectors`\n"
             "  - `DataSetAttributes.active_vectors_name`\n",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_vectors_name = name
 
@@ -380,7 +380,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.t_coords` is deprecated. "
             "Use `DataSetAttributes.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_t_coords
 
@@ -389,7 +389,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.t_coords` is deprecated. "
             "Use `DataSetAttributes.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_t_coords = t_coords  # type: ignore
 
@@ -454,7 +454,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         warnings.warn(
             "Use of `active_texture_name` is deprecated. Use `active_t_coords_name` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_t_coords_name
 
@@ -643,7 +643,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
             ``tuple`` or scalar value.
 
-        name : str
+        name : str, default='scalars'
             Name to assign the scalars.
 
         deep_copy : bool, optional
@@ -898,7 +898,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "  - `DataSetAttributes.set_scalars`\n"
             "  - `DataSetAttributes.set_vectors`\n"
             "  - The [] operator",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         if active_vectors:  # pragma: no cover
             raise ValueError('Use set_vectors to set vector data')

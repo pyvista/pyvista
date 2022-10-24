@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/psf/black
-  rev: 22.6.0
+  rev: 22.10.0
   hooks:
   - id: black
 
@@ -9,18 +9,18 @@ repos:
   hooks:
   - id: isort
 
-- repo: https://gitlab.com/PyCQA/flake8
-  rev: 3.9.2
+- repo: https://github.com/PyCQA/flake8
+  rev: 5.0.4
   hooks:
   - id: flake8
     additional_dependencies: [
-      "flake8-black==0.3.2",
-      "flake8-isort==4.1.1",
+      "flake8-black==0.3.3",
+      "flake8-isort==4.2.0",
       "flake8-quotes==3.3.1",
     ]
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.1
+  rev: v2.2.2
   hooks:
   - id: codespell
     args: [
@@ -37,7 +37,7 @@ repos:
     exclude: ^pyvista/ext/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.971
+  rev: v0.982
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
@@ -57,6 +57,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.17.1
+  rev: 0.18.3
   hooks:
     - id: check-github-workflows

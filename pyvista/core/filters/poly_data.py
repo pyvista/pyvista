@@ -18,7 +18,7 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.utilities.misc import PyvistaFutureWarning
+from pyvista.utilities.misc import PyVistaFutureWarning
 
 
 @abstract_class
@@ -653,7 +653,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(trifilter)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -745,7 +745,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -869,7 +869,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -988,7 +988,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1011,7 +1011,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        radius : float
+        radius : float, optional
             Minimum tube radius (minimum because the tube radius may
             vary).
 
@@ -1086,7 +1086,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(tube)
         if inplace:
-            poly_data.overwrite(mesh)
+            poly_data.copy_from(mesh)
             return poly_data
         return mesh
 
@@ -1185,7 +1185,7 @@ class PolyDataFilters(DataSetFilters):
 
         submesh = _get_output(sfilter)
         if inplace:
-            self.overwrite(submesh)
+            self.copy_from(submesh)
             return self
 
         return submesh
@@ -1289,7 +1289,7 @@ class PolyDataFilters(DataSetFilters):
         submesh = _get_output(sfilter)
 
         if inplace:
-            self.overwrite(submesh)
+            self.copy_from(submesh)
             return self
 
         return submesh
@@ -1428,7 +1428,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1581,7 +1581,7 @@ class PolyDataFilters(DataSetFilters):
             mesh.GetCellData().SetActiveNormals('Normals')
 
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1674,7 +1674,7 @@ class PolyDataFilters(DataSetFilters):
         result = _get_output(alg)
 
         if inplace:
-            self.overwrite(result)
+            self.copy_from(result)
             return self
         else:
             return result
@@ -1730,7 +1730,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -1831,7 +1831,7 @@ class PolyDataFilters(DataSetFilters):
             raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -1920,7 +1920,7 @@ class PolyDataFilters(DataSetFilters):
             output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
 
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
 
         return output
@@ -2370,7 +2370,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Return vtk surface and reverse indexing array
         if inplace:
-            self.overwrite(newmesh)
+            self.copy_from(newmesh)
             return self, ridx
         return newmesh, ridx
 
@@ -2423,33 +2423,32 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        tol : float, optional
+        tol : float, default: 1e-05
             Specify a tolerance to control discarding of closely
             spaced points. This tolerance is specified as a fraction
             of the diagonal length of the bounding box of the points.
-            Defaults to ``1e-05``.
 
-        alpha : float, optional
+        alpha : float, default: 0.0
             Specify alpha (or distance) value to control output of
             this filter. For a non-zero alpha value, only edges or
             triangles contained within a sphere centered at mesh
             vertices will be output. Otherwise, only triangles will be
-            output. Defaults to ``0.0``.
+            output.
 
-        offset : float, optional
+        offset : float, default: 1.0
             Specify a multiplier to control the size of the initial,
-            bounding Delaunay triangulation. Defaults to ``1.0``.
+            bounding Delaunay triangulation.
 
-        bound : bool, optional
+        bound : bool, default: False
             Boolean controls whether bounding triangulation points
             and associated triangles are included in the
             output. These are introduced as an initial triangulation
             to begin the triangulation process. This feature is nice
-            for debugging output. Default ``False``.
+            for debugging output.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             If ``True``, overwrite this mesh with the triangulated
-            mesh. Default ``False``.
+            mesh.
 
         edge_source : pyvista.PolyData, optional
             Specify the source object used to specify constrained
@@ -2459,9 +2458,8 @@ class PolyDataFilters(DataSetFilters):
             (i.e. point ids are identical in the input and
             source).
 
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress. Default
-            ``False``.
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -2472,15 +2470,26 @@ class PolyDataFilters(DataSetFilters):
         --------
         First, generate 30 points on circle and plot them.
 
-        >>> import pyvista
-        >>> points = pyvista.Polygon(n_sides=30).points
-        >>> circle = pyvista.PolyData(points)
+        >>> import pyvista as pv
+        >>> points = pv.Polygon(n_sides=30).points
+        >>> circle = pv.PolyData(points)
         >>> circle.plot(show_edges=True, point_size=15)
 
         Use :func:`delaunay_2d` to fill the interior of the circle.
 
         >>> filled_circle = circle.delaunay_2d()
         >>> filled_circle.plot(show_edges=True, line_width=5)
+
+        Use the ``edge_source`` parameter to create a constrained delaunay
+        triangulation and plot it.
+
+        >>> squar = pv.Polygon(n_sides=4, radius=8, fill=False)
+        >>> squar = squar.rotate_z(45, inplace=False)
+        >>> circ0 = pv.Polygon(center=(2, 3, 0), n_sides=30, radius=1)
+        >>> circ1 = pv.Polygon(center=(-2, -3, 0), n_sides=30, radius=1)
+        >>> comb = circ0 + circ1 + squar
+        >>> tess = comb.delaunay_2d(edge_source=comb)
+        >>> tess.plot(cpos='xy', show_edges=True)
 
         See :ref:`triangulated_surface` for more examples using this filter.
 
@@ -2500,7 +2509,7 @@ class PolyDataFilters(DataSetFilters):
         # `.triangulate()` filter cleans those
         mesh = _get_output(alg).triangulate()
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -2779,7 +2788,7 @@ class PolyDataFilters(DataSetFilters):
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
-                PyvistaFutureWarning,
+                PyVistaFutureWarning,
             )
 
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -2790,7 +2799,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = _get_output(alg)
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -2914,7 +2923,7 @@ class PolyDataFilters(DataSetFilters):
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
-                PyvistaFutureWarning,
+                PyVistaFutureWarning,
             )
 
         if (
@@ -2944,7 +2953,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -3053,7 +3062,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding with trimming')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -3084,6 +3093,9 @@ class PolyDataFilters(DataSetFilters):
         extended. (If you wish to strip these use ``triangulate``
         filter to fragment the input into triangles and lines prior to
         running this filter.)
+
+        This filter implements `vtkStripper
+        <https://vtk.org/doc/nightly/html/classvtkStripper.html>`_
 
         Parameters
         ----------

@@ -1,4 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+from functools import wraps
 import logging
 import pathlib
 from typing import Sequence, Tuple, Union
@@ -12,7 +13,7 @@ from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyvistaDeprecationWarning, raise_has_duplicates
+from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -495,7 +496,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. First argument must be "
                 "either a ``vtk.vtkImageData`` or path.",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
             dims = uinput
             uinput = None
@@ -509,7 +510,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                 "    ...     spacing=(2, 1, 5),\n"
                 "    ...     origin=(10, 35, 50),\n"
                 "    ... )\n",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
             origin = args[0]
             if len(args) > 1:
@@ -830,3 +831,8 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         if len(new_extent) != 6:
             raise ValueError('Extent must be a vector of 6 values.')
         self.SetExtent(new_extent)
+
+    @wraps(RectilinearGridFilters.to_tetrahedra)
+    def to_tetrahedra(self, *args, **kwargs):
+        """Cast to a rectangular grid and then convert to tetrahedra."""
+        return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)

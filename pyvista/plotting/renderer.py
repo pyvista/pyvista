@@ -11,11 +11,14 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
-from pyvista.utilities.misc import uses_egl
+from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
+from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
+from .helpers import view_vectors
+from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 
 ACTOR_LOC_MAP = [
@@ -220,6 +223,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
+        self._render_passes = RenderPasses(self)
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -400,12 +404,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        number_of_peels : int
+        number_of_peels : int, optional
             The maximum number of peeling layers. Initial value is 4
             and is set in the ``pyvista.global_theme``. A special value of
             0 means no maximum limit.  It has to be a positive value.
 
-        occlusion_ratio : float
+        occlusion_ratio : float, optional
             The threshold under which the depth peeling algorithm
             stops to iterate over peel layers. This is the ratio of
             the number of pixels that have been touched by the last
@@ -437,48 +441,50 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self):
-        """Enable anti-aliasing using FXAA.
+    def enable_anti_aliasing(self, aa_type='fxaa'):
+        """Enable anti-aliasing.
 
-        This tends to make edges appear softer and less pixelated.
-
-        Warnings
-        --------
-        Enabling this causes screenshots with vtk compiled with OSMesa to be
-        all black. This cannot be enabled when compiled with OSMesa (EGL). See
-        https://github.com/pyvista/pyvista/issues/2686 for more details.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.enable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
+        Parameters
+        ----------
+        aa_type : str, default='fxaa'
+            Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
-        if uses_egl():  # pragma: no cover
-            # only display the warning when not building documentation
-            if not pyvista.BUILDING_GALLERY:
-                warnings.warn(
-                    "VTK compiled with OSMesa does not properly support anti-aliasing and anti-aliasing will not be enabled."
-                )
-            return
+        if not isinstance(aa_type, str):
+            raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
+        aa_type = aa_type.lower()
+
+        if aa_type == 'fxaa':
+            if uses_egl():  # pragma: no cover
+                # only display the warning when not building documentation
+                if not pyvista.BUILDING_GALLERY:
+                    warnings.warn(
+                        "VTK compiled with OSMesa does not properly support "
+                        "FXAA anti-aliasing and SSAA will be used instead."
+                    )
+                self._render_passes.enable_ssaa_pass()
+                return
+            self._enable_fxaa()
+
+        elif aa_type == 'ssaa':
+            self._render_passes.enable_ssaa_pass()
+
+        else:
+            raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
+
+    def disable_anti_aliasing(self):
+        """Disable all anti-aliasing."""
+        self._render_passes.disable_ssaa_pass()
+        self.SetUseFXAA(False)
+        self.Modified()
+
+    def _enable_fxaa(self):
+        """Enable FXAA anti-aliasing."""
         self.SetUseFXAA(True)
         self.Modified()
 
-    def disable_anti_aliasing(self):
-        """Disable anti-aliasing.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.disable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
-
-        """
+    def _disable_fxaa(self):
+        """Disable FXAA anti-aliasing."""
         self.SetUseFXAA(False)
         self.Modified()
 
@@ -666,7 +672,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        actor : vtk.vtkActor
+        actor : vtk.vtkActor or pyvista.Actor
             The actor.
 
         actor_properties : vtk.Properties
@@ -677,7 +683,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
-            actor = _vtk.vtkActor()
+            actor = Actor()
             actor.SetMapper(uinput)
         else:
             actor = uinput
@@ -840,12 +846,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             mesh = actor.copy()
             mesh.clear_data()
             mapper.SetInputData(mesh)
-            actor = _vtk.vtkActor()
-            actor.SetMapper(mapper)
-            prop = actor.GetProperty()
+            actor = pyvista.Actor(mapper=mapper)
             if color is not None:
-                prop.SetColor(Color(color).float_rgb)
-            prop.SetOpacity(opacity)
+                actor.prop.color = color
+            actor.prop.opacity = opacity
         if hasattr(self, 'axes_widget'):
             # Delete the old one
             self.axes_widget.EnabledOff()
@@ -875,10 +879,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ylabel='Y',
         zlabel='Z',
         labels_off=False,
-        marker_args=None,
         box=None,
         box_args=None,
         viewport=(0, 0, 0.2, 0.2),
+        marker_args=None,
+        **kwargs,
     ):
         """Add an interactive axes widget in the bottom left corner.
 
@@ -914,10 +919,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels_off : bool, optional
             Enable or disable the text labels for the axes.
 
-        marker_args : dict, optional
-            Parameters for the orientation marker widget. See the parameters of
-            :func:`pyvista.create_axes_marker`.
-
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
@@ -929,6 +930,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         viewport : tuple, optional
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        marker_args : dict, optional
+            Marker arguments.
+
+            .. deprecated:: 0.37.0
+               Use ``**kwargs`` for passing parameters for the orientation
+               marker widget. See the parameters of
+               :func:`pyvista.create_axes_marker`.
+
+        **kwargs : dict, optional
+            Used for passing parameters for the orientation marker
+            widget. See the parameters of :func:`pyvista.create_axes_marker`.
 
         Returns
         -------
@@ -957,11 +970,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
-        >>> marker_args = dict(cone_radius=0.6, shaft_length=0.7, tip_length=0.3, ambient=0.5, label_size=(0.4, 0.16))
-        >>> _ = pl.add_axes(line_width=5, marker_args=marker_args)
+        >>> _ = pl.add_axes(
+        ...     line_width=5,
+        ...     cone_radius=0.6,
+        ...     shaft_length=0.7,
+        ...     tip_length=0.3,
+        ...     ambient=0.5,
+        ...     label_size=(0.4, 0.16)
+        ... )
         >>> pl.show()
 
         """
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
+        if marker_args is not None:  # pragma: no cover
+            warnings.warn(
+                "Use of `marker_args` is deprecated. Use `**kwargs` instead.",
+                PyVistaDeprecationWarning,
+            )
+            kwargs.update(marker_args)
+
         if interactive is None:
             interactive = self._theme.interactive
         if hasattr(self, 'axes_widget'):
@@ -986,8 +1013,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **box_args,
             )
         else:
-            if marker_args is None:
-                marker_args = {}
             self.axes_actor = create_axes_marker(
                 label_color=color,
                 line_width=line_width,
@@ -998,7 +1023,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 ylabel=ylabel,
                 zlabel=zlabel,
                 labels_off=labels_off,
-                **marker_args,
+                **kwargs,
             )
         axes_widget = self.add_orientation_widget(
             self.axes_actor, interactive=interactive, color=None
@@ -1090,7 +1115,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock, optional
             Input mesh to draw bounds axes around.
 
         bounds : list or tuple, optional
@@ -1531,7 +1556,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset_camera : bool, optional
             Reset camera position when ``True`` to include all actors.
 
-        outline : bool
+        outline : bool, default=True
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
@@ -2137,7 +2162,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        try:
+            self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        except (AttributeError, ReferenceError):
+            pass
         self.RemoveActor(actor)
 
         if name is None:
@@ -2215,7 +2243,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool
+        negative : bool, default=False
             View from the opposite direction.
 
         Returns
@@ -2269,9 +2297,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        render : bool
+        render : bool, default=True
             Trigger a render after resetting the camera.
-        bounds : iterable(int)
+        bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
@@ -2379,11 +2407,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, 1])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xy', negative=negative))
 
     def view_yx(self, negative=False):
         """View the YX plane.
@@ -2406,11 +2430,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, -1])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yx', negative=negative))
 
     def view_xz(self, negative=False):
         """View the XZ plane.
@@ -2433,11 +2453,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, -1, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xz', negative=negative))
 
     def view_zx(self, negative=False):
         """View the ZX plane.
@@ -2460,11 +2476,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 1, 0])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zx', negative=negative))
 
     def view_yz(self, negative=False):
         """View the YZ plane.
@@ -2487,11 +2499,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([1, 0, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yz', negative=negative))
 
     def view_zy(self, negative=False):
         """View the ZY plane.
@@ -2514,11 +2522,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([-1, 0, 0])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zy', negative=negative))
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
@@ -2527,6 +2531,99 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def enable(self):
         """Enable this renderer's camera to be interactive."""
         self.SetInteractive(1)
+
+    def add_blurring(self):
+        """Add blurring.
+
+        This can be added several times to increase the degree of blurring.
+
+        Examples
+        --------
+        Add two blurring passes to the plotter and show it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.add_blurring()
+        >>> pl.add_blurring()
+        >>> pl.show()
+
+        See :ref:`blur_example` for a full example using this method.
+
+        """
+        self._render_passes.add_blur_pass()
+
+    def remove_blurring(self):
+        """Remove a single blurring pass.
+
+        You will need to run this multiple times to remove all blurring passes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.add_blurring()
+        >>> pl.remove_blurring()
+        >>> pl.show()
+
+        """
+        self._render_passes.remove_blur_pass()
+
+    def enable_depth_of_field(self, automatic_focal_distance=True):
+        """Enable depth of field plotting.
+
+        Parameters
+        ----------
+        automatic_focal_distance : bool, optional
+            Use automatic focal distance calculation. When enabled, the center
+            of the viewport will always be in focus regardless of where the
+            focal point is. Default ``True``.
+
+        Examples
+        --------
+        Create five spheres and demonstrate the effect of depth of field.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.background_color = "w"
+        >>> for i in range(5):
+        ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
+        ...     color = [0, 255 - i*20, 30 + i*50]
+        ...     _ = pl.add_mesh(
+        ...         mesh,
+        ...         show_edges=False,
+        ...         pbr=True,
+        ...         metallic=1.0,
+        ...         color=color
+        ...     )
+        >>> pl.camera.zoom(1.8)
+        >>> pl.camera_position = [
+        ...     (4.74, 0.959, 0.525),
+        ...     (0.363, 0.3116, 0.132),
+        ...     (-0.088, -0.0075, 0.996),
+        ... ]
+        >>> pl.enable_depth_of_field()
+        >>> pl.show()
+
+        See :ref:`depth_of_field_example` for a full example using this method.
+
+        """
+        self._render_passes.enable_depth_of_field_pass()
+
+    def disable_depth_of_field(self):
+        """Disable depth of field plotting.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.enable_depth_of_field()
+        >>> pl.disable_depth_of_field()
+
+        """
+        self._render_passes.disable_depth_of_field_pass()
 
     def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL).
@@ -2543,20 +2640,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.enable_eye_dome_lighting()
 
         """
-        if hasattr(self, 'edl_pass'):
-            return self
-        # create the basic VTK render steps
-        basic_passes = _vtk.vtkRenderStepsPass()
-        # blur the resulting image
-        # The blur delegates rendering the unblured image to the basic_passes
-        self.edl_pass = _vtk.vtkEDLShading()
-        self.edl_pass.SetDelegatePass(basic_passes)
-
-        # tell the renderer to use our render pass pipeline
-        self.glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
-        self.glrenderer.SetPass(self.edl_pass)
-        self.Modified()
-        return self.glrenderer
+        self._render_passes.enable_edl_pass()
 
     def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL).
@@ -2568,12 +2652,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.disable_eye_dome_lighting()
 
         """
-        if not hasattr(self, 'edl_pass'):
-            return
-        self.SetPass(None)
-        self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        del self.edl_pass
-        self.Modified()
+        self._render_passes.disable_edl_pass()
 
     def enable_shadows(self):
         """Enable shadows.
@@ -2606,24 +2685,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if self._shadow_pass is not None:
-            # shadows are already enabled for this renderer
-            return
-
-        shadows = _vtk.vtkShadowMapPass()
-
-        passes = _vtk.vtkRenderPassCollection()
-        passes.AddItem(shadows.GetShadowMapBakerPass())
-        passes.AddItem(shadows)
-
-        seq = _vtk.vtkSequencePass()
-        seq.SetPasses(passes)
-
-        # Tell the renderer to use our render pass pipeline
-        self._shadow_pass = _vtk.vtkCameraPass()
-        self._shadow_pass.SetDelegatePass(seq)
-        self.SetPass(self._shadow_pass)
-        self.Modified()
+        self._render_passes.enable_shadow_pass()
 
     def disable_shadows(self):
         """Disable shadows.
@@ -2635,15 +2697,58 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.disable_shadows()
 
         """
-        if self._shadow_pass is None:
-            # shadows are already disabled
-            return
+        self._render_passes.disable_shadow_pass()
 
-        self.SetPass(None)
-        if hasattr(self.parent, 'ren_win'):
-            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        self._shadow_pass = None
-        self.Modified()
+    def enable_ssao(self, radius=0.5, bias=0.005, kernel_size=256, blur=True):
+        """Enable surface space ambient occlusion (SSAO).
+
+        SSAO can approximate shadows more efficiently than ray-tracing
+        and produce similar results. Use this when you wish to plot the
+        occlusion effect that nearby meshes have on each other by blocking
+        nearby light sources.
+
+        See `Kitware: Screen-Space Ambient Occlusion
+        <https://www.kitware.com/ssao/>`_ for more details
+
+        Parameters
+        ----------
+        radius : float, default: 0.5
+            Neighbor pixels considered when computing the occlusion.
+
+        bias : float, default 0.005
+            Tolerance factor used when comparing pixel depth.
+
+        kernel_size : int, default: 256
+            Number of samples used. This controls the quality where a higher
+            number increases the quality at the expense of computation time.
+
+        blur : bool, default: True
+            Controls if occlusion buffer should be blurred before combining it
+            with the color buffer.
+
+        Examples
+        --------
+        Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
+        nearby each other and plot it without SSAO.
+
+        >>> import pyvista as pv
+        >>> ugrid = pv.UniformGrid(dims=(3, 2, 2)).to_tetrahedra(12)
+        >>> exploded = ugrid.explode()
+        >>> exploded.plot()
+
+        Enable SSAO with the default parameters.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(exploded)
+        >>> pl.enable_ssao()
+        >>> pl.show()
+
+        """
+        self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
+
+    def disable_ssao(self):
+        """Disable surface space ambient occlusion (SSAO)."""
+        self._render_passes.disable_ssao_pass()
 
     def get_pick_position(self):
         """Get the pick position/area as ``x0, y0, x1, y1``.
@@ -2804,6 +2909,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.__charts.deep_clean()
             self.__charts = None
 
+        self._render_passes.deep_clean()
         self.remove_floors(render=render)
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
