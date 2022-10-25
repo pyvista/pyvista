@@ -5028,6 +5028,10 @@ def download_dolfinx_mesh(load=True):  # pragma: no cover
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
+    Examples
+    --------
+    Download and plot the dataset.
+
     >>> from pyvista import examples
     >>> dataset = examples.download_dolfinx_mesh()
     >>> dataset.plot()
