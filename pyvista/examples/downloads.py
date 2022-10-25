@@ -5018,6 +5018,7 @@ def download_cad_model_case(load=True, progress_bar=False):  # pragma: no cover
         'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load, progress_bar=progress_bar
     )
 
+
 def download_dolfinx_mesh(load=True):  # pragma: no cover
     """Download a mesh of DOLFINx.
 
