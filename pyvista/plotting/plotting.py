@@ -66,7 +66,6 @@ from .widgets import WidgetHelper
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
 
-
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
 if KILL_DISPLAY:  # pragma: no cover
@@ -3005,7 +3004,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
-        scalars_name = 'Data'
+        scalars_name = pyvista.DEFAULT_SCALARS_NAME
         if isinstance(scalars, str):
             self.mapper.array_name = scalars
 
