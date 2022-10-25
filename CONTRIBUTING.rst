@@ -222,7 +222,7 @@ Sample docstring follows:
 .. code:: python
 
     def slice_x(self, x=None, generate_triangles=False):
-        """Create an orthogonal slice through the dataset in the x-direction.
+        """Create an orthogonal slice through the dataset in the X direction.
 
         Yields a MutliBlock dataset of the three slices.
 
@@ -232,8 +232,8 @@ Sample docstring follows:
             The X location of the YZ slice.
 
         generate_triangles : bool, default: False
-            If this is enabled, the output will be triangles. Otherwise the output
-            will be the intersection polygons.
+            If this is enabled, the output will be all triangles. Otherwise the output
+            will consist of the intersection polygons.
 
         Returns
         -------
@@ -246,7 +246,7 @@ Sample docstring follows:
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> slices = hills.slice_orthogonal(5, generate_triangles=False)
+        >>> slices = hills.slice_x(5, generate_triangles=False)
         >>> slices.plot(line_width=5)
 
         See :ref:`slice_example` for more examples using this filter.
@@ -258,12 +258,15 @@ Note the following:
 * The parameter definition of ``generate_triangles`` uses ``default: False``,
   and does not include the default in the docstring's "description" section.
 * There is a newline between each parameter. This is different than
-  ``numpydoc``'s documentation where there are no lines between parameter
-  doc strings.
-* This docstring contains both a returns section and examples section.
-* Returns section does not include the parameter name if it has a single return.
-  Multiple returns (not shown) should have descriptive parameter names.
-* The examples section references the "full example" if it exists.
+  ``numpydoc``'s documentation where there are no empty lines between parameter
+  docstrings.
+* This docstring also contains a returns section and an examples section.
+* The returns section does not include the parameter name if the function has 
+  a single return value. Multiple return values (not shown) should have 
+  descriptive parameter names for each returned value, in the same format as
+  the input parameters.
+* The examples section references the "full example" in the gallery if it 
+  exists.
 
 
 Branch Naming Conventions
