@@ -4602,7 +4602,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rendering window, it will be replaced by the new actor.
 
         shape_color : color_like, optional
-            Color of points (if visible).  Either a string, rgb
+            Color of shape (if visible).  Either a string, rgb
             sequence, or hex color string.
 
         shape : str, optional

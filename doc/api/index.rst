@@ -27,7 +27,7 @@ Highlights of the API include:
    :link-type: ref
    :class-title: pyvista-card-title
 
-   Learn more anout PyVista's different mesh types and direct access to common
+   Learn more about PyVista's different mesh types and direct access to common
    VTK filters.
 
    .. jupyter-execute::
