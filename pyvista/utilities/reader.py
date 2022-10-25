@@ -2336,6 +2336,7 @@ class XdmfReader(BaseReader, PointCellDataSelection):
     ----------
     path : str
         Path of the XDMF file to read.
+
     Examples
     --------
     >>> import pyvista
