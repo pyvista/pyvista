@@ -137,7 +137,7 @@ class PickingHelper:
             self_ = weakref.ref(self)
             actor = picked.GetActor()
             if actor:
-                mesh = actor.GetMapper().GetInput()
+                mesh = actor.GetMapper().GetInputAsDataSet()
                 is_valid_selection = True
 
             if is_valid_selection:
@@ -154,7 +154,10 @@ class PickingHelper:
                     renderer = self.renderers[index]
                     for actor in renderer._actors.values():
                         mapper = actor.GetMapper()
-                        if isinstance(mapper, _vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                        if (
+                            isinstance(mapper, _vtk.vtkDataSetMapper)
+                            and mapper.GetInputAsDataSet() == mesh
+                        ):
                             loc = self_().renderers.index_to_loc(index)
                             self_().subplot(*loc)
                             break
