@@ -392,6 +392,12 @@ class PickingHelper:
                     cids = pyvista.convert_array(selection_node.GetSelectionList())
                     actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
 
+                    # TODO: this is too hacky - find better way to avoid non-dataset actors
+                    if not actor.GetMapper() or not hasattr(
+                        actor.GetProperty(), 'GetRepresentation'
+                    ):
+                        continue
+
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         logging.warning(
