@@ -81,7 +81,7 @@ def test_multi_cell_picking(through):
     plotter.close()
 
     assert isinstance(plotter.picked_cells, pyvista.MultiBlock)
-    # Seletion should return 2 submeshes
+    # Selection should return 2 submeshes
     assert len(plotter.picked_cells) == 2
 
     merged = plotter.picked_cells.combine()
