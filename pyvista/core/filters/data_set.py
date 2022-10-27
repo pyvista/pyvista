@@ -632,8 +632,12 @@ class DataSetFilters:
             origin = self.center
         # create the plane for clipping
         plane = generate_plane(normal, origin)
-        return self.slice_implicit(
-            plane, generate_triangles=generate_triangles, contour=contour, progress_bar=progress_bar
+        return DataSetFilters.slice_implicit(
+            self,
+            plane,
+            generate_triangles=generate_triangles,
+            contour=contour,
+            progress_bar=progress_bar,
         )
 
     def slice_orthogonal(
