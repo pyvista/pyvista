@@ -518,6 +518,64 @@ class DataSetFilters:
         )
         return result
 
+    def slice_implicit(
+        self, implicit_function, generate_triangles=False, contour=False, progress_bar=False
+    ):
+        """Slice a dataset by a VTK implicit function.
+
+        Parameters
+        ----------
+        implicit_function : vtk.vtkImplicitFunction
+            Specify the implicit function to perform the cutting.
+
+        generate_triangles : bool, optional
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
+            polygons.
+
+        contour : bool, optional
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
+
+        Examples
+        --------
+        Slice the surface of a sphere.
+
+        >>> import pyvista as pv
+        >>> import vtk
+        >>> sphere = vtk.vtkSphere()
+        >>> sphere.SetRadius(10)
+        >>> mesh = pv.Wavelet()
+        >>> slice = mesh.slice_implicit(sphere)
+        >>> slice.plot(show_edges=True, line_width=5)
+
+        >>> sphere = vtk.vtkCylinder()
+        >>> sphere.SetRadius(10)
+        >>> mesh = pv.Wavelet()
+        >>> slice = mesh.slice_implicit(sphere)
+        >>> slice.plot(show_edges=True, line_width=5)
+
+        See :ref:`slice_example` for more examples using this filter.
+
+        """
+        alg = _vtk.vtkCutter()  # Construct the cutter object
+        alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
+        alg.SetCutFunction(implicit_function)  # the cutter to use the function
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+        _update_alg(alg, progress_bar, 'Slicing')
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
+        return output
+
     def slice(
         self, normal='x', origin=None, generate_triangles=False, contour=False, progress_bar=False
     ):
@@ -574,17 +632,9 @@ class DataSetFilters:
             origin = self.center
         # create the plane for clipping
         plane = generate_plane(normal, origin)
-        # create slice
-        alg = _vtk.vtkCutter()  # Construct the cutter object
-        alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
-        alg.SetCutFunction(plane)  # the cutter to use the plane we made
-        if not generate_triangles:
-            alg.GenerateTrianglesOff()
-        _update_alg(alg, progress_bar, 'Slicing')
-        output = _get_output(alg)
-        if contour:
-            return output.contour()
-        return output
+        return self.slice_implicit(
+            plane, generate_triangles=generate_triangles, contour=contour, progress_bar=progress_bar
+        )
 
     def slice_orthogonal(
         self, x=None, y=None, z=None, generate_triangles=False, contour=False, progress_bar=False
