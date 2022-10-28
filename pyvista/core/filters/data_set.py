@@ -531,7 +531,9 @@ class DataSetFilters:
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will
             be triangles. Otherwise the output will be the intersection
-            polygons.
+            polygons. If the cutting function is not a plane, the
+            output will be 3D poygons, which might be nice to look at
+            but hard to compute with downstream.
 
         contour : bool, optional
             If ``True``, apply a ``contour`` filter after slicing.
@@ -568,8 +570,7 @@ class DataSetFilters:
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
-        if not generate_triangles:
-            alg.GenerateTrianglesOff()
+        alg.SetGenerateTriangles(generate_triangles)
         _update_alg(alg, progress_bar, 'Slicing')
         output = _get_output(alg)
         if contour:
