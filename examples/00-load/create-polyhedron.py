@@ -1,10 +1,9 @@
 """
 .. _polyhedron_example:
 
-Polyhedrons
+Combining a polyhedron with other figures.
 ~~~~~~~~~~~~~~~
 
-Polyhedrons have a particular way of bei
 This example shows how to build a simple :class:`pyvista.UnstructuredGrid` using
 polyhedrons, which have a concrete way of beign built. We will be using VTK
 types to determine which type of figures we are building.
@@ -151,7 +150,7 @@ cell_type = np.asarray(
 # as the nodes that describe the faces.
 
 grid = pv.UnstructuredGrid(cells, cell_type, nodes)
-
+print(grid.cell_type(0))
 
 ###############################################################################
 # Plot the mesh
