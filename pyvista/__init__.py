@@ -5,7 +5,6 @@ MAX_N_COLOR_BARS = 10
 from typing import Optional
 import warnings
 import os
-import appdirs
 
 # Load default theme.  Must be loaded first.
 from pyvista._version import __version__

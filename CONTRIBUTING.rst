@@ -224,16 +224,15 @@ Sample docstring follows:
     def slice_x(self, x=None, generate_triangles=False):
         """Create an orthogonal slice through the dataset in the X direction.
 
-        Yields a MutliBlock dataset of the three slices.
-
         Parameters
         ----------
         x : float, optional
-            The X location of the YZ slice.
+            The X location of the YZ slice. By default this will be the X center
+            of the dataset.
 
         generate_triangles : bool, default: False
-            If this is enabled, the output will be all triangles. Otherwise the output
-            will consist of the intersection polygons.
+            If this is enabled, the output will be all triangles. Otherwise the
+            output will consist of the intersection polygons.
 
         Returns
         -------
@@ -269,6 +268,81 @@ Note the following:
   exists.
 
 
+Depreciating Features or other Backwards-Breaking Changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When implementing backwards-breaking changes within PyVista, care must be taken
+to make the modifications non-breaking in one of the following ways:
+
+* Retain the old behavior and issue a ``PyVistaDeprecationWarning`` indicating
+  the new interface you should use.
+* Retain the old behavior but raise a ``pyvista.core.errors.DeprecationError``
+  indicating the new interface you must use.
+* Remove the old behavior.
+
+Whenever possible, PyVista developers should seek to have at least three minor
+versions of backwards compatibility to give users the ability to update their
+software and scripts.
+
+Here's an example of soft depreciation. Note the usage of both
+``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
+directive.
+
+.. code:: python
+
+    def addition(a, b):
+        """Add two numbers.
+
+        .. deprecated:: 0.37.0
+           Since PyVista 0.37.0, you can use :func:`pyvista.add` instead.
+
+        Parameters
+        ----------
+        a : float
+            First term to add.
+
+        b : float
+            Second term to add.
+
+        Returns
+        -------
+        float
+            Sum of the two inputs.
+
+        """
+        # depreciated 0.37.0, convert to error in 0.40.0, remove 0.41.0
+        PyVistaDeprecationWarning(
+            '`addition` has been deprecated. Use pyvista.add instead'
+        )
+        add(a, b)
+
+
+    def add(a, b):
+        """Add two numbers.
+
+        ...
+
+In the above code example, note how a comment is made to convert to an error in
+three minor releases and completely remove in the following minor release. For
+significant changes, this can be made longer, and for trivial ones this can be
+kept short.
+
+When adding an additional parameter to an existing method or function, you are
+encouraged to use the ``.. versionadded::`` sphinx directive. For example:
+
+.. code:: python
+
+    def Cube(clean=True):
+        """Create a cube.
+
+        Parameters
+        ----------
+        clean : bool, default: True
+            Whether to clean the raw points of the mesh.
+
+            .. versionadded:: 0.33.0
+        """
+
+
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -299,8 +373,7 @@ request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
 To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt``,
-``requirements_docs.txt``
+dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 
 .. code:: bash
 

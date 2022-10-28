@@ -51,7 +51,7 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
         rotation axis passes). By default the rotation axis contains the
         origin.
 
-    deg : bool, optional
+    deg : bool, default: True
         Whether the angle is specified in degrees. ``False`` implies
         radians.
 
@@ -221,7 +221,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     points : np.ndarray
         Array of points to be transformed of shape (N, 3).
 
-    inplace : bool, optional
+    inplace : bool, default: False
         Updates points in-place while returning nothing.
 
     Returns
