@@ -528,14 +528,14 @@ class DataSetFilters:
         implicit_function : vtk.vtkImplicitFunction
             Specify the implicit function to perform the cutting.
 
-        generate_triangles : bool, optional
+        generate_triangles : bool, default: False
             If this is enabled (``False`` by default), the output will
             be triangles. Otherwise the output will be the intersection
             polygons. If the cutting function is not a plane, the
-            output will be 3D poygons, which might be nice to look at
+            output will be 3D polygons, which might be nice to look at
             but hard to compute with downstream.
 
-        contour : bool, optional
+        contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
 
         progress_bar : bool, optional
