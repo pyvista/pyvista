@@ -564,8 +564,6 @@ class DataSetFilters:
         >>> slice = mesh.slice_implicit(sphere)
         >>> slice.plot(show_edges=True, line_width=5)
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
