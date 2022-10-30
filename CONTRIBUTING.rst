@@ -328,7 +328,7 @@ significant changes, this can be made longer, and for trivial ones this can be
 kept short.
 
 When adding an additional parameter to an existing method or function, you are
-encouraged to use the ``.. versionadded::`` sphinx directive. For example:
+encouraged to use the ``.. versionadded`` sphinx directive. For example:
 
 .. code:: python
 
