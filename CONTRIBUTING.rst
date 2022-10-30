@@ -274,11 +274,11 @@ When implementing backwards-breaking changes within PyVista, care must be taken
 to give users the chance to adjust to any new changes. Any non-backwards
 compatible modifications should proceed through the following steps:
 
-# Retain the old behavior and issue a ``PyVistaDeprecationWarning`` indicating
-  the new interface you should use.
-# Retain the old behavior but raise a ``pyvista.core.errors.DeprecationError``
-  indicating the new interface you must use.
-# Remove the old behavior.
+#. Retain the old behavior and issue a ``PyVistaDeprecationWarning`` indicating
+   the new interface you should use.
+#. Retain the old behavior but raise a ``pyvista.core.errors.DeprecationError``
+   indicating the new interface you must use.
+#. Remove the old behavior.
 
 Whenever possible, PyVista developers should seek to have at least three minor
 versions of backwards compatibility to give users the ability to update their
