@@ -1823,7 +1823,7 @@ def test_plot_uniform(uniform):
     data = np.arange(uniform.n_points).reshape(uniform.dimensions)
     pl = pyvista.Plotter()
     pl.add_mesh(uniform, scalars=data, smooth_shading=True, split_sharp_edges=True)
-    pl.show(before_close_callback=verify_cache_image)
+    pl.show()
 
 
 def test_opacity_by_array_preference():
