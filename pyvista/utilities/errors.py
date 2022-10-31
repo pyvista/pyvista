@@ -278,7 +278,7 @@ class Report(scooby.Report):
 
     gpu : bool, default: True
         Gather information about the GPU. Defaults to ``True`` but if
-        experiencing renderinng issues, pass ``False`` to safely generate a
+        experiencing rendering issues, pass ``False`` to safely generate a
         report.
 
     Examples

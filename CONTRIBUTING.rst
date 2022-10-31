@@ -268,7 +268,7 @@ Note the following:
   exists.
 
 
-Depreciating Features or other Backwards-Breaking Changes
+Deprecating Features or other Backwards-Breaking Changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 When implementing backwards-breaking changes within PyVista, care must be taken
 to give users the chance to adjust to any new changes. Any non-backwards
@@ -284,7 +284,7 @@ Whenever possible, PyVista developers should seek to have at least three minor
 versions of backwards compatibility to give users the ability to update their
 software and scripts.
 
-Here's an example of a soft depreciation of a function. Note the usage of both
+Here's an example of a soft deprecation of a function. Note the usage of both
 the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
 directive.
 
@@ -310,7 +310,7 @@ directive.
             Sum of the two inputs.
 
         """
-        # depreciated 0.37.0, convert to error in 0.40.0, remove 0.41.0
+        # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
         PyVistaDeprecationWarning(
             '`addition` has been deprecated. Use pyvista.add instead'
         )
@@ -318,9 +318,9 @@ directive.
 
 
     def add(a, b):
-        """Add two numbers.
+        """Add two numbers."""
 
-        ...
+        pass  # implementation goes here
 
 In the above code example, note how a comment is made to convert to an error in
 three minor releases and completely remove in the following minor release. For
