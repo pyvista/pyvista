@@ -1,8 +1,8 @@
 """
 .. _polyhedron_example:
 
-Combining a polyhedron with other cells
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unstructured Grid with Polyhedra
+--------------------------------
 
 This example shows how to build a simple :class:`pyvista.UnstructuredGrid`
 using polyhedra. We will be using VTK types to determine which type of cells we
@@ -16,10 +16,14 @@ import numpy as np
 import pyvista as pv
 
 ###############################################################################
-# Node arrays of the cells
-# ~~~~~~~~~~~~~~~~~~~~~~~~
-# We will mix several cells in one grid for this example. We set the points that
-# will define each cell.
+# Define Points
+# ~~~~~~~~~~~~~
+# We will mix several cells in one grid for this example. Here we create the
+# points that will define each cell.
+#
+# .. note::
+#    It is not necessary that each cell has an isolated set of points. This has
+#    been done here to create isolated cells for this example.
 
 
 quad_points = [
@@ -60,6 +64,7 @@ polyhedron_points = [
 points = quad_points + polygon_points + hexa_points + polyhedron_points
 
 
+###############################################################################
 # Cell connectivity
 # ~~~~~~~~~~~~~~~~~
 # Connectivity describes the indices of the points to compose each cell. The
@@ -77,6 +82,7 @@ points = quad_points + polygon_points + hexa_points + polyhedron_points
 quad = [4, 0, 1, 2, 3]
 polygon = [5, 4, 5, 6, 7, 8]
 hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
+
 
 ###############################################################################
 # Polyhedron connectivity array
