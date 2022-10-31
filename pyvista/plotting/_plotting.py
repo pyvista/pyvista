@@ -210,6 +210,7 @@ def _common_arg_parser(
     color,
     texture,
     rgb,
+    style,
     **kwargs,
 ):
     """Parse arguments in common between add_volume, composite, and mesh."""
@@ -241,7 +242,10 @@ def _common_arg_parser(
         show_scalar_bar = False if rgb else theme.show_scalar_bar
     feature_angle = kwargs.pop('feature_angle', theme.sharp_edges_feature_angle)
     if render_points_as_spheres is None:
-        render_points_as_spheres = theme.render_points_as_spheres
+        if style == 'points_gaussian':
+            render_points_as_spheres = True
+        else:
+            render_points_as_spheres = theme.render_points_as_spheres
 
     if smooth_shading is None:
         if pbr:

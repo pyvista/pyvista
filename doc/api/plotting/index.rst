@@ -74,4 +74,3 @@ routines in PyVista.
    :maxdepth: 2
 
    conv_func
-

@@ -4513,6 +4513,176 @@ def download_gif_simple(load=True):  # pragma: no cover
     return _download_and_read('gifs/sample.gif', load=load)
 
 
+def download_cloud_dark_matter(load=True):  # pragma: no cover
+    """Download particles from a simulated dark matter halo.
+
+    This dataset contains 32,314 particles.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PointSet
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the dark matter cloud and display its representation.
+
+    >>> import numpy as np
+    >>> from pyvista import examples
+    >>> pc = examples.download_cloud_dark_matter()
+    >>> pc  # doctest:+SKIP
+    PointSet (0x7f97f718d460)
+      N Cells:      0
+      N Points:     32314
+      X Bounds:     7.451e+01, 7.892e+01
+      Y Bounds:     1.616e+01, 2.275e+01
+      Z Bounds:     8.900e+01, 9.319e+01
+      N Arrays:     0
+
+    Plot the point cloud. Color based on the distance from the center of the
+    cloud.
+
+    >>> pc.plot(
+    ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
+    ...     style='points_gaussian',
+    ...     opacity=0.5,
+    ...     point_size=1.5,
+    ...     show_scalar_bar=False,
+    ...     zoom=2,
+    ... )
+
+    See the :ref:`plotting_point_clouds` for a full example using this dataset.
+
+    """
+    filename = download_file('point-clouds/findus23/halo_low_res.npy')
+
+    if load:
+        return pyvista.PointSet(np.load(filename))
+    return filename
+
+
+def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
+    """Download a particles from a simulated dark matter halo.
+
+    This dataset contains 2,062,256 particles.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PointSet
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the dark matter cloud and display its representation.
+
+    >>> import numpy as np
+    >>> from pyvista import examples
+    >>> pc = examples.download_cloud_dark_matter_dense()
+    >>> pc  # doctest:+SKIP
+    PointSet (0x7fd79493a340)
+    N Cells:      0
+    N Points:     2062256
+    X Bounds:     7.462e+01, 7.863e+01
+    Y Bounds:     1.604e+01, 2.244e+01
+    Z Bounds:     8.893e+01, 9.337e+01
+    N Arrays:     0
+
+    Plot the point cloud. Color based on the distance from the center of the
+    cloud.
+
+    >>> pc.plot(
+    ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
+    ...     style='points_gaussian',
+    ...     opacity=0.030,
+    ...     point_size=2.0,
+    ...     show_scalar_bar=False,
+    ...     zoom=2,
+    ... )
+
+    See the :ref:`plotting_point_clouds` for more details on how to plot point
+    clouds.
+
+    """
+    filename = download_file('point-clouds/findus23/halo_high_res.npy')
+
+    if load:
+        return pyvista.PointSet(np.load(filename))
+    return filename
+
+
+def download_stars_cloud_hyg(load=True):  # pragma: no cover
+    """Download a point cloud of stars as computed by the HYG Database.
+
+    See `HYG-Database <https://github.com/astronexus/HYG-Database>`_ for more
+    details.
+
+    This data set is licensed by a Creative Commons Attribution-ShareAlike
+    license. For more details, read the `Creative Commons page
+    <https://creativecommons.org/licenses/by-sa/2.5/>`_
+
+    See the `README.md
+    <https://github.com/pyvista/vtk-data/blob/master/Data/point-clouds/hyg-database/README.md>`_
+    for more details for how the star colors were computed.
+
+    Distances are in parsecs from Earth.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot a point cloud of stars within 3,000 light years. Stars
+    are colored according to their RGBA colors.
+
+    >>> import numpy as np
+    >>> from pyvista import examples
+    >>> stars = examples.download_stars_cloud_hyg()
+    >>> stars.plot(
+    ...     style='points_gaussian',
+    ...     background='k',
+    ...     point_size=0.5,
+    ...     scalars='_rgba',
+    ...     render_points_as_spheres=False,
+    ...     zoom=3.0,
+    ... )
+
+    >>> stars  # doctest:+SKIP
+    PolyData (0x7fe5851ac0a0)
+      N Cells:      107857
+      N Points:     107857
+      N Strips:     0
+      X Bounds:     -9.755e+02, 9.774e+02
+      Y Bounds:     -9.620e+02, 9.662e+02
+      Z Bounds:     -9.788e+02, 9.702e+02
+      N Arrays:     4
+
+    See the :ref:`plotting_point_clouds` for more details on how to plot point
+    clouds.
+
+    """
+    return _download_and_read('point-clouds/hyg-database/stars.vtp', load=load)
+
+
 def download_fea_bracket(load=True):  # pragma: no cover
     """Download the finite element solution of a bracket.
 

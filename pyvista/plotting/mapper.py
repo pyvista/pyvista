@@ -25,17 +25,20 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     _theme = None
 
-    def __init__(self, theme, **kwargs):
+    def __init__(self, theme=None, **kwargs):
         self._theme = theme
         self.lookup_table = LookupTable()
 
-    def copy(self):
-        """Create a deep of this mapper.
+    def copy(self) -> '_BaseMapper':
+        """Create a copy of this mapper.
+
+        Returns
+        -------
+        pyvista.DataSetMapper
+            A copy of this dataset mapper.
 
         Examples
         --------
-        Create a copy of a :class:`pyvista.DataSetMapper`.
-
         >>> import pyvista as pv
         >>> mapper = pv.DataSetMapper(dataset=pv.Cube())
         >>> mapper_copy = mapper.copy()
@@ -338,7 +341,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         theme: Optional['pv.themes.DefaultTheme'] = None,
     ):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
         if dataset is not None:
             self.dataset = dataset
 
@@ -350,6 +353,25 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     @dataset.setter
     def dataset(self, obj: 'pv.core.dataset.DataSet'):
         return self.SetInputData(obj)
+
+    def as_rgba(self):
+        """Convert the active scalars to RGBA.
+
+        This method is used to convert the active scalars to a fixed RGBA array
+        and is used for certain mappers that do not support the "map" color
+        mode.
+
+        """
+        if self.color_mode == 'direct':
+            return
+
+        self.dataset.point_data.pop('__rgba__', None)
+        self._configure_scalars_mode(
+            self.lookup_table(self.dataset.active_scalars),
+            '__rgba__',
+            self.scalar_map_mode,
+            True,
+        )
 
     def _configure_scalars_mode(
         self,
@@ -387,12 +409,18 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
         # Scalars interpolation approach
         if use_points:
-            if scalars_name not in self.dataset.point_data:
+            if (
+                scalars_name not in self.dataset.point_data
+                or scalars_name == pv.DEFAULT_SCALARS_NAME
+            ):
                 self.dataset.point_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
             self.scalar_map_mode = 'point'
         elif use_cells:
-            if scalars_name not in self.dataset.cell_data:
+            if (
+                scalars_name not in self.dataset.cell_data
+                or scalars_name == pv.DEFAULT_SCALARS_NAME
+            ):
                 self.dataset.cell_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
             self.scalar_map_mode = 'cell'
@@ -473,7 +501,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : color_like
+        nan_color : color_like, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -684,6 +712,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             rgb or custom_opac,
         )
 
+        if isinstance(self, PointGaussianMapper):
+            self.as_rgba()
+
     @property
     def cmap(self):
         """Colormap assigned to this mapper."""
@@ -751,13 +782,95 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         return '\n'.join(mapper_attr)
 
 
+@no_new_attr
+class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
+    """Wrap vtkPointGaussianMapper."""
+
+    @property
+    def emissive(self) -> bool:
+        """Set or return emissive.
+
+        This treats points as emissive light sources. Two points that overlap
+        will have their brightness combined.
+        """
+        return bool(self.GetEmissive())
+
+    @emissive.setter
+    def emissive(self, value: bool):
+        return self.SetEmissive(value)
+
+    @property
+    def scale_factor(self) -> float:
+        """Set or return the scale factor.
+
+        Ranges from 0 to 1. A value of 0 will cause the splats to be rendered
+        as simple points. Defaults to 1.0.
+
+        """
+        return self.GetScaleFactor()
+
+    @scale_factor.setter
+    def scale_factor(self, value: float):
+        return self.SetScaleFactor(value)
+
+    def use_circular_splat(self, opacity: float = 1.0):
+        """Set the fragment shader code to create a circular splat.
+
+        Parameters
+        ----------
+        opacity : float, default: 1.0
+            Desired opacity between 0 and 1.
+
+        Notes
+        -----
+        This very close to ParaView's PointGaussianMapper, but uses opacity to
+        modify the scale as the opacity cannot be set from the actor's property.
+        """
+        self.SetSplatShaderCode(
+            "//VTK::Color::Impl\n"
+            "float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n"
+            "if (dist > 1.0) {\n"
+            "  discard;\n"
+            "} else {\n"
+            f"  float scale = ({opacity} - dist);\n"
+            "  ambientColor *= scale;\n"
+            "  diffuseColor *= scale;\n"
+            "}\n"
+        )
+        # maintain consistency with the default style
+        self.emissive = True
+        self.scale_factor *= 1.5
+
+    def use_default_splat(self):
+        """Clear the fragment shader and use the default splat."""
+        self.SetSplatShaderCode(None)
+        self.scale_factor /= 1.5
+
+    def __repr__(self):
+        """Representation of the gaussian mapper."""
+        mapper_attr = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Scalar visibility:           {self.scalar_visibility}',
+            f'  Scalar range:                {self.scalar_range}',
+            f'  Emissive:                    {self.emissive}',
+            f'  Scale Factor:                {self.scale_factor}',
+            f'  Using custom splat:          {self.GetSplatShaderCode() is None}',
+            '',
+        ]
+
+        mapper_attr.append('Attached dataset:')
+        mapper_attr.append(str(self.dataset))
+
+        return '\n'.join(mapper_attr)
+
+
 @abstract_class
 class _BaseVolumeMapper(_BaseMapper):
     """Volume mapper class to override methods and attributes for to volume mappers."""
 
     def __init__(self, theme=None):
         """Initialize this class."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
         self._lut = LookupTable()
         self._scalar_range = None
 
@@ -796,30 +909,22 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme)
+    pass
 
 
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme)
+    pass
 
 
 class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme)
+    pass
 
 
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
-    def __init__(self, theme=None):
-        """Initialize this class."""
-        super().__init__(theme)
+    pass

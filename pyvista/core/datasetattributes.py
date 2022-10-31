@@ -664,7 +664,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
             ``tuple`` or scalar value.
 
-        name : str
+        name : str, default='scalars'
             Name to assign the scalars.
 
         deep_copy : bool, optional

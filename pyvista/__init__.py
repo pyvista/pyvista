@@ -76,3 +76,6 @@ PICKLE_FORMAT = 'xml'
 
 # grid type
 GRID_TYPE = (RectilinearGrid, StructuredGrid, UniformGrid)
+
+# Name used for unnamed scalars
+DEFAULT_SCALARS_NAME = 'Data'

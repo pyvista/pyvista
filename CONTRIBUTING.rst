@@ -381,18 +381,23 @@ testing or for potentially a major or minor release. You can use
 temporarily ignore regression testing. Realize that regression testing
 will still occur on our CI testing.
 
-If you need to add a new test to ``tests/plotting/test_plotting.py`` and
-wish to include image regression testing, be sure to add
-``verify_cache_image`` to ``show``. For example:
+Images are currently only cached from tests in
+``tests/plotting/test_plotting.py``.  By default, any test that uses
+``Plotter.show`` will cache images automatically.  To skip image caching,
+the ``verify_image_cache`` fixture can be utilized:
 
 .. code:: python
 
 
        @skip_no_plotting
-       def test_add_background_image_not_global():
+       def test_add_background_image_not_global(verify_image_cache):
+           verify_image_cache.skip = True  # Turn off caching
            plotter = pyvista.Plotter()
            plotter.add_mesh(sphere)
-           plotter.show(before_close_callback=verify_cache_image)
+           plotter.show()
+           # Turn on caching for further plotting
+           verify_image_cache.skip = False
+           ...
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image

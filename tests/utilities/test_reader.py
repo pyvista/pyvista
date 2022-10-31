@@ -262,6 +262,9 @@ def test_ensightreader_timepoints():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
 
+    with pytest.raises(ValueError, match="Not a valid time"):
+        reader.set_active_time_value(1000.0)
+
 
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
