@@ -20,6 +20,7 @@ import pyvista as pv
 # We will mix several cells in one grid for this example, so we determine several
 # points for each cell.
 
+
 quad_points = [
     [0.0, 0.0, 0.0],  # 0
     [0.0, 0.01, 0.0],  # 1
@@ -61,13 +62,13 @@ points = np.array(quad_points + polygon_points + hexa_points + polyhedron_points
 ###############################################################################
 # Connectivity arrays
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We set which points each of the cells needs. The first element in each array 
-# is the number of elements the cell will have. E.g., quad array is composed of 
+# We set which points each of the cells needs. The first element in each array
+# is the number of elements the cell will have. E.g., quad array is composed of
 # 0, 1, 2 and 3 points, so it has 4 elements. This is needed because the connectivity
 # array that will contain all cells needs to have only one dimension, so to be able to
 # know which points belong to which cell, we set that the following N points in the array
 # belong to a single cell, the next N points belong to another cell, etc.
-# Note that for polygons, 
+# Note that for polygons,
 # the order of the points is important.
 
 quad = np.array([4, 0, 1, 2, 3])
@@ -131,10 +132,9 @@ polyhedron = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
 ###############################################################################
 # Cells array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Now we build the input cells array for `UnstructuredGrid`. We join all cells in 
+# Now we build the input cells array for `UnstructuredGrid`. We join all cells in
 # a one dimensional array. Internally, the `NElements` previously described is used
 # to know which nodes belong to which cells.
-
 
 cells = np.hstack((quad, polygon, hexa, polyhedron))
 
@@ -143,12 +143,10 @@ cells = np.hstack((quad, polygon, hexa, polyhedron))
 # Cell types
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We need to determine the cell types for each of the cells we define in the cells array.
-# The number of elements in this array must coincide with the number of cells in the 
+# The number of elements in this array must coincide with the number of cells in the
 # connectivity array.
 
-cell_type = np.array(
-    [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON]
-)
+cell_type = [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON]
 
 
 ###############################################################################
@@ -163,7 +161,7 @@ print(grid.cell_type(0))
 ###############################################################################
 # Plot the mesh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Finally, we can plot the grid we've created
+# Finally, we can plot the grid we've created.
 
 plt = pv.Plotter()
 plt.show_axes()
