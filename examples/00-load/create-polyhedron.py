@@ -5,7 +5,7 @@ Combining a polyhedron with other figures.
 ~~~~~~~~~~~~~~~
 
 This example shows how to build a simple :class:`pyvista.UnstructuredGrid` using
-polyhedrons, which have a concrete way of beign built. We will be using VTK
+polyhedra, which have a concrete way of being built. We will be using VTK
 types to determine which type of figures we are building.
 
 """
@@ -61,7 +61,7 @@ nodes = np.asarray(quad_nodes + polygon_nodes + hexa_nodes + polyhedron_nodes)
 ###############################################################################
 # Connectivity arrays
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We set which nodes each of the figure needs. Note that in polygon,
+# We set which nodes each of the figures needs. Note that for polygons,
 # the order of the nodes is important.
 
 quad = np.asarray([4, 0, 1, 2, 3])
@@ -72,7 +72,7 @@ hexa = np.asarray([8, 9, 10, 11, 12, 13, 14, 15, 16])
 # Polyhedron connectivity array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # For polyhedrons, we need to set the faces with the following format:
-# [NElements, NFaces, Face1NPoints, Face1Point1, Face1Point2..., Face1PointN, FaceNNPoints,...]
+# [NElements, NFaces, Face1NPoints, Face1Point1, Face1Point2..., Face1PointN, Face2NPoints,...]
 # - NElements refers to the total number of elements in the array needed to describe the
 #   polyhedron.
 # - NFaces is the number of faces the figure will have.
