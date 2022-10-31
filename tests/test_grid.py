@@ -276,8 +276,8 @@ def test_init_polyhedron():
     nodes = np.asarray(polyhedron_nodes)
 
     polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
-    cells = np.asarray([len(polyhedron_connectivity)] + polyhedron_connectivity)
-    cell_type = np.asarray([pyvista.CellType.POLYHEDRON])
+    cells = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
+    cell_type = np.array([pyvista.CellType.POLYHEDRON])
     grid = pyvista.UnstructuredGrid(cells, cell_type, nodes)
 
     assert grid.n_cells == len(cell_type)

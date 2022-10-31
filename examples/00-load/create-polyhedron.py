@@ -62,9 +62,9 @@ points = np.array(quad_points + polygon_points + hexa_points + polyhedron_points
 ###############################################################################
 # Connectivity arrays
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We set which points each of the cells needs. The first element in each array
+# We set the points needed by each cell. The first element in each array
 # is the number of elements the cell will have. E.g., quad array is composed of
-# 0, 1, 2 and 3 points, so it has 4 elements. This is needed because the connectivity
+# points 0, 1, 2 and 3, so it has 4 elements. This is needed because the connectivity
 # array that will contain all cells needs to have only one dimension, so to be able to
 # know which points belong to which cell, we set that the following N positions in the array
 # belong to a single cell, the next N positions belong to another cell, etc.
@@ -76,15 +76,15 @@ hexa = np.array([8, 9, 10, 11, 12, 13, 14, 15, 16])
 ###############################################################################
 # Polyhedron connectivity array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Polyhedrons connectivity array is defined differently from the rest of the cell types.
-# For polyhedrons, we need to set the faces with the following format:
+# The connectivity array of polyhedra is defined differently from the rest of the cell
+# types. For polyhedra, we need to set the faces with the following format:
 #
 # `[NElements, NFaces, Face1NPoints, Face1Point1, Face1Point2..., Face1PointN, Face2NPoints,...]`
 #
 # - `NElements` refers to the total number of elements in the array needed to describe the polyhedron.
 # - `NFaces` is the number of faces the polyhedron will have.
 # - `Face1Npoints` is the number of points the first face will have
-# - `Face1Point1..Face1PointN`` are each of the points that describe face1
+# - `Face1Point1...Face1PointN`` are each of the points that describe face1
 #
 # In `polyhedron_connectivity`, the first element is `NFaces`. `NElements` is added to `polyhedron`.
 
