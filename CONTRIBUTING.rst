@@ -252,6 +252,8 @@ Sample docstring follows:
 
         """
 
+        pass  # implementation goes here
+
 Note the following:
 
 * The parameter definition of ``generate_triangles`` uses ``default: False``,
