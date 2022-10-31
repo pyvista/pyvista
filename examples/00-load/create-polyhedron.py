@@ -60,7 +60,6 @@ polyhedron_points = [
 points = quad_points + polygon_points + hexa_points + polyhedron_points
 
 
-###############################################################################
 # Cell connectivity
 # ~~~~~~~~~~~~~~~~~
 # Connectivity describes the indices of the points to compose each cell. The
@@ -80,12 +79,10 @@ polygon = [5, 4, 5, 6, 7, 8]
 hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 ###############################################################################
-# Polyhedron connectivity
-# ~~~~~~~~~~~~~~~~~~~~~~~
-# Polyhedron cell connectivity is defined differently from the rest of the
-# cell types.
-#
-# For polyhedrons, we need to set the faces with the following format:
+# Polyhedron connectivity array
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The connectivity array of polyhedra is defined differently from the rest of the cell
+# types. For polyhedra, we need to set the faces with the following format:
 #
 # ``[NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1..., Face0PointN, Face1NPoints, ...]``
 #
@@ -95,7 +92,7 @@ hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 #   describe the polyhedron.
 # - ``NFaces`` is the number of faces the polyhedron will have.
 # - ``Face1Npoints`` is the number of points the first face will have
-# - ``Face1Point1..Face1PointN`` are each of the points that describe ``face0``
+# - ``Face1Point1...Face1PointN`` are each of the points that describe ``face0``
 #
 # In ``polyhedron_connectivity``, the first item is ``NFaces``. ``NItems`` is
 # added to ``polyhedron``.
