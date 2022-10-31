@@ -69,7 +69,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         greater than 0, otherwise it will always return an error, even
         on identical images.
 
-    use_vtk : bool, bool: True
+    use_vtk : bool, default: True
         When disabled, computes the mean pixel error over the entire
         image using numpy.  The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
