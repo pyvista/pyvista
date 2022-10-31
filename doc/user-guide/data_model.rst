@@ -280,6 +280,16 @@ in the same order as we defined earlier.
    to define that. This actually gives us the flexibility to define
    as many (or as few as one) points per cell as we wish.
 
+.. note::
+   All cell types follow the same connectivity array format: 
+
+   ``[Number of points, Point 1, Point 2, ...]`` 
+
+
+   Except for ``polyhedra`` type, in which we need to define each face of the cell. The
+   format for this type is the following:
+
+   ``[Number of elements, Number of faces, Face1NPoints, Point1, Point2, ..., PointN, Face2NPoints, ...]``.
 
 Now we have all the necessary pieces to assemble an instance of
 |PolyData| that contains a single triangle. To do
