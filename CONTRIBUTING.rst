@@ -269,7 +269,7 @@ Note the following:
 
 
 Deprecating Features or other Backwards-Breaking Changes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 When implementing backwards-breaking changes within PyVista, care must be taken
 to give users the chance to adjust to any new changes. Any non-backwards
 compatible modifications should proceed through the following steps:
