@@ -145,7 +145,7 @@ cell_type = np.asarray(
 ###############################################################################
 # Create the grid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# To create the grid, we use the cells array we built, the cells types, as well
+# To create the grid, we use the cells array we built, the cell types, as well
 # as the nodes that describe the faces.
 
 grid = pv.UnstructuredGrid(cells, cell_type, nodes)
