@@ -4258,7 +4258,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
-            img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
+
+            # convert to image data
+            img_data = pyvista.Texture(img_arr).to_image().flip_y()
             self.SetImage(img_data)
 
     def _render_event(self, *args, **kwargs):
