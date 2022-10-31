@@ -66,8 +66,8 @@ points = quad_points + polygon_points + hexa_points + polyhedron_points
 # Cell connectivity
 # ~~~~~~~~~~~~~~~~~
 # Connectivity describes the indices of the points to compose each cell. The
-# first item in each cell's connectivity is the number of item the cell will
-# have. For example, a quad cell is composed of point ``[0, 1, 2, 3]`` and
+# first item in each cell's connectivity is the number of items the cell will
+# have. For example, a quad cell is composed of points ``[0, 1, 2, 3]`` and
 # totaling 4 points, therefore ``[4, 0, 1, 2, 3]`` describes its connectivity.
 #
 # .. note::
@@ -88,15 +88,15 @@ hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 # The connectivity array of polyhedra is defined differently from the rest of the cell
 # types. For polyhedra, we need to set the faces with the following format:
 #
-# ``[NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1..., Face0PointN, Face1NPoints, ...]``
+# ``[NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1..., Face0PointN-1, Face1NPoints, ...]``
 #
 # Where:
 #
 # - ``NItems`` refers to the total number of items in the list needed to
 #   describe the polyhedron.
 # - ``NFaces`` is the number of faces the polyhedron will have.
-# - ``Face1Npoints`` is the number of points the first face will have
-# - ``Face1Point1...Face1PointN`` are each of the points that describe ``face0``
+# - ``Face0NPoints`` is the number of points the first face will have.
+# - ``Face0Point0...Face0PointN-1`` are each of the points that describe ``face0``.
 #
 # In ``polyhedron_connectivity``, the first item is ``NFaces``. ``NItems`` is
 # added to ``polyhedron``.
@@ -151,8 +151,8 @@ polyhedron = [len(polyhedron_connectivity)] + polyhedron_connectivity
 # Cells array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now we build the input cells array for the
-# :class:`pyvista.UnstructuredGrid`. Here, we join all cells in a one dimensional
-# array. Internally, the ``NElements`` previously described is used to determine
+# :class:`pyvista.UnstructuredGrid`. Here, we join all cells in a flat
+# list. Internally, the ``NItems`` previously described is used to determine
 # which nodes belong to which cells.
 
 cells = quad + polygon + hexa + polyhedron
@@ -161,7 +161,7 @@ cells = quad + polygon + hexa + polyhedron
 ###############################################################################
 # Cell types
 # ~~~~~~~~~~
-# We need to specity the cell types for each of the cells we define in the
+# We need to specify the cell types for each of the cells we define in the
 # cells array.
 #
 # The number of items in this list must match the number of cells in the
