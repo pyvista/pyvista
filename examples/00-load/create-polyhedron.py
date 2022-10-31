@@ -72,7 +72,7 @@ hexa = np.asarray([8, 9, 10, 11, 12, 13, 14, 15, 16])
 # Polyhedron connectivity array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # For polyhedrons, we need to set the faces with the following format:
-# [NElements, NFaces, Face1NPoints, Face1Point1, Face1Point2..., Face1PointN, FaceNNPoints,...]
+# [NElements, NFaces, Face1NPoints, Face1Point1, Face1Point2..., Face1PointN, Face2NPoints,...]
 # - NElements refers to the total number of elements in the array needed to describe the polyhedron.
 # - NFaces is the number of faces the figure will have.
 # - Face1Npoints is the number of points the first face will have
