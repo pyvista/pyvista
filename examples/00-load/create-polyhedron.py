@@ -11,8 +11,6 @@ are building.
 First, we import the required libraries.
 """
 
-import numpy as np
-
 import pyvista as pv
 
 ###############################################################################
@@ -157,7 +155,7 @@ polyhedron = [len(polyhedron_connectivity)] + polyhedron_connectivity
 # array. Internally, the ``NElements`` previously described is used to determine
 # which nodes belong to which cells.
 
-cells = np.hstack((quad, polygon, hexa, polyhedron))
+cells = quad + polygon + hexa + polyhedron
 
 
 ###############################################################################
