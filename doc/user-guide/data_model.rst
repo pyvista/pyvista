@@ -275,11 +275,23 @@ in the same order as we defined earlier.
 
 .. note::
    Observe how we had to insert a leading ``3`` to tell VTK that our
-   face will contain three points. In our |PolyData| VTK
+   face is described by three elements, in this case, three points. In our |PolyData| VTK
    doesn't assume that faces always contain three points, so we have
    to define that. This actually gives us the flexibility to define
    as many (or as few as one) points per cell as we wish.
 
+.. note::
+   All cell types follow the same connectivity array format: 
+
+   ``[Number of points, Point 1, Point 2, ...]`` 
+
+
+   Except for ``polyhedron`` type, in which we need to define each face of the cell. The
+   format for this type is the following:
+
+   ``[Number of elements, Number of faces, Face1NPoints, Point1, Point2, ..., PointN, Face2NPoints, ...]``.
+
+   Where `number of elements` is the total number of elements in the array that describe this cell.
 
 Now we have all the necessary pieces to assemble an instance of
 |PolyData| that contains a single triangle. To do
