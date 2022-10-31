@@ -66,8 +66,8 @@ points = np.array(quad_points + polygon_points + hexa_points + polyhedron_points
 # is the number of elements the cell will have. E.g., quad array is composed of
 # 0, 1, 2 and 3 points, so it has 4 elements. This is needed because the connectivity
 # array that will contain all cells needs to have only one dimension, so to be able to
-# know which points belong to which cell, we set that the following N points in the array
-# belong to a single cell, the next N points belong to another cell, etc.
+# know which points belong to which cell, we set that the following N positions in the array
+# belong to a single cell, the next N positions belong to another cell, etc.
 
 quad = np.array([4, 0, 1, 2, 3])
 polygon = np.array([5, 4, 5, 6, 7, 8])
