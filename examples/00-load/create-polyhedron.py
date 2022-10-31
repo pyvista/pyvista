@@ -1,12 +1,12 @@
 """
 .. _polyhedron_example:
 
-Combining a polyhedron with other figures.
+Combining a polyhedron with other cells.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how to build a simple :class:`pyvista.UnstructuredGrid` using
 polyhedra, which have a concrete way of being built. We will be using VTK
-types to determine which type of figures we are building.
+types to determine which type of cells we are building.
 
 """
 
@@ -15,25 +15,25 @@ import numpy as np
 import pyvista as pv
 
 ###############################################################################
-# Node arrays of the figures
+# Node arrays of the cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We will mix several figures in one grid for this example, so we determine several
-# nodes for each figure.
+# We will mix several cells in one grid for this example, so we determine several
+# points for each cell.
 
-quad_nodes = [
+quad_points = [
     [0.0, 0.0, 0.0],  # 0
     [0.0, 0.01, 0.0],  # 1
     [0.01, 0.01, 0.0],  # 2
     [0.01, 0.0, 0.0],  # 3
 ]
-polygon_nodes = [
+polygon_points = [
     [0.02, 0.0, 0.0],  # 4
     [0.02, 0.01, 0.0],  # 5
     [0.03, 0.01, 0.0],  # 6
     [0.035, 0.005, 0.0],  # 7
     [0.03, 0.0, 0.0],  # 8
 ]
-hexa_nodes = [
+hexa_points = [
     [0.0, 0.0, 0.02],  # 9
     [0.0, 0.01, 0.02],  # 10
     [0.01, 0.01, 0.02],  # 11
@@ -43,7 +43,7 @@ hexa_nodes = [
     [0.01, 0.01, 0.03],  # 15
     [0.01, 0.0, 0.03],  # 16
 ]
-polyhedron_nodes = [
+polyhedron_points = [
     [0.02, 0.0, 0.02],  # 17
     [0.02, 0.01, 0.02],  # 18
     [0.03, 0.01, 0.02],  # 19
@@ -55,18 +55,24 @@ polyhedron_nodes = [
     [0.035, 0.005, 0.03],  # 25
     [0.03, 0.0, 0.03],  # 26
 ]
-nodes = np.asarray(quad_nodes + polygon_nodes + hexa_nodes + polyhedron_nodes)
+points = np.array(quad_points + polygon_points + hexa_points + polyhedron_points)
 
 
 ###############################################################################
 # Connectivity arrays
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We set which nodes each of the figures needs. Note that for polygons,
-# the order of the nodes is important.
+# We set which points each of the cells needs. The first element in each array 
+# is the number of elements the cell will have. E.g., quad array is composed of 
+# 0, 1, 2 and 3 points, so it has 4 elements. This is needed because the connectivity
+# array that will contain all cells needs to have only one dimension, so to be able to
+# know which points belong to which cell, we set that the following N points in the array
+# belong to a single cell, the next N points belong to another cell, etc.
+# Note that for polygons, 
+# the order of the points is important.
 
-quad = np.asarray([4, 0, 1, 2, 3])
-polygon = np.asarray([5, 4, 5, 6, 7, 8])
-hexa = np.asarray([8, 9, 10, 11, 12, 13, 14, 15, 16])
+quad = np.array([4, 0, 1, 2, 3])
+polygon = np.array([5, 4, 5, 6, 7, 8])
+hexa = np.array([8, 9, 10, 11, 12, 13, 14, 15, 16])
 
 ###############################################################################
 # Polyhedron connectivity array
@@ -74,9 +80,10 @@ hexa = np.asarray([8, 9, 10, 11, 12, 13, 14, 15, 16])
 # For polyhedrons, we need to set the faces with the following format:
 # [NElements, NFaces, Face1NPoints, Face1Point1, Face1Point2..., Face1PointN, Face2NPoints,...]
 # - NElements refers to the total number of elements in the array needed to describe the polyhedron.
-# - NFaces is the number of faces the figure will have.
+# - NFaces is the number of faces the polyhedron will have.
 # - Face1Npoints is the number of points the first face will have
 # - Face1Point1..Face1PointN are each of the points that describe face1
+# In `polyhedron_connectivity`, the first element is `NFaces`. `NElements` is added in `polyhedron`.
 
 polyhedron_connectivity = [
     7,
@@ -118,15 +125,16 @@ polyhedron_connectivity = [
     25,
     26,
 ]
-polyhedron = np.asarray([len(polyhedron_connectivity)] + polyhedron_connectivity)
+polyhedron = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
 
 
 ###############################################################################
 # Cells array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# All of the cells are joined in a 1 dimensional numpy array. Separation between cells
-# is determined by the number of elements of each figure (the first element of each
-# connectivity array)
+# Now we build the input cells array for `UnstructuredGrid`. We join all cells in 
+# a one dimensional array. Internally, the `NElements` previously described is used
+# to know which nodes belong to which cells.
+
 
 cells = np.hstack((quad, polygon, hexa, polyhedron))
 
@@ -135,9 +143,10 @@ cells = np.hstack((quad, polygon, hexa, polyhedron))
 # Cell types
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We need to determine the cell types for each of the cells we define in the cells array.
-# The number of elements in this array must coincide with the number of cells in the
+# The number of elements in this array must coincide with the number of cells in the 
+# connectivity array.
 
-cell_type = np.asarray(
+cell_type = np.array(
     [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON]
 )
 
@@ -146,9 +155,9 @@ cell_type = np.asarray(
 # Create the grid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # To create the grid, we use the cells array we built, the cell types, as well
-# as the nodes that describe the faces.
+# as the points that describe the faces.
 
-grid = pv.UnstructuredGrid(cells, cell_type, nodes)
+grid = pv.UnstructuredGrid(cells, cell_type, points)
 print(grid.cell_type(0))
 
 ###############################################################################
