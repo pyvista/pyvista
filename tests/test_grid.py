@@ -273,7 +273,7 @@ def test_init_polyhedron():
         [0.035, 0.005, 0.03],  # 25
         [0.03, 0.0, 0.03],  # 26
     ]
-    nodes = np.asarray(polyhedron_nodes)
+    nodes = np.array(polyhedron_nodes)
 
     polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
     cells = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
