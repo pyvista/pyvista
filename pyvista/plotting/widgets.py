@@ -39,6 +39,7 @@ class WidgetHelper:
         self.spline_sliced_meshes = []
         self.sphere_widgets = []
         self.button_widgets = []
+        self.measure_widgets = []
 
     def add_box_widget(
         self,
@@ -1751,6 +1752,29 @@ class WidgetHelper:
 
         return self.add_mesh(spline_sliced_mesh, **kwargs)
 
+    def add_measure_widget(
+        self,
+        callback=None,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+    ):
+        """Missing docstring."""
+        if self.iren is None:  # should be DRY
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
+
+        def _the_callback(self, *args):
+            try_callback(callback, *args)
+
+        widget = _vtk.vtkDistanceWidget()
+        widget.SetInteractor(self.iren.interactor)
+        widget.CreateDefaultRepresentation()
+        # widget.AddObserver(interaction_event, _the_callback)
+        widget.On()
+        self.measure_widgets.append(widget)
+
+    def clear_measure_widgets(self):
+        """Remove all of the measurement widgets."""
+        self.measure_widgets.clear()
+
     def add_sphere_widget(
         self,
         callback,
@@ -2068,3 +2092,4 @@ class WidgetHelper:
         self.clear_spline_widgets()
         self.clear_button_widgets()
         self.clear_camera_widgets()
+        self.clear_measure_widgets()

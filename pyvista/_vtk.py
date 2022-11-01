@@ -433,6 +433,7 @@ if VTK9:
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
         vtkButtonWidget,
+        vtkDistanceWidget,
         vtkImplicitPlaneWidget,
         vtkLineWidget,
         vtkOrientationMarkerWidget,
