@@ -350,7 +350,7 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
 
     Parameters
     ----------
-    dims : tuple(int), optional
+    dimensions : tuple(int), optional
         Grid dimensions. Default is (5, 6, 7).
     spacing : tuple(int), optional
         Grid spacing. Default is (20, 10, 1).
