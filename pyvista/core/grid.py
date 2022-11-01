@@ -411,13 +411,16 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         ``vtk.vtkImageData``. Use keyword arguments to specify the
         dimensions, spacing, and origin of the uniform grid.
 
+    .. versionchanged:: 0.37.0
+        The ``dims`` parameter has been renamed to ``dimensions``.
+
     Parameters
     ----------
     uinput : str, vtk.vtkImageData, pyvista.UniformGrid, optional
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
-    dims : iterable, optional
+    dimensions : iterable, optional
         Dimensions of the uniform grid.
 
     spacing : iterable, optional
