@@ -345,7 +345,7 @@ def load_sphere_vectors():
     return sphere
 
 
-def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
+def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     """Load a simple explicit structured grid.
 
     Parameters
@@ -367,7 +367,7 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
     >>> grid.plot(show_edges=True)
 
     """
-    ni, nj, nk = np.asarray(dims) - 1
+    ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
 
     xcorn = np.arange(0, (ni + 1) * si, si)
@@ -390,7 +390,7 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()
 
-    grid = pyvista.ExplicitStructuredGrid(dims, corners)
+    grid = pyvista.ExplicitStructuredGrid(dimensions, corners)
     return grid
 
 

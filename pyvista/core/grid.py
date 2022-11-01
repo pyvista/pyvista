@@ -11,7 +11,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
-from pyvista.utilities import abstract_class
+from pyvista.utilities import abstract_class, assert_empty_kwargs
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
 
@@ -39,7 +39,7 @@ class Grid(DataSet):
         Create a uniform grid with dimensions ``(1, 2, 3)``.
 
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 3, 4))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 3, 4))
         >>> grid.dimensions
         (2, 3, 4)
         >>> grid.plot(show_edges=True)
@@ -447,19 +447,19 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     Initialize using using just the grid dimensions and default
     spacing and origin. These must be keyword arguments.
 
-    >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    >>> grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
 
     Initialize using dimensions and spacing.
 
     >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ... )
 
     Initialize using dimensions, spacing, and an origin.
 
     >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ...     origin=(10, 35, 50),
     ... )
@@ -467,7 +467,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     Initialize from another UniformGrid.
 
     >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ...     origin=(10, 35, 50),
     ... )
@@ -483,10 +483,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         self,
         uinput=None,
         *args,
-        dims=None,
+        dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
         deep=False,
+        **kwargs,
     ):
         """Initialize the uniform grid."""
         super().__init__()
@@ -498,15 +499,22 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                 "either a ``vtk.vtkImageData`` or path.",
                 PyVistaDeprecationWarning,
             )
-            dims = uinput
+            dimensions = uinput
             uinput = None
+
+        if dimensions is None and 'dims' in kwargs:
+            dimensions = kwargs.pop('dims')
+            warnings.warn(
+                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning
+            )
+        assert_empty_kwargs(**kwargs)
 
         if args:
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. Use keyword arguments "
                 "to specify dimensions, spacing, and origin. For example:\n\n"
                 "    >>> grid = pyvista.UniformGrid(\n"
-                "    ...     dims=(10, 10, 10),\n"
+                "    ...     dimensions=(10, 10, 10),\n"
                 "    ...     spacing=(2, 1, 5),\n"
                 "    ...     origin=(10, 35, 50),\n"
                 "    ... )\n",
@@ -536,13 +544,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                     f"or a path, not {type(uinput)}.  Use keyword arguments to "
                     "specify dimensions, spacing, and origin. For example:\n\n"
                     "    >>> grid = pyvista.UniformGrid(\n"
-                    "    ...     dims=(10, 10, 10),\n"
+                    "    ...     dimensions=(10, 10, 10),\n"
                     "    ...     spacing=(2, 1, 5),\n"
                     "    ...     origin=(10, 35, 50),\n"
                     "    ... )\n"
                 )
-        elif dims is not None:
-            self._from_specs(dims, spacing, origin)
+        elif dimensions is not None:
+            self._from_specs(dimensions, spacing, origin)
 
     def __repr__(self):
         """Return the default representation."""
@@ -589,7 +597,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.points
         array([[0., 0., 0.],
                [1., 0., 0.],
@@ -637,7 +645,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.x
         array([0., 1., 0., 1., 0., 1., 0., 1.])
 
@@ -651,7 +659,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.y
         array([0., 0., 1., 1., 0., 0., 1., 1.])
 
@@ -665,7 +673,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.z
         array([0., 0., 0., 0., 1., 1., 1., 1.])
 
@@ -679,7 +687,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(5, 5, 5))
+        >>> grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
         >>> grid.origin
         (0.0, 0.0, 0.0)
 
@@ -726,7 +734,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Create a 5 x 5 x 5 uniform grid.
 
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(5, 5, 5))
+        >>> grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
         >>> grid.spacing
         (1.0, 1.0, 1.0)
         >>> grid.plot(show_edges=True)
@@ -806,7 +814,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Create a ``UniformGrid`` and show its extent.
 
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
+        >>> grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
         >>> grid.extent
         (0, 9, 0, 9, 0, 9)
 
