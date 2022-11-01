@@ -1212,7 +1212,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             still retaining all edges of the boundary.
 
         corner_factor : float, optional
-            If ``all_edges````, this is the factor along each axis to
+            If ``all_edges``, this is the factor along each axis to
             draw the default box. Default is 0.5 to show the full box.
 
         fmt : str, optional
