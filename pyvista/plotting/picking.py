@@ -236,7 +236,7 @@ class PickingHelper:
         meshes to the scene.
 
         When multiple meshes are being picked, the picked cells
-        in ````self.picked_cells`` will be a :class:`MultiBlock`
+        in ``self.picked_cells`` will be a :class:`MultiBlock`
         dataset for each mesh's selection.
 
         Uses last input mesh for input by default.

@@ -499,7 +499,7 @@ def test_anti_aliasing_msaa(default_theme):
     assert pl.ren_win.GetMultiSamples() == default_theme.multi_samples
 
 
-def test_antialiasing_deprication(default_theme):
+def test_antialiasing_deprecation(default_theme):
     with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
         default_theme.antialiasing
     with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
