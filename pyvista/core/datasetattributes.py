@@ -227,8 +227,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if has_arr:
             return
 
-        # make active if not field data
-        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+        # make active if not field data and there isn't already an active scalar
+        if (
+            self.association
+            in [
+                FieldAssociation.POINT,
+                FieldAssociation.CELL,
+            ]
+            and self.active_scalars_name is None
+        ):
             self.active_scalars_name = key
 
     def __delitem__(self, key: str):
