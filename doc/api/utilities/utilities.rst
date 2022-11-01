@@ -82,6 +82,11 @@ Miscellaneous
    color_like
    start_xvfb
 
+.. autosummary::
+   :toctree: _autosummary
+
+   Report
+
 
 VTK Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~

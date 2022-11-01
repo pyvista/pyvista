@@ -446,7 +446,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        aa_type : str, default='fxaa'
+        aa_type : str, default: 'fxaa'
             Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
@@ -1556,7 +1556,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset_camera : bool, optional
             Reset camera position when ``True`` to include all actors.
 
-        outline : bool, default=True
+        outline : bool, default: True
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
@@ -2243,7 +2243,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, default=False
+        negative : bool, default: False
             View from the opposite direction.
 
         Returns
@@ -2297,7 +2297,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        render : bool, default=True
+        render : bool, default: True
             Trigger a render after resetting the camera.
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box

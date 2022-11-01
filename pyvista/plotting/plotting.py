@@ -2013,7 +2013,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
-        style : str, default='wireframe'
+        style : str, default: 'wireframe'
             Visualization style of the mesh.  One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``.
             Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
