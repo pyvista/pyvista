@@ -1616,7 +1616,7 @@ class DataSetFilters:
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.UniformGrid(
-        ...     dims=(n, n, n),
+        ...     dimensions=(n, n, n),
         ...     spacing=(abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
         ...     origin=(x_min, y_min, z_min),
         ... )
@@ -5433,7 +5433,7 @@ class DataSetFilters:
          containing each partition.
 
          >>> import pyvista as pv
-         >>> grid = pv.UniformGrid(dims=(5, 5, 5))
+         >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
          >>> out = grid.partition(4, as_composite=True)
          >>> out.plot(multi_colors=True, show_edges=True)
 
