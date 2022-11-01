@@ -3769,6 +3769,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
 
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        self.renderers.clear_actors()
+
     def clear(self):
         """Clear plot by removing all actors and properties.
 
