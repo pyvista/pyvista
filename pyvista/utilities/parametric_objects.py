@@ -21,7 +21,8 @@ def Spline(points, n_points=None):
         and directionally ordered.
 
     n_points : int, optional
-        Number of points to interpolate along the points array.
+        Number of points to interpolate along the points array. By default this
+        is the number of points in ``points``.
 
     Returns
     -------
@@ -1279,16 +1280,16 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clea
     parametric_function : vtk.vtkParametricFunction
         Parametric function to generate mesh from.
 
-    u_res : int, optional
+    u_res : int, default: 100
         Resolution in the u direction.
 
-    v_res : int, optional
+    v_res : int, default: 100
         Resolution in the v direction.
 
-    w_res : int, optional
+    w_res : int, default: 100
         Resolution in the w direction.
 
-    clean : bool, optional
+    clean : bool, default: False
         Clean and merge duplicate points to avoid "creases" when
         plotting with smooth shading.
 

@@ -395,7 +395,7 @@ a simple mesh containing four isometric cells by starting with a
 
 .. jupyter-execute::
 
-   >>> grid = pyvista.UniformGrid(dims=(3, 3, 1))
+   >>> grid = pyvista.UniformGrid(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
    >>> ugrid
 
@@ -405,7 +405,7 @@ Let's also plot this basic mesh:
    :context:
    :include-source: False
 
-   >>> grid = pyvista.UniformGrid(dims=(3, 3, 1))
+   >>> grid = pyvista.UniformGrid(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
 
 .. pyvista-plot::

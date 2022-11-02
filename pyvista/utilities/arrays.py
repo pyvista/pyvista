@@ -17,13 +17,13 @@ def _coerce_pointslike_arg(
     points : Sequence(float) or np.ndarray
         Argument to coerce into (n, 3) ``np.ndarray``.
 
-    copy : bool, optional
+    copy : bool, default: False
         Whether to copy the ``points`` array.  Copying always occurs if ``points``
-        is not ``np.ndarray``.
+        is not :class:`numpy.ndarray`.
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
         Size (n, 3) array.
     bool
         Whether the input was a single point in an array-like with shape (3,).

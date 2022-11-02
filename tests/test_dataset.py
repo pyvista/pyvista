@@ -797,7 +797,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
@@ -946,14 +946,14 @@ def test_find_closest_cell_surface_point():
 
 
 def test_find_containing_cell():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     node = np.array([0.3, 0.3, 0.0])
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
     points_copy = points.copy()
     indices = mesh.find_containing_cell(points)
@@ -1111,7 +1111,7 @@ def test_cell_type(grid):
 
 
 def test_point_is_inside_cell():
-    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
     assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
     assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
 
@@ -1514,11 +1514,11 @@ def test_volume_area():
         assert np.isclose(grid.area, 16.0)
 
     # UniformGrid 3D size 4x4x4
-    vol_grid = pyvista.UniformGrid(dims=(5, 5, 5))
+    vol_grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
     assert_volume(vol_grid)
 
     # 2D grid size 4x4
-    surf_grid = pyvista.UniformGrid(dims=(5, 5, 1))
+    surf_grid = pyvista.UniformGrid(dimensions=(5, 5, 1))
     assert_area(surf_grid)
 
     # UnstructuredGrid
@@ -1536,6 +1536,6 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pyvista.UniformGrid(dims=(5, 5, 5)).extract_surface()
+    grid = pyvista.UniformGrid(dimensions=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)

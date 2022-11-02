@@ -359,6 +359,11 @@ class Renderers:
             if renderer is not None:
                 renderer.clear()
 
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        for renderer in self:
+            renderer.clear_actors()
+
     def clear(self):
         """Clear all renders."""
         for renderer in self:

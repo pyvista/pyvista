@@ -89,7 +89,7 @@ pl.show()
 # There is not a method to add labels to cells.
 # If you want to label it, you need to extract the position to label it.
 
-grid = pv.UniformGrid(dims=(10, 10, 1))
+grid = pv.UniformGrid(dimensions=(10, 10, 1))
 points = grid.cell_centers().points
 
 pl = pv.Plotter()
