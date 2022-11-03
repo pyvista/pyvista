@@ -9,7 +9,7 @@ ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
 jupyterlab==3.5.0
 lxml==4.9.1
-matplotlib==3.6.1
+matplotlib==3.6.2
 meshio==5.3.4
 mypy-extensions==0.4.3
 mypy==0.982
