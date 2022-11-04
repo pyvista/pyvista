@@ -151,19 +151,19 @@ articles = dict(
         image="grad_descent_visualizer.gif",
     ),
     nikolov1=Example(
-        title="Python Libraries for Mesh, Point Cloud, and Data Visualization (Part 1)",
+        title="Ivan Nikolov on Visualization Libraries",
         description="Python Libraries for Mesh, Point Cloud, and Data Visualization (Part 1)",
         link="https://medium.com/towards-data-science/python-libraries-for-mesh-and-point-cloud-visualization-part-1-daa2af36de30",
         image="nikolov1.gif",
     ),
     nikolov2=Example(
-        title="How to Voxelize Meshes and Point Clouds in Python",
+        title="Ivan Nikolov on Voxelization and Point Clouds",
         description="How to Voxelize Meshes and Point Clouds in Python",
         link="https://medium.com/towards-data-science/how-to-voxelize-meshes-and-point-clouds-in-python-ca94d403f81d",
         image="nikolov2.gif",
     ),
     nikolov3=Example(
-        title="Neighborhood Analysis, KD-Trees, and Octrees for Meshes and Point Clouds in Python",
+        title="Ivan Nikolov on Neighbourhood Analysis",
         description="Neighborhood Analysis, KD-Trees, and Octrees for Meshes and Point Clouds in Python",
         link="https://medium.com/towards-data-science/neighborhood-analysis-kd-trees-and-octrees-for-meshes-and-point-clouds-in-python-19fa96527b77",
         image="nikolov3.gif",
