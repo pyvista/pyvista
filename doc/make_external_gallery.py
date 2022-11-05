@@ -157,7 +157,7 @@ articles = dict(
         image="nikolov1.gif",
     ),
     nikolov2=Example(
-        title="Ivan Nikolov on Voxelization and Point Clouds",
+        title="Ivan Nikolov on Voxelization",
         description="How to Voxelize Meshes and Point Clouds in Python",
         link="https://medium.com/towards-data-science/how-to-voxelize-meshes-and-point-clouds-in-python-ca94d403f81d",
         image="nikolov2.gif",
