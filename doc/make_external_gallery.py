@@ -138,6 +138,12 @@ articles = dict(
         link="https://geemap.org/",
         image="geemap.gif",
     ),
+    entry=Example(
+        title="GeoVista",
+        description="Cartographic rendering and mesh analytics powered by PyVista",
+        link="https://github.com/bjlittle/geovista",
+        image="geovista_earth.png",
+    ),
     gmshmodel=Example(
         title="GmshModel",
         description="A mesh modeling interface to the Gmsh-Python-API",
