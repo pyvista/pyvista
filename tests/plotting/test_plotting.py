@@ -3031,11 +3031,26 @@ def test_lookup_table(verify_image_cache):
     lut.below_range_color = 'black'
     lut.above_range_color = 'grey'
     lut.nan_color = 'r'
+    lut.nan_opacity = 0.5
 
     # There are minor variations within 9.0.3 that slightly invalidate the
     # image cache.
     verify_image_cache.skip = pyvista.vtk_version_info == (9, 0, 3)
     lut.plot()
+
+
+def test_plot_nan_color(uniform):
+    arg = uniform.active_scalars < uniform.active_scalars.mean()
+    uniform.active_scalars[arg] = np.nan
+    # NaN values should be hidden
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform, nan_opacity=0)
+    pl.enable_depth_peeling()
+    pl.show()
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform, nan_opacity=0.5, nan_color='green')
+    pl.enable_depth_peeling()
+    pl.show()
 
 
 def test_plotter_lookup_table(sphere):

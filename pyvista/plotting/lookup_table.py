@@ -1,4 +1,5 @@
 """Wrap vtkLookupTable."""
+from tokenize import Number
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
@@ -512,6 +513,31 @@ class LookupTable(_vtk.vtkLookupTable):
         # NAN value is always set, but make it explicit for example plotting
         self._nan_color_set = True
         self.SetNanColor(*Color(value).float_rgba)
+
+    @property
+    def nan_opacity(self):
+        """Return or set the not a number (NAN) opacity.
+
+        Any values that are NANs will be rendered with this opacity.
+
+        Examples
+        --------
+        Set the NAN opacity to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
+        >>> lut.nan_color = 'grey'
+        >>> lut.nan_opacity = 0.5
+        >>> lut.plot()
+
+        """
+        color = self.nan_color
+        return color.opacity
+
+    @nan_opacity.setter
+    def nan_opacity(self, value):
+        nan_color = self.nan_color.float_rgba[:3]
+        self.nan_color = Color(nan_color, opacity=value).float_rgba
 
     @property
     def ramp(self) -> str:

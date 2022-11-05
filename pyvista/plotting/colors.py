@@ -872,6 +872,11 @@ class Color:
         """Convert to dictionary for JSON serialization."""
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
+    @property
+    def opacity(self):
+        """Get the opacity of this color."""
+        return self._opacity
+
     def __eq__(self, other):
         """Equality comparison."""
         try:
