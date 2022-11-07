@@ -536,8 +536,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     @nan_opacity.setter
     def nan_opacity(self, value):
-        nan_color = self.nan_color.float_rgba[:3]
-        self.nan_color = Color(nan_color, opacity=value).float_rgba
+        self.nan_color = Color(self.nan_color, opacity=value)
 
     @property
     def ramp(self) -> str:
