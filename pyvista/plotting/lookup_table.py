@@ -1,5 +1,4 @@
 """Wrap vtkLookupTable."""
-from tokenize import Number
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
