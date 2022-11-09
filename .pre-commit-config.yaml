@@ -54,6 +54,7 @@ repos:
   - id: debug-statements
   - id: no-commit-to-branch
     args: [--branch, main]
+  - id: requirements-txt-fixer
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema

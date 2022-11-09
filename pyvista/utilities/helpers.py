@@ -943,7 +943,7 @@ def wrap(dataset):
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.UniformGrid(dims=dataset.shape)
+            mesh = pyvista.UniformGrid(dimensions=dataset.shape)
             if isinstance(dataset, pyvista.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
                 dataset = np.array(dataset, copy=False)

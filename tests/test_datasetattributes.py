@@ -1,4 +1,5 @@
 import os
+import platform
 from string import ascii_letters, digits, whitespace
 import sys
 
@@ -12,6 +13,10 @@ import pyvista
 from pyvista.utilities import FieldAssociation
 
 skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+skip_apple_silicon = mark.skipif(
+    platform.system() == 'Darwin' and platform.processor() == 'arm',
+    reason='Test fails on Apple Silicon',
+)
 
 
 @fixture()
@@ -585,6 +590,7 @@ def test_active_t_coords_name(plane):
 
 
 @skip_windows  # windows doesn't support np.complex256
+@skip_apple_silicon  # same with Apple silicon (M1/M2)
 def test_complex_raises(plane):
     with raises(ValueError, match='Only numpy.complex64'):
         plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)

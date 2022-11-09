@@ -128,7 +128,7 @@ warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~
 # Show that the sum of the low and high passes equals the original noise.
 
-grid = pv.UniformGrid(dims=sampled.dimensions, spacing=sampled.spacing)
+grid = pv.UniformGrid(dimensions=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
 
 print(

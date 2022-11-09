@@ -216,6 +216,15 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
+def test_clear_actors(cube, sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(cube)
+    pl.add_mesh(sphere)
+    assert len(pl.renderer.actors) == 2
+    pl.clear_actors()
+    assert len(pl.renderer.actors) == 0
+
+
 def test_anti_aliasing_multiplot(sphere):
     pl = pyvista.Plotter(shape=(1, 2))
     pl.enable_anti_aliasing('fxaa', all_renderers=False)

@@ -1772,13 +1772,13 @@ class DataSet(DataSetFilters, DataObject):
         Note that there are 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
         >>> mesh.volume
         64.0
 
         A mesh with 2D cells has no volume.
 
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
         >>> mesh.volume
         0.0
 
@@ -1810,7 +1810,7 @@ class DataSet(DataSetFilters, DataObject):
         Note 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
         >>> mesh.area
         16.0
 
@@ -1818,7 +1818,7 @@ class DataSet(DataSetFilters, DataObject):
         the outer surface area, first extract the surface using
         :func:`pyvista.DataSetFilters.extract_surface`.
 
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
         >>> mesh.area
         0.0
 
@@ -2423,7 +2423,7 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista
-        >>> mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1/4, 1/4, 0])
         >>> mesh
         UniformGrid...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
