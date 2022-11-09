@@ -39,7 +39,7 @@ class WidgetHelper:
         self.spline_sliced_meshes = []
         self.sphere_widgets = []
         self.button_widgets = []
-        self.measure_widgets = []
+        self.distance_widgets = []
 
     def add_box_widget(
         self,
@@ -1752,28 +1752,116 @@ class WidgetHelper:
 
         return self.add_mesh(spline_sliced_mesh, **kwargs)
 
-    def add_measure_widget(
+    def add_distance_widget(
         self,
         callback=None,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
-        """Missing docstring."""
-        if self.iren is None:  # should be DRY
+        """Interactively measure distance with a distance widget.
+
+        Creates an overlay documenting the selected line and total
+        distance between two mouse left-click interactions.
+
+        The measurement overlay stays on the rendering until the widget is deleted.
+        Only one measurement can be added by each widget instance.
+
+        Parameters
+        ----------
+        callback : Callable[[Tuple[float, float, float], [Tuple[float, float, float], int], None]
+            The method called every time the widget calculates a distance measurement. 
+            This callback receives the start point and end point as cartesian coordinate tuples
+            and the calculated distance between the two points.
+
+        Returns
+        -------
+        vtk.vtkDistanceWidget
+            The newly created distance widget.
+
+        """
+        if self.iren is None:
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
-        def _the_callback(self, *args):
-            try_callback(callback, *args)
+        #point_picker = _vtk.vtkPointPicker()
+        #self.iren.set_picker(point_picker)
 
+        selector = _vtk.vtkOpenGLHardwareSelector()
+        selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS)
+        selector.SetRenderer(self.renderer)
+
+        handle = _vtk.vtkPointHandleRepresentation3D()
+        representation = _vtk.vtkDistanceRepresentation3D()
         widget = _vtk.vtkDistanceWidget()
         widget.SetInteractor(self.iren.interactor)
-        widget.CreateDefaultRepresentation()
-        # widget.AddObserver(interaction_event, _the_callback)
+        representation.SetHandleRepresentation(handle)
+        # widget.CreateDefaultRepresentation()
+        widget.SetRepresentation(representation)
+
+        def complete_measurement(widget, *args):
+            p1 = [0, 0, 0]
+            p2 = [0, 0, 0]
+
+            representation.GetPoint1DisplayPosition(p1)
+            point1_picker = _vtk.vtkPropPicker()
+            if point1_picker.Pick(p1, self.renderer):
+                pos1 = point1_picker.GetPickPosition()
+                representation.GetPoint1Representation().SetWorldPosition(pos1)
+
+            representation.GetPoint2DisplayPosition(p2)
+            point2_picker = _vtk.vtkPropPicker()
+
+            if point2_picker.Pick(p2, self.renderer):
+                pos2 = point2_picker.GetPickPosition()
+                representation.GetPoint2Representation().SetWorldPosition(pos2)
+
+            representation.BuildRepresentation()
+
+            try_callback(
+                callback,
+                representation.GetPoint1Representation().GetWorldPosition(),
+                representation.GetPoint2Representation().GetWorldPosition(),
+                representation.GetDistance()
+            )
+            return
+
+        def place_point(widget, event_id):
+            point = [0, 0, 0]
+            
+            if (widget.GetWidgetState() == 1):
+                representation.GetPoint1DisplayPosition(point)
+                selector.SetArea(int(point[0]), int(point[1]), int(point[0]), int(point[1]))  # single pixel
+                selection = selector.Select()
+
+                selection_node = selection.GetNode(0)
+                if not selection_node.GetFieldType() == _vtk.vtkSelectionNode.POINT:
+                    raise ValueError("Unexpected")
+                representation.GetPoint1Representation().SetWorldPosition(selection_node.GetPoint())
+                representation.BuildRepresentation()
+            else:
+                representation.GetPoint2DisplayPosition(point)
+                selector.SetArea(int(point[0]), int(point[1]), int(point[0]), int(point[1]))  # single pixel
+                selection = selector.Select()
+
+                selection_node = selection.GetNode(0)
+                if not selection_node.GetFieldType() == _vtk.vtkSelectionNode.POINT:
+                    raise ValueError("Unexpected")
+                representation.GetPoint2Representation().SetWorldPosition(selection_node.GetPoint())
+                representation.BuildRepresentation()
+            return
+
+        # observe the end interaction
+        widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, complete_measurement)
+
+        # observe the PlacePointEvent to position the start point
+        widget.AddObserver(_vtk.vtkCommand.PlacePointEvent, place_point)
+
+        # observe the InteractionEvent to track mesh during mouse movements
+        widget.AddObserver(_vtk.vtkCommand.InteractionEvent, place_point)
         widget.On()
-        self.measure_widgets.append(widget)
+        self.distance_widgets.append(widget)
+        return widget
 
     def clear_measure_widgets(self):
         """Remove all of the measurement widgets."""
-        self.measure_widgets.clear()
+        self.distance_widgets.clear()
 
     def add_sphere_widget(
         self,

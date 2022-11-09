@@ -218,7 +218,40 @@ def test_widget_spline(uniform):
     p.close()
 
 
-def test_widget_uniform(uniform):
+def test_widget_distance(uniform):
+
+    class DistanceCallback:
+        def __init__(self):
+            self.called = False
+            self.args = None
+            self.count = 0
+
+        def __call__(self, *args, **kwargs):
+            self.called = True
+            self.args = args
+            self.kwargs = kwargs
+            self.count += 1
+
+    p = pyvista.Plotter()
+    cube1 = pyvista.Cube()
+    cube2 = pyvista.Cube([10, 0, 0])
+    p.add_mesh(cube1)
+    p.add_mesh(cube2)
+    distance_callback = DistanceCallback()
+    p.add_distance_widget(callback=distance_callback)
+    p.show(auto_close=False)
+    width, height = p.window_size
+
+    # TODO: Find the locations to click on each cube to perform a measurement with an expected distance
+    p.iren._mouse_left_button_click(width // 2, height // 2)
+    p.iren._mouse_left_button_click(width // 2 + 3, height // 2)
+
+    assert distance_callback.called
+    
+    p.close()
+
+
+def test_widget_sphere(uniform):
     p = pyvista.Plotter()
     func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
