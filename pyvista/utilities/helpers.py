@@ -963,7 +963,7 @@ def wrap(dataset):
         try:
             return pyvista._wrappers[key](dataset)
         except KeyError:
-            warnings.warn(f'VTK data type ({key}) is not currently supported by pyvista.')
+            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
         return
 
     # wrap meshio
