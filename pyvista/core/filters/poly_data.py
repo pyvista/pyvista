@@ -1721,7 +1721,6 @@ class PolyDataFilters(DataSetFilters):
         >>> assert edges.n_cells == 0  # doctest:+SKIP
 
         """
-        warnings.warn('pyvista.PolyData.fill_holes is known to segfault. Use at your own risk')
         alg = _vtk.vtkFillHolesFilter()
         alg.SetHoleSize(hole_size)
         alg.SetInputData(self)
