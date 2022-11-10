@@ -1,7 +1,6 @@
 """An internal module for wrapping the use of mappers."""
 import sys
 from typing import Optional
-import warnings
 
 import numpy as np
 

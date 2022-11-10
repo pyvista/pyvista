@@ -1,6 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
 from functools import wraps
-import logging
 import pathlib
 from typing import Sequence, Tuple, Union
 import warnings
