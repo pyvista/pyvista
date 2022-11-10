@@ -37,7 +37,7 @@ omit = [
     'pyvista/plotting/theme.py',
 ]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 junit_family='legacy'
 filterwarnings = [
     'ignore::FutureWarning',
