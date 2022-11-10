@@ -10,7 +10,7 @@ jupyterlab==3.5.0
 lxml==4.9.1
 matplotlib==3.6.2
 meshio==5.3.4
-mypy==0.982
+mypy==0.990
 mypy-extensions==0.4.3
 numpydoc==1.5.0
 osmnx==1.2.2
@@ -30,5 +30,5 @@ sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.2.0
 sphinxcontrib-asciinema==0.3.5
 sphinxcontrib-websupport==1.2.4
-trimesh==3.15.8
+trimesh==3.16.0
 typed-ast==1.5.4
