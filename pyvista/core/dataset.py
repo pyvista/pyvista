@@ -2165,8 +2165,8 @@ class DataSet(DataSetFilters, DataObject):
     def cast_to_pointset(self, pass_cell_data: bool = False) -> 'pyvista.PointSet':
         """Extract the nodes of this dataset as a :class:`pyvista.PointSet`.
 
-        Note
-        ----
+        Notes
+        -----
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
@@ -2206,8 +2206,8 @@ class DataSet(DataSetFilters, DataObject):
     def cast_to_poly_points(self, pass_cell_data: bool = False) -> 'pyvista.PolyData':
         """Extract the nodes of this dataset as a :class:`pyvista.PolyData`.
 
-        Note
-        ----
+        Notes
+        -----
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
