@@ -2162,10 +2162,13 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(
-        self, deep: bool = False, pass_cell_data: bool = False
-    ) -> 'pyvista.PointSet':
+    def cast_to_pointset(self, pass_cell_data: bool = False) -> 'pyvista.PointSet':
         """Extract the nodes of this dataset as a :class:`pyvista.PointSet`.
+
+        Note
+        ----
+        This will produce a deep copy of the points and point/cell data of
+        the original mesh.
 
         Parameters
         ----------
@@ -2193,19 +2196,20 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         pset = pyvista.PointSet()
-        pset.points = self.points
+        pset.points = self.points.copy()
         if pass_cell_data:
             self = self.cell_data_to_point_data()
-        pset.GetPointData().ShallowCopy(self.GetPointData())
+        pset.GetPointData().DeepCopy(self.GetPointData())
         pset.active_scalars_name = self.active_scalars_name
-        if deep:
-            return pset.copy(deep=True)
         return pset
 
-    def cast_to_poly_points(
-        self, deep: bool = False, pass_cell_data: bool = False
-    ) -> 'pyvista.PolyData':
+    def cast_to_poly_points(self, pass_cell_data: bool = False) -> 'pyvista.PolyData':
         """Extract the nodes of this dataset as a :class:`pyvista.PolyData`.
+
+        Note
+        ----
+        This will produce a deep copy of the points and point/cell data of
+        the original mesh.
 
         Parameters
         ----------
@@ -2252,16 +2256,14 @@ class DataSet(DataSetFilters, DataObject):
             Spatial Cell Data       float64    (1000,)
 
         """
-        pset = pyvista.PolyData(self.points)
+        pset = pyvista.PolyData(self.points.copy())
         if pass_cell_data:
             cell_data = self.copy()
             cell_data.clear_point_data()
             cell_data = cell_data.cell_data_to_point_data()
-            pset.GetCellData().ShallowCopy(cell_data.GetPointData())
-        pset.GetPointData().ShallowCopy(self.GetPointData())
+            pset.GetCellData().DeepCopy(cell_data.GetPointData())
+        pset.GetPointData().DeepCopy(self.GetPointData())
         pset.active_scalars_name = self.active_scalars_name
-        if deep:
-            return pset.copy(deep=True)
         return pset
 
     def find_closest_point(self, point: Iterable[float], n=1) -> int:
