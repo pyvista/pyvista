@@ -12,7 +12,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import VTKVersionError
 from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -257,6 +257,31 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     # Invalid point dimensions
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid(input_cells_dict, points[..., :-1])
+
+
+def test_init_polyhedron():
+
+    polyhedron_nodes = [
+        [0.02, 0.0, 0.02],  # 17
+        [0.02, 0.01, 0.02],  # 18
+        [0.03, 0.01, 0.02],  # 19
+        [0.035, 0.005, 0.02],  # 20
+        [0.03, 0.0, 0.02],  # 21
+        [0.02, 0.0, 0.03],  # 22
+        [0.02, 0.01, 0.03],  # 23
+        [0.03, 0.01, 0.03],  # 24
+        [0.035, 0.005, 0.03],  # 25
+        [0.03, 0.0, 0.03],  # 26
+    ]
+    nodes = np.array(polyhedron_nodes)
+
+    polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
+    cells = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
+    cell_type = np.array([pyvista.CellType.POLYHEDRON])
+    grid = pyvista.UnstructuredGrid(cells, cell_type, nodes)
+
+    assert grid.n_cells == len(cell_type)
+    assert grid.cell_type(0) == pyvista.CellType.POLYHEDRON
 
 
 def test_cells_dict_hexbeam_file():
@@ -817,7 +842,7 @@ def test_create_uniform_grid_from_specs():
 
     # create UniformGrid
     dims = (10, 10, 10)
-    grid = pyvista.UniformGrid(dims=dims)  # Using default spacing and origin
+    grid = pyvista.UniformGrid(dimensions=dims)  # Using default spacing and origin
     assert grid.dimensions == dims
     assert grid.extent == (0, 9, 0, 9, 0, 9)
     assert grid.origin == (0.0, 0.0, 0.0)
@@ -825,25 +850,25 @@ def test_create_uniform_grid_from_specs():
 
     # Using default origin
     spacing = (2, 1, 5)
-    grid = pyvista.UniformGrid(dims=dims, spacing=spacing)
+    grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing)
     assert grid.dimensions == dims
     assert grid.origin == (0.0, 0.0, 0.0)
     assert grid.spacing == spacing
     origin = (10, 35, 50)
 
     # Everything is specified
-    grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
+    grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
     assert grid.dimensions == dims
     assert grid.origin == origin
     assert grid.spacing == spacing
 
     # ensure negative spacing is not allowed
     with pytest.raises(ValueError, match="Spacing must be non-negative"):
-        grid = pyvista.UniformGrid(dims=dims, spacing=(-1, 1, 1))
+        grid = pyvista.UniformGrid(dimensions=dims, spacing=(-1, 1, 1))
 
     # all args (deprecated)
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         grid = pyvista.UniformGrid(dims, origin, spacing)
         assert grid.dimensions == dims
@@ -852,13 +877,21 @@ def test_create_uniform_grid_from_specs():
 
     # just dims (deprecated)
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         grid = pyvista.UniformGrid(dims)
         assert grid.dimensions == dims
 
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='`dims` argument is deprecated. Please use `dimensions`.',
+    ):
+        grid = pyvista.UniformGrid(dims=dims)
+    with pytest.raises(TypeError):
+        grid = pyvista.UniformGrid(dimensions=dims, dims=dims)
+
     # uniform grid from a uniform grid
-    grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
+    grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
     grid_from_grid = pyvista.UniformGrid(grid)
     assert grid == grid_from_grid
 
@@ -869,7 +902,7 @@ def test_create_uniform_grid_from_specs():
 
 def test_uniform_grid_invald_args():
     with pytest.warns(
-        PyvistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
+        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
     ):
         pyvista.UniformGrid((1, 1, 1))
 
@@ -933,8 +966,14 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
+def test_uniform_grid_to_tetrahedra():
+    grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
+    ugrid = grid.to_tetrahedra()
+    assert ugrid.n_cells == 5
+
+
 def test_fft_and_rfft(noise_2d):
-    grid = pyvista.UniformGrid(dims=(10, 10, 1))
+    grid = pyvista.UniformGrid(dimensions=(10, 10, 1))
     with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
         grid.fft()
 
@@ -1151,7 +1190,7 @@ def test_hide_points(ind, struct_grid):
 
 
 def test_set_extent():
-    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
+    uni_grid = pyvista.UniformGrid(dimensions=[10, 10, 10])
     with pytest.raises(ValueError):
         uni_grid.extent = [0, 1]
 

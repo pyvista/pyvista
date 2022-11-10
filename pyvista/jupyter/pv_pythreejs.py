@@ -55,11 +55,11 @@ def get_coloring(mapper, dataset):
 
     """
     coloring = 'NoColors'
-    if mapper.GetScalarModeAsString() == 'UsePointData':
+    if mapper.scalar_map_mode == 'point':
         scalars = dataset.point_data.active_scalars
         if scalars is not None:
             coloring = 'VertexColors'
-    elif mapper.GetScalarModeAsString() == 'UseCellData':
+    elif mapper.scalar_map_mode == 'cell':
         scalars = dataset.cell_data.active_scalars
         if scalars is not None:
             coloring = 'FaceColors'
@@ -279,7 +279,12 @@ def to_surf_mesh(
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
     else:
-        shared_attr['side'] = 'DoubleSide'
+        if prop.GetBackfaceCulling():
+            shared_attr['side'] = 'FrontSide'
+        elif prop.GetFrontfaceCulling():
+            shared_attr['side'] = 'BackSide'
+        else:
+            shared_attr['side'] = 'DoubleSide'
 
     if opacity < 1.0:
         shared_attr['transparent'] = True

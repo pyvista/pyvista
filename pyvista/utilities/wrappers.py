@@ -32,5 +32,6 @@ _wrappers = {
     'vtkStructuredPoints': pyvista.UniformGrid,
     'vtkMultiBlockDataSet': pyvista.MultiBlock,
     'vtkTable': pyvista.Table,
+    'vtkPointSet': pyvista.PointSet,
     # 'vtkParametricSpline': pyvista.Spline,
 }

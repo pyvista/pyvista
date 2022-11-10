@@ -1,4 +1,6 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+from functools import wraps
+import logging
 import pathlib
 from typing import Sequence, Tuple, Union
 import warnings
@@ -9,9 +11,9 @@ import pyvista
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
-from pyvista.utilities import abstract_class
+from pyvista.utilities import abstract_class, assert_empty_kwargs
 import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyvistaDeprecationWarning, raise_has_duplicates
+from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
 
 
 @abstract_class
@@ -34,7 +36,7 @@ class Grid(DataSet):
         Create a uniform grid with dimensions ``(1, 2, 3)``.
 
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 3, 4))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 3, 4))
         >>> grid.dimensions
         (2, 3, 4)
         >>> grid.plot(show_edges=True)
@@ -406,13 +408,16 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         ``vtk.vtkImageData``. Use keyword arguments to specify the
         dimensions, spacing, and origin of the uniform grid.
 
+    .. versionchanged:: 0.37.0
+        The ``dims`` parameter has been renamed to ``dimensions``.
+
     Parameters
     ----------
     uinput : str, vtk.vtkImageData, pyvista.UniformGrid, optional
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
-    dims : iterable, optional
+    dimensions : iterable, optional
         Dimensions of the uniform grid.
 
     spacing : iterable, optional
@@ -442,19 +447,19 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     Initialize using using just the grid dimensions and default
     spacing and origin. These must be keyword arguments.
 
-    >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    >>> grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
 
     Initialize using dimensions and spacing.
 
     >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ... )
 
     Initialize using dimensions, spacing, and an origin.
 
     >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ...     origin=(10, 35, 50),
     ... )
@@ -462,7 +467,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     Initialize from another UniformGrid.
 
     >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ...     origin=(10, 35, 50),
     ... )
@@ -478,10 +483,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         self,
         uinput=None,
         *args,
-        dims=None,
+        dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
         deep=False,
+        **kwargs,
     ):
         """Initialize the uniform grid."""
         super().__init__()
@@ -491,21 +497,28 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. First argument must be "
                 "either a ``vtk.vtkImageData`` or path.",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
-            dims = uinput
+            dimensions = uinput
             uinput = None
+
+        if dimensions is None and 'dims' in kwargs:
+            dimensions = kwargs.pop('dims')
+            warnings.warn(
+                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning
+            )
+        assert_empty_kwargs(**kwargs)
 
         if args:
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. Use keyword arguments "
                 "to specify dimensions, spacing, and origin. For example:\n\n"
                 "    >>> grid = pyvista.UniformGrid(\n"
-                "    ...     dims=(10, 10, 10),\n"
+                "    ...     dimensions=(10, 10, 10),\n"
                 "    ...     spacing=(2, 1, 5),\n"
                 "    ...     origin=(10, 35, 50),\n"
                 "    ... )\n",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
             origin = args[0]
             if len(args) > 1:
@@ -531,13 +544,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                     f"or a path, not {type(uinput)}.  Use keyword arguments to "
                     "specify dimensions, spacing, and origin. For example:\n\n"
                     "    >>> grid = pyvista.UniformGrid(\n"
-                    "    ...     dims=(10, 10, 10),\n"
+                    "    ...     dimensions=(10, 10, 10),\n"
                     "    ...     spacing=(2, 1, 5),\n"
                     "    ...     origin=(10, 35, 50),\n"
                     "    ... )\n"
                 )
-        elif dims is not None:
-            self._from_specs(dims, spacing, origin)
+        elif dimensions is not None:
+            self._from_specs(dimensions, spacing, origin)
 
     def __repr__(self):
         """Return the default representation."""
@@ -584,7 +597,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.points
         array([[0., 0., 0.],
                [1., 0., 0.],
@@ -632,7 +645,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.x
         array([0., 1., 0., 1., 0., 1., 0., 1.])
 
@@ -646,7 +659,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.y
         array([0., 0., 1., 1., 0., 0., 1., 1.])
 
@@ -660,7 +673,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
         >>> grid.z
         array([0., 0., 0., 0., 1., 1., 1., 1.])
 
@@ -674,7 +687,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Examples
         --------
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(5, 5, 5))
+        >>> grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
         >>> grid.origin
         (0.0, 0.0, 0.0)
 
@@ -721,7 +734,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Create a 5 x 5 x 5 uniform grid.
 
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(5, 5, 5))
+        >>> grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
         >>> grid.spacing
         (1.0, 1.0, 1.0)
         >>> grid.plot(show_edges=True)
@@ -801,7 +814,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Create a ``UniformGrid`` and show its extent.
 
         >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
+        >>> grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
         >>> grid.extent
         (0, 9, 0, 9, 0, 9)
 
@@ -826,3 +839,8 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         if len(new_extent) != 6:
             raise ValueError('Extent must be a vector of 6 values.')
         self.SetExtent(new_extent)
+
+    @wraps(RectilinearGridFilters.to_tetrahedra)
+    def to_tetrahedra(self, *args, **kwargs):
+        """Cast to a rectangular grid and then convert to tetrahedra."""
+        return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)

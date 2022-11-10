@@ -1,11 +1,11 @@
 """This module contains some convenience helper functions."""
 
+from typing import Tuple
+
 import numpy as np
 
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
-
-from .plotting import Plotter
 
 
 def plot(
@@ -37,6 +37,7 @@ def plot(
     border=None,
     border_color='k',
     border_width=2.0,
+    ssao=False,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
@@ -147,8 +148,8 @@ def plot(
 
     anti_aliasing : bool, optional
         Enable or disable anti-aliasing.  Defaults to the theme
-        setting :attr:`pyvista.global_theme.antialiasing
-        <pyvista.themes.DefaultTheme.antialiasing>`.
+        setting :attr:`pyvista.global_theme.anti_aliasing
+        <pyvista.themes.DefaultTheme.anti_aliasing>`.
 
     zoom : float, str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
@@ -167,6 +168,10 @@ def plot(
 
     border_width : float, optional
         Width of the border in pixels when enabled.
+
+    ssao : bool, optional
+        Enable surface space ambient occlusion (SSAO). See
+        :func:`Plotter.enable_ssao` for more details.
 
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
@@ -205,7 +210,7 @@ def plot(
     UniformGrid. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(dims=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
     >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
     >>> grid.plot(volume=True)
@@ -222,7 +227,7 @@ def plot(
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
-    pl = Plotter(
+    pl = pyvista.Plotter(
         window_size=window_size,
         off_screen=off_screen,
         notebook=notebook,
@@ -287,6 +292,9 @@ def plot(
 
     if parallel_projection:
         pl.enable_parallel_projection()
+
+    if ssao:
+        pl.enable_ssao()
 
     if zoom is not None:
         pl.camera.zoom(zoom)
@@ -454,3 +462,52 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
     else:
         pl.add_mesh(mesh, color, scalars, opacity, smooth_shading)
     return pl.show()
+
+
+def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """Given a plane to view, return vectors for setting up camera.
+
+    Parameters
+    ----------
+    view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
+        Plane to return vectors for.
+
+    negative : bool
+        Whether to view from opposite direction.  Default ``False``.
+
+    Returns
+    -------
+    vec : numpy.ndarray
+        ``[x, y, z]`` vector that points in the viewing direction
+
+    viewup : numpy.ndarray
+        ``[x, y, z]`` vector that points to the viewup direction
+
+    """
+    if view == 'xy':
+        vec = np.array([0, 0, 1])
+        viewup = np.array([0, 1, 0])
+    elif view == 'yx':
+        vec = np.array([0, 0, -1])
+        viewup = np.array([1, 0, 0])
+    elif view == 'xz':
+        vec = np.array([0, -1, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zx':
+        vec = np.array([0, 1, 0])
+        viewup = np.array([1, 0, 0])
+    elif view == 'yz':
+        vec = np.array([1, 0, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zy':
+        vec = np.array([-1, 0, 0])
+        viewup = np.array([0, 1, 0])
+    else:
+        raise ValueError(
+            f"Unexpected value for direction {view}\n"
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
+        )
+
+    if negative:
+        vec *= -1
+    return vec, viewup

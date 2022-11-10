@@ -16,7 +16,7 @@ install_requires = [
     'numpy',
     'imageio',
     'pillow',
-    'appdirs',
+    'pooch',
     'scooby>=0.5.1',
     'vtk',
     "typing-extensions; python_version < '3.8'",
