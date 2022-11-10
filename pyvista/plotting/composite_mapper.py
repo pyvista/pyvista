@@ -63,7 +63,7 @@ class BlockAttributes:
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -296,7 +296,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -591,7 +591,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Composite Block Addr=... Attributes
         Visible:   None
         Opacity:   0.1
-        Color:     Color(name='blue', hex='#0000ffff')
+        Color:     Color(name='blue', hex='#0000ffff', opacity=255)
         Pickable   None
 
         """
@@ -636,9 +636,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.set_unique_colors()
         >>> mapper.block_attr[1].color
-        Color(name='tab:orange', hex='#ff7f0eff')
+        Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
-        Color(name='tab:green', hex='#2ca02cff')
+        Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
         if has_module('matplotlib'):

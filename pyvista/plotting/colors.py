@@ -442,13 +442,13 @@ class Color:
 
     >>> import pyvista
     >>> pyvista.Color("green", opacity=0.5)
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
     >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
     >>> pyvista.Color([0, 128, 0, 128])
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
     >>> pyvista.Color("#00800080")
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
 
     """
 
@@ -641,7 +641,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", opacity=128)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgba
         (0, 0, 255, 128)
 
@@ -649,7 +649,7 @@ class Color:
 
         >>> c = pyvista.Color([255, 0, 0, 64])
         >>> c
-        Color(name='red', hex='#ff000040')
+        Color(name='red', hex='#ff000040', opacity=64)
         >>> c.int_rgba
         (255, 0, 0, 64)
 
@@ -667,7 +667,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", opacity=128)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgb
         (0, 0, 255)
 
@@ -675,7 +675,7 @@ class Color:
 
         >>> c = pyvista.Color([255, 0, 0])
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.int_rgb
         (255, 0, 0)
 
@@ -693,7 +693,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", opacity=0.6)
         >>> c
-        Color(name='blue', hex='#0000ff99')
+        Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgba
         (0.0, 0.0, 1.0, 0.6)
 
@@ -701,7 +701,7 @@ class Color:
 
         >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
-        Color(name='red', hex='#ff000033')
+        Color(name='red', hex='#ff000033', opacity=51)
         >>> c.float_rgba
         (1.0, 0.0, 0.0, 0.2)
 
@@ -719,7 +719,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity=0.6)
         >>> c
-        Color(name='blue', hex='#0000ff99')
+        Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgb
         (0.0, 0.0, 1.0)
 
@@ -727,7 +727,7 @@ class Color:
 
         >>> c = pyvista.Color([1.0, 0.0, 0.0])
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.float_rgb
         (1.0, 0.0, 0.0)
 
@@ -745,7 +745,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity="#80")
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgba
         '#0000ff80'
 
@@ -753,7 +753,7 @@ class Color:
 
         >>> c = pyvista.Color("0xff000040")
         >>> c
-        Color(name='red', hex='#ff000040')
+        Color(name='red', hex='#ff000040', opacity=64)
         >>> c.hex_rgba
         '#ff000040'
 
@@ -773,7 +773,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity="#80")
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgb
         '#0000ff'
 
@@ -781,7 +781,7 @@ class Color:
 
         >>> c = pyvista.Color("0xff0000")
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.hex_rgb
         '#ff0000'
 
@@ -810,7 +810,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
 
         """
         return self._name
@@ -826,7 +826,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.vtk_c3ub
         vtkmodules.vtkCommonDataModel.vtkColor3ub([0, 0, 255])
 
@@ -874,8 +874,30 @@ class Color:
 
     @property
     def opacity(self):
-        """Get the opacity of this color."""
+        """Return or set the opacity of this color in the range of ``(0-255)``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> color = pv.Color('r', opacity=0.5)
+        >>> color.opacity
+        128
+
+        Change the opacity via an attribute.
+
+        >>> color.opacity = 0.25
+        >>> color.opacity
+        64
+
+        >>> color
+        Color(name='red', hex='#ff000040', opacity=64)
+
+        """
         return self._opacity
+
+    @opacity.setter
+    def opacity(self, value: Union[int, float, str]):
+        self._opacity = self.convert_color_channel(value)
 
     def __eq__(self, other):
         """Equality comparison."""
@@ -907,7 +929,7 @@ class Color:
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
-        kwargs = f"hex={self.hex_rgba!r}"
+        kwargs = f"hex={self.hex_rgba!r}, opacity={self.opacity}"
         if self._name is not None:
             kwargs = f"name={self._name!r}, " + kwargs
         return f"Color({kwargs})"
