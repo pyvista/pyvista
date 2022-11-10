@@ -1,0 +1,21 @@
+[flake8]
+exclude = .git,__pycache__,build,dist,doc/examples,doc/_build,pyvista/**/__init__.py,pyvista/__init__.py
+ignore =
+    # whitespace before ':'
+    E203,
+    # line break before binary operator
+    W503,
+    # line length too long
+    E501,
+    # do not assign a lambda expression, use a def
+    E731,
+    # too many leading '#' for block comment
+    E266,
+    # ambiguous variable name
+    E741,
+    # module level import not at top of file
+    E402,
+    # Quotes (temporary)
+    Q0,
+    # bare excepts (temporary)
+    B001, E722
