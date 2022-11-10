@@ -1,4 +1,5 @@
 """PyVista Scalar bar module."""
+import weakref
 
 import numpy as np
 
@@ -14,7 +15,7 @@ class ScalarBars:
 
     def __init__(self, plotter):
         """Initialize ScalarBars."""
-        self._plotter = plotter
+        self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
@@ -421,8 +422,12 @@ class ScalarBars:
             lut = mapper.lookup_table
 
         scalar_bar.SetLookupTable(lut)
-        if n_colors is not None:
-            scalar_bar.SetMaximumNumberOfColors(n_colors)
+        if n_colors is None:
+            # ensure the number of colors in the scalarbar's lookup table is at
+            # least the number in the mapper
+            n_colors = mapper.lookup_table.n_values
+
+        scalar_bar.SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
             scalar_bar.SetDrawTickLabels(False)

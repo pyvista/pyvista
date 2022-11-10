@@ -7,7 +7,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.examples.downloads import _download_file
+from pyvista.examples.downloads import download_file
 
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
@@ -262,6 +262,9 @@ def test_ensightreader_timepoints():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
 
+    with pytest.raises(ValueError, match="Not a valid time"):
+        reader.set_active_time_value(1000.0)
+
 
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
@@ -357,10 +360,10 @@ def test_facetreader():
 
 
 def test_plot3dmetareader():
-    filename, _ = _download_file('multi.p3d')
-    _download_file('multi-bin.xyz')
-    _download_file('multi-bin.q')
-    _download_file('multi-bin.f')
+    filename = download_file('multi.p3d')
+    download_file('multi-bin.xyz')
+    download_file('multi-bin.q')
+    download_file('multi-bin.f')
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.Plot3DMetaReader)
     assert reader.path == filename
@@ -371,8 +374,8 @@ def test_plot3dmetareader():
 
 
 def test_multiblockplot3dreader():
-    filename, _ = _download_file('multi-bin.xyz')
-    q_filename, _ = _download_file('multi-bin.q')
+    filename = download_file('multi-bin.xyz')
+    q_filename = download_file('multi-bin.q')
     reader = pyvista.MultiBlockPlot3DReader(filename)
     assert reader.path == filename
 
@@ -384,21 +387,64 @@ def test_multiblockplot3dreader():
     # Reader doesn't yet support reusability
     reader = pyvista.MultiBlockPlot3DReader(filename)
     reader.add_q_files(q_filename)
+
+    reader.add_function(112)  # add by int
+    reader.add_function(pyvista.reader.Plot3DFunctionEnum.PRESSURE_GRADIENT)  # add by enum
+    reader.add_function(reader.KINETIC_ENERGY)  # add by class variable (alias to enum value)
+    reader.add_function(reader.ENTROPY)  # add ENTROPY by class variable
+    reader.remove_function(170)  # remove ENTROPY by int
+
+    reader.add_function(reader.ENTROPY)
+    reader.remove_function(reader.ENTROPY)  # remove by class variable
+
+    mesh = reader.read()
+    for m in mesh:
+        assert len(m.array_names) > 0
+
+    assert 'MachNumber' in mesh[0].point_data
+    assert 'PressureGradient' in mesh[0].point_data
+    assert 'KineticEnergy' in mesh[0].point_data
+    assert 'Entropy' not in mesh[0].point_data
+
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files([q_filename])
     mesh = reader.read()
     for m in mesh:
         assert len(m.array_names) > 0
 
     reader = pyvista.MultiBlockPlot3DReader(filename)
-    q_filename = reader.add_q_files([q_filename])
-    mesh = reader.read()
-    for m in mesh:
-        assert len(m.array_names) > 0
 
-    reader = pyvista.MultiBlockPlot3DReader(filename)
+    # get/set of `auto_detect_format`
     reader.auto_detect_format = False
     assert reader.auto_detect_format is False
     reader.auto_detect_format = True
     assert reader.auto_detect_format is True
+
+    # get/set of `preserve_intermediate_functions`
+    reader.preserve_intermediate_functions = False
+    assert reader.preserve_intermediate_functions is False
+    reader.preserve_intermediate_functions = True
+    assert reader.preserve_intermediate_functions is True
+
+    # get/set of `gamma`
+    reader.gamma = 1.5
+    assert reader.gamma == 1.5
+    reader.gamma = 99
+    assert reader.gamma == 99
+
+    # get/set of `r_gas_constant`
+    reader.r_gas_constant = 5
+    assert reader.r_gas_constant == 5
+    reader.r_gas_constant = 10
+    assert reader.r_gas_constant == 10
+
+    # check removing all functions
+    reader = pyvista.MultiBlockPlot3DReader(filename)
+    reader.add_q_files(q_filename)
+    reader.add_function(reader.ENTROPY)
+    reader.remove_all_functions()
+    mesh_no_functions = reader.read()
+    assert 'ENTROPY' not in mesh_no_functions[0].point_data
 
 
 def test_binarymarchingcubesreader():
@@ -744,7 +790,7 @@ def test_demreader():
 
 
 def test_jpegreader():
-    filename = examples.download_mars_jpg()
+    filename = examples.planets.download_mars_surface(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.JPEGReader)
     assert reader.path == filename
@@ -757,6 +803,16 @@ def test_meta_image_reader():
     filename = examples.download_chest(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.MetaImageReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_nifti_reader():
+    filename = examples.download_brain_atlas_with_sides(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.NIFTIReader)
     assert reader.path == filename
 
     mesh = reader.read()
@@ -858,7 +914,7 @@ def test_gif_reader(gif_file):
     assert grid.n_arrays == 3
 
     img = Image.open(gif_file)
-    new_grid = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+    new_grid = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):

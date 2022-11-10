@@ -177,7 +177,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista._typing import color_like
-from pyvista.utilities import PyvistaDeprecationWarning
+from pyvista.utilities import PyVistaDeprecationWarning
 from pyvista.utilities.misc import has_module
 
 IPYGANY_MAP = {
@@ -429,7 +429,7 @@ class Color:
 
        <details><summary>Refer to the table below for a list of supported colors.</summary>
 
-    .. include:: ../colors.rst
+    .. include:: ../color_table/color_table.rst
 
     .. raw:: html
 
@@ -916,7 +916,7 @@ def hex_to_rgb(h):  # pragma: no cover
     # Deprecated on v0.34.0, estimated removal on v0.37.0
     warnings.warn(
         "The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     return Color(h).float_rgb
 
@@ -939,7 +939,7 @@ def string_to_rgb(string):  # pragma: no cover
     # Deprecated on v0.34.0, estimated removal on v0.37.0
     warnings.warn(
         "The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     return Color(string).float_rgb
 

@@ -26,9 +26,9 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.common import _coerce_pointslike_arg
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .._typing import Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
@@ -473,7 +473,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `DataSet.vectors` is deprecated. Use `DataSet.active_vectors` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_vectors
 
@@ -483,7 +483,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use of `DataSet.vectors` to add vector data is deprecated. "
             "Use `DataSet['vector_name'] = data`. "
             "Use `DataSet.active_vectors_name = 'vector_name' to make active.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         if array.ndim != 2:
             raise ValueError('vector array must be a 2-dimensional array')
@@ -506,7 +506,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.active_t_coords
 
@@ -514,7 +514,7 @@ class DataSet(DataSetFilters, DataObject):
     def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
         warnings.warn(
             "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.active_t_coords = t_coords  # type: ignore
 
@@ -1473,7 +1473,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `point_arrays` is deprecated. Use `point_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.point_data
 
@@ -1526,7 +1526,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.clear_point_data()
 
@@ -1558,7 +1558,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `clear_cell_arrays` is deprecated. Use `clear_cell_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.clear_cell_data()
 
@@ -1575,7 +1575,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `clear_arrays` is deprecated. Use `clear_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         self.clear_data()
 
@@ -1610,7 +1610,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         warnings.warn(
             "Use of `cell_arrays` is deprecated. Use `cell_data` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self.cell_data
 
@@ -1772,13 +1772,13 @@ class DataSet(DataSetFilters, DataObject):
         Note that there are 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
         >>> mesh.volume
         64.0
 
         A mesh with 2D cells has no volume.
 
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
         >>> mesh.volume
         0.0
 
@@ -1810,7 +1810,7 @@ class DataSet(DataSetFilters, DataObject):
         Note 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
         >>> mesh.area
         16.0
 
@@ -1818,7 +1818,7 @@ class DataSet(DataSetFilters, DataObject):
         the outer surface area, first extract the surface using
         :func:`pyvista.DataSetFilters.extract_surface`.
 
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
         >>> mesh.area
         0.0
 
@@ -2019,6 +2019,8 @@ class DataSet(DataSetFilters, DataObject):
         attrs = []
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
+        if isinstance(self, pyvista.PolyData):
+            attrs.append(("N Strips", self.n_strips, "{}"))
         bds = self.bounds
         fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
         attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
@@ -2084,7 +2086,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def overwrite(self, mesh: _vtk.vtkDataSet):
+    def copy_from(self, mesh: _vtk.vtkDataSet):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -2100,7 +2102,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()
         >>> mesh_b = pyvista.Cube()
-        >>> mesh_a.overwrite(mesh_b)
+        >>> mesh_a.copy_from(mesh_b)
         >>> mesh_a == mesh_b
         True
 
@@ -2114,6 +2116,24 @@ class DataSet(DataSetFilters, DataObject):
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=True)
+
+    def overwrite(self, mesh: _vtk.vtkDataSet):
+        """Overwrite this dataset inplace with the new dataset's geometries and data.
+
+        .. deprecated:: 0.37.0
+            Use :func:`DataSet.copy_from` instead.
+
+        Parameters
+        ----------
+        mesh : vtk.vtkDataSet
+            The overwriting mesh.
+
+        """
+        warnings.warn(
+            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.copy_from(mesh)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2474,7 +2494,7 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista
-        >>> mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1/4, 1/4, 0])
         >>> mesh
         UniformGrid...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])

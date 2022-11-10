@@ -40,3 +40,8 @@ def test_to_tetrahedral_mixed(tiny_rectilinear):
 
     with pytest.raises(TypeError, match='mixed'):
         tet_grid = tiny_rectilinear.to_tetrahedra(mixed=123)
+
+
+def test_to_tetrahedral_edge_case():
+    with pytest.raises(RuntimeError, match='is 1'):
+        pv.UniformGrid(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)

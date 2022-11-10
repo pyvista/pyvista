@@ -6,7 +6,9 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
+
+from .helpers import view_vectors
 
 
 class Camera(_vtk.vtkCamera):
@@ -197,7 +199,7 @@ class Camera(_vtk.vtkCamera):
         warnings.warn(
             "Use of `Camera.is_parallel_projection` is deprecated. "
             "Use `Camera.parallel_projection` instead.",
-            PyvistaDeprecationWarning,
+            PyVistaDeprecationWarning,
         )
         return self._parallel_projection
 
@@ -645,8 +647,17 @@ class Camera(_vtk.vtkCamera):
 
         return new_camera
 
-    def tight(self, padding=0.0, adjust_render_window=True):
+    def tight(self, padding=0.0, adjust_render_window=True, view='xy', negative=False):
         """Adjust the camera position so that the actors fill the entire renderer.
+
+        The camera view direction is reoriented to be normal to the ``view``
+        plane. When ``negative=False``, The first letter of ``view`` refers
+        to the axis that points to the right. The second letter of ``view``
+        refers to axis that points up.  When ``negative=True``, the first
+        letter refers to the axis that points left.  The up direction is
+        unchanged.
+
+        Parallel projection is enabled when using this function.
 
         Parameters
         ----------
@@ -658,9 +669,15 @@ class Camera(_vtk.vtkCamera):
             Adjust the size of the render window as to match the dimensions of
             the visible actors.
 
+        view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
+            Plane to which the view is oriented. Default 'xy'.
+
+        negative : bool
+            Whether to view in opposite direction. Default ``False``.
+
         Notes
         -----
-        This resets the view direction to look at the XY plane.
+        This resets the view direction to look at a plane with parallel projection.
 
         Examples
         --------
@@ -690,15 +707,29 @@ class Camera(_vtk.vtkCamera):
 
         self._renderer.ComputeAspect()
         aspect = self._renderer.GetAspect()
-        angle = np.pi * self.view_angle / 180.0
-        dx, dy = (x1 - x0), (y1 - y0)
-        dist = max(dx / aspect[0], dy) / np.sin(angle / 2) / 2
 
-        self.SetViewUp(0, 1, 0)
-        self.SetPosition(x0 + dx / 2, y0 + dy / 2, dist * (1 + padding))
-        self.SetFocalPoint(x0 + dx / 2, y0 + dy / 2, 0)
+        position0 = np.array([x0, y0, z0])
+        position1 = np.array([x1, y1, z1])
+        objects_size = position1 - position0
+        position = position0 + objects_size / 2
 
-        ps = max(dx / aspect[0], dy) / 2
+        direction, viewup = view_vectors(view, negative)
+        horizontal = np.cross(direction, viewup)
+
+        vert_dist = abs(objects_size @ viewup)
+        horiz_dist = abs(objects_size @ horizontal)
+
+        # set focal point to objects' center
+        # offset camera position from objects center by dist in opposite of viewing direction
+        # (actual distance doesn't matter due to parallel projection)
+        dist = 1
+        camera_position = position + dist * direction
+
+        self.SetViewUp(*viewup)
+        self.SetPosition(*camera_position)
+        self.SetFocalPoint(*position)
+
+        ps = max(horiz_dist / aspect[0], vert_dist) / 2
         self.parallel_scale = ps * (1 + padding)
         self._renderer.ResetCameraClippingRange(x0, x1, y0, y1, z0, z1)
 
@@ -706,7 +737,7 @@ class Camera(_vtk.vtkCamera):
             ren_win = self._renderer.GetRenderWindow()
             size = list(ren_win.GetSize())
             size_ratio = size[0] / size[1]
-            tight_ratio = dx / dy
+            tight_ratio = horiz_dist / vert_dist
             resize_ratio = tight_ratio / size_ratio
             if resize_ratio < 1:
                 size[0] = round(size[0] * resize_ratio)
@@ -717,4 +748,4 @@ class Camera(_vtk.vtkCamera):
 
             # simply call tight again to reset the parallel scale due to the
             # resized window
-            self.tight(padding=padding, adjust_render_window=False)
+            self.tight(padding=padding, adjust_render_window=False, view=view, negative=negative)

@@ -9,7 +9,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyvistaFutureWarning
+from pyvista.utilities.misc import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -792,6 +792,25 @@ def test_lines():
     assert poly.n_cells == 1
 
 
+def test_strips():
+    # init with strips test
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    strips = np.array([4, 0, 1, 3, 2])
+    strips_init = pyvista.PolyData(vertices, strips=strips)
+    assert len(strips_init.strips) == len(strips)
+
+    # add strips using the setter
+    strips_setter = pyvista.PolyData(vertices)
+    strips_setter.strips = strips
+    assert len(strips_setter.strips) == len(strips)
+
+    # test n_strips function
+    strips = np.array([[4, 0, 1, 3, 2], [4, 1, 2, 3, 0]])
+    strips_stack = np.hstack(strips)
+    n_strips_test = pyvista.PolyData(vertices, strips=strips_stack)
+    assert n_strips_test.n_strips == len(strips)
+
+
 def test_ribbon_filter():
     line = examples.load_spline().compute_arc_length(progress_bar=True)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
@@ -822,6 +841,7 @@ def test_extrude():
     poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
+    assert np.any(poly.strips)
 
     n_points_old = arc.n_points
     arc.extrude([0, 0, 1], inplace=True, capping=True)
@@ -830,9 +850,9 @@ def test_extrude():
 
 def test_extrude_capping_warnings():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude([0, 0, 1])
-    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude_rotate()
 
 

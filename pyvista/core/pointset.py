@@ -1,5 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-from collections.abc import Iterable
+import collections.abc as collections
 from functools import wraps
 import logging
 import numbers
@@ -13,7 +13,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyvistaDeprecationWarning, abstract_class
+from pyvista.utilities import PyVistaDeprecationWarning, abstract_class
 from pyvista.utilities.cells import (
     CellArray,
     create_mixed_cells,
@@ -23,6 +23,7 @@ from pyvista.utilities.cells import (
 )
 
 from ..utilities.fileio import get_ext
+from .cell import CellType
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
@@ -202,7 +203,7 @@ class _PointSet(DataSet):
         """
         if inplace is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             inplace = True
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore
@@ -258,7 +259,7 @@ class _PointSet(DataSet):
         """
         if inplace is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             inplace = True
         return super().scale(
             xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
@@ -269,7 +270,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_x``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_x(*args, **kwargs)
 
@@ -278,7 +279,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_y``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_y(*args, **kwargs)
 
@@ -287,7 +288,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_z``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_z(*args, **kwargs)
 
@@ -296,7 +297,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.flip_normal``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_normal(*args, **kwargs)
 
@@ -305,7 +306,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_x``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_x(*args, **kwargs)
 
@@ -314,7 +315,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_y``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_y(*args, **kwargs)
 
@@ -323,7 +324,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_z``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_z(*args, **kwargs)
 
@@ -332,7 +333,7 @@ class _PointSet(DataSet):
         """Wrap ``DataSet.rotate_vector``."""
         if kwargs.get('inplace') is None:
             # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
+            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_vector(*args, **kwargs)
 
@@ -350,7 +351,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     Parameters
     ----------
-    points : Sequence, optional
+    var_inp : vtk.vtkPointSet, Sequence, optional
+        Flexible input type.  Can be a ``vtk.vtkPointSet``, in which case
+        this PointSet object will be copied if ``deep=True`` and will
+        be a shallow copy if ``deep=False``.
+
         List, numpy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
 
@@ -402,11 +407,19 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
         return super().__new__(cls, *args, **kwargs)
 
-    def __init__(self, points=None, deep=False, force_float=True):
+    def __init__(self, var_inp=None, deep=False, force_float=True):
         """Initialize the pointset."""
         super().__init__()
-        if points is not None:
-            self.SetPoints(pyvista.vtk_points(points, deep=deep, force_float=force_float))
+
+        if var_inp is None:
+            return
+        elif isinstance(var_inp, _vtk.vtkPointSet):
+            if deep:
+                self.deep_copy(var_inp)
+            else:
+                self.shallow_copy(var_inp)
+        else:
+            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
 
     def __repr__(self):
         """Return the standard representation."""
@@ -502,6 +515,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         optional, setting this speeds up the creation of the
         ``PolyData``.
 
+    strips : sequence, optional
+        Triangle strips connectivity array.  Triangle strips require an initial
+        triangle, and the following points of the strip. Each
+        triangle is built with the new point and the two previous
+        points. Just as in ``lines`` and ``faces``, this array requires a
+        padding indicating the number of points. For example,
+        a single triangle strip of ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
+        ``10`` and should input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
+
+    n_strips : int, optional
+        Number of strips in the ``strips`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
     deep : bool, optional
         Whether to copy the inputs, or to create a mesh from them
         without copying them.  Setting ``deep=True`` ensures that the
@@ -550,6 +577,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
     >>> mesh = pyvista.PolyData(vertices, lines=lines)
 
+    Initialize from vertices and triangle strips.
+
+    >>> strips = np.hstack([[4, 0, 1, 3, 2]])
+    >>> mesh = pyvista.PolyData(vertices, strips=strips)
+
     Initialize from a filename.
 
     >>> mesh = pyvista.PolyData(examples.antfile)
@@ -572,6 +604,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         n_faces=None,
         lines=None,
         n_lines=None,
+        strips=None,
+        n_strips=None,
         deep=False,
         force_ext=None,
         force_float=True,
@@ -628,11 +662,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
-        if faces is None and lines is None:
+        if faces is None and lines is None and strips is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
             self.verts = CellArray(verts, self.n_points, deep)
-
+        elif strips is not None:
+            self.strips = CellArray(strips, n_strips, deep)
         elif faces is not None:
             # here we use CellArray since we must specify deep and n_faces
             self.faces = CellArray(faces, n_faces, deep)
@@ -765,6 +800,33 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         else:
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
+
+    @property
+    def strips(self) -> np.ndarray:
+        """Return a pointer to the strips as a numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of strip indices.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polygon = pv.Rectangle()
+        >>> extruded = polygon.extrude((0, 0, 1), capping=False)
+        >>> extruded.strips
+        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+        """
+        return _vtk.vtk_to_numpy(self.GetStrips().GetData())
+
+    @strips.setter
+    def strips(self, strips):
+        """Set the strip cells."""
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
 
     @property
     def is_all_triangles(self):
@@ -911,6 +973,26 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         """
         return self.GetNumberOfVerts()
+
+    @property
+    def n_strips(self) -> int:
+        """Return the number of strips.
+
+        Examples
+        --------
+        Create a simple mesh with one triangle strip and return the
+        number of triangles.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+        >>> strip = np.array([3, 0, 1, 2])
+        >>> mesh = pyvista.PolyData(vertices, strips=strip)
+        >>> mesh.n_strips
+        1
+
+        """
+        return self.GetNumberOfStrips()
 
     @property
     def n_faces(self) -> int:
@@ -1281,20 +1363,31 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     >>> grid = pyvista.UnstructuredGrid()
 
-    Copy a vtkUnstructuredGrid
+    Copy a vtk.vtkUnstructuredGrid
 
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
-    >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
+    >>> grid = pyvista.UnstructuredGrid(vtkgrid)
 
-    >>> # from arrays (vtk9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, celltypes, points)
-
-    >>> # from arrays (vtk<9)
-    >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
-
-    From a string filename
+    From a filename.
 
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    >>> grid.plot(show_edges=True)
+
+    From arrays (VTK >= 9). Here we create a single tetrahedron.
+
+    >>> cells = [4, 0, 1, 2, 3]
+    >>> celltypes = [pyvista.CellType.TETRA]
+    >>> points = [
+    ...     [1.0, 1.0, 1.0],
+    ...     [1.0, -1.0, -1.0],
+    ...     [-1.0, 1.0, -1.0],
+    ...     [-1.0, -1.0, 1.0],
+    ... ]
+    >>> grid = pyvista.UnstructuredGrid(cells, celltypes, points)
+    >>> grid.plot(show_edges=True)
+
+    See the :ref:`create_unstructured_example` example for more details
+    on creating unstructured grids within PyVista.
 
     """
 
@@ -1332,27 +1425,27 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._check_for_consistency()
 
         elif len(args) == 3:  # and VTK9:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            arg2_is_arr = isinstance(args[2], np.ndarray)
+            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.Sequence))
 
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
+            if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
                 self._check_for_consistency()
             else:
-                raise TypeError('All input types must be np.ndarray')
+                raise TypeError('All input types must be sequences.')
 
-        elif len(args) == 4:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            arg2_is_arr = isinstance(args[2], np.ndarray)
-            arg3_is_arr = isinstance(args[3], np.ndarray)
+        elif len(args) == 4:  # pragma: no cover
+            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.Sequence))
+            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.Sequence))
+            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.Sequence))
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
                 self._check_for_consistency()
             else:
-                raise TypeError('All input types must be np.ndarray')
+                raise TypeError('All input types must be sequences.')
 
         else:
             err_msg = (
@@ -1397,19 +1490,19 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Parameters
         ----------
-        offset : numpy.ndarray dtype=np.int64
+        offset : sequence or numpy.ndarray dtype=np.int64
             Array indicating the start location of each cell in the cells
             array.  Set to ``None`` when using VTK 9+.
 
-        cells : numpy.ndarray dtype=np.int64
+        cells : sequence or numpy.ndarray dtype=np.int64
             Array of cells.  Each cell contains the number of points in the
             cell and the node numbers of the cell.
 
-        cell_type : np.uint8
+        cell_type : sequence or numpy.ndarray np.uint8
             Cell types of each cell.  Each cell type numbers can be found from
             vtk documentation.  See example below.
 
-        points : numpy.ndarray
+        points : sequence or numpy.ndarray
             Numpy array containing point locations.
 
         deep : bool, optional
@@ -1425,11 +1518,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         >>> import numpy as np
-        >>> import vtk
+        >>> from pyvista import CellType
         >>> import pyvista
         >>> offset = np.array([0, 9])
         >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-        >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
+        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
         >>> cell1 = np.array([[0, 0, 0],
         ...                   [1, 0, 0],
@@ -1454,6 +1547,13 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
 
         """
+        # convert to arrays upfront
+        if offset is not None:
+            offset = np.asarray(offset)
+        cells = np.asarray(cells)
+        cell_type = np.asarray(cell_type)
+        points = np.asarray(points)
+
         # Convert to vtk arrays
         vtkcells = CellArray(cells, cell_type.size, deep)
         if cell_type.dtype != np.uint8:
@@ -1541,7 +1641,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Return the cells dictionary of the sample hex beam.  Note how
         there is only one key/value pair as the hex beam example is
         composed of only all hexahedral cells, which is
-        ``vtk.VTK_HEXAHEDRON``, which evaluates to 12.
+        ``CellType.HEXAHEDRON``, which evaluates to 12.
 
         Also note how there is no padding for the cell array.  This
         approach may be more helpful than the ``cells`` property when
@@ -1600,16 +1700,16 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Converts the following cell types to their linear equivalents.
 
-        - ``VTK_QUADRATIC_TETRA      --> VTK_TETRA``
-        - ``VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID``
-        - ``VTK_QUADRATIC_WEDGE      --> VTK_WEDGE``
-        - ``VTK_QUADRATIC_HEXAHEDRON --> VTK_HEXAHEDRON``
+        - ``QUADRATIC_TETRA      --> TETRA``
+        - ``QUADRATIC_PYRAMID    --> PYRAMID``
+        - ``QUADRATIC_WEDGE      --> WEDGE``
+        - ``QUADRATIC_HEXAHEDRON --> HEXAHEDRON``
 
         Parameters
         ----------
-        deep : bool
-            When ``True``, makes a copy of the points array.  Default
-            ``False``.  Cells and cell types are always copied.
+        deep : bool, default: False
+            When ``True``, makes a copy of the points array.
+            Cells and cell types are always copied.
 
         Returns
         -------
@@ -1623,17 +1723,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         # grab the vtk object
         vtk_cell_type = _vtk.numpy_to_vtk(self.GetCellTypesArray(), deep=True)
         celltype = _vtk.vtk_to_numpy(vtk_cell_type)
-        celltype[celltype == _vtk.VTK_QUADRATIC_TETRA] = _vtk.VTK_TETRA
-        celltype[celltype == _vtk.VTK_QUADRATIC_PYRAMID] = _vtk.VTK_PYRAMID
-        celltype[celltype == _vtk.VTK_QUADRATIC_WEDGE] = _vtk.VTK_WEDGE
-        celltype[celltype == _vtk.VTK_QUADRATIC_HEXAHEDRON] = _vtk.VTK_HEXAHEDRON
+        celltype[celltype == CellType.QUADRATIC_TETRA] = CellType.TETRA
+        celltype[celltype == CellType.QUADRATIC_PYRAMID] = CellType.PYRAMID
+        celltype[celltype == CellType.QUADRATIC_WEDGE] = CellType.WEDGE
+        celltype[celltype == CellType.QUADRATIC_HEXAHEDRON] = CellType.HEXAHEDRON
 
         # track quad mask for later
-        quad_quad_mask = celltype == _vtk.VTK_QUADRATIC_QUAD
-        celltype[quad_quad_mask] = _vtk.VTK_QUAD
+        quad_quad_mask = celltype == CellType.QUADRATIC_QUAD
+        celltype[quad_quad_mask] = CellType.QUAD
 
-        quad_tri_mask = celltype == _vtk.VTK_QUADRATIC_TRIANGLE
-        celltype[quad_tri_mask] = _vtk.VTK_TRIANGLE
+        quad_tri_mask = celltype == CellType.QUADRATIC_TRIANGLE
+        celltype[quad_tri_mask] = CellType.TRIANGLE
 
         vtk_offset = self.GetCellLocationsArray()
         cells = _vtk.vtkCellArray()
@@ -1680,40 +1780,40 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Returns
         -------
         numpy.ndarray
-            Array of VTK cell types.  Some of the most popular cell types:
+            Array of cell types.  Some of the most popular cell types:
 
-        * ``VTK_EMPTY_CELL = 0``
-        * ``VTK_VERTEX = 1``
-        * ``VTK_POLY_VERTEX = 2``
-        * ``VTK_LINE = 3``
-        * ``VTK_POLY_LINE = 4``
-        * ``VTK_TRIANGLE = 5``
-        * ``VTK_TRIANGLE_STRIP = 6``
-        * ``VTK_POLYGON = 7``
-        * ``VTK_PIXEL = 8``
-        * ``VTK_QUAD = 9``
-        * ``VTK_TETRA = 10``
-        * ``VTK_VOXEL = 11``
-        * ``VTK_HEXAHEDRON = 12``
-        * ``VTK_WEDGE = 13``
-        * ``VTK_PYRAMID = 14``
-        * ``VTK_PENTAGONAL_PRISM = 15``
-        * ``VTK_HEXAGONAL_PRISM = 16``
-        * ``VTK_QUADRATIC_EDGE = 21``
-        * ``VTK_QUADRATIC_TRIANGLE = 22``
-        * ``VTK_QUADRATIC_QUAD = 23``
-        * ``VTK_QUADRATIC_POLYGON = 36``
-        * ``VTK_QUADRATIC_TETRA = 24``
-        * ``VTK_QUADRATIC_HEXAHEDRON = 25``
-        * ``VTK_QUADRATIC_WEDGE = 26``
-        * ``VTK_QUADRATIC_PYRAMID = 27``
-        * ``VTK_BIQUADRATIC_QUAD = 28``
-        * ``VTK_TRIQUADRATIC_HEXAHEDRON = 29``
-        * ``VTK_QUADRATIC_LINEAR_QUAD = 30``
-        * ``VTK_QUADRATIC_LINEAR_WEDGE = 31``
-        * ``VTK_BIQUADRATIC_QUADRATIC_WEDGE = 32``
-        * ``VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
-        * ``VTK_BIQUADRATIC_TRIANGLE = 34``
+        * ``EMPTY_CELL = 0``
+        * ``VERTEX = 1``
+        * ``POLY_VERTEX = 2``
+        * ``LINE = 3``
+        * ``POLY_LINE = 4``
+        * ``TRIANGLE = 5``
+        * ``TRIANGLE_STRIP = 6``
+        * ``POLYGON = 7``
+        * ``PIXEL = 8``
+        * ``QUAD = 9``
+        * ``TETRA = 10``
+        * ``VOXEL = 11``
+        * ``HEXAHEDRON = 12``
+        * ``WEDGE = 13``
+        * ``PYRAMID = 14``
+        * ``PENTAGONAL_PRISM = 15``
+        * ``HEXAGONAL_PRISM = 16``
+        * ``QUADRATIC_EDGE = 21``
+        * ``QUADRATIC_TRIANGLE = 22``
+        * ``QUADRATIC_QUAD = 23``
+        * ``QUADRATIC_POLYGON = 36``
+        * ``QUADRATIC_TETRA = 24``
+        * ``QUADRATIC_HEXAHEDRON = 25``
+        * ``QUADRATIC_WEDGE = 26``
+        * ``QUADRATIC_PYRAMID = 27``
+        * ``BIQUADRATIC_QUAD = 28``
+        * ``TRIQUADRATIC_HEXAHEDRON = 29``
+        * ``QUADRATIC_LINEAR_QUAD = 30``
+        * ``QUADRATIC_LINEAR_WEDGE = 31``
+        * ``BIQUADRATIC_QUADRATIC_WEDGE = 32``
+        * ``BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
+        * ``BIQUADRATIC_TRIANGLE = 34``
 
         See
         https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
@@ -1722,7 +1822,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         This mesh contains only linear hexahedral cells, type
-        ``vtk.VTK_HEXAHEDRON``, which evaluates to 12.
+        ``CellType.HEXAHEDRON``, which evaluates to 12.
 
         >>> import pyvista
         >>> from pyvista import examples
@@ -2076,7 +2176,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(key) != 3:
             raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
-            if isinstance(k, Iterable):
+            if isinstance(k, collections.Iterable):
                 raise RuntimeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k

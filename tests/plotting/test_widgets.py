@@ -190,6 +190,15 @@ def test_widget_slider(uniform):
     assert s.GetRepresentation().GetLabelFormat() == fmt
     p.close()
 
+    # custom width
+    p = pyvista.Plotter()
+    slider = p.add_slider_widget(
+        callback=func, rng=[0, 10], fmt=fmt, tube_width=0.1, slider_width=0.2
+    )
+    assert slider.GetRepresentation().GetSliderWidth() == 0.2
+    assert slider.GetRepresentation().GetTubeWidth() == 0.1
+    p.close()
+
 
 def test_widget_spline(uniform):
     p = pyvista.Plotter()
@@ -228,6 +237,14 @@ def test_widget_checkbox_button(uniform):
     p.add_mesh(uniform)
     p.add_checkbox_button_widget(callback=func)
     p.close()
+
+
+def test_widget_closed(uniform):
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform)
+    pl.close()
+    with pytest.raises(RuntimeError, match='closed plotter'):
+        pl.add_checkbox_button_widget(callback=lambda value: value)
 
 
 @pytest.mark.needs_vtk_version(9, 1)

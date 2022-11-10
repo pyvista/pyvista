@@ -40,6 +40,7 @@ Reader Classes
     MFIXReader
     MetaImageReader
     MultiBlockPlot3DReader
+    NIFTIReader
     NRRDReader
     OBJReader
     OpenFOAMReader
@@ -86,3 +87,15 @@ and setting time or iterations for reading.
    BaseReader
    PointCellDataSelection
    TimeReader
+
+
+Enumerations
+~~~~~~~~~~~~
+
+Enumerations are available to simplify inputs to certain readers.
+
+.. toctree::
+    :maxdepth: 2
+
+    enums
+

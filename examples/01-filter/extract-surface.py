@@ -11,9 +11,9 @@ using the ``extract_surface`` filter.
 # sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
-from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 import pyvista as pv
+from pyvista import CellType
 
 ###############################################################################
 # Create a quadratic cell and extract its surface
@@ -65,7 +65,7 @@ pts = np.vstack((lin_pts, quad_pts))
 # If you are using vtk>=9, you do not need the offset array
 offset = np.array([0])
 cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
-celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
+celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
 grid = pv.UnstructuredGrid(offset, cells, celltypes, pts)
 
 # finally, extract the surface and plot it

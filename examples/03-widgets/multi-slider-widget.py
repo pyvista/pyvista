@@ -30,7 +30,7 @@ class MyCustomRoutine:
     def update(self):
         # This is where you call your simulation
         result = pv.Sphere(**self.kwargs)
-        self.output.overwrite(result)
+        self.output.copy_from(result)
         return
 
 
