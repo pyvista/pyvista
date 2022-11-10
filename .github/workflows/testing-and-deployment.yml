@@ -171,7 +171,7 @@ jobs:
         if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.2
         with:
           packages: libgl1-mesa-glx xvfb python-tk
           version: 3.0
@@ -199,7 +199,7 @@ jobs:
           twine check dist/*
 
       - name: Upload to PyPi
-        if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v*')
+        if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
         run: |
           twine upload --skip-existing dist/pyvista*
         env:

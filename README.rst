@@ -51,11 +51,14 @@ PyVista
   :target: https://github.com/psf/black
   :alt: black
 
+.. |python| image:: https://img.shields.io/badge/python-3.7+-blue.svg
+   :target: https://www.python.org/downloads/
+
 
 +----------------------+-----------+------------+
 | Deployment           | |pypi|    |   |conda|  |
 +----------------------+-----------+------------+
-| Build Status         | |GH-CI|                |
+| Build Status         | |GH-CI|   |  |python|  |
 +----------------------+-----------+------------+
 | Metrics              | |codacy|  |  |codecov| |
 +----------------------+-----------+------------+

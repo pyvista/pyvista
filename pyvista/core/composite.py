@@ -786,7 +786,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        empty : bool, default=True
+        empty : bool, default: True
             Remove any meshes that are empty as well (have zero points).
 
         Examples

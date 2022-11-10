@@ -409,12 +409,18 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
         # Scalars interpolation approach
         if use_points:
-            if scalars_name not in self.dataset.point_data:
+            if (
+                scalars_name not in self.dataset.point_data
+                or scalars_name == pv.DEFAULT_SCALARS_NAME
+            ):
                 self.dataset.point_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
             self.scalar_map_mode = 'point'
         elif use_cells:
-            if scalars_name not in self.dataset.cell_data:
+            if (
+                scalars_name not in self.dataset.cell_data
+                or scalars_name == pv.DEFAULT_SCALARS_NAME
+            ):
                 self.dataset.cell_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
             self.scalar_map_mode = 'cell'

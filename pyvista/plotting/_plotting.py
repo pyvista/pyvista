@@ -235,7 +235,7 @@ def _common_arg_parser(
     feature_angle = kwargs.pop('feature_angle', theme.sharp_edges_feature_angle)
     if render_points_as_spheres is None:
         if style == 'points_gaussian':
-            render_points_as_spheres = True
+            render_points_as_spheres = False
         else:
             render_points_as_spheres = theme.render_points_as_spheres
 

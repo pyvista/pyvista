@@ -66,7 +66,6 @@ from .widgets import WidgetHelper
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
 
-
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
 if KILL_DISPLAY:  # pragma: no cover
@@ -2014,7 +2013,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
-        style : str, default='wireframe'
+        style : str, default: 'wireframe'
             Visualization style of the mesh.  One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``.
             Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
@@ -3005,7 +3004,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
-        scalars_name = 'Data'
+        scalars_name = pyvista.DEFAULT_SCALARS_NAME
         if isinstance(scalars, str):
             self.mapper.array_name = scalars
 
@@ -3769,6 +3768,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         except KeyError:
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
+
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        self.renderers.clear_actors()
 
     def clear(self):
         """Clear plot by removing all actors and properties.
@@ -4602,7 +4605,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rendering window, it will be replaced by the new actor.
 
         shape_color : color_like, optional
-            Color of points (if visible).  Either a string, rgb
+            Color of shape (if visible).  Either a string, rgb
             sequence, or hex color string.
 
         shape : str, optional
@@ -5909,6 +5912,7 @@ class Plotter(BasePlotter):
         jupyter_backend=None,
         return_viewer=False,
         return_cpos=None,
+        before_close_callback=None,
         **kwargs,
     ):
         """Display the plotting window.
@@ -5987,6 +5991,15 @@ class Plotter(BasePlotter):
             when enabled.  Default based on theme setting.  See
             :attr:`pyvista.themes.DefaultTheme.return_cpos`.
 
+        before_close_callback : Callable, optional
+            Callback that is called before the plotter is closed.
+            The function takes a single parameter, which is the plotter object
+            before it closes. An example of use is to capture a screenshot after
+            interaction::
+
+                def fun(plotter):
+                    plotter.screenshot('file.png')
+
         **kwargs : dict, optional
             Developer keyword arguments.
 
@@ -6055,10 +6068,12 @@ class Plotter(BasePlotter):
         (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
 
         """
-        # developer keyword argument: runs a function immediately prior to ``close``
-        self._before_close_callback = kwargs.pop('before_close_callback', None)
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
+
+        if before_close_callback is None:
+            before_close_callback = pyvista.global_theme._before_close_callback
+        self._before_close_callback = before_close_callback
 
         if interactive_update and auto_close is None:
             auto_close = False
