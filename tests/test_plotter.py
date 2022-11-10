@@ -168,7 +168,8 @@ def test_plotter_remains_shallow():
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
 
-def test_add_multiple(sphere):
+def test_add_multiple(sphere, verify_image_cache):
+    verify_image_cache.skip = True
     point_data_name = 'data'
     sphere[point_data_name] = np.random.random(sphere.n_points)
     pl = pyvista.Plotter()

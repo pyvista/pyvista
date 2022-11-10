@@ -7,7 +7,6 @@ import pytest
 
 import pyvista
 
-pytest_plugins = ["pyvista"]
 # these are set here because we only need them for plotting tests
 pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
