@@ -123,6 +123,8 @@ def test_remove_scalars_single(sphere, hexbeam):
 
 def test_active_scalars_remain(sphere, hexbeam):
     """Ensure active scalars remain active despite plotting different scalars when copy_mesh=True."""
+    sphere.clear_data()
+    hexbeam.clear_data()
     point_data_name = "point_data"
     cell_data_name = "cell_data"
     sphere[point_data_name] = np.random.random(sphere.n_points)

@@ -1494,13 +1494,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.point_data
         pyvista DataSetAttributes
         Association     : POINT
-        Active Scalars  : my_other_array
+        Active Scalars  : my_array
         Active Vectors  : None
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64    (8,)
-            my_other_array          int64      (8,)                 SCALARS
+            my_array                float64    (8,)                 SCALARS
+            my_other_array          int64      (8,)
 
         Access an array from ``point_data``.
 
@@ -1631,13 +1631,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.cell_data
         pyvista DataSetAttributes
         Association     : CELL
-        Active Scalars  : my_other_array
+        Active Scalars  : my_array
         Active Vectors  : None
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64    (6,)
-            my_other_array          int64      (6,)                 SCALARS
+            my_array                float64    (6,)                 SCALARS
+            my_other_array          int64      (6,)
 
         Access an array from ``cell_data``.
 
