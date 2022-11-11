@@ -45,7 +45,7 @@ def test_polydata_eq(sphere):
     assert sphere != copy
 
     copy = sphere.copy(deep=True)
-    copy.point_data.active_scalars_name = 'data0'
+    copy.point_data.active_scalars_name = 'data1'
     assert sphere != copy
 
     copy = sphere.copy(deep=True)

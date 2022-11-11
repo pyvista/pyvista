@@ -429,7 +429,7 @@ class Color:
 
        <details><summary>Refer to the table below for a list of supported colors.</summary>
 
-    .. include:: ../colors.rst
+    .. include:: ../color_table/color_table.rst
 
     .. raw:: html
 
