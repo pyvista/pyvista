@@ -874,7 +874,7 @@ class Color:
 
     @property
     def opacity(self):
-        """Return or set the opacity of this color in the range of ``(0-255)``.
+        """Return the opacity of this color in the range of ``(0-255)``.
 
         Examples
         --------
@@ -882,22 +882,11 @@ class Color:
         >>> color = pv.Color('r', opacity=0.5)
         >>> color.opacity
         128
-
-        Change the opacity via an attribute.
-
-        >>> color.opacity = 0.25
-        >>> color.opacity
-        64
-
         >>> color
-        Color(name='red', hex='#ff000040', opacity=64)
+        Color(name='red', hex='#ff000040', opacity=128)
 
         """
         return self._opacity
-
-    @opacity.setter
-    def opacity(self, value: Union[int, float, str]):
-        self._opacity = self.convert_color_channel(value)
 
     def __eq__(self, other):
         """Equality comparison."""

@@ -826,10 +826,7 @@ def test_color():
 
 
 def test_color_opacity():
-    opac = 1.0
-    color = pyvista.Color(opacity=opac)
-    assert color.opacity == 255
-    color.opacity = 0.5
+    color = pyvista.Color(opacity=0.5)
     assert color.opacity == 128
 
 
