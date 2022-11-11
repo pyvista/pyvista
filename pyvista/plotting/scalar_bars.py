@@ -410,7 +410,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = _vtk.vtkLookupTable()
+            lut = pyvista.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
