@@ -802,7 +802,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 self.lookup_table.annotations = annotations
 
             # self.lookup_table.SetNumberOfTableValues(n_colors)
-            self.lookup_table.nan_color = nan_color
+            if nan_color:
+                self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
                 scalar_bar_args.setdefault('above_label', 'Above')

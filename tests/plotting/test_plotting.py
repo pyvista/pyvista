@@ -3078,12 +3078,14 @@ def test_plot_nan_color(uniform):
     pl.show()
     # nan annotation should appear on scalar bar
     pl = pyvista.Plotter()
-    pl.add_mesh(uniform, nan_opacity=0.5, nan_color='green')
+    pl.add_mesh(
+        uniform, nan_opacity=0.5, nan_color='green', scalar_bar_args=dict(nan_annotation=True)
+    )
     pl.enable_depth_peeling()
     pl.show()
 
 
-def test_plot_above_below_nan_color(uniform):
+def test_plot_above_below_color(uniform):
     mean = uniform.active_scalars.mean()
     clim = (mean - mean / 2, mean + mean / 2)
 
@@ -3093,8 +3095,6 @@ def test_plot_above_below_nan_color(uniform):
     lut.below_range_opacity = 0.5
     lut.above_range_color = 'green'
     lut.above_range_opacity = 0.5
-    lut.nan_color = 'r'
-    lut.nan_opacity = 0.5
     lut.scalar_range = clim
 
     pl = pyvista.Plotter()

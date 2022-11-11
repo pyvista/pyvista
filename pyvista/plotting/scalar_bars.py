@@ -435,7 +435,7 @@ class ScalarBars:
             scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetNumberOfLabels(n_labels)
 
-        if nan_annotation or (lut._nan_color_set and lut.nan_opacity > 0):
+        if nan_annotation:
             scalar_bar.DrawNanAnnotationOn()
 
         if above_label:
