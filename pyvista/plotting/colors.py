@@ -883,7 +883,7 @@ class Color:
         >>> color.opacity
         128
         >>> color
-        Color(name='red', hex='#ff000040', opacity=128)
+        Color(name='red', hex='#ff000080', opacity=128)
 
         """
         return self._opacity
