@@ -2167,11 +2167,6 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        deep : bool, optional
-            When ``True`` makes a full copy of the object.  When ``False``,
-            performs a shallow copy where the points and data arrays are
-            references to the original object.
-
         pass_cell_data : bool, optional
             Run the ``cell_data_to_point_data`` filter and pass cell data
             fields to the new pointset.
@@ -2208,11 +2203,6 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        deep : bool, optional
-            When ``True`` makes a full copy of the object.  When ``False``,
-            performs a shallow copy where the points and data arrays are
-            references to the original object.
-
         pass_cell_data : bool, optional
             Run the ``cell_data_to_point_data`` filter and pass cell data
             fields to the new pointset.
