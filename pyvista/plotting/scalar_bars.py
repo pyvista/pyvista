@@ -164,7 +164,7 @@ class ScalarBars:
         fmt=None,
         use_opacity=True,
         outline=False,
-        nan_annotation=None,
+        nan_annotation=False,
         below_label=None,
         above_label=None,
         background_color=None,
