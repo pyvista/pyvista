@@ -536,7 +536,6 @@ class LookupTable(_vtk.vtkLookupTable):
     @nan_opacity.setter
     def nan_opacity(self, value):
         # Hacky check to prevent auto activation
-        print(f'nan opacity being set: {value}')
         if not self._nan_color_set and (value == 1.0 or value == 255):
             return
         color = self.nan_color
@@ -701,7 +700,6 @@ class LookupTable(_vtk.vtkLookupTable):
             self.SetBelowRangeColor(*Color(pv.global_theme.below_range_color).float_rgba)
             self.SetUseBelowRangeColor(True)
         else:
-            print(Color(value).float_rgba)
             self.SetBelowRangeColor(*Color(value).float_rgba)
             self.SetUseBelowRangeColor(True)
 
