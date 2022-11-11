@@ -164,7 +164,7 @@ class ScalarBars:
         fmt=None,
         use_opacity=True,
         outline=False,
-        nan_annotation=False,
+        nan_annotation=None,
         below_label=None,
         above_label=None,
         background_color=None,
@@ -435,15 +435,21 @@ class ScalarBars:
             scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetNumberOfLabels(n_labels)
 
-        if nan_annotation:
+        if nan_annotation or (lut._nan_color_set and lut.nan_opacity > 0):
             scalar_bar.DrawNanAnnotationOn()
 
         if above_label:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
+        elif lut.above_range_color:
+            scalar_bar.DrawAboveRangeSwatchOn()
+            scalar_bar.SetAboveRangeAnnotation('above')
         if below_label:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
+        elif lut.below_range_color:
+            scalar_bar.DrawBelowRangeSwatchOn()
+            scalar_bar.SetBelowRangeAnnotation('below')
 
         # edit the size of the colorbar
         scalar_bar.SetHeight(height)
