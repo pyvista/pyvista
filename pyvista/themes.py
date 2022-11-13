@@ -1300,6 +1300,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.return_cpos = False
         """
+        return self._return_cpos
 
     @return_cpos.setter
     def return_cpos(self, value: bool):
