@@ -975,7 +975,18 @@ def get_cmap_safe(cmap):
                 'The use of custom colormaps requires the installation of matplotlib.'
             )  # pragma: no cover
 
-        from matplotlib import colormaps, colors
+        try:
+            from matplotlib import colormaps, colors
+        except ImportError:  # pragma: no cover
+            import matplotlib
+            import scooby
+
+            min_req = '3.5.0'
+            if not scooby.meets_version(matplotlib.__version__, min_req):
+                raise ImportError(
+                    'The use of custom colormaps requires the installation of '
+                    f'matplotlib>={min_req}.'
+                ) from None
 
         if not isinstance(cmap, colors.Colormap):
             cmap = colormaps[cmap]
