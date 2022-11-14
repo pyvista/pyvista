@@ -2670,6 +2670,36 @@ class DataSet(DataSetFilters, DataObject):
         point_ids = cell.GetPointIds()
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
+    def point_cell_ids(self, ind: int) -> List[int]:
+
+        self.BuildLinks()
+        # as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+
+        ids = _vtk.vtkIdList()
+        self.GetPointCells(ind, ids)
+        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+
+    def point_neighbors_ids(self, ind: int) -> List[int]:
+
+        out = []
+        for cell in self.point_cell_ids(ind):
+            out.extend([i for i in self.cell_point_ids(cell) if i != ind])
+        return list(set(out))
+
+    def cell_point_neighbors_ids(self, ind: int) -> List[int]:
+
+        out = []
+        for i in self.cell_point_ids(ind):
+            ids = _vtk.vtkIdList()
+            ids.InsertNextId(i)
+
+            cell_ids = _vtk.vtkIdList()
+            self.GetCellNeighbors(ind, ids, cell_ids)
+
+            out.extend([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
+
+        return list(set(out))
+
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
     ) -> Union[int, np.ndarray]:

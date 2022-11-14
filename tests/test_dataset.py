@@ -1099,6 +1099,65 @@ def test_cell_point_ids(grid):
     assert all([0 <= id < grid.n_points for id in point_ids])
 
 
+@pytest.mark.parametrize("i0", range(5))
+def test_point_cell_ids(grid: pyvista.UnstructuredGrid, i0):
+    cell_ids = grid.point_cell_ids(i0)
+    assert isinstance(cell_ids, list)
+    assert all([isinstance(id, int) for id in cell_ids])
+    assert all([0 <= id < grid.n_cells for id in cell_ids])
+
+    # Check that the output cells contain the i0-th point but also that the
+    # remaining cells does not contain this point id
+    for c in cell_ids:
+        assert i0 in grid.cell_point_ids(c)
+
+    others = [i for i in range(grid.n_cells) if i not in cell_ids]
+    for c in others:
+        assert i0 not in grid.cell_point_ids(c)
+
+
+@pytest.mark.parametrize("i0", range(5))
+def test_point_neighbors_ids(grid: pyvista.UnstructuredGrid, i0):
+    point_ids = grid.point_neighbors_ids(i0)
+    assert isinstance(point_ids, list)
+    assert all([isinstance(id, int) for id in point_ids])
+    assert all([0 <= id < grid.n_points for id in point_ids])
+
+    # Check that all the neighbors points share at least one cell with the
+    # current point
+    current_cells = set(grid.point_cell_ids(i0))
+    for i in point_ids:
+        neighbor_cells = set(grid.point_cell_ids(i))
+        assert not neighbor_cells.isdisjoint(current_cells)
+
+    # Check that other points do not share a cell with the current point
+    other_ids = [i for i in range(grid.n_points) if (i not in point_ids and i != i0)]
+    for i in other_ids:
+        neighbor_cells = set(grid.point_cell_ids(i))
+        assert neighbor_cells.isdisjoint(current_cells)
+
+
+@pytest.mark.parametrize("i0", range(5))
+def test_cell_point_neighbors_ids(grid: pyvista.UnstructuredGrid, i0):
+    cell_ids = grid.cell_point_neighbors_ids(i0)
+    assert isinstance(cell_ids, list)
+    assert all([isinstance(id, int) for id in cell_ids])
+    assert all([0 <= id < grid.n_cells for id in cell_ids])
+
+    # Check that all the neighbors cells share at least one point with the
+    # current cell
+    current_points = set(grid.cell_point_ids(i0))
+    for i in cell_ids:
+        neighbor_points = set(grid.cell_point_ids(i))
+        assert not neighbor_points.isdisjoint(current_points)
+
+    # Check that other cells do not share a point with the current cell
+    other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
+    for i in other_ids:
+        neighbor_points = set(grid.cell_point_ids(i))
+        assert neighbor_points.isdisjoint(current_points)
+
+
 def test_cell_bounds(grid):
     bounds = grid.cell_bounds(0)
     assert isinstance(bounds, tuple)
