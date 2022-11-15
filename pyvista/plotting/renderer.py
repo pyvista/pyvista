@@ -11,12 +11,13 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
-from pyvista.utilities.misc import uses_egl
+from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
+from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 
@@ -403,12 +404,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        number_of_peels : int
+        number_of_peels : int, optional
             The maximum number of peeling layers. Initial value is 4
             and is set in the ``pyvista.global_theme``. A special value of
             0 means no maximum limit.  It has to be a positive value.
 
-        occlusion_ratio : float
+        occlusion_ratio : float, optional
             The threshold under which the depth peeling algorithm
             stops to iterate over peel layers. This is the ratio of
             the number of pixels that have been touched by the last
@@ -445,7 +446,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        aa_type : str
+        aa_type : str, default: 'fxaa'
             Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
@@ -878,10 +879,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ylabel='Y',
         zlabel='Z',
         labels_off=False,
-        marker_args=None,
         box=None,
         box_args=None,
         viewport=(0, 0, 0.2, 0.2),
+        marker_args=None,
+        **kwargs,
     ):
         """Add an interactive axes widget in the bottom left corner.
 
@@ -917,10 +919,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels_off : bool, optional
             Enable or disable the text labels for the axes.
 
-        marker_args : dict, optional
-            Parameters for the orientation marker widget. See the parameters of
-            :func:`pyvista.create_axes_marker`.
-
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
@@ -932,6 +930,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         viewport : tuple, optional
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        marker_args : dict, optional
+            Marker arguments.
+
+            .. deprecated:: 0.37.0
+               Use ``**kwargs`` for passing parameters for the orientation
+               marker widget. See the parameters of
+               :func:`pyvista.create_axes_marker`.
+
+        **kwargs : dict, optional
+            Used for passing parameters for the orientation marker
+            widget. See the parameters of :func:`pyvista.create_axes_marker`.
 
         Returns
         -------
@@ -960,11 +970,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
-        >>> marker_args = dict(cone_radius=0.6, shaft_length=0.7, tip_length=0.3, ambient=0.5, label_size=(0.4, 0.16))
-        >>> _ = pl.add_axes(line_width=5, marker_args=marker_args)
+        >>> _ = pl.add_axes(
+        ...     line_width=5,
+        ...     cone_radius=0.6,
+        ...     shaft_length=0.7,
+        ...     tip_length=0.3,
+        ...     ambient=0.5,
+        ...     label_size=(0.4, 0.16)
+        ... )
         >>> pl.show()
 
         """
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
+        if marker_args is not None:  # pragma: no cover
+            warnings.warn(
+                "Use of `marker_args` is deprecated. Use `**kwargs` instead.",
+                PyVistaDeprecationWarning,
+            )
+            kwargs.update(marker_args)
+
         if interactive is None:
             interactive = self._theme.interactive
         if hasattr(self, 'axes_widget'):
@@ -989,8 +1013,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **box_args,
             )
         else:
-            if marker_args is None:
-                marker_args = {}
             self.axes_actor = create_axes_marker(
                 label_color=color,
                 line_width=line_width,
@@ -1001,7 +1023,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 ylabel=ylabel,
                 zlabel=zlabel,
                 labels_off=labels_off,
-                **marker_args,
+                **kwargs,
             )
         axes_widget = self.add_orientation_widget(
             self.axes_actor, interactive=interactive, color=None
@@ -1093,7 +1115,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock, optional
             Input mesh to draw bounds axes around.
 
         bounds : list or tuple, optional
@@ -1190,7 +1212,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             still retaining all edges of the boundary.
 
         corner_factor : float, optional
-            If ``all_edges````, this is the factor along each axis to
+            If ``all_edges``, this is the factor along each axis to
             draw the default box. Default is 0.5 to show the full box.
 
         fmt : str, optional
@@ -1534,7 +1556,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset_camera : bool, optional
             Reset camera position when ``True`` to include all actors.
 
-        outline : bool
+        outline : bool, default: True
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
@@ -1873,15 +1895,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.RemoveAllLights()
         self._lights.clear()
 
-    def clear(self):
-        """Remove all actors and properties."""
+    def clear_actors(self):
+        """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
                 try:
                     self.remove_actor(actor, reset_camera=False, render=False)
                 except KeyError:
                     pass
+            self.Modified()
 
+    def clear(self):
+        """Remove all actors and properties."""
+        self.clear_actors()
         if self.__charts is not None:
             self._charts.deep_clean()
         self.remove_all_lights()
@@ -2221,7 +2247,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool
+        negative : bool, default: False
             View from the opposite direction.
 
         Returns
@@ -2275,9 +2301,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        render : bool
+        render : bool, default: True
             Trigger a render after resetting the camera.
-        bounds : iterable(int)
+        bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
@@ -2385,11 +2411,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, 1])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xy', negative=negative))
 
     def view_yx(self, negative=False):
         """View the YX plane.
@@ -2412,11 +2434,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, -1])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yx', negative=negative))
 
     def view_xz(self, negative=False):
         """View the XZ plane.
@@ -2439,11 +2457,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, -1, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xz', negative=negative))
 
     def view_zx(self, negative=False):
         """View the ZX plane.
@@ -2466,11 +2480,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0, 1, 0])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zx', negative=negative))
 
     def view_yz(self, negative=False):
         """View the YZ plane.
@@ -2493,11 +2503,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([1, 0, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yz', negative=negative))
 
     def view_zy(self, negative=False):
         """View the ZY plane.
@@ -2520,11 +2526,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([-1, 0, 0])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zy', negative=negative))
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
@@ -2734,7 +2736,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         nearby each other and plot it without SSAO.
 
         >>> import pyvista as pv
-        >>> ugrid = pv.UniformGrid(dims=(3, 2, 2)).to_tetrahedra(12)
+        >>> ugrid = pv.UniformGrid(dimensions=(3, 2, 2)).to_tetrahedra(12)
         >>> exploded = ugrid.explode()
         >>> exploded.plot()
 

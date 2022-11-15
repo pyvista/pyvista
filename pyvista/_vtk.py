@@ -493,6 +493,7 @@ if VTK9:
         vtkLightActor,
         vtkLightKit,
         vtkMapper,
+        vtkPointGaussianMapper,
         vtkPointPicker,
         vtkPolyDataMapper,
         vtkPolyDataMapper2D,

@@ -33,11 +33,12 @@ pyvista.
 from enum import Enum
 import json
 import os
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 import warnings
 
 from ._typing import color_like
 from .plotting.colors import Color, get_cmap_safe
+from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
 from .utilities.misc import PyVistaDeprecationWarning
 
@@ -1149,6 +1150,7 @@ class DefaultTheme(_ThemeConfig):
         '_enable_camera_orientation_widget',
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
+        '_before_close_callback',
     ]
 
     def __init__(self):
@@ -1196,6 +1198,7 @@ class DefaultTheme(_ThemeConfig):
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
+        self._before_close_callback = None
 
         # Grab system flag for anti-aliasing
         try:
@@ -1257,7 +1260,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.above_range_color = 'r'
         >>> pyvista.global_theme.above_range_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
 
         """
         return self._above_range_color
@@ -1277,7 +1280,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.below_range_color = 'b'
         >>> pyvista.global_theme.below_range_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         """
         return self._below_range_color
@@ -1297,6 +1300,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.return_cpos = False
         """
+        return self._return_cpos
 
     @return_cpos.setter
     def return_cpos(self, value: bool):
@@ -2144,6 +2148,15 @@ class DefaultTheme(_ThemeConfig):
             raise TypeError('Configuration type must be `_AxesConfig`.')
         self._axes = config
 
+    @property
+    def before_close_callback(self) -> Callable[[Plotter], None]:
+        """Return the default before_close_callback function for Plotter."""
+        return self._before_close_callback
+
+    @before_close_callback.setter
+    def before_close_callback(self, value: Callable[[Plotter], None]):
+        self._before_close_callback = value
+
     def restore_defaults(self):
         """Restore the theme defaults.
 
@@ -2197,6 +2210,7 @@ class DefaultTheme(_ThemeConfig):
             'Anti-Aliasing': '_anti_aliasing',
             'Split sharp edges': '_split_sharp_edges',
             'Sharp edges feat. angle': '_sharp_edges_feature_angle',
+            'Before close callback': '_before_close_callback',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2262,6 +2276,8 @@ class DefaultTheme(_ThemeConfig):
     def save(self, filename):
         """Serialize this theme to a json file.
 
+        ``before_close_callback`` is non-serializable and is omitted.
+
         Parameters
         ----------
         filename : str
@@ -2278,8 +2294,11 @@ class DefaultTheme(_ThemeConfig):
         >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
 
         """
+        data = self.to_dict()
+        # functions are not serializable
+        del data["before_close_callback"]
         with open(filename, 'w') as f:
-            json.dump(self.to_dict(), f)
+            json.dump(data, f)
 
     @property
     def use_ipyvtk(self):  # pragma: no cover

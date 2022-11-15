@@ -203,16 +203,147 @@ Docstrings
 
 PyVista uses Python docstrings to create reference documentation for our Python
 APIs. Docstrings are read by developers, interactive Python users, and readers
-of our online documentation. This page describes how to write these docstrings
+of our online documentation. This section describes how to write these docstrings
 for PyVista.
 
-* PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
-  `numpydoc Style Guide`_.
+PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
+`numpydoc Style Guide`_ in all ways except for the following:
+
 * Be sure to describe all ``Parameters`` and ``Returns`` for all public
   methods.
 * We strongly encourage you to add an example section. PyVista is a visual
   library, so adding examples that show a plot will really help users figure
   out what individual methods do.
+* With optional parameters, use ``default: <value>`` instead of ``optional``
+  when the parameter has a default value instead of ``None``.
+
+Sample docstring follows:
+
+.. code:: python
+
+    def slice_x(self, x=None, generate_triangles=False):
+        """Create an orthogonal slice through the dataset in the X direction.
+
+        Parameters
+        ----------
+        x : float, optional
+            The X location of the YZ slice. By default this will be the X center
+            of the dataset.
+
+        generate_triangles : bool, default: False
+            If this is enabled, the output will be all triangles. Otherwise the
+            output will consist of the intersection polygons.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
+
+        Examples
+        --------
+        Slice the random hills dataset with one orthogonal plane.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_x(5, generate_triangles=False)
+        >>> slices.plot(line_width=5)
+
+        See :ref:`slice_example` for more examples using this filter.
+
+        """
+
+        pass  # implementation goes here
+
+Note the following:
+
+* The parameter definition of ``generate_triangles`` uses ``default: False``,
+  and does not include the default in the docstring's "description" section.
+* There is a newline between each parameter. This is different than
+  ``numpydoc``'s documentation where there are no empty lines between parameter
+  docstrings.
+* This docstring also contains a returns section and an examples section.
+* The returns section does not include the parameter name if the function has 
+  a single return value. Multiple return values (not shown) should have 
+  descriptive parameter names for each returned value, in the same format as
+  the input parameters.
+* The examples section references the "full example" in the gallery if it 
+  exists.
+
+
+Deprecating Features or other Backwards-Breaking Changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When implementing backwards-breaking changes within PyVista, care must be taken
+to give users the chance to adjust to any new changes. Any non-backwards
+compatible modifications should proceed through the following steps:
+
+#. Retain the old behavior and issue a ``PyVistaDeprecationWarning`` indicating
+   the new interface you should use.
+#. Retain the old behavior but raise a ``pyvista.core.errors.DeprecationError``
+   indicating the new interface you must use.
+#. Remove the old behavior.
+
+Whenever possible, PyVista developers should seek to have at least three minor
+versions of backwards compatibility to give users the ability to update their
+software and scripts.
+
+Here's an example of a soft deprecation of a function. Note the usage of both
+the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
+directive.
+
+.. code:: python
+
+    def addition(a, b):
+        """Add two numbers.
+
+        .. deprecated:: 0.37.0
+           Since PyVista 0.37.0, you can use :func:`pyvista.add` instead.
+
+        Parameters
+        ----------
+        a : float
+            First term to add.
+
+        b : float
+            Second term to add.
+
+        Returns
+        -------
+        float
+            Sum of the two inputs.
+
+        """
+        # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
+        PyVistaDeprecationWarning(
+            '`addition` has been deprecated. Use pyvista.add instead'
+        )
+        add(a, b)
+
+
+    def add(a, b):
+        """Add two numbers."""
+
+        pass  # implementation goes here
+
+In the above code example, note how a comment is made to convert to an error in
+three minor releases and completely remove in the following minor release. For
+significant changes, this can be made longer, and for trivial ones this can be
+kept short.
+
+When adding an additional parameter to an existing method or function, you are
+encouraged to use the ``.. versionadded`` sphinx directive. For example:
+
+.. code:: python
+
+    def Cube(clean=True):
+        """Create a cube.
+
+        Parameters
+        ----------
+        clean : bool, default: True
+            Whether to clean the raw points of the mesh.
+
+            .. versionadded:: 0.33.0
+        """
 
 
 Branch Naming Conventions
@@ -245,8 +376,7 @@ request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
 To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt``,
-``requirements_docs.txt``
+dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 
 .. code:: bash
 
@@ -381,18 +511,23 @@ testing or for potentially a major or minor release. You can use
 temporarily ignore regression testing. Realize that regression testing
 will still occur on our CI testing.
 
-If you need to add a new test to ``tests/plotting/test_plotting.py`` and
-wish to include image regression testing, be sure to add
-``verify_cache_image`` to ``show``. For example:
+Images are currently only cached from tests in
+``tests/plotting/test_plotting.py``.  By default, any test that uses
+``Plotter.show`` will cache images automatically.  To skip image caching,
+the ``verify_image_cache`` fixture can be utilized:
 
 .. code:: python
 
 
        @skip_no_plotting
-       def test_add_background_image_not_global():
+       def test_add_background_image_not_global(verify_image_cache):
+           verify_image_cache.skip = True  # Turn off caching
            plotter = pyvista.Plotter()
            plotter.add_mesh(sphere)
-           plotter.show(before_close_callback=verify_cache_image)
+           plotter.show()
+           # Turn on caching for further plotting
+           verify_image_cache.skip = False
+           ...
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
@@ -447,7 +582,7 @@ rather than generating a table and placing class methods and attributes on
 individual pages. Figures are also sized to ``(400, 300)`` rather than the
 default ``(1024, 768)``. This is to minimize the time it takes to build
 documentation locally. If you wish to generate the full documentation, enable
-it with::
+it with:
 
 .. code:: bash
 

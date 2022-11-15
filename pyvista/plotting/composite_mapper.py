@@ -63,7 +63,7 @@ class BlockAttributes:
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -296,7 +296,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -522,7 +522,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None
     ):
         """Initialize this composite mapper."""
-        super().__init__(theme)
+        super().__init__(theme=theme)
         self.SetInputDataObject(dataset)
 
         # this must be added to set the color, opacity, and visibility of
@@ -591,7 +591,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Composite Block Addr=... Attributes
         Visible:   None
         Opacity:   0.1
-        Color:     Color(name='blue', hex='#0000ffff')
+        Color:     Color(name='blue', hex='#0000ffff', opacity=255)
         Pickable   None
 
         """
@@ -636,9 +636,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.set_unique_colors()
         >>> mapper.block_attr[1].color
-        Color(name='tab:orange', hex='#ff7f0eff')
+        Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
-        Color(name='tab:green', hex='#2ca02cff')
+        Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
         if has_module('matplotlib'):
@@ -802,7 +802,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 self.lookup_table.annotations = annotations
 
             # self.lookup_table.SetNumberOfTableValues(n_colors)
-            self.lookup_table.nan_color = nan_color
+            if nan_color:
+                self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
                 scalar_bar_args.setdefault('above_label', 'Above')

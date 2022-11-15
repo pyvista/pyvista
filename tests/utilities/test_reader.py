@@ -262,6 +262,9 @@ def test_ensightreader_timepoints():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
 
+    with pytest.raises(ValueError, match="Not a valid time"):
+        reader.set_active_time_value(1000.0)
+
 
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
@@ -911,7 +914,7 @@ def test_gif_reader(gif_file):
     assert grid.n_arrays == 3
 
     img = Image.open(gif_file)
-    new_grid = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+    new_grid = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):

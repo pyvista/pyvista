@@ -426,6 +426,7 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -435,6 +436,8 @@ html_theme_options = {
     "google_analytics_id": "UA-140243896-1",
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
+    "collapse_navigation": True,
+    "use_edit_page_button": True,
     "icon_links": [
         {
             "name": "Slack Community",
