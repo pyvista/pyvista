@@ -434,6 +434,25 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pyvista.themes.DarkTheme()
 
 
+def test_save_before_close_callback(tmpdir, default_theme):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    dark_theme = pyvista.themes.DarkTheme()
+
+    def fun(plotter):
+        pass
+
+    dark_theme.before_close_callback = fun
+    assert dark_theme != pyvista.themes.DarkTheme()
+    dark_theme.save(filename)
+
+    # fun is stripped from the theme
+    loaded_theme = pyvista.load_theme(filename)
+    assert loaded_theme == pyvista.themes.DarkTheme()
+
+    default_theme.load_theme(filename)
+    assert default_theme == pyvista.themes.DarkTheme()
+
+
 def test_anti_aliasing(default_theme):
     # test backwards compatibility
     with pytest.warns(PyVistaDeprecationWarning, match='is now a string'):
@@ -480,7 +499,7 @@ def test_anti_aliasing_msaa(default_theme):
     assert pl.ren_win.GetMultiSamples() == default_theme.multi_samples
 
 
-def test_antialiasing_deprication(default_theme):
+def test_antialiasing_deprecation(default_theme):
     with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
         default_theme.antialiasing
     with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):

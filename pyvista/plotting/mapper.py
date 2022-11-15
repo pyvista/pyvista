@@ -32,6 +32,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     def copy(self) -> '_BaseMapper':
         """Create a copy of this mapper.
 
+        Returns
+        -------
+        pyvista.DataSetMapper
+            A copy of this dataset mapper.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -349,6 +354,25 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     def dataset(self, obj: 'pv.core.dataset.DataSet'):
         return self.SetInputData(obj)
 
+    def as_rgba(self):
+        """Convert the active scalars to RGBA.
+
+        This method is used to convert the active scalars to a fixed RGBA array
+        and is used for certain mappers that do not support the "map" color
+        mode.
+
+        """
+        if self.color_mode == 'direct':
+            return
+
+        self.dataset.point_data.pop('__rgba__', None)
+        self._configure_scalars_mode(
+            self.lookup_table(self.dataset.active_scalars),
+            '__rgba__',
+            self.scalar_map_mode,
+            True,
+        )
+
     def _configure_scalars_mode(
         self,
         scalars,
@@ -385,12 +409,18 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
         # Scalars interpolation approach
         if use_points:
-            if scalars_name not in self.dataset.point_data:
+            if (
+                scalars_name not in self.dataset.point_data
+                or scalars_name == pv.DEFAULT_SCALARS_NAME
+            ):
                 self.dataset.point_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
             self.scalar_map_mode = 'point'
         elif use_cells:
-            if scalars_name not in self.dataset.cell_data:
+            if (
+                scalars_name not in self.dataset.cell_data
+                or scalars_name == pv.DEFAULT_SCALARS_NAME
+            ):
                 self.dataset.cell_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
             self.scalar_map_mode = 'cell'
@@ -471,7 +501,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : color_like
+        nan_color : color_like, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -655,7 +685,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     scalars = scalars.astype(np.uint8)
 
             # configure the lookup table
-            self.lookup_table.nan_color = nan_color
+            if nan_color:
+                self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
                 scalar_bar_args.setdefault('above_label', 'Above')
@@ -672,6 +703,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             preference,
             rgb or custom_opac,
         )
+
+        if isinstance(self, PointGaussianMapper):
+            self.as_rgba()
 
     @property
     def cmap(self):
@@ -731,6 +765,88 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             f'  Interpolate before mapping:  {self.interpolate_before_map}',
             f'  Scalar map mode:             {self.scalar_map_mode}',
             f'  Color mode:                  {self.color_mode}',
+            '',
+        ]
+
+        mapper_attr.append('Attached dataset:')
+        mapper_attr.append(str(self.dataset))
+
+        return '\n'.join(mapper_attr)
+
+
+@no_new_attr
+class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
+    """Wrap vtkPointGaussianMapper."""
+
+    @property
+    def emissive(self) -> bool:
+        """Set or return emissive.
+
+        This treats points as emissive light sources. Two points that overlap
+        will have their brightness combined.
+        """
+        return bool(self.GetEmissive())
+
+    @emissive.setter
+    def emissive(self, value: bool):
+        return self.SetEmissive(value)
+
+    @property
+    def scale_factor(self) -> float:
+        """Set or return the scale factor.
+
+        Ranges from 0 to 1. A value of 0 will cause the splats to be rendered
+        as simple points. Defaults to 1.0.
+
+        """
+        return self.GetScaleFactor()
+
+    @scale_factor.setter
+    def scale_factor(self, value: float):
+        return self.SetScaleFactor(value)
+
+    def use_circular_splat(self, opacity: float = 1.0):
+        """Set the fragment shader code to create a circular splat.
+
+        Parameters
+        ----------
+        opacity : float, default: 1.0
+            Desired opacity between 0 and 1.
+
+        Notes
+        -----
+        This very close to ParaView's PointGaussianMapper, but uses opacity to
+        modify the scale as the opacity cannot be set from the actor's property.
+        """
+        self.SetSplatShaderCode(
+            "//VTK::Color::Impl\n"
+            "float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n"
+            "if (dist > 1.0) {\n"
+            "  discard;\n"
+            "} else {\n"
+            f"  float scale = ({opacity} - dist);\n"
+            "  ambientColor *= scale;\n"
+            "  diffuseColor *= scale;\n"
+            "}\n"
+        )
+        # maintain consistency with the default style
+        self.emissive = True
+        self.scale_factor *= 1.5
+
+    def use_default_splat(self):
+        """Clear the fragment shader and use the default splat."""
+        self.SetSplatShaderCode(None)
+        self.scale_factor /= 1.5
+
+    def __repr__(self):
+        """Representation of the gaussian mapper."""
+        mapper_attr = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Scalar visibility:           {self.scalar_visibility}',
+            f'  Scalar range:                {self.scalar_range}',
+            f'  Emissive:                    {self.emissive}',
+            f'  Scale Factor:                {self.scale_factor}',
+            f'  Using custom splat:          {self.GetSplatShaderCode() is None}',
             '',
         ]
 

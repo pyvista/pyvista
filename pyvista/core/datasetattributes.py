@@ -227,8 +227,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if has_arr:
             return
 
-        # make active if not field data
-        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+        # make active if not field data and there isn't already an active scalar
+        if (
+            self.association
+            in [
+                FieldAssociation.POINT,
+                FieldAssociation.CELL,
+            ]
+            and self.active_scalars_name is None
+        ):
             self.active_scalars_name = key
 
     def __delitem__(self, key: str):
@@ -643,7 +650,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
             ``tuple`` or scalar value.
 
-        name : str
+        name : str, default: 'scalars'
             Name to assign the scalars.
 
         deep_copy : bool, optional
@@ -1117,14 +1124,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_data
         pyvista DataSetAttributes
         Association     : POINT
-        Active Scalars  : rand
+        Active Scalars  : Spatial Point Data
         Active Vectors  : None
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            Spatial Point Data      float64    (1000,)
+            Spatial Point Data      float64    (1000,)              SCALARS
             foo                     int64      (1000,)
-            rand                    float64    (1000,)              SCALARS
+            rand                    float64    (1000,)
 
         """
         for name, array in array_dict.items():
@@ -1147,20 +1154,21 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Examples
         --------
-        Add two arrays to the mesh point data.
+        Add two arrays to the mesh point data. Note how the first array becomes
+        the active scalars since the ``mesh`` contained no scalars.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> mesh.point_data['my_other_data'] = range(mesh.n_points)
         >>> mesh.point_data.active_scalars_name
-        'my_other_data'
+        'my_data'
 
         Set the name of the active scalars.
 
-        >>> mesh.point_data.active_scalars_name = 'my_data'
+        >>> mesh.point_data.active_scalars_name = 'my_other_data'
         >>> mesh.point_data.active_scalars_name
-        'my_data'
+        'my_other_data'
 
         """
         if self.GetScalars() is not None:

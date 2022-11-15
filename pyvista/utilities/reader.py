@@ -749,7 +749,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
             )
         self.reader.SetTimeValue(time_value)
 
@@ -2285,7 +2285,7 @@ class _GIFReader:
         from PIL import Image, ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+        self._data_object = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames

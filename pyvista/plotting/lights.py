@@ -295,7 +295,7 @@ class Light(vtkLight):
         >>> light = pyvista.Light()
         >>> light.ambient_color = 'red'
         >>> light.ambient_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
 
         """
         return Color(self.GetAmbientColor())
@@ -325,7 +325,7 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.diffuse_color = (0.0, 0.0, 1.0)
         >>> light.diffuse_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         """
         return Color(self.GetDiffuseColor())
@@ -355,7 +355,7 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.specular_color = '#00FF00'
         >>> light.specular_color
-        Color(name='lime', hex='#00ff00ff')
+        Color(name='lime', hex='#00ff00ff', opacity=255)
 
         """
         return Color(self.GetSpecularColor())

@@ -786,7 +786,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        empty : bool
+        empty : bool, default: True
             Remove any meshes that are empty as well (have zero points).
 
         Examples
@@ -1124,7 +1124,9 @@ class MultiBlock(
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
                     scalars = np.array(scalars.astype(float))
-                    getattr(block, data_attr)[f'{scalars_name}-real'] = scalars
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-real'] = scalars
+                    dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
     def _convert_to_single_component(
@@ -1139,7 +1141,9 @@ class MultiBlock(
                     scalars = getattr(block, data_attr).get(scalars_name, None)
                     if scalars is not None:
                         scalars = np.linalg.norm(scalars, axis=1)
-                        getattr(block, data_attr)[f'{scalars_name}-normed'] = scalars
+                        dattr = getattr(block, data_attr)
+                        dattr[f'{scalars_name}-normed'] = scalars
+                        dattr.active_scalars_name = f'{scalars_name}-normed'
             return f'{scalars_name}-normed'
 
         for block in self:
@@ -1148,7 +1152,9 @@ class MultiBlock(
             elif block is not None:
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
-                    getattr(block, data_attr)[f'{scalars_name}-{component}'] = scalars[:, component]
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-{component}'] = scalars[:, component]
+                    dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
     def _get_consistent_active_scalars(self):
