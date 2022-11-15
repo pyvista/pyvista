@@ -359,6 +359,11 @@ class Renderers:
             if renderer is not None:
                 renderer.clear()
 
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        for renderer in self:
+            renderer.clear_actors()
+
     def clear(self):
         """Clear all renders."""
         for renderer in self:
@@ -418,7 +423,7 @@ class Renderers:
         >>> plotter = pyvista.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
-        Color(name='black', hex='#000000ff')
+        Color(name='black', hex='#000000ff', opacity=255)
         >>> plotter.close()
 
         Set the background color at the bottom to black and white at

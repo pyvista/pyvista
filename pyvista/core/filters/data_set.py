@@ -86,7 +86,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str, default='x'
+        normal : tuple(float) or str, default: 'x'
             Length 3 tuple for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
@@ -518,6 +518,63 @@ class DataSetFilters:
         )
         return result
 
+    def slice_implicit(
+        self, implicit_function, generate_triangles=False, contour=False, progress_bar=False
+    ):
+        """Slice a dataset by a VTK implicit function.
+
+        Parameters
+        ----------
+        implicit_function : vtk.vtkImplicitFunction
+            Specify the implicit function to perform the cutting.
+
+        generate_triangles : bool, default: False
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
+            polygons. If the cutting function is not a plane, the
+            output will be 3D polygons, which might be nice to look at
+            but hard to compute with downstream.
+
+        contour : bool, default: False
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
+
+        Examples
+        --------
+        Slice the surface of a sphere.
+
+        >>> import pyvista as pv
+        >>> import vtk
+        >>> sphere = vtk.vtkSphere()
+        >>> sphere.SetRadius(10)
+        >>> mesh = pv.Wavelet()
+        >>> slice = mesh.slice_implicit(sphere)
+        >>> slice.plot(show_edges=True, line_width=5)
+
+        >>> sphere = vtk.vtkCylinder()
+        >>> sphere.SetRadius(10)
+        >>> mesh = pv.Wavelet()
+        >>> slice = mesh.slice_implicit(sphere)
+        >>> slice.plot(show_edges=True, line_width=5)
+
+        """
+        alg = _vtk.vtkCutter()  # Construct the cutter object
+        alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
+        alg.SetCutFunction(implicit_function)  # the cutter to use the function
+        alg.SetGenerateTriangles(generate_triangles)
+        _update_alg(alg, progress_bar, 'Slicing')
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
+        return output
+
     def slice(
         self, normal='x', origin=None, generate_triangles=False, contour=False, progress_bar=False
     ):
@@ -527,7 +584,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str, default='x'
+        normal : tuple(float) or str, default: 'x'
             Length 3 tuple for the normal vector direction. Can also be
             specified as a string conventional direction such as ``'x'`` for
             ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
@@ -574,17 +631,13 @@ class DataSetFilters:
             origin = self.center
         # create the plane for clipping
         plane = generate_plane(normal, origin)
-        # create slice
-        alg = _vtk.vtkCutter()  # Construct the cutter object
-        alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
-        alg.SetCutFunction(plane)  # the cutter to use the plane we made
-        if not generate_triangles:
-            alg.GenerateTrianglesOff()
-        _update_alg(alg, progress_bar, 'Slicing')
-        output = _get_output(alg)
-        if contour:
-            return output.contour()
-        return output
+        return DataSetFilters.slice_implicit(
+            self,
+            plane,
+            generate_triangles=generate_triangles,
+            contour=contour,
+            progress_bar=progress_bar,
+        )
 
     def slice_orthogonal(
         self, x=None, y=None, z=None, generate_triangles=False, contour=False, progress_bar=False
@@ -695,7 +748,7 @@ class DataSetFilters:
         n : int, optional
             The number of slices to create.
 
-        axis : str or int, default='x'
+        axis : str or int, default: 'x'
             The axis to generate the slices along. Perpendicular to the
             slices. Can be string name (``'x'``, ``'y'``, or ``'z'``) or
             axis index (``0``, ``1``, or ``2``).
@@ -948,7 +1001,7 @@ class DataSetFilters:
             components to meet criteria.  'any' is when
             any component satisfies the criteria.
 
-        component : int, default=0
+        component : int, default: 0
             When using ``component_mode='selected'``, this sets
             which component to threshold on.
 
@@ -1563,7 +1616,7 @@ class DataSetFilters:
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.UniformGrid(
-        ...     dims=(n, n, n),
+        ...     dimensions=(n, n, n),
         ...     spacing=(abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
         ...     origin=(x_min, y_min, z_min),
         ... )
@@ -1870,7 +1923,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        vertex : bool, default=True
+        vertex : bool, default: True
             Enable or disable the generation of vertex cells.
 
         progress_bar : bool, optional
@@ -2139,7 +2192,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        largest : bool, default=False
+        largest : bool, default: False
             Extract the largest connected part of the mesh.
 
         progress_bar : bool, optional
@@ -3640,7 +3693,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target_reduction : float, default=0.5
+        target_reduction : float, default: 0.5
             Fraction of the original mesh to remove.
             TargetReduction is set to ``0.9``, this filter will try to reduce
             the data set to 10% of its original size and will remove 90%
@@ -4720,10 +4773,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        quality_measure : str, default='scaled_jacobian'
+        quality_measure : str, default: 'scaled_jacobian'
             The cell quality measure to use.
 
-        null_value : float, default=-1.0
+        null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities
             that could be addressed by this filter but is not well defined for
             the particular geometry of cell in question, e.g. a volume query
@@ -5380,7 +5433,7 @@ class DataSetFilters:
          containing each partition.
 
          >>> import pyvista as pv
-         >>> grid = pv.UniformGrid(dims=(5, 5, 5))
+         >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
          >>> out = grid.partition(4, as_composite=True)
          >>> out.plot(multi_colors=True, show_edges=True)
 

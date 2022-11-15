@@ -305,7 +305,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.color = 'b'
         >>> prop.color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         Visualize setting the property to blue.
 
@@ -339,7 +339,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.edge_color = 'red'
         >>> prop.edge_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
 
         Visualize red edges. Set the edge's visibility to ``True`` so we can see
         them.
@@ -1002,7 +1002,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.ambient_color = 'b'
         >>> prop.ambient_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         Visualize setting the ambient color to blue with ``ambient = 0.1``
 
@@ -1033,7 +1033,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.specular_color = 'b'
         >>> prop.specular_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         Visualize setting the specular color to blue with ``specular = 0.2``
 
@@ -1064,7 +1064,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.diffuse_color = 'b'
         >>> prop.diffuse_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         Visualize setting the diffuse color to white with ``diffuse = 0.5``
 

@@ -1260,7 +1260,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.above_range_color = 'r'
         >>> pyvista.global_theme.above_range_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
 
         """
         return self._above_range_color
@@ -1280,7 +1280,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.below_range_color = 'b'
         >>> pyvista.global_theme.below_range_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         """
         return self._below_range_color
@@ -1300,6 +1300,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.return_cpos = False
         """
+        return self._return_cpos
 
     @return_cpos.setter
     def return_cpos(self, value: bool):

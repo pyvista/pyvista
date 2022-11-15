@@ -797,7 +797,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
@@ -946,14 +946,14 @@ def test_find_closest_cell_surface_point():
 
 
 def test_find_containing_cell():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     node = np.array([0.3, 0.3, 0.0])
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
     points_copy = points.copy()
     indices = mesh.find_containing_cell(points)
@@ -1111,7 +1111,7 @@ def test_cell_type(grid):
 
 
 def test_point_is_inside_cell():
-    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
     assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
     assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
 
@@ -1462,16 +1462,60 @@ def test_active_normals(sphere):
 @pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
-@pytest.mark.parametrize('deep', [False, True])
-def test_cast_to_pointset(sphere, deep):
-    pointset = sphere.cast_to_pointset(deep=deep)
+def test_cast_to_pointset(sphere):
+    sphere = sphere.elevation()
+    pointset = sphere.cast_to_pointset()
     assert isinstance(pointset, pyvista.PointSet)
 
+    assert not np.may_share_memory(sphere.points, pointset.points)
+    assert not np.may_share_memory(sphere.active_scalars, pointset.active_scalars)
+    assert np.allclose(sphere.points, pointset.points)
+    assert np.allclose(sphere.active_scalars, pointset.active_scalars)
+
     pointset.points[:] = 0
-    if deep:
-        assert not np.allclose(sphere.points, pointset.points)
-    else:
-        assert np.allclose(sphere.points, pointset.points)
+    assert not np.allclose(sphere.points, pointset.points)
+
+    pointset.active_scalars[:] = 0
+    assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
+
+
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
+def test_cast_to_pointset_implicit(uniform):
+    pointset = uniform.cast_to_pointset(pass_cell_data=True)
+    assert isinstance(pointset, pyvista.PointSet)
+    assert pointset.n_arrays == uniform.n_arrays
+
+    assert not np.may_share_memory(uniform.active_scalars, pointset.active_scalars)
+    assert np.allclose(uniform.active_scalars, pointset.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], pointset[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        pointset[name][:] = i
+        assert not np.allclose(uniform[name], pointset[name])
+
+
+def test_cast_to_poly_points_implicit(uniform):
+    points = uniform.cast_to_poly_points(pass_cell_data=True)
+    assert isinstance(points, pyvista.PolyData)
+    assert points.n_arrays == uniform.n_arrays
+    assert len(points.cell_data) == len(uniform.cell_data)
+    assert len(points.point_data) == len(uniform.point_data)
+
+    assert not np.may_share_memory(uniform.active_scalars, points.active_scalars)
+    assert np.allclose(uniform.active_scalars, points.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], points[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        points[name][:] = i
+        assert not np.allclose(uniform[name], points[name])
 
 
 def test_partition(hexbeam):
@@ -1514,11 +1558,11 @@ def test_volume_area():
         assert np.isclose(grid.area, 16.0)
 
     # UniformGrid 3D size 4x4x4
-    vol_grid = pyvista.UniformGrid(dims=(5, 5, 5))
+    vol_grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
     assert_volume(vol_grid)
 
     # 2D grid size 4x4
-    surf_grid = pyvista.UniformGrid(dims=(5, 5, 1))
+    surf_grid = pyvista.UniformGrid(dimensions=(5, 5, 1))
     assert_area(surf_grid)
 
     # UnstructuredGrid
@@ -1536,6 +1580,6 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pyvista.UniformGrid(dims=(5, 5, 5)).extract_surface()
+    grid = pyvista.UniformGrid(dimensions=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)

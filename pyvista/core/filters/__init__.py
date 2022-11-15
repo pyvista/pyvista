@@ -50,7 +50,7 @@ def _get_output(
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset
     if isinstance(ido, pyvista.PointSet):
-        return data.cast_to_pointset(deep=False)
+        return data.cast_to_pointset()
     return data
 
 

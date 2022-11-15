@@ -66,7 +66,6 @@ from .widgets import WidgetHelper
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
 
-
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
 if KILL_DISPLAY:  # pragma: no cover
@@ -1509,7 +1508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
         >>> pl.background_color = "pink"
         >>> pl.background_color
-        Color(name='pink', hex='#ffc0cbff')
+        Color(name='pink', hex='#ffc0cbff', opacity=255)
         >>> pl.show()
 
         """
@@ -2014,7 +2013,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
-        style : str, default='wireframe'
+        style : str, default: 'wireframe'
             Visualization style of the mesh.  One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``.
             Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
@@ -3005,7 +3004,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
-        scalars_name = 'Data'
+        scalars_name = pyvista.DEFAULT_SCALARS_NAME
         if isinstance(scalars, str):
             self.mapper.array_name = scalars
 
@@ -3769,6 +3768,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         except KeyError:
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
+
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        self.renderers.clear_actors()
 
     def clear(self):
         """Clear plot by removing all actors and properties.
