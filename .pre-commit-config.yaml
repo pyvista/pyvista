@@ -37,7 +37,7 @@ repos:
     exclude: ^pyvista/ext/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.982
+  rev: v0.990
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
@@ -54,9 +54,10 @@ repos:
   - id: debug-statements
   - id: no-commit-to-branch
     args: [--branch, main]
+  - id: requirements-txt-fixer
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.18.4
+  rev: 0.19.1
   hooks:
     - id: check-github-workflows

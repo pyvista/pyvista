@@ -1212,7 +1212,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             still retaining all edges of the boundary.
 
         corner_factor : float, optional
-            If ``all_edges````, this is the factor along each axis to
+            If ``all_edges``, this is the factor along each axis to
             draw the default box. Default is 0.5 to show the full box.
 
         fmt : str, optional
@@ -1895,15 +1895,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.RemoveAllLights()
         self._lights.clear()
 
-    def clear(self):
-        """Remove all actors and properties."""
+    def clear_actors(self):
+        """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
                 try:
                     self.remove_actor(actor, reset_camera=False, render=False)
                 except KeyError:
                     pass
+            self.Modified()
 
+    def clear(self):
+        """Remove all actors and properties."""
+        self.clear_actors()
         if self.__charts is not None:
             self._charts.deep_clean()
         self.remove_all_lights()
@@ -2732,7 +2736,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         nearby each other and plot it without SSAO.
 
         >>> import pyvista as pv
-        >>> ugrid = pv.UniformGrid(dims=(3, 2, 2)).to_tetrahedra(12)
+        >>> ugrid = pv.UniformGrid(dimensions=(3, 2, 2)).to_tetrahedra(12)
         >>> exploded = ugrid.explode()
         >>> exploded.plot()
 

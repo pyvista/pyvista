@@ -22,7 +22,7 @@ See `Kitware: Screen-Space Ambient Occlusion
 import pyvista as pv
 from pyvista import examples
 
-grid = pv.UniformGrid(dims=(5, 5, 5)).explode(0.2)
+grid = pv.UniformGrid(dimensions=(5, 5, 5)).explode(0.2)
 
 ###############################################################################
 # Plot with defaults

@@ -426,6 +426,7 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

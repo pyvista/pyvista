@@ -18,7 +18,7 @@ import pyvista as pv
 
 # We use a uniform grid here simply to create equidistantly spaced points for
 # our glyph filter
-grid = pv.UniformGrid(dims=(4, 4, 4), spacing=(1, 1, 1))
+grid = pv.UniformGrid(dimensions=(4, 4, 4), spacing=(1, 1, 1))
 
 spheres = grid.glyph(geom=pv.Sphere(), scale=False, orient=False)
 
