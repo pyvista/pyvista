@@ -26,7 +26,7 @@ mesh = mesh.rotate_x(90, inplace=False).rotate_z(90, inplace=False).scale(4, 4, 
 
 # We use a uniform grid here simply to create equidistantly spaced points for
 # our glyph filter
-grid = pv.UniformGrid(dims=(4, 3, 3), spacing=(3, 1, 1))
+grid = pv.UniformGrid(dimensions=(4, 3, 3), spacing=(3, 1, 1))
 
 bunnies = grid.glyph(geom=mesh, scale=False, orient=False)
 bunnies

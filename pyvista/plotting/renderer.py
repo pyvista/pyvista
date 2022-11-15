@@ -446,7 +446,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        aa_type : str, default='fxaa'
+        aa_type : str, default: 'fxaa'
             Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
@@ -1212,7 +1212,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             still retaining all edges of the boundary.
 
         corner_factor : float, optional
-            If ``all_edges````, this is the factor along each axis to
+            If ``all_edges``, this is the factor along each axis to
             draw the default box. Default is 0.5 to show the full box.
 
         fmt : str, optional
@@ -1556,7 +1556,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset_camera : bool, optional
             Reset camera position when ``True`` to include all actors.
 
-        outline : bool, default=True
+        outline : bool, default: True
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
@@ -1895,15 +1895,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.RemoveAllLights()
         self._lights.clear()
 
-    def clear(self):
-        """Remove all actors and properties."""
+    def clear_actors(self):
+        """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
                 try:
                     self.remove_actor(actor, reset_camera=False, render=False)
                 except KeyError:
                     pass
+            self.Modified()
 
+    def clear(self):
+        """Remove all actors and properties."""
+        self.clear_actors()
         if self.__charts is not None:
             self._charts.deep_clean()
         self.remove_all_lights()
@@ -2243,7 +2247,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, default=False
+        negative : bool, default: False
             View from the opposite direction.
 
         Returns
@@ -2297,7 +2301,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        render : bool, default=True
+        render : bool, default: True
             Trigger a render after resetting the camera.
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
@@ -2732,7 +2736,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         nearby each other and plot it without SSAO.
 
         >>> import pyvista as pv
-        >>> ugrid = pv.UniformGrid(dims=(3, 2, 2)).to_tetrahedra(12)
+        >>> ugrid = pv.UniformGrid(dimensions=(3, 2, 2)).to_tetrahedra(12)
         >>> exploded = ugrid.explode()
         >>> exploded.plot()
 

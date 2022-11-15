@@ -5,7 +5,6 @@ MAX_N_COLOR_BARS = 10
 from typing import Optional
 import warnings
 import os
-import appdirs
 
 # Load default theme.  Must be loaded first.
 from pyvista._version import __version__
@@ -73,3 +72,6 @@ FLOAT_FORMAT = "{:.3e}"
 
 # Serialization format to be used when pickling `DataObject`
 PICKLE_FORMAT = 'xml'
+
+# Name used for unnamed scalars
+DEFAULT_SCALARS_NAME = 'Data'

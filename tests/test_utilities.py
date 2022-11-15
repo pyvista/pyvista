@@ -825,6 +825,11 @@ def test_color():
         c[4]  # Invalid integer index
 
 
+def test_color_opacity():
+    color = pyvista.Color(opacity=0.5)
+    assert color.opacity == 128
+
+
 def test_convert_array():
     arr = np.arange(4).astype('O')
     arr2 = pyvista.utilities.convert_array(arr, array_type=np.dtype('O'))

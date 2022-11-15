@@ -146,7 +146,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
         A numpy array or vtkDataArry to convert.
     name : str, optional
         The name of the data array for VTK.
-    deep : bool, optional
+    deep : bool, default: False
         If input is numpy array then deep copy values.
     array_type : int, optional
         VTK array type ID as specified in specified in ``vtkType.h``.
@@ -354,12 +354,12 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     name : str
         The name of the array to get the range.
 
-    preference : str, optional
+    preference : str, default: "cell"
         When scalars is specified, this is the preferred array type to
         search for in the dataset.  Must be either ``'point'``,
         ``'cell'``, or ``'field'``.
 
-    err : bool, optional
+    err : bool, default: False
         Whether to throw an error if array is not present.
 
     Returns
@@ -417,12 +417,12 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     name : str
         The name of the array.
 
-    preference : str, optional
+    preference : str, default: "cell"
         When scalars is specified, this is the preferred array type to
         search for in the dataset.  Must be either ``'point'``,
         ``'cell'``, or ``'field'``.
 
-    err : bool, optional
+    err : bool, default: False
         Boolean to control whether to throw an error if array is not
         present.
 
@@ -471,11 +471,11 @@ def vtk_points(points, deep=True, force_float=False):
         Points to convert.  Should be 1 or 2 dimensional.  Accepts a
         single point or several points.
 
-    deep : bool, optional
+    deep : bool, default: True
         Perform a deep copy of the array.  Only applicable if
         ``points`` is a :class:`numpy.ndarray`.
 
-    force_float : bool, optional
+    force_float : bool, default: False
         Casts the datatype to ``float32`` if points datatype is
         non-float.  Set this to ``False`` to allow non-float types,
         though this may lead to truncation of intermediate floats
@@ -591,7 +591,7 @@ def lines_from_points(points, close=False):
         segments. For example, two line segments would be represented
         as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-    close : bool, optional
+    close : bool, default: False
         If ``True``, close the line segments into a loop.
 
     Returns
@@ -943,7 +943,7 @@ def wrap(dataset):
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.UniformGrid(dims=dataset.shape)
+            mesh = pyvista.UniformGrid(dimensions=dataset.shape)
             if isinstance(dataset, pyvista.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
                 dataset = np.array(dataset, copy=False)
@@ -1082,7 +1082,7 @@ def fit_plane_to_points(points, return_meta=False):
     points : sequence
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
-    return_meta : bool, optional
+    return_meta : bool, default: False
         If ``True``, also returns the center and normal used to
         generate the plane.
 
@@ -1211,10 +1211,10 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
     Parameters
     ----------
-    number_of_peels : int, optional
+    number_of_peels : int, default: 100
         Maximum number of depth peels.
 
-    occlusion_ratio : float, optional
+    occlusion_ratio : float, default: 0.0
         Occlusion ratio.
 
     Returns
@@ -1306,7 +1306,7 @@ class ProgressMonitor:
     algorithm
         VTK algorithm or filter.
 
-    message : str, optional
+    message : str, default: ""
         Message to display in the progress bar.
 
     scaling : float, optional
@@ -1314,7 +1314,7 @@ class ProgressMonitor:
 
     """
 
-    def __init__(self, algorithm, message="", scaling=100):
+    def __init__(self, algorithm, message="", scaling=None):
         """Initialize observer."""
         try:
             from tqdm import tqdm  # noqa
@@ -1399,16 +1399,16 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     angle : float
         Rotation angle.
 
-    inplace : bool, optional
+    inplace : bool, default: False
         Updates points in-place while returning nothing.
 
-    deg : bool, optional
+    deg : bool, default: True
         If ``True``, the angle is interpreted as degrees instead of
-        radians. Default is ``True``.
+        radians.
 
-    axis : str, optional
+    axis : str, default: "z"
         Name of axis to rotate about. Valid options are ``'x'``, ``'y'``,
-        and ``'z'``. Default value is ``'z'``.
+        and ``'z'``.
 
     Returns
     -------
@@ -1464,13 +1464,13 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Parameters
     ----------
-    path : str, optional
+    path : str, default: ""
         Directory containing the cubemap images.
 
-    prefix : str, optional
+    prefix : str, default: ""
         Prefix to the filename.
 
-    ext : str, optional
+    ext : str, default: ".jpg"
         The filename extension.  For example ``'.jpg'``.
 
     Returns
