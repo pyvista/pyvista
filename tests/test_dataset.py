@@ -274,11 +274,6 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
-def test_translate_deprecation(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid.translate((0.0, 0.0, 0.0))
-
-
 def test_set_points():
     dataset = pyvista.UnstructuredGrid()
     points = np.random.random((10, 3))
@@ -1259,13 +1254,6 @@ def test_rotate_z():
         out = mesh.rotate_z(30, point=[1, 3])
 
 
-@pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
-def test_deprecation_rotate(sphere, method):
-    meth = getattr(sphere, method)
-    with pytest.warns(PyVistaDeprecationWarning):
-        meth(30)
-
-
 def test_rotate_vector():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
@@ -1345,11 +1333,6 @@ def test_transform_integers_vtkbug_present():
     assert poly.points[-1, 1] != 0
 
 
-def test_deprecation_vector(sphere):
-    with pytest.warns(PyVistaDeprecationWarning):
-        sphere.rotate_vector([1, 1, 1], 33)
-
-
 def test_scale():
     mesh = examples.load_airplane()
 
@@ -1372,8 +1355,6 @@ def test_scale():
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        scale1.scale(xyz)
 
 
 def test_flip_x():
@@ -1387,8 +1368,6 @@ def test_flip_x():
     mesh = examples.load_uniform()
     out = mesh.flip_x()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_x1.flip_x(point=(0, 0, 0))
 
 
 def test_flip_y():
@@ -1402,8 +1381,6 @@ def test_flip_y():
     mesh = examples.load_uniform()
     out = mesh.flip_y()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_y1.flip_y(point=(0, 0, 0))
 
 
 def test_flip_z():
@@ -1417,8 +1394,6 @@ def test_flip_z():
     mesh = examples.load_uniform()
     out = mesh.flip_z()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_z1.flip_z(point=(0, 0, 0))
 
 
 def test_flip_normal():
@@ -1440,9 +1415,6 @@ def test_flip_normal():
     flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0], inplace=True)
     flip_normal6.flip_z(inplace=True)
     assert np.allclose(flip_normal5.points, flip_normal6.points)
-
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
 
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()

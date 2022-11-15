@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
@@ -222,8 +221,3 @@ def test_copy():
 
     deep = camera.copy()
     assert deep == camera
-
-
-def test_deprecation_warning_of_is_parallel_projection(camera):
-    with pytest.warns(PyVistaDeprecationWarning):
-        _ = camera.is_parallel_projection
