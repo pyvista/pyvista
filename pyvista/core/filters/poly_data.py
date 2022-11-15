@@ -3393,20 +3393,21 @@ class PolyDataFilters(DataSetFilters):
         Plot the random hills dataset and with 10 contour lines. Note how we use 9
         colors here (``n_contours - 1``).
 
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_random_hills()
-        >>> _, edges = contour_banded(uni, 10)
-        >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
-        >>> pl.add_mesh(mesh, n_colors=9)
+        >>> _, edges = mesh.contour_banded(10)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
+        >>> _ = pl.add_mesh(mesh, n_colors=9)
         >>> pl.show()
 
         Extract the surface from the uniform grid dataset and plot its contours
         alongside the output from the banded contour filter.
 
         >>> surf = examples.load_uniform().extract_surface()
-        >>> output, edges = contour_banded(uni, 5, rng=[200, 500])
-        >>> pl = pyvista.Plotter()
+        >>> output, edges = surf.contour_banded(5, rng=[200, 500])
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
         >>> _ = pl.add_mesh(surf, opacity=0.3, show_scalar_bar=False)
         >>> _ = pl.add_mesh(output)
