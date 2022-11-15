@@ -435,7 +435,7 @@ class DataObject:
             "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
             PyVistaDeprecationWarning,
         )
-        return self.clear_field_data()
+        self.clear_field_data()
 
     def clear_field_data(self):
         """Remove all field data.
