@@ -331,10 +331,10 @@ class DataObject:
            Use :func:`DataObject.add_field_data` instead.
         """
         warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
+            "Use of `add_field_array` is deprecated. Use `add_field_data` instead.",
             PyVistaDeprecationWarning,
         )
-        return self.clear_point_data()
+        return self.add_field_data(array=scalars, name=name, deep=deep)
 
     def add_field_data(self, array: np.ndarray, name: str, deep=True):
         """Add field data.
