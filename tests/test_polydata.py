@@ -223,10 +223,11 @@ def test_geodesic_distance(sphere):
     assert isinstance(distance, float)
 
     # Use scalar weights
-    distance_use_scalar_weights = sphere.geodesic_distance(
-        0, sphere.n_points - 1, use_scalar_weights=True
-    )
-    assert isinstance(distance_use_scalar_weights, float)
+    if pyvista.vtk_version_info >= (9,):
+        distance_use_scalar_weights = sphere.geodesic_distance(
+            0, sphere.n_points - 1, use_scalar_weights=True
+        )
+        assert isinstance(distance_use_scalar_weights, float)
 
 
 def test_ray_trace(sphere):
