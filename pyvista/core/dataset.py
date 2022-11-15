@@ -2163,7 +2163,7 @@ class DataSet(DataSetFilters, DataObject):
         return _get_output(alg)
 
     def cast_to_pointset(self, pass_cell_data: bool = False) -> 'pyvista.PointSet':
-        """Extract the nodes of this dataset as a :class:`pyvista.PointSet`.
+        """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
         ----------
@@ -2199,7 +2199,7 @@ class DataSet(DataSetFilters, DataObject):
         return pset
 
     def cast_to_poly_points(self, pass_cell_data: bool = False) -> 'pyvista.PolyData':
-        """Extract the nodes of this dataset as a :class:`pyvista.PolyData`.
+        """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
         ----------
