@@ -685,7 +685,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     scalars = scalars.astype(np.uint8)
 
             # configure the lookup table
-            self.lookup_table.nan_color = nan_color
+            if nan_color:
+                self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
                 scalar_bar_args.setdefault('above_label', 'Above')

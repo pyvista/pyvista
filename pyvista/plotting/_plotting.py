@@ -252,7 +252,7 @@ def _common_arg_parser(
         # check if this actor already exists
         remove_existing_actor = True
 
-    nan_color = Color(nan_color, default_opacity=nan_opacity, default_color=theme.nan_color)
+    nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)
 
     if color is True:
         color = theme.color

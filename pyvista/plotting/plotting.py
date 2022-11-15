@@ -1508,7 +1508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
         >>> pl.background_color = "pink"
         >>> pl.background_color
-        Color(name='pink', hex='#ffc0cbff')
+        Color(name='pink', hex='#ffc0cbff', opacity=255)
         >>> pl.show()
 
         """
