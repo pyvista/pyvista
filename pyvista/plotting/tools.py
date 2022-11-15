@@ -55,7 +55,7 @@ def _system_supports_plotting():
     # mac case
     if platform.system() == 'Darwin':
         # check if finder available
-        proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE)
+        proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE, encoding="utf8")
         proc.communicate()
         if proc.returncode == 0:
             return True
@@ -65,7 +65,7 @@ def _system_supports_plotting():
 
     # Linux case
     try:
-        proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
+        proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
         proc.communicate()
         return proc.returncode == 0
     except OSError:
