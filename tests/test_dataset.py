@@ -1462,16 +1462,60 @@ def test_active_normals(sphere):
 @pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
-@pytest.mark.parametrize('deep', [False, True])
-def test_cast_to_pointset(sphere, deep):
-    pointset = sphere.cast_to_pointset(deep=deep)
+def test_cast_to_pointset(sphere):
+    sphere = sphere.elevation()
+    pointset = sphere.cast_to_pointset()
     assert isinstance(pointset, pyvista.PointSet)
 
+    assert not np.may_share_memory(sphere.points, pointset.points)
+    assert not np.may_share_memory(sphere.active_scalars, pointset.active_scalars)
+    assert np.allclose(sphere.points, pointset.points)
+    assert np.allclose(sphere.active_scalars, pointset.active_scalars)
+
     pointset.points[:] = 0
-    if deep:
-        assert not np.allclose(sphere.points, pointset.points)
-    else:
-        assert np.allclose(sphere.points, pointset.points)
+    assert not np.allclose(sphere.points, pointset.points)
+
+    pointset.active_scalars[:] = 0
+    assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
+
+
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
+def test_cast_to_pointset_implicit(uniform):
+    pointset = uniform.cast_to_pointset(pass_cell_data=True)
+    assert isinstance(pointset, pyvista.PointSet)
+    assert pointset.n_arrays == uniform.n_arrays
+
+    assert not np.may_share_memory(uniform.active_scalars, pointset.active_scalars)
+    assert np.allclose(uniform.active_scalars, pointset.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], pointset[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        pointset[name][:] = i
+        assert not np.allclose(uniform[name], pointset[name])
+
+
+def test_cast_to_poly_points_implicit(uniform):
+    points = uniform.cast_to_poly_points(pass_cell_data=True)
+    assert isinstance(points, pyvista.PolyData)
+    assert points.n_arrays == uniform.n_arrays
+    assert len(points.cell_data) == len(uniform.cell_data)
+    assert len(points.point_data) == len(uniform.point_data)
+
+    assert not np.may_share_memory(uniform.active_scalars, points.active_scalars)
+    assert np.allclose(uniform.active_scalars, points.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], points[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        points[name][:] = i
+        assert not np.allclose(uniform[name], points[name])
 
 
 def test_partition(hexbeam):

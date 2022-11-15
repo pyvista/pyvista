@@ -2162,35 +2162,98 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self, deep: bool = False) -> 'pyvista.PointSet':
-        """Get a new representation of this object as a :class:`pyvista.PointSet`.
+    def cast_to_pointset(self, pass_cell_data: bool = False) -> 'pyvista.PointSet':
+        """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
         ----------
-        deep : bool, optional
-            When ``True`` makes a full copy of the object.  When ``False``,
-            performs a shallow copy where the points and data arrays are
-            references to the original object.
+        pass_cell_data : bool, optional
+            Run the ``cell_data_to_point_data`` filter and pass cell data
+            fields to the new pointset.
 
         Returns
         -------
         pyvista.PointSet
             Dataset cast into a :class:`pyvista.PointSet`.
 
+        Notes
+        -----
+        This will produce a deep copy of the points and point/cell data of
+        the original mesh.
+
         Examples
         --------
         >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pyvista.Wavelet()
         >>> pointset = mesh.cast_to_pointset()
         >>> type(pointset)
         <class 'pyvista.core.pointset.PointSet'>
 
         """
         pset = pyvista.PointSet()
-        pset.SetPoints(self.GetPoints())
-        pset.GetPointData().ShallowCopy(self.GetPointData())
-        if deep:
-            return pset.copy(deep=True)
+        pset.points = self.points.copy()
+        if pass_cell_data:
+            self = self.cell_data_to_point_data()
+        pset.GetPointData().DeepCopy(self.GetPointData())
+        pset.active_scalars_name = self.active_scalars_name
+        return pset
+
+    def cast_to_poly_points(self, pass_cell_data: bool = False) -> 'pyvista.PolyData':
+        """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
+
+        Parameters
+        ----------
+        pass_cell_data : bool, optional
+            Run the ``cell_data_to_point_data`` filter and pass cell data
+            fields to the new pointset.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Dataset cast into a :class:`pyvista.PolyData`.
+
+        Notes
+        -----
+        This will produce a deep copy of the points and point/cell data of
+        the original mesh.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> points = mesh.cast_to_poly_points(pass_cell_data=True)
+        >>> type(points)
+        <class 'pyvista.core.pointset.PolyData'>
+        >>> points.n_arrays
+        2
+        >>> points.point_data
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : Spatial Point Data
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            Spatial Point Data      float64    (1000,)              SCALARS
+        >>> points.cell_data
+        pyvista DataSetAttributes
+        Association     : CELL
+        Active Scalars  : None
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            Spatial Cell Data       float64    (1000,)
+
+        """
+        pset = pyvista.PolyData(self.points.copy())
+        if pass_cell_data:
+            cell_data = self.copy()
+            cell_data.clear_point_data()
+            cell_data = cell_data.cell_data_to_point_data()
+            pset.GetCellData().DeepCopy(cell_data.GetPointData())
+        pset.GetPointData().DeepCopy(self.GetPointData())
+        pset.active_scalars_name = self.active_scalars_name
         return pset
 
     def find_closest_point(self, point: Iterable[float], n=1) -> int:
