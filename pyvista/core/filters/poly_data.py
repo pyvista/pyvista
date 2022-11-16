@@ -1951,7 +1951,8 @@ class PolyDataFilters(DataSetFilters):
             Vertex index indicating the end point of the geodesic segment.
 
         use_scalar_weights : bool, optional
-            If ``True``, use scalar values in the edge weight (experimental).
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
