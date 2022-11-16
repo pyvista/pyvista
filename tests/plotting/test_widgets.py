@@ -257,7 +257,7 @@ def test_add_camera_orientation_widget(uniform):
     assert not p.camera_widgets
 
 
-def test_plot_algorithm_scalars():
+def test_plot_algorithm_widgets():
     algo = vtk.vtkRTAnalyticSource()
 
     pl = pyvista.Plotter()
