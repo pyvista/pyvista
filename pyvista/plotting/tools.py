@@ -1,17 +1,14 @@
 """Module containing useful plotting tools."""
 
-from collections.abc import Sequence
 from enum import Enum
 import os
 import platform
 from subprocess import PIPE, Popen
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyVistaDeprecationWarning
 
 from .colors import Color
 
@@ -559,114 +556,6 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
             )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
-
-
-def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
-    """Parse color into a VTK friendly RGB(A) tuple.
-
-    .. deprecated:: 0.34.0
-        Use :class:`Color` to parse and convert colors instead.
-
-    If ``color`` is a sequence of RGBA floats, the ``opacity`` parameter
-    is ignored.
-
-    Values returned will be between 0 and 1.
-
-    Parameters
-    ----------
-    color : color_like
-        Either a string, RGB sequence, RGBA sequence, or hex color string.
-        RGB(A) sequences should only contain values between 0 and 1.
-        For example:
-
-        * ``'white'``
-        * ``'w'``
-        * ``[1.0, 1.0, 1.0]``
-        * ``[0.5, 1.0, 0.7, 1.0]``
-        * ``'#FFFFFF'``
-
-    opacity : float, optional
-        Default opacity of the returned color. Used when ``color`` is
-        not a length 4 RGBA sequence. Only opacities between 0 and 1
-        are allowed.
-
-    default_color : color_like, optional
-        Default color to use when ``color`` is None.  If this value is
-        ``None``, then defaults to the global theme color.  Format is
-        identical to ``color``.
-
-    Returns
-    -------
-    tuple
-        Either a length 3 RGB sequence if opacity is unset, or an RGBA
-        sequence when ``opacity`` is set or the input ``color`` is an
-        RGBA sequence.
-
-    Examples
-    --------
-    >>> import pyvista
-    >>> pyvista.parse_color('blue')
-    (0.0, 0.0, 1.0)
-
-    >>> pyvista.parse_color('k')
-    (0.0, 0.0, 0.0)
-
-    >>> pyvista.parse_color('#FFFFFF')
-    (1.0, 1.0, 1.0)
-
-    >>> pyvista.parse_color((0.4, 0.3, 0.4, 1))
-    (0.4, 0.3, 0.4, 1.0)
-
-    """
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `parse_color` is deprecated in favor of the new `Color` class.",
-        PyVistaDeprecationWarning,
-    )
-    color_valid = True
-    if color is None:
-        if default_color is None:
-            color = pyvista.global_theme.color
-        else:
-            color = default_color
-    if isinstance(color, str):
-        color = Color(color).float_rgb
-    elif isinstance(color, (Sequence, np.ndarray)):
-        try:
-            color = np.asarray(color, dtype=np.float64)
-            if (
-                color.ndim != 1
-                or color.size not in (3, 4)
-                or not np.all((0 <= color) & (color <= 1))
-            ):
-                color_valid = False
-            elif len(color) == 4:
-                opacity = color[3]
-                color = color[:3]
-        except ValueError:
-            color_valid = False
-    else:
-        color_valid = False
-    if not color_valid:
-        raise ValueError(
-            "\n"
-            f"\tInvalid color input: ({color})\n"
-            "\tMust be string, rgb list, or hex color string.  For example:\n"
-            "\t\tcolor='white'\n"
-            "\t\tcolor='w'\n"
-            "\t\tcolor=[1, 1, 1]\n"
-            "\t\tcolor='#FFFFFF'"
-        )
-    if opacity is not None:
-        if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
-            color = [color[0], color[1], color[2], float(opacity)]
-        else:
-            raise ValueError(
-                "\n"
-                f"\tInvalid opacity input: {opacity}\n"
-                "\tMust be a scalar value between 0 and 1."
-            )
-    return tuple(color)
 
 
 def parse_font_family(font_family):
