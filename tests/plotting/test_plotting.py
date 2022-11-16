@@ -3218,6 +3218,7 @@ def test_plot_algorithm_cone():
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_algorithm_scalars():
     name, name2 = 'foo', 'bar'
     mesh = pyvista.Wavelet()
