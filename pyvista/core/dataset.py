@@ -2738,6 +2738,14 @@ class DataSet(DataSetFilters, DataObject):
 
     def cell_point_neighbors_ids(self, ind: int) -> List[int]:
         return DatasetConnectivity(self,"cell")[ind].neighbors
+
+    @property 
+    def cells_connectivity(self):
+        return DatasetConnectivity(self,"cell")
+
+    @property 
+    def points_connectivity(self):
+        return DatasetConnectivity(self,"point")
     
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
