@@ -1,6 +1,7 @@
 """Attributes common to PolyData and Grid Objects."""
 
 import collections.abc
+from collections import namedtuple
 from copy import deepcopy
 import logging
 import sys
@@ -41,9 +42,70 @@ log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
-ActiveArrayInfoTuple = collections.namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
+ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
+
+CellConnectivityTuple = namedtuple('CellConnectivityTuple',["neighbors","edge_neighbors","points"])
+PointConnectivityTuple = namedtuple('PointConnectivityTuple',["neighbors","cells"])
 
 
+class DatasetConnectivity():
+
+    def __init__(self,dataset,preference="cell") -> None:
+        self.dataset = dataset
+
+        # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+        self.dataset.BuildLinks()
+
+        if preference not in [
+                'point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
+            raise ValueError('``preference`` must be either "point" or "cell"')
+        self.preference = preference
+
+    def __getitem__(self,ind:int):
+        if type(ind) is not int:
+            raise TypeError("Non-integers indexing is not supported yet.")
+
+        if self.preference == "point":
+            return PointConnectivityTuple(self._point_neighbors_ids(ind),
+                                          self._point_cell_ids(ind))
+        else:
+            return CellConnectivityTuple(self._cell_point_neighbors_ids(ind),
+                                         self._cell_point_ids(ind),
+                                         [None]) # not implemented yet
+
+    def _cell_point_ids(self,ind:int):
+
+        cell = self.dataset.GetCell(ind)
+        point_ids = cell.GetPointIds()
+        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
+    
+    def _point_cell_ids(self,ind:int):
+
+        ids = _vtk.vtkIdList()
+        self.dataset.GetPointCells(ind, ids)
+        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+
+    def _point_neighbors_ids(self, ind: int) -> List[int]:
+
+        out = []
+        for cell in self._point_cell_ids(ind):
+            out.extend([i for i in self._cell_point_ids(cell) if i != ind])
+        return list(set(out))
+
+    def _cell_point_neighbors_ids(self, ind: int) -> List[int]:
+
+        out = []
+        for i in self._cell_point_ids(ind):
+            ids = _vtk.vtkIdList()
+            ids.InsertNextId(i)
+
+            cell_ids = _vtk.vtkIdList()
+            self.dataset.GetCellNeighbors(ind, ids, cell_ids)
+
+            out.extend([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
+
+        return list(set(out))
+        
 class ActiveArrayInfo:
     """Active array info class with support for pickling."""
 
@@ -2666,40 +2728,17 @@ class DataSet(DataSetFilters, DataObject):
         [0, 1, 2]
 
         """
-        cell = self.GetCell(ind)
-        point_ids = cell.GetPointIds()
-        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
+        return DatasetConnectivity(self,"cell")[ind].points
 
     def point_cell_ids(self, ind: int) -> List[int]:
-
-        self.BuildLinks()
-        # as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-
-        ids = _vtk.vtkIdList()
-        self.GetPointCells(ind, ids)
-        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+        return DatasetConnectivity(self,"point")[ind].cells
 
     def point_neighbors_ids(self, ind: int) -> List[int]:
-
-        out = []
-        for cell in self.point_cell_ids(ind):
-            out.extend([i for i in self.cell_point_ids(cell) if i != ind])
-        return list(set(out))
+        return DatasetConnectivity(self,"point")[ind].neighbors
 
     def cell_point_neighbors_ids(self, ind: int) -> List[int]:
-
-        out = []
-        for i in self.cell_point_ids(ind):
-            ids = _vtk.vtkIdList()
-            ids.InsertNextId(i)
-
-            cell_ids = _vtk.vtkIdList()
-            self.GetCellNeighbors(ind, ids, cell_ids)
-
-            out.extend([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
-
-        return list(set(out))
-
+        return DatasetConnectivity(self,"cell")[ind].neighbors
+    
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
     ) -> Union[int, np.ndarray]:
