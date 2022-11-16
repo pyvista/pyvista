@@ -3219,10 +3219,12 @@ def test_plot_algorithm_cone():
 
 
 def test_plot_algorithm_scalars():
-    name = 'foo'
+    name, name2 = 'foo', 'bar'
     mesh = pyvista.Wavelet()
     mesh.point_data[name] = np.arange(mesh.n_points)
+    mesh.cell_data[name2] = np.arange(mesh.n_cells)
     assert mesh.active_scalars_name != name
+    assert mesh.active_scalars_name != name2
 
     alg = vtk.vtkGeometryFilter()
     alg.SetInputDataObject(mesh)
@@ -3230,10 +3232,6 @@ def test_plot_algorithm_scalars():
     pl = pyvista.Plotter()
     pl.add_mesh(alg, scalars=name)
     pl.show()
-
-    name2 = 'bar'
-    mesh.cell_data[name2] = np.arange(mesh.n_cells)
-    assert mesh.active_scalars_name != name2
 
     pl = pyvista.Plotter()
     pl.add_mesh(alg, scalars=name2)
