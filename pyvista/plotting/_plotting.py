@@ -252,7 +252,7 @@ def _common_arg_parser(
         # check if this actor already exists
         remove_existing_actor = True
 
-    nan_color = Color(nan_color, default_opacity=nan_opacity, default_color=theme.nan_color)
+    nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)
 
     if color is True:
         color = theme.color
@@ -273,6 +273,7 @@ def _common_arg_parser(
 
     # account for legacy behavior
     if 'stitle' in kwargs:  # pragma: no cover
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
         warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
         scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 

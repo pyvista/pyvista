@@ -1,12 +1,10 @@
 """Module containing geometry helper functions."""
 
 import collections.abc
-import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def voxelize(mesh, density=None, check_surface=True):
@@ -107,19 +105,6 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]
     return image
-
-
-def single_triangle():  # pragma: no cover
-    """Create a single PolyData triangle."""
-    warnings.warn(
-        "Use of `single_triangle` is deprecated. Use `pyvista.Triangle` instead.",
-        PyVistaDeprecationWarning,
-    )
-    points = np.zeros((3, 3))
-    points[1] = [1, 0, 0]
-    points[2] = [0.5, 0.707, 0]
-    cells = np.array([[3, 0, 1, 2]])
-    return pyvista.PolyData(points, cells)
 
 
 def grid_from_sph_coords(theta, phi, r):

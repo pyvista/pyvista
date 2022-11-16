@@ -7,9 +7,7 @@ from .colors import (
     color_like,
     color_char_to_word,
     get_cmap_safe,
-    hex_to_rgb,
     hexcolors,
-    string_to_rgb,
     PARAVIEW_BACKGROUND,
 )
 from .composite_mapper import CompositeAttributes, BlockAttributes, CompositePolyDataMapper
@@ -24,7 +22,6 @@ from .tools import (
     opacity_transfer_function,
     FONTS,
     system_supports_plotting,
-    parse_color,
     parse_font_family,
 )
 from .widgets import WidgetHelper

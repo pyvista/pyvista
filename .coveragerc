@@ -1,6 +1,0 @@
-[run]
-omit =
-    pyvista/ext/coverage.py
-    pyvista/conftest.py
-    # kept for backwards compatibility:
-    pyvista/plotting/theme.py
