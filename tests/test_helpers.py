@@ -115,6 +115,14 @@ def test_wrappers():
         pyvista._wrappers = default_wrappers  # always reset back to default
 
 
+def test_wrap_no_copy():
+    # makes sure that wrapping an already wrapped object returns source
+    mesh = pyvista.Wavelet()
+    wrapped = pyvista.wrap(mesh)
+    assert mesh == wrapped
+    assert id(mesh) == id(wrapped)
+
+
 def test_inheritance_no_wrappers():
     class Foo(pyvista.PolyData):
         pass

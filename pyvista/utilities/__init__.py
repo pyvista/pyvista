@@ -1,4 +1,5 @@
 """Utilities routines."""
+from .algorithms import *
 from .common import perlin_noise, sample_function
 from .errors import (
     GPUInfo,

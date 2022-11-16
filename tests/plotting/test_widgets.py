@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
@@ -254,3 +255,31 @@ def test_add_camera_orientation_widget(uniform):
     assert p.camera_widgets
     p.close()
     assert not p.camera_widgets
+
+
+def test_plot_algorithm_scalars():
+    algo = vtk.vtkRTAnalyticSource()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_box(algo, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_plane(algo, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice(algo)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_threshold(algo)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_isovalue(algo)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice_spline(algo)
+    pl.close()

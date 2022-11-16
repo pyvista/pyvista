@@ -934,6 +934,10 @@ def wrap(dataset):
     if dataset is None:
         return
 
+    if isinstance(dataset, tuple(pyvista._wrappers.values())):
+        # Return object if it is already wrapped
+        return dataset
+
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.

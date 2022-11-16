@@ -1,16 +1,18 @@
 """An internal module for wrapping the use of mappers."""
 import sys
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities import (
+    FieldAssociation,
     abstract_class,
     convert_array,
     convert_string_array,
     raise_not_matching,
+    wrap,
 )
 from pyvista.utilities.misc import has_module, no_new_attr
 
@@ -249,7 +251,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: str):
+    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):
+        if isinstance(scalar_mode, FieldAssociation):
+            scalar_mode = scalar_mode.name
+        scalar_mode = scalar_mode.lower()
         if scalar_mode == 'default':
             self.SetScalarModeToDefault()
         elif scalar_mode == 'point':
@@ -348,11 +353,16 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     @property
     def dataset(self) -> Optional['pv.DataSet']:
         """Return or set the dataset assigned to this mapper."""
-        return self.GetInputAsDataSet()
+        return wrap(self.GetInputAsDataSet())
 
     @dataset.setter
     def dataset(self, obj: 'pv.core.dataset.DataSet'):
-        return self.SetInputData(obj)
+        if isinstance(obj, _vtk.vtkAlgorithm):
+            return self.SetInputConnection(obj.GetOutputPort())
+        elif isinstance(obj, _vtk.vtkAlgorithmOutput):
+            return self.SetInputConnection(obj)
+        else:
+            return self.SetInputData(obj)
 
     def as_rgba(self):
         """Convert the active scalars to RGBA.

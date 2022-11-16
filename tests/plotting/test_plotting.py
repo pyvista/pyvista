@@ -20,7 +20,7 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista._vtk import VTK9
+from pyvista._vtk import VTK9, VTK91
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
@@ -3198,3 +3198,65 @@ def test_add_point_scalar_labels_list():
 
     plotter.add_point_scalar_labels(points, labels)
     plotter.show()
+
+
+def test_plot_algorithm_cone():
+    algo = vtk.vtkConeSource()
+    algo.SetResolution(10)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(algo, color='red')
+    pl.show(auto_close=False)
+    # Use low resolution so it appears in image regression tests easily
+    algo.SetResolution(3)
+    pl.show()
+
+    # Bump resolution and plot with silhouette
+    algo.SetResolution(8)
+    pl = pyvista.Plotter()
+    pl.add_mesh(algo, color='red', silhouette=True)
+    pl.show()
+
+
+def test_plot_algorithm_scalars():
+    name = 'foo'
+    mesh = pyvista.Wavelet()
+    mesh.point_data[name] = np.arange(mesh.n_points)
+    assert mesh.active_scalars_name != name
+
+    alg = vtk.vtkGeometryFilter()
+    alg.SetInputDataObject(mesh)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars=name)
+    pl.show()
+
+    name2 = 'bar'
+    mesh.cell_data[name2] = np.arange(mesh.n_cells)
+    assert mesh.active_scalars_name != name2
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars=name2)
+    pl.show()
+
+
+def test_algorithm_add_points():
+    algo = vtk.vtkRTAnalyticSource()
+
+    pl = pyvista.Plotter()
+    pl.add_points(algo)
+    pl.show()
+
+
+@pytest.mark.skipif(not VTK91, reason='Requires VTK 9.1 or later')
+def test_algorithm_add_point_labels():
+    algo = vtk.vtkConeSource()
+    elev = vtk.vtkElevationFilter()
+    elev.SetInputConnection(algo.GetOutputPort())
+    elev.SetLowPoint(0, 0, -1)
+    elev.SetHighPoint(0, 0, 1)
+
+    pl = pyvista.Plotter()
+    pl.add_point_labels(elev, 'Elevation', always_visible=False)
+    # pl.add_slider_widget(lambda x: algo.SetResolution(int(x)), [3, 10])
+    pl.show()

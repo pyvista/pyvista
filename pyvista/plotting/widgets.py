@@ -6,9 +6,13 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (
     NORMALS,
+    add_ids_algorithm,
+    algorithm_to_mesh_handler,
+    crinkle_algorithm,
     generate_plane,
     get_array,
     get_array_association,
+    outline_algorithm,
     try_callback,
 )
 
@@ -222,26 +226,39 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        from pyvista.core.filters import _get_output  # avoids circular import
+
+        if invert and isinstance(mesh, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
+            raise ValueError(
+                'Inverted box clipping is currently not supported with vtkAlgorithm inputs.'
+            )
+
+        mesh, algo = algorithm_to_mesh_handler(
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+        )
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
 
         port = 1 if invert else 0
 
-        if crinkle:
-            mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
-
-        alg = _vtk.vtkBoxClipDataSet()
+        clipper = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
-            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-        alg.SetInputDataObject(mesh)
-        alg.GenerateClippedOutputOn()
+            clipper.SetLocator(_vtk.vtkNonMergingPointLocator())
+        clipper.SetInputConnection(algo.GetOutputPort())
+        clipper.GenerateClippedOutputOn()
 
-        box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
+        if crinkle:
+            crinkler = crinkle_algorithm(clipper.GetOutputPort(port), algo)
+            box_clipped_mesh = _get_output(crinkler)
+        else:
+            box_clipped_mesh = _get_output(clipper, oport=port)
+
         self.box_clipped_meshes.append(box_clipped_mesh)
 
         def callback(planes):
@@ -251,11 +268,12 @@ class WidgetHelper:
                 bounds.append(plane.GetNormal())
                 bounds.append(plane.GetOrigin())
 
-            alg.SetBoxClip(*bounds)
-            alg.Update()
-            clipped = pyvista.wrap(alg.GetOutput(port))
+            clipper.SetBoxClip(*bounds)
+            clipper.Update()
             if crinkle:
-                clipped = mesh.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+            else:
+                clipped = _get_output(clipper, oport=port)
             box_clipped_mesh.shallow_copy(clipped)
 
         self.add_box_widget(
@@ -269,7 +287,9 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(box_clipped_mesh, reset_camera=False, **kwargs)
+        if crinkle:
+            return self.add_mesh(crinkler, reset_camera=False, **kwargs)
+        return self.add_mesh(clipper.GetOutputPort(port), reset_camera=False, **kwargs)
 
     def add_plane_widget(
         self,
@@ -569,6 +589,10 @@ class WidgetHelper:
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
+        mesh, algo = algorithm_to_mesh_handler(
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+        )
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -576,32 +600,34 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
-
-        if crinkle:
-            mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
+        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
 
         if isinstance(mesh, _vtk.vtkPolyData):
-            alg = _vtk.vtkClipPolyData()
+            clipper = _vtk.vtkClipPolyData()
         # elif isinstance(mesh, vtk.vtkImageData):
-        #     alg = vtk.vtkClipVolume()
-        #     alg.SetMixed3DCellGeneration(True)
+        #     clipper = vtk.vtkClipVolume()
+        #     clipper.SetMixed3DCellGeneration(True)
         else:
-            alg = _vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
-        alg.SetValue(value)
-        alg.SetInsideOut(invert)  # invert the clip if needed
+            clipper = _vtk.vtkTableBasedClipDataSet()
+        clipper.SetInputConnection(algo.GetOutputPort())
+        clipper.SetValue(value)
+        clipper.SetInsideOut(invert)  # invert the clip if needed
 
-        plane_clipped_mesh = _get_output(alg)
+        if crinkle:
+            crinkler = crinkle_algorithm(clipper, algo)
+            plane_clipped_mesh = _get_output(crinkler)
+        else:
+            plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, loc):
             function = generate_plane(normal, loc)
-            alg.SetClipFunction(function)  # the implicit function
-            alg.Update()  # Perform the Cut
-            clipped = pyvista.wrap(alg.GetOutput())
+            clipper.SetClipFunction(function)  # the implicit function
+            clipper.Update()  # Perform the Cut
             if crinkle:
-                clipped = mesh.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+            else:
+                clipped = pyvista.wrap(clipper.GetOutput())
             plane_clipped_mesh.shallow_copy(clipped)
 
         self.add_plane_widget(
@@ -620,7 +646,9 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(plane_clipped_mesh, **kwargs)
+        if crinkle:
+            return self.add_mesh(crinkler, **kwargs)
+        return self.add_mesh(clipper, **kwargs)
 
     def add_mesh_slice(
         self,
@@ -705,6 +733,8 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        mesh, algo = algorithm_to_mesh_handler(mesh)
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -712,10 +742,13 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
-        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
+        if algo is not None:
+            alg.SetInputConnection(algo.GetOutputPort())
+        else:
+            alg.SetInputDataObject(mesh)
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
@@ -745,7 +778,7 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(plane_sliced_mesh, **kwargs)
+        return self.add_mesh(alg, **kwargs)
 
     def add_mesh_slice_orthogonal(
         self,
@@ -1313,6 +1346,8 @@ class WidgetHelper:
         # avoid circular import
         from ..core.filters.data_set import _set_threshold_limit
 
+        mesh, algo = algorithm_to_mesh_handler(mesh)
+
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', mesh.memory_address)
@@ -1329,10 +1364,13 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
-        alg.SetInputDataObject(mesh)
+        if algo is not None:
+            alg.SetInputConnection(algo.GetOutputPort())
+        else:
+            alg.SetInputDataObject(mesh)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -1356,7 +1394,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault("reset_camera", False)
-        return self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
+        return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_mesh_isovalue(
         self,
@@ -1442,6 +1480,7 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        mesh, algo = algorithm_to_mesh_handler(mesh)
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
         name = kwargs.get('name', mesh.memory_address)
@@ -1465,14 +1504,17 @@ class WidgetHelper:
         mesh.set_active_scalars(scalars)
 
         alg = _vtk.vtkContourFilter()
-        alg.SetInputDataObject(mesh)
+        if algo is not None:
+            alg.SetInputConnection(algo.GetOutputPort())
+        else:
+            alg.SetInputDataObject(mesh)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
@@ -1492,7 +1534,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault("reset_camera", False)
-        return self.add_mesh(isovalue_mesh, scalars=scalars, **kwargs)
+        return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_spline_widget(
         self,
@@ -1708,6 +1750,7 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        mesh, algo = algorithm_to_mesh_handler(mesh)
         name = kwargs.get('name', None)
         if name is None:
             name = mesh.memory_address
@@ -1715,10 +1758,14 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
-        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
+        # Use the grid as the data we desire to cut
+        if algo is not None:
+            alg.SetInputConnection(algo.GetOutputPort())
+        else:
+            alg.SetInputDataObject(mesh)
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
@@ -1749,7 +1796,7 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(spline_sliced_mesh, **kwargs)
+        return self.add_mesh(alg, **kwargs)
 
     def add_sphere_widget(
         self,
