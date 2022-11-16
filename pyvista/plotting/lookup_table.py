@@ -514,6 +514,36 @@ class LookupTable(_vtk.vtkLookupTable):
         self.SetNanColor(*Color(value).float_rgba)
 
     @property
+    def nan_opacity(self):
+        """Return or set the not a number (NAN) opacity.
+
+        Any values that are NANs will be rendered with this opacity.
+
+        Examples
+        --------
+        Set the NAN opacity to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
+        >>> lut.nan_color = 'grey'
+        >>> lut.nan_opacity = 0.5
+        >>> lut.plot()
+
+        """
+        color = self.nan_color
+        return color.opacity
+
+    @nan_opacity.setter
+    def nan_opacity(self, value):
+        # Hacky check to prevent auto activation
+        if not self._nan_color_set and (value == 1.0 or value == 255):
+            return
+        color = self.nan_color
+        if color is None:
+            color = Color(pv.global_theme.nan_color)
+        self.nan_color = Color(self.nan_color, opacity=value)
+
+    @property
     def ramp(self) -> str:
         """Set the shape of the table ramp.
 
@@ -610,6 +640,31 @@ class LookupTable(_vtk.vtkLookupTable):
             self.SetUseAboveRangeColor(True)
 
     @property
+    def above_range_opacity(self):
+        """Return or set the above range opacity.
+
+        Examples
+        --------
+        Set the above range opacity to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
+        >>> lut.above_range_color = 'grey'
+        >>> lut.above_range_opacity = 0.5
+        >>> lut.plot()
+
+        """
+        color = self.above_range_color
+        return color.opacity
+
+    @above_range_opacity.setter
+    def above_range_opacity(self, value):
+        color = self.above_range_color
+        if color is None:
+            color = Color(pv.global_theme.above_range_color)
+        self.above_range_color = Color(color, opacity=value)
+
+    @property
     def below_range_color(self) -> Optional[Color]:
         """Return or set the below range color.
 
@@ -642,11 +697,36 @@ class LookupTable(_vtk.vtkLookupTable):
         if value in (None, False):
             self.SetUseBelowRangeColor(False)
         elif value is True:
-            self.SetBelowRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
+            self.SetBelowRangeColor(*Color(pv.global_theme.below_range_color).float_rgba)
             self.SetUseBelowRangeColor(True)
         else:
             self.SetBelowRangeColor(*Color(value).float_rgba)
             self.SetUseBelowRangeColor(True)
+
+    @property
+    def below_range_opacity(self):
+        """Return or set the below range opacity.
+
+        Examples
+        --------
+        Set the below range opacity to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
+        >>> lut.below_range_color = 'grey'
+        >>> lut.below_range_opacity = 0.5
+        >>> lut.plot()
+
+        """
+        color = self.below_range_color
+        return color.opacity
+
+    @below_range_opacity.setter
+    def below_range_opacity(self, value):
+        color = self.below_range_color
+        if color is None:
+            color = Color(pv.global_theme.below_range_color)
+        self.below_range_color = Color(color, opacity=value)
 
     def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
         """Assign a colormap to this lookup table.
@@ -931,7 +1011,8 @@ class LookupTable(_vtk.vtkLookupTable):
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
         scalar_bar.SetPosition2(0.95, 0.9 - label_level * 0.1)
         # scalar_bar.SetTextPad(-10)
-        scalar_bar.SetDrawNanAnnotation(self._nan_color_set)
+        if self._nan_color_set and self.nan_opacity > 0:
+            scalar_bar.SetDrawNanAnnotation(self._nan_color_set)
 
         pl.background_color = kwargs.pop('background', 'w')
         pl.show(**kwargs)

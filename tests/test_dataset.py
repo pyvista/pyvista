@@ -274,11 +274,6 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
-def test_translate_deprecation(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid.translate((0.0, 0.0, 0.0))
-
-
 def test_set_points():
     dataset = pyvista.UnstructuredGrid()
     points = np.random.random((10, 3))
@@ -1318,13 +1313,6 @@ def test_rotate_z():
         out = mesh.rotate_z(30, point=[1, 3])
 
 
-@pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
-def test_deprecation_rotate(sphere, method):
-    meth = getattr(sphere, method)
-    with pytest.warns(PyVistaDeprecationWarning):
-        meth(30)
-
-
 def test_rotate_vector():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
@@ -1404,11 +1392,6 @@ def test_transform_integers_vtkbug_present():
     assert poly.points[-1, 1] != 0
 
 
-def test_deprecation_vector(sphere):
-    with pytest.warns(PyVistaDeprecationWarning):
-        sphere.rotate_vector([1, 1, 1], 33)
-
-
 def test_scale():
     mesh = examples.load_airplane()
 
@@ -1431,8 +1414,6 @@ def test_scale():
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        scale1.scale(xyz)
 
 
 def test_flip_x():
@@ -1446,8 +1427,6 @@ def test_flip_x():
     mesh = examples.load_uniform()
     out = mesh.flip_x()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_x1.flip_x(point=(0, 0, 0))
 
 
 def test_flip_y():
@@ -1461,8 +1440,6 @@ def test_flip_y():
     mesh = examples.load_uniform()
     out = mesh.flip_y()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_y1.flip_y(point=(0, 0, 0))
 
 
 def test_flip_z():
@@ -1476,8 +1453,6 @@ def test_flip_z():
     mesh = examples.load_uniform()
     out = mesh.flip_z()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_z1.flip_z(point=(0, 0, 0))
 
 
 def test_flip_normal():
@@ -1500,9 +1475,6 @@ def test_flip_normal():
     flip_normal6.flip_z(inplace=True)
     assert np.allclose(flip_normal5.points, flip_normal6.points)
 
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
-
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
@@ -1521,16 +1493,60 @@ def test_active_normals(sphere):
 @pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
-@pytest.mark.parametrize('deep', [False, True])
-def test_cast_to_pointset(sphere, deep):
-    pointset = sphere.cast_to_pointset(deep=deep)
+def test_cast_to_pointset(sphere):
+    sphere = sphere.elevation()
+    pointset = sphere.cast_to_pointset()
     assert isinstance(pointset, pyvista.PointSet)
 
+    assert not np.may_share_memory(sphere.points, pointset.points)
+    assert not np.may_share_memory(sphere.active_scalars, pointset.active_scalars)
+    assert np.allclose(sphere.points, pointset.points)
+    assert np.allclose(sphere.active_scalars, pointset.active_scalars)
+
     pointset.points[:] = 0
-    if deep:
-        assert not np.allclose(sphere.points, pointset.points)
-    else:
-        assert np.allclose(sphere.points, pointset.points)
+    assert not np.allclose(sphere.points, pointset.points)
+
+    pointset.active_scalars[:] = 0
+    assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
+
+
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
+def test_cast_to_pointset_implicit(uniform):
+    pointset = uniform.cast_to_pointset(pass_cell_data=True)
+    assert isinstance(pointset, pyvista.PointSet)
+    assert pointset.n_arrays == uniform.n_arrays
+
+    assert not np.may_share_memory(uniform.active_scalars, pointset.active_scalars)
+    assert np.allclose(uniform.active_scalars, pointset.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], pointset[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        pointset[name][:] = i
+        assert not np.allclose(uniform[name], pointset[name])
+
+
+def test_cast_to_poly_points_implicit(uniform):
+    points = uniform.cast_to_poly_points(pass_cell_data=True)
+    assert isinstance(points, pyvista.PolyData)
+    assert points.n_arrays == uniform.n_arrays
+    assert len(points.cell_data) == len(uniform.cell_data)
+    assert len(points.point_data) == len(uniform.point_data)
+
+    assert not np.may_share_memory(uniform.active_scalars, points.active_scalars)
+    assert np.allclose(uniform.active_scalars, points.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], points[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        points[name][:] = i
+        assert not np.allclose(uniform[name], points[name])
 
 
 def test_partition(hexbeam):

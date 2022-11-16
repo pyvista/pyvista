@@ -1,12 +1,10 @@
 """Module containing pyvista implementation of vtkCamera."""
-import warnings
 from weakref import proxy
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .helpers import view_vectors
 
@@ -192,16 +190,6 @@ class Camera(_vtk.vtkCamera):
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
-
-    @property
-    def is_parallel_projection(self):
-        """Return True if parallel projection is set."""
-        warnings.warn(
-            "Use of `Camera.is_parallel_projection` is deprecated. "
-            "Use `Camera.parallel_projection` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self._parallel_projection
 
     @property
     def distance(self):

@@ -3031,11 +3031,76 @@ def test_lookup_table(verify_image_cache):
     lut.below_range_color = 'black'
     lut.above_range_color = 'grey'
     lut.nan_color = 'r'
+    lut.nan_opacity = 0.5
 
     # There are minor variations within 9.0.3 that slightly invalidate the
     # image cache.
     verify_image_cache.skip = pyvista.vtk_version_info == (9, 0, 3)
     lut.plot()
+
+
+def test_lookup_table_nan_hidden(verify_image_cache):
+    lut = pyvista.LookupTable('viridis')
+    lut.n_values = 8
+    lut.below_range_color = 'black'
+    lut.above_range_color = 'grey'
+    lut.nan_opacity = 0
+
+    # There are minor variations within 9.0.3 that slightly invalidate the
+    # image cache.
+    verify_image_cache.skip = pyvista.vtk_version_info == (9, 0, 3)
+    lut.plot()
+
+
+def test_lookup_table_above_below_opacity(verify_image_cache):
+    lut = pyvista.LookupTable('viridis')
+    lut.n_values = 8
+    lut.below_range_color = 'blue'
+    lut.below_range_opacity = 0.5
+    lut.above_range_color = 'green'
+    lut.above_range_opacity = 0.5
+    lut.nan_color = 'r'
+    lut.nan_opacity = 0.5
+
+    # There are minor variations within 9.0.3 that slightly invalidate the
+    # image cache.
+    verify_image_cache.skip = pyvista.vtk_version_info == (9, 0, 3)
+    lut.plot()
+
+
+def test_plot_nan_color(uniform):
+    arg = uniform.active_scalars < uniform.active_scalars.mean()
+    uniform.active_scalars[arg] = np.nan
+    # NaN values should be hidden
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform, nan_opacity=0)
+    pl.enable_depth_peeling()
+    pl.show()
+    # nan annotation should appear on scalar bar
+    pl = pyvista.Plotter()
+    pl.add_mesh(
+        uniform, nan_opacity=0.5, nan_color='green', scalar_bar_args=dict(nan_annotation=True)
+    )
+    pl.enable_depth_peeling()
+    pl.show()
+
+
+def test_plot_above_below_color(uniform):
+    mean = uniform.active_scalars.mean()
+    clim = (mean - mean / 2, mean + mean / 2)
+
+    lut = pyvista.LookupTable('viridis')
+    lut.n_values = 8
+    lut.below_range_color = 'blue'
+    lut.below_range_opacity = 0.5
+    lut.above_range_color = 'green'
+    lut.above_range_opacity = 0.5
+    lut.scalar_range = clim
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform, cmap=lut)
+    pl.enable_depth_peeling()
+    pl.show()
 
 
 def test_plotter_lookup_table(sphere):
