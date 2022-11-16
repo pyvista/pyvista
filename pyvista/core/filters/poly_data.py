@@ -1871,7 +1871,8 @@ class PolyDataFilters(DataSetFilters):
             .. versionadded:: 0.32.0
 
         use_scalar_weights : bool, optional
-            If ``True``, use scalar values in the edge weight (experimental).
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1908,7 +1909,8 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetInputData(self)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
-        dijkstra.SetUseScalarWeights(use_scalar_weights)
+        if _vtk.VTK9:
+            dijkstra.SetUseScalarWeights(use_scalar_weights)
         _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
