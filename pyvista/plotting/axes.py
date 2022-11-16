@@ -42,6 +42,7 @@ class Axes(_vtk.vtkAxes):
         self.mapper.SetInputConnection(self.GetOutputPort())
         # Add the axes actor
         self.actor = Actor(mapper=self.actor)
+        self.axes_actor = _vtk.vtkAxesActor()
         self.actor.visibility = show_actor
         self.actor.scale = actor_scale
         self.actor.prop.line_width = line_width
