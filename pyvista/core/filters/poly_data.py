@@ -1,6 +1,5 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
 import collections.abc
-import logging
 import warnings
 
 import numpy as np
@@ -1722,7 +1721,6 @@ class PolyDataFilters(DataSetFilters):
         >>> assert edges.n_cells == 0  # doctest:+SKIP
 
         """
-        logging.warning('pyvista.PolyData.fill_holes is known to segfault. Use at your own risk')
         alg = _vtk.vtkFillHolesFilter()
         alg.SetHoleSize(hole_size)
         alg.SetInputData(self)
@@ -2366,7 +2364,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]
                 except:
-                    logging.warning(f'Unable to pass cell key {key} onto reduced mesh')
+                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array
         if inplace:
