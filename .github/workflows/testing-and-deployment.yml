@@ -52,6 +52,13 @@ jobs:
       - name: Test Plotting
         run: pytest -v tests/plotting
 
+      - name: Upload failing images
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: failing-plotting-tests-mac-${{ matrix.python-version }}
+          path: tests/plotting/image_cache/failing/
+
 
   LinuxConda:
     runs-on: ubuntu-latest
@@ -125,6 +132,13 @@ jobs:
           conda activate ${{ env.conda_env }}
           pytest -v tests/plotting --cov-report html
 
+      - name: Upload failing images
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: failing-plotting-tests-linux-conda
+          path: tests/plotting/image_cache/failing/
+
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-latest
@@ -187,6 +201,13 @@ jobs:
 
       - name: Unit Testing
         run: xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
+
+      - name: Upload failing images
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: failing-plotting-tests-linux-${{ matrix.python-version }}
+          path: tests/plotting/image_cache/failing/
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
@@ -256,3 +277,10 @@ jobs:
 
       - name: Test Plotting
         run: python -m pytest -v tests/plotting
+
+      - name: Upload failing images
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: failing-plotting-tests-win-${{ matrix.python-version }}
+          path: tests/plotting/image_cache/failing/

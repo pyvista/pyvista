@@ -250,6 +250,9 @@ class VerifyImageCache:
 
         # cached image name
         image_filename = os.path.join(self.cache_dir, test_name[5:] + '.png')
+        self.failing_dir = pathlib.Path(self.cache_dir, 'failing')
+        self.failing_dir.mkdir(exist_ok=True)
+        fail_filename = os.path.join(self.failing_dir, test_name[5:] + '.png')
 
         if not os.path.isfile(image_filename) and self.fail_extra_image_cache:
             raise RuntimeError(f"{image_filename} does not exist in image cache")
@@ -261,12 +264,14 @@ class VerifyImageCache:
         # otherwise, compare with the existing cached image
         error = pyvista.compare_images(image_filename, plotter)
         if error > allowed_error:
+            plotter.screenshot(fail_filename)
             raise RuntimeError(
                 f'{test_name} Exceeded image regression error of '
                 f'{allowed_error} with an image error of '
                 f'{error}'
             )
         if error > allowed_warning:
+            plotter.screenshot(fail_filename)
             warnings.warn(
                 f'{test_name} Exceeded image regression warning of '
                 f'{allowed_warning} with an image error of '
@@ -3198,3 +3203,28 @@ def test_add_point_scalar_labels_list():
 
     plotter.add_point_scalar_labels(points, labels)
     plotter.show()
+
+
+def test_plot_change_scalars():
+    name, name2 = 'foo', 'bar'
+    mesh = pyvista.Wavelet()
+    mesh.point_data[name] = np.arange(mesh.n_points)
+    mesh.cell_data[name2] = np.arange(mesh.n_cells)
+    assert mesh.active_scalars_name != name
+    assert mesh.active_scalars_name != name2
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh.copy(), scalars=name)
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh.copy(), scalars=name2)
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, scalars=name)
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(mesh, scalars=name2)
+    pl.show()
