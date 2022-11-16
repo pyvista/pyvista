@@ -23,7 +23,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, default_port=0):
     return mesh_or_algo, algo
 
 
-class BasePreserveTypeAlgorithm(_vtk.VTKPythonAlgorithmBase):
+class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
     """Base algorithm to preserve type."""
 
     def __init__(self, nInputPorts=1, nOutputPorts=1):
@@ -42,7 +42,7 @@ class BasePreserveTypeAlgorithm(_vtk.VTKPythonAlgorithmBase):
         return 1
 
 
-class ActiveScalarsAlgorithm(BasePreserveTypeAlgorithm):
+class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
     """Internal helper algorithm to control active scalars.
 
     Parameters
@@ -115,7 +115,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
         return 1
 
 
-class AddIDsAlgorithm(BasePreserveTypeAlgorithm):
+class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
     """Internal helper algorithm to add point or cell IDs."""
 
     def __init__(self, point_ids=True, cell_ids=True):
