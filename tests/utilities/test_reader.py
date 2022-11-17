@@ -7,7 +7,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.examples.downloads import _download_file
+from pyvista.examples.downloads import download_file
 
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
@@ -262,6 +262,9 @@ def test_ensightreader_timepoints():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
 
+    with pytest.raises(ValueError, match="Not a valid time"):
+        reader.set_active_time_value(1000.0)
+
 
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
@@ -357,10 +360,10 @@ def test_facetreader():
 
 
 def test_plot3dmetareader():
-    filename, _ = _download_file('multi.p3d')
-    _download_file('multi-bin.xyz')
-    _download_file('multi-bin.q')
-    _download_file('multi-bin.f')
+    filename = download_file('multi.p3d')
+    download_file('multi-bin.xyz')
+    download_file('multi-bin.q')
+    download_file('multi-bin.f')
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.Plot3DMetaReader)
     assert reader.path == filename
@@ -371,8 +374,8 @@ def test_plot3dmetareader():
 
 
 def test_multiblockplot3dreader():
-    filename, _ = _download_file('multi-bin.xyz')
-    q_filename, _ = _download_file('multi-bin.q')
+    filename = download_file('multi-bin.xyz')
+    q_filename = download_file('multi-bin.q')
     reader = pyvista.MultiBlockPlot3DReader(filename)
     assert reader.path == filename
 
@@ -911,7 +914,7 @@ def test_gif_reader(gif_file):
     assert grid.n_arrays == 3
 
     img = Image.open(gif_file)
-    new_grid = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+    new_grid = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):

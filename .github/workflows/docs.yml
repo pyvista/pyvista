@@ -40,7 +40,7 @@ jobs:
           cache: 'pip'
           cache-dependency-path: requirements_docs.txt
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.2
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
@@ -54,7 +54,7 @@ jobs:
       - name: PyVista Report
         run: |
           python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)") >> $GITHUB_ENV
+          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v3

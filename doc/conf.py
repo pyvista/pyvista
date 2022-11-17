@@ -62,21 +62,22 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.autosummary",
     "enum_tools.autoenum",
-    "notfound.extension",
-    "sphinx_copybutton",
-    "sphinx_gallery.gen_gallery",
-    "sphinx.ext.extlinks",
     "jupyter_sphinx",
-    "sphinx_panels",
-    "pyvista.ext.plot_directive",
-    "pyvista.ext.coverage",
+    "notfound.extension",
     "numpydoc",
+    "pyvista.ext.coverage",
+    "pyvista.ext.plot_directive",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_gallery.gen_gallery",
+    "sphinxcontrib.asciinema",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -425,6 +426,7 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -434,6 +436,8 @@ html_theme_options = {
     "google_analytics_id": "UA-140243896-1",
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
+    "collapse_navigation": True,
+    "use_edit_page_button": True,
     "icon_links": [
         {
             "name": "Slack Community",
@@ -466,7 +470,9 @@ panels_add_bootstrap_css = False
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
+html_css_files = [
+    'cards.css',  # used in card CSS
+]
 
 # -- Options for HTMLHelp output ------------------------------------------
 

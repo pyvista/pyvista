@@ -25,11 +25,11 @@ def test_export_to_html(sphere, tmpdir):
 
     pl = pyvista.Plotter(shape=(1, 2))
     pl.add_text("Sphere 1\n", font_size=30, color='grey')
-    pl.add_mesh(sphere, show_edges=False, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey', culling='back')
 
     pl.subplot(0, 1)
     pl.add_text("Sphere 2\n", font_size=30, color='grey')
-    pl.add_mesh(sphere, show_edges=False, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey', culling='front')
     pl.link_views()
 
     with pytest.raises(ValueError, match="Invalid backend"):

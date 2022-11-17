@@ -104,23 +104,20 @@ def sample_function(
         Implicit function to evaluate.  For example, the function
         generated from :func:`pyvista.perlin_noise`.
 
-    bounds : length 6 sequence
+    bounds : length 6 sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:
 
-        - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+        - ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
-        Defaults to ``(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)``.
-
-    dim : length 3 sequence
+    dim : length 3 sequence, default: (50, 50, 50)
         Dimensions of the data on which to sample in the format of
-        ``(xdim, ydim, zdim)``.  Defaults to ``(50, 50, 50)``.
+        ``(xdim, ydim, zdim)``.
 
-    compute_normals : bool, optional
-        Enable or disable the computation of normals.  Default ``False``.
+    compute_normals : bool, default: False
+        Enable or disable the computation of normals.
 
-    output_type : np.dtype, optional
-        Set the output scalar type.  Defaults to ``np.double``.  One
-        of the following:
+    output_type : np.dtype, default: numpy.double
+        Set the output scalar type.  One of the following:
 
         - ``np.float64``
         - ``np.float32``
@@ -133,26 +130,22 @@ def sample_function(
         - ``np.int8``
         - ``np.uint8``
 
-    capping : bool, optional
-        Enable or disable capping.  Default ``False``.  If capping is
-        enabled, then the outer boundaries of the structured point set
-        are set to cap value. This can be used to ensure surfaces are
-        closed.
+    capping : bool, default: False
+        Enable or disable capping. If capping is enabled, then the outer
+        boundaries of the structured point set are set to cap value. This can
+        be used to ensure surfaces are closed.
 
-    cap_value : float, optional
+    cap_value : float, default: sys.float_info.max
         Capping value used with the ``capping`` parameter.
 
-    scalar_arr_name : str, optional
-        Set the scalar array name for this data set.  Defaults to
-        ``"scalars"``.
+    scalar_arr_name : str, default: "scalars"
+        Set the scalar array name for this data set.
 
-    normal_arr_name : str, optional
-        Set the normal array name for this data set.  Defaults to
-        ``"normals"``.
+    normal_arr_name : str, default: "normals"
+        Set the normal array name for this data set.
 
-    progress_bar : bool, optional
-        Display a progress bar to indicate progress.  Default
-        ``False``.
+    progress_bar : bool, default: False
+        Display a progress bar to indicate progress.
 
     Returns
     -------

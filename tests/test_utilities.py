@@ -308,23 +308,31 @@ def test_get_sg_image_scraper():
     assert callable(scraper)
 
 
-def test_voxelize():
-    mesh = pyvista.PolyData(ex.load_uniform().points)
-    vox = pyvista.voxelize(mesh, 0.5)
+def test_voxelize(uniform):
+    vox = pyvista.voxelize(uniform, 0.5)
     assert vox.n_cells
 
 
-def test_voxelize_non_uniform_desnity():
-    mesh = pyvista.PolyData(ex.load_uniform().points)
-    vox = pyvista.voxelize(mesh, [0.5, 0.3, 0.2])
+def test_voxelize_non_uniform_density(uniform):
+    vox = pyvista.voxelize(uniform, [0.5, 0.3, 0.2])
+    assert vox.n_cells
+    vox = pyvista.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
-def test_voxelize_throws_when_density_is_not_length_3():
-    with pytest.raises(ValueError) as e:
-        mesh = pyvista.PolyData(ex.load_uniform().points)
-        _ = pyvista.voxelize(mesh, [0.5, 0.3])
-    assert "not enough values to unpack" in str(e.value)
+def test_voxelize_invalid_density(rectilinear):
+    # test error when density is not length-3
+    with pytest.raises(ValueError, match='not enough values to unpack'):
+        pyvista.voxelize(rectilinear, [0.5, 0.3])
+    # test error when density is not an array-like
+    with pytest.raises(TypeError, match='expected number or array-like'):
+        pyvista.voxelize(rectilinear, {0.5, 0.3})
+
+
+def test_voxelize_throws_point_cloud(hexbeam):
+    with pytest.raises(ValueError, match='must have faces'):
+        mesh = pyvista.PolyData(hexbeam.points)
+        pyvista.voxelize(mesh)
 
 
 def test_report():
@@ -815,6 +823,11 @@ def test_color():
         c["invalid_name"]  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
+
+
+def test_color_opacity():
+    color = pyvista.Color(opacity=0.5)
+    assert color.opacity == 128
 
 
 def test_convert_array():

@@ -2,22 +2,16 @@
 
 from abc import abstractmethod
 import collections.abc
-import logging
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, Type, Union
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import FieldAssociation, abstract_class, fileio
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .datasetattributes import DataSetAttributes
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -187,7 +181,7 @@ class DataObject:
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html: bool = None):
+    def head(self, display=True, html=None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -324,18 +318,6 @@ class DataObject:
 
         return True
 
-    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):  # pragma: no cover
-        """Add field data.
-
-        .. deprecated:: 0.32.0
-           Use :func:`DataObject.add_field_data` instead.
-        """
-        warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.clear_point_data()
-
     def add_field_data(self, array: np.ndarray, name: str, deep=True):
         """Add field data.
 
@@ -368,7 +350,7 @@ class DataObject:
 
         Add field data to a UniformGrid dataset.
 
-        >>> mesh = pyvista.UniformGrid(dims=(2, 2, 1))
+        >>> mesh = pyvista.UniformGrid(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
@@ -385,20 +367,6 @@ class DataObject:
 
         """
         self.field_data.set_array(array, name, deep_copy=deep)
-
-    @property
-    def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkFieldData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataObject.field_data` to return field data.
-
-        """
-        warnings.warn(
-            "Use of `field_arrays` is deprecated. Use `field_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.field_data
 
     @property
     def field_data(self) -> DataSetAttributes:
@@ -423,19 +391,6 @@ class DataObject:
         return DataSetAttributes(
             self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
         )
-
-    def clear_field_arrays(self):  # pragma: no cover
-        """Remove all field data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataObject.clear_field_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.field_data
 
     def clear_field_data(self):
         """Remove all field data.
@@ -506,7 +461,7 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
+        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> target = pv.UniformGrid()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
@@ -525,9 +480,9 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
+        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid(dims=(10, 10, 5))
+        >>> target = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 

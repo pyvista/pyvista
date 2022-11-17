@@ -1,3 +1,5 @@
+.. _plotting-api-index:
+
 Plotting
 ========
 
@@ -72,4 +74,3 @@ routines in PyVista.
    :maxdepth: 2
 
    conv_func
-

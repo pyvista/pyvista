@@ -26,7 +26,7 @@ jobs:
           cache: 'pip'
           cache-dependency-path: requirements_docs.txt
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.2
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0

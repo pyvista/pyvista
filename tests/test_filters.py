@@ -73,7 +73,7 @@ def grid():
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
     origin = (-(nx - 1) * 0.1 / 2, -(ny - 1) * 0.1 / 2, -(nz - 1) * 0.1 / 2)
-    mesh = pyvista.UniformGrid(dims=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
+    mesh = pyvista.UniformGrid(dimensions=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
     mesh['vectors'] = mesh.points
     return mesh
 
@@ -502,11 +502,18 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
-def test_wireframe(datasets):
+def test_extract_all_edges(datasets):
     for dataset in datasets:
-        wire = dataset.extract_all_edges(progress_bar=True)
-        assert wire is not None
-        assert isinstance(wire, pyvista.PolyData)
+        edges = dataset.extract_all_edges()
+        assert edges is not None
+        assert isinstance(edges, pyvista.PolyData)
+
+    if pyvista.vtk_version_info < (9, 1):
+        with pytest.raises(VTKVersionError):
+            datasets[0].extract_all_edges(use_all_points=True)
+    else:
+        edges = datasets[0].extract_all_edges(use_all_points=True)
+        assert edges.n_lines
 
 
 @skip_py2_nobind
@@ -651,7 +658,7 @@ def test_compute_cell_sizes(datasets):
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
     # Test the volume property
-    grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
 
@@ -889,7 +896,7 @@ def test_glyph_settings(sphere):
 
 
 def test_glyph_orient_and_scale():
-    grid = pyvista.UniformGrid(dims=(1, 1, 1))
+    grid = pyvista.UniformGrid(dimensions=(1, 1, 1))
     geom = pyvista.Line()
     scale = 10.0
     orient = np.array([[0.0, 0.0, 1.0]])
@@ -1156,7 +1163,7 @@ def test_streamlines_from_source(uniform_vec):
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
-    source = pyvista.UniformGrid(dims=[5, 5, 5], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
+    source = pyvista.UniformGrid(dimensions=[5, 5, 5], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
@@ -1833,7 +1840,7 @@ def test_gaussian_smooth_output_type():
 
 def test_gaussian_smooth_constant_data():
     point_data = np.ones((10, 10, 10))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.gaussian_smooth()
     assert np.allclose(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
@@ -1842,7 +1849,7 @@ def test_gaussian_smooth_constant_data():
 def test_gaussian_smooth_outlier():
     point_data = np.ones((10, 10, 10))
     point_data[4, 4, 4] = 100
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.gaussian_smooth()
     assert volume_smoothed.get_data_range()[1] < volume.get_data_range()[1]
@@ -1851,7 +1858,7 @@ def test_gaussian_smooth_outlier():
 def test_gaussian_smooth_cell_data_specified():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     with pytest.raises(ValueError):
@@ -1861,7 +1868,7 @@ def test_gaussian_smooth_cell_data_specified():
 def test_gaussian_smooth_cell_data_active():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     volume.set_active_scalars('cell_data')
@@ -1879,7 +1886,7 @@ def test_median_smooth_output_type():
 
 def test_median_smooth_constant_data():
     point_data = np.ones((10, 10, 10))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.median_smooth()
     assert np.array_equal(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
@@ -1889,9 +1896,9 @@ def test_median_smooth_outlier():
     point_data = np.ones((10, 10, 10))
     point_data_outlier = point_data.copy()
     point_data_outlier[4, 4, 4] = 100
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_outlier = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume_outlier = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume_outlier.point_data['point_data'] = point_data_outlier.flatten(order='F')
     volume_outlier_smoothed = volume_outlier.median_smooth()
     assert np.array_equal(
@@ -1902,7 +1909,7 @@ def test_median_smooth_outlier():
 def test_image_dilate_erode_output_type():
     point_data = np.zeros((10, 10, 10))
     point_data[4, 4, 4] = 1
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_dilate_erode = volume.image_dilate_erode()
     assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
@@ -1917,7 +1924,7 @@ def test_image_dilate_erode_dilation():
     point_data_dilated[3:6, 3:6, 4] = 1  # "activate" all voxels within diameter 3 around (4,4,4)
     point_data_dilated[3:6, 4, 3:6] = 1
     point_data_dilated[4, 3:6, 3:6] = 1
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_dilated = volume.image_dilate_erode()  # default is binary dilation
     assert np.array_equal(
@@ -1929,7 +1936,7 @@ def test_image_dilate_erode_erosion():
     point_data = np.zeros((10, 10, 10))
     point_data[4, 4, 4] = 1
     point_data_eroded = np.zeros((10, 10, 10))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
     assert np.array_equal(
@@ -1940,7 +1947,7 @@ def test_image_dilate_erode_erosion():
 def test_image_dilate_erode_cell_data_specified():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     with pytest.raises(ValueError):
@@ -1950,7 +1957,7 @@ def test_image_dilate_erode_cell_data_specified():
 def test_image_dilate_erode_cell_data_active():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     volume.set_active_scalars('cell_data')
@@ -1992,7 +1999,7 @@ def test_image_threshold_upper(in_value, out_value):
     in_value_mask[in_value_location] = True
     point_data[in_value_mask] = 100  # the only 'in' value
     point_data[~in_value_mask] = -100  # out values
-    volume = pyvista.UniformGrid(dims=array_shape)
+    volume = pyvista.UniformGrid(dimensions=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
     if in_value is not None:
@@ -2018,7 +2025,7 @@ def test_image_threshold_between(in_value, out_value):
     point_data[in_value_mask] = 0  # the only 'in' value
     point_data[~in_value_mask] = 100  # out values
     point_data[low_value_location] = -100  # add a value below the threshold also
-    volume = pyvista.UniformGrid(dims=array_shape)
+    volume = pyvista.UniformGrid(dimensions=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
     if in_value is not None:
