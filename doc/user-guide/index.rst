@@ -32,7 +32,7 @@ This basic example demonstrates three key features of PyVista:
 
 Here, we download the `Stanford dragon mesh
 <http://graphics.stanford.edu/data/3Dscanrep/>`_, color it according
-to height, and plot it using a web-viewer.  This same example will run
+to height and plot it using a web-viewer.  This same example will run
 identically locally.
 
 .. jupyter-execute::
