@@ -105,34 +105,41 @@ def test_track_click_position_multi_render():
 
 @pytest.mark.needs_vtk_version(9, 1)
 def test_timer():
+    # Create normal interactor from offscreen plotter (not generic,
+    # which is the default for offscreen rendering)
     pl = pyvista.Plotter()
-    iren = pl.iren
+    iren = pyvista.plotting.RenderWindowInteractor(pl)
+    iren.set_render_window(pl.ren_win)
+
     duration = 20
     events = []
 
     def on_timer(obj, event):
+        # TimerEvent callback
         events.append(event)
 
     def process_events(iren, duration):
+        # Helper function to call process_events for the given duration (in milliseconds).
         t = 1000 * time.time()
         while 1000 * time.time() - t < duration:
             iren.process_events()
 
+    # Setup interactor
     iren.add_observer("TimerEvent", on_timer)
     iren.initialize()
 
-    # Test one-shot timer
+    # Test one-shot timer (only fired once for extended duration)
     iren.create_timer(duration, repeating=False)
     process_events(iren, 5 * duration)
     assert len(events) == 1
 
-    # Test repeating timer
+    # Test repeating timer (fired multiple times for extended duration)
     repeating_timer = iren.create_timer(duration, repeating=True)
     process_events(iren, 5 * duration)
     assert len(events) >= 3
     E = len(events)
 
-    # Test timer destruction
+    # Test timer destruction (no more events fired)
     iren.destroy_timer(repeating_timer)
     process_events(iren, 5 * duration)
     assert len(events) == E
