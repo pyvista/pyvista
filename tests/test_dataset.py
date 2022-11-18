@@ -1,5 +1,6 @@
 """Tests for pyvista.core.dataset."""
 
+import itertools
 import multiprocessing
 import pickle
 
@@ -1110,8 +1111,8 @@ def test_point_cell_ids(grid: pyvista.UnstructuredGrid, i0):
     for c in others:
         assert i0 not in grid.cell_point_ids(c)
 
-
-@pytest.mark.parametrize("i0", range(5))
+ids = itertools.chain(range(5), range(5, 0, -1))
+@pytest.mark.parametrize("i0", ids)
 def test_point_neighbors_ids(grid: pyvista.UnstructuredGrid, i0):
     point_ids = grid.point_neighbors_ids(i0)
     assert isinstance(point_ids, list)
@@ -1132,7 +1133,8 @@ def test_point_neighbors_ids(grid: pyvista.UnstructuredGrid, i0):
         assert neighbor_cells.isdisjoint(current_cells)
 
 
-@pytest.mark.parametrize("i0", range(5))
+ids = itertools.chain(range(5), range(5, 0, -1))
+@pytest.mark.parametrize("i0", ids)
 def test_cell_point_neighbors_ids(grid: pyvista.UnstructuredGrid, i0):
     cell_ids = grid.cell_point_neighbors_ids(i0)
     assert isinstance(cell_ids, list)

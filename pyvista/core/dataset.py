@@ -1,7 +1,8 @@
 """Attributes common to PolyData and Grid Objects."""
+from __future__ import annotations
 
-import collections.abc
 from collections import namedtuple
+import collections.abc
 from copy import deepcopy
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -40,42 +41,45 @@ from .pyvista_ndarray import pyvista_ndarray
 DEFAULT_VECTOR_KEY = '_vectors'
 ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
 
-CellConnectivityTuple = namedtuple('CellConnectivityTuple',["neighbors","edge_neighbors","points"])
-PointConnectivityTuple = namedtuple('PointConnectivityTuple',["neighbors","cells"])
+CellConnectivityTuple = namedtuple(
+    'CellConnectivityTuple', ["neighbors", "edge_neighbors", "points"]
+)
+PointConnectivityTuple = namedtuple('PointConnectivityTuple', ["neighbors", "cells"])
 
 
-class DatasetConnectivity():
-
-    def __init__(self,dataset,preference="cell") -> None:
+class DatasetConnectivity:
+    def __init__(self, dataset: DataSet, preference="cell") -> None:
         self.dataset = dataset
 
         # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
         self.dataset.BuildLinks()
 
-        if preference not in [
-                'point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
+        if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
         self.preference = preference
 
-    def __getitem__(self,ind:int):
+    def __getitem__(self, ind: int):
         if type(ind) is not int:
             raise TypeError("Non-integers indexing is not supported yet.")
+
+        n = self.dataset.n_cells if self.preference == "cells" else self.dataset.n_points
+        ind = ind if ind >= 0 else ind - 1 + n
 
         if self.preference == "point":
             return PointConnectivityTuple(self._point_neighbors_ids(ind),
                                           self._point_cell_ids(ind))
         else:
             return CellConnectivityTuple(self._cell_point_neighbors_ids(ind),
-                                         self._cell_point_ids(ind),
-                                         [None]) # not implemented yet
+                                         [None], # not implemented yet
+                                         self._cell_point_ids(ind))
 
-    def _cell_point_ids(self,ind:int):
+    def _cell_point_ids(self, ind: int):
 
         cell = self.dataset.GetCell(ind)
         point_ids = cell.GetPointIds()
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
-    
-    def _point_cell_ids(self,ind:int):
+
+    def _point_cell_ids(self, ind: int):
 
         ids = _vtk.vtkIdList()
         self.dataset.GetPointCells(ind, ids)
@@ -101,7 +105,8 @@ class DatasetConnectivity():
             out.extend([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
 
         return list(set(out))
-        
+
+
 class ActiveArrayInfo:
     """Active array info class with support for pickling."""
 
@@ -2666,25 +2671,25 @@ class DataSet(DataSetFilters, DataObject):
         [0, 1, 2]
 
         """
-        return DatasetConnectivity(self,"cell")[ind].points
+        return self.cells_connectivity[ind].points
 
     def point_cell_ids(self, ind: int) -> List[int]:
-        return DatasetConnectivity(self,"point")[ind].cells
+        return self.points_connectivity[ind].cells
 
     def point_neighbors_ids(self, ind: int) -> List[int]:
-        return DatasetConnectivity(self,"point")[ind].neighbors
+        return self.points_connectivity[ind].neighbors
 
     def cell_point_neighbors_ids(self, ind: int) -> List[int]:
-        return DatasetConnectivity(self,"cell")[ind].neighbors
+        return self.cells_connectivity[ind].neighbors
 
-    @property 
+    @property
     def cells_connectivity(self):
-        return DatasetConnectivity(self,"cell")
+        return DatasetConnectivity(self, "cell")
 
-    @property 
+    @property
     def points_connectivity(self):
-        return DatasetConnectivity(self,"point")
-    
+        return DatasetConnectivity(self, "point")
+
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
     ) -> Union[int, np.ndarray]:
