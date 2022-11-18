@@ -17,6 +17,7 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.errors import MissingDataError
 from pyvista.utilities.misc import PyVistaFutureWarning
 
 
@@ -3313,6 +3314,143 @@ class PolyDataFilters(DataSetFilters):
             output.cell_data.GetAbstractArray(0).SetName('collision_rgba')
 
         return output, alg.GetNumberOfContacts()
+
+    def contour_banded(
+        self,
+        n_contours,
+        rng=None,
+        scalars=None,
+        component=0,
+        clip_tolerance=1e-6,
+        generate_contour_edges=True,
+        scalar_mode="value",
+        clipping=True,
+        progress_bar=False,
+    ):
+        """Generate filled contours.
+
+        Generates filled contours for vtkPolyData. Filled contours are
+        bands of cells that all have the same cell scalar value, and can
+        therefore be colored the same. The method is also referred to as
+        filled contour generation.
+
+        This filter implements `vtkBandedPolyDataContourFilter
+        <https://vtk.org/doc/nightly/html/classvtkBandedPolyDataContourFilter.html>`_.
+
+        Parameters
+        ----------
+        n_contours : int
+            Number of contours.
+
+        rng : Sequence, optional
+            Range of the scalars. Optional and defaults to the minimum and
+            maximum of the active scalars of ``scalars``.
+
+        scalars : str, optional
+            The name of the scalar array to use for contouring.  If ``None``,
+            the active scalar array will be used.
+
+        component : int, default: 0
+            The component to use of an input scalars array with more than one
+            component.
+
+        clip_tolerance : float, optional
+            Set/Get the clip tolerance.  Warning: setting this too large will
+            certainly cause numerical issues. Change from the default value at
+            your own risk. The actual internal clip tolerance is computed by
+            multiplying ``clip_tolerance`` by the scalar range.
+
+        generate_contour_edges : bool, default: True
+            Controls whether contour edges are generated.  Contour edges are
+            the edges between bands. If enabled, they are generated from
+            polygons/triangle strips and returned as a second output.
+
+        scalar_mode : str, default: 'value'
+            Control whether the cell scalars are output as an integer index or
+            a scalar value.  If ``'index'``, the index refers to the bands
+            produced by the clipping range. If ``'value'``, then a scalar value
+            which is a value between clip values is used.
+
+        clipping : bool, default: True
+            Indicate whether to clip outside ``rng`` and only return cells with
+            values within ``rng``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        output : pyvista.Polydata
+            Surface containing the contour surface.
+
+        edges : pyvista.PolyData
+            Optional edges when ``generate_contour_edges`` is ``True``.
+
+        Examples
+        --------
+        Plot the random hills dataset and with 10 contour lines. Note how we use 9
+        colors here (``n_contours - 1``).
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_random_hills()
+        >>> _, edges = mesh.contour_banded(10)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
+        >>> _ = pl.add_mesh(mesh, n_colors=9)
+        >>> pl.show()
+
+        Extract the surface from the uniform grid dataset and plot its contours
+        alongside the output from the banded contour filter.
+
+        >>> surf = examples.load_uniform().extract_surface()
+        >>> output, edges = surf.contour_banded(5, rng=[200, 500])
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
+        >>> _ = pl.add_mesh(surf, opacity=0.3, show_scalar_bar=False)
+        >>> _ = pl.add_mesh(output)
+        >>> pl.show()
+
+        """
+        # check active scalars
+        if scalars is not None:
+            self.point_data.active_scalars_name = scalars
+        else:
+            pyvista.set_default_active_scalars(self)
+            if self.point_data.active_scalars_name is None:
+                raise MissingDataError('No point scalars to contour.')
+
+        if rng is None:
+            rng = (self.active_scalars.min(), self.active_scalars.max())
+
+        alg = _vtk.vtkBandedPolyDataContourFilter()
+
+        alg.GenerateValues(n_contours, rng[0], rng[1])
+        alg.SetInputDataObject(self)
+        alg.SetClipping(clipping)
+        if scalar_mode == 'value':
+            alg.SetScalarModeToValue()
+        elif scalar_mode == 'index':
+            alg.SetScalarModeToValue()
+        else:
+            raise ValueError(
+                f'Invalid scalar mode "{scalar_mode}". Should be either "value" or "index".'
+            )
+        alg.SetGenerateContourEdges(generate_contour_edges)
+        alg.SetClipTolerance(clip_tolerance)
+        alg.SetComponent(component)
+        _update_alg(alg, progress_bar, 'Contouring Mesh')
+        mesh = _get_output(alg)
+
+        # Must rename array as VTK sets the active scalars array name to a nullptr.
+        if mesh.point_data and mesh.point_data.GetAbstractArray(0).GetName() is None:
+            mesh.point_data.GetAbstractArray(0).SetName(self.point_data.active_scalars_name)
+        if mesh.cell_data and mesh.cell_data.GetAbstractArray(0).GetName() is None:
+            mesh.cell_data.GetAbstractArray(0).SetName(self.cell_data.active_scalars_name)
+
+        if generate_contour_edges:
+            return mesh, pyvista.wrap(alg.GetContourEdgesOutput())
+        return mesh
 
     def reconstruct_surface(self, nbr_sz=None, sample_spacing=None, progress_bar=False):
         """Reconstruct a surface from the points in this dataset.
