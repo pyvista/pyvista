@@ -1940,15 +1940,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.iren is not None:
             update_rate = self.iren.get_desired_update_rate()
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
-                # Setup a timer to break out of the next blocking call
-                Plotter.update_timer_id = self.iren.create_repeating_timer(stime)
-                # Allow interaction for a brief moment during interactive updating, blocking call.
+                # Allow interaction for a brief moment during interactive updating
                 if self.iren.can_process_events:
+                    # For newer VTK versions we can use the non-blocking ProcessEvents method.
                     self.iren.process_events()
                 else:
+                    # For older VTK versions we have to use the blocking Start method instead.
+                    # Setup a timer to break out of the next blocking call
+                    Plotter.update_timer_id = self.iren.create_timer(stime)
+                    # Allow interaction for a brief moment during interactive updating, blocking call.
                     self.iren.start()
-                # Execution resumed after TerminateApp() call in on_timer callback, destroy the timer
-                self.iren.destroy_timer(Plotter.update_timer_id)
+                    # Execution resumed after TerminateApp() call in on_timer callback, destroy the timer
+                    self.iren.destroy_timer(Plotter.update_timer_id)
                 # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time

@@ -1,5 +1,7 @@
 """Test render window interactor"""
 
+import time
+
 import pytest
 
 import pyvista
@@ -99,3 +101,38 @@ def test_track_click_position_multi_render():
     pl.untrack_click_position(side='left')
     pl.iren._mouse_left_button_click(50, 50)
     assert len(points) == 1
+
+
+@pytest.mark.needs_vtk_version(9, 1)
+def test_timer():
+    pl = pyvista.Plotter()
+    iren = pl.iren
+    duration = 20
+    events = []
+
+    def on_timer(obj, event):
+        events.append(event)
+
+    def process_events(iren, duration):
+        t = 1000 * time.time()
+        while 1000 * time.time() - t < duration:
+            iren.process_events()
+
+    iren.add_observer("TimerEvent", on_timer)
+    iren.initialize()
+
+    # Test one-shot timer
+    iren.create_timer(duration, repeating=False)
+    process_events(iren, 5 * duration)
+    assert len(events) == 1
+
+    # Test repeating timer
+    repeating_timer = iren.create_timer(duration, repeating=True)
+    process_events(iren, 5 * duration)
+    assert len(events) >= 3
+    E = len(events)
+
+    # Test timer destruction
+    iren.destroy_timer(repeating_timer)
+    process_events(iren, 5 * duration)
+    assert len(events) == E

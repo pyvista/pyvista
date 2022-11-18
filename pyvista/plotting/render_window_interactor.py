@@ -774,15 +774,29 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_repeating_timer(self, stime):
-        """Create a repeating timer.
+    def create_timer(self, duration, repeating=True):
+        """Create a timer.
+
+        Parameters
+        ----------
+        duration : int
+            Time (in milliseconds) before the timer emits a TimerEvent.
+
+        repeating : bool
+            When ``False`` a one-shot timer is created, which only fires
+            once. When ``True`` a repeating timer is created, which
+            continuously fires (every ``duration`` milliseconds) until
+            destruction.
 
         Returns
         -------
         int
             Timer ID.
         """
-        timer_id = self.interactor.CreateRepeatingTimer(stime)
+        if repeating:
+            timer_id = self.interactor.CreateRepeatingTimer(duration)
+        else:
+            timer_id = self.interactor.CreateOneShotTimer(duration)
         return timer_id
 
     def destroy_timer(self, timer_id):
