@@ -126,6 +126,28 @@ class DatasetConnectivity:
 
         return list(neighbors)
 
+    def point_neighbors(self, ind: int, *, n_levels: int = 1):
+
+        if self.preference != "point":
+            raise ValueError("Cannot get point neighbors when `preference` is set to `cells`.")
+
+        neighbors = set(self._point_neighbors_ids(ind))
+        yield list(neighbors)
+
+        all_visited = neighbors.copy()
+        all_visited.add(ind)
+
+        for _ in range(n_levels - 1):
+            new_visited = set()
+
+            for n in neighbors:
+                new_neighbors = self._point_neighbors_ids(n)
+                new_visited.update(new_neighbors)
+            neighbors = new_visited
+
+            yield list(neighbors.difference(all_visited))
+            all_visited.update(neighbors)
+
 
 class ActiveArrayInfo:
     """Active array info class with support for pickling."""
