@@ -111,7 +111,8 @@ def test_timer():
     iren = pyvista.plotting.RenderWindowInteractor(pl)
     iren.set_render_window(pl.ren_win)
 
-    duration = 20
+    duration = 50  # Duration of created timers
+    delay = 10 * duration  # Extra time we wait for the timers to fire at least once
     events = []
 
     def on_timer(obj, event):
@@ -130,16 +131,16 @@ def test_timer():
 
     # Test one-shot timer (only fired once for extended duration)
     iren.create_timer(duration, repeating=False)
-    process_events(iren, 5 * duration)
+    process_events(iren, delay)
     assert len(events) == 1
 
     # Test repeating timer (fired multiple times for extended duration)
     repeating_timer = iren.create_timer(duration, repeating=True)
-    process_events(iren, 5 * duration)
+    process_events(iren, 2 * delay)
     assert len(events) >= 3
     E = len(events)
 
     # Test timer destruction (no more events fired)
     iren.destroy_timer(repeating_timer)
-    process_events(iren, 5 * duration)
+    process_events(iren, delay)
     assert len(events) == E

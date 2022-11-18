@@ -5823,9 +5823,6 @@ class Plotter(BasePlotter):
             # are constantly being fired. As we cannot differentiate between different
             # timers from the python side, we assume all TimerEvents that are fired while
             # the ContextInteractorStyle is not active are coming from the update_timer.
-            # A better approach, if VTK ever supports this, would be to check whether
-            #     self.iren.GetTimerEventId() == Plotter.update_timer_id
-            # See https://discourse.vtk.org/t/how-to-use-multiple-timers-and-multiple-callbacks-simultaneously/7636
             if event_id == 'TimerEvent' and self.iren._style != "Context":
                 # Simulate 'q' press to break out of blocking call in the update method.
                 self.iren.terminate_app()
@@ -5902,8 +5899,9 @@ class Plotter(BasePlotter):
         # Set window size
         self.window_size = window_size
 
-        # add timer event if interactive render exists
-        self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
+        # add timer event callback to break out of blocking interactive update call (only needed for VTK<9)
+        if not self.iren.can_process_events:
+            self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
         if self._theme.depth_peeling.enabled:
             if self.enable_depth_peeling():
