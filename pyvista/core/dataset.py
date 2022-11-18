@@ -42,7 +42,7 @@ DEFAULT_VECTOR_KEY = '_vectors'
 ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
 
 CellConnectivityTuple = namedtuple(
-    'CellConnectivityTuple', ["neighbors", "edge_neighbors", "points"]
+    'CellConnectivityTuple', ["point_neighbors", "edge_neighbors", "face_neighbors", "points"]
 )
 PointConnectivityTuple = namedtuple('PointConnectivityTuple', ["neighbors", "cells"])
 
@@ -58,7 +58,7 @@ class DatasetConnectivity:
             raise ValueError('``preference`` must be either "point" or "cell"')
         self.preference = preference
 
-    def __getitem__(self, ind: int):
+    def __getitem__(self, ind: int) -> Union[CellConnectivityTuple, PointConnectivityTuple]:
         if type(ind) is not int:
             raise TypeError("Non-integers indexing is not supported yet.")
 
@@ -66,12 +66,14 @@ class DatasetConnectivity:
         ind = ind if ind >= 0 else ind - 1 + n
 
         if self.preference == "point":
-            return PointConnectivityTuple(self._point_neighbors_ids(ind),
-                                          self._point_cell_ids(ind))
+            return PointConnectivityTuple(self._point_neighbors_ids(ind), self._point_cell_ids(ind))
         else:
-            return CellConnectivityTuple(self._cell_point_neighbors_ids(ind),
-                                         [None], # not implemented yet
-                                         self._cell_point_ids(ind))
+            return CellConnectivityTuple(
+                self._cell_neighbors(ind, "points"),
+                self._cell_neighbors(ind, "edges"),
+                self._cell_neighbors(ind, "faces"),
+                self._cell_point_ids(ind),
+            )
 
     def _cell_point_ids(self, ind: int):
 
@@ -92,19 +94,37 @@ class DatasetConnectivity:
             out.extend([i for i in self._cell_point_ids(cell) if i != ind])
         return list(set(out))
 
-    def _cell_point_neighbors_ids(self, ind: int) -> List[int]:
+    def _cell_neighbors(self, ind: int, connections: str = "points"):
 
-        out = []
-        for i in self._cell_point_ids(ind):
-            ids = _vtk.vtkIdList()
-            ids.InsertNextId(i)
+        needed = ["points", "edges", "faces"]
+        if connections not in needed:
+            raise ValueError(f"`connections` must be one of: {needed}")
 
+        iterators = {
+            "points": self._cell_point_ids(ind),
+            "edges": range(self.dataset.GetCell(ind).GetNumberOfEdges()),
+            "faces": range(self.dataset.GetCell(ind).GetNumberOfFaces()),
+        }
+
+        def generate_ids(i: int, connections: str):
+            if connections == "points":
+                ids = _vtk.vtkIdList()
+                ids.InsertNextId(i)
+                return ids
+            elif connections == "edges":
+                return self.dataset.GetCell(ind).GetEdge(i).GetPointIds()
+            elif connections == "faces":
+                return self.dataset.GetCell(ind).GetFace(i).GetPointIds()
+
+        neighbors = set()
+        for i in iterators[connections]:
+            point_ids = generate_ids(i, connections)
             cell_ids = _vtk.vtkIdList()
-            self.dataset.GetCellNeighbors(ind, ids, cell_ids)
+            self.dataset.GetCellNeighbors(ind, point_ids, cell_ids)
 
-            out.extend([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
+            neighbors.update([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
 
-        return list(set(out))
+        return list(neighbors)
 
 
 class ActiveArrayInfo:
@@ -2680,7 +2700,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.points_connectivity[ind].neighbors
 
     def cell_point_neighbors_ids(self, ind: int) -> List[int]:
-        return self.cells_connectivity[ind].neighbors
+        return self.cells_connectivity[ind].point_neighbors
 
     @property
     def cells_connectivity(self):
