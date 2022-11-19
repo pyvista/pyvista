@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections import namedtuple
 import collections.abc
 from copy import deepcopy
+from functools import partial
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
@@ -52,8 +53,8 @@ class DatasetConnectivity:
 
         # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
         is_polydata = isinstance(dataset, pyvista.PolyData)
-        is_unstructured_grid = isinstance(dataset,pyvista.UnstructuredGrid)
-        is_explicit_struct = isinstance(dataset,pyvista.ExplicitStructuredGrid)
+        is_unstructured_grid = isinstance(dataset, pyvista.UnstructuredGrid)
+        is_explicit_struct = isinstance(dataset, pyvista.ExplicitStructuredGrid)
         if is_polydata or is_unstructured_grid or is_explicit_struct:
             dataset.BuildLinks()
 
@@ -131,12 +132,14 @@ class DatasetConnectivity:
 
         return list(neighbors)
 
-    def point_neighbors(self, ind: int, *, n_levels: int = 1):
+    def neighbors(self, ind: int, *, connections="points", n_levels: int = 1):
 
-        if self.preference != "point":
-            raise ValueError("Cannot get point neighbors when `preference` is set to `cells`.")
+        if self.preference == "points":
+            method = self._point_neighbors_ids
+        else:
+            method = partial(self._cell_neighbors, connections=connections)
 
-        neighbors = set(self._point_neighbors_ids(ind))
+        neighbors = set(method(ind))
         yield list(neighbors)
 
         all_visited = neighbors.copy()
@@ -146,7 +149,7 @@ class DatasetConnectivity:
             new_visited = set()
 
             for n in neighbors:
-                new_neighbors = self._point_neighbors_ids(n)
+                new_neighbors = method(n)
                 new_visited.update(new_neighbors)
             neighbors = new_visited
 
