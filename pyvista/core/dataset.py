@@ -49,10 +49,15 @@ PointConnectivityTuple = namedtuple('PointConnectivityTuple', ["neighbors", "cel
 
 class DatasetConnectivity:
     def __init__(self, dataset: DataSet, preference="cell") -> None:
-        self.dataset = dataset
 
         # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-        self.dataset.BuildLinks()
+        is_polydata = isinstance(dataset, pyvista.PolyData)
+        is_unstructured_grid = isinstance(dataset,pyvista.UnstructuredGrid)
+        is_explicit_struct = isinstance(dataset,pyvista.ExplicitStructuredGrid)
+        if is_polydata or is_unstructured_grid or is_explicit_struct:
+            dataset.BuildLinks()
+
+        self.dataset = dataset
 
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
