@@ -1,5 +1,6 @@
 """Test render window interactor"""
 
+import platform
 import time
 
 import pytest
@@ -103,7 +104,14 @@ def test_track_click_position_multi_render():
     assert len(points) == 1
 
 
-@pytest.mark.needs_vtk_version(9, 2)
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason='vtkCocoaRenderWindowInteractor (MacOS) does not invoke TimerEvents during ProcessEvents. ',
+)
+@pytest.mark.needs_vtk_version(
+    (9, 2),
+    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents until VTK9.2.',
+)
 def test_timer():
     # Create normal interactor from offscreen plotter (not generic,
     # which is the default for offscreen rendering)
