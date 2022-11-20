@@ -620,8 +620,10 @@ def test_set_t_coords(grid):
 
 
 def test_activate_texture_none(grid):
-    assert grid._activate_texture('not a key') is None
-    assert grid._activate_texture(True) is None
+    with pytest.warns(UserWarning, match='Texture (.+) not associated with this dataset'):
+        assert grid._activate_texture('not a key') is None
+    with pytest.warns(UserWarning, match='No textures associated with input mesh.'):
+        assert grid._activate_texture(True) is None
 
 
 def test_set_active_vectors_fail(grid):
