@@ -11,6 +11,11 @@ if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
 
+def noop_callback(*args, **kwargs):
+    """A callback that doesn't do anything."""
+    pass
+
+
 @pytest.mark.needs_vtk9
 def test_single_cell_picking():
     sphere = pyvista.Sphere()
@@ -245,7 +250,7 @@ def test_point_picking(left_clicking):
             show_message=True,
             use_mesh=use_mesh,
             left_clicking=left_clicking,
-            callback=lambda: None,
+            callback=noop_callback,
         )
         # must show to activate the interactive renderer (for left_clicking)
         plotter.show(auto_close=False)
@@ -308,7 +313,7 @@ def test_path_picking():
     plotter.add_mesh(sphere)
     plotter.enable_path_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=noop_callback,
     )
     # simulate the pick
     renderer = plotter.renderer
@@ -331,7 +336,7 @@ def test_geodesic_picking():
     plotter.add_mesh(sphere)
     plotter.enable_geodesic_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=noop_callback,
         show_path=True,
         keep_order=True,
     )
@@ -359,7 +364,7 @@ def test_horizon_picking():
     plotter.add_mesh(sphere)
     plotter.enable_horizon_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=noop_callback,
         show_horizon=True,
     )
     # simulate the pick

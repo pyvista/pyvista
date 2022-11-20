@@ -9,17 +9,20 @@ if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
 
+def noop_callback(*args, **kwargs):
+    """A callback that doesn't do anything."""
+    pass
+
+
 def test_widget_box(uniform):
     p = pyvista.Plotter()
-    func = lambda box: box  # Does nothing
     p.add_mesh(uniform)
-    p.add_box_widget(callback=func)
+    p.add_box_widget(callback=noop_callback)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda box, widget: box  # Does nothing
     p.add_mesh(uniform)
-    p.add_box_widget(callback=func, pass_widget=True)
+    p.add_box_widget(callback=noop_callback, pass_widget=True)
     p.close()
 
     # clip box with and without crinkle
@@ -39,39 +42,33 @@ def test_widget_box(uniform):
 
 def test_widget_plane(uniform):
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    p.add_plane_widget(callback=func, implicit=True)
+    p.add_plane_widget(callback=noop_callback, implicit=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin, widget: normal  # Does nothing
     p.add_mesh(uniform)
-    p.add_plane_widget(callback=func, pass_widget=True, implicit=True)
+    p.add_plane_widget(callback=noop_callback, pass_widget=True, implicit=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    p.add_plane_widget(callback=func, implicit=False)
+    p.add_plane_widget(callback=noop_callback, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin, widget: normal  # Does nothing
     p.add_mesh(uniform)
-    p.add_plane_widget(callback=func, pass_widget=True, implicit=False)
+    p.add_plane_widget(callback=noop_callback, pass_widget=True, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
+    p.add_plane_widget(callback=noop_callback, assign_to_axis='z', implicit=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    p.add_plane_widget(callback=func, normal_rotation=False, implicit=False)
+    p.add_plane_widget(callback=noop_callback, normal_rotation=False, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
@@ -93,61 +90,55 @@ def test_widget_plane(uniform):
 
 def test_widget_line(uniform):
     p = pyvista.Plotter()
-    func = lambda line: line  # Does nothing
     p.add_mesh(uniform)
-    p.add_line_widget(callback=func)
+    p.add_line_widget(callback=noop_callback)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda line, widget: line  # Does nothing
     p.add_mesh(uniform)
-    p.add_line_widget(callback=func, pass_widget=True)
+    p.add_line_widget(callback=noop_callback, pass_widget=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda a, b: (a, b)  # Does nothing
     p.add_mesh(uniform)
-    p.add_line_widget(callback=func, use_vertices=True)
+    p.add_line_widget(callback=noop_callback, use_vertices=True)
     p.close()
 
 
 def test_widget_text_slider(uniform):
     p = pyvista.Plotter()
-    func = lambda value: value  # Does nothing
     p.add_mesh(uniform)
     with pytest.raises(TypeError, match='must be a list'):
-        p.add_text_slider_widget(callback=func, data='foo')
+        p.add_text_slider_widget(callback=noop_callback, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
-        p.add_text_slider_widget(callback=func, data=[])
+        p.add_text_slider_widget(callback=noop_callback, data=[])
     for style in pyvista.global_theme.slider_styles:
-        p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
+        p.add_text_slider_widget(callback=noop_callback, data=['foo', 'bar'], style=style)
     p.close()
 
 
 def test_widget_slider(uniform):
     p = pyvista.Plotter()
-    func = lambda value: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_slider_widget(callback=func, rng=[0, 10], style="classic")
+    p.add_slider_widget(callback=noop_callback, rng=[0, 10], style="classic")
     p.close()
 
     p = pyvista.Plotter()
     for event_type in ['start', 'end', 'always']:
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type=event_type)
+        p.add_slider_widget(callback=noop_callback, rng=[0, 10], event_type=event_type)
     with pytest.raises(TypeError, match='type for ``style``'):
-        p.add_slider_widget(callback=func, rng=[0, 10], style=0)
+        p.add_slider_widget(callback=noop_callback, rng=[0, 10], style=0)
     with pytest.raises(AttributeError):
-        p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
+        p.add_slider_widget(callback=noop_callback, rng=[0, 10], style="foo")
     with pytest.raises(TypeError, match='type for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type=0)
+        p.add_slider_widget(callback=noop_callback, rng=[0, 10], event_type=0)
     with pytest.raises(ValueError, match='value for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type='foo')
+        p.add_slider_widget(callback=noop_callback, rng=[0, 10], event_type='foo')
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda value, widget: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
+    p.add_slider_widget(callback=noop_callback, rng=[0, 10], style="modern", pass_widget=True)
     p.close()
 
     p = pyvista.Plotter()
@@ -166,34 +157,38 @@ def test_widget_slider(uniform):
 
     p = pyvista.Plotter()
     title_height = np.random.random()
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
+    s = p.add_slider_widget(
+        callback=noop_callback, rng=[0, 10], style="classic", title_height=title_height
+    )
     assert s.GetRepresentation().GetTitleHeight() == title_height
     p.close()
 
     p = pyvista.Plotter()
     title_opacity = np.random.random()
     s = p.add_slider_widget(
-        callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity
+        callback=noop_callback, rng=[0, 10], style="classic", title_opacity=title_opacity
     )
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
 
     p = pyvista.Plotter()
     title_color = "red"
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_color=title_color)
+    s = p.add_slider_widget(
+        callback=noop_callback, rng=[0, 10], style="classic", title_color=title_color
+    )
     assert s.GetRepresentation().GetTitleProperty().GetColor() == pyvista.Color(title_color)
     p.close()
 
     p = pyvista.Plotter()
     fmt = "%0.9f"
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", fmt=fmt)
+    s = p.add_slider_widget(callback=noop_callback, rng=[0, 10], style="classic", fmt=fmt)
     assert s.GetRepresentation().GetLabelFormat() == fmt
     p.close()
 
     # custom width
     p = pyvista.Plotter()
     slider = p.add_slider_widget(
-        callback=func, rng=[0, 10], fmt=fmt, tube_width=0.1, slider_width=0.2
+        callback=noop_callback, rng=[0, 10], fmt=fmt, tube_width=0.1, slider_width=0.2
     )
     assert slider.GetRepresentation().GetSliderWidth() == 0.2
     assert slider.GetRepresentation().GetTubeWidth() == 0.1
@@ -202,15 +197,13 @@ def test_widget_slider(uniform):
 
 def test_widget_spline(uniform):
     p = pyvista.Plotter()
-    func = lambda spline: spline  # Does nothing
     p.add_mesh(uniform)
-    p.add_spline_widget(callback=func)
+    p.add_spline_widget(callback=noop_callback)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda spline, widget: spline  # Does nothing
     p.add_mesh(uniform)
-    p.add_spline_widget(callback=func, pass_widget=True, color=None, show_ribbon=True)
+    p.add_spline_widget(callback=noop_callback, pass_widget=True, color=None, show_ribbon=True)
     p.close()
 
     p = pyvista.Plotter()
@@ -220,22 +213,19 @@ def test_widget_spline(uniform):
 
 def test_widget_uniform(uniform):
     p = pyvista.Plotter()
-    func = lambda center: center  # Does nothing
-    p.add_sphere_widget(callback=func, center=(0, 0, 0))
+    p.add_sphere_widget(callback=noop_callback, center=(0, 0, 0))
     p.close()
 
     nodes = np.array([[-1, -1, -1], [1, 1, 1]])
     p = pyvista.Plotter()
-    func = lambda center: center  # Does nothing
-    p.add_sphere_widget(callback=func, center=nodes)
+    p.add_sphere_widget(callback=noop_callback, center=nodes)
     p.close()
 
 
 def test_widget_checkbox_button(uniform):
     p = pyvista.Plotter()
-    func = lambda value: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_checkbox_button_widget(callback=func)
+    p.add_checkbox_button_widget(callback=noop_callback)
     p.close()
 
 
@@ -244,7 +234,7 @@ def test_widget_closed(uniform):
     pl.add_mesh(uniform)
     pl.close()
     with pytest.raises(RuntimeError, match='closed plotter'):
-        pl.add_checkbox_button_widget(callback=lambda value: value)
+        pl.add_checkbox_button_widget(callback=noop_callback)
 
 
 @pytest.mark.needs_vtk_version(9, 1)
