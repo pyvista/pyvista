@@ -103,7 +103,7 @@ def test_track_click_position_multi_render():
     assert len(points) == 1
 
 
-@pytest.mark.needs_vtk_version(9, 1)
+@pytest.mark.needs_vtk_version(9, 2)
 def test_timer():
     # Create normal interactor from offscreen plotter (not generic,
     # which is the default for offscreen rendering)
@@ -112,7 +112,7 @@ def test_timer():
     iren.set_render_window(pl.ren_win)
 
     duration = 50  # Duration of created timers
-    delay = 10 * duration  # Extra time we wait for the timers to fire at least once
+    delay = 5 * duration  # Extra time we wait for the timers to fire at least once
     events = []
 
     def on_timer(obj, event):
