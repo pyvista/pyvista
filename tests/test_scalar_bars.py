@@ -94,3 +94,18 @@ def test_too_many_scalar_bars(sphere):
             mesh = pv.Sphere()
             mesh[str(i)] = range(mesh.n_points)
             pl.add_mesh(mesh)
+
+
+def test_update_scalar_bar_range(sphere):
+    sphere['z'] = sphere.points[:, 2]
+    minmax = sphere.bounds[2:4]  # ymin, ymax
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere, scalars='z')
+
+    # automatic mapper lookup works
+    plotter.update_scalar_bar_range(minmax)
+    # named mapper lookup works
+    plotter.update_scalar_bar_range(minmax, name='z')
+    # missing name raises
+    with pytest.raises(ValueError, match='not valid/not found in this plotter'):
+        plotter.update_scalar_bar_range(minmax, name='invalid')
