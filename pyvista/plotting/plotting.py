@@ -3758,17 +3758,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.scalar_range = clim
             return
 
-        # Use the name to find the desired actor
-        def update_mapper(mapper_helper):
-            mapper_helper.scalar_range = clim
-            return
-
         try:
-            for mh in self._scalar_bar_mappers[name]:
-                update_mapper(mh)
+            # use the name to find the desired actor
+            for mh in self.scalar_bars._scalar_bar_mappers[name]:
+                mh.scalar_range = clim
         except KeyError:
-            raise KeyError('Name ({}) not valid/not found in this plotter.')
-        return
+            raise ValueError(f'Name ({name!r}) not valid/not found in this plotter.') from None
 
     def clear_actors(self):
         """Clear actors from all renderers."""
