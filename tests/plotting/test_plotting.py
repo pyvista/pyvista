@@ -2164,17 +2164,6 @@ def test_set_viewup():
     p.show()
 
 
-def test_plot_remove_scalar_bar(sphere):
-    sphere['z'] = sphere.points[:, 2]
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere, show_scalar_bar=False)
-    plotter.add_scalar_bar(interactive=True)
-    assert len(plotter.scalar_bars) == 1
-    plotter.remove_scalar_bar()
-    assert len(plotter.scalar_bars) == 0
-    plotter.show()
-
-
 def test_plot_shadows():
     plotter = pyvista.Plotter(lighting=None)
 

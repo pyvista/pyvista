@@ -71,7 +71,7 @@ def test_actor_removal(sphere):
 
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, show_scalar_bar=True)
-    assert len(pl.scalar_bars) == 1
+    assert list(pl.scalar_bars.keys()) == ['scalars']
     pl.remove_actor(actor)
     assert len(pl.scalar_bars) == 0
 
@@ -82,7 +82,7 @@ def test_add_remove_bar(sphere):
 
     # verify that the number of slots is restored
     init_slots = len(pl._scalar_bar_slots)
-    pl.add_scalar_bar()
+    pl.add_scalar_bar(interactive=True)
     pl.remove_scalar_bar()
     assert len(pl._scalar_bar_slots) == init_slots
 
