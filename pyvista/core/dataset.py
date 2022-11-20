@@ -553,7 +553,7 @@ class DataSet(DataSetFilters, DataObject):
         try:
             texture = mesh.textures[name]
         except KeyError:
-            warnings.warn(f'Texture ({name}) not associated with this dataset')
+            warnings.warn(f'Texture ({name!r}) not associated with this dataset')
             texture = None
         else:
             # Be sure to reset the tcoords if present
