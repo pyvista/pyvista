@@ -307,6 +307,7 @@ if VTK9:
     from vtkmodules.vtkFiltersHybrid import vtkPolyDataSilhouette
     from vtkmodules.vtkFiltersModeling import (
         vtkAdaptiveSubdivisionFilter,
+        vtkBandedPolyDataContourFilter,
         vtkButterflySubdivisionFilter,
         vtkCollisionDetectionFilter,
         vtkDijkstraGraphGeodesicPath,

@@ -410,7 +410,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = _vtk.vtkLookupTable()
+            lut = pyvista.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
@@ -441,9 +441,15 @@ class ScalarBars:
         if above_label:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
+        elif lut.above_range_color:
+            scalar_bar.DrawAboveRangeSwatchOn()
+            scalar_bar.SetAboveRangeAnnotation('above')
         if below_label:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
+        elif lut.below_range_color:
+            scalar_bar.DrawBelowRangeSwatchOn()
+            scalar_bar.SetBelowRangeAnnotation('below')
 
         # edit the size of the colorbar
         scalar_bar.SetHeight(height)

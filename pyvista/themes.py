@@ -127,9 +127,6 @@ def set_plot_theme(theme):
 
     if isinstance(theme, str):
         theme = theme.lower()
-        if theme == 'night':  # pragma: no cover
-            warnings.warn('use "dark" instead of "night" theme', PyVistaDeprecationWarning)
-            theme = 'dark'
         new_theme_type = _ALLOWED_THEMES[theme].value
         pyvista.global_theme.load_theme(new_theme_type())
     elif isinstance(theme, DefaultTheme):
@@ -1260,7 +1257,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.above_range_color = 'r'
         >>> pyvista.global_theme.above_range_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
 
         """
         return self._above_range_color
@@ -1280,7 +1277,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.below_range_color = 'b'
         >>> pyvista.global_theme.below_range_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         """
         return self._below_range_color
@@ -1300,6 +1297,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.return_cpos = False
         """
+        return self._return_cpos
 
     @return_cpos.setter
     def return_cpos(self, value: bool):
@@ -1932,6 +1930,7 @@ class DefaultTheme(_ThemeConfig):
     @anti_aliasing.setter
     def anti_aliasing(self, anti_aliasing: Union[str, None]):
         if isinstance(anti_aliasing, bool):
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
                 '`anti_aliasing` is now a string or None and must be either "ssaa", '
                 '"msaa", "fxaa", or None',

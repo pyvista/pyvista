@@ -21,7 +21,6 @@ from pyvista.utilities import (
     wrap,
 )
 from pyvista.utilities.cells import numpy_to_idarr
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 @abstract_class
@@ -2481,7 +2480,7 @@ class DataSetFilters:
         else:
             return warped_mesh
 
-    def cell_data_to_point_data(self, pass_cell_data=False, progress_bar=False, **kwargs):
+    def cell_data_to_point_data(self, pass_cell_data=False, progress_bar=False):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -2501,9 +2500,6 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
-
-        **kwargs : dict, optional
-            Depreciated keyword argument ``pass_cell_arrays``.
 
         Returns
         -------
@@ -2531,13 +2527,6 @@ class DataSetFilters:
         >>> surf.plot(scalars='Area')
 
         """
-        if pass_cell_data is False and 'pass_cell_arrays' in kwargs:  # pragma: no cover
-            pass_cell_data = kwargs.pop('pass_cell_arrays')
-            warnings.warn(
-                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        assert_empty_kwargs(**kwargs)
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
@@ -2579,7 +2568,7 @@ class DataSetFilters:
             self, pass_cell_data=pass_cell_data, progress_bar=progress_bar, **kwargs
         )
 
-    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False, **kwargs):
+    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -2594,9 +2583,6 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
-
-        **kwargs : dict, optional
-            Depreciated keyword argument ``pass_point_arrays``.
 
         Returns
         -------
@@ -2628,13 +2614,6 @@ class DataSetFilters:
         >>> sphere.plot()
 
         """
-        if pass_point_data is False and 'pass_point_arrays' in kwargs:  # pragma: no cover
-            pass_point_data = kwargs.pop('pass_point_arrays')
-            warnings.warn(
-                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        assert_empty_kwargs(**kwargs)
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
@@ -2872,7 +2851,6 @@ class DataSetFilters:
         categorical=False,
         progress_bar=False,
         locator=None,
-        **kwargs,
     ):
         """Sample data values at specified point locations.
 
@@ -2907,10 +2885,6 @@ class DataSetFilters:
             Prototype cell locator to perform the ``FindCell()``
             operation.  This requires VTK 9.0.0 or newer.
 
-        **kwargs : dict, optional
-            Depreciated keyword arguments ``pass_cell_arrays`` and
-            ``pass_point_arrays``.
-
         Returns
         -------
         pyvista.DataSet
@@ -2929,20 +2903,6 @@ class DataSetFilters:
         True
 
         """
-        if pass_cell_data is True and 'pass_cell_arrays' in kwargs:  # pragma: no cover
-            pass_cell_data = kwargs.pop('pass_cell_arrays')
-            warnings.warn(
-                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        if pass_point_data is True and 'pass_point_arrays' in kwargs:  # pragma: no cover
-            pass_point_data = kwargs.pop('pass_point_arrays')
-            warnings.warn(
-                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        assert_empty_kwargs(**kwargs)
-
         if not pyvista.is_pyvista_dataset(points):
             points = pyvista.wrap(points)
         alg = _vtk.vtkProbeFilter()
@@ -2973,7 +2933,6 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
-        **kwargs,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3004,10 +2963,6 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        **kwargs : dict, optional
-            Depreciated keyword arguments ``pass_cell_arrays`` and
-            ``pass_point_arrays``.
-
         Returns
         -------
         pyvista.DataSet
@@ -3027,19 +2982,6 @@ class DataSetFilters:
         See :ref:`resampling_example` for more examples using this filter.
 
         """
-        if pass_cell_data is True and 'pass_cell_arrays' in kwargs:  # pragma: no cover
-            pass_cell_data = kwargs.pop('pass_cell_arrays')
-            warnings.warn(
-                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        if pass_point_data is True and 'pass_point_arrays' in kwargs:  # pragma: no cover
-            pass_point_data = kwargs.pop('pass_point_arrays')
-            warnings.warn(
-                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        assert_empty_kwargs(**kwargs)
         if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
@@ -3066,7 +3008,6 @@ class DataSetFilters:
         pass_cell_data=True,
         pass_point_data=True,
         progress_bar=False,
-        **kwargs,
     ):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -3122,10 +3063,6 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        **kwargs : dict, optional
-            Depreciated keyword arguments ``pass_cell_arrays`` and
-            ``pass_point_arrays``.
-
         Returns
         -------
         pyvista.DataSet
@@ -3156,20 +3093,6 @@ class DataSetFilters:
         """
         if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
-
-        if pass_cell_data is True and 'pass_cell_arrays' in kwargs:  # pragma: no cover
-            pass_cell_data = kwargs.pop('pass_cell_arrays')
-            warnings.warn(
-                'Use of `pass_cell_arrays` is deprecated. Use `pass_cell_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        if pass_point_data is True and 'pass_point_arrays' in kwargs:  # pragma: no cover
-            pass_point_data = kwargs.pop('pass_point_arrays')
-            warnings.warn(
-                'Use of `pass_point_arrays` is deprecated. Use `pass_point_data` instead.',
-                PyVistaDeprecationWarning,
-            )
-        assert_empty_kwargs(**kwargs)
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method

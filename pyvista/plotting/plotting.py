@@ -1508,7 +1508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
         >>> pl.background_color = "pink"
         >>> pl.background_color
-        Color(name='pink', hex='#ffc0cbff')
+        Color(name='pink', hex='#ffc0cbff', opacity=255)
         >>> pl.show()
 
         """
@@ -3426,6 +3426,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = scalar_bar_args.copy()
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
+            # Deprecated on ..., estimated removal on v0.40.0
             warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 

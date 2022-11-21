@@ -27,6 +27,9 @@ repos:
       "doc examples examples_flask pyvista tests",
       "*.py *.rst *.md",
     ]
+    additional_dependencies: [
+      "tomli"
+    ]
 
 - repo: https://github.com/pycqa/pydocstyle
   rev: 6.1.1
@@ -37,7 +40,7 @@ repos:
     exclude: ^pyvista/ext/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.982
+  rev: v0.991
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
@@ -58,6 +61,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.18.4
+  rev: 0.19.2
   hooks:
     - id: check-github-workflows
