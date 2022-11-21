@@ -433,7 +433,6 @@ html_show_sourcelink = False
 # documentation.
 #
 html_theme_options = {
-    "analytics": analytics_options,
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
     "collapse_navigation": True,
