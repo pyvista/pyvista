@@ -433,6 +433,7 @@ html_show_sourcelink = False
 # documentation.
 #
 html_theme_options = {
+    "analytics": "UA-140243896-1",
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
     "collapse_navigation": True,
@@ -459,10 +460,6 @@ html_theme_options = {
             "icon": "fa fa-file-text fa-fw",
         },
     ],
-    "analytics": analytics_options,
-}
-html_theme_options["analytics"] = {
-    "google_analytics_id": "UA-140243896-1",
 }
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
