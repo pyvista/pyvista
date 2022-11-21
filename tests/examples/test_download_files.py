@@ -657,6 +657,11 @@ def test_download_dolfin():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
+def test_download_meshio_xdmf():
+    dataset = examples.download_meshio_xdmf()
+    assert isinstance(dataset, pv.UnstructuredGrid)
+
+
 def test_download_damavand_volcano():
     filename = examples.download_damavand_volcano(load=False)
     assert os.path.isfile(filename)
