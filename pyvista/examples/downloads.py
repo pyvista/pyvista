@@ -3474,6 +3474,7 @@ def download_mars_jpg():
     str
         Filename of the JPEG.
     """
+    # Deprecated on v0.37.0, estimated removal on v0.40.0
     warnings.warn(
         "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with load=False",
         PyVistaDeprecationWarning,
@@ -3489,6 +3490,7 @@ def download_stars_jpg():
     str
         Filename of the JPEG.
     """
+    # Deprecated on v0.37.0, estimated removal on v0.40.0
     warnings.warn(
         "examples.download_stars_jpg is deprecated.  Use examples.planets.download_stars_sky_background with load=False",
         PyVistaDeprecationWarning,

@@ -311,7 +311,7 @@ class BaseReader:
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
-            raise RuntimeError("Failed to read file.")
+            raise RuntimeError("File reader failed to read and/or produced no output.")
         data._post_file_load_processing()
 
         # check for any pyvista metadata

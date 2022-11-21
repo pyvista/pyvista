@@ -1,8 +1,8 @@
 """Module containing composite data mapper."""
 from itertools import cycle
-import logging
 import sys
 from typing import Optional
+import warnings
 import weakref
 
 import numpy as np
@@ -649,7 +649,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 attr.color = next(colors)['color']
 
         else:  # pragma: no cover
-            logging.warning('Please install matplotlib for color cycles.')
+            warnings.warn('Please install matplotlib for color cycles.')
 
     def set_scalars(
         self,
