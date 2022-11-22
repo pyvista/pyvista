@@ -362,7 +362,7 @@ def test_vtk_points_force_float(force_float, expected_data_type):
 
 def test_try_callback_error():
     def raisin():
-        raise RuntimeError('Callback succeeded.')
+        raise RuntimeError('Callback successfully failed.')
 
     with pytest.warns(UserWarning, match='Encountered issue in callback'):
         pyvista.try_callback(raisin)
