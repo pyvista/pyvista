@@ -755,12 +755,14 @@ def test_download_action_figure():
 
 
 def test_download_mars_jpg():
-    filename = examples.download_mars_jpg()
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=r'Use .+\.download_mars_surface'):
+        filename = examples.download_mars_jpg()
     assert os.path.isfile(filename)
 
 
 def test_download_stars_jpg():
-    filename = examples.download_stars_jpg()
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=r'Use .+\.download_stars_sky_background'):
+        filename = examples.download_stars_jpg()
     assert os.path.isfile(filename)
 
 
