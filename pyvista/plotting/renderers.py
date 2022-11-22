@@ -246,8 +246,7 @@ class Renderers:
 
     def __iter__(self):
         """Return a iterable of renderers."""
-        for renderer in self._renderers:
-            yield renderer
+        yield from self._renderers
 
     @property
     def active_index(self):

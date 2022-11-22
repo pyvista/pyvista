@@ -2144,7 +2144,7 @@ class PolyDataFilters(DataSetFilters):
         )
         if retry:
             # gather intersecting rays in lists
-            loc_lst, ray_lst, tri_lst = [arr.tolist() for arr in [locations, index_ray, index_tri]]
+            loc_lst, ray_lst, tri_lst = (arr.tolist() for arr in [locations, index_ray, index_tri])
 
             # find indices that trimesh failed on
             all_ray_indices = np.arange(len(origins))

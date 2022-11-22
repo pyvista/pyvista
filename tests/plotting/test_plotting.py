@@ -2085,7 +2085,7 @@ def test_index_vs_loc():
     with pytest.raises(TypeError):
         pl.renderers.index_to_loc(1.5)
     with pytest.raises(IndexError):
-        pl.renderers.index_to_loc((-1))
+        pl.renderers.index_to_loc(-1)
     with pytest.raises(TypeError):
         pl.renderers.index_to_loc((1, 2))
     with pytest.raises(IndexError):
