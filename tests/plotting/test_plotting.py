@@ -2486,12 +2486,7 @@ def test_ssao_pass(verify_image_cache):
         return
 
     pl.enable_ssao()
-    pl.show(auto_close=False)
-
-    # ensure this fails when ssao disabled
-    pl.disable_ssao()
-    with pytest.raises(RuntimeError):
-        pl.show()
+    pl.show()
 
 
 @skip_mesa
