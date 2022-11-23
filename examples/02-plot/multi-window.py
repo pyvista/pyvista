@@ -116,9 +116,8 @@ groups = [
 
 plotter = pv.Plotter(shape=shape, row_weights=row_weights, col_weights=col_weights, groups=groups)
 
-###############################################################################
 # A grouped subplot can be activated through any of its composing cells using
-# the :func:`pyvista.Plotter.subplot` method.
+# the subplot() method.
 
 # Access all subplots and groups and plot something:
 plotter.subplot(0, 0)
