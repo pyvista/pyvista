@@ -2192,7 +2192,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------
@@ -2250,7 +2250,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------

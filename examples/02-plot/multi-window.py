@@ -12,7 +12,7 @@ from pyvista import examples
 ###############################################################################
 # This example shows how to create a multi-window plotter by specifying the
 # ``shape`` parameter.  The window generated is a two by two window by setting
-# ``shape=(2, 2)``. Use the :func:`pyvista.BasePlotter.subplot` function to
+# ``shape=(2, 2)``. Use the :func:`pyvista.Plotter.subplot` function to
 # select the subplot you wish to be the active subplot.
 
 plotter = pv.Plotter(shape=(2, 2))
@@ -116,8 +116,9 @@ groups = [
 
 plotter = pv.Plotter(shape=shape, row_weights=row_weights, col_weights=col_weights, groups=groups)
 
+###############################################################################
 # A grouped subplot can be activated through any of its composing cells using
-# the :func:`pyvista.BasePlotter.subplot` function.
+# the :func:`pyvista.Plotter.subplot` method.
 
 # Access all subplots and groups and plot something:
 plotter.subplot(0, 0)
