@@ -2730,11 +2730,58 @@ class DataSet(DataSetFilters, DataObject):
         return self.cells_connectivity[ind].points
 
     @property
-    def cells_connectivity(self):
+    def cells_connectivity(self) -> DatasetConnectivity:
+        """Return cells connectivity.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+
+        Get the point ids of the 0-th cell
+
+        >>> mesh.cells_connectivity[0].points
+        [0, 1, 2]
+
+        Get the neighbor cell ids that have at least one point in common with
+        the 0-th cell
+
+        >>> mesh.cells_connectivity[0].point_neighbors
+        [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
+
+        Get the neighbor cell ids that have at least one edge in common with
+        the 0-th cell
+
+        >>> mesh.cells_connectivity[0].edge_neighbors
+        [1, 3, 12]
+
+        For unstructured grids, cell neighbors can be defined using faces
+
+        >>> mesh = examples.download_tetrahedron()
+        >>> mesh.cells_connectivity[1].face_neighbors
+        [0, 8, 11]
+        """
         return DatasetConnectivity(self, "cell")
 
     @property
-    def points_connectivity(self):
+    def points_connectivity(self) -> DatasetConnectivity:
+        """Return points connectivity.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+
+        Get the cell ids that use the 0-th point
+
+        >>> mesh.points_connectivity[0].cells
+        [0, 1, 3, 209, 211, 212]
+
+        Get the neighbor points ids of the 0-th point
+
+        >>> mesh.points_connectivity[0].neighbors
+        [1, 2, 3, 4, 115, 117]
+        """
         return DatasetConnectivity(self, "point")
 
     def point_is_inside_cell(
