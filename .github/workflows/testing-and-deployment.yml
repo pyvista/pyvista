@@ -250,7 +250,7 @@ jobs:
         run: pip install -r requirements_test.txt
 
       - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting
+        run: xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache
 
       - name: Test Plotting
         run: python -m pytest -v tests/plotting
