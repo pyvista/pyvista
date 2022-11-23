@@ -13,8 +13,17 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import Texture, examples
+from pyvista import DatasetConnectivity, Texture, examples
 from pyvista.core.errors import VTKVersionError
+from pyvista.examples import (
+    load_airplane,
+    load_explicit_structured,
+    load_hexbeam,
+    load_rectilinear,
+    load_structured,
+    load_tetbeam,
+    load_uniform,
+)
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
@@ -23,6 +32,163 @@ HYPOTHESIS_MAX_EXAMPLES = 20
 @pytest.fixture()
 def grid():
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
+
+
+@pytest.fixture
+def dataset_connectivity_point(request):
+    return DatasetConnectivity(request.param, "point")
+
+
+@pytest.fixture
+def dataset_connectivity_cell(request):
+    return DatasetConnectivity(request.param, "cell")
+
+
+class TestDatasetConnectivity:
+
+    i0s = [1, -1]
+    grids = [
+        load_hexbeam(),
+        load_airplane(),
+        load_rectilinear(),
+        load_structured(),
+        load_tetbeam(),
+        load_uniform(),
+    ]
+    # load_explicit_structured()]
+    ids = list(map(type, grids))
+
+    @pytest.mark.parametrize("dataset_connectivity_point", grids, ids=ids, indirect=True)
+    @pytest.mark.parametrize("i0", i0s)
+    def test_point_cell_ids(self, dataset_connectivity_point, i0):
+
+        dset_c: DatasetConnectivity = dataset_connectivity_point
+        cell_ids = dset_c[i0].cells
+
+        assert isinstance(cell_ids, list)
+        assert all([isinstance(id, int) for id in cell_ids])
+        assert all([0 <= id < dset_c.dataset.n_cells for id in cell_ids])
+
+        # Check that the output cells contain the i0-th point but also that the
+        # remaining cells does not contain this point id
+        n = dset_c.dataset.n_points
+        i0 = i0 if i0 >= 0 else i0 - 1 + n
+        for c in cell_ids:
+            assert i0 in dset_c._cell_point_ids(c)
+
+        others = [i for i in range(dset_c.dataset.n_cells) if i not in cell_ids]
+        for c in others:
+            assert i0 not in dset_c._cell_point_ids(c)
+
+    @pytest.mark.parametrize("dataset_connectivity_point", grids, ids=ids, indirect=True)
+    @pytest.mark.parametrize("i0", i0s)
+    def test_point_neighbors_ids(self, dataset_connectivity_point, i0):
+
+        dset_c: DatasetConnectivity = dataset_connectivity_point
+        point_ids = dset_c[i0].neighbors
+
+        assert isinstance(point_ids, list)
+        assert all([isinstance(id, int) for id in point_ids])
+        assert all([0 <= id < dset_c.dataset.n_points for id in point_ids])
+
+        # Check that all the neighbors points share at least one cell with the
+        # current point
+        current_cells = set(dset_c[i0].cells)
+        for i in point_ids:
+            neighbor_cells = set(dset_c[i].cells)
+            assert not neighbor_cells.isdisjoint(current_cells)
+
+        # Check that other points do not share a cell with the current point
+        n = dset_c.dataset.n_points
+        i0 = i0 if i0 >= 0 else i0 - 1 + n
+        other_ids = [i for i in range(dset_c.dataset.n_points) if (i not in point_ids and i != i0)]
+        for i in other_ids:
+            neighbor_cells = set(dset_c[i].cells)
+            assert neighbor_cells.isdisjoint(current_cells)
+
+    @pytest.mark.parametrize("dataset_connectivity_cell", grids, ids=ids, indirect=True)
+    @pytest.mark.parametrize("i0", i0s)
+    def test_cell_point_neighbors_ids(self, dataset_connectivity_cell, i0):
+
+        dset_c: DatasetConnectivity = dataset_connectivity_cell
+        cell_ids = dset_c[i0].point_neighbors
+
+        assert isinstance(cell_ids, list)
+        assert all([isinstance(id, int) for id in cell_ids])
+        assert all([0 <= id < dset_c.dataset.n_cells for id in cell_ids])
+
+        # Check that all the neighbors cells share at least one point with the
+        # current cell
+        current_points = set(dset_c[i0].points)
+        for i in cell_ids:
+            neighbor_points = set(dset_c[i].points)
+            assert not neighbor_points.isdisjoint(current_points)
+
+        # Check that other cells do not share a point with the current cell
+        n = dset_c.dataset.n_cells
+        i0 = i0 if i0 >= 0 else i0 - 1 + n
+        other_ids = [i for i in range(dset_c.dataset.n_cells) if (i not in cell_ids and i != i0)]
+        for i in other_ids:
+            neighbor_points = set(dset_c[i].points)
+            assert neighbor_points.isdisjoint(current_points)
+
+    @pytest.mark.parametrize("dataset_connectivity_cell", grids, ids=ids, indirect=True)
+    @pytest.mark.parametrize("i0", i0s)
+    def test_cell_edge_neighbors_ids(self, dataset_connectivity_cell, i0):
+
+        dset_c: DatasetConnectivity = dataset_connectivity_cell
+        cell_ids = dset_c[i0].edge_neighbors
+
+        assert isinstance(cell_ids, list)
+        assert all([isinstance(id, int) for id in cell_ids])
+        assert all([0 <= id < dset_c.dataset.n_cells for id in cell_ids])
+
+    @pytest.mark.parametrize("dataset_connectivity_cell", grids, ids=ids, indirect=True)
+    @pytest.mark.parametrize("i0", i0s)
+    def test_cell_face_neighbors_ids(self, dataset_connectivity_cell, i0):
+
+        dset_c: DatasetConnectivity = dataset_connectivity_cell
+        cell_ids = dset_c[i0].face_neighbors
+
+        assert isinstance(cell_ids, list)
+        assert all([isinstance(id, int) for id in cell_ids])
+        assert all([0 <= id < dset_c.dataset.n_cells for id in cell_ids])
+
+    @pytest.mark.parametrize("dataset_connectivity_cell", grids, ids=ids, indirect=True)
+    @pytest.mark.parametrize("i0", i0s)
+    def test_get_neighbors_cell_with_level(self, dataset_connectivity_cell, i0):
+
+        dset_c: DatasetConnectivity = dataset_connectivity_cell
+        cell_ids = dset_c.get_neighbors(i0, connections="points", n_levels=3)
+
+        for i, ids in enumerate(cell_ids):
+            assert isinstance(ids, list)
+            assert all([isinstance(id, int) for id in ids])
+            assert all([0 <= id < dset_c.dataset.n_cells for id in ids])
+        assert i == 2
+
+    @pytest.mark.parametrize("dataset_connectivity_point", grids, ids=ids, indirect=True)
+    @pytest.mark.parametrize("i0", i0s)
+    def test_get_neighbors_point_with_level(self, dataset_connectivity_point, i0):
+
+        dset_p: DatasetConnectivity = dataset_connectivity_point
+        cell_ids = dset_p.get_neighbors(i0, n_levels=3)
+
+        for i, ids in enumerate(cell_ids):
+            assert isinstance(ids, list)
+            assert all([isinstance(id, int) for id in ids])
+            assert all([0 <= id < dset_p.dataset.n_points for id in ids])
+        assert i == 2
+
+    def test_raises(self, grid):
+        with pytest.raises(ValueError, match=r'either "point" or "cell" \(got "edges"\)'):
+            _ = DatasetConnectivity(grid, "edges")
+
+        d = DatasetConnectivity(grid, "point")
+        with pytest.raises(TypeError, match=r'Non-integers'):
+            _ = d["a"]
+        with pytest.raises(ValueError, match=r'["points", "edges", "faces"]'):
+            _ = d._cell_neighbors(0, "foo")
 
 
 def test_invalid_overwrite(grid):
@@ -1093,66 +1259,6 @@ def test_cell_point_ids(grid):
     assert len(point_ids) == grid.cell_n_points(0)
     assert all([isinstance(id, int) for id in point_ids])
     assert all([0 <= id < grid.n_points for id in point_ids])
-
-
-@pytest.mark.parametrize("i0", range(5))
-def test_point_cell_ids(grid: pyvista.UnstructuredGrid, i0):
-    cell_ids = grid.point_cell_ids(i0)
-    assert isinstance(cell_ids, list)
-    assert all([isinstance(id, int) for id in cell_ids])
-    assert all([0 <= id < grid.n_cells for id in cell_ids])
-
-    # Check that the output cells contain the i0-th point but also that the
-    # remaining cells does not contain this point id
-    for c in cell_ids:
-        assert i0 in grid.cell_point_ids(c)
-
-    others = [i for i in range(grid.n_cells) if i not in cell_ids]
-    for c in others:
-        assert i0 not in grid.cell_point_ids(c)
-
-ids = itertools.chain(range(5), range(5, 0, -1))
-@pytest.mark.parametrize("i0", ids)
-def test_point_neighbors_ids(grid: pyvista.UnstructuredGrid, i0):
-    point_ids = grid.point_neighbors_ids(i0)
-    assert isinstance(point_ids, list)
-    assert all([isinstance(id, int) for id in point_ids])
-    assert all([0 <= id < grid.n_points for id in point_ids])
-
-    # Check that all the neighbors points share at least one cell with the
-    # current point
-    current_cells = set(grid.point_cell_ids(i0))
-    for i in point_ids:
-        neighbor_cells = set(grid.point_cell_ids(i))
-        assert not neighbor_cells.isdisjoint(current_cells)
-
-    # Check that other points do not share a cell with the current point
-    other_ids = [i for i in range(grid.n_points) if (i not in point_ids and i != i0)]
-    for i in other_ids:
-        neighbor_cells = set(grid.point_cell_ids(i))
-        assert neighbor_cells.isdisjoint(current_cells)
-
-
-ids = itertools.chain(range(5), range(5, 0, -1))
-@pytest.mark.parametrize("i0", ids)
-def test_cell_point_neighbors_ids(grid: pyvista.UnstructuredGrid, i0):
-    cell_ids = grid.cell_point_neighbors_ids(i0)
-    assert isinstance(cell_ids, list)
-    assert all([isinstance(id, int) for id in cell_ids])
-    assert all([0 <= id < grid.n_cells for id in cell_ids])
-
-    # Check that all the neighbors cells share at least one point with the
-    # current cell
-    current_points = set(grid.cell_point_ids(i0))
-    for i in cell_ids:
-        neighbor_points = set(grid.cell_point_ids(i))
-        assert not neighbor_points.isdisjoint(current_points)
-
-    # Check that other cells do not share a point with the current cell
-    other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
-    for i in other_ids:
-        neighbor_points = set(grid.cell_point_ids(i))
-        assert neighbor_points.isdisjoint(current_points)
 
 
 def test_cell_bounds(grid):

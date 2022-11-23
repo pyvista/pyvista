@@ -61,15 +61,15 @@ class DatasetConnectivity:
         self.dataset = dataset
 
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
-            raise ValueError('``preference`` must be either "point" or "cell"')
+            msg = f'``preference`` must be either "point" or "cell" (got "{preference}")'
+            raise ValueError(msg)
         self.preference = preference
 
     def __getitem__(self, ind: int) -> Union[CellConnectivityTuple, PointConnectivityTuple]:
         if type(ind) is not int:
             raise TypeError("Non-integers indexing is not supported yet.")
 
-        n = self.dataset.n_cells if self.preference == "cells" else self.dataset.n_points
-        ind = ind if ind >= 0 else ind - 1 + n
+        ind = self._convert_negative_index(ind)
 
         if self.preference == "point":
             return PointConnectivityTuple(self._point_neighbors_ids(ind), self._point_cell_ids(ind))
@@ -80,6 +80,11 @@ class DatasetConnectivity:
                 self._cell_neighbors(ind, "faces"),
                 self._cell_point_ids(ind),
             )
+
+    def _convert_negative_index(self, ind: int):
+
+        n = self.dataset.n_cells if self.preference == "cell" else self.dataset.n_points
+        return ind if ind >= 0 else ind - 1 + n
 
     def _cell_point_ids(self, ind: int):
 
@@ -104,7 +109,7 @@ class DatasetConnectivity:
 
         needed = ["points", "edges", "faces"]
         if connections not in needed:
-            raise ValueError(f"`connections` must be one of: {needed}")
+            raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
 
         iterators = {
             "points": self._cell_point_ids(ind),
@@ -132,13 +137,14 @@ class DatasetConnectivity:
 
         return list(neighbors)
 
-    def neighbors(self, ind: int, *, connections="points", n_levels: int = 1):
+    def get_neighbors(self, ind: int, *, connections="points", n_levels: int = 1):
 
-        if self.preference == "points":
+        if self.preference == "point":
             method = self._point_neighbors_ids
         else:
             method = partial(self._cell_neighbors, connections=connections)
 
+        ind = self._convert_negative_index(ind)
         neighbors = set(method(ind))
         yield list(neighbors)
 
@@ -2722,15 +2728,6 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.cells_connectivity[ind].points
-
-    def point_cell_ids(self, ind: int) -> List[int]:
-        return self.points_connectivity[ind].cells
-
-    def point_neighbors_ids(self, ind: int) -> List[int]:
-        return self.points_connectivity[ind].neighbors
-
-    def cell_point_neighbors_ids(self, ind: int) -> List[int]:
-        return self.cells_connectivity[ind].point_neighbors
 
     @property
     def cells_connectivity(self):
