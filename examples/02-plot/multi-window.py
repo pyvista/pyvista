@@ -12,7 +12,7 @@ from pyvista import examples
 ###############################################################################
 # This example shows how to create a multi-window plotter by specifying the
 # ``shape`` parameter.  The window generated is a two by two window by setting
-# ``shape=(2, 2)``. Use the :func:`pyvista.Plotter.subplot` function to
+# ``shape=(2, 2)``. Use the :func:`pyvista.Plotter.subplot` method to
 # select the subplot you wish to be the active subplot.
 
 plotter = pv.Plotter(shape=(2, 2))
