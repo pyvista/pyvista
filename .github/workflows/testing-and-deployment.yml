@@ -160,6 +160,12 @@ jobs:
           restore-keys: |
             Examples-1-
 
+      - uses: actions/cache@v3
+        with:
+          path: .\tests\integration\image_cache
+          key: pyvista-image-cache-v-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pyvista-image-cache-v
+
       - name: Build wheel and install pyvista
         run: |
           pip install build
@@ -187,7 +193,7 @@ jobs:
       - name: Unit Testing
         run: |
           xvfb-run mkdir -p ~/image_cache
-          xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache --image_cache_dir .
+          xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache --image_cache_dir ./tests/integration/image_cache
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
