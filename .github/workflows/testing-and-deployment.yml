@@ -173,8 +173,13 @@ jobs:
           xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
-      - name: Unit Testing
+      - name: Unit Testing with coverage
+        if: matrix.python-version == '3.9'
         run: xvfb-run pytest -v --cov pyvista --cov-report xml
+
+      - name: Unit Testing
+        if: matrix.python-version != '3.9'
+        run: xvfb-run pytest -v
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
