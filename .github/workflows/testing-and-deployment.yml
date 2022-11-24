@@ -176,7 +176,7 @@ jobs:
       - name: Unit Testing with coverage
         if: matrix.python-version == '3.9'
         run: |
-          xvfb-run pip uninstall pyvista
+          xvfb-run pip uninstall pyvista --yes
           xvfb-run pip install -e .
           xvfb-run pytest -v --cov pyvista --cov-report xml
 
