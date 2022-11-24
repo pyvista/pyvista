@@ -157,9 +157,11 @@ jobs:
 
       - name: Build wheel and install pyvista
         run: |
+          pip uninstall --yes pyvista
           pip install build
           python -m build --wheel
           pip install dist/pyvista*.whl
+
       - name: Set up vtk
         if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
@@ -177,6 +179,7 @@ jobs:
           pip list
       - name: Unit Testing
         run: |
+
           xvfb-run pytest -v --cov pyvista --cov-report xml
 
       - uses: codecov/codecov-action@v3
