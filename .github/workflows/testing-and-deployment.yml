@@ -187,7 +187,7 @@ jobs:
       - name: Unit Testing
         run: |
           xvfb-run mkdir -p ~/image_cache
-          xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache --image_cache_dir ~/image_cache --reset_image_cache
+          xvfb-run pytest -v --cov pyvista --cov-report xml --fail_extra_image_cache --image_cache_dir .
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
