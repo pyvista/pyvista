@@ -151,6 +151,10 @@ jobs:
           key: Examples-1-${{ hashFiles('*') }}
           restore-keys: |
             Examples-1-
+
+      - name: Install Testing Requirements
+        run: pip install -r requirements_test.txt
+
       - name: Build wheel and install pyvista
         run: |
           pip install build
@@ -165,24 +169,15 @@ jobs:
           packages: libgl1-mesa-glx xvfb python-tk
           version: 3.0
 
-      - name: Install Testing Requirements
-        run: pip install -r requirements_test.txt
 
       - name: Software Report
         run: |
           xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
-      - name: Unit Testing with coverage
-        if: matrix.python-version == '3.9'
-        run: |
-          xvfb-run pip uninstall pyvista --yes
-          xvfb-run pip install -e .
-          xvfb-run pytest -v --cov pyvista --cov-report xml
-
       - name: Unit Testing
-        if: matrix.python-version != '3.9'
-        run: xvfb-run pytest -v
+        run: |
+          xvfb-run pytest -v --cov pyvista --cov-report xml
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
