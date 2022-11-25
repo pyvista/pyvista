@@ -1608,16 +1608,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.add_key_event(*args, **kwargs)
 
-    def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key.
-
-        Parameters
-        ----------
-        key : str
-            Key to clear events for.
-
-        """
-        self.iren.clear_events_for_key(key)
+    @wraps(RenderWindowInteractor.clear_events_for_key)
+    def clear_events_for_key(self, *args, **kwargs):
+        """Wrap RenderWindowInteractor.clear_events_for_key."""
+        if hasattr(self, 'iren'):
+            self.iren.clear_events_for_key(*args, **kwargs)
 
     def store_mouse_position(self, *args):
         """Store mouse position."""

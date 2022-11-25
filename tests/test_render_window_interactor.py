@@ -28,6 +28,10 @@ def test_observers():
     assert key in pl.iren._key_press_event_callbacks
     pl.clear_events_for_key(key)
     assert key not in pl.iren._key_press_event_callbacks
+    # attempting to clear non-existing events doesn't raise by default
+    pl.clear_events_for_key(key)
+    with pytest.raises(ValueError, match='No events found for key'):
+        pl.clear_events_for_key(key, raise_on_missing=True)
 
     # Custom events
     assert not pl.iren.interactor.HasObserver(
