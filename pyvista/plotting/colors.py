@@ -586,9 +586,9 @@ class Color:
         try:
             if len(rgba) != 4:
                 raise ValueError("Invalid length for RGBA sequence.")
-            self._red, self._green, self._blue, self._opacity = [
+            self._red, self._green, self._blue, self._opacity = (
                 self.convert_color_channel(c) for c in rgba
-            ]
+            )
         except ValueError:
             raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
 
