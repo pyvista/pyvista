@@ -203,6 +203,14 @@ def test_widget_spline(uniform):
 
     p = pyvista.Plotter()
     p.add_mesh(uniform)
+    pts = np.array([[1, 5, 4], [2, 4, 9], [3, 6, 2]])
+    with pytest.raises(ValueError, match='`initial_points` must be length `n_handles`'):
+        p.add_spline_widget(callback=noop_callback, n_handles=4, initial_points=pts)
+    p.add_spline_widget(callback=noop_callback, n_handles=3, initial_points=pts)
+    p.close()
+
+    p = pyvista.Plotter()
+    p.add_mesh(uniform)
     p.add_spline_widget(callback=noop_callback, pass_widget=True, color=None, show_ribbon=True)
     p.close()
 

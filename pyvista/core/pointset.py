@@ -1,5 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import collections.abc as collections
+import collections.abc
 from functools import wraps
 import numbers
 import os
@@ -1293,9 +1293,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._check_for_consistency()
 
         elif len(args) == 3:  # and VTK9:
-            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.Sequence))
-            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.Sequence))
-            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.Sequence))
+            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
@@ -1304,10 +1304,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 raise TypeError('All input types must be sequences.')
 
         elif len(args) == 4:  # pragma: no cover
-            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.Sequence))
-            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.Sequence))
-            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.Sequence))
-            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.Sequence))
+            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
+            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
+            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
@@ -2044,7 +2044,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(key) != 3:
             raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
-            if isinstance(k, collections.Iterable):
+            if isinstance(k, collections.abc.Iterable):
                 raise RuntimeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k
