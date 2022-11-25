@@ -186,7 +186,7 @@ class RenderWindowInteractor:
             self._key_press_event_callbacks.pop(key)
         except KeyError:
             if raise_on_missing:
-                raise ValueError(f'No events found for key {key}.') from None
+                raise ValueError(f'No events found for key {key!r}.') from None
 
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
