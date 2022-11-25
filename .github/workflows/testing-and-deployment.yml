@@ -179,7 +179,7 @@ jobs:
       - name: Unit Testing
         run: |
           pip uninstall --yes pyvista
-          pip install -e .
+          pip install dist/pyvista*.whl
           xvfb-run pytest -v --cov pyvista --cov-report xml
 
       - uses: codecov/codecov-action@v3
