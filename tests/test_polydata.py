@@ -744,6 +744,10 @@ def test_tube(spline):
     tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
     assert tube.n_points, tube.n_cells
 
+    # Complicated with absolute radius
+    tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
+    assert tube.n_points, tube.n_cells
+
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))
 

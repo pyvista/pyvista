@@ -1000,6 +1000,7 @@ class PolyDataFilters(DataSetFilters):
         capping=True,
         n_sides=20,
         radius_factor=10,
+        absolute=False,
         preference='point',
         inplace=False,
         progress_bar=False,
@@ -1028,6 +1029,10 @@ class PolyDataFilters(DataSetFilters):
         radius_factor : float, optional
             Maximum tube radius in terms of a multiple of the minimum
             radius.
+
+        absolute : float, optional
+            Vary the radius with values from scalars in absolute units.
+            Default ``False``.
 
         preference : str, optional
             The field preference when searching for the scalars array by
@@ -1080,7 +1085,10 @@ class PolyDataFilters(DataSetFilters):
             field = poly_data.get_array_association(scalars, preference=preference)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-            tube.SetVaryRadiusToVaryRadiusByScalar()
+            if not absolute:
+                tube.SetVaryRadiusToVaryRadiusByScalar()
+            else:
+                tube.SetVaryRadiusToVaryRadiusByAbsoluteScalar()
         # Apply the filter
         _update_alg(tube, progress_bar, 'Creating Tube')
 
