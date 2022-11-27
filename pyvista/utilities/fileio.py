@@ -179,13 +179,13 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise IOError("This file was not able to be automatically read by pvista.")
+            raise OSError("This file was not able to be automatically read by pvista.")
         from meshio._exceptions import ReadError
 
         try:
             return read_meshio(filename)
         except ReadError:
-            raise IOError("This file was not able to be automatically read by pyvista.")
+            raise OSError("This file was not able to be automatically read by pyvista.")
     else:
         observer = pyvista.utilities.errors.Observer()
         observer.observe(reader.reader)
