@@ -1019,29 +1019,27 @@ class PolyDataFilters(DataSetFilters):
         scalars : str, optional
             Scalars array by which the radius varies.
 
-        capping : bool, optional
-            Turn on/off whether to cap the ends with polygons. Default
-            ``True``.
+        capping : bool, default: True
+            Turn on/off whether to cap the ends with polygons.
 
-        n_sides : int, optional
+        n_sides : int, default: 20
             Set the number of sides for the tube. Minimum of 3.
 
-        radius_factor : float, optional
+        radius_factor : float, default: 10
             Maximum tube radius in terms of a multiple of the minimum
             radius.
 
-        absolute : bool, optional
+        absolute : bool, default: False
             Vary the radius with values from scalars in absolute units.
-            Default ``False``.
 
-        preference : str, optional
+        preference : str, default: 'point'
             The field preference when searching for the scalars array by
             name.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
