@@ -999,7 +999,7 @@ class PolyDataFilters(DataSetFilters):
         scalars=None,
         capping=True,
         n_sides=20,
-        radius_factor=10,
+        radius_factor=10.0,
         absolute=False,
         preference='point',
         inplace=False,
@@ -1025,7 +1025,7 @@ class PolyDataFilters(DataSetFilters):
         n_sides : int, default: 20
             Set the number of sides for the tube. Minimum of 3.
 
-        radius_factor : float, default: 10
+        radius_factor : float, default: 10.0
             Maximum tube radius in terms of a multiple of the minimum
             radius.
 
