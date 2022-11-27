@@ -5068,4 +5068,5 @@ def download_meshio_xdmf(load=True):  # pragma: no cover
     >>> dataset.plot()
 
     """
+    _ = download_file("meshio/out.h5")
     return _download_and_read("meshio/out.xdmf", load=load)
