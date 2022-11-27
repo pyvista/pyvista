@@ -178,7 +178,7 @@ class RenderWindowInteractor:
         key : str
             Key to clear events for.
 
-        raise_on_missing : bool, default=False
+        raise_on_missing : bool, default: False
             Whether to raise a :class:`ValueError` if there are no events
             registered for the given key.
         """
