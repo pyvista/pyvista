@@ -22,7 +22,7 @@ def _is_vtk(obj):
 @pytest.fixture(autouse=True)
 def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
-    before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
+    before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
     yield
 
     # Do not check for collection if the test session failed. Tests that fail
