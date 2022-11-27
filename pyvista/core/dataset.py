@@ -49,15 +49,66 @@ PointConnectivityTuple = namedtuple('PointConnectivityTuple', ["neighbors", "cel
 
 
 class DatasetConnectivity:
+    """
+    Container class that enables access to point and cell connectivity
+    of a dataset.
+
+    Parameters
+    ----------
+    dataset : vtkDataSet
+        The dataset object from which the connectivity is accessed.
+    
+    preference : str, optional
+        Connectivity preference. Must be either ``'point'`` or ``'cell'``.
+        Default to ``cell``.
+
+    Examples
+    --------
+
+    Plot the point neighbors of the 0-th point:
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.load_sphere()
+    >>> pl = pv.Plotter()
+    >>> pl.add_mesh(mesh,show_edges=True)
+    >>>
+    >>> # Label the 0-th point
+    >>> i0 = 0
+    >>> pl.add_point_labels(mesh.points[i0],[f"{i0}"],text_color="blue", font_size=20)
+    >>>
+    >>> # Get the point neighbors and plot them
+    >>> neighbors = mesh.points_connectivity[i0].neighbors
+    >>> pl.add_point_labels(mesh.points[neighbors], labels=[f"{i}" for i in neighbors], text_color="red", font_size=20)
+    >>> pl.camera_position = "yx"
+    >>> pl.camera.zoom(4.)
+    >>> pl.show()
+
+    Now, plot the cells that use the 0-th point
+
+    >>> pl = pv.Plotter()
+    >>> pl.add_point_labels(mesh.points[i0],[f"{i0}"],text_color="blue",font_size=20)
+    >>>
+    >>> # Get the cells ids using the 0-th point
+    >>> ids = mesh.points_connectivity[i0].cells
+    >>> cells = mesh.extract_cells(ids)
+    >>> pl.add_mesh(cells,color="red", show_edges=True)
+    >>> centers = cells.cell_centers().points
+    >>> pl.add_point_labels(centers, labels=[f"{i}" for i in ids], text_color="white", font_size=20, shape=None,show_points=False)
+    >>>
+    >>> # Plot the other cells 
+    >>> others = mesh.extract_cells([i for i in range(mesh.n_cells) if i not in ids])
+    >>> pl.add_mesh(others,show_edges=True)
+    >>> 
+    >>> pl.camera_position = "yx"
+    >>> pl.camera.zoom(6.)
+    >>> pl.show()
+    """
     def __init__(self, dataset: DataSet, preference="cell") -> None:
 
         # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-        is_polydata = isinstance(dataset, pyvista.PolyData)
-        is_unstructured_grid = isinstance(dataset, pyvista.UnstructuredGrid)
-        is_explicit_struct = isinstance(dataset, pyvista.ExplicitStructuredGrid)
-        if is_polydata or is_unstructured_grid or is_explicit_struct:
+        if hasattr(dataset,"BuildLinks"):
             dataset.BuildLinks()
-
         self.dataset = dataset
 
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
