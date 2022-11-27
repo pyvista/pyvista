@@ -1030,7 +1030,7 @@ class PolyDataFilters(DataSetFilters):
             Maximum tube radius in terms of a multiple of the minimum
             radius.
 
-        absolute : float, optional
+        absolute : bool, optional
             Vary the radius with values from scalars in absolute units.
             Default ``False``.
 
