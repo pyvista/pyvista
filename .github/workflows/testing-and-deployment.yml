@@ -180,7 +180,7 @@ jobs:
         run: |
           pip uninstall --yes pyvista
           pip install -e .
-          xvfb-run pytest -v --cov pyvista --cov-report xml
+          xvfb-run pytest -v --cov pyvista --cov-report xml --image_cache_dir ./image_cache
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
@@ -244,4 +244,4 @@ jobs:
         run: python -m pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: python -m pytest -v tests/plotting
+        run: python -m pytest -v tests/plotting --image_cache_dir ./image_cache
