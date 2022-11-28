@@ -67,21 +67,17 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 
-    tension : sequence, optional
-        Changes the length of the tangent vector.  Defaults to ``[0.0,
-        0.0, 0.0]``.
+    tension : sequence, default: np.array([0.0, 0.0, 0.0])
+        Changes the length of the tangent vector.
 
-    bias : sequence, optional
+    bias : sequence, default: np.array([0.0, 0.0, 0.0])
         Primarily changes the direction of the tangent vector.
-        Defaults to ``[0.0, 0.0, 0.0]``.
 
-    continuity : sequence, optional
-        Changes the sharpness in change between tangents.  Defaults to
-        ``[0.0, 0.0, 0.0]``.
+    continuity : sequence, default: np.array([0.0, 0.0, 0.0])
+        Changes the sharpness in change between tangents.
 
-    n_points : int, optional
-        Number of points on the spline.  Defaults to the number of
-        points in ``points``.
+    n_points : int, default: len(points)
+        Number of points on the spline.
 
     Returns
     -------
@@ -129,6 +125,9 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         raise ValueError(
             "The absolute value of all values continuity array elements must be <= 1.0 "
         )
+
+    if n_points is None:
+        n_points = len(points)
 
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points, False))
