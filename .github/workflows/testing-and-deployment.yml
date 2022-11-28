@@ -158,7 +158,7 @@ jobs:
       - name: Build wheel and install pyvista
         run: |
           # pytest-pyvista plugin installs pyvista, make sure we install the right version
-          pip uninstall pyvista 
+          pip uninstall pyvista --yes
           pip install build
           python -m build --wheel
           pip install dist/pyvista*.whl
