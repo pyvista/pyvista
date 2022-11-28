@@ -999,7 +999,8 @@ class PolyDataFilters(DataSetFilters):
         scalars=None,
         capping=True,
         n_sides=20,
-        radius_factor=10,
+        radius_factor=10.0,
+        absolute=False,
         preference='point',
         inplace=False,
         progress_bar=False,
@@ -1018,25 +1019,27 @@ class PolyDataFilters(DataSetFilters):
         scalars : str, optional
             Scalars array by which the radius varies.
 
-        capping : bool, optional
-            Turn on/off whether to cap the ends with polygons. Default
-            ``True``.
+        capping : bool, default: True
+            Turn on/off whether to cap the ends with polygons.
 
-        n_sides : int, optional
+        n_sides : int, default: 20
             Set the number of sides for the tube. Minimum of 3.
 
-        radius_factor : float, optional
+        radius_factor : float, default: 10.0
             Maximum tube radius in terms of a multiple of the minimum
             radius.
 
-        preference : str, optional
+        absolute : bool, default: False
+            Vary the radius with values from scalars in absolute units.
+
+        preference : str, default: 'point'
             The field preference when searching for the scalars array by
             name.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1080,7 +1083,10 @@ class PolyDataFilters(DataSetFilters):
             field = poly_data.get_array_association(scalars, preference=preference)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-            tube.SetVaryRadiusToVaryRadiusByScalar()
+            if absolute:
+                tube.SetVaryRadiusToVaryRadiusByAbsoluteScalar()
+            else:
+                tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
         _update_alg(tube, progress_bar, 'Creating Tube')
 
