@@ -1835,7 +1835,13 @@ class PolyDataFilters(DataSetFilters):
         return output
 
     def geodesic(
-        self, start_vertex, end_vertex, inplace=False, keep_order=True, progress_bar=False
+        self,
+        start_vertex,
+        end_vertex,
+        inplace=False,
+        keep_order=True,
+        use_scalar_weights=False,
+        progress_bar=False,
     ):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
@@ -1862,6 +1868,10 @@ class PolyDataFilters(DataSetFilters):
             to start with the start vertex (as opposed to the end vertex).
 
             .. versionadded:: 0.32.0
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1898,6 +1908,8 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetInputData(self)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
+        if _vtk.VTK9:
+            dijkstra.SetUseScalarWeights(use_scalar_weights)
         _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
@@ -1924,7 +1936,9 @@ class PolyDataFilters(DataSetFilters):
 
         return output
 
-    def geodesic_distance(self, start_vertex, end_vertex, progress_bar=False):
+    def geodesic_distance(
+        self, start_vertex, end_vertex, use_scalar_weights=False, progress_bar=False
+    ):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
 
         Parameters
@@ -1934,6 +1948,10 @@ class PolyDataFilters(DataSetFilters):
 
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1954,7 +1972,7 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`geodesic_example` for more examples using this filter.
 
         """
-        path = self.geodesic(start_vertex, end_vertex)
+        path = self.geodesic(start_vertex, end_vertex, use_scalar_weights=use_scalar_weights)
         sizes = path.compute_cell_sizes(
             length=True, area=False, volume=False, progress_bar=progress_bar
         )
@@ -2126,7 +2144,9 @@ class PolyDataFilters(DataSetFilters):
         )
         if retry:
             # gather intersecting rays in lists
-            loc_lst, ray_lst, tri_lst = [arr.tolist() for arr in [locations, index_ray, index_tri]]
+            loc_lst = locations.tolist()
+            ray_lst = index_ray.tolist()
+            tri_lst = index_tri.tolist()
 
             # find indices that trimesh failed on
             all_ray_indices = np.arange(len(origins))
