@@ -14,8 +14,7 @@ skip_no_plotting = pytest.mark.skipif(
 
 
 @skip_no_plotting
-def test_plot_glyphs(verify_image_cache):
-    verify_image_cache.skip = True
+def test_plot_glyphs():
     demos.plot_glyphs(2)
 
 
@@ -45,8 +44,7 @@ def test_plot_logo():
 
 
 @skip_no_plotting
-def test_plot_datasets(verify_image_cache):
-    verify_image_cache.skip = True
+def test_plot_datasets():
     # simply should not fail
     demos.plot_datasets()
 
@@ -58,20 +56,17 @@ def test_plot_wave():
 
 
 @skip_no_plotting
-def test_beam_example(verify_image_cache):
-    verify_image_cache.skip = True
+def test_beam_example():
     demos.plot_beam()
 
 
 @skip_no_plotting
-def test_plot_ants_plane(verify_image_cache):
-    verify_image_cache.skip = True
+def test_plot_ants_plane():
     demos.plot_ants_plane()
 
 
 @skip_no_plotting
-def test_orientation_cube(verify_image_cache):
-    verify_image_cache.skip = True
+def test_orientation_cube():
     pl = demos.orientation_plotter()
     assert isinstance(pl, pyvista.Plotter)
     pl.show()
