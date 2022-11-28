@@ -33,8 +33,8 @@ def test_kochanek_spline():
     assert kochanek_spline.n_points == n_points
 
     # test default
-    kochanek_spline = pyvista.KochanekSpline(points, n_points=n_points)
-    assert kochanek_spline.n_points == n_points
+    kochanek_spline = pyvista.KochanekSpline(points)
+    assert kochanek_spline.n_points == len(points)
 
     # test invalid
     with pytest.raises(ValueError, match='tension'):
