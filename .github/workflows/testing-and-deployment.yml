@@ -157,6 +157,8 @@ jobs:
 
       - name: Build wheel and install pyvista
         run: |
+          # pytest-pyvista plugin installs pyvista, make sure we install the right version
+          pip uninstall pyvista 
           pip install build
           python -m build --wheel
           pip install dist/pyvista*.whl
@@ -177,10 +179,9 @@ jobs:
           which python
           pip list
       - name: Unit Testing
-        run: |
-          pip uninstall --yes pyvista
-          pip install -e .
-          xvfb-run pytest -v --cov pyvista --cov-report xml --image_cache_dir ./image_cache
+        run: | 
+          xvfb-run coverage run -m --source=pyvista --module pytest --image_cache_dir ./image_cache 
+          xvfb-run coverage xml
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
