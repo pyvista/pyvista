@@ -17,9 +17,9 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 test_path = os.path.dirname(os.path.abspath(__file__))
 
 # must be manually set until pytest adds parametrize with fixture feature
-HEXBEAM_CELLS_BOOL = np.ones(40, np.bool_)  # matches hexbeam.n_cells == 40
-STRUCTGRID_CELLS_BOOL = np.ones(729, np.bool_)  # struct_grid.n_cells == 729
-STRUCTGRID_POINTS_BOOL = np.ones(1000, np.bool_)  # struct_grid.n_points == 1000
+HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
+STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
+STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
 pointsetmark = pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
@@ -454,7 +454,7 @@ def test_extract_cells(hexbeam):
     assert part_beam.n_points < hexbeam.n_points
     assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], ind)
 
-    mask = np.zeros(hexbeam.n_cells, np.bool_)
+    mask = np.zeros(hexbeam.n_cells, dtype=bool)
     mask[ind] = True
     part_beam = hexbeam.extract_cells(mask)
     assert part_beam.n_cells == len(ind)
@@ -1164,7 +1164,7 @@ def test_remove_cells_not_inplace(ind, hexbeam):
 def test_remove_cells_invalid(hexbeam):
     grid_copy = hexbeam.copy()
     with pytest.raises(ValueError):
-        grid_copy.remove_cells(np.ones(10, np.bool_), inplace=True)
+        grid_copy.remove_cells(np.ones(10, dtype=bool), inplace=True)
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_CELLS_BOOL])
@@ -1177,7 +1177,7 @@ def test_hide_cells(ind, struct_grid):
     assert out.HasAnyBlankCells()
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
-        struct_grid.hide_cells(np.ones(10, dtype=np.bool), inplace=True)
+        struct_grid.hide_cells(np.ones(10, dtype=bool), inplace=True)
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_POINTS_BOOL])
@@ -1186,7 +1186,7 @@ def test_hide_points(ind, struct_grid):
     assert struct_grid.HasAnyBlankPoints()
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
-        struct_grid.hide_points(np.ones(10, dtype=np.bool))
+        struct_grid.hide_points(np.ones(10, dtype=bool))
 
 
 def test_set_extent():
