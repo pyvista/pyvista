@@ -466,7 +466,7 @@ def test_pvdreader():
 
     assert reader.number_time_points == 15
     assert reader.time_point_value(1) == 1.0
-    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=np.float))
+    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=float))
 
     assert reader.active_time_value == reader.time_values[0]
 
