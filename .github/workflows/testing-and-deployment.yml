@@ -152,14 +152,11 @@ jobs:
           restore-keys: |
             Examples-1-
 
-
-
       - name: Build wheel and install pyvista
         run: |
           pip install build
           python -m build --wheel
           pip install dist/pyvista*.whl
-
 
       - name: Set up vtk
         if: ${{ matrix.vtk-version != 'latest' }}
@@ -191,6 +188,7 @@ jobs:
           pip install build twine
           python -m build
           twine check --strict dist/*
+          
       - name: Upload to PyPi
         if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
         run: |

@@ -25,17 +25,6 @@ from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities.misc import can_create_mpl_figure
 
-# Image regression warning/error thresholds for releases after 9.0.1
-# TODO: once we have a stable release for VTK, remove these.
-
-# these images vary between Windows when using OSMesa and Linux/MacOS
-# and will not be verified
-
-
-# these images vary between Linux/Windows and MacOS
-# and will not be verified for MacOS
-
-
 # skip all tests if unable to render
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
@@ -114,6 +103,7 @@ def multicomp_poly():
     return data
 
 
+# image cache created with 9.0.20210612.dev0
 @pytest.mark.needs_vtk9
 def test_import_gltf(verify_image_cache):
     verify_image_cache.high_variance_test = True
@@ -128,6 +118,7 @@ def test_import_gltf(verify_image_cache):
     pl.show()
 
 
+# image cache created with 9.0.20210612.dev0
 @pytest.mark.needs_vtk9
 def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
     verify_image_cache.high_variance_test = True
@@ -1621,6 +1612,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show()
 
 
+# VTK regression 9.0.1 --> 9.1.0
 @skip_windows
 def test_opacity_by_array_direct(plane, verify_image_cache):
     verify_image_cache.high_variance_test = True

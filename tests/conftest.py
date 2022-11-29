@@ -6,7 +6,6 @@ import pyvista
 from pyvista import examples
 
 pyvista.OFF_SCREEN = True
-# pytest_plugins = ["pyvista"]
 
 
 @fixture(scope='session', autouse=True)
