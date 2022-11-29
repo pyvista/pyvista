@@ -152,16 +152,14 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Install Testing Requirements
-        run: pip install -r requirements_test.txt
+
 
       - name: Build wheel and install pyvista
         run: |
-          # pytest-pyvista plugin installs pyvista, make sure we install the right version
-          pip uninstall pyvista --yes
           pip install build
           python -m build --wheel
           pip install dist/pyvista*.whl
+
 
       - name: Set up vtk
         if: ${{ matrix.vtk-version != 'latest' }}
@@ -172,6 +170,8 @@ jobs:
           packages: libgl1-mesa-glx xvfb python-tk
           version: 3.0
 
+      - name: Install Testing Requirements
+        run: pip install -r requirements_test.txt
 
       - name: Software Report
         run: |
