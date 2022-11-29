@@ -45,7 +45,9 @@ jobs:
             Examples-Data-
 
       - name: Install pyvista and doctest requirements
-        run: pip install . -r requirements_test.txt
+        run: |
+          pip install -e .
+          pip install -r requirements_test.txt
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v1
@@ -59,7 +61,7 @@ jobs:
       - name: Test Package Docstrings
         run: |
           pip uninstall --yes pytest-pyvista 
-          pytest -v --doctest-modules pyvista --import-mode importlib
+          pytest -v --doctest-modules pyvista
           pip install pytest-pyvista
 
       - name: Test Package Docstrings with Local Namespace
