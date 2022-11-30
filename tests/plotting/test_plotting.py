@@ -103,9 +103,9 @@ def multicomp_poly():
     return data
 
 
-# image cache created with 9.0.20210612.dev0
 @pytest.mark.needs_vtk9
 def test_import_gltf(verify_image_cache):
+    # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
 
     filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
@@ -118,9 +118,9 @@ def test_import_gltf(verify_image_cache):
     pl.show()
 
 
-# image cache created with 9.0.20210612.dev0
 @pytest.mark.needs_vtk9
 def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
+    # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.gltf'))
 
@@ -1612,9 +1612,9 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show()
 
 
-# VTK regression 9.0.1 --> 9.1.0
 @skip_windows
 def test_opacity_by_array_direct(plane, verify_image_cache):
+    # VTK regression 9.0.1 --> 9.1.0
     verify_image_cache.high_variance_test = True
 
     # test with opacity parm as an array, both cell and point sized
