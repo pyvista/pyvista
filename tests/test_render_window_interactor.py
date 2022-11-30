@@ -113,7 +113,7 @@ def test_track_click_position_multi_render():
     reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents until VTK9.2.',
 )
 def test_timer():
-    # Create normal interactor from offscreen plotter (not generic,
+    # Create a normal interactor from the offscreen plotter (not generic,
     # which is the default for offscreen rendering)
     pl = pyvista.Plotter()
     iren = pyvista.plotting.RenderWindowInteractor(pl)
@@ -137,7 +137,7 @@ def test_timer():
     iren.add_observer("TimerEvent", on_timer)
     iren.initialize()
 
-    # Test one-shot timer (only fired once for extended duration)
+    # Test one-shot timer (only fired once for the extended duration)
     iren.create_timer(duration, repeating=False)
     process_events(iren, delay)
     assert len(events) == 1
