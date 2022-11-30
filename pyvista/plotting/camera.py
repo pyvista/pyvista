@@ -111,7 +111,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pv.Plotter()
         >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc") # doctest:+SKIP
         >>> pl.camera.position
-        (2.0, 1.0, 1.0)
+        (1.0, 1.0, 1.0)
         """
         to_find = {
             "CameraPosition": ("position", float),
