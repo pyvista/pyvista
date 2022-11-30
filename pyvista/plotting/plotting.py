@@ -20,6 +20,7 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
+from pyvista.plotting.volume import Volume
 from pyvista.utilities import (
     FieldAssociation,
     abstract_class,
@@ -3635,8 +3636,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         self.mapper.update()
 
-        self.volume = _vtk.vtkVolume()
-        self.volume.SetMapper(self.mapper)
+        self.volume = Volume()
+        self.volume.mapper = self.mapper
 
         prop = _vtk.vtkVolumeProperty()
         prop.SetColor(self.mapper.lookup_table.to_color_tf())
@@ -3647,7 +3648,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetDiffuse(diffuse)
         prop.SetSpecular(specular)
         prop.SetSpecularPower(specular_power)
-        self.volume.SetProperty(prop)
+        self.volume.prop = prop
 
         actor, prop = self.add_actor(
             self.volume,
