@@ -1,5 +1,10 @@
 """Module containing pyvista implementation of vtkCamera."""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Union
 from weakref import proxy
+from xml.etree import ElementTree
 
 import numpy as np
 
@@ -87,6 +92,62 @@ class Camera(_vtk.vtkCamera):
         """Delete the camera."""
         self.RemoveAllObservers()
         self.parent = None
+
+    @classmethod
+    def from_paraview_pvcc(cls, filename: Union[str, Path]) -> Camera:
+        """Load a Paraview camera file (.pvcc extension).
+
+        Returns a pyvista.Camera object for which attributes has been read
+        from the filename argument.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            Path to Paraview camera file (.pvcc).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc") # doctest:+SKIP
+        >>> pl.camera.position
+        (2.0, 1.0, 1.0)
+        """
+        to_find = {
+            "CameraPosition": ("position", float),
+            "CameraFocalPoint": ("focal_point", float),
+            "CameraViewAngle": ("view_angle", float),
+            "CameraViewUp": ("up", float),
+            "CameraParallelProjection": ("parallel_projection", int),
+            "CameraParallelScale": ("parallel_scale", float),
+        }
+        camera = cls()
+
+        tree = ElementTree.parse(filename)
+        root = tree.getroot()[0]
+        for element in root:
+            attrib = element.attrib
+            attrib_name = attrib["name"]
+
+            if attrib_name in to_find:
+                name, typ = to_find[attrib_name]
+                nelems = int(attrib["number_of_elements"])
+
+                # Set the camera attributes
+                if nelems == 3:
+                    values = [typ(e.attrib["value"]) for e in element]
+                    setattr(camera, name, values)
+                elif nelems == 1:
+
+                    # Special case for bool since bool("0") returns True.
+                    # So first convert to int from `to_find` and then apply bool
+                    if element[-1].attrib["name"] == "bool":
+                        val = bool(typ(element[0].attrib["value"]))
+                    else:
+                        val = typ(element[0].attrib["value"])
+                    setattr(camera, name, val)
+
+        return camera
 
     @property
     def position(self):
