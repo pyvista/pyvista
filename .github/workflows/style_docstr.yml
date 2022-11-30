@@ -60,9 +60,7 @@ jobs:
 
       - name: Test Package Docstrings
         run: |
-          pip uninstall --yes pytest-pyvista 
           pytest -v --doctest-modules pyvista
-          pip install pytest-pyvista
 
       - name: Test Package Docstrings with Local Namespace
         run: make doctest-modules-local-namespace
