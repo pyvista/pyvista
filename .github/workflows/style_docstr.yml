@@ -59,8 +59,7 @@ jobs:
           pip list
 
       - name: Test Package Docstrings
-        run: |
-          pytest -v --doctest-modules pyvista
+        run: pytest -v --doctest-modules pyvista
 
       - name: Test Package Docstrings with Local Namespace
         run: make doctest-modules-local-namespace
