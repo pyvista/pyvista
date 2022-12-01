@@ -16,19 +16,19 @@ numpydoc==1.5.0
 osmnx==1.2.2
 panel==0.14.1
 param==1.12.2  # due to panel bug
-pydata-sphinx-theme==0.11.0
+pydata-sphinx-theme==0.12.0
 pypandoc==1.10
 pytest-sphinx==0.5.0
 pythreejs==2.4.1
 scipy==1.9.3
 Sphinx==5.3.0
 sphinx-autobuild==2021.3.14
-sphinx-copybutton==0.5.0
+sphinx-copybutton==0.5.1
 sphinx-design==0.3.0
 sphinx-gallery==0.11.1
 sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.2.0
 sphinxcontrib-asciinema==0.3.5
 sphinxcontrib-websupport==1.2.4
-trimesh==3.16.2
+trimesh==3.16.4
 typed-ast==1.5.4

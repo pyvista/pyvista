@@ -3,7 +3,7 @@
 cmocean<2.1
 codecov<2.2.0
 colorcet<3.1.0
-hypothesis<6.57.2
+hypothesis<6.58.2
 imageio<2.23.0
 imageio-ffmpeg<0.5.0
 ipygany<0.6.0

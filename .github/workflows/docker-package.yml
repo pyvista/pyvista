@@ -40,7 +40,8 @@ jobs:
 
       - name: Create PyVista package
         run: |
-          python setup.py sdist
+          pip install build
+          python -m build --sdist
 
       - name: Log into the Container registry
         uses: docker/login-action@v2

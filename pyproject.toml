@@ -1,3 +1,98 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'pyvista'
+description = 'Easier Pythonic interface to VTK'
+authors = [
+    {name = 'PyVista Developers', email = 'info@pyvista.org'},
+]
+readme = 'README.rst'
+requires-python = '>=3.7'
+keywords = ['vtk', 'numpy', 'plotting', 'mesh']
+license = {text = 'MIT'}
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Science/Research',
+    'Topic :: Scientific/Engineering :: Information Analysis',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: MacOS',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+]
+dependencies = [
+    'imageio',
+    'numpy',
+    'pillow',
+    'pooch',
+    'scooby>=0.5.1',
+    "typing-extensions; python_version < '3.8'",
+    'vtk',
+]
+dynamic = ['version']
+
+[project.optional-dependencies]
+all = [
+    'cmocean',
+    'colorcet',
+    'ipyvtklink',
+    'matplotlib',
+    'meshio>=5.2',
+    'panel',
+    'pythreejs',
+]
+colormaps = [
+    'cmocean',
+    'colorcet',
+    'matplotlib',
+]
+io = ['meshio>=5.2']
+jupyter = [
+    'ipyvtklink',
+    'panel',
+    'pythreejs',
+]
+trame = [
+    'trame',
+    'jupyter-server-proxy'
+]
+
+[project.urls]
+Documentation = 'https://docs.pyvista.org/'
+"Bug Tracker" = 'https://github.com/pyvista/pyvista/issues'
+"Source Code" = 'https://github.com/pyvista/pyvista'
+
+[tool.setuptools.dynamic]
+version = {attr = 'pyvista._version.__version__'}
+
+[tool.setuptools.packages.find]
+include = [
+    'pyvista',
+    'pyvista.*',
+]
+
+[tool.setuptools.package-data]
+pyvista = [
+    'py.typed',
+]
+"pyvista.examples" = [
+    '2k_earth_daymap.jpg',
+    'airplane.ply',
+    'ant.ply',
+    'channels.vti',
+    'globe.vtk',
+    'hexbeam.vtk',
+    'nut.ply',
+    'rectilinear.vtk',
+    'sphere.ply',
+    'uniform.vtk',
+]
+
 [tool.isort]
 profile = 'black'
 line_length = 100
