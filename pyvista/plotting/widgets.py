@@ -1651,7 +1651,7 @@ class WidgetHelper:
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
-            spline_widget.InitializeHandles(pyvista.vtk_points((initial_points)))
+            spline_widget.InitializeHandles(pyvista.vtk_points(initial_points))
         else:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
