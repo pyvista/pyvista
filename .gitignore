@@ -99,4 +99,4 @@ venv/
 .vscode/
 
 # Image cache
-*image_cache/* 
+*image_cache/*
