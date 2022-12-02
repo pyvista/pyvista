@@ -178,7 +178,7 @@ class RenderWindowInteractor:
         """Keep track of the mouse position.
 
         This will potentially slow down the interactor. No callbacks supported
-        here - use :func:`pyvista.BasePlotter.track_click_position` instead.
+        here - use :func:`pyvista.Plotter.track_click_position` instead.
 
         """
         self.add_observer(_vtk.vtkCommand.MouseMoveEvent, callback)
