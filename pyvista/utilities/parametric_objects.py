@@ -126,7 +126,6 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
             "The absolute value of all values continuity array elements must be <= 1.0 "
         )
 
-
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points, False))
 
