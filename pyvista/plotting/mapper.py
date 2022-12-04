@@ -468,7 +468,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         rgb : bool, default: False
             If an 2 dimensional array is passed as the scalars, plot
