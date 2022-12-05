@@ -3370,8 +3370,8 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             The type of plots to return. Allowed types are
             ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
             and ``"stack"``.
-If no type is provided (``None``), all plots are returned,
-regardless of their type.
+            If no type is provided (``None``), all plots are returned,
+            regardless of their type.
 
         Yields
         ------
@@ -3444,8 +3444,8 @@ regardless of their type.
             ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
             and ``"stack"``.
 
-If no type is provided (``None``), all plots are removed,
-regardless of their type.
+            If no type is provided (``None``), all plots are removed,
+            regardless of their type.
 
         Examples
         --------
