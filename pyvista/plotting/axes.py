@@ -2,6 +2,7 @@
 from pyvista import _vtk
 
 from .actor import Actor
+from .axes_actor import AxesActor
 
 
 class Axes(_vtk.vtkAxes):
@@ -41,8 +42,8 @@ class Axes(_vtk.vtkAxes):
         self.mapper = _vtk.vtkPolyDataMapper()
         self.mapper.SetInputConnection(self.GetOutputPort())
         # Add the axes actor
-        self.actor = Actor(mapper=self.actor)
-        self.axes_actor = _vtk.vtkAxesActor()
+        self.actor = Actor(mapper=self.mapper)
+        self.axes_actor = AxesActor(mapper=self.mapper)
         self.actor.visibility = show_actor
         self.actor.scale = actor_scale
         self.actor.prop.line_width = line_width

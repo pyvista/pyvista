@@ -591,33 +591,34 @@ class Actor(pv._vtk.vtkActor):
     def backface_prop(self) -> Optional['pv.Property']:
         """Return or set the backface property.
 
-        By default this property matches the frontface property
-        :attr:`Actor.prop`. Once accessed or modified, this backface
-        property becomes independent of the frontface property. In
-        order to restore the fallback to frontface property, assign
-        ``None`` to the property.
+                By default this property matches the frontface property
+                :attpl.add_mesh(pv.Sphere())
+        pl.show() r:`Actor.prop`. Once accessed or modified, this backface
+                property becomes independent of the frontface property. In
+                order to restore the fallback to frontface property, assign
+                ``None`` to the property.
 
-        Returns
-        -------
-        pyvista.Property
-            The object describing backfaces.
+                Returns
+                -------
+                pyvista.Property
+                    The object describing backfaces.
 
-        Examples
-        --------
-        Clip a sphere by a plane and color the inside of the clipped sphere
-        light blue using the ``backface_prop``.
+                Examples
+                --------
+                Clip a sphere by a plane and color the inside of the clipped sphere
+                light blue using the ``backface_prop``.
 
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> plane = pv.Plane(i_size=1.5, j_size=1.5)
-        >>> mesh = pv.Sphere().clip_surface(plane, invert=False)
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(mesh, smooth_shading=True)
-        >>> actor.backface_prop.color = 'lightblue'
-        >>> _ = pl.add_mesh(
-        ...     plane, opacity=0.25, show_edges=True, color='grey', lighting=False,
-        ... )
-        >>> pl.show()
+                >>> import numpy as np
+                >>> import pyvista as pv
+                >>> plane = pv.Plane(i_size=1.5, j_size=1.5)
+                >>> mesh = pv.Sphere().clip_surface(plane, invert=False)
+                >>> pl = pv.Plotter()
+                >>> actor = pl.add_mesh(mesh, smooth_shading=True)
+                >>> actor.backface_prop.color = 'lightblue'
+                >>> _ = pl.add_mesh(
+                ...     plane, opacity=0.25, show_edges=True, color='grey', lighting=False,
+                ... )
+                >>> pl.show()
 
         """
         if self.GetBackfaceProperty() is None:
