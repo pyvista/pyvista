@@ -164,7 +164,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     Other Parameters
     ----------------
     _wrap : vtk.vtkPen, default: None
-        Wrap an existing VTK Pen instance.
+        Wrap an existing VTK Pen instance (no wrapping when ``None``).
 
     Notes
     -----
@@ -281,7 +281,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
     Other Parameters
     ----------------
     _wrap : vtk.vtkBrush, default: None
-        Wrap an existing VTK Brush instance.
+        Wrap an existing VTK Brush instance (no wrapping when ``None``).
 
     """
 
@@ -443,7 +443,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     Other Parameters
     ----------------
     _wrap : vtk.vtkAxis, default: None
-        Wrap an existing VTK Axis instance.
+        Wrap an existing VTK Axis instance (no wrapping when ``None``).
 
     """
 
@@ -1374,7 +1374,7 @@ class _Chart(DocSubs):
         off_screen : bool, default: :attr:`pyvista.global_theme.off_screen
             <pyvista.themes.DefaultTheme.off_screen>`
             Plots off screen when ``True``.  Helpful for saving screenshots
-            without a window popping up.
+            without a window popping up. Defaults to active theme setting.
 
         full_screen : bool, default: :attr:`pyvista.global_theme.full_screen
             <pyvista.themes.DefaultTheme.full_screen>`
@@ -3370,6 +3370,8 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             The type of plots to return. Allowed types are
             ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
             and ``"stack"``.
+If no type is provided (``None``), all plots are returned,
+regardless of their type.
 
         Yields
         ------
@@ -3441,6 +3443,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             The type of the plots to remove. Allowed types are
             ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
             and ``"stack"``.
+
+If no type is provided (``None``), all plots are removed,
+regardless of their type.
 
         Examples
         --------
@@ -3901,7 +3906,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     Other Parameters
     ----------------
     _wrap : vtk.vtkPlotPie, default: None
-        Wrap an existing VTK PlotPie instance.
+        Wrap an existing VTK PlotPie instance (no wrapping when ``None``).
 
     Examples
     --------
@@ -4106,7 +4111,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     Parameters
     ----------
     figure : matplotlib.figure.Figure, default: None
-        The matplotlib figure to draw.
+        The matplotlib figure to draw. If no figure is
+        provided (``None``), a new figure is created.
 
     size : list or tuple, default: (1, 1)
         Size of the chart in normalized coordinates. A size of ``(0,
