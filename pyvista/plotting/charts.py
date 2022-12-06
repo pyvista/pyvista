@@ -429,7 +429,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         ``'fixed'``. Setting it to ``None`` will change the axis
         behavior to ``'auto'``.
 
-    grid : bool, default: ``True``
+    grid : bool, default: True
         Flag to toggle grid lines visibility for this axis.
 
     Attributes
@@ -1371,13 +1371,11 @@ class _Chart(DocSubs):
 
         Parameters
         ----------
-        off_screen : bool, default: :attr:`pyvista.global_theme.off_screen
-            <pyvista.themes.DefaultTheme.off_screen>`
+        off_screen : bool, default: pyvista.global_theme.off_screen
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up. Defaults to active theme setting.
 
-        full_screen : bool, default: :attr:`pyvista.global_theme.full_screen
-            <pyvista.themes.DefaultTheme.full_screen>`
+        full_screen : bool, default: pyvista.global_theme.full_screen
             Opens window in full screen.  When enabled, ignores
             ``window_size``.
 
@@ -1388,8 +1386,7 @@ class _Chart(DocSubs):
             When ``True``, takes screenshot and returns ``numpy`` array of
             image.
 
-        window_size : list, default: :attr:`pyvista.global_theme.window_size
-            <pyvista.themes.DefaultTheme.window_size>`
+        window_size : list, default: pyvista.global_theme.window_size
             Window size in pixels.
 
         notebook : bool, default: None
