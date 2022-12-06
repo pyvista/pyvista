@@ -1379,7 +1379,7 @@ class _Chart(DocSubs):
         full_screen : bool, default: :attr:`pyvista.global_theme.full_screen
             <pyvista.themes.DefaultTheme.full_screen>`
             Opens window in full screen.  When enabled, ignores
-            ``window_size``.  Defaults to active theme setting in
+            ``window_size``.
 
         screenshot : str or bool, default: False
             Saves screenshot to file when enabled.  See:
@@ -1400,7 +1400,7 @@ class _Chart(DocSubs):
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-            ``color='#FFFFFF'``
+            ``color='#FFFFFF'``.
 
         dev_kwargs : dict, optional
             Optional developer keyword arguments.
