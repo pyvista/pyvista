@@ -182,7 +182,6 @@ def _download_file(filename, progress_bar):
         filename,
         processor=Unzip() if filename.endswith('.zip') else None,
         downloader=_file_copier if _FILE_CACHE else None,
-        progressbar=progress_bar,
     )
 
 
