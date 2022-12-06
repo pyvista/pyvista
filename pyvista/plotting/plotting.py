@@ -4498,7 +4498,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.lines_from_points(lines)
+        lines = pyvista.line_segments_from_points(lines)
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
