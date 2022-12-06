@@ -2924,10 +2924,10 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         renderer's bottom left corner, a location of ``(1, 1)``
         corresponds to the renderer's top right corner.
 
-    x_label : str, default: 'x'
+    x_label : str, default: "x"
         Label along the x-axis.
 
-    y_label : str, default: 'y'
+    y_label : str, default: "y"
         Label along the y-axis.
 
     grid : bool, default: True
@@ -3102,7 +3102,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         y : array_like, default: None
             Values to plot on the Y-axis.
 
-        fmt : str, default: '-'
+        fmt : str, default: "-"
             A format string, e.g. ``'ro'`` for red circles. See the Notes
             section for a full description of the format strings.
 
@@ -4112,7 +4112,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     ----------
     figure : matplotlib.figure.Figure, default: None
         The matplotlib figure to draw. If no figure is
-        provided (``None``), a new figure is created.
+        provided ( ``None`` ), a new figure is created.
 
     size : list or tuple, default: (1, 1)
         Size of the chart in normalized coordinates. A size of ``(0,
