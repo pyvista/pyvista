@@ -219,8 +219,9 @@ def test_add_points_invalid_style(sphere):
 def test_add_lines():
     pl = pyvista.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-    _ = pl.add_lines(points)
-    assert len(pl.renderer.actors) == 2
+    actor = pl.add_lines(points)
+    dataset = actor.mapper.dataset
+    assert dataset.n_cells == 2
 
 
 def test_clear_actors(cube, sphere):
