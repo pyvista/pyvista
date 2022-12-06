@@ -215,11 +215,13 @@ def test_add_points_invalid_style(sphere):
     with pytest.raises(ValueError, match='Should be either "points"'):
         pl.add_points(sphere, style='wireframe')
 
+
 def test_add_lines():
     pl = pyvista.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-    actor = pl.add_lines(points)
+    _ = pl.add_lines(points)
     assert len(pl.renderer.actors) == 2
+
 
 def test_clear_actors(cube, sphere):
     pl = pyvista.Plotter()
