@@ -141,7 +141,7 @@ class Camera(_vtk.vtkCamera):
 
                     # Special case for bool since bool("0") returns True.
                     # So first convert to int from `to_find` and then apply bool
-                    if element[-1].attrib["name"] == "bool":
+                    if "name" in element[-1].attrib and element[-1].attrib["name"] == "bool":
                         val = bool(typ(element[0].attrib["value"]))
                     else:
                         val = typ(element[0].attrib["value"])

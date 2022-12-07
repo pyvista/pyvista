@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import io
 
 import pyvista
 
@@ -21,11 +22,69 @@ configuration = [
 def camera():
     return pyvista.Camera()
 
+@pytest.fixture()
+def paraview_pvcc():
+    """Fixture returning a paraview camera file with values of the position"""
+
+    tmp = """
+    <PVCameraConfiguration description="ParaView camera configuration" version="1.0">
+      <Proxy group="views" type="RenderView" id="6395" servers="21">
+        <Property name="CameraPosition" id="6395.CameraPosition" number_of_elements="3">
+          <Element index="0" value="10.519087611966333"/>
+          <Element index="1" value="40.74973775632195"/>
+          <Element index="2" value="-20.24019652397463"/>
+        </Property>
+        <Property name="CameraFocalPoint" id="6395.CameraFocalPoint" number_of_elements="3">
+          <Element index="0" value="15.335762892470676"/>
+          <Element index="1" value="-26.960151717473682"/>
+          <Element index="2" value="17.860905595181094"/>
+        </Property>
+        <Property name="CameraViewUp" id="6395.CameraViewUp" number_of_elements="3">
+          <Element index="0" value="0.2191945908188539"/>
+          <Element index="1" value="-0.4665856879512876"/>
+          <Element index="2" value="-0.8568847805596613"/>
+        </Property>
+        <Property name="CenterOfRotation" id="6395.CenterOfRotation" number_of_elements="3">
+          <Element index="0" value="15.039424359798431"/>
+          <Element index="1" value="-7.047080755233765"/>
+          <Element index="2" value="6.712674975395203"/>
+        </Property>
+        <Property name="RotationFactor" id="6395.RotationFactor" number_of_elements="1">
+          <Element index="0" value="1"/>
+        </Property>
+        <Property name="CameraViewAngle" id="6395.CameraViewAngle" number_of_elements="1">
+          <Element index="0" value="30"/>
+        </Property>
+        <Property name="CameraParallelScale" id="6395.CameraParallelScale" number_of_elements="1">
+          <Element index="0" value="20.147235678333413"/>
+        </Property>
+        <Property name="CameraParallelProjection" id="6395.CameraParallelProjection" number_of_elements="1">
+          <Element index="0" value="0"/>
+          <Domain name="bool" id="6395.CameraParallelProjection.bool"/>
+        </Property>
+      </Proxy>
+    </PVCameraConfiguration>"""
+    position = [10.519087611966333,40.74973775632195,-20.24019652397463]
+    focal = [15.335762892470676,-26.960151717473682,17.860905595181094]
+    view_up = [0.2191945908188539,-0.4665856879512876,-0.8568847805596613]
+    view_angle = 30
+    parallel_scale = 20.147235678333413
+    projection = False
+
+    return io.StringIO(tmp), position, focal, view_up, view_angle, parallel_scale, projection
 
 def test_invalid_init():
     with pytest.raises(TypeError):
         pyvista.Camera(1)
 
+def test_camera_fom_paraview_pvcc(paraview_pvcc):
+    camera = pyvista.Camera.from_paraview_pvcc(paraview_pvcc[0])
+    assert camera.position == pytest.approx(paraview_pvcc[1])
+    assert camera.focal_point == pytest.approx(paraview_pvcc[2])
+    assert camera.up == pytest.approx(paraview_pvcc[3])
+    assert camera.view_angle == paraview_pvcc[4]
+    assert camera.parallel_scale == paraview_pvcc[-2]
+    assert camera.parallel_projection == paraview_pvcc[-1]
 
 def test_camera_position(camera):
     position = np.random.random(3)
