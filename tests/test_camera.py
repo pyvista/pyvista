@@ -1,6 +1,7 @@
+import io
+
 import numpy as np
 import pytest
-import io
 
 import pyvista
 
@@ -21,6 +22,7 @@ configuration = [
 @pytest.fixture()
 def camera():
     return pyvista.Camera()
+
 
 @pytest.fixture()
 def paraview_pvcc():
@@ -64,18 +66,20 @@ def paraview_pvcc():
         </Property>
       </Proxy>
     </PVCameraConfiguration>"""
-    position = [10.519087611966333,40.74973775632195,-20.24019652397463]
-    focal = [15.335762892470676,-26.960151717473682,17.860905595181094]
-    view_up = [0.2191945908188539,-0.4665856879512876,-0.8568847805596613]
+    position = [10.519087611966333, 40.74973775632195, -20.24019652397463]
+    focal = [15.335762892470676, -26.960151717473682, 17.860905595181094]
+    view_up = [0.2191945908188539, -0.4665856879512876, -0.8568847805596613]
     view_angle = 30
     parallel_scale = 20.147235678333413
     projection = False
 
     return io.StringIO(tmp), position, focal, view_up, view_angle, parallel_scale, projection
 
+
 def test_invalid_init():
     with pytest.raises(TypeError):
         pyvista.Camera(1)
+
 
 def test_camera_fom_paraview_pvcc(paraview_pvcc):
     camera = pyvista.Camera.from_paraview_pvcc(paraview_pvcc[0])
@@ -85,6 +89,15 @@ def test_camera_fom_paraview_pvcc(paraview_pvcc):
     assert camera.view_angle == paraview_pvcc[4]
     assert camera.parallel_scale == paraview_pvcc[-2]
     assert camera.parallel_projection == paraview_pvcc[-1]
+
+
+def test_camera_to_paraview_pvcc(camera, tmp_path):
+    fname = tmp_path / "test.pvcc"
+    camera.to_paraview_pvcc(fname)
+    assert fname.exists()
+    ocamera = pyvista.Camera.from_paraview_pvcc(fname)
+    assert ocamera == camera
+
 
 def test_camera_position(camera):
     position = np.random.random(3)

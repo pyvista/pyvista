@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Union
 from weakref import proxy
+import xml.dom.minidom as md
 from xml.etree import ElementTree
 
 import numpy as np
@@ -148,6 +149,72 @@ class Camera(_vtk.vtkCamera):
                     setattr(camera, name, val)
 
         return camera
+
+    def to_paraview_pvcc(self, filename: Union[str, Path]):
+        """Write the camera parameters to a Paraview camera file (.pvcc extension).
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            Path to Paraview camera file (.pvcc).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.camera.to_paraview_pvcc("camera.pvcc")
+        """
+        root = ElementTree.Element("PVCameraConfiguration")
+        root.attrib["description"] = "ParaView camera configuration"
+        root.attrib["version"] = "1.0"
+
+        dico = dict(group="views", type="RenderView", id="0", servers="21")
+        proxy = ElementTree.SubElement(root, "Proxy", dico)
+
+        # Add tuples
+        to_find = {
+            "CameraPosition": "position",
+            "CameraFocalPoint": "focal_point",
+            "CameraViewUp": "up",
+        }
+        for name, attr in to_find.items():
+            e = ElementTree.SubElement(
+                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="3")
+            )
+
+            for i in range(3):
+                tmp = ElementTree.Element("Element")
+                tmp.attrib["index"] = str(i)
+                tmp.attrib["value"] = str(getattr(self, attr)[i])
+                e.append(tmp)
+
+        # Add single values
+        to_find = {
+            "CameraViewAngle": "view_angle",
+            "CameraParallelScale": "parallel_scale",
+            "CameraParallelProjection": "parallel_projection",
+        }
+
+        for name, attr in to_find.items():
+            e = ElementTree.SubElement(
+                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="1")
+            )
+            tmp = ElementTree.Element("Element")
+            tmp.attrib["index"] = "0"
+
+            val = getattr(self, attr)
+            if type(val) is not bool:
+                tmp.attrib["value"] = str(val)
+                e.append(tmp)
+            else:
+                tmp.attrib["value"] = "1" if val else "0"
+                e.append(tmp)
+                e.append(ElementTree.Element("Domain", dict(name="bool", id=f"0.{name}.bool")))
+
+        xmlstr = ElementTree.tostring(root).decode()
+        newxml = md.parseString(xmlstr)
+        with open(filename, 'w') as outfile:
+            outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property
     def position(self):
