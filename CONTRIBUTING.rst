@@ -413,7 +413,7 @@ Run the primary test suite and generate coverage report:
 
 .. code:: bash
 
-   python -m pytest -v --cov pyvista
+   python -m pytest -v --cov pyvista --image_cache_dir ./image_cache
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
@@ -421,7 +421,7 @@ leverage multiple processes. Example usage:
 
 .. code:: bash
 
-   python -m pytest -n <NUMCORE> --cov pyvista
+   python -m pytest -n <NUMCORE> --cov pyvista --image_cache_dir ./image_cache
 
 Documentation Testing
 ~~~~~~~~~~~~~~~~~~~~~
