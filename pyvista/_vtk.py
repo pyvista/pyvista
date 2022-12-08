@@ -181,6 +181,7 @@ if VTK9:
         VTK_VERTEX,
         VTK_VOXEL,
         VTK_WEDGE,
+        vtkCell,
         vtkCellArray,
         vtkCellLocator,
         vtkColor3ub,

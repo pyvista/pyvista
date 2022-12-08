@@ -1,7 +1,64 @@
 """Define types of cells."""
+from __future__ import annotations
+
 from enum import IntEnum
 
 from pyvista import _vtk
+
+
+class Cell(_vtk.VTKObjectWrapper):
+    def __init__(self, vtkobject: _vtk.vtkCell) -> None:
+        super().__init__(vtkobject=vtkobject)
+
+    @property
+    def type(self):
+        for i in CellType:
+            if i == self.GetCellType():
+                return i
+        raise ValueError("`cell_type` not in CellType enum")
+
+    @property
+    def is_linear(self):
+        return bool(self.IsLinear())
+
+    @property
+    def dimension(self):
+        return self.GetCellDimension()
+
+    @property
+    def n_points(self):
+        return self.GetNumberOfPoints()
+
+    @property
+    def n_faces(self):
+        return self.GetNumberOfFaces()
+
+    @property
+    def n_edges(self):
+        return self.GetNumberOfEdges()
+
+    @property
+    def point_ids(self):
+        point_ids = self.GetPointIds()
+        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
+
+    @property
+    def edges(self):
+        return [self.get_edge(i) for i in range(self.n_edges)]
+
+    def get_edge(self, i):
+        return Cell(self.GetEdge(i))
+
+    @property
+    def faces(self):
+        return [self.get_face(i) for i in range(self.n_faces)]
+
+    def get_face(self, i):
+        return Cell(self.GetFace(i))
+
+    @property
+    def bounds(self):
+        return self.GetBounds()
 
 
 class CellType(IntEnum):

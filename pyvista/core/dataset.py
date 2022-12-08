@@ -30,6 +30,7 @@ from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .._typing import Number, NumericArray, Vector, VectorArray
+from .cell import Cell
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -2479,6 +2480,13 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
+    def get_cell(self, i) -> Cell:
+        return Cell(self.GetCell(i))
+
+    @property
+    def cell(self):
+        return [self.get_cell(i) for i in range(self.n_cells)]
+
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
@@ -2500,7 +2508,7 @@ class DataSet(DataSetFilters, DataObject):
         3
 
         """
-        return self.GetCell(ind).GetPoints().GetNumberOfPoints()
+        return self.get_cell(ind).n_points
 
     def cell_points(self, ind: int) -> np.ndarray:
         """Return the points in a cell.
@@ -2553,7 +2561,7 @@ class DataSet(DataSetFilters, DataObject):
         (896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461, 80.74520111083984, 83.65809631347656)
 
         """
-        return self.GetCell(ind).GetBounds()
+        return self.get_cell(ind).bounds
 
     def cell_type(self, ind: int) -> int:
         """Return the type of a cell.
@@ -2576,7 +2584,7 @@ class DataSet(DataSetFilters, DataObject):
         5
 
         """
-        return self.GetCellType(ind)
+        return self.get_cell(ind).type
 
     def cell_point_ids(self, ind: int) -> List[int]:
         """Return the point ids in a cell.
@@ -2604,9 +2612,7 @@ class DataSet(DataSetFilters, DataObject):
         [0, 1, 2]
 
         """
-        cell = self.GetCell(ind)
-        point_ids = cell.GetPointIds()
-        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
+        return self.get_cell(ind).point_ids
 
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
