@@ -71,4 +71,4 @@ jobs:
           pip show vtk
 
       - name: Unit Testing
-        run: xvfb-run pytest --image_cache_dir ./image_cache
+        run: xvfb-run pytest -v --image_cache_dir ./image_cache
