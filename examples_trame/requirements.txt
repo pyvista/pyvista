@@ -1,4 +1,4 @@
 pyvista
 matplotlib
 trame
-trame-vtk
+trame-vtk>=2.0.10
