@@ -1,0 +1,68 @@
+name: VTK Master Testing
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ALLOW_PLOTTING: true
+  SHELLOPTS: 'errexit:pipefail'
+
+jobs:
+  Linux:
+    name: Linux VTK Master Testing
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9, "3.10"]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: requirements_test.txt
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-1-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-1-
+
+      - name: Build wheel and install pyvista
+        run: |
+          pip install build
+          python -m build --wheel
+          pip install dist/pyvista*.whl
+
+      - name: Set up vtk
+        run: pip install vtk --pre --no-cache --extra-index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
+
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
+        with:
+          packages: libgl1-mesa-glx xvfb python-tk
+          version: 3.0
+
+      - name: Install Testing Requirements
+        run: pip install -r requirements_test.txt
+
+      - name: Software Report
+        run: |
+          xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          which python
+          pip list
+          pip show vtk
+
+      - name: Unit Testing
+        run: xvfb-run pytest --image_cache_dir ./image_cache
