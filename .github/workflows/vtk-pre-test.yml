@@ -1,6 +1,10 @@
 name: VTK Master Testing
 
 on:
+  # TODO: remove
+  push:
+    branches:
+      - maint/vtk-master-testing
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
