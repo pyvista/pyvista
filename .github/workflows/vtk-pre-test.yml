@@ -52,7 +52,7 @@ jobs:
 
       - name: Set up vtk
         run: |
-          pip uninstall vtk
+          pip uninstall vtk --yes
           pip install vtk --pre --no-cache --extra-index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
