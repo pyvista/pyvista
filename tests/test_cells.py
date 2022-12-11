@@ -4,6 +4,116 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
+from pyvista import Cell, CellType
+from pyvista.examples import (
+    load_airplane,
+    load_explicit_structured,
+    load_hexbeam,
+    load_rectilinear,
+    load_structured,
+    load_tetbeam,
+    load_uniform,
+)
+
+
+class Test_Cell:
+
+    grids = [
+        load_hexbeam(),
+        load_airplane(),
+        load_rectilinear(),
+        load_structured(),
+        load_tetbeam(),
+        load_uniform(),
+        load_explicit_structured(),
+    ]
+    ids = list(map(type, grids))
+
+    def test_bad_init(self):
+        with pytest.raises(TypeError, match="must be of vtkCell"):
+            _ = Cell(1)
+
+    @pytest.mark.parametrize("grid", grids, ids=ids)
+    def test_cell_attribute(self, grid):
+        assert isinstance(grid.cell, list)
+        assert len(grid.cell) == grid.n_cells
+        assert all(t == Cell for t in map(type, grid.cell[:]))
+
+    @pytest.mark.parametrize("grid", grids, ids=ids)
+    def test_cell_type_is_inside_enum(self, grid):
+        assert grid.cell[0].type in CellType
+
+    types = [
+        CellType.HEXAHEDRON,
+        CellType.TRIANGLE,
+        CellType.VOXEL,
+        CellType.QUAD,
+        CellType.TETRA,
+        CellType.VOXEL,
+        CellType.HEXAHEDRON,
+    ]
+
+    @pytest.mark.parametrize("grid,type", zip(grids, types), ids=ids)
+    def test_cell_type(self, grid, type):
+        assert grid.cell[0].type == type
+
+    @pytest.mark.parametrize("grid", grids, ids=ids)
+    def test_cell_is_linear(self, grid):
+        assert grid.cell[-1].is_linear
+
+    dims = [3, 2, 3, 2, 3, 3, 3]
+
+    @pytest.mark.parametrize("grid, dim", zip(grids, dims), ids=ids)
+    def test_cell_dimension(self, grid, dim):
+        assert grid.cell[-1].dimension == dim
+
+    npoints = [8, 3, 8, 4, 4, 8, 8]
+
+    @pytest.mark.parametrize("grid, np", zip(grids, npoints), ids=ids)
+    def test_cell_n_points(self, grid, np):
+        assert grid.cell[-1].n_points == np
+
+    nfaces = [6, 0, 6, 0, 4, 6, 6]
+
+    @pytest.mark.parametrize("grid, nf", zip(grids, nfaces), ids=ids)
+    def test_cell_n_faces(self, grid, nf):
+        assert grid.cell[-1].n_faces == nf
+
+    nedges = [12, 3, 12, 4, 6, 12, 12]
+
+    @pytest.mark.parametrize("grid, ne", zip(grids, nedges), ids=ids)
+    def test_cell_n_edges(self, grid, ne):
+        assert grid.cell[-1].n_edges == ne
+
+    @pytest.mark.parametrize("grid", grids, ids=ids)
+    def test_cell_edges(self, grid):
+        assert isinstance(grid.cell[0].edges, list)
+        assert all(e.type == CellType.LINE for e in grid.cell[-1].edges)
+
+    faces_types = [
+        CellType.QUAD,
+        None,
+        CellType.PIXEL,
+        None,
+        CellType.TRIANGLE,
+        CellType.PIXEL,
+        CellType.QUAD,
+    ]
+
+    @pytest.mark.parametrize("grid, face_type", zip(grids, faces_types), ids=ids)
+    def test_cell_faces(self, grid, face_type):
+        assert isinstance(grid.cell[0].faces, list)
+        if face_type is not None:
+            assert all(e.type == face_type for e in grid.cell[-1].faces)
+        else:
+            assert grid.cell[-1].faces == []
+
+    @pytest.mark.parametrize("grid", grids, ids=ids)
+    def test_cell_bounds(self, grid):
+        assert isinstance(grid.cell[0].bounds, tuple)
+        assert all(bc >= bg for bc, bg in zip(grid.cell[0].bounds[::2], grid.bounds[::2]))
+        assert all(bc <= bg for bc, bg in zip(grid.cell[0].bounds[1::2], grid.bounds[1::2]))
+
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
 NCELLS = 2

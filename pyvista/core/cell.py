@@ -3,19 +3,27 @@ from __future__ import annotations
 
 from enum import IntEnum
 
+import numpy as np
+
 from pyvista import _vtk
 
 
 class Cell(_vtk.VTKObjectWrapper):
     def __init__(self, vtkobject: _vtk.vtkCell) -> None:
+
+        if not isinstance(vtkobject, _vtk.vtkCell):
+            msg = f"`vtkobject` must be of vtkCell type (got {type(vtkobject)}) instead"
+            raise TypeError(msg)
         super().__init__(vtkobject=vtkobject)
 
     @property
     def type(self):
-        for i in CellType:
-            if i == self.GetCellType():
-                return i
-        raise ValueError("`cell_type` not in CellType enum")
+        arr = np.array(CellType)
+        mask = np.where(arr == self.GetCellType())[0]
+        if len(mask) == 1:
+            return CellType(mask[0])
+        else:
+            raise ValueError("Issue with the vtk GetCellType() method and CellType enum")
 
     @property
     def is_linear(self):
