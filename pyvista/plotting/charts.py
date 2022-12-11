@@ -163,7 +163,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     Other Parameters
     ----------------
-    _wrap : vtk.vtkPen, default: None
+    _wrap : vtk.vtkPen, optional
         Wrap an existing VTK Pen instance (no wrapping when ``None``).
 
     Notes
@@ -274,13 +274,13 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         Fill color of the shapes drawn using this brush. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
-    texture : Texture, default: None
+    texture : Texture, optional
         Texture used to fill shapes drawn using this brush. Any object
         convertible to a :class:`Texture` is allowed.
 
     Other Parameters
     ----------------
-    _wrap : vtk.vtkBrush, default: None
+    _wrap : vtk.vtkBrush, optional
         Wrap an existing VTK Brush instance (no wrapping when ``None``).
 
     """
@@ -422,7 +422,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     label : str, default: ""
         Axis label.
 
-    range : list or tuple of float, default: None
+    range : list or tuple of float, optional
         Axis range, denoting the minimum and maximum values
         displayed on this axis. Setting this to any valid value
         other than ``None`` will change this axis behavior to
@@ -442,7 +442,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     Other Parameters
     ----------------
-    _wrap : vtk.vtkAxis, default: None
+    _wrap : vtk.vtkAxis, optional
         Wrap an existing VTK Axis instance (no wrapping when ``None``).
 
     """
@@ -1371,11 +1371,11 @@ class _Chart(DocSubs):
 
         Parameters
         ----------
-        off_screen : bool, default: pyvista.global_theme.off_screen
+        off_screen : bool, optional
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up. Defaults to active theme setting.
 
-        full_screen : bool, default: pyvista.global_theme.full_screen
+        full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.
 
@@ -1386,10 +1386,12 @@ class _Chart(DocSubs):
             When ``True``, takes screenshot and returns ``numpy`` array of
             image.
 
-        window_size : list, default: pyvista.global_theme.window_size
-            Window size in pixels.
+        window_size : list, optional
+            Window size in pixels.  Defaults to global theme
+            :attr:`pyvista.global_theme.window_size
+            <pyvista.themes.DefaultTheme.window_size>`.
 
-        notebook : bool, default: None
+        notebook : bool, optional
             When ``True``, the resulting plot is placed inline a
             jupyter notebook.  Assumes a jupyter console is active.
 
@@ -2771,7 +2773,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         coordinates. Each sequence defines the sizes of one stack
         (area), which are stacked on top of each other.
 
-    colors : list or tuple of color_like, default: None
+    colors : list or tuple of color_like, optional
         Color of the stacks (areas) drawn in this plot. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
@@ -3096,7 +3098,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Values to plot on the X-axis. In case ``y`` is ``None``,
             these are the values to plot on the Y-axis instead.
 
-        y : array_like, default: None
+        y : array_like, optional
             Values to plot on the Y-axis.
 
         fmt : str, default: "-"
@@ -3333,7 +3335,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             coordinates. Each sequence defines the sizes of one stack
             (area), which are stacked on top of each other.
 
-        colors : list or tuple of color_like, default: None
+        colors : list or tuple of color_like, optional
             Color of the stacks (areas) drawn in this plot. Any color
             parsable by :class:`pyvista.Color` is allowed.
 
@@ -3363,7 +3365,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        plot_type : str, default: None
+        plot_type : str, optional
             The type of plots to return. Allowed types are
             ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
             and ``"stack"``.
@@ -3436,7 +3438,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        plot_type : str, default: None
+        plot_type : str, optional
             The type of the plots to remove. Allowed types are
             ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
             and ``"stack"``.
@@ -3656,7 +3658,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         Dataset(s) from which the relevant statistics will be
         calculated used to draw the box plot.
 
-    colors : list or tuple of color_like, default: None
+    colors : list or tuple of color_like, optional
         Color of the boxes drawn in this plot. Any color parsable by
         :class:`pyvista.Color` is allowed.
 
@@ -3771,7 +3773,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         Dataset(s) from which the relevant statistics will be
         calculated used to draw the box plot.
 
-    colors : list or tuple of color_like, default: None
+    colors : list or tuple of color_like, optional
         Color used for each drawn boxplot.
 
     labels : list or tuple of str, default: []
@@ -3892,7 +3894,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     data : array_like
         Relative size of each pie segment.
 
-    colors : list or tuple of color_like, default: None
+    colors : list or tuple of color_like, optional
         Color of the segments drawn in this plot. Any color parsable
         by :class:`pyvista.Color` is allowed.
 
@@ -3902,7 +3904,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     Other Parameters
     ----------------
-    _wrap : vtk.vtkPlotPie, default: None
+    _wrap : vtk.vtkPlotPie, optional
         Wrap an existing VTK PlotPie instance (no wrapping when ``None``).
 
     Examples
