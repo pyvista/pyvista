@@ -1290,7 +1290,7 @@ def Circle(radius=0.5, resolution=100):
     >>> circle.plot(show_edges=True, line_width=5)
     """
     points = np.zeros((resolution, 3))
-    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution, endpoint=False)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
