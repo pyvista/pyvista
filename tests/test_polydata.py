@@ -222,6 +222,13 @@ def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
 
+    # Use scalar weights
+    if pyvista.vtk_version_info >= (9,):
+        distance_use_scalar_weights = sphere.geodesic_distance(
+            0, sphere.n_points - 1, use_scalar_weights=True
+        )
+        assert isinstance(distance_use_scalar_weights, float)
+
 
 def test_ray_trace(sphere):
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
@@ -727,7 +734,7 @@ def test_tube(spline):
     # Simple
     line = pyvista.Line()
     tube = line.tube(n_sides=2, progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
 
     # inplace
     line.tube(n_sides=2, inplace=True, progress_bar=True)
@@ -735,7 +742,11 @@ def test_tube(spline):
 
     # Complicated
     tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
+
+    # Complicated with absolute radius
+    tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
+    assert tube.n_points and tube.n_cells
 
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))

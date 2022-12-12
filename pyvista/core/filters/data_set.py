@@ -3011,7 +3011,11 @@ class DataSetFilters:
     ):
         """Interpolate values onto this mesh from a given dataset.
 
-        The input dataset is typically a point cloud.
+        The input dataset is typically a point cloud. Only point data from
+        the source mesh will be interpolated onto points of this mesh. Whether
+        preexisting point and cell data of this mesh are preserved in the
+        output can be customized with the ``pass_point_data`` and
+        ``pass_cell_data`` parameters.
 
         This uses a Gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel. You can also switch this

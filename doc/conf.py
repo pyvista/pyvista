@@ -1,4 +1,5 @@
 import datetime
+import faulthandler
 import locale
 import os
 import sys
@@ -6,10 +7,7 @@ import sys
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
-if sys.version_info >= (3, 0):
-    import faulthandler
-
-    faulthandler.enable()
+faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
 import make_external_gallery
@@ -433,7 +431,7 @@ html_show_sourcelink = False
 # documentation.
 #
 html_theme_options = {
-    "google_analytics_id": "UA-140243896-1",
+    "analytics": {"google_analytics_id": "UA-140243896-1"},
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
     "collapse_navigation": True,

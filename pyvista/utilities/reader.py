@@ -1896,7 +1896,7 @@ class PVDReader(BaseReader, TimeReader):
                 )
             )
         self._datasets = sorted(datasets)
-        self._time_values = sorted(list(set([dataset.time for dataset in self.datasets])))
+        self._time_values = sorted({dataset.time for dataset in self.datasets})
 
         self.set_active_time_value(self.time_values[0])
 
