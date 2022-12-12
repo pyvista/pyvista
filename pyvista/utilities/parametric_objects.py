@@ -414,7 +414,7 @@ def ParametricDini(a=None, b=None, **kwargs):
 
     Parameters
     ----------
-    a : float,  default: 1
+    a : float, default: 1
         The scale factor.  See the definition in Parametric surfaces
         referred to above.
 
@@ -681,7 +681,7 @@ def ParametricKuen(deltav0=None, **kwargs):
     ----------
     deltav0 : float, default: 0.05
         The value to use when ``V == 0``.
-        Giving the best appearance with the default settings.
+        This has the best appearance with the default settings.
         Setting it to a value less than 0.05 extrapolates the surface
         towards a pole in the -z direction.
         Setting it to 0 retains the pole whose z-value is -inf.
