@@ -11,7 +11,7 @@ class Volume(Prop3D, pv._vtk.vtkVolume):
 
     This class represents a volume in a rendered scene. It inherits
     functions related to the volume's position, orientation and origin
-    from Prop3D
+    from Prop3D.
 
     """
 
