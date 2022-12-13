@@ -22,22 +22,41 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @property
     def mapper(self) -> _BaseMapper:
-        """Mapper getter."""
+        """Return or set actor set of properties.
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then change the
+        visibility of the actor.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+
+        """
         return self.GetMapper()
 
     @mapper.setter
     def mapper(self, obj):
-        """Mapper setter."""
         return self.SetMapper(obj)
 
     @property
     def prop(self):
-        """Prop getter."""
+        """Return or set AxesActor set of properties.
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then change the
+        visibility of the actor.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+
+        """
         return self.GetProperty()
 
     @prop.setter
     def prop(self, obj: Property):
-        """Prop setter."""
         self.SetProperty(obj)
 
     @property
