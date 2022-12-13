@@ -1288,6 +1288,13 @@ def Circle(radius=0.5, resolution=100):
     >>> radius = 0.5
     >>> circle = pyvista.Circle(radius)
     >>> circle.plot(show_edges=True, line_width=5)
+
+    Notes
+    --------
+
+    prior to version 0.38,
+        this method had incorrect results, which are now fixed.
+    See [#3710](https://github.com/pyvista/pyvista/pull/3710) for details.
     """
     points = np.zeros((resolution, 3))
     theta = np.linspace(0.0, 2.0 * np.pi, resolution, endpoint=False)
