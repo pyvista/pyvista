@@ -39,3 +39,10 @@ def test_symmetric():
     assert axes.GetSymmetric()
     axes.hide_symmetric()
     assert not axes.GetSymmetric()
+
+
+def test_axes_actor_visibility():
+    axes = pyvista.Axes()
+    assert axes.axes_actor.visibility
+    axes.axes_actor.visibility = False
+    assert not axes.axes_actor.visibility
