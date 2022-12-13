@@ -3068,3 +3068,10 @@ def test_add_point_scalar_labels_list():
 
     plotter.add_point_scalar_labels(points, labels)
     plotter.show()
+
+
+def test_axes_actor_visibility():
+    axes = pyvista.Axes()
+    assert axes.axes_actor.visibility
+    axes.axes_actor.visibility = False
+    assert not axes.axes_actor.visibility
