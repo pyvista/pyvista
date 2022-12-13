@@ -4459,7 +4459,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : color_like, optional
+        color : color_like, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4467,14 +4467,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        width : float, optional
+        width : float, default: 5
             Thickness of lines.
 
-        label : str, optional
+        label : str, default: None
             String label to use when adding a legend to the scene with
             :func:`pyvista.Plotter.add_legend`.
 
-        name : str, optional
+        name : str, default: None
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
@@ -4498,7 +4498,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.lines_from_points(lines)
+        lines = pyvista.line_segments_from_points(lines)
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
