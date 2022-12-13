@@ -253,6 +253,8 @@ def test_labels():
     pl = pyvista.Plotter()
     pl.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
 
+    print(pyvista.Report())
+
     # ensure point labels at least don't raise a warning
     with pytest.warns(None) as record:
         pv_pythreejs.convert_plotter(pl)
