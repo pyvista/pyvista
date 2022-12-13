@@ -20,9 +20,8 @@ def Spline(points, n_points=None):
         Array of points to build a spline out of.  Array must be 3D
         and directionally ordered.
 
-    n_points : int, optional
-        Number of points to interpolate along the points array. By default this
-        is the number of points in ``points``.
+    n_points : int, default: points.shape[0]
+        Number of points to interpolate along the points array.
 
     Returns
     -------
@@ -67,21 +66,17 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 
-    tension : sequence, optional
-        Changes the length of the tangent vector.  Defaults to ``[0.0,
-        0.0, 0.0]``.
+    tension : sequence, default: [0.0, 0.0, 0.0]
+        Changes the length of the tangent vector.
 
-    bias : sequence, optional
+    bias : sequence, default: [0.0, 0.0, 0.0]
         Primarily changes the direction of the tangent vector.
-        Defaults to ``[0.0, 0.0, 0.0]``.
 
-    continuity : sequence, optional
-        Changes the sharpness in change between tangents.  Defaults to
-        ``[0.0, 0.0, 0.0]``.
+    continuity : sequence, default: [0.0, 0.0, 0.0]
+        Changes the sharpness in change between tangents.
 
-    n_points : int, optional
-        Number of points on the spline.  Defaults to the number of
-        points in ``points``.
+    n_points : int, default: points.shape[0]
+        Number of points on the spline.
 
     Returns
     -------
@@ -330,24 +325,20 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
 
     Parameters
     ----------
-    a : float, optional
+    a : float, default: 0.2
         The scale factor.
-        Default is 0.2.
 
-    b : float, optional
+    b : float, default: 1
         The A function coefficient.
         See the definition in Parametric surfaces referred to above.
-        Default is 1.
 
-    c : float, optional
+    c : float, default: 0.1
         The B function coefficient.
         See the definition in Parametric surfaces referred to above.
-        Default is 0.1.
 
-    n : float, optional
+    n : float, default: 2
         The C function coefficient.
         See the definition in Parametric surfaces referred to above.
-        Default is 2.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -433,13 +424,13 @@ def ParametricDini(a=None, b=None, **kwargs):
 
     Parameters
     ----------
-    a : float, optional
+    a : float, default: 1
         The scale factor.  See the definition in Parametric surfaces
-        referred to above.  Default is 1.
+        referred to above.
 
-    b : float, optional
+    b : float, default: 0.2
         The scale factor.  See the definition in Parametric surfaces
-        referred to above.  Default is 0.2.
+        referred to above.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -485,14 +476,14 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
 
     Parameters
     ----------
-    xradius : float, optional
-        The scaling factor for the x-axis. Default is 1.
+    xradius : float, default: 1
+        The scaling factor for the x-axis.
 
-    yradius : float, optional
-        The scaling factor for the y-axis. Default is 1.
+    yradius : float, default: 1
+        The scaling factor for the y-axis.
 
-    zradius : float, optional
-        The scaling factor for the z-axis. Default is 1.
+    zradius : float, default: 1
+        The scaling factor for the z-axis.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` and :func:`parametric_keywords`
@@ -589,8 +580,8 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 
     Parameters
     ----------
-    radius : float, optional
-        The radius of the bottle. Default is 1.
+    radius : float, default: 1
+        The radius of the bottle.
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
 
@@ -698,9 +689,9 @@ def ParametricKuen(deltav0=None, **kwargs):
 
     Parameters
     ----------
-    deltav0 : float, optional
+    deltav0 : float, default: 0.05
         The value to use when ``V == 0``.
-        Default is 0.05, giving the best appearance with the default settings.
+        This has the best appearance with the default settings.
         Setting it to a value less than 0.05 extrapolates the surface
         towards a pole in the -z direction.
         Setting it to 0 retains the pole whose z-value is -inf.
@@ -739,8 +730,8 @@ def ParametricMobius(radius=None, **kwargs):
 
     Parameters
     ----------
-    radius : float, optional
-        The radius of the Mobius strip. Default is 1.
+    radius : float, default: 1
+        The radius of the Mobius strip.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -872,39 +863,31 @@ def ParametricRandomHills(
 
     Parameters
     ----------
-    numberofhills : int, optional
+    numberofhills : int, default: 30
         The number of hills.
-        Default is 30.
 
-    hillxvariance : float, optional
+    hillxvariance : float, default: 2.5
         The hill variance in the x-direction.
-        Default is 2.5.
 
-    hillyvariance : float, optional
+    hillyvariance : float, default: 2.5
         The hill variance in the y-direction.
-        Default is 2.5.
 
-    hillamplitude : float, optional
+    hillamplitude : float, default: 2
         The hill amplitude (height).
-        Default is 2.
 
-    randomseed : int, optional
+    randomseed : int, default: 1
         The Seed for the random number generator,
         a value of 1 will initialize the random number generator,
         a negative value will initialize it with the system time.
-        Default is 1.
 
-    xvariancescalefactor : float, optional
+    xvariancescalefactor : float, default: 13
         The scaling factor for the variance in the x-direction.
-        Default is 13.
 
-    yvariancescalefactor : float, optional
+    yvariancescalefactor : float, default: 13
         The scaling factor for the variance in the y-direction.
-        Default is 13.
 
-    amplitudescalefactor : float, optional
+    amplitudescalefactor : float, default: 13
         The scaling factor for the amplitude.
-        Default is 13.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -962,8 +945,8 @@ def ParametricRoman(radius=None, **kwargs):
 
     Parameters
     ----------
-    radius : float, optional
-        The radius. Default is 1.
+    radius : float, default: 1
+        The radius.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -1005,20 +988,20 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
 
     Parameters
     ----------
-    xradius : float, optional
-        The scaling factor for the x-axis. Default is 1.
+    xradius : float, default: 1
+        The scaling factor for the x-axis.
 
-    yradius : float, optional
-        The scaling factor for the y-axis. Default is 1.
+    yradius : float, default: 1
+        The scaling factor for the y-axis.
 
-    zradius : float, optional
-        The scaling factor for the z-axis. Default is 1.
+    zradius : float, default: 1
+        The scaling factor for the z-axis.
 
-    n1 : float, optional
-        The "squareness" parameter in the z axis.  Default is 1.
+    n1 : float, default: 1
+        The "squareness" parameter in the z axis.
 
-    n2 : float, optional
-        The "squareness" parameter in the x-y plane. Default is 1.
+    n2 : float, default: 1
+        The "squareness" parameter in the x-y plane.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -1098,28 +1081,27 @@ def ParametricSuperToroid(
 
     Parameters
     ----------
-    ringradius : float, optional
+    ringradius : float, default: 1
         The radius from the center to the middle of the ring of the
-        supertoroid. Default is 1.
+        supertoroid.
 
-    crosssectionradius : float, optional
+    crosssectionradius : float, default: 0.5
         The radius of the cross section of ring of the supertoroid.
-        Default = 0.5.
 
-    xradius : float, optional
-        The scaling factor for the x-axis. Default is 1.
+    xradius : float, default: 1
+        The scaling factor for the x-axis.
 
-    yradius : float, optional
-        The scaling factor for the y-axis. Default is 1.
+    yradius : float, default: 1
+        The scaling factor for the y-axis.
 
-    zradius : float, optional
-        The scaling factor for the z-axis. Default is 1.
+    zradius : float, default: 1
+        The scaling factor for the z-axis.
 
-    n1 : float, optional
-        The shape of the torus ring.  Default is 1.
+    n1 : float, default: 1
+        The shape of the torus ring.
 
-    n2 : float, optional
-        The shape of the cross section of the ring. Default is 1.
+    n2 : float, default: 1
+        The shape of the cross section of the ring.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -1180,12 +1162,12 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 
     Parameters
     ----------
-    ringradius : float, optional
+    ringradius : float, default: 1.0
         The radius from the center to the middle of the ring of the
-        torus. Default is 1.0.
+        torus.
 
-    crosssectionradius : float, optional
-        The radius of the cross section of ring of the torus. Default is 0.5.
+    crosssectionradius : float, default: 0.5
+        The radius of the cross section of ring of the torus.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
