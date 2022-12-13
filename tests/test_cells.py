@@ -114,6 +114,14 @@ class Test_Cell:
         assert all(bc >= bg for bc, bg in zip(grid.cell[0].bounds[::2], grid.bounds[::2]))
         assert all(bc <= bg for bc, bg in zip(grid.cell[0].bounds[1::2], grid.bounds[1::2]))
 
+    @pytest.mark.parametrize("grid,type", zip(grids, types), ids=ids)
+    def test_str(self, grid, type):
+        assert str(type) in str(grid.cell[0])
+
+    @pytest.mark.parametrize("grid,type", zip(grids, types), ids=ids)
+    def test_repr(self, grid, type):
+        assert str(type) in repr(grid.cell[0])
+
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
 NCELLS = 2
