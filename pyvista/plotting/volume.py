@@ -9,7 +9,9 @@ from .prop3D import Prop3D
 class Volume(Prop3D, pv._vtk.vtkVolume):
     """Wrapper class for VTK volume.
 
-    This class represents a volume in a rendered scene.
+    This class represents a volume in a rendered scene. It inherits
+    functions related to the volume's position, orientation and origin
+    from Prop3D
 
     """
 
@@ -37,20 +39,6 @@ class Volume(Prop3D, pv._vtk.vtkVolume):
 
     @mapper.setter
     def mapper(self, obj):
-        """Setter of the volume mapper.
-
-        Examples
-        --------
-        Create an volume and set its mapper.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> vol = examples.download_knee_full()
-        >>> p = pv.Plotter(notebook=0)
-        >>> actor = p.add_volume(vol, cmap="bone", opacity="sigmoid")
-        >>> actor.mapper.lookup_table.cmap = 'viridis'
-
-        """
         return self.SetMapper(obj)
 
     @property
@@ -74,18 +62,4 @@ class Volume(Prop3D, pv._vtk.vtkVolume):
 
     @prop.setter
     def prop(self, obj: Property):
-        """Setter of the volume properties.
-
-        Examples
-        --------
-        Create an volume and set its mapper.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> vol = examples.download_knee_full()
-        >>> p = pv.Plotter(notebook=0)
-        >>> actor = p.add_volume(vol, cmap="bone", opacity="sigmoid")
-        >>> actor.prop.SetShade(True)
-
-        """
         self.SetProperty(obj)

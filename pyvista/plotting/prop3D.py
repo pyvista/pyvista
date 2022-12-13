@@ -3,7 +3,12 @@ import pyvista as pv
 
 
 class Prop3D(pv._vtk.vtkProp3D):
-    """Prop3D wrapper for VTK."""
+    """Prop3D wrapper for vtkProp3D.
+
+    Used to represent an entity in a rendering scene. It handles functions
+    related to the position, orientation and scaling. Used as parent class
+    in Actor and Volume class.
+    """
 
     def __init__(self, mapper=None, prop=None):
         """Initialize Prop3D."""
@@ -11,7 +16,7 @@ class Prop3D(pv._vtk.vtkProp3D):
 
     @property
     def scale(self) -> tuple:
-        """Return or set actor scale.
+        """Return or set entity scale.
 
         Examples
         --------
@@ -34,7 +39,7 @@ class Prop3D(pv._vtk.vtkProp3D):
 
     @property
     def position(self):
-        """Return or set the actor position.
+        """Return or set the entity position.
 
         Examples
         --------
@@ -58,12 +63,12 @@ class Prop3D(pv._vtk.vtkProp3D):
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
-        """Rotate the actor about the x axis.
+        """Rotate the entity about the x axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the actor about the x axis in degrees.
+            Angle to rotate the entity about the x axis in degrees.
 
         Examples
         --------
@@ -85,12 +90,12 @@ class Prop3D(pv._vtk.vtkProp3D):
         self.RotateX(angle)
 
     def rotate_y(self, angle: float):
-        """Rotate the actor about the y axis.
+        """Rotate the entity about the y axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the actor about the y axis in degrees.
+            Angle to rotate the entity about the y axis in degrees.
 
         Examples
         --------
@@ -112,12 +117,12 @@ class Prop3D(pv._vtk.vtkProp3D):
         self.RotateY(angle)
 
     def rotate_z(self, angle: float):
-        """Rotate the actor about the z axis.
+        """Rotate the entity about the z axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the actor about the z axis in degrees.
+            Angle to rotate the entity about the z axis in degrees.
 
         Examples
         --------
@@ -140,7 +145,7 @@ class Prop3D(pv._vtk.vtkProp3D):
 
     @property
     def orientation(self) -> tuple:
-        """Return or set the actor orientation.
+        """Return or set the entity orientation.
 
         Orientation is defined as the rotation from the global axes in degrees
         about the actor's x, y, and z axes.
@@ -187,7 +192,7 @@ class Prop3D(pv._vtk.vtkProp3D):
 
     @property
     def bounds(self) -> tuple:
-        """Return the bounds of the actor.
+        """Return the bounds of the entity.
 
         Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
 
@@ -205,7 +210,7 @@ class Prop3D(pv._vtk.vtkProp3D):
 
     @property
     def center(self) -> tuple:
-        """Return the center of the actor.
+        """Return the center of the entity.
 
         Examples
         --------
