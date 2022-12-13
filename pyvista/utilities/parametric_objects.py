@@ -160,13 +160,19 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     return spline.compute_arc_length()
 
 
-def ParametricBohemianDome(a=None, **kwargs):
+def ParametricBohemianDome(a=None, b=None, c=None, **kwargs):
     """Generate a Bohemian dome surface.
 
     Parameters
     ----------
-    a : float, optional
-        Bohemian dome surface parameter.
+    a : float, default: 0.5
+        Bohemian dome surface parameter a.
+
+    b : float, default: 1.5
+        Bohemian dome surface parameter b.
+
+    c : float, default: 1.0
+        Bohemian dome surface parameter c.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -188,6 +194,10 @@ def ParametricBohemianDome(a=None, **kwargs):
     parametric_function = _vtk.vtkParametricBohemianDome()
     if a is not None:
         parametric_function.SetA(a)
+    if b is not None:
+        parametric_function.SetB(b)
+    if c is not None:
+        parametric_function.SetC(c)
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
