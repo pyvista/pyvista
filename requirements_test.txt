@@ -3,7 +3,7 @@
 cmocean<2.1
 codecov<2.2.0
 colorcet<3.1.0
-hypothesis<6.57.2
+hypothesis<6.61.1
 imageio<2.23.0
 imageio-ffmpeg<0.5.0
 ipygany<0.6.0
@@ -20,10 +20,12 @@ pooch<1.7.0
 pytest<7.3.0
 pytest-cov<4.1.0
 pytest-memprof<0.3.0
-pytest-xdist<3.1.0
+pytest-xdist<3.2.0
+pytest_pyvista==0.1.1
 pythreejs<2.5.0
 Sphinx<5.4.0
 sphinx-gallery<0.12.0
 tqdm<4.65.0
 trame<2.3.0
-trimesh<3.17.0
+trimesh<3.18.0
+

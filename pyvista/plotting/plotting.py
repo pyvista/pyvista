@@ -659,7 +659,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         the rendering engine supports it.
 
         Disable this with :func:`disable_hidden_line_removal
-        <BasePlotter.disable_hidden_line_removal>`
+        <Plotter.disable_hidden_line_removal>`.
 
         Parameters
         ----------
@@ -696,7 +696,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Disable hidden line removal.
 
         Enable again with :func:`enable_hidden_line_removal
-        <BasePlotter.enable_hidden_line_removal>`
+        <Plotter.enable_hidden_line_removal>`.
 
         Parameters
         ----------
@@ -1637,7 +1637,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         This will potentially slow down the interactor. No callbacks
         supported here - use
-        :func:`pyvista.BasePlotter.track_click_position` instead.
+        :func:`pyvista.Plotter.track_click_position` instead.
 
         """
         self.iren.track_mouse_position(self.store_mouse_position)
@@ -1837,7 +1837,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enable anaglyph stereo rendering.
 
         Disable this with :func:`disable_stereo_render
-        <BasePlotter.disable_stereo_render>`
+        <Plotter.disable_stereo_render>`
 
         Examples
         --------
@@ -1858,7 +1858,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Disable anaglyph stereo rendering.
 
         Enable again with :func:`enable_stereo_render
-        <BasePlotter.enable_stereo_render>`
+        <Plotter.enable_stereo_render>`
 
         Examples
         --------
@@ -2099,7 +2099,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label : str, optional
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
         reset_camera : bool, optional
             Reset the camera after adding this mesh to the scene. The default
@@ -2111,7 +2111,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -2509,7 +2509,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         This method is using a mesh representation to view the surfaces
         and/or geometry of datasets. For volume rendering, see
-        :func:`pyvista.BasePlotter.add_volume`.
+        :func:`pyvista.Plotter.add_volume`.
 
         To see the what most of the following parameters look like in action,
         please refer to :class:`pyvista.Property`.
@@ -2619,7 +2619,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label : str, optional
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
         reset_camera : bool, optional
             Reset the camera after adding this mesh to the scene. The default
@@ -2631,7 +2631,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -3349,7 +3349,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -4471,7 +4471,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : color_like, optional
+        color : color_like, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4479,14 +4479,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        width : float, optional
+        width : float, default: 5
             Thickness of lines.
 
-        label : str, optional
+        label : str, default: None
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
-        name : str, optional
+        name : str, default: None
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
@@ -4510,7 +4510,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.lines_from_points(lines)
+        lines = pyvista.line_segments_from_points(lines)
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
@@ -4773,7 +4773,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
         """Label the points from a dataset with the values of their scalars.
 
-        Wrapper for :func:`pyvista.BasePlotter.add_point_labels`.
+        Wrapper for :func:`pyvista.Plotter.add_point_labels`.
 
         Parameters
         ----------
@@ -4793,7 +4793,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         **kwargs : dict, optional
             Keyword arguments passed to
-            :func:`pyvista.BasePlotter.add_point_labels`.
+            :func:`pyvista.Plotter.add_point_labels`.
 
         Returns
         -------
@@ -4834,7 +4834,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``render_points_as_spheres`` options.
 
         **kwargs : dict, optional
-            See :func:`pyvista.BasePlotter.add_mesh` for optional
+            See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
         Returns
@@ -4884,7 +4884,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Amount to scale the direction vectors.
 
         **kwargs : dict, optional
-            See :func:`pyvista.BasePlotter.add_mesh` for optional
+            See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
         Returns
@@ -5958,7 +5958,7 @@ class Plotter(BasePlotter):
 
         interactive_update : bool, optional
             Disabled by default.  Allows user to non-blocking draw,
-            user should call :func:`BasePlotter.update` in each iteration.
+            user should call :func:`Plotter.update` in each iteration.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores

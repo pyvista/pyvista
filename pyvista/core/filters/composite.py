@@ -35,10 +35,10 @@ class CompositeFilters:
 
         Parameters
         ----------
-        merge_points : bool, optional
+        merge_points : bool, default: False
             Merge coincidental points.
 
-        tolerance : float, optional
+        tolerance : float, default: 0.0
             The absolute tolerance to use to find coincident points when
             ``merge_points=True``. Note, this was added in VTK v9.
 
@@ -111,13 +111,13 @@ class CompositeFilters:
 
         Parameters
         ----------
-        generate_faces : bool, optional
-            Generate solid faces for the box. This is disabled by default.
+        generate_faces : bool, default: False
+            Generate solid faces for the box.
 
-        nested : bool, optional
+        nested : bool, default: False
             If ``True``, these creates individual outlines for each nested dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -138,14 +138,14 @@ class CompositeFilters:
 
         Parameters
         ----------
-        factor : float, optional
+        factor : float, default: 0.2
             Controls the relative size of the corners to the length of
             the corresponding bounds.
 
-        nested : bool, optional
+        nested : bool, default: False
             If ``True``, these creates individual outlines for each nested dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns

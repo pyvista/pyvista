@@ -999,7 +999,8 @@ class PolyDataFilters(DataSetFilters):
         scalars=None,
         capping=True,
         n_sides=20,
-        radius_factor=10,
+        radius_factor=10.0,
+        absolute=False,
         preference='point',
         inplace=False,
         progress_bar=False,
@@ -1018,25 +1019,27 @@ class PolyDataFilters(DataSetFilters):
         scalars : str, optional
             Scalars array by which the radius varies.
 
-        capping : bool, optional
-            Turn on/off whether to cap the ends with polygons. Default
-            ``True``.
+        capping : bool, default: True
+            Turn on/off whether to cap the ends with polygons.
 
-        n_sides : int, optional
+        n_sides : int, default: 20
             Set the number of sides for the tube. Minimum of 3.
 
-        radius_factor : float, optional
+        radius_factor : float, default: 10.0
             Maximum tube radius in terms of a multiple of the minimum
             radius.
 
-        preference : str, optional
+        absolute : bool, default: False
+            Vary the radius with values from scalars in absolute units.
+
+        preference : str, default: 'point'
             The field preference when searching for the scalars array by
             name.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1080,7 +1083,10 @@ class PolyDataFilters(DataSetFilters):
             field = poly_data.get_array_association(scalars, preference=preference)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-            tube.SetVaryRadiusToVaryRadiusByScalar()
+            if absolute:
+                tube.SetVaryRadiusToVaryRadiusByAbsoluteScalar()
+            else:
+                tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
         _update_alg(tube, progress_bar, 'Creating Tube')
 
@@ -1835,7 +1841,13 @@ class PolyDataFilters(DataSetFilters):
         return output
 
     def geodesic(
-        self, start_vertex, end_vertex, inplace=False, keep_order=True, progress_bar=False
+        self,
+        start_vertex,
+        end_vertex,
+        inplace=False,
+        keep_order=True,
+        use_scalar_weights=False,
+        progress_bar=False,
     ):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
@@ -1862,6 +1874,10 @@ class PolyDataFilters(DataSetFilters):
             to start with the start vertex (as opposed to the end vertex).
 
             .. versionadded:: 0.32.0
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1898,6 +1914,8 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetInputData(self)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
+        if _vtk.VTK9:
+            dijkstra.SetUseScalarWeights(use_scalar_weights)
         _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
@@ -1924,7 +1942,9 @@ class PolyDataFilters(DataSetFilters):
 
         return output
 
-    def geodesic_distance(self, start_vertex, end_vertex, progress_bar=False):
+    def geodesic_distance(
+        self, start_vertex, end_vertex, use_scalar_weights=False, progress_bar=False
+    ):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
 
         Parameters
@@ -1934,6 +1954,10 @@ class PolyDataFilters(DataSetFilters):
 
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1954,7 +1978,7 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`geodesic_example` for more examples using this filter.
 
         """
-        path = self.geodesic(start_vertex, end_vertex)
+        path = self.geodesic(start_vertex, end_vertex, use_scalar_weights=use_scalar_weights)
         sizes = path.compute_cell_sizes(
             length=True, area=False, volume=False, progress_bar=progress_bar
         )
@@ -2126,7 +2150,9 @@ class PolyDataFilters(DataSetFilters):
         )
         if retry:
             # gather intersecting rays in lists
-            loc_lst, ray_lst, tri_lst = [arr.tolist() for arr in [locations, index_ray, index_tri]]
+            loc_lst = locations.tolist()
+            ray_lst = index_ray.tolist()
+            tri_lst = index_tri.tolist()
 
             # find indices that trimesh failed on
             all_ray_indices = np.arange(len(origins))
@@ -2174,7 +2200,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------
@@ -2232,7 +2258,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------
