@@ -3,6 +3,11 @@
 Using ``ipyvtklink`` with PyVista
 ---------------------------------
 
+.. warning::
+
+    The ``ipyvtklink`` backend is deprecated in favor of the new
+    ``server`` backend powered by ``trame``. See :ref:trame_plotting
+
 ``pyvista`` has the ability to display fully featured plots within a
 JupyterLab environment using ``ipyvtklink``.  This feature works by
 streaming the current render window to a canvas within JupyterLab and

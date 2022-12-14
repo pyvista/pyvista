@@ -1206,7 +1206,7 @@ class DefaultTheme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'ipyvtklink')
+        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'server')
 
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
@@ -1327,7 +1327,7 @@ class DefaultTheme(_ThemeConfig):
         Jupyter backend to use when plotting.  Must be one of the
         following:
 
-        * ``'ipyvtklink'`` : Render remotely and stream the
+        * ``'ipyvtklink'`` : DEPRECATED. Render remotely and stream the
           resulting VTK images back to the client.  Supports all VTK
           methods, but suffers from lag due to remote rendering.
           Requires that a virtual framebuffer be set up when displaying
@@ -1377,7 +1377,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> pv.set_jupyter_backend('panel')
 
-        Enable the ipyvtklink backend.
+        Enable the ipyvtklink backend (DEPRECATED).
 
         >>> pv.set_jupyter_backend('ipyvtklink')
 
@@ -2297,31 +2297,6 @@ class DefaultTheme(_ThemeConfig):
         del data["before_close_callback"]
         with open(filename, 'w') as f:
             json.dump(data, f)
-
-    @property
-    def use_ipyvtk(self):  # pragma: no cover
-        """Set or return the usage of "ipyvtk" as a jupyter backend.
-
-        .. deprecated:: 0.35.0
-           Deprecated in favor of ``jupyter_backend``.
-        """
-        warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
-            DeprecationWarning,
-        )
-        return self.jupyter_backend == 'ipyvtklink'
-
-    @use_ipyvtk.setter
-    def use_ipyvtk(self, value):  # pragma: no cover
-        warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
-            DeprecationWarning,
-        )
-
-        if value:
-            self.jupyter_backend = 'ipyvtklink'
-        else:
-            self.jupyter_backend = 'static'
 
     @property
     def split_sharp_edges(self) -> bool:

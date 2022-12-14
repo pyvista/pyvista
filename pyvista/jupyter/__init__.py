@@ -1,7 +1,9 @@
 """Jupyter notebook plotting module."""
+import warnings
 
 from turtle import back
 import pyvista
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 from .itkplotter import PlotterITK
 
 ALLOWED_BACKENDS = [
@@ -55,6 +57,10 @@ def _validate_jupyter_backend(backend):
             raise ImportError('Please install `pythreejs` to use this feature.')
 
     if backend == 'ipyvtklink':
+        warnings.warn(
+            '`ipyvtklink` backend is deprecated and has been replaced by the `server` backend.',
+            PyVistaDeprecationWarning,
+        )
         try:
             import ipyvtklink
         except ImportError:  # pragma: no cover

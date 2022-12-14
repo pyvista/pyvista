@@ -25,6 +25,7 @@ except ImportError:  # pragma: no cover
     raise ImportError('Install IPython to display an image in a notebook')
 
 from pyvista import _vtk
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 PANEL_EXTENSION_SET = [False]
 
@@ -51,7 +52,10 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
         if backend == 'pythreejs':
             return show_pythreejs(plotter, return_viewer, **kwargs)
         if backend == 'ipyvtklink':
-            warnings.warn('`ipyvtklink` backend is to be replaced by the `server` backend.')
+            warnings.warn(
+                '`ipyvtklink` backend is deprecated and has been replaced by the `server` backend.',
+                PyVistaDeprecationWarning,
+            )
             return show_ipyvtk(plotter, return_viewer)
         if backend == 'panel':
             return show_panel(plotter, return_viewer)

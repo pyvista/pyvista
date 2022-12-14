@@ -119,7 +119,7 @@ modifying the above ``cmake`` command with:
 This disables any plotting using the X server, so be prepared to use
 this module only on a headless display where you either intend to save
 static images or stream the render window to another computer with a
-display (e.g using ``pyvista.set_jupyter_backend('ipyvtklink')`` and
+display (e.g using ``pyvista.set_jupyter_backend('server')`` and
 jupyterlab). In other words, this wheel will make VTK unusable outside
 of an off-screen environment, so only plan on installing it on a
 headless system without an X server.

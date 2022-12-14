@@ -62,8 +62,8 @@ Supported Modules
 The PyVista module supports a variety of backends when plotting within
 a jupyter notebook:
 
-* Server-side rendering with PyVista streaming to the notebook through
-  `ipyvtklink <https://github.com/Kitware/ipyvtklink/>`_
+* Server- and client-side rendering with PyVista streaming to the notebook through
+  `trame <https://github.com/Kitware/trame/>`_
 * Client-side rendering with `pythreejs`_ using ``threejs``.
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
 * Client-side rendering using `panel <https://github.com/holoviz/panel>`_ using ``vtk.js``.
@@ -129,11 +129,8 @@ jupyter notebook plotting modules:
 | itkwidgets    | No           | Client             | vtk.js  | Yes                  |
 +---------------+--------------+--------------------+---------+----------------------+
 
-At the moment, ``itkwidgets`` and ``ipyvtklink`` are incompatible with
-Jupyterlab 3, and will result in a "Error displaying widget: model not
-found" message from juptyer.  Additionally, all the modules other than
-``ipygany`` and ``pythreejs`` require a framebuffer, which can be
-set up on a headless environment with :func:`pyvista.start_xvfb`.
+All the modules other than ``ipygany`` and ``pythreejs`` require a framebuffer,
+which can be set up on a headless environment with :func:`pyvista.start_xvfb`.
 However, on Google Colab, where it's not possible to install system
 packages, you should stick with a module like ``threejs``, which does
 not require any server side rendering or framebuffer.

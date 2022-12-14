@@ -343,6 +343,8 @@ class Report(scooby.Report):
             'jupyterlab',
             'pythreejs',
             'pytest_pyvista',
+            'trame',
+            'trame_vtk',
         ]
 
         # Information about the GPU - bare except in case there is a rendering

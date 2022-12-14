@@ -5942,7 +5942,6 @@ class Plotter(BasePlotter):
         screenshot=False,
         return_img=False,
         cpos=None,
-        use_ipyvtk=None,
         jupyter_backend=None,
         return_viewer=False,
         return_cpos=None,
@@ -5997,11 +5996,6 @@ class Plotter(BasePlotter):
         cpos : list(tuple(floats)), optional
             The camera position.  You can also set this with
             :attr:`Plotter.camera_position`.
-
-        use_ipyvtk : bool, optional
-            Deprecated.  Instead, set the backend either globally with
-            ``pyvista.set_jupyter_backend('ipyvtklink')`` or with
-            ``backend='ipyvtklink'``.
 
         jupyter_backend : str, optional
             Jupyter notebook plotting backend to use.  One of the
@@ -6123,18 +6117,6 @@ class Plotter(BasePlotter):
             )
         elif auto_close is None:
             auto_close = self._theme.auto_close
-
-        if use_ipyvtk:
-            txt = textwrap.dedent(
-                """
-                use_ipyvtk is deprecated.  Set the backend
-                globally with ``pyvista.set_jupyter_backend("ipyvtklink")
-                or with ``backend="ipyvtklink"``
-                """
-            ).strip()
-            from pyvista.core.errors import DeprecationError
-
-            raise DeprecationError(txt)
 
         if self.render_window is None:
             raise RuntimeError("This plotter has been closed and cannot be shown.")
