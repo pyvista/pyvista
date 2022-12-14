@@ -20,8 +20,8 @@ class AxesActor(pv._vtk.vtkAxesActor):
     >>> axes.axes_actor.GetZAxisShaftProperty().SetColor(0, 1, 1)
     >>> axes.axes_actor.SetShaftTypeToCylinder()
     >>> pl = pv.Plotter()
-    >>> pl.add_actor(axes.axes_actor)
-    >>> pl.add_mesh(pv.Sphere())
+    >>> _ = pl.add_actor(axes.axes_actor)
+    >>> _ = pl.add_mesh(pv.Sphere())
     >>> pl.show()
 
     """
