@@ -59,7 +59,6 @@ def _show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwar
 
 def show_trame(
     plotter,
-    server=None,
     local_rendering=True,
     server_proxy=False,
     server_proxy_prefix=None,
@@ -72,14 +71,10 @@ def show_trame(
     if plotter.render_window is None:
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
-    if server is None:
-        server = get_server()
+    server = get_server(name=plotter._id_name)
 
-    if isinstance(server, str):
-        server = get_server(server)
-
-        # Needed to support multi-instance in Jupyter
-        server.enable_module(vtk_module)
+    # Needed to support multi-instance in Jupyter
+    server.enable_module(vtk_module)
 
     # Disable logging
     logger.setLevel(logging.WARNING)
