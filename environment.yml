@@ -27,8 +27,8 @@ dependencies:
   - panel
   - ipygany
   - ipyvtklink
-  - trame
   - pythreejs
   - pooch
   - pip:
       - pytest-memprof
+      - trame
