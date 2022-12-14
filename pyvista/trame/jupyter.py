@@ -1,3 +1,4 @@
+"""Trame utilities for running in Jupyter."""
 import asyncio
 import logging
 
@@ -9,24 +10,28 @@ from pyvista.trame import CLOSED_PLOTTER_ERROR, ui
 logger = logging.getLogger(__name__)
 
 
-def _show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
-    """
-    Helper function to show a server ui element into the cell.
+def show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
+    """Show a server ui element into the cell.
 
-    :param _server: the server on which the UI is defined
-    :type _server: trame_server.core.Server
+    Internal helper method.
 
-    :param ui: the name of the ui section to display. (Default: 'main')
-    :type ui: str
+    Parameters
+    ----------
+    _server : str, trame_server.core.Server
+        the server on which the UI is defined
 
-    :param server_proxy: build the URL relative for use with `jupyter-server-proxy`
-    :type server_proxy: bool
+    ui : str
+        the name of the ui section to display. (Default: 'main')
 
-    :param server_proxy_prefix: URL prefix when using `jupyter-server-proxy` on JupyterHub instances.
-    :type server_proxy: str
+    server_proxy : bool
+        build the URL relative for use with `jupyter-server-proxy`
 
-    :param **kwargs: any keyword arguments are pass to the Jupyter IFrame.
-        Additionally `protocol=` and `host=` can be use to override the iframe src url.
+    server_proxy_prefix : str
+        URL prefix when using `jupyter-server-proxy` on JupyterHub instances.
+
+    **kwargs
+        any keyword arguments are pass to the Jupyter IFrame. Additionally
+        `protocol=` and `host=` can be use to override the iframe src url.
     """
     if isinstance(_server, str):
         _server = get_server(_server)
@@ -64,7 +69,7 @@ def show_trame(
     server_proxy_prefix=None,
     **kwargs,
 ):
-    """Run and display the trame application in jupyter's event loop
+    """Run and display the trame application in jupyter's event loop.
 
     The kwargs are forwarded to IPython.display.IFrame()
     """
@@ -83,4 +88,4 @@ def show_trame(
     ui.initialize(server, plotter, local_rendering=local_rendering)
 
     # Show as cell result
-    _show(server, server_proxy=server_proxy, server_proxy_prefix=server_proxy_prefix, **kwargs)
+    show(server, server_proxy=server_proxy, server_proxy_prefix=server_proxy_prefix, **kwargs)
