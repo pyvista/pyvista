@@ -3173,6 +3173,71 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Legend actor."""
         return self._legend
 
+    def add_legend_scale(
+        self,
+        corner_offset_factor=2.0,
+        bottom_border_offset=30,
+        left_border_offset=30,
+        right_border_offset=30,
+        top_border_offset=30,
+        bottom_axis_visibility=False,
+        left_axis_visibilty=False,
+        right_axis_visibility=False,
+        top_axis_vibility=False,
+        legend_visibility=True,
+        xy_label_mode=False,
+        render=True,
+    ):
+        """Annotate the render window with scale and distance information.
+
+        Its basic goal is to provide an indication of the scale of the scene.
+        Four axes surrounding the render window indicate (in a variety of ways)
+        the scale of what the camera is viewing. An option also exists for
+        displaying a scale legend.
+
+        The axes can be programmed either to display distance scales or x-y
+        coordinate values (see ``xy_label_mode``). By default, the scales display
+        a distance. However, if you know that the view is down the z-axis, the
+        scales can be programmed to display x-y coordinate values.
+
+        Warning
+        -------
+        Please be aware that the axes and scale values are subject to perspective
+        effects. The distances are computed in the focal plane of the camera. When
+        there are large view angles (i.e., perspective projection), the computed
+        distances may provide users the wrong sense of scale. These effects are not
+        present when parallel projection is enabled.
+
+        """
+        legend_scale = _vtk.vtkLegendScaleActor()
+        legend_scale.SetCornerOffsetFactor(corner_offset_factor)
+        legend_scale.SetLegendVisibility(legend_visibility)
+        if xy_label_mode:
+            legend_scale.SetLabelModeToXYCoordinates()
+        else:
+            legend_scale.SetLabelModeToDistance()
+        legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
+        legend_scale.SetBottomBorderOffset(bottom_border_offset)
+        legend_scale.SetLeftAxisVisibility(left_axis_visibilty)
+        legend_scale.SetLeftBorderOffset(left_border_offset)
+        legend_scale.SetRightAxisVisibility(right_axis_visibility)
+        legend_scale.SetRightBorderOffset(right_border_offset)
+        legend_scale.SetTopAxisVisibility(top_axis_vibility)
+        legend_scale.SetTopBorderOffset(top_border_offset)
+
+        # TODO set colors (defaults to white)
+
+        # TODO enable placement of the legend
+
+        return self.add_actor(
+            legend_scale,
+            reset_camera=False,
+            name='_vtkLegendScaleActor',
+            culling=False,
+            pickable=False,
+            render=render,
+        )
+
 
 def _line_for_legend():
     """Create a simple line-like rectangle for the legend."""
