@@ -35,7 +35,7 @@ vol.plot(volume=True, cmap="bone", cpos=cpos)
 # Opacity Mappings
 # ++++++++++++++++
 #
-# Or use the :func:`pyvista.BasePlotter.add_volume` method like below.
+# Or use the :func:`pyvista.Plotter.add_volume` method like below.
 # Note that here we use a non-default opacity mapping to a sigmoid:
 
 p = pv.Plotter()
