@@ -7,8 +7,8 @@ Includes:
 * ``panel``
 * ``pythreejs``
 * ``ipygany``
-* ``trame``
-* ``trame-server``
+* ``client``
+* ``server``
 
 """
 import os
@@ -51,7 +51,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
         if backend == 'pythreejs':
             return show_pythreejs(plotter, return_viewer, **kwargs)
         if backend == 'ipyvtklink':
-            warnings.warn('`ipyvtklink` backend is to be replaced by the `trame-server` backend.')
+            warnings.warn('`ipyvtklink` backend is to be replaced by the `server` backend.')
             return show_ipyvtk(plotter, return_viewer)
         if backend == 'panel':
             return show_panel(plotter, return_viewer)
@@ -59,10 +59,10 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
             from pyvista.jupyter.pv_ipygany import show_ipygany
 
             return show_ipygany(plotter, return_viewer, **kwargs)
-        if backend == 'trame' or backend == 'trame-server':
+        if backend == 'client' or backend == 'server':
             from pyvista.trame.jupyter import show_trame
 
-            if backend == 'trame-server':
+            if backend == 'server':
                 return show_trame(plotter, local_rendering=False, **kwargs)
             return show_trame(plotter, local_rendering=True, **kwargs)
 

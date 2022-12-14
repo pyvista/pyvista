@@ -10,8 +10,8 @@ ALLOWED_BACKENDS = [
     'ipygany',
     'static',
     'pythreejs',
-    'trame',
-    'trame-server',
+    'client',
+    'server',
     'none',
 ]
 
@@ -71,7 +71,7 @@ def _validate_jupyter_backend(backend):
         # raises an import error when fail
         from pyvista.jupyter import pv_ipygany
 
-    if backend == 'trame' or backend == 'trame-server':
+    if backend == 'client' or backend == 'server':
         try:
             from pyvista.trame.jupyter import show_trame
         except ImportError:
@@ -121,12 +121,12 @@ def set_jupyter_backend(backend):
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
-        * ``'trame'`` : Export/serialize the scene graph to be rendered
+        * ``'client'`` : Export/serialize the scene graph to be rendered
           with VTK.js client-side through ``trame``. Requires that a virtual
           framebuffer be set up when displaying on a headless server and
           requires ``trame`` and ``jupyter-server-proxy`` to be installed.
 
-        * ``'trame-server'``: Render remotely and stream the
+        * ``'server'``: Render remotely and stream the
           resulting VTK images back to the client using ``trame``. This
           replaces the ``'ipyvtklink'`` backend with better performance.
           Supports all VTK methods, but suffers from lag due to remote
@@ -161,11 +161,11 @@ def set_jupyter_backend(backend):
 
     Enable the trame client-side backend.
 
-    >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
+    >>> pv.set_jupyter_backend('client')  # doctest:+SKIP
 
     Enable the trame server-side backend.
 
-    >>> pv.set_jupyter_backend('trame-server')  # doctest:+SKIP
+    >>> pv.set_jupyter_backend('server')  # doctest:+SKIP
 
     Just show static images.
 
