@@ -170,9 +170,23 @@ class RenderWindowInteractor:
         for observer in observers:
             self.remove_observer(observer)
 
-    def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key."""
-        self._key_press_event_callbacks.pop(key)
+    def clear_events_for_key(self, key, raise_on_missing=False):
+        """Remove the callbacks associated to the key.
+
+        Parameters
+        ----------
+        key : str
+            Key to clear events for.
+
+        raise_on_missing : bool, default: False
+            Whether to raise a :class:`ValueError` if there are no events
+            registered for the given key.
+        """
+        try:
+            self._key_press_event_callbacks.pop(key)
+        except KeyError:
+            if raise_on_missing:
+                raise ValueError(f'No events found for key {key!r}.') from None
 
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
@@ -292,9 +306,19 @@ class RenderWindowInteractor:
         self.interactor.SetInteractorStyle(self._style_class)
 
     def _toggle_context_style(self, mouse_pos):
+        """Toggle the context style for chart interaction.
+
+        Parameters
+        ----------
+        mouse_pos : tuple or None
+            Either a valid mouse position (to toggle interaction
+            with the chart pointed at) or ``None`` (to disable
+            interaction with all charts).
+
+        """
         scene = None
         for renderer in self._plotter.renderers:
-            if scene is None and renderer.IsInViewport(*mouse_pos):
+            if scene is None and mouse_pos is not None and renderer.IsInViewport(*mouse_pos):
                 scene = renderer._charts.toggle_interaction(mouse_pos)
             else:
                 # Not in viewport or already an active chart found (in case they overlap), so disable interaction
@@ -764,21 +788,34 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_repeating_timer(self, stime):
-        """Create a repeating timer.
+    def create_timer(self, duration, repeating=True):
+        """Create a timer.
+
+        Parameters
+        ----------
+        duration : int
+            Time (in milliseconds) before the timer emits a TimerEvent.
+
+        repeating : bool
+            When ``False`` a one-shot timer is created, which only fires
+            once. When ``True`` a repeating timer is created, which
+            continuously fires (every ``duration`` milliseconds) until
+            destruction.
 
         Returns
         -------
         int
             Timer ID.
         """
-        timer_id = self.interactor.CreateRepeatingTimer(stime)
-        if hasattr(self.interactor, 'ProcessEvents'):
-            self.process_events()
+        if repeating:
+            timer_id = self.interactor.CreateRepeatingTimer(duration)
         else:
-            self.interactor.Start()
-        self.interactor.DestroyTimer(timer_id)
+            timer_id = self.interactor.CreateOneShotTimer(duration)
         return timer_id
+
+    def destroy_timer(self, timer_id):
+        """Destroy the given timer."""
+        self.interactor.DestroyTimer(timer_id)
 
     def start(self):
         """Start interactions."""
@@ -791,6 +828,11 @@ class RenderWindowInteractor:
     def set_render_window(self, render_window):
         """Set the render window."""
         self.interactor.SetRenderWindow(render_window)
+
+    @property
+    def can_process_events(self):
+        """Return whether the interactor can process events (only available in VTK 9+)."""
+        return hasattr(self.interactor, 'ProcessEvents')
 
     def process_events(self):
         """Process events."""
@@ -836,7 +878,6 @@ class RenderWindowInteractor:
             # #################################################################
 
             self.interactor.TerminateApp()
-            self.interactor = None
 
     def close(self):
         """Close out the render window interactor.
@@ -844,11 +885,14 @@ class RenderWindowInteractor:
         This will terminate the render window if it is not already closed.
         """
         self.remove_observers()
+        if self._style_class == self._context_style:
+            self._toggle_context_style(None)  # Disable context interactor style first
         if self._style_class is not None:
             self._style_class.remove_observers()
             self._style_class = None
 
         self.terminate_app()
+        self.interactor = None
         self._click_event_callbacks = None
 
 

@@ -342,6 +342,7 @@ class Report(scooby.Report):
             'meshio',
             'jupyterlab',
             'pythreejs',
+            'pytest_pyvista',
         ]
 
         # Information about the GPU - bare except in case there is a rendering
