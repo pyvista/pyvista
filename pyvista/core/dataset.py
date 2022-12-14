@@ -2480,11 +2480,87 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self, i) -> Cell:
+    def get_cell(self, i: int) -> Cell:
+        """Return a pyvista.Cell object.
+
+        Parameters
+        ----------
+        i : int
+            Cell ID.
+
+        Returns
+        -------
+        pyvista.Cell
+            The i-th pyvista.Cell
+
+        Examples
+        --------
+        Get the 0-th cell
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.get_cell(0) # doctest:+SKIP
+        Cell (0x7f6304e0a730)
+          Type:	CellType.TRIANGLE
+          Linear:	True
+          Dimension:	2
+          N Points:	3
+          N Faces:	0
+          N Edges:	3
+          X Bounds:	8.970e+02, 9.075e+02
+          Y Bounds:	4.876e+01, 5.549e+01
+          Z Bounds:	8.075e+01, 8.366e+01
+        """
         return Cell(self.GetCell(i))
 
     @property
-    def cell(self):
+    def cell(self) -> List[Cell]:
+        """Return a list of cells.
+
+        Returns
+        -------
+        list(pyvista.Cell]
+            A list of pyvista.Cell objects
+
+        Examples
+        --------
+        Get the last cell
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell[-1] # doctest:+SKIP
+        Cell (0x7f62d214c310)
+          Type:	CellType.TRIANGLE
+          Linear:	True
+          Dimension:	2
+          N Points:	3
+          N Faces:	0
+          N Edges:	3
+          X Bounds:	7.420e+02, 8.067e+02
+          Y Bounds:	6.815e+02, 7.094e+02
+          Z Bounds:	9.487e+00, 1.449e+01
+
+        Get the 0-th edge of the 0-th cell
+        >>> mesh.cell[-1].edges[0] # doctest:+SKIP
+        Cell (0x7f63142531c0)
+          Type:	CellType.LINE
+          Linear:	True
+          Dimension:	1
+          N Points:	2
+          N Faces:	0
+          N Edges:	0
+          X Bounds:	7.420e+02, 7.420e+02
+          Y Bounds:	6.852e+02, 7.094e+02
+          Z Bounds:	1.343e+01, 1.449e+01
+
+        Get the point ids of the last cell
+        >>> mesh.cell[-1].point_ids
+        [1325, 1334, 1324]
+
+        Get the points coordinates of the last cell
+        >>> mesh.cell[-1].points
+        array([[742.02801514, 709.42700195,  14.49050045],
+               [806.66497803, 681.5369873 ,   9.48744011],
+               [742.02801514, 685.23797607,  13.4307003 ]])
+        """
         return [self.get_cell(i) for i in range(self.n_cells)]
 
     def cell_n_points(self, ind: int) -> int:
@@ -2534,11 +2610,7 @@ class DataSet(DataSetFilters, DataObject):
          [907.53900146  55.49020004  83.65809631]]
 
         """
-        # A copy of the points must be returned to avoid overlapping them since the
-        # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
-        points = self.GetCell(ind).GetPoints().GetData()
-        points = _vtk.vtk_to_numpy(points)
-        return points.copy()
+        return self.get_cell(ind).points
 
     def cell_bounds(self, ind: int) -> Tuple[float, float, float, float, float, float]:
         """Return the bounding box of a cell.
@@ -2581,7 +2653,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.cell_type(0)
-        5
+        <CellType.TRIANGLE: 5>
 
         """
         return self.get_cell(ind).type
@@ -2604,7 +2676,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.cell_type(0)
-        5
+        <CellType.TRIANGLE: 5>
 
         Cell type 5 is a triangular cell with three points.
 

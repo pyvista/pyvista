@@ -132,6 +132,14 @@ class Cell(_vtk.VTKObjectWrapper):
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
+    def points(self) -> np.ndarray:
+        """Get the point coordinates of the cell."""
+        # A copy of the points must be returned to avoid overlapping them since the
+        # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
+        points = _vtk.vtk_to_numpy(self.GetPoints().GetData())
+        return points.copy()
+
+    @property
     def edges(self) -> List[Cell]:
         """Get a list of edges building the cell."""
         return [self.get_edge(i) for i in range(self.n_edges)]
