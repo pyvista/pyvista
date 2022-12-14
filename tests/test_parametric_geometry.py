@@ -46,7 +46,7 @@ def test_kochanek_spline():
 
 
 def test_ParametricBohemianDome():
-    geom = pyvista.ParametricBohemianDome(direction=[0, 0, 1])
+    geom = pyvista.ParametricBohemianDome(direction=[0, 0, 1], a=0.5, b=1.5, c=1.0)
     assert geom.n_points
 
 
