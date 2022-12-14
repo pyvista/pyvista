@@ -170,9 +170,23 @@ class RenderWindowInteractor:
         for observer in observers:
             self.remove_observer(observer)
 
-    def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key."""
-        self._key_press_event_callbacks.pop(key)
+    def clear_events_for_key(self, key, raise_on_missing=False):
+        """Remove the callbacks associated to the key.
+
+        Parameters
+        ----------
+        key : str
+            Key to clear events for.
+
+        raise_on_missing : bool, default: False
+            Whether to raise a :class:`ValueError` if there are no events
+            registered for the given key.
+        """
+        try:
+            self._key_press_event_callbacks.pop(key)
+        except KeyError:
+            if raise_on_missing:
+                raise ValueError(f'No events found for key {key!r}.') from None
 
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
