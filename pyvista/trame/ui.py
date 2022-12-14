@@ -6,6 +6,8 @@ The UI generated here is the default for rendering in Jupyter
 environments and provides a starting point for custom user-built
 applications.
 """
+import io
+
 from trame.ui.vuetify import VAppLayout
 from trame.widgets import vuetify
 
@@ -33,6 +35,7 @@ class Viewer:
     def __init__(self, plotter, server):
         """Initialize Viewer."""
         state, ctrl = server.state, server.controller
+        self._server = server
         self._ctrl = ctrl
         self._state = state
 
@@ -45,6 +48,7 @@ class Viewer:
         self._state.change("view_edge_visiblity")(self.on_edge_visiblity_change)
         self._state.change("grid_visiblity")(self.on_grid_visiblity_change)
         self._state.change("outline_visiblity")(self.on_outline_visiblity_change)
+        self._ctrl.trigger("download_screenshot")(self.screenshot)
 
     @vuwrap
     def on_edge_visiblity_change(self, view_edge_visiblity, **kwargs):
@@ -99,6 +103,15 @@ class Viewer:
         """Get dataset actors."""
         return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
 
+    @vuwrap
+    def screenshot(self):
+        """Take screenshot and add attachament."""
+        self.plotter.render()
+        buffer = io.BytesIO()
+        self.plotter.screenshot(filename=buffer)
+        buffer.seek(0)
+        return self._server.protocol.addAttachment(memoryview(buffer.read()))
+
 
 def initialize(server, plotter, local_rendering=True):
     """Generate the UI for a given plotter."""
@@ -128,14 +141,6 @@ def initialize(server, plotter, local_rendering=True):
                     with vuetify.VBtn(icon=True, click=viewer.reset_camera):
                         vuetify.VIcon('mdi-arrow-expand-all')
                     vuetify.VCheckbox(
-                        v_model=("grid_visiblity", False),
-                        dense=True,
-                        hide_details=True,
-                        on_icon="mdi-ruler-square",
-                        off_icon="mdi-ruler-square",
-                        classes="ma-2",
-                    )
-                    vuetify.VCheckbox(
                         v_model=("outline_visiblity", False),
                         dense=True,
                         hide_details=True,
@@ -143,7 +148,20 @@ def initialize(server, plotter, local_rendering=True):
                         off_icon="mdi-cube-off",
                         classes="ma-2",
                     )
-
+                    if not local_rendering:
+                        vuetify.VCheckbox(
+                            v_model=("grid_visiblity", False),
+                            dense=True,
+                            hide_details=True,
+                            on_icon="mdi-ruler-square",
+                            off_icon="mdi-ruler-square",
+                            classes="ma-2",
+                        )
+                        with vuetify.VBtn(
+                            icon=True,
+                            click="utils.download('screenshot.png', trigger('download_screenshot'), 'image/png')",
+                        ):
+                            vuetify.VIcon('mdi-file-png-box')
             if local_rendering:
                 view = PyVistaLocalView(plotter)
             else:
