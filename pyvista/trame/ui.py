@@ -48,6 +48,7 @@ class Viewer:
         self._state.change("view_edge_visiblity")(self.on_edge_visiblity_change)
         self._state.change("grid_visiblity")(self.on_grid_visiblity_change)
         self._state.change("outline_visiblity")(self.on_outline_visiblity_change)
+        self._state.change("axis_visiblity")(self.on_axis_visiblity_change)
         self._ctrl.trigger("download_screenshot")(self.screenshot)
 
     @vuwrap
@@ -98,6 +99,14 @@ class Viewer:
         else:
             self.plotter.remove_bounding_box()
 
+    @vuwrap
+    def on_axis_visiblity_change(self, axis_visiblity, **kwargs):
+        """Handle outline visibility."""
+        if axis_visiblity:
+            self.plotter.show_axes()
+        else:
+            self.plotter.hide_axes()
+
     @property
     def actors(self):
         """Get dataset actors."""
@@ -130,38 +139,49 @@ def initialize(server, plotter, local_rendering=True):
             ):
                 with vuetify.VCardTitle(classes="py-0"):
                     # Scene controls
-                    with vuetify.VBtn(icon=True, click=viewer.view_isometric):
-                        vuetify.VIcon('mdi-axis-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.view_yz):
-                        vuetify.VIcon('mdi-axis-x-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.view_xz):
-                        vuetify.VIcon('mdi-axis-y-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.view_xy):
-                        vuetify.VIcon('mdi-axis-z-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.reset_camera):
-                        vuetify.VIcon('mdi-arrow-expand-all')
-                    vuetify.VCheckbox(
-                        v_model=("outline_visiblity", False),
-                        dense=True,
-                        hide_details=True,
-                        on_icon="mdi-cube",
-                        off_icon="mdi-cube-off",
-                        classes="ma-2",
-                    )
-                    if not local_rendering:
+                    with vuetify.VBtn(icon=True, click="show_ui=!show_ui"):
+                        vuetify.VIcon('mdi-dots-vertical')
+                    with vuetify.VRow(v_show=("show_ui", False)):
+                        with vuetify.VBtn(icon=True, click=viewer.view_isometric):
+                            vuetify.VIcon('mdi-axis-arrow')
+                        with vuetify.VBtn(icon=True, click=viewer.view_yz):
+                            vuetify.VIcon('mdi-axis-x-arrow')
+                        with vuetify.VBtn(icon=True, click=viewer.view_xz):
+                            vuetify.VIcon('mdi-axis-y-arrow')
+                        with vuetify.VBtn(icon=True, click=viewer.view_xy):
+                            vuetify.VIcon('mdi-axis-z-arrow')
+                        with vuetify.VBtn(icon=True, click=viewer.reset_camera):
+                            vuetify.VIcon('mdi-arrow-expand-all')
                         vuetify.VCheckbox(
-                            v_model=("grid_visiblity", False),
+                            v_model=("outline_visiblity", False),
                             dense=True,
                             hide_details=True,
-                            on_icon="mdi-ruler-square",
-                            off_icon="mdi-ruler-square",
+                            on_icon="mdi-cube",
+                            off_icon="mdi-cube-off",
                             classes="ma-2",
                         )
-                        with vuetify.VBtn(
-                            icon=True,
-                            click="utils.download('screenshot.png', trigger('download_screenshot'), 'image/png')",
-                        ):
-                            vuetify.VIcon('mdi-file-png-box')
+                        if not local_rendering:
+                            vuetify.VCheckbox(
+                                v_model=("grid_visiblity", False),
+                                dense=True,
+                                hide_details=True,
+                                on_icon="mdi-ruler-square",
+                                off_icon="mdi-ruler-square",
+                                classes="ma-2",
+                            )
+                            vuetify.VCheckbox(
+                                v_model=("axis_visiblity", False),
+                                dense=True,
+                                hide_details=True,
+                                on_icon="mdi-axis-arrow-info",
+                                off_icon="mdi-axis-arrow-info",
+                                classes="ma-2",
+                            )
+                            with vuetify.VBtn(
+                                icon=True,
+                                click="utils.download('screenshot.png', trigger('download_screenshot'), 'image/png')",
+                            ):
+                                vuetify.VIcon('mdi-file-png-box')
             if local_rendering:
                 view = PyVistaLocalView(plotter)
             else:
