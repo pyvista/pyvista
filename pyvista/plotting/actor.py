@@ -592,8 +592,7 @@ class Actor(pv._vtk.vtkActor):
         """Return or set the backface property.
 
         By default this property matches the frontface property
-        :attpl.add_mesh(pv.Sphere())
-        pl.show() r:`Actor.prop`. Once accessed or modified, this backface
+        :attr:`Actor.prop`. Once accessed or modified, this backface
         property becomes independent of the frontface property. In
         order to restore the fallback to frontface property, assign
         ``None`` to the property.
