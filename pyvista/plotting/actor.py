@@ -601,7 +601,7 @@ class Actor(pv._vtk.vtkActor):
         Returns
         -------
         pyvista.Property
-        The object describing backfaces.
+            The object describing backfaces.
 
         Examples
         --------

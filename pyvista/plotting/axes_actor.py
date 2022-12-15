@@ -8,7 +8,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
-    options, refer to `VTK axes actor documentation
+    options, refer to `vtkAxesActor Details
     <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`
 
     Examples
