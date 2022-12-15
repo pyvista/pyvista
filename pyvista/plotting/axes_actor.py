@@ -36,8 +36,8 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
         Examples
         --------
-        Create an Axes object and then change the
-        visibility of its AxesActor.
+        Create an Axes object and then access the
+        visibility attribute of its AxesActor.
 
         >>> import pyvista as pv
         >>> axes = pv.Axes()
