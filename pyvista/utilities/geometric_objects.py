@@ -1291,8 +1291,9 @@ def Circle(radius=0.5, resolution=100):
 
     Notes
     -----
-    Prior to version 0.38, this method had incorrect results, which
-    are now fixed. See pull request 3710 for details.
+    .. versionchanged:: 0.38.0
+       Prior to version 0.38, this method had incorrect results, producing
+       inconsistent edge lengths and a duplicated point which is now fixed.
 
     """
     points = np.zeros((resolution, 3))
