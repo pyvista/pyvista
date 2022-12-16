@@ -12,7 +12,6 @@ from trame.ui.vuetify import VAppLayout
 from trame.widgets import vuetify
 
 import pyvista
-from pyvista.plotting.plotting import BasePlotter
 from pyvista.trame import PyVistaLocalView, PyVistaRemoteView
 
 UI_TITLE = "PyVista"
