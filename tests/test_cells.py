@@ -122,6 +122,14 @@ class Test_Cell:
     def test_repr(self, grid, type):
         assert str(type) in repr(grid.cell[0])
 
+    @pytest.mark.parametrize("grid", grids, ids=ids)
+    def test_cell_points(self, grid):
+        points = grid.cell[0].points
+        assert isinstance(points, np.ndarray)
+        assert points.ndim == 2
+        assert points.shape[0] > 0
+        assert points.shape[1] == 3
+
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
 NCELLS = 2

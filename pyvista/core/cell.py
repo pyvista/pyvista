@@ -93,12 +93,10 @@ class Cell(_vtk.VTKObjectWrapper):
     @property
     def type(self) -> CellType:
         """Get the cell type from the enum `CellType`."""
-        arr = np.array(CellType)
-        mask = np.where(arr == self.GetCellType())[0]
-        if len(mask) == 1:
-            return CellType(mask[0])
-        else:
-            raise ValueError("Issue with the vtk GetCellType() method and CellType enum")
+        for t in CellType:
+            if t == self.GetCellType():
+                return t
+        raise ValueError("Issue with the vtk GetCellType() method and CellType enum")
 
     @property
     def is_linear(self) -> bool:
