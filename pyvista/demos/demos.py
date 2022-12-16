@@ -225,7 +225,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
         Allows the user to set the camera position before the start of the
         wave movement.
 
-    notebook : bool, default: None
+    notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
@@ -345,7 +345,7 @@ def plot_ants_plane(notebook=None):
 
     Parameters
     ----------
-    notebook : bool, default: None
+    notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
@@ -387,7 +387,7 @@ def plot_beam(notebook=None):
 
     Parameters
     ----------
-    notebook : bool, default: None
+    notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
@@ -443,7 +443,7 @@ def plot_datasets(dataset_type=None):
 
     Parameters
     ----------
-    dataset_type : str, default: None
+    notebook : bool, optional
         If set, plot just that dataset.  Must be one of the following:
 
         * ``'PolyData'``
