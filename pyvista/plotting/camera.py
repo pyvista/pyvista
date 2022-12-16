@@ -14,7 +14,7 @@ class Camera(_vtk.vtkCamera):
 
     Parameters
     ----------
-    renderer : pyvista.Renderer, default: None
+    renderer : pyvista.Renderer, optional
         Renderer to attach the camera to.
 
     Examples
