@@ -25,8 +25,10 @@ class Test_Cell:
         load_structured(),
         load_tetbeam(),
         load_uniform(),
-        load_explicit_structured(),
     ]
+    if pyvista._vtk.VTK9:
+        grids.append(load_explicit_structured())
+
     ids = list(map(type, grids))
 
     def test_bad_init(self):
