@@ -1377,7 +1377,7 @@ class _Chart(DocSubs):
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
-            ``window_size``.
+            ``window_size``. Defaults to active theme setting.
 
         screenshot : str or bool, default: False
             Saves screenshot to file when enabled.  See:
