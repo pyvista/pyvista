@@ -24,13 +24,15 @@ class _BasePyVistaView:
 class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
     """PyVista wrapping of trame VtkRemoteView."""
 
-    def __init__(self, plotter, interactive_ratio=1, ref='view', **kwargs):
+    def __init__(self, plotter, interactive_ratio=1, still_ratio=1, ref='view', **kwargs):
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         VtkRemoteView.__init__(
             self,
             self._plotter().render_window,
             interactive_ratio=interactive_ratio,
+            still_ratio=still_ratio,
+            __properties=[('still_ratio', 'stillRatio')],
             ref=ref,
             **kwargs,
         )
@@ -55,13 +57,15 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     Makes it easy to dynamically switch between client and server rendering.
     """
 
-    def __init__(self, plotter, interactive_ratio=1, ref='view', **kwargs):
+    def __init__(self, plotter, interactive_ratio=1, still_ratio=1, ref='view', **kwargs):
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         VtkRemoteLocalView.__init__(
             self,
             self._plotter().render_window,
-            interactive_ratio=1,
+            interactive_ratio=interactive_ratio,
+            still_ratio=still_ratio,
+            __properties=[('still_ratio', 'stillRatio')],
             ref=ref,
             **kwargs,
         )
