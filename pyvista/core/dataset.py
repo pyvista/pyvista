@@ -2491,11 +2491,12 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         pyvista.Cell
-            The i-th pyvista.Cell
+            The i-th pyvista.Cell.
 
         Examples
         --------
         Get the 0-th cell
+
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.get_cell(0) # doctest:+SKIP
@@ -2518,12 +2519,13 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        list(pyvista.Cell]
-            A list of pyvista.Cell objects
+        list[pyvista.Cell]
+            A list of pyvista.Cell objects.
 
         Examples
         --------
         Get the last cell
+
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.cell[-1] # doctest:+SKIP
@@ -2538,7 +2540,8 @@ class DataSet(DataSetFilters, DataObject):
           Y Bounds:	6.815e+02, 7.094e+02
           Z Bounds:	9.487e+00, 1.449e+01
 
-        Get the 0-th edge of the 0-th cell
+        Get the 0-th edge of the last cell
+
         >>> mesh.cell[-1].edges[0] # doctest:+SKIP
         Cell (0x7f63142531c0)
           Type:	CellType.LINE
@@ -2552,10 +2555,12 @@ class DataSet(DataSetFilters, DataObject):
           Z Bounds:	1.343e+01, 1.449e+01
 
         Get the point ids of the last cell
+
         >>> mesh.cell[-1].point_ids
         [1325, 1334, 1324]
 
         Get the points coordinates of the last cell
+
         >>> mesh.cell[-1].points
         array([[742.02801514, 709.42700195,  14.49050045],
                [806.66497803, 681.5369873 ,   9.48744011],

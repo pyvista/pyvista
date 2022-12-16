@@ -39,10 +39,12 @@ class Cell(_vtk.VTKObjectWrapper):
       Z Bounds:	4.883e-01, 4.971e-01
 
     Get if the 0-th cell is linear
+
     >>> mesh.cell[0].is_linear
     True
 
     Get the number of points, faces and edges of the 0-th cell
+
     >>> mesh.cell[0].n_points
     3
     >>> mesh.cell[0].n_faces
@@ -51,10 +53,12 @@ class Cell(_vtk.VTKObjectWrapper):
     3
 
     Get the point ids of the 0-th cell
+
     >>> mesh.cell[0].point_ids
     [840, 29, 28]
 
     Get the 0-th edge of the 0-th cell
+
     >>> mesh.cell[0].edges[0] # doctest:+SKIP
     Cell (0x7f082560dbe0)
       Type:	CellType.LINE
@@ -68,6 +72,7 @@ class Cell(_vtk.VTKObjectWrapper):
       Z Bounds:	4.883e-01, 4.883e-01
 
     Get the 0-th face from the 0-th cell of an unstructured grid
+
     >>> from pyvista.examples import load_hexbeam
     >>> mesh = load_hexbeam()
     >>> mesh.cell[0].faces[0] # doctest:+SKIP
