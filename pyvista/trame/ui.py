@@ -40,22 +40,30 @@ class Viewer:
 
         self.plotter = plotter
 
+        # State variable names
+        self.GRID = f'{plotter._id_name}_grid_visibility'
+        self.OUTLINE = f'{plotter._id_name}_outline_visibility'
+        self.EDGES = f'{plotter._id_name}_edge_visibility'
+        self.AXIS = f'{plotter._id_name}_axis_visiblity'
+        self.SCREENSHOT = f'{plotter._id_name}_download_screenshot'
+
         # controller
         ctrl.get_render_window = lambda: self.plotter.ren_win
 
         # Listen to changes
-        self._state.change("view_edge_visiblity")(self.on_edge_visiblity_change)
-        self._state.change("grid_visiblity")(self.on_grid_visiblity_change)
-        self._state.change("outline_visiblity")(self.on_outline_visiblity_change)
-        self._state.change("axis_visiblity")(self.on_axis_visiblity_change)
-        self._ctrl.trigger("download_screenshot")(self.screenshot)
+        self._state.change(self.EDGES)(self.on_edge_visiblity_change)
+        self._state.change(self.GRID)(self.on_grid_visiblity_change)
+        self._state.change(self.OUTLINE)(self.on_outline_visiblity_change)
+        self._state.change(self.AXIS)(self.on_axis_visiblity_change)
+        self._ctrl.trigger(self.SCREENSHOT)(self.screenshot)
 
     @vuwrap
-    def on_edge_visiblity_change(self, view_edge_visiblity, **kwargs):
+    def on_edge_visiblity_change(self, **kwargs):
         """Toggle edge visibility for all actors."""
+        value = self._state[self.GRID]
         for _, actor in self.plotter.actors.items():
             if isinstance(actor, pyvista.Actor):
-                actor.prop.show_edges = view_edge_visiblity
+                actor.prop.show_edges = value
 
     @vuwrap
     def view_isometric(self):
@@ -83,25 +91,25 @@ class Viewer:
         self.plotter.reset_camera()
 
     @vuwrap
-    def on_grid_visiblity_change(self, grid_visiblity, **kwargs):
+    def on_grid_visiblity_change(self, **kwargs):
         """Handle axes grid visibility."""
-        if grid_visiblity:
+        if self._state[self.GRID]:
             self.plotter.show_grid()
         else:
             self.plotter.remove_bounds_axes()
 
     @vuwrap
-    def on_outline_visiblity_change(self, outline_visiblity, **kwargs):
+    def on_outline_visiblity_change(self, **kwargs):
         """Handle outline visibility."""
-        if outline_visiblity:
+        if self._state[self.OUTLINE]:
             self.plotter.add_bounding_box()
         else:
             self.plotter.remove_bounding_box()
 
     @vuwrap
-    def on_axis_visiblity_change(self, axis_visiblity, **kwargs):
+    def on_axis_visiblity_change(self, **kwargs):
         """Handle outline visibility."""
-        if axis_visiblity:
+        if self._state[self.AXIS]:
             self.plotter.show_axes()
         else:
             self.plotter.hide_axes()
@@ -128,7 +136,7 @@ def initialize(server, plotter, local_rendering=True):
 
     viewer = Viewer(plotter, server)
 
-    with VAppLayout(server):
+    with VAppLayout(server, template_name=plotter._id_name):
         with vuetify.VContainer(
             fluid=True,
             classes="pa-0 fill-height",
@@ -138,9 +146,11 @@ def initialize(server, plotter, local_rendering=True):
             ):
                 with vuetify.VCardTitle(classes="py-0"):
                     # Scene controls
-                    with vuetify.VBtn(icon=True, click="show_ui=!show_ui"):
+                    with vuetify.VBtn(
+                        icon=True, click=f"{plotter._id_name}_show_ui=!{plotter._id_name}_show_ui"
+                    ):
                         vuetify.VIcon('mdi-dots-vertical')
-                    with vuetify.VRow(v_show=("show_ui", False)):
+                    with vuetify.VRow(v_show=(f"{plotter._id_name}_show_ui", False)):
                         with vuetify.VBtn(icon=True, click=viewer.view_isometric):
                             vuetify.VIcon('mdi-axis-arrow')
                         with vuetify.VBtn(icon=True, click=viewer.view_yz):
@@ -152,7 +162,7 @@ def initialize(server, plotter, local_rendering=True):
                         with vuetify.VBtn(icon=True, click=viewer.reset_camera):
                             vuetify.VIcon('mdi-arrow-expand-all')
                         vuetify.VCheckbox(
-                            v_model=("outline_visiblity", False),
+                            v_model=(viewer.OUTLINE, False),
                             dense=True,
                             hide_details=True,
                             on_icon="mdi-cube",
@@ -161,7 +171,7 @@ def initialize(server, plotter, local_rendering=True):
                         )
                         if not local_rendering:
                             vuetify.VCheckbox(
-                                v_model=("grid_visiblity", False),
+                                v_model=(viewer.GRID, False),
                                 dense=True,
                                 hide_details=True,
                                 on_icon="mdi-ruler-square",
@@ -169,7 +179,7 @@ def initialize(server, plotter, local_rendering=True):
                                 classes="ma-2",
                             )
                             vuetify.VCheckbox(
-                                v_model=("axis_visiblity", False),
+                                v_model=(viewer.AXIS, False),
                                 dense=True,
                                 hide_details=True,
                                 on_icon="mdi-axis-arrow-info",
@@ -178,7 +188,7 @@ def initialize(server, plotter, local_rendering=True):
                             )
                             with vuetify.VBtn(
                                 icon=True,
-                                click="utils.download('screenshot.png', trigger('download_screenshot'), 'image/png')",
+                                click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
                             ):
                                 vuetify.VIcon('mdi-file-png-box')
             if local_rendering:
@@ -187,3 +197,6 @@ def initialize(server, plotter, local_rendering=True):
                 view = PyVistaRemoteView(plotter)
             ctrl.view_update = view.update
             ctrl.view_reset_camera = view.reset_camera
+
+    # Returns the UI identifier (used in `template_name`)
+    return plotter._id_name

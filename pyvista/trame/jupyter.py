@@ -85,7 +85,13 @@ def show_trame(
     logger.setLevel(logging.WARNING)
 
     # Initialize app
-    ui.initialize(server, plotter, local_rendering=local_rendering)
+    ui_name = ui.initialize(server, plotter, local_rendering=local_rendering)
 
     # Show as cell result
-    show(server, server_proxy=server_proxy, server_proxy_prefix=server_proxy_prefix, **kwargs)
+    show(
+        server,
+        ui=ui_name,
+        server_proxy=server_proxy,
+        server_proxy_prefix=server_proxy_prefix,
+        **kwargs,
+    )
