@@ -443,7 +443,7 @@ def plot_datasets(dataset_type=None):
 
     Parameters
     ----------
-    notebook : bool, optional
+    dataset_type : str, optional
         If set, plot just that dataset.  Must be one of the following:
 
         * ``'PolyData'``
