@@ -10,6 +10,25 @@ from pyvista.trame import CLOSED_PLOTTER_ERROR, ui
 logger = logging.getLogger(__name__)
 
 
+def launch_server(server):
+    """Launch a trame server."""
+    if isinstance(server, str):
+        server = get_server(server)
+
+    if server._running_stage == 0:
+        task = server.start(
+            exec_mode="task",
+            port=0,
+            open_browser=False,
+            show_connection_info=False,
+            disable_logging=True,
+            timeout=0,
+        )
+        # TODO: wait for server to begin
+        return task
+    # else, server is already running
+
+
 def show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
     """Show a server ui element into the cell.
 
@@ -42,23 +61,20 @@ def show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwarg
             src = f"{server_proxy_prefix + '/' if server_proxy_prefix else ''}proxy/{_server.port}/index.html{params}"
         else:
             src = f"{kwargs.get('protocol', 'http')}://{kwargs.get('host', 'localhost')}:{_server.port}/index.html{params}"
+        logger.debug(src)
         loop = asyncio.get_event_loop()
         loop.call_later(0.1, lambda: jupyter.display_iframe(src, **kwargs))
         _server.controller.on_server_ready.discard(on_ready)
 
     if _server._running_stage == 0:
+        logger.debug('stage 0')
         _server.controller.on_server_ready.add(on_ready)
-        _server.start(
-            exec_mode="task",
-            port=0,
-            open_browser=False,
-            show_connection_info=False,
-            disable_logging=True,
-            timeout=0,
-        )
+        launch_server(_server)
     elif _server._running_stage == 1:
+        logger.debug('stage 1')
         _server.controller.on_server_ready.add(on_ready)
     elif _server._running_stage == 2:
+        logger.debug('stage 2')
         on_ready()
 
 
@@ -67,6 +83,7 @@ def show_trame(
     local_rendering=True,
     server_proxy=False,
     server_proxy_prefix=None,
+    name='pyvista-jupyter',
     **kwargs,
 ):
     """Run and display the trame application in jupyter's event loop.
@@ -76,7 +93,7 @@ def show_trame(
     if plotter.render_window is None:
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
-    server = get_server(name=plotter._id_name)
+    server = get_server(name=name)
 
     # Needed to support multi-instance in Jupyter
     server.enable_module(vtk_module)
