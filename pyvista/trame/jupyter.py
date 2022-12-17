@@ -1,13 +1,62 @@
 """Trame utilities for running in Jupyter."""
-import asyncio
 import logging
 
-from trame.app import get_server, jupyter
+from IPython import display
+from trame.app import get_server
 from trame_vtk.modules import vtk as vtk_module
 
+import pyvista
 from pyvista.trame import CLOSED_PLOTTER_ERROR, ui
 
+JUPYTER_SERVER_NAME = 'pyvista-jupyter'
+SERVER_DOWN_MESSAGE = """Trame server has not launched.
+
+You must start the trame server before attempting to `show()`
+with PyVista.
+
+You can use the following snippet to launch the server:
+
+    from pyvista.trame.jupyter import launch_server
+    launch_server({name})
+
+"""
+JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
+
+Prior to plotting, please make sure to run `set_jupyter_backend('server')` when using the `'server'` or `'client'` Jupyter backends.
+
+    import pyvista as pv
+    pv.set_jupyter_backend('server')
+
+In Jupyter, this MUST be in a separate cell from your `plotter.show()` call.
+
+If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
+
+"""
+
 logger = logging.getLogger(__name__)
+
+
+class TrameServerDownError(RuntimeError):
+    """Exception when trame server is down for Jupyter."""
+
+    def __init__(self, server_name):
+        """Call the base class constructor with the custom message."""
+        super().__init__(SERVER_DOWN_MESSAGE.format(name=server_name))
+
+
+class TrameJupyterServerDownError(RuntimeError):
+    """Exception when trame server is down for Jupyter."""
+
+    def __init__(self):
+        """Call the base class constructor with the custom message."""
+        super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
+
+
+def is_server_up(server):
+    """Check if server is running."""
+    if isinstance(server, str):
+        server = get_server(server)
+    return server._running_stage >= 2
 
 
 def launch_server(server):
@@ -15,7 +64,17 @@ def launch_server(server):
     if isinstance(server, str):
         server = get_server(server)
 
+    # Needed to support multi-instance in Jupyter
+    server.enable_module(vtk_module)
+
+    # HACK: Need to register CSS
+    ui.initialize(server, pyvista.Plotter(off_screen=True, notebook=False), local_rendering=False)
+
+    def on_ready(**_):
+        logger.debug(f'Server ready: {server}')
+
     if server._running_stage == 0:
+        server.controller.on_server_ready.add(on_ready)
         task = server.start(
             exec_mode="task",
             port=0,
@@ -24,23 +83,45 @@ def launch_server(server):
             disable_logging=True,
             timeout=0,
         )
-        # TODO: wait for server to begin
+        # TODO: await for server to begin
         return task
     # else, server is already running
 
 
-def show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
-    """Show a server ui element into the cell.
+def build_iframe(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
+    """Build IPython display.IFrame object for the trame view."""
+    params = f"?ui={ui}" if ui else ""
+    if server_proxy:
+        src = f"{server_proxy_prefix + '/' if server_proxy_prefix else ''}proxy/{_server.port}/index.html{params}"
+    else:
+        src = f"{kwargs.get('protocol', 'http')}://{kwargs.get('host', 'localhost')}:{_server.port}/index.html{params}"
+    iframe_kwargs = {
+        "width": "100%",
+        "height": 600,
+    }
+    iframe_kwargs.update(**kwargs)
+    logger.debug(src)
+    return display.IFrame(src=src, **iframe_kwargs)
 
-    Internal helper method.
 
-    Parameters
-    ----------
-    _server : str, trame_server.core.Server
-        the server on which the UI is defined
+def show_trame(
+    plotter,
+    local_rendering=False,
+    name=None,
+    server_proxy=False,
+    server_proxy_prefix=None,
+    **kwargs,
+):
+    """Run and display the trame application in jupyter's event loop.
 
-    ui : str
-        the name of the ui section to display. (Default: 'main')
+    plotter : pyvista.BasePlotter
+        The PyVista plotter to show.
+
+    local_rendering : bool, default: False
+        Whether to use local (client-side) rendering.
+
+    name : str
+        The name of the trame server on which the UI is defined
 
     server_proxy : bool
         build the URL relative for use with `jupyter-server-proxy`
@@ -52,60 +133,24 @@ def show(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwarg
         any keyword arguments are pass to the Jupyter IFrame. Additionally
         `protocol=` and `host=` can be use to override the iframe src url.
     """
-    if isinstance(_server, str):
-        _server = get_server(_server)
-
-    def on_ready(**_):
-        params = f"?ui={ui}" if ui else ""
-        if server_proxy:
-            src = f"{server_proxy_prefix + '/' if server_proxy_prefix else ''}proxy/{_server.port}/index.html{params}"
-        else:
-            src = f"{kwargs.get('protocol', 'http')}://{kwargs.get('host', 'localhost')}:{_server.port}/index.html{params}"
-        logger.debug(src)
-        loop = asyncio.get_event_loop()
-        loop.call_later(0.1, lambda: jupyter.display_iframe(src, **kwargs))
-        _server.controller.on_server_ready.discard(on_ready)
-
-    if _server._running_stage == 0:
-        logger.debug('stage 0')
-        _server.controller.on_server_ready.add(on_ready)
-        launch_server(_server)
-    elif _server._running_stage == 1:
-        logger.debug('stage 1')
-        _server.controller.on_server_ready.add(on_ready)
-    elif _server._running_stage == 2:
-        logger.debug('stage 2')
-        on_ready()
-
-
-def show_trame(
-    plotter,
-    local_rendering=True,
-    server_proxy=False,
-    server_proxy_prefix=None,
-    name='pyvista-jupyter',
-    **kwargs,
-):
-    """Run and display the trame application in jupyter's event loop.
-
-    The kwargs are forwarded to IPython.display.IFrame()
-    """
     if plotter.render_window is None:
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
-    server = get_server(name=name)
+    if name is None:
+        server = get_server(name=JUPYTER_SERVER_NAME)
+    else:
+        server = get_server(name=name)
 
-    # Needed to support multi-instance in Jupyter
-    server.enable_module(vtk_module)
-
-    # Disable logging
-    logger.setLevel(logging.WARNING)
+    if name is None and not is_server_up(server):
+        raise TrameJupyterServerDownError()
+    elif not is_server_up(server):
+        raise TrameServerDownError(name)
 
     # Initialize app
     ui_name = ui.initialize(server, plotter, local_rendering=local_rendering)
 
     # Show as cell result
-    show(
+    return build_iframe(
         server,
         ui=ui_name,
         server_proxy=server_proxy,
