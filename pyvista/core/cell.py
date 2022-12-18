@@ -98,10 +98,7 @@ class Cell(_vtk.VTKObjectWrapper):
     @property
     def type(self) -> CellType:
         """Get the cell type from the enum `CellType`."""
-        for t in CellType:
-            if t == self.GetCellType():
-                return t
-        raise ValueError("Issue with the vtk GetCellType() method and CellType enum")
+        return CellType(self.GetCellType())
 
     @property
     def is_linear(self) -> bool:
@@ -182,7 +179,7 @@ class Cell(_vtk.VTKObjectWrapper):
 
         return attrs
 
-    def str(self, html=False):
+    def _str(self, html=False):
         """Return a string with the cell info."""
         fmt = ""
         if html:
@@ -201,11 +198,7 @@ class Cell(_vtk.VTKObjectWrapper):
 
     def __repr__(self):
         """Return the object representation."""
-        return self.str(html=False)
-
-    def __str__(self):
-        """Return the object string representation."""
-        return self.str(html=False)
+        return self._str(html=False)
 
 
 class CellType(IntEnum):

@@ -18,6 +18,7 @@ from pyvista.examples import (
 
 class Test_Cell:
 
+    # Define some lists to test again
     grids = [
         load_hexbeam(),
         load_airplane(),
@@ -30,6 +31,16 @@ class Test_Cell:
         grids.append(load_explicit_structured())
 
     ids = list(map(type, grids))
+
+    types = [
+        CellType.HEXAHEDRON,
+        CellType.TRIANGLE,
+        CellType.VOXEL,
+        CellType.QUAD,
+        CellType.TETRA,
+        CellType.VOXEL,
+        CellType.HEXAHEDRON,
+    ]
 
     def test_bad_init(self):
         with pytest.raises(TypeError, match="must be of vtkCell"):
@@ -44,16 +55,6 @@ class Test_Cell:
     @pytest.mark.parametrize("grid", grids, ids=ids)
     def test_cell_type_is_inside_enum(self, grid):
         assert grid.cell[0].type in CellType
-
-    types = [
-        CellType.HEXAHEDRON,
-        CellType.TRIANGLE,
-        CellType.VOXEL,
-        CellType.QUAD,
-        CellType.TETRA,
-        CellType.VOXEL,
-        CellType.HEXAHEDRON,
-    ]
 
     @pytest.mark.parametrize("grid,type", zip(grids, types), ids=ids)
     def test_cell_type(self, grid, type):
