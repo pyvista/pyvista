@@ -37,55 +37,6 @@ class Cell(_vtk.VTKObjectWrapper):
       X Bounds:	-1.075e-01, -5.406e-02
       Y Bounds:	-2.235e-02, 0.000e+00
       Z Bounds:	4.883e-01, 4.971e-01
-
-    Get if the 0-th cell is linear
-
-    >>> mesh.cell[0].is_linear
-    True
-
-    Get the number of points, faces and edges of the 0-th cell
-
-    >>> mesh.cell[0].n_points
-    3
-    >>> mesh.cell[0].n_faces
-    0
-    >>> mesh.cell[0].n_edges
-    3
-
-    Get the point ids of the 0-th cell
-
-    >>> mesh.cell[0].point_ids
-    [840, 29, 28]
-
-    Get the 0-th edge of the 0-th cell
-
-    >>> mesh.cell[0].edges[0] # doctest:+SKIP
-    Cell (0x7f082560dbe0)
-      Type:	CellType.LINE
-      Linear:	True
-      Dimension:	1
-      N Points:	2
-      N Faces:	0
-      N Edges:	0
-      X Bounds:	-1.075e-01, -1.051e-01
-      Y Bounds:	-2.235e-02, 0.000e+00
-      Z Bounds:	4.883e-01, 4.883e-01
-
-    Get the 0-th face from the 0-th cell of an unstructured grid
-
-    >>> from pyvista.examples import load_hexbeam
-    >>> mesh = load_hexbeam()
-    >>> mesh.cell[0].faces[0] # doctest:+SKIP
-    Cell (0x7fd0c0247790)
-      Type:	CellType.QUAD
-      Linear:	True
-      Dimension:	2
-      N Points:	4
-      N Faces:	0
-      N Edges:	4
-      X Bounds:	5.000e-01, 1.000e+00
-      Y Bounds:	5.000e-01, 1.000e+00
-      Z Bounds:	5.000e+00, 5.000e+00
     """
 
     def __init__(self, vtkobject: _vtk.vtkCell) -> None:
@@ -97,43 +48,109 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def type(self) -> CellType:
-        """Get the cell type from the enum `CellType`."""
+        """Get the cell type from the enum `CellType`.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].type
+        <CellType.TRIANGLE: 5>
+        """
         return CellType(self.GetCellType())
 
     @property
     def is_linear(self) -> bool:
-        """Get if the cell is linear."""
+        """Get if the cell is linear.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].is_linear
+        True
+        """
         return bool(self.IsLinear())
 
     @property
     def dimension(self) -> int:
-        """Get the cell dimension. For example, 2 for a triangle and 3 for a tetrahedron."""
+        """Get the cell dimension. For example, 2 for a triangle and 3 for a tetrahedron.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].dimension
+        2
+        """
         return self.GetCellDimension()
 
     @property
     def n_points(self) -> int:
-        """Get the number of points building the cell."""
+        """Get the number of points building the cell.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].n_points
+        3
+        """
         return self.GetNumberOfPoints()
 
     @property
     def n_faces(self) -> int:
-        """Get the number of faces building the cell."""
+        """Get the number of faces building the cell.
+
+        Examples
+        --------
+        >>> from pyvista.examples.cells import Tetrahedron
+        >>> mesh = Tetrahedron()
+        >>> mesh.cell[0].n_faces
+        4
+        """
         return self.GetNumberOfFaces()
 
     @property
     def n_edges(self) -> int:
-        """Get the number of edges building the cell."""
+        """Get the number of edges building the cell.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].n_edges
+        3
+        """
         return self.GetNumberOfEdges()
 
     @property
     def point_ids(self) -> List[int]:
-        """Get the point ids building the cell."""
+        """Get the point ids building the cell.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].point_ids
+        [840, 29, 28]
+        """
         point_ids = self.GetPointIds()
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
     def points(self) -> np.ndarray:
-        """Get the point coordinates of the cell."""
+        """Get the point coordinates of the cell.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].points
+        array([[-0.10513641, -0.02234743,  0.48831028],
+               [-0.05405951,  0.        ,  0.49706897],
+               [-0.10748522,  0.        ,  0.48831028]])
+        """
         # A copy of the points must be returned to avoid overlapping them since the
         # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
         points = _vtk.vtk_to_numpy(self.GetPoints().GetData())
@@ -141,7 +158,24 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def edges(self) -> List[Cell]:
-        """Get a list of edges building the cell."""
+        """Get a list of edges building the cell.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].edges[0] # doctest:+SKIP
+        Cell (0x7f4c1b044b20)
+          Type:	    CellType.LINE
+          Linear:	True
+          Dimension:	1
+          N Points:	    2
+          N Faces:	    0
+          N Edges:	    0
+          X Bounds:	    -1.075e-01, -1.051e-01
+          Y Bounds:	    -2.235e-02, 0.000e+00
+          Z Bounds:	    4.883e-01, 4.883e-01
+        """
         return [self.get_edge(i) for i in range(self.n_edges)]
 
     def get_edge(self, i) -> Cell:
@@ -150,7 +184,24 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def faces(self) -> List[Cell]:
-        """Get a list of cell faces."""
+        """Get a list of cell faces.
+
+        Examples
+        --------
+        >>> from pyvista.examples.cells import Tetrahedron
+        >>> mesh = Tetrahedron()
+        >>> mesh.cell[0].faces[0] # doctest:+SKIP
+        Cell (0x7f4c1b044190)
+          Type:	CellType.TRIANGLE
+          Linear:	True
+          Dimension:	2
+          N Points:	3
+          N Faces:	0
+          N Edges:	3
+          X Bounds:	-1.000e+00, 1.000e+00
+          Y Bounds:	-1.000e+00, 1.000e+00
+          Z Bounds:	-1.000e+00, 1.000e+00
+        """
         return [self.get_face(i) for i in range(self.n_faces)]
 
     def get_face(self, i) -> Cell:
@@ -159,7 +210,15 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def bounds(self) -> Tuple[float, float, float, float, float, float]:
-        """Get the cell bounds [xmin, xmax, ymin, ymax, zmin, zmax]."""
+        """Get the cell bounds [xmin, xmax, ymin, ymax, zmin, zmax].
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.cell[0].bounds
+        (-0.10748521983623505, -0.05405950918793678, -0.022347433492541313, 0.0, 0.4883102774620056, 0.49706897139549255)
+        """
         return self.GetBounds()
 
     def _get_attrs(self):
