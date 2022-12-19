@@ -42,7 +42,7 @@ _ = ax.set_ylabel('Height (m)')
 # to the scene, and define a second (right) chart.
 
 p = pv.Plotter()
-h_chart = pv.ChartMPL(f, size=(0.46, 0.25), loc=(0.02, 0.06), redraw_on_update=True)
+h_chart = pv.ChartMPL(f, size=(0.46, 0.25), loc=(0.02, 0.06))
 h_chart.background_color = (1.0, 1.0, 1.0, 0.4)
 p.add_chart(h_chart)
 v_chart = pv.Chart2D(

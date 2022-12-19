@@ -4142,9 +4142,10 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         renderer's bottom left corner, a location of ``(1, 1)``
         corresponds to the renderer's top right corner.
 
-    redraw_on_update : bool, optional
+    redraw_on_update : bool, default: True
         Flag indicating whether the chart should be redrawn when
-        the plotter is updated, default ``True``.
+        the plotter is updated. For static charts, setting this
+        to ``False`` can improve performance.
 
     Examples
     --------
