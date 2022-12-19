@@ -155,9 +155,6 @@ def noise_2d():
 
 
 def pytest_addoption(parser):
-    parser.addoption("--reset_image_cache", action='store_true', default=False)
-    parser.addoption("--ignore_image_cache", action='store_true', default=False)
-    parser.addoption("--fail_extra_image_cache", action='store_true', default=False)
     parser.addoption("--test_downloads", action='store_true', default=False)
 
 

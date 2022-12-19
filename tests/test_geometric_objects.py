@@ -275,6 +275,11 @@ def test_circle():
     assert mesh.n_cells
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
     assert np.isclose(diameter, radius * 2.0, rtol=1e-3)
+    line_lengths = np.linalg.norm(
+        np.roll(mesh.points, shift=1, axis=0) - mesh.points,
+        axis=1,
+    )
+    assert np.allclose(line_lengths[0], line_lengths)
 
 
 def test_ellipse():

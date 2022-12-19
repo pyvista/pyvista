@@ -1,6 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
 from functools import wraps
-import logging
 import pathlib
 from typing import Sequence, Tuple, Union
 import warnings
@@ -14,9 +13,6 @@ from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _ge
 from pyvista.utilities import abstract_class, assert_empty_kwargs
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 
 @abstract_class
@@ -497,6 +493,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
 
         # permit old behavior
         if isinstance(uinput, Sequence) and not isinstance(uinput, str):
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. First argument must be "
                 "either a ``vtk.vtkImageData`` or path.",
@@ -507,12 +504,14 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
 
         if dimensions is None and 'dims' in kwargs:
             dimensions = kwargs.pop('dims')
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
                 '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning
             )
         assert_empty_kwargs(**kwargs)
 
         if args:
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. Use keyword arguments "
                 "to specify dimensions, spacing, and origin. For example:\n\n"

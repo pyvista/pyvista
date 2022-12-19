@@ -41,7 +41,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
+class _vtkWrapper(metaclass=_vtkWrapperMeta):
     def __getattribute__(self, item):
         unwrapped_attrs = ["_wrapped", "__class__", "__init__"]
         wrapped = super().__getattribute__("_wrapped")
@@ -978,7 +978,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 
 class _CustomContextItem(_vtk.vtkPythonItem):
-    class ItemWrapper(object):
+    class ItemWrapper:
         def Initialize(self, item):
             # item is the _CustomContextItem subclass instance
             return True
@@ -3419,8 +3419,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
         for plot_type in plot_types:
-            for plot in self._plots[plot_type]:
-                yield plot
+            yield from self._plots[plot_type]
 
     def remove_plot(self, plot):
         """Remove the given plot from this chart.
@@ -4505,8 +4504,7 @@ class Charts:
 
     def __iter__(self):
         """Return an iterable of charts."""
-        for chart in self._charts:
-            yield chart
+        yield from self._charts
 
     def __del__(self):
         """Clean up before being destroyed."""

@@ -467,6 +467,13 @@ def test_active_scalars_setter(hexbeam_point_attributes):
     assert dsa.GetScalars().GetName() == 'sample_point_scalars'
 
 
+def test_active_scalars_setter_no_override(hexbeam):
+    # Test that adding new array does not override
+    assert hexbeam.active_scalars_name == 'sample_cell_scalars'
+    hexbeam.cell_data['test'] = np.arange(0, hexbeam.n_cells, dtype=int)
+    assert hexbeam.active_scalars_name == 'sample_cell_scalars'
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_preserve_field_data_after_extract_cells(hexbeam, arr):

@@ -468,7 +468,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         rgb : bool, default: False
             If an 2 dimensional array is passed as the scalars, plot
@@ -685,7 +685,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     scalars = scalars.astype(np.uint8)
 
             # configure the lookup table
-            self.lookup_table.nan_color = nan_color
+            if nan_color:
+                self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
                 scalar_bar_args.setdefault('above_label', 'Above')

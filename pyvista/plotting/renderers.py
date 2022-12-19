@@ -246,8 +246,7 @@ class Renderers:
 
     def __iter__(self):
         """Return a iterable of renderers."""
-        for renderer in self._renderers:
-            yield renderer
+        yield from self._renderers
 
     @property
     def active_index(self):
@@ -428,7 +427,7 @@ class Renderers:
         >>> plotter = pyvista.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
-        Color(name='black', hex='#000000ff')
+        Color(name='black', hex='#000000ff', opacity=255)
         >>> plotter.close()
 
         Set the background color at the bottom to black and white at

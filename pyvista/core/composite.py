@@ -5,7 +5,6 @@ to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections.abc
 from itertools import zip_longest
-import logging
 import pathlib
 from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overload
 
@@ -18,10 +17,6 @@ from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
-
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
@@ -1124,7 +1119,9 @@ class MultiBlock(
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
                     scalars = np.array(scalars.astype(float))
-                    getattr(block, data_attr)[f'{scalars_name}-real'] = scalars
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-real'] = scalars
+                    dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
     def _convert_to_single_component(
@@ -1139,7 +1136,9 @@ class MultiBlock(
                     scalars = getattr(block, data_attr).get(scalars_name, None)
                     if scalars is not None:
                         scalars = np.linalg.norm(scalars, axis=1)
-                        getattr(block, data_attr)[f'{scalars_name}-normed'] = scalars
+                        dattr = getattr(block, data_attr)
+                        dattr[f'{scalars_name}-normed'] = scalars
+                        dattr.active_scalars_name = f'{scalars_name}-normed'
             return f'{scalars_name}-normed'
 
         for block in self:
@@ -1148,7 +1147,9 @@ class MultiBlock(
             elif block is not None:
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
-                    getattr(block, data_attr)[f'{scalars_name}-{component}'] = scalars[:, component]
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-{component}'] = scalars[:, component]
+                    dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
     def _get_consistent_active_scalars(self):
