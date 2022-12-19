@@ -2,22 +2,16 @@
 
 from abc import abstractmethod
 import collections.abc
-import logging
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, Type, Union
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import FieldAssociation, abstract_class, fileio
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .datasetattributes import DataSetAttributes
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -324,18 +318,6 @@ class DataObject:
 
         return True
 
-    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):  # pragma: no cover
-        """Add field data.
-
-        .. deprecated:: 0.32.0
-           Use :func:`DataObject.add_field_data` instead.
-        """
-        warnings.warn(
-            "Use of `add_field_array` is deprecated. Use `add_field_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.add_field_data(array=scalars, name=name, deep=deep)
-
     def add_field_data(self, array: np.ndarray, name: str, deep=True):
         """Add field data.
 
@@ -387,20 +369,6 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkFieldData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataObject.field_data` to return field data.
-
-        """
-        warnings.warn(
-            "Use of `field_arrays` is deprecated. Use `field_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.field_data
-
-    @property
     def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
@@ -423,19 +391,6 @@ class DataObject:
         return DataSetAttributes(
             self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
         )
-
-    def clear_field_arrays(self):  # pragma: no cover
-        """Remove all field data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataObject.clear_field_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.clear_field_data()
 
     def clear_field_data(self):
         """Remove all field data.

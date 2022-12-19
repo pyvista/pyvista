@@ -2,7 +2,6 @@
 
 import collections.abc
 from copy import deepcopy
-import logging
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
@@ -35,9 +34,6 @@ from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -464,61 +460,6 @@ class DataSet(DataSetFilters, DataObject):
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
-    def vectors(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
-        """Return active vectors.
-
-        .. deprecated:: 0.32.0
-           Use of `DataSet.vectors` to return vector data is deprecated.
-
-        """
-        warnings.warn(
-            "Use of `DataSet.vectors` is deprecated. Use `DataSet.active_vectors` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.active_vectors
-
-    @vectors.setter
-    def vectors(self, array: np.ndarray):  # pragma: no cover
-        warnings.warn(
-            "Use of `DataSet.vectors` to add vector data is deprecated. "
-            "Use `DataSet['vector_name'] = data`. "
-            "Use `DataSet.active_vectors_name = 'vector_name' to make active.",
-            PyVistaDeprecationWarning,
-        )
-        if array.ndim != 2:
-            raise ValueError('vector array must be a 2-dimensional array')
-        elif array.shape[1] != 3:
-            raise ValueError('vector array must be 3D')
-        elif array.shape[0] != self.n_points:
-            raise ValueError('Number of vectors be the same as the number of points')
-
-        self.point_data[DEFAULT_VECTOR_KEY] = array
-        self.active_vectors_name = DEFAULT_VECTOR_KEY
-
-    @property
-    def t_coords(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
-        """Return the active texture coordinates on the points.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSet.active_t_coords` to return the active
-            texture coordinates.
-
-        """
-        warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.active_t_coords
-
-    @t_coords.setter
-    def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
-        warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.active_t_coords = t_coords  # type: ignore
-
-    @property
     def active_t_coords(self) -> Optional[pyvista_ndarray]:
         """Return or set the active texture coordinates on the points.
 
@@ -606,13 +547,13 @@ class DataSet(DataSetFilters, DataObject):
             try:
                 name = keys[idx]
             except IndexError:
-                logging.warning('No textures associated with input mesh.')
+                warnings.warn('No textures associated with input mesh.')
                 return None
         # Grab the texture object by name
         try:
             texture = mesh.textures[name]
         except KeyError:
-            logging.warning(f'Texture ({name}) not associated with this dataset')
+            warnings.warn(f'Texture ({name}) not associated with this dataset')
             texture = None
         else:
             # Be sure to reset the tcoords if present
@@ -1464,20 +1405,6 @@ class DataSet(DataSetFilters, DataObject):
             self._textures = ido.textures
 
     @property
-    def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkPointData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSet.point_data` to return point data.
-
-        """
-        warnings.warn(
-            "Use of `point_arrays` is deprecated. Use `point_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.point_data
-
-    @property
     def point_data(self) -> DataSetAttributes:
         """Return vtkPointData as DataSetAttributes.
 
@@ -1517,19 +1444,6 @@ class DataSet(DataSetFilters, DataObject):
             self.GetPointData(), dataset=self, association=FieldAssociation.POINT
         )
 
-    def clear_point_arrays(self):  # pragma: no cover
-        """Remove all point data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataSet.clear_point_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.clear_point_data()
-
     def clear_point_data(self):
         """Remove all point arrays.
 
@@ -1549,35 +1463,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.point_data.clear()
 
-    def clear_cell_arrays(self):  # pragma: no cover
-        """Remove all cell data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataSet.clear_cell_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_cell_arrays` is deprecated. Use `clear_cell_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.clear_cell_data()
-
     def clear_cell_data(self):
         """Remove all cell arrays."""
         self.cell_data.clear()
-
-    def clear_arrays(self):  # pragma: no cover
-        """Remove all arrays from point/cell/field data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataSet.clear_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_arrays` is deprecated. Use `clear_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.clear_data()
 
     def clear_data(self):
         """Remove all arrays from point/cell/field data.
@@ -1599,20 +1487,6 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
-
-    @property
-    def cell_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkCellData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSet.cell_data` to return cell data.
-
-        """
-        warnings.warn(
-            "Use of `cell_arrays` is deprecated. Use `cell_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.cell_data
 
     @property
     def cell_data(self) -> DataSetAttributes:
@@ -2129,6 +2003,7 @@ class DataSet(DataSetFilters, DataObject):
             The overwriting mesh.
 
         """
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
         warnings.warn(
             "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
             PyVistaDeprecationWarning,

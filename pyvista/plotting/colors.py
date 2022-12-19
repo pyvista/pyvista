@@ -170,14 +170,12 @@ tab:cyan
 from __future__ import annotations
 
 from typing import Optional, Tuple, Union
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista._typing import color_like
-from pyvista.utilities import PyVistaDeprecationWarning
 from pyvista.utilities.misc import has_module
 
 IPYGANY_MAP = {
@@ -588,9 +586,9 @@ class Color:
         try:
             if len(rgba) != 4:
                 raise ValueError("Invalid length for RGBA sequence.")
-            self._red, self._green, self._blue, self._opacity = [
+            self._red, self._green, self._blue, self._opacity = (
                 self.convert_color_channel(c) for c in rgba
-            ]
+            )
         except ValueError:
             raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
 
@@ -925,39 +923,6 @@ class Color:
 
 
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
-
-
-def hex_to_rgb(h):  # pragma: no cover
-    """Return 0 to 1 rgb from a hex list or tuple."""
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyVistaDeprecationWarning,
-    )
-    return Color(h).float_rgb
-
-
-def string_to_rgb(string):  # pragma: no cover
-    """Convert a literal color string (i.e. white) to a color rgb.
-
-    Also accepts hex strings or single characters from the following list.
-
-        b: blue
-        g: green
-        r: red
-        c: cyan
-        m: magenta
-        y: yellow
-        k: black
-        w: white
-
-    """
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyVistaDeprecationWarning,
-    )
-    return Color(string).float_rgb
 
 
 def get_cmap_safe(cmap):

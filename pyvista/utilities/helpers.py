@@ -559,7 +559,7 @@ def line_segments_from_points(points):
     >>> import pyvista
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> lines = pyvista.lines_from_points(points)
+    >>> lines = pyvista.line_segments_from_points(points)
     >>> lines.plot()
 
     """
@@ -963,7 +963,7 @@ def wrap(dataset):
         try:
             return pyvista._wrappers[key](dataset)
         except KeyError:
-            logging.warning(f'VTK data type ({key}) is not currently supported by pyvista.')
+            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
         return
 
     # wrap meshio
@@ -1198,7 +1198,7 @@ def try_callback(func, *args):
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
         ).rstrip('\n')
-        logging.warning(formatted_exception)
+        warnings.warn(formatted_exception)
 
 
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
