@@ -1074,14 +1074,14 @@ class _Chart(DocSubs):
 
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
-        _, _, c_w, c_h = self._geometry
+        _, _, c_w, c_h = (int(g) for g in self._geometry)
         # Target size is calculated from specified normalized width and height and the renderer's current size
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
+        t_w = int(self._size[0] * r_w)
+        t_h = int(self._size[1] * r_h)
         resize = c_w != t_w or c_h != t_h
         if resize:
             # Mismatch between current size and target size, so resize chart:
-            self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+            self._geometry = (int(self._loc[0] * r_w), int(self._loc[1] * r_h), t_w, t_h)
         return resize
 
     @property
@@ -4257,17 +4257,17 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     def _resize(self):
         r_w, r_h = self._renderer.GetSize()
-        c_w, c_h = self._canvas.get_width_height()
+        c_w, c_h = (int(s) for s in self._canvas.get_width_height())
         # Calculate target size from specified normalized width and height and the renderer's current size
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
+        t_w = int(self._size[0] * r_w)
+        t_h = int(self._size[1] * r_h)
         resize = c_w != t_w or c_h != t_h
         if resize:
             # Mismatch between canvas size and target size, so resize figure:
             f_w = t_w / self._fig.dpi
             f_h = t_h / self._fig.dpi
             self._fig.set_size_inches(f_w, f_h)
-            self.position = (self._loc[0] * r_w, self._loc[1] * r_h)
+            self.position = (int(self._loc[0] * r_w), int(self._loc[1] * r_h))
         return resize
 
     def _redraw(self, event=None):
@@ -4284,7 +4284,6 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             img_arr = img.reshape([h, w, 4])
             img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
-            print("Chart Redrawn!")  # TODO: remove
 
     def _render_event(self, *args, plotter_update=False, **kwargs):
         # Redraw figure when geometry has changed (self._resize call
