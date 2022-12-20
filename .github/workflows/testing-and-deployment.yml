@@ -56,8 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CONDA_ALWAYS_YES: 1
-      VTK_VERSION: 8.2
-      conda_env: pyvista-vtk8.2
+      conda_env: pyvista-vtk
       DISPLAY: ':99.0'
       PYVISTA_OFF_SCREEN: True
 
@@ -97,7 +96,6 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
           conda env create --quiet -n ${{ env.conda_env }} --file environment.yml --experimental-solver=libmamba
           conda activate ${{ env.conda_env }}
           conda list
