@@ -1608,16 +1608,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.add_key_event(*args, **kwargs)
 
-    def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key.
-
-        Parameters
-        ----------
-        key : str
-            Key to clear events for.
-
-        """
-        self.iren.clear_events_for_key(key)
+    @wraps(RenderWindowInteractor.clear_events_for_key)
+    def clear_events_for_key(self, *args, **kwargs):
+        """Wrap RenderWindowInteractor.clear_events_for_key."""
+        if hasattr(self, 'iren'):
+            self.iren.clear_events_for_key(*args, **kwargs)
 
     def store_mouse_position(self, *args):
         """Store mouse position."""
@@ -1752,8 +1747,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
-        if hasattr(self, 'iren'):
-            self.iren.clear_key_event_callbacks()
+        if not hasattr(self, 'iren'):
+            return
+
+        self.iren.clear_key_event_callbacks()
 
         self.add_key_event('q', self._prep_for_close)  # Add no matter what
         b_left_down_callback = lambda: self.iren.add_observer(
@@ -1940,7 +1937,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.iren is not None:
             update_rate = self.iren.get_desired_update_rate()
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
-                self.right_timer_id = self.iren.create_repeating_timer(stime)
+                # Allow interaction for a brief moment during interactive updating
+                if self.iren.can_process_events:
+                    # For newer VTK versions we can use the non-blocking ProcessEvents method.
+                    self.iren.process_events()
+                else:
+                    # For older VTK versions we have to use the blocking Start method instead.
+                    # Setup a timer to break out of the next blocking call
+                    Plotter.update_timer_id = self.iren.create_timer(stime)
+                    # Allow interaction for a brief moment during interactive updating, blocking call.
+                    self.iren.start()
+                    # Execution resumed after TerminateApp() call in on_timer callback, destroy the timer
+                    self.iren.destroy_timer(Plotter.update_timer_id)
+                # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time
                 return
@@ -4459,7 +4468,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : color_like, optional
+        color : color_like, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4467,14 +4476,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        width : float, optional
+        width : float, default: 5
             Thickness of lines.
 
-        label : str, optional
+        label : str, default: None
             String label to use when adding a legend to the scene with
             :func:`pyvista.Plotter.add_legend`.
 
-        name : str, optional
+        name : str, default: None
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
@@ -4498,7 +4507,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.lines_from_points(lines)
+        lines = pyvista.line_segments_from_points(lines)
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
@@ -5760,7 +5769,7 @@ class Plotter(BasePlotter):
     """
 
     last_update_time = 0.0
-    right_timer_id = -1
+    update_timer_id = -1
 
     def __init__(
         self,
@@ -5806,8 +5815,13 @@ class Plotter(BasePlotter):
         _warn_xserver()
 
         def on_timer(iren, event_id):
-            """Exit application if interactive renderer stops."""
+            """Resume execution after processing interaction events during an interactive update."""
+            # For some odd reason when vtkContextInteractorStyle is active, TimerEvents
+            # are constantly being fired. As we cannot differentiate between different
+            # timers from the python side, we assume all TimerEvents that are fired while
+            # the ContextInteractorStyle is not active are coming from the update_timer.
             if event_id == 'TimerEvent' and self.iren._style != "Context":
+                # Simulate 'q' press to break out of blocking call in the update method.
                 self.iren.terminate_app()
 
         if off_screen is None:
@@ -5868,6 +5882,7 @@ class Plotter(BasePlotter):
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.ren_win)
+        self.reset_key_events()
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
@@ -5882,8 +5897,9 @@ class Plotter(BasePlotter):
         # Set window size
         self.window_size = window_size
 
-        # add timer event if interactive render exists
-        self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
+        # add timer event callback to break out of blocking interactive update call (only needed for VTK<9)
+        if not self.iren.can_process_events:
+            self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
         if self._theme.depth_peeling.enabled:
             if self.enable_depth_peeling():

@@ -1,5 +1,11 @@
 """Module containing pyvista implementation of vtkCamera."""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Union
 from weakref import proxy
+import xml.dom.minidom as md
+from xml.etree import ElementTree
 
 import numpy as np
 
@@ -87,6 +93,128 @@ class Camera(_vtk.vtkCamera):
         """Delete the camera."""
         self.RemoveAllObservers()
         self.parent = None
+
+    @classmethod
+    def from_paraview_pvcc(cls, filename: Union[str, Path]) -> Camera:
+        """Load a Paraview camera file (.pvcc extension).
+
+        Returns a pyvista.Camera object for which attributes has been read
+        from the filename argument.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            Path to Paraview camera file (.pvcc).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc") # doctest:+SKIP
+        >>> pl.camera.position
+        (1.0, 1.0, 1.0)
+        """
+        to_find = {
+            "CameraPosition": ("position", float),
+            "CameraFocalPoint": ("focal_point", float),
+            "CameraViewAngle": ("view_angle", float),
+            "CameraViewUp": ("up", float),
+            "CameraParallelProjection": ("parallel_projection", int),
+            "CameraParallelScale": ("parallel_scale", float),
+        }
+        camera = cls()
+
+        tree = ElementTree.parse(filename)
+        root = tree.getroot()[0]
+        for element in root:
+            attrib = element.attrib
+            attrib_name = attrib["name"]
+
+            if attrib_name in to_find:
+                name, typ = to_find[attrib_name]
+                nelems = int(attrib["number_of_elements"])
+
+                # Set the camera attributes
+                if nelems == 3:
+                    values = [typ(e.attrib["value"]) for e in element]
+                    setattr(camera, name, values)
+                elif nelems == 1:
+
+                    # Special case for bool since bool("0") returns True.
+                    # So first convert to int from `to_find` and then apply bool
+                    if "name" in element[-1].attrib and element[-1].attrib["name"] == "bool":
+                        val = bool(typ(element[0].attrib["value"]))
+                    else:
+                        val = typ(element[0].attrib["value"])
+                    setattr(camera, name, val)
+
+        return camera
+
+    def to_paraview_pvcc(self, filename: Union[str, Path]):
+        """Write the camera parameters to a Paraview camera file (.pvcc extension).
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            Path to Paraview camera file (.pvcc).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.camera.to_paraview_pvcc("camera.pvcc")
+        """
+        root = ElementTree.Element("PVCameraConfiguration")
+        root.attrib["description"] = "ParaView camera configuration"
+        root.attrib["version"] = "1.0"
+
+        dico = dict(group="views", type="RenderView", id="0", servers="21")
+        proxy = ElementTree.SubElement(root, "Proxy", dico)
+
+        # Add tuples
+        to_find = {
+            "CameraPosition": "position",
+            "CameraFocalPoint": "focal_point",
+            "CameraViewUp": "up",
+        }
+        for name, attr in to_find.items():
+            e = ElementTree.SubElement(
+                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="3")
+            )
+
+            for i in range(3):
+                tmp = ElementTree.Element("Element")
+                tmp.attrib["index"] = str(i)
+                tmp.attrib["value"] = str(getattr(self, attr)[i])
+                e.append(tmp)
+
+        # Add single values
+        to_find = {
+            "CameraViewAngle": "view_angle",
+            "CameraParallelScale": "parallel_scale",
+            "CameraParallelProjection": "parallel_projection",
+        }
+
+        for name, attr in to_find.items():
+            e = ElementTree.SubElement(
+                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="1")
+            )
+            tmp = ElementTree.Element("Element")
+            tmp.attrib["index"] = "0"
+
+            val = getattr(self, attr)
+            if type(val) is not bool:
+                tmp.attrib["value"] = str(val)
+                e.append(tmp)
+            else:
+                tmp.attrib["value"] = "1" if val else "0"
+                e.append(tmp)
+                e.append(ElementTree.Element("Domain", dict(name="bool", id=f"0.{name}.bool")))
+
+        xmlstr = ElementTree.tostring(root).decode()
+        newxml = md.parseString(xmlstr)
+        with open(filename, 'w') as outfile:
+            outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property
     def position(self):
@@ -469,9 +597,8 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        aspect : float, optional
-            The aspect of the viewport to compute the planes. Defaults
-            to 1.0.
+        aspect : float, default: 1.0
+            The aspect of the viewport to compute the planes.
 
         Returns
         -------
@@ -649,19 +776,19 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        padding : float, optional
+        padding : float, default: 0.0
             Additional padding around the actor(s). This is effectively a zoom,
             where a value of 0.01 results in a zoom out of 1%.
 
-        adjust_render_window : bool, optional
+        adjust_render_window : bool, default: True
             Adjust the size of the render window as to match the dimensions of
             the visible actors.
 
-        view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
-            Plane to which the view is oriented. Default 'xy'.
+        view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}, default: 'xy'
+            Plane to which the view is oriented.
 
-        negative : bool
-            Whether to view in opposite direction. Default ``False``.
+        negative : bool, default: False
+            Whether to view in opposite direction.
 
         Notes
         -----
