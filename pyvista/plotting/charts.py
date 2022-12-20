@@ -419,7 +419,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     Parameters
     ----------
-    label : str, default: ""
+    label : str, optional
         Axis label.
 
     range : list or tuple of float, optional
@@ -2101,7 +2101,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         Style of the line drawn in this plot. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line
         styles.
 
-    label : str, default: ""
+    label : str, optional
         Label of this plot, as shown in the chart's legend.
 
     Examples
@@ -2232,7 +2232,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         Style of the point markers drawn in this plot. See :ref:`ScatterPlot2D.MARKER_STYLES <scatter_marker_styles>`
         for a list of allowed marker styles.
 
-    label : str, default: ""
+    label : str, optional
         Label of this plot, as shown in the chart's legend.
 
     Notes
@@ -2428,7 +2428,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     color : color_like, default: "b"
         Color of the area drawn in this plot. Any color parsable by :class:`pyvista.Color` is allowed.
 
-    label : str, default: ""
+    label : str, optional
         Label of this plot, as shown in the chart's legend.
 
     Examples
@@ -2595,7 +2595,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
         vertical orientation.
 
-    label : str, default: ""
+    label : str, optional
         Label of this plot, as shown in the chart's legend.
 
     Examples
@@ -2777,7 +2777,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         Color of the stacks (areas) drawn in this plot. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
-    labels : list or tuple of str, default: []
+    labels : list or tuple of str, optional
         Label for each stack (area) drawn in this plot, as shown in
         the chart's legend.
 
@@ -3177,7 +3177,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             :ref:`ScatterPlot2D.MARKER_STYLES <scatter_marker_styles>`
             for a list of allowed marker styles.
 
-        label : str, default: ""
+        label : str, optional
             Label of this plot, as shown in the chart's legend.
 
         Returns
@@ -3220,7 +3220,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of
             allowed line styles.
 
-        label : str, default: ""
+        label : str, optional
             Label of this plot, as shown in the chart's legend.
 
         Returns
@@ -3259,7 +3259,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Color of the area drawn in this plot. Any color parsable
             by :class:`pyvista.Color` is allowed.
 
-        label : str, default: ""
+        label : str, optional
             Label of this plot, as shown in the chart's legend.
 
         Returns
@@ -3302,7 +3302,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             for an horizontal orientation or ``"V"`` for a vertical
             orientation.
 
-        label : str, default: ""
+        label : str, optional
             Label of this plot, as shown in the chart's legend.
 
         Returns
@@ -3339,7 +3339,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Color of the stacks (areas) drawn in this plot. Any color
             parsable by :class:`pyvista.Color` is allowed.
 
-        labels : list or tuple of str, default: []
+        labels : list or tuple of str, optional
             Label for each stack (area) drawn in this plot, as shown
             in the chart's legend.
 
@@ -3662,7 +3662,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         Color of the boxes drawn in this plot. Any color parsable by
         :class:`pyvista.Color` is allowed.
 
-    labels : list or tuple of str, default: []
+    labels : list or tuple of str, optional
         Label for each box drawn in this plot, as shown in the chart's
         legend.
 
@@ -3776,7 +3776,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     colors : list or tuple of color_like, optional
         Color used for each drawn boxplot.
 
-    labels : list or tuple of str, default: []
+    labels : list or tuple of str, optional
         Label for each drawn boxplot, as shown in the chart's
         legend.
 
@@ -3898,7 +3898,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         Color of the segments drawn in this plot. Any color parsable
         by :class:`pyvista.Color` is allowed.
 
-    labels : list or tuple of str, default: []
+    labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the
         chart's legend.
 
@@ -3993,7 +3993,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     colors : list or tuple of color_like, default: None
         Color used for each pie segment drawn in this plot.
 
-    labels : list or tuple of str, default: []
+    labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the
         chart's legend.
 
