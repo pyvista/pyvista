@@ -1100,7 +1100,10 @@ class DataSetFilters:
                 raise ValueError(
                     f'Value range must be length one for a float value or two for min/max; not ({value}).'
                 )
-            alg.ThresholdBetween(value[0], value[1])
+            # alg.ThresholdBetween(value[0], value[1])
+            alg.SetLowerThreshold(value[0])
+            alg.SetUpperThreshold(value[1])
+            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
         elif isinstance(value, collections.abc.Iterable):
             raise TypeError('Value must either be a single scalar or a sequence.')
         else:
