@@ -1,16 +1,19 @@
 """Axes actor module."""
 from enum import Enum
-from typing import Union
 
 import pyvista as pv
 
 
 class ShaftType(Enum):
+    """Types of shaft shapes available."""
+
     CYLINDER = 0
     LINE = 1
 
 
 class TipType(Enum):
+    """Types of tip shapes available."""
+
     CONE = 0
     SPHERE = 1
 
@@ -84,7 +87,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         return self.GetTotalLength()
 
     @total_length.setter
-    def total_length(self, length: Union[tuple, float]):
+    def total_length(self, length):
         if hasattr(length, '__iter__'):
             return self.SetTotalLength(length[0], length[1], length[2])
         else:
@@ -111,7 +114,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length: Union[tuple, float]):
+    def shaft_length(self, length):
         if hasattr(length, '__iter__'):
             return self.SetNormalizedShaftLength(length[0], length[1], length[2])
         else:
@@ -138,7 +141,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length: Union[tuple, float]):
+    def tip_length(self, length):
         if hasattr(length, '__iter__'):
             return self.SetNormalizedTipLength(length[0], length[1], length[2])
         else:
@@ -165,7 +168,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length: Union[tuple, float]):
+    def label_position(self, length):
         if hasattr(length, '__iter__'):
             return self.SetNormalizedLabelPosition(length[0], length[1], length[2])
         else:
@@ -298,8 +301,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @property
     def shaft_type(self) -> ShaftType:
-        """Return or set the shaft type. Can be either
-        a cylinder(0) or a line(1).
+        """Return or set the shaft type. Can be either a cylinder(0) or a line(1).
 
         Examples
         --------
@@ -322,8 +324,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @property
     def tip_type(self) -> TipType:
-        """Return or set the shaft type. Can be either
-        a cone(0) or a sphere(1).
+        """Return or set the shaft type. Can be either a cone(0) or a sphere(1).
 
         Examples
         --------
@@ -350,7 +351,6 @@ class AxesActor(pv._vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> from pyvista.plotting.axes_actor import TipType
         >>> axes = pv.Axes()
         >>> axes.axes_actor.x_axis_label = 'This axis'
         >>> axes.axes_actor.x_axis_label
@@ -369,7 +369,6 @@ class AxesActor(pv._vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> from pyvista.plotting.axes_actor import TipType
         >>> axes = pv.Axes()
         >>> axes.axes_actor.y_axis_label = 'This axis'
         >>> axes.axes_actor.y_axis_label
@@ -388,7 +387,6 @@ class AxesActor(pv._vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> from pyvista.plotting.axes_actor import TipType
         >>> axes = pv.Axes()
         >>> axes.axes_actor.z_axis_label = 'This axis'
         >>> axes.axes_actor.z_axis_label
