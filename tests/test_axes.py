@@ -1,6 +1,7 @@
 import numpy as np
 
 import pyvista
+from pyvista.plotting.axes_actor import ShaftType, TipType
 
 
 def test_actors():
@@ -46,3 +47,93 @@ def test_axes_actor_visibility():
     assert axes.axes_actor.visibility
     axes.axes_actor.visibility = False
     assert not axes.axes_actor.visibility
+
+
+def test_axes_actor_shaft_len():
+    axes = pyvista.Axes()
+    axes.axes_actor.shaft_length = 1
+    assert axes.axes_actor.shaft_length == (1, 1, 1)
+
+    axes.axes_actor.shaft_length = (1, 2, 3)
+    assert axes.axes_actor.shaft_length == (1, 2, 3)
+
+
+def test_axes_actor_tip_len():
+    axes = pyvista.Axes()
+    axes.axes_actor.tip_length = 1
+    assert axes.axes_actor.tip_length == (1, 1, 1)
+
+    axes.axes_actor.tip_length = (1, 2, 3)
+    assert axes.axes_actor.tip_length == (1, 2, 3)
+
+
+def test_axes_actor_label_pos():
+    axes = pyvista.Axes()
+    axes.axes_actor.label_position = 1
+    assert axes.axes_actor.label_position == (1, 1, 1)
+
+    axes.axes_actor.label_position = (1, 2, 3)
+    assert axes.axes_actor.label_position == (1, 2, 3)
+
+
+def test_axes_actor_cone_res():
+    axes = pyvista.Axes()
+    axes.axes_actor.cone_resolution = 24
+    assert axes.axes_actor.cone_resolution == 24
+
+
+def test_axes_actor_sphere_res():
+    axes = pyvista.Axes()
+    axes.axes_actor.sphere_resolution = 24
+    assert axes.axes_actor.sphere_resolution == 24
+
+
+def test_axes_actor_cylinder_res():
+    axes = pyvista.Axes()
+    axes.axes_actor.cylinder_resolution = 24
+    assert axes.axes_actor.cylinder_resolution == 24
+
+
+def test_axes_actor_cone_rad():
+    axes = pyvista.Axes()
+    axes.axes_actor.cone_radius = 0.8
+    assert axes.axes_actor.cone_radius == 0.8
+
+
+def test_axes_actor_sphere_rad():
+    axes = pyvista.Axes()
+    axes.axes_actor.sphere_radius = 0.8
+    assert axes.axes_actor.sphere_radius == 0.8
+
+
+def test_axes_actor_cylinder_rad():
+    axes = pyvista.Axes()
+    axes.axes_actor.sphere_radius = 0.03
+    assert axes.axes_actor.sphere_radius == 0.03
+
+
+def test_axes_actor_shaft_type():
+    axes = pyvista.Axes()
+    axes.axes_actor.shaft_type = ShaftType.CYLINDER
+    assert axes.axes_actor.shaft_type == ShaftType.CYLINDER
+    axes.axes_actor.shaft_type = ShaftType.LINE
+    assert axes.axes_actor.shaft_type == ShaftType.LINE
+
+
+def test_axes_actor_tip_type():
+    axes = pyvista.Axes()
+    axes.axes_actor.tip_type = TipType.CONE
+    assert axes.axes_actor.tip_type == TipType.CONE
+    axes.axes_actor.tip_type = TipType.SPHERE
+    assert axes.axes_actor.tip_type == TipType.SPHERE
+
+
+def test_axes_actor_axis_labels():
+    axes = pyvista.Axes()
+    axes.axes_actor.x_axis_label = 'Axis X'
+    axes.axes_actor.y_axis_label = 'Axis Y'
+    axes.axes_actor.z_axis_label = 'Axis Z'
+
+    assert axes.axes_actor.x_axis_label == 'Axis X'
+    assert axes.axes_actor.y_axis_label == 'Axis Y'
+    assert axes.axes_actor.z_axis_label == 'Axis Z'
