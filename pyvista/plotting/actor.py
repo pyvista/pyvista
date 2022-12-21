@@ -6,6 +6,7 @@ import weakref
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.utilities.misc import no_new_attr
 
 from ._property import Property
@@ -14,7 +15,7 @@ from .prop3D import Prop3D
 
 
 @no_new_attr
-class Actor(Prop3D, pv._vtk.vtkActor):
+class Actor(Prop3D, _vtk.vtkActor):
     """Wrap vtkActor.
 
     This class represents the geometry & properties in a rendered

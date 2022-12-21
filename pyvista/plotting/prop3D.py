@@ -1,8 +1,8 @@
 """Prop3D module."""
-import pyvista as pv
+from pyvista import _vtk
 
 
-class Prop3D(pv._vtk.vtkProp3D):
+class Prop3D(_vtk.vtkProp3D):
     """Prop3D wrapper for vtkProp3D.
 
     Used to represent an entity in a rendering scene. It handles functions
@@ -10,7 +10,7 @@ class Prop3D(pv._vtk.vtkProp3D):
     in Actor and Volume class.
     """
 
-    def __init__(self, mapper=None, prop=None):
+    def __init__(self):
         """Initialize Prop3D."""
         super().__init__()
 

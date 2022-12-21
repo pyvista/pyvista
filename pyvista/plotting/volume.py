@@ -1,12 +1,12 @@
 """PyVista volume module."""
-import pyvista as pv
+from pyvista import _vtk
 
 from ._property import Property
 from .mapper import _BaseMapper
 from .prop3D import Prop3D
 
 
-class Volume(Prop3D, pv._vtk.vtkVolume):
+class Volume(Prop3D, _vtk.vtkVolume):
     """Wrapper class for VTK volume.
 
     This class represents a volume in a rendered scene. It inherits
