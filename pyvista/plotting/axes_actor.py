@@ -89,9 +89,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @total_length.setter
     def total_length(self, length):
         if hasattr(length, '__iter__'):
-            return self.SetTotalLength(length[0], length[1], length[2])
+            self.SetTotalLength(length[0], length[1], length[2])
         else:
-            return self.SetTotalLength(length, length, length)
+            self.SetTotalLength(length, length, length)
 
     @property
     def shaft_length(self) -> tuple:
@@ -116,9 +116,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @shaft_length.setter
     def shaft_length(self, length):
         if hasattr(length, '__iter__'):
-            return self.SetNormalizedShaftLength(length[0], length[1], length[2])
+            self.SetNormalizedShaftLength(length[0], length[1], length[2])
         else:
-            return self.SetNormalizedShaftLength(length, length, length)
+            self.SetNormalizedShaftLength(length, length, length)
 
     @property
     def tip_length(self) -> tuple:
@@ -143,9 +143,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @tip_length.setter
     def tip_length(self, length):
         if hasattr(length, '__iter__'):
-            return self.SetNormalizedTipLength(length[0], length[1], length[2])
+            self.SetNormalizedTipLength(length[0], length[1], length[2])
         else:
-            return self.SetNormalizedTipLength(length, length, length)
+            self.SetNormalizedTipLength(length, length, length)
 
     @property
     def label_position(self) -> tuple:
@@ -170,9 +170,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @label_position.setter
     def label_position(self, length):
         if hasattr(length, '__iter__'):
-            return self.SetNormalizedLabelPosition(length[0], length[1], length[2])
+            self.SetNormalizedLabelPosition(length[0], length[1], length[2])
         else:
-            return self.SetNormalizedLabelPosition(length, length, length)
+            self.SetNormalizedLabelPosition(length, length, length)
 
     @property
     def cone_resolution(self) -> int:
@@ -193,7 +193,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @cone_resolution.setter
     def cone_resolution(self, res: int):
-        return self.SetConeResolution(res)
+        self.SetConeResolution(res)
 
     @property
     def sphere_resolution(self) -> int:
@@ -213,7 +213,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @sphere_resolution.setter
     def sphere_resolution(self, res: int):
-        return self.SetSphereResolution(res)
+        self.SetSphereResolution(res)
 
     @property
     def cylinder_resolution(self) -> int:
@@ -234,7 +234,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @cylinder_resolution.setter
     def cylinder_resolution(self, res: int):
-        return self.SetCylinderResolution(res)
+        self.SetCylinderResolution(res)
 
     @property
     def cone_radius(self) -> float:
@@ -255,7 +255,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @cone_radius.setter
     def cone_radius(self, rad: float):
-        return self.SetConeRadius(rad)
+        self.SetConeRadius(rad)
 
     @property
     def sphere_radius(self) -> float:
@@ -276,7 +276,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @sphere_radius.setter
     def sphere_radius(self, rad: float):
-        return self.SetSphereRadius(rad)
+        self.SetSphereRadius(rad)
 
     @property
     def cylinder_radius(self) -> float:
@@ -297,7 +297,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @cylinder_radius.setter
     def cylinder_radius(self, rad: float):
-        return self.SetCylinderRadius(rad)
+        self.SetCylinderRadius(rad)
 
     @property
     def shaft_type(self) -> ShaftType:
@@ -318,9 +318,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @shaft_type.setter
     def shaft_type(self, shaft_type: int):
         if shaft_type == ShaftType.CYLINDER:
-            return self.SetShaftTypeToCylinder()
+            self.SetShaftTypeToCylinder()
         elif shaft_type == ShaftType.LINE:
-            return self.SetShaftTypeToLine()
+            self.SetShaftTypeToLine()
 
     @property
     def tip_type(self) -> TipType:
@@ -340,9 +340,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @tip_type.setter
     def tip_type(self, tip_type: int):
         if tip_type == TipType.CONE:
-            return self.SetTipTypeToCone()
+            self.SetTipTypeToCone()
         elif tip_type == TipType.SPHERE:
-            return self.SetTipTypeToSphere()
+            self.SetTipTypeToSphere()
 
     @property
     def x_axis_label(self) -> str:
@@ -360,7 +360,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @x_axis_label.setter
     def x_axis_label(self, label: str):
-        return self.SetXAxisLabelText(label)
+        self.SetXAxisLabelText(label)
 
     @property
     def y_axis_label(self) -> str:
@@ -378,7 +378,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @y_axis_label.setter
     def y_axis_label(self, label: str):
-        return self.SetYAxisLabelText(label)
+        self.SetYAxisLabelText(label)
 
     @property
     def z_axis_label(self) -> str:
@@ -396,4 +396,4 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @z_axis_label.setter
     def z_axis_label(self, label: str):
-        return self.SetZAxisLabelText(label)
+        self.SetZAxisLabelText(label)
