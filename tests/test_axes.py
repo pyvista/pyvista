@@ -49,6 +49,15 @@ def test_axes_actor_visibility():
     assert not axes.axes_actor.visibility
 
 
+def test_axes_actor_total_len():
+    axes = pyvista.Axes()
+    axes.axes_actor.total_length = 1
+    assert axes.axes_actor.total_length == (1, 1, 1)
+
+    axes.axes_actor.total_length = (1, 2, 3)
+    assert axes.axes_actor.total_length == (1, 2, 3)
+
+
 def test_axes_actor_shaft_len():
     axes = pyvista.Axes()
     axes.axes_actor.shaft_length = 1
