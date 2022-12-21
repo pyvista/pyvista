@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import List, Tuple
+from typing import Generator, List, Tuple
 
 import numpy as np
 
@@ -157,8 +157,8 @@ class Cell(_vtk.VTKObjectWrapper):
         return points.copy()
 
     @property
-    def edges(self) -> List[Cell]:
-        """Get a list of edges building the cell.
+    def edges(self) -> Generator[Cell, None, None]:
+        """Get an iterator of edges building the cell.
 
         Examples
         --------
@@ -176,15 +176,16 @@ class Cell(_vtk.VTKObjectWrapper):
           Y Bounds:	    -2.235e-02, 0.000e+00
           Z Bounds:	    4.883e-01, 4.883e-01
         """
-        return [self.get_edge(i) for i in range(self.n_edges)]
+        for i in range(self.n_edges):
+            yield self.get_edge(i)
 
     def get_edge(self, i) -> Cell:
         """Get the i-th edge building the cell."""
         return Cell(self.GetEdge(i))
 
     @property
-    def faces(self) -> List[Cell]:
-        """Get a list of cell faces.
+    def faces(self) -> Generator[Cell, None, None]:
+        """Get an iterator of cell faces.
 
         Examples
         --------
@@ -202,7 +203,8 @@ class Cell(_vtk.VTKObjectWrapper):
           Y Bounds:	-1.000e+00, 1.000e+00
           Z Bounds:	-1.000e+00, 1.000e+00
         """
-        return [self.get_face(i) for i in range(self.n_faces)]
+        for i in range(self.n_faces):
+            yield self.get_face(i)
 
     def get_face(self, i) -> Cell:
         """Get the i-th face building the cell."""

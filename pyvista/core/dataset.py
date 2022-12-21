@@ -2511,7 +2511,9 @@ class DataSet(DataSetFilters, DataObject):
           Y Bounds:	4.876e+01, 5.549e+01
           Z Bounds:	8.075e+01, 8.366e+01
         """
-        return Cell(self.GetCell(i))
+        vtkCell = _vtk.vtkGenericCell()
+        self.GetCell(i, vtkCell)
+        return Cell(vtkCell)
 
     @property
     def cell(self) -> List[Cell]:
