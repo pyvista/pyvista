@@ -3,6 +3,8 @@
 This requires trame v2.3.0
 
 """
+from pyvista import _vtk
+
 import weakref
 from trame.widgets.vtk import VtkLocalView, VtkRemoteView, VtkRemoteLocalView
 
@@ -40,6 +42,8 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         )
         # Sometimes there is a lag
         self._server.controller.on_server_ready.add(self.update)
+
+        plotter.add_on_render_callback(lambda *args: self.update, render_event=True)
 
 
 class PyVistaLocalView(VtkLocalView, _BasePyVistaView):

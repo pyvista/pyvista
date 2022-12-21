@@ -254,6 +254,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # track if render window has ever been rendered
         self._rendered = False
 
+        self._on_render_callbacks = set()
+
         # this helps managing closed plotters
         self._closed = False
 
@@ -1621,6 +1623,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
             log.debug('Rendering')
             self.render_window.Render()
             self._rendered = True
+            for callback in self._on_render_callbacks:
+                callback(self)
+
+    def add_on_render_callback(self, callback, render_event=False):
+        """Add a method to be called post-render.
+
+        Parameters
+        ----------
+        callback : callable
+            The callback method to run post-render. This takes a single
+            argument which is the plotter object.
+
+        render_event : bool
+            If True, associate with all VTK RenderEvents. Otherwise, the
+            callback is only handled on a successful ``render()`` from
+            the PyVista plotter directly.
+
+        """
+        if render_event:
+            for renderer in self.renderers:
+                renderer.AddObserver(_vtk.vtkCommand.RenderEvent, lambda *args: callback(self))
+        else:
+            self._on_render_callbacks.add(callback)
+
+    def clear_on_render_callbacks(self):
+        """Clear all callback methods previously registered with ``render()``."""
+        for renderer in self.renderers:
+            renderer.RemoveObservers(_vtk.vtkCommand.RenderEvent)
+        self._on_render_callbacks = set()
 
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs):
