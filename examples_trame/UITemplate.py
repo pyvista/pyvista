@@ -1,3 +1,10 @@
+"""How to use PyVista UI template.
+
+This example demonstrates how to use ``ui_container`` to create
+add a PyVista ``Plotter`` to a UI with scene controls and standard
+UI features.
+"""
+
 import matplotlib.pyplot as plt
 from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout
@@ -5,18 +12,20 @@ from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.trame import PyVistaRemoteView
+from pyvista.trame.ui import ui_container
+
+pv.OFF_SCREEN = True
 
 server = get_server()
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVista Colormaps"
+state.trame__title = "PyVista UI Template"
 
 # -----------------------------------------------------------------------------
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter(off_screen=True)
+plotter = pv.Plotter()
 actor = plotter.add_mesh(mesh, cmap="viridis")
 
 
@@ -48,13 +57,8 @@ with SinglePageLayout(server) as layout:
         )
 
     with layout.content:
-        with vuetify.VContainer(
-            fluid=True,
-            classes="pa-0 fill-height",
-        ):
-            view = PyVistaRemoteView(plotter)
-            ctrl.view_update = view.update
-            ctrl.view_reset_camera = view.reset_camera
+        # Use PyVista UI template for Plotters
+        ui_container(server, plotter)
 
     # hide footer
     layout.footer.hide()

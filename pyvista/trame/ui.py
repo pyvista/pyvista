@@ -129,74 +129,83 @@ class Viewer:
         return self._server.protocol.addAttachment(memoryview(buffer.read()))
 
 
-def initialize(server, plotter, local_rendering=True):
-    """Generate the UI for a given plotter."""
-    state, ctrl = server.state, server.controller
-    state.trame__title = UI_TITLE
+def ui_container(server, plotter, local_rendering=False):
+    """Generate VContainer for PyVista Plotter."""
+    ctrl = server.controller
 
     viewer = Viewer(plotter, server)
 
-    with VAppLayout(server, template_name=plotter._id_name):
-        with vuetify.VContainer(
-            fluid=True,
-            classes="pa-0 fill-height",
+    with vuetify.VContainer(
+        fluid=True,
+        classes="pa-0 fill-height",
+    ):
+        with vuetify.VCard(
+            style="position: absolute; top: 20px; left: 20px; z-index: 1",
         ):
-            with vuetify.VCard(
-                style="position: absolute; top: 20px; left: 20px; z-index: 1",
-            ):
-                with vuetify.VCardTitle(classes="py-0"):
-                    # Scene controls
-                    with vuetify.VBtn(
-                        icon=True, click=f"{plotter._id_name}_show_ui=!{plotter._id_name}_show_ui"
-                    ):
-                        vuetify.VIcon('mdi-dots-vertical')
-                    with vuetify.VRow(v_show=(f"{plotter._id_name}_show_ui", False)):
-                        with vuetify.VBtn(icon=True, click=viewer.view_isometric):
-                            vuetify.VIcon('mdi-axis-arrow')
-                        with vuetify.VBtn(icon=True, click=viewer.view_yz):
-                            vuetify.VIcon('mdi-axis-x-arrow')
-                        with vuetify.VBtn(icon=True, click=viewer.view_xz):
-                            vuetify.VIcon('mdi-axis-y-arrow')
-                        with vuetify.VBtn(icon=True, click=viewer.view_xy):
-                            vuetify.VIcon('mdi-axis-z-arrow')
-                        with vuetify.VBtn(icon=True, click=viewer.reset_camera):
-                            vuetify.VIcon('mdi-arrow-expand-all')
+            with vuetify.VCardTitle(classes="py-0"):
+                # Scene controls
+                with vuetify.VBtn(
+                    icon=True, click=f"{plotter._id_name}_show_ui=!{plotter._id_name}_show_ui"
+                ):
+                    vuetify.VIcon('mdi-dots-vertical')
+                with vuetify.VRow(v_show=(f"{plotter._id_name}_show_ui", False)):
+                    with vuetify.VBtn(icon=True, click=viewer.view_isometric):
+                        vuetify.VIcon('mdi-axis-arrow')
+                    with vuetify.VBtn(icon=True, click=viewer.view_yz):
+                        vuetify.VIcon('mdi-axis-x-arrow')
+                    with vuetify.VBtn(icon=True, click=viewer.view_xz):
+                        vuetify.VIcon('mdi-axis-y-arrow')
+                    with vuetify.VBtn(icon=True, click=viewer.view_xy):
+                        vuetify.VIcon('mdi-axis-z-arrow')
+                    with vuetify.VBtn(icon=True, click=viewer.reset_camera):
+                        vuetify.VIcon('mdi-arrow-expand-all')
+                    vuetify.VCheckbox(
+                        v_model=(viewer.OUTLINE, False),
+                        dense=True,
+                        hide_details=True,
+                        on_icon="mdi-cube",
+                        off_icon="mdi-cube-off",
+                        classes="ma-2",
+                    )
+                    if not local_rendering:
                         vuetify.VCheckbox(
-                            v_model=(viewer.OUTLINE, False),
+                            v_model=(viewer.GRID, False),
                             dense=True,
                             hide_details=True,
-                            on_icon="mdi-cube",
-                            off_icon="mdi-cube-off",
+                            on_icon="mdi-ruler-square",
+                            off_icon="mdi-ruler-square",
                             classes="ma-2",
                         )
-                        if not local_rendering:
-                            vuetify.VCheckbox(
-                                v_model=(viewer.GRID, False),
-                                dense=True,
-                                hide_details=True,
-                                on_icon="mdi-ruler-square",
-                                off_icon="mdi-ruler-square",
-                                classes="ma-2",
-                            )
-                            vuetify.VCheckbox(
-                                v_model=(viewer.AXIS, False),
-                                dense=True,
-                                hide_details=True,
-                                on_icon="mdi-axis-arrow-info",
-                                off_icon="mdi-axis-arrow-info",
-                                classes="ma-2",
-                            )
-                            with vuetify.VBtn(
-                                icon=True,
-                                click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
-                            ):
-                                vuetify.VIcon('mdi-file-png-box')
-            if local_rendering:
-                view = PyVistaLocalView(plotter)
-            else:
-                view = PyVistaRemoteView(plotter)
-            ctrl.view_update = view.update
-            ctrl.view_reset_camera = view.reset_camera
+                        vuetify.VCheckbox(
+                            v_model=(viewer.AXIS, False),
+                            dense=True,
+                            hide_details=True,
+                            on_icon="mdi-axis-arrow-info",
+                            off_icon="mdi-axis-arrow-info",
+                            classes="ma-2",
+                        )
+                        with vuetify.VBtn(
+                            icon=True,
+                            click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
+                        ):
+                            vuetify.VIcon('mdi-file-png-box')
+        if local_rendering:
+            view = PyVistaLocalView(plotter)
+        else:
+            view = PyVistaRemoteView(plotter)
+        ctrl.view_update = view.update
+        ctrl.view_reset_camera = view.reset_camera
+
+    return plotter._id_name
+
+
+def initialize(server, plotter, local_rendering=False):
+    """Generate the UI for a given plotter."""
+    state = server.state
+    state.trame__title = UI_TITLE
+
+    with VAppLayout(server, template_name=plotter._id_name):
+        ui_container(server, plotter, local_rendering=local_rendering)
 
     # Returns the UI identifier (used in `template_name`)
     return plotter._id_name
