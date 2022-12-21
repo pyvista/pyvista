@@ -13,7 +13,7 @@ leverages `threejs <https://threejs.org/>`_ through the `pythreejs
 widget <https://github.com/jupyter-widgets/pythreejs>`_.  It allows
 for embedded html documentation (as shown here), rapid plotting (as
 compared to the other client jupyterlab plotting modules like
-``panel`` or ``itkwidgets``).
+``panel``).
 
 There is an excellent block post at `ipygany: Jupyter into the third dimension <https://blog.jupyter.org/ipygany-jupyter-into-the-third-dimension-29a97597fc33>`_
 and without repeating too much here, ``ipygany`` includes the
@@ -51,7 +51,7 @@ sphinx documentation:
     from pyvista import examples
 
     mesh = examples.download_bunny()
-    
+
     pl = pv.Plotter()
     pl.add_mesh(mesh, color='lightgrey')
     pl.background_color = 'white'
