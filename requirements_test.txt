@@ -10,7 +10,6 @@ ipygany<0.6.0
 ipython<9.0.0
 ipyvtklink<0.4.0
 ipywidgets<9.0.0
-itkwidgets<0.33.0; python_version < '3.10'
 matplotlib<3.7.0
 meshio<5.4.0
 numpydoc==1.5.0
@@ -28,4 +27,3 @@ sphinx-gallery<0.12.0
 tqdm<4.65.0
 trame<2.3.0
 trimesh<3.18.0
-

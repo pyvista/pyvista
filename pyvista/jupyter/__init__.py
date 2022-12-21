@@ -1,7 +1,6 @@
 """Jupyter notebook plotting module."""
 
 import pyvista
-from .itkplotter import PlotterITK
 
 ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'pythreejs', 'none']
 
