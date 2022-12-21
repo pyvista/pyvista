@@ -18,7 +18,7 @@ from pyvista.utilities.misc import (
     set_pickle_format,
 )
 from pyvista import _vtk
-from pyvista.jupyter import set_jupyter_backend, PlotterITK
+from pyvista.jupyter import set_jupyter_backend
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
 from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 
