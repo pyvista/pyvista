@@ -13,7 +13,6 @@ dependencies:
   - imageio-ffmpeg
   - colorcet
   - cmocean
-  - itkwidgets>=0.25.2
   - tqdm
   - pytest
   - pytest-cov
