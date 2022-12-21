@@ -2532,26 +2532,6 @@ class DocumentTheme(DefaultTheme):
         self.axes.z_color = 'blue'
 
 
-class DocumentProTheme(DocumentTheme):
-    """A more professional document theme.
-
-    This theme extends the base document theme with:
-
-    * Default color cycling
-    *
-    """
-
-    def __init__(self):
-        """Initialize the theme."""
-        super().__init__()
-        self.color_cycler = get_cycler('default')
-        self.render_points_as_spheres = True
-        self.anti_aliasing = 'ssaa'
-        self.depth_peeling.number_of_peels = 1
-        self.depth_peeling.occlusion_ratio = 0.0
-        self.depth_peeling.enabled = True
-
-
 class _TestingTheme(DefaultTheme):
     """Low resolution testing theme for ``pytest``.
 
@@ -2578,7 +2558,6 @@ class _ALLOWED_THEMES(Enum):
 
     paraview = ParaViewTheme
     document = DocumentTheme
-    document_pro = DocumentProTheme
     dark = DarkTheme
     default = DefaultTheme
     testing = _TestingTheme
