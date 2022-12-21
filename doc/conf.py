@@ -193,7 +193,6 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
-    r'\.PlotterITK$',
     r'\.MultiBlock\.copy_meta_from$',
     r'\.DataObject\.copy_meta_from$',
     # wraps
