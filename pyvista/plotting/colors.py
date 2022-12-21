@@ -368,6 +368,19 @@ color_synonyms = {
     'slategrey': 'slategray',
 }
 
+matplotlib_default_colors = [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+]
+
 
 class Color:
     """Helper class to convert between different color representations used in the pyvista library.
@@ -987,3 +1000,66 @@ def get_cmap_safe(cmap):
         cmap = ListedColormap(cmap)
 
     return cmap
+
+
+def get_default_cycler():
+    """Return the default color cycler (matches matplotlib's default)."""
+    try:
+        from cycler import cycler
+    except ImportError:
+        raise ImportError('cycler not installed. Please install matplotlib.')
+    return cycler('color', matplotlib_default_colors)
+
+
+def get_hexcolors_cycler():
+    """Return a color cycler for all of the available hexcolors.
+
+    See ``pyvista.plotting.colors.hexcolors``.
+    """
+    try:
+        from cycler import cycler
+    except ImportError:
+        raise ImportError('cycler not installed. Please install matplotlib.')
+    return cycler('color', hexcolors.keys())
+
+
+def get_matplotlib_theme_cycler():
+    """Return matplotlib's current theme's color cycler."""
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        raise ImportError('Please install matplotlib.')
+    return plt.rcParams['axes.prop_cycle']
+
+
+def get_cycler(color_cycler):
+    """Return a color cycler based on the input value.
+
+    The value must be either a list of color-like objects,
+    or a cycler of color-like objects. If the value passed is a single
+    string, it must be one of:
+
+    * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+    * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+    * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+    """
+    try:
+        from cycler import Cycler, cycler
+    except ImportError:
+        raise ImportError('cycler not installed. Please install matplotlib.')
+    if color_cycler is None:
+        return None
+    elif isinstance(color_cycler, str):
+        if color_cycler == 'default':
+            return get_default_cycler()
+        elif color_cycler == 'matplotlib':
+            return get_matplotlib_theme_cycler()
+        elif color_cycler == 'all':
+            return get_hexcolors_cycler()
+    elif isinstance(color_cycler, (tuple, list)):
+        return cycler('color', color_cycler)
+    elif isinstance(color_cycler, Cycler):
+        return color_cycler
+    else:
+        raise TypeError(f'color cycler of type {type(color_cycler)} not supported.')

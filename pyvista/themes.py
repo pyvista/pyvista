@@ -37,7 +37,7 @@ from typing import Callable, List, Optional, Union
 import warnings
 
 from ._typing import color_like
-from .plotting.colors import Color, get_cmap_safe
+from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
 from .utilities.misc import PyVistaDeprecationWarning
@@ -1117,6 +1117,7 @@ class DefaultTheme(_ThemeConfig):
         '_auto_close',
         '_cmap',
         '_color',
+        '_color_cycler',
         '_above_range_color',
         '_below_range_color',
         '_nan_color',
@@ -1165,6 +1166,7 @@ class DefaultTheme(_ThemeConfig):
         self._font = _Font()
         self._cmap = 'viridis'
         self._color = Color('white')
+        self._color_cycler = None
         self._nan_color = Color('darkgray')
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
@@ -1638,6 +1640,44 @@ class DefaultTheme(_ThemeConfig):
     @color.setter
     def color(self, color: color_like):
         self._color = Color(color)
+
+    @property
+    def color_cycler(self):
+        """Return or set the default color cycler used to color meshes.
+
+        This color cycler is iterated over by each renderer to sequentially
+        color datasets when displaying them through ``add_mesh``.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
+
+        >>> p = pv.Plotter()
+        >>> p.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> p.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> p.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> p.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> p.show()
+
+        """
+        return self._color_cycler
+
+    @color_cycler.setter
+    def color_cycler(self, color_cycler):
+        self._color_cycler = get_cycler(color_cycler)
 
     @property
     def nan_color(self) -> Color:
@@ -2181,6 +2221,7 @@ class DefaultTheme(_ThemeConfig):
             'Auto close': 'auto_close',
             'Colormap': 'cmap',
             'Color': 'color',
+            'Color Cycler': 'color_cycler',
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
             'Outline color': 'outline_color',
@@ -2491,6 +2532,26 @@ class DocumentTheme(DefaultTheme):
         self.axes.z_color = 'blue'
 
 
+class DocumentProTheme(DocumentTheme):
+    """A more professional document theme.
+
+    This theme extends the base document theme with:
+
+    * Default color cycling
+    *
+    """
+
+    def __init__(self):
+        """Initialize the theme."""
+        super().__init__()
+        self.color_cycler = get_cycler('default')
+        self.render_points_as_spheres = True
+        self.anti_aliasing = 'ssaa'
+        self.depth_peeling.number_of_peels = 1
+        self.depth_peeling.occlusion_ratio = 0.0
+        self.depth_peeling.enabled = True
+
+
 class _TestingTheme(DefaultTheme):
     """Low resolution testing theme for ``pytest``.
 
@@ -2517,6 +2578,7 @@ class _ALLOWED_THEMES(Enum):
 
     paraview = ParaViewTheme
     document = DocumentTheme
+    document_pro = DocumentProTheme
     dark = DarkTheme
     default = DefaultTheme
     testing = _TestingTheme

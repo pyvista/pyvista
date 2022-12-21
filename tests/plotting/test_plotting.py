@@ -22,6 +22,7 @@ from pyvista import examples
 from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities.misc import can_create_mpl_figure
 
@@ -3068,3 +3069,40 @@ def test_add_point_scalar_labels_list():
 
     plotter.add_point_scalar_labels(points, labels)
     plotter.show()
+
+
+def test_color_cycler():
+    pyvista.global_theme.color_cycler = 'default'
+    p = pyvista.Plotter()
+    a0 = p.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = p.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    a2 = p.add_mesh(pyvista.Sphere(center=(1, 1, 0)))
+    a3 = p.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))
+    p.show()
+    assert a0.prop.color.hex_rgb == matplotlib_default_colors[0]
+    assert a1.prop.color.hex_rgb == matplotlib_default_colors[1]
+    assert a2.prop.color.hex_rgb == matplotlib_default_colors[2]
+    assert a3.prop.color.hex_rgb == matplotlib_default_colors[3]
+
+    pyvista.global_theme.color_cycler = ['red', 'green', 'blue']
+    p = pyvista.Plotter()
+    a0 = p.add_mesh(pyvista.Cone(center=(0, 0, 0)))  # red
+    a1 = p.add_mesh(pyvista.Cube(center=(1, 0, 0)))  # green
+    a2 = p.add_mesh(pyvista.Sphere(center=(1, 1, 0)))  # blue
+    a3 = p.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))  # red again
+    p.show()
+
+    assert a0.prop.color.name == 'red'
+    assert a1.prop.color.name == 'green'
+    assert a2.prop.color.name == 'blue'
+    assert a3.prop.color.name == 'red'
+
+    # Make sure all solid color matching theme default again
+    pyvista.global_theme.color_cycler = None
+    p = pyvista.Plotter()
+    a0 = p.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = p.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    p.show()
+
+    assert a0.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
+    assert a1.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
