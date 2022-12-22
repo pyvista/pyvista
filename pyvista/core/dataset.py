@@ -2591,6 +2591,9 @@ class DataSet(DataSetFilters, DataObject):
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
+        ..  deprecated:: 0.38.0
+            You can use :py:attr:`DataSet.cell[i].n_points` instead.
+
         Parameters
         ----------
         ind : int
@@ -2609,10 +2612,18 @@ class DataSet(DataSetFilters, DataObject):
         3
 
         """
-        return self.get_cell(ind).n_points
+        # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
+        warnings.warn(
+            '`cell_n_points` is deprecated. Use `cell[i].n_points` instead',
+            PyVistaDeprecationWarning,
+        )
+        return self.cell[ind].n_points
 
     def cell_points(self, ind: int) -> np.ndarray:
         """Return the points in a cell.
+
+        ..  deprecated:: 0.38.0
+            You can use :py:attr:`DataSet.cell[i].points` instead.
 
         Parameters
         ----------
@@ -2635,10 +2646,17 @@ class DataSet(DataSetFilters, DataObject):
          [907.53900146  55.49020004  83.65809631]]
 
         """
-        return self.get_cell(ind).points
+        # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
+        warnings.warn(
+            '`cell_points` is deprecated. Use `cell[i].points` instead', PyVistaDeprecationWarning
+        )
+        return self.cell[ind].points
 
     def cell_bounds(self, ind: int) -> Tuple[float, float, float, float, float, float]:
         """Return the bounding box of a cell.
+
+        ..  deprecated:: 0.38.0
+            You can use :py:attr:`DataSet.cell[i].bounds` instead.
 
         Parameters
         ----------
@@ -2658,10 +2676,17 @@ class DataSet(DataSetFilters, DataObject):
         (896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461, 80.74520111083984, 83.65809631347656)
 
         """
-        return self.get_cell(ind).bounds
+        # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
+        warnings.warn(
+            '`cell_bounds` is deprecated. Use `cell[i].bounds` instead', PyVistaDeprecationWarning
+        )
+        return self.cell[ind].bounds
 
     def cell_type(self, ind: int) -> int:
         """Return the type of a cell.
+
+        ..  deprecated:: 0.38.0
+            You can use :py:attr:`DataSet.cell[i].type` instead.
 
         Parameters
         ----------
@@ -2681,10 +2706,17 @@ class DataSet(DataSetFilters, DataObject):
         <CellType.TRIANGLE: 5>
 
         """
-        return self.get_cell(ind).type
+        # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
+        warnings.warn(
+            '`cell_type` is deprecated. Use `cell[i].type` instead', PyVistaDeprecationWarning
+        )
+        return self.cell[ind].type
 
     def cell_point_ids(self, ind: int) -> List[int]:
         """Return the point ids in a cell.
+
+        ..  deprecated:: 0.38.0
+            You can use :py:attr:`DataSet.cell[i].point_ids` instead.
 
         Parameters
         ----------
@@ -2709,7 +2741,12 @@ class DataSet(DataSetFilters, DataObject):
         [0, 1, 2]
 
         """
-        return self.get_cell(ind).point_ids
+        # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
+        warnings.warn(
+            '`cell_point_ids` is deprecated. Use `cell[i].point_ids` instead',
+            PyVistaDeprecationWarning,
+        )
+        return self.cell[ind].point_ids
 
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
