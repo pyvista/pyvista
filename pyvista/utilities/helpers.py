@@ -531,10 +531,10 @@ def vtk_points(points, deep=True, force_float=False):
     vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
     vtkpts.SetData(vtk_arr)
 
-    # remove the numpy reference to potential circular reference
-    if not deep and isinstance(points, pyvista.pyvista_ndarray):
-        if points.VTKObject is not None:
-            del vtk_arr._numpy_reference
+    # # remove the numpy reference to potential circular reference
+    # if not deep and isinstance(points, pyvista.pyvista_ndarray):
+    #     if points.VTKObject is not None:
+    #         del vtk_arr._numpy_reference
 
     return vtkpts
 
