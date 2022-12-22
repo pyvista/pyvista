@@ -2522,7 +2522,16 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         list[pyvista.Cell]
-            A list of pyvista.Cell objects.
+            A list of `pyvista.Cell` objects.
+
+        Warnings
+        --------
+        The ``edges`` and ``faces`` properties of the :class:`pyvista.Cell`
+        object are generators that should NEVER be converted to a list
+        since repeated calls to the vtk underlying methods can change the
+        returned data.
+        See https://vtk.org/doc/nightly/html/classvtkCell.html#a11b6ba66e9f7e193b204d478379e32ea.
+
 
         Examples
         --------
@@ -2533,28 +2542,14 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.cell[-1] # doctest:+SKIP
         Cell (0x7f62d214c310)
           Type:	CellType.TRIANGLE
-          Linear:	True
-          Dimension:	2
+          Linear: True
+          Dimension: 2
           N Points:	3
-          N Faces:	0
-          N Edges:	3
+          N Faces: 0
+          N Edges: 3
           X Bounds:	7.420e+02, 8.067e+02
           Y Bounds:	6.815e+02, 7.094e+02
           Z Bounds:	9.487e+00, 1.449e+01
-
-        Get the 0-th edge of the last cell
-
-        >>> mesh.cell[-1].edges[0] # doctest:+SKIP
-        Cell (0x7f63142531c0)
-          Type:	CellType.LINE
-          Linear:	True
-          Dimension:	1
-          N Points:	2
-          N Faces:	0
-          N Edges:	0
-          X Bounds:	7.420e+02, 7.420e+02
-          Y Bounds:	6.852e+02, 7.094e+02
-          Z Bounds:	1.343e+01, 1.449e+01
 
         Get the point ids of the last cell
 
@@ -2567,6 +2562,29 @@ class DataSet(DataSetFilters, DataObject):
         array([[742.02801514, 709.42700195,  14.49050045],
                [806.66497803, 681.5369873 ,   9.48744011],
                [742.02801514, 685.23797607,  13.4307003 ]])
+
+        Get the point ids of the edges of the last cell.
+        Note that the `edges` attributes returns a generator of
+        `pyvista.Cell` objects.
+
+        >>> for e in mesh.cell[-1].edges:
+        ...     print(e.point_ids)
+        [1325, 1334]
+        [1334, 1324]
+        [1324, 1325]
+
+        Get the point ids of the faces of the last cell.
+        Note that the `faces` attributes returns a generator of
+        `pyvista.Cell` objects.
+
+        >>> from pyvista.examples.cells import Tetrahedron
+        >>> mesh = Tetrahedron()
+        >>> for f in mesh.cell[-1].faces:
+        ...     print(f.point_ids)
+        [0, 1, 3]
+        [1, 2, 3]
+        [2, 0, 3]
+        [0, 2, 1]
         """
         return [self.get_cell(i) for i in range(self.n_cells)]
 

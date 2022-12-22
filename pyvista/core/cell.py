@@ -27,16 +27,16 @@ class Cell(_vtk.VTKObjectWrapper):
     >>> import pyvista
     >>> mesh = pyvista.Sphere()
     >>> mesh.cell[0] # doctest: +SKIP
-    Cell (0x7f2881968f40)
+    Cell (0x7fda00ddec70)
       Type:	CellType.TRIANGLE
-      Linear:       True
-      Dimension:	2
-      N Points:	    3
-      N Faces:	    0
-      N Edges:	    3
-      X Bounds:	    -5.406e-02, -5.551e-17
-      Y Bounds:	    0.000e+00, 1.124e-02
-      Z Bounds:	    -5.000e-01, -4.971e-01
+      Linear: True
+      Dimension: 2
+      N Points:	3
+      N Faces: 0
+      N Edges: 3
+      X Bounds:	-5.406e-02, -5.551e-17
+      Y Bounds:	0.000e+00, 1.124e-02
+      Z Bounds:	-5.000e-01, -4.971e-01
     """
 
     def __init__(self, vtkobject: _vtk.vtkCell) -> None:
@@ -164,17 +164,11 @@ class Cell(_vtk.VTKObjectWrapper):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].edges[0] # doctest:+SKIP
-        Cell (0x7f4c1b044b20)
-          Type:	    CellType.LINE
-          Linear:	True
-          Dimension:	1
-          N Points:	    2
-          N Faces:	    0
-          N Edges:	    0
-          X Bounds:	    -1.075e-01, -1.051e-01
-          Y Bounds:	    -2.235e-02, 0.000e+00
-          Z Bounds:	    4.883e-01, 4.883e-01
+        >>> for e in mesh.cell[0].edges:
+        ...     print(e.point_ids)
+        [2, 30]
+        [30, 0]
+        [0, 2]
         """
         for i in range(self.n_edges):
             yield self.get_edge(i)
@@ -191,17 +185,12 @@ class Cell(_vtk.VTKObjectWrapper):
         --------
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> mesh.cell[0].faces[0] # doctest:+SKIP
-        Cell (0x7f4c1b044190)
-          Type:	CellType.TRIANGLE
-          Linear:	True
-          Dimension:	2
-          N Points:	3
-          N Faces:	0
-          N Edges:	3
-          X Bounds:	-1.000e+00, 1.000e+00
-          Y Bounds:	-1.000e+00, 1.000e+00
-          Z Bounds:	-1.000e+00, 1.000e+00
+        >>> for f in mesh.cell[0].faces:
+        ...     print(f.point_ids)
+        [0, 1, 3]
+        [1, 2, 3]
+        [2, 0, 3]
+        [0, 2, 1]
         """
         for i in range(self.n_faces):
             yield self.get_face(i)
@@ -249,7 +238,7 @@ class Cell(_vtk.VTKObjectWrapper):
         # Otherwise return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        row = "  {}: {}\n"
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
