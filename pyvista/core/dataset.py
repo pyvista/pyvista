@@ -2532,6 +2532,8 @@ class DataSet(DataSetFilters, DataObject):
         returned data.
         See https://vtk.org/doc/nightly/html/classvtkCell.html#a11b6ba66e9f7e193b204d478379e32ea.
 
+        For large meshes, the list can take some time to compute and you might prefer to
+        use the :func:`DataSet.get_cell` method within a for-loop.
 
         Examples
         --------
