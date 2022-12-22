@@ -26,17 +26,17 @@ class Cell(_vtk.VTKObjectWrapper):
 
     >>> import pyvista
     >>> mesh = pyvista.Sphere()
-    >>> mesh.cell[0] # doctest:+SKIP
-    Cell (0x7fd0c064efa0)
+    >>> mesh.cell[0] # doctest: +SKIP
+    Cell (0x7f2881968f40)
       Type:	CellType.TRIANGLE
-      Linear:	True
+      Linear:       True
       Dimension:	2
-      N Points:	3
-      N Faces:	0
-      N Edges:	3
-      X Bounds:	-1.075e-01, -5.406e-02
-      Y Bounds:	-2.235e-02, 0.000e+00
-      Z Bounds:	4.883e-01, 4.971e-01
+      N Points:	    3
+      N Faces:	    0
+      N Edges:	    3
+      X Bounds:	    -5.406e-02, -5.551e-17
+      Y Bounds:	    0.000e+00, 1.124e-02
+      Z Bounds:	    -5.000e-01, -4.971e-01
     """
 
     def __init__(self, vtkobject: _vtk.vtkCell) -> None:
@@ -133,7 +133,7 @@ class Cell(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.cell[0].point_ids
-        [840, 29, 28]
+        [2, 30, 0]
         """
         point_ids = self.GetPointIds()
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
@@ -147,9 +147,9 @@ class Cell(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.cell[0].points
-        array([[-0.10513641, -0.02234743,  0.48831028],
-               [-0.05405951,  0.        ,  0.49706897],
-               [-0.10748522,  0.        ,  0.48831028]])
+        array([[-5.40595092e-02,  0.00000000e+00, -4.97068971e-01],
+               [-5.28781787e-02,  1.12396041e-02, -4.97068971e-01],
+               [-5.55111512e-17,  0.00000000e+00, -5.00000000e-01]])
         """
         # A copy of the points must be returned to avoid overlapping them since the
         # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
@@ -219,7 +219,7 @@ class Cell(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.cell[0].bounds
-        (-0.10748521983623505, -0.05405950918793678, -0.022347433492541313, 0.0, 0.4883102774620056, 0.49706897139549255)
+        (-0.05405950918793678, -5.551115123125783e-17, 0.0, 0.011239604093134403, -0.5, -0.49706897139549255)
         """
         return self.GetBounds()
 
