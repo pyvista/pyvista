@@ -525,6 +525,13 @@ def vtk_points(points, deep=True, force_float=False):
             f'Shape is {points.shape} and should be (X, 3)'
         )
 
+    # use the underlying vtk data if present to avoid memory leaks
+    if not deep and isinstance(points, pyvista.pyvista_ndarray):
+        if points.VTKObject is not None:
+            vtkpts = _vtk.vtkPoints()
+            vtkpts.SetData(points.VTKObject)
+            return vtkpts
+
     # points must be contiguous
     points = np.require(points, requirements=['C'])
     vtkpts = _vtk.vtkPoints()

@@ -3,6 +3,7 @@ import gc
 import weakref
 
 import numpy as np
+import vtk
 
 import pyvista as pv
 
@@ -61,3 +62,8 @@ def test_plotting_collection():
     assert ref_renderers() is None
     assert ref_renderer() is None
     assert ref_charts() is None
+
+
+def test_vtk_points(sphere):
+    pts = pv.vtk_points(sphere.points, deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
