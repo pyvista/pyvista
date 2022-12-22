@@ -65,5 +65,11 @@ def test_plotting_collection():
 
 
 def test_vtk_points(sphere):
+    orig_points = np.array(sphere.points)
     pts = pv.vtk_points(sphere.points, deep=False)
     assert isinstance(pts, vtk.vtkPoints)
+
+    del sphere
+    pdata = pv.PolyData()
+    pdata.SetPoints(pts)
+    assert np.allclose(pdata.points, orig_points)
