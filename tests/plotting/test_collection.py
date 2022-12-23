@@ -64,12 +64,25 @@ def test_plotting_collection():
     assert ref_charts() is None
 
 
-def test_vtk_points(sphere):
-    orig_points = np.array(sphere.points)
-    pts = pv.vtk_points(sphere.points, deep=False)
+def test_vtk_points_slice():
+    mesh = pv.Sphere()
+    n = 10
+    orig_points = np.array(mesh.points[:n])
+    pts = pv.vtk_points(mesh.points[:n], deep=False)
     assert isinstance(pts, vtk.vtkPoints)
 
-    del sphere
-    pdata = pv.PolyData()
-    pdata.SetPoints(pts)
-    assert np.allclose(pdata.points, orig_points)
+    del mesh
+    gc.collect()
+    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)
+
+
+def test_vtk_points():
+    mesh = pv.Sphere()
+    orig_points = np.array(mesh.points)
+    pts = pv.vtk_points(mesh.points, deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
+    assert np.shares_memory(mesh.points, pv._vtk.vtk_to_numpy(pts.GetData()))
+
+    del mesh
+    gc.collect()
+    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)
