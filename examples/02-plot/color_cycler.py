@@ -76,3 +76,26 @@ p.add_mesh(pv.Cylinder(center=(0, 1, 0)))
 p.link_views()
 p.view_isometric()
 p.show()
+
+
+###############################################################################
+# You can also change the colors of actors after they are added to the scene.
+#
+# ProTip: you could place the for-loop below in an event callback for a key
+# event to cycle through the colors on-demand. Or better yet, have your cycler
+# randomly select colors.
+from cycler import cycler
+
+p = pv.Plotter()
+p.add_mesh(pv.Cone(center=(0, 0, 0)))
+p.add_mesh(pv.Cube(center=(1, 0, 0)))
+p.add_mesh(pv.Sphere(center=(1, 1, 0)))
+p.add_mesh(pv.Cylinder(center=(0, 1, 0)))
+
+colors = cycler('color', ['lightcoral', 'seagreen', 'aqua', 'firebrick'])()
+
+for actor in p.renderer.actors.values():
+    if isinstance(actor, pv.Actor):
+        actor.prop.color = next(colors)['color']
+
+p.show()
