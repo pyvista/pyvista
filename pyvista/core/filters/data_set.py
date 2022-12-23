@@ -2090,7 +2090,8 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.set_active_scalars(scale)
+            # TODO: document why this needs to be 'cell'
+            dataset.set_active_scalars(scale, preference='cell')
             scale = True
         elif isinstance(scale, bool) and scale:
             try:
