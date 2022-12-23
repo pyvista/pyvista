@@ -1387,9 +1387,7 @@ class _Chart(DocSubs):
             image.
 
         window_size : list, optional
-            Window size in pixels.  Defaults to global theme
-            :attr:`pyvista.global_theme.window_size
-            <pyvista.themes.DefaultTheme.window_size>`.
+            Window size in pixels. Defaults to active theme setting.
 
         notebook : bool, optional
             When ``True``, the resulting plot is placed inline a
