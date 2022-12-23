@@ -3896,13 +3896,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 renderer.camera = Camera()
                 renderer.reset_camera()
+                renderer.camera_set = False
         elif isinstance(views, int):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
+            self.renderers[views].camera_set = False
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
+                self.renderers[view_index].cemera_set = False
         else:
             raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 

@@ -1447,6 +1447,30 @@ def test_link_views(sphere):
     plotter.show()
 
 
+@skip_windows
+def test_link_views_camera_set(sphere, verify_image_cache):
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(pyvista.Cone())
+    assert not p.renderer.camera_set
+    p.subplot(0, 1)
+    p.add_mesh(pyvista.Cube())
+    assert not p.renderer.camera_set
+    p.link_views()  # make sure the default isometric view is used
+    for renderer in p.renderers:
+        assert not renderer.camera_set
+    p.show()
+
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(pyvista.Cone())
+    p.subplot(0, 1)
+    p.add_mesh(pyvista.Cube())
+    p.link_views()
+    p.unlink_views()
+    for renderer in p.renderers:
+        assert not renderer.camera_set
+    p.show()
+
+
 def test_orthographic_slicer(uniform):
     uniform.set_active_scalars('Spatial Cell Data')
     slices = uniform.slice_orthogonal()
