@@ -3865,13 +3865,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if isinstance(views, (int, np.integer)):
+            camera = self.renderers[views].camera
+            camera_status = self.renderers[views].camera_set
             for renderer in self.renderers:
-                renderer.camera = self.renderers[views].camera
+                renderer.camera = camera
+                renderer.camera_set = camera_status
             return
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
+            camera = self.renderers[views[0]].camera
+            camera_status = self.renderers[views[0]].camera_set
             for view_index in views:
-                self.renderers[view_index].camera = self.renderers[views[0]].camera
+                self.renderers[view_index].camera = camera
+                self.renderers[view_index].camera_set = camera_status
         else:
             raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
