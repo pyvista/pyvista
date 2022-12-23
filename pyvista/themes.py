@@ -40,6 +40,7 @@ from ._typing import color_like
 from .plotting.colors import Color, get_cmap_safe
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
+from .utilities.helpers import FieldAssociation
 from .utilities.misc import PyVistaDeprecationWarning
 
 
@@ -1148,6 +1149,7 @@ class DefaultTheme(_ThemeConfig):
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
         '_before_close_callback',
+        '_field_association_preference',
     ]
 
     def __init__(self):
@@ -1218,6 +1220,8 @@ class DefaultTheme(_ThemeConfig):
         self._hidden_line_removal = False
         self._anti_aliasing = None
         self._enable_camera_orientation_widget = False
+
+        self._field_association_preference = FieldAssociation.POINT
 
     @property
     def hidden_line_removal(self) -> bool:
@@ -2373,6 +2377,17 @@ class DefaultTheme(_ThemeConfig):
     @sharp_edges_feature_angle.setter
     def sharp_edges_feature_angle(self, value: float):
         self._sharp_edges_feature_angle = float(value)
+
+    @property
+    def field_association_preference(self) -> FieldAssociation:
+        """Set the default association for arrays access."""
+        return self._field_association_preference
+
+    @field_association_preference.setter
+    def field_association_preference(self, preference: Union[FieldAssociation, str]):
+        if not isinstance(preference, FieldAssociation):
+            preference = FieldAssociation.parse(preference)
+        self._field_association_preference = preference
 
 
 class DarkTheme(DefaultTheme):

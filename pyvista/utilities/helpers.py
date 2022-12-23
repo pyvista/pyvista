@@ -30,6 +30,14 @@ class FieldAssociation(enum.Enum):
     NONE = _vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
     ROW = _vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
 
+    @staticmethod
+    def parse(value) -> 'FieldAssociation':
+        if value is None:
+            return FieldAssociation.NONE
+        if isinstance(value, str):
+            return FieldAssociation[value.upper()]
+        return FieldAssociation(value)
+
 
 def get_vtk_type(typ):
     """Look up the VTK type for a given numpy data type.
