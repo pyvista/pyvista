@@ -67,7 +67,6 @@ a jupyter notebook:
 * Client-side rendering with `pythreejs`_ using ``threejs``.
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
 * Client-side rendering using `panel <https://github.com/holoviz/panel>`_ using ``vtk.js``.
-* Client-side rendering with `itkwidgets <https://github.com/InsightSoftwareConsortium/itkwidgets>`_ using ``itk.js`` and ``vtk.js``.
 * Static images.
 
 ------------
@@ -84,7 +83,6 @@ details on how to use these plotting backends.
    ipygany
    panel
    ipyvtk_plotting
-   itk_plotting
 
 
 State of 3D Interactive Jupyterlab Plotting
@@ -126,11 +124,10 @@ jupyter notebook plotting modules:
 +---------------+--------------+--------------------+---------+----------------------+
 | ipyvtklink    | Yes          | Server             | vtk     | Yes                  |
 +---------------+--------------+--------------------+---------+----------------------+
-| itkwidgets    | No           | Client             | vtk.js  | Yes                  |
-+---------------+--------------+--------------------+---------+----------------------+
 
-All the modules other than ``ipygany`` and ``pythreejs`` require a framebuffer,
-which can be set up on a headless environment with :func:`pyvista.start_xvfb`.
+All the modules other than
+``ipygany`` and ``pythreejs`` require a framebuffer, which can be
+set up on a headless environment with :func:`pyvista.start_xvfb`.
 However, on Google Colab, where it's not possible to install system
 packages, you should stick with a module like ``threejs``, which does
 not require any server side rendering or framebuffer.

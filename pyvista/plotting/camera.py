@@ -162,7 +162,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera.to_paraview_pvcc("camera.pvcc")
+        >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
         """
         root = ElementTree.Element("PVCameraConfiguration")
         root.attrib["description"] = "ParaView camera configuration"
@@ -597,9 +597,8 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        aspect : float, optional
-            The aspect of the viewport to compute the planes. Defaults
-            to 1.0.
+        aspect : float, default: 1.0
+            The aspect of the viewport to compute the planes.
 
         Returns
         -------
@@ -777,19 +776,19 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        padding : float, optional
+        padding : float, default: 0.0
             Additional padding around the actor(s). This is effectively a zoom,
             where a value of 0.01 results in a zoom out of 1%.
 
-        adjust_render_window : bool, optional
+        adjust_render_window : bool, default: True
             Adjust the size of the render window as to match the dimensions of
             the visible actors.
 
-        view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
-            Plane to which the view is oriented. Default 'xy'.
+        view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}, default: 'xy'
+            Plane to which the view is oriented.
 
-        negative : bool
-            Whether to view in opposite direction. Default ``False``.
+        negative : bool, default: False
+            Whether to view in opposite direction.
 
         Notes
         -----

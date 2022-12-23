@@ -103,9 +103,9 @@ The following are a list of optional dependencies and their purpose:
 +===================================+=========================================+
 | ``matplotlib``                    | Using Colormaps                         |
 +-----------------------------------+-----------------------------------------+
-| ``itkwidgets``                    | Interactive notebook rendering          |
-+-----------------------------------+-----------------------------------------+
 | ``trame``                         | Interactive notebook rendering          |
++-----------------------------------+-----------------------------------------+
+| ``ipyvtklink``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+

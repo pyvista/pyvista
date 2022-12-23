@@ -313,7 +313,6 @@ class Report(scooby.Report):
                cmocean : 2.0
             ipyvtklink : 0.2.3
                  scipy : 1.9.1
-            itkwidgets : 0.32.3
                   tqdm : 4.64.1
                 meshio : 5.3.4
             jupyterlab : 3.4.7
@@ -337,7 +336,6 @@ class Report(scooby.Report):
             'cmocean',
             'ipyvtklink',
             'scipy',
-            'itkwidgets',
             'tqdm',
             'meshio',
             'jupyterlab',
