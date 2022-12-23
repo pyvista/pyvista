@@ -1052,9 +1052,10 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The method called every time the slider is updated. This
-            should take a single parameter: the float value of the
-            slider.
+            Called every time the slider is updated. This should take a single
+            parameter: the float value of the slider. If ``pass_widget=True``,
+            callable should take two parameters: the float value of the slider
+            and the widget itself.
 
         rng : tuple(float)
             Length two tuple of the minimum and maximum ranges of the
@@ -1773,11 +1774,12 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The function to call back when the widget is modified. It
-            takes a single argument: the center of the sphere as an
-            XYZ coordinate (a 3-length sequence).  If multiple centers
-            are passed in the ``center`` parameter, the callback must
-            also accept an index of that widget.
+            The function to call back when the widget is modified. It takes a
+            single argument: the center of the sphere as an XYZ coordinate (a
+            3-length sequence), unless ``pass_widget=True``, in which case the
+            callback must accept the widget object as the second parameter.  If
+            multiple centers are passed in the ``center`` parameter, the
+            callback must also accept an index of that widget.
 
         center : tuple(float), optional
             Length 3 array for the XYZ coordinate of the sphere's
