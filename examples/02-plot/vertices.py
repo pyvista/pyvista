@@ -39,7 +39,7 @@ p.show(cpos=cpos)
 # surface vertices.
 #
 # In order to display the vertices atop a mesh's surface geometry, we must
-# extract the vertices and display them seperately.
+# extract the vertices and display them separately.
 #
 # The first step is to extract the outer surface geometry of the mesh then
 # grab all the points of that extraction.
