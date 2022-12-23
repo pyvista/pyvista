@@ -3,6 +3,7 @@ import gc
 import weakref
 
 import numpy as np
+import vtk
 
 import pyvista as pv
 
@@ -61,3 +62,27 @@ def test_plotting_collection():
     assert ref_renderers() is None
     assert ref_renderer() is None
     assert ref_charts() is None
+
+
+def test_vtk_points_slice():
+    mesh = pv.Sphere()
+    n = 10
+    orig_points = np.array(mesh.points[:n])
+    pts = pv.vtk_points(mesh.points[:n], deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
+
+    del mesh
+    gc.collect()
+    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)
+
+
+def test_vtk_points():
+    mesh = pv.Sphere()
+    orig_points = np.array(mesh.points)
+    pts = pv.vtk_points(mesh.points, deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
+    assert np.shares_memory(mesh.points, pv._vtk.vtk_to_numpy(pts.GetData()))
+
+    del mesh
+    gc.collect()
+    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)
