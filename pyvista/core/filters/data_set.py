@@ -935,7 +935,7 @@ class DataSetFilters:
         scalars=None,
         invert=False,
         continuous=False,
-        preference='cell',
+        preference='point',
         all_scalars=False,
         progress_bar=False,
         component_mode="all",
@@ -1134,7 +1134,7 @@ class DataSetFilters:
         scalars=None,
         invert=False,
         continuous=False,
-        preference='cell',
+        preference='point',
         progress_bar=False,
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
@@ -2090,7 +2090,7 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.set_active_scalars(scale, preference='cell')
+            dataset.set_active_scalars(scale)
             scale = True
         elif isinstance(scale, bool) and scale:
             try:

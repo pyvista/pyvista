@@ -565,7 +565,7 @@ class DataSet(DataSetFilters, DataObject):
                 mesh.Modified()
         return texture
 
-    def set_active_scalars(self, name: Optional[str], preference='cell'):
+    def set_active_scalars(self, name: Optional[str], preference='point'):
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -697,7 +697,7 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
 
-    def rename_array(self, old_name: str, new_name: str, preference='cell'):
+    def rename_array(self, old_name: str, new_name: str, preference='point'):
         """Change array name by searching for the array then renaming it.
 
         Parameters
@@ -792,7 +792,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.cell_data.active_normals
 
     def get_data_range(
-        self, arr_var: Optional[Union[str, np.ndarray]] = None, preference='cell'
+        self, arr_var: Optional[Union[str, np.ndarray]] = None, preference='point'
     ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """Get the non-NaN min and max of a named array.
 

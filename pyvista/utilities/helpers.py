@@ -343,7 +343,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='point', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -406,7 +406,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     return None
 
 
-def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:
+def get_array_association(mesh, name, preference='point', err=False) -> FieldAssociation:
     """Return the array association.
 
     Parameters

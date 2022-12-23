@@ -1241,7 +1241,7 @@ class WidgetHelper:
         scalars=None,
         invert=False,
         widget_color=None,
-        preference='cell',
+        preference='point',
         title=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
