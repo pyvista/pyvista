@@ -132,7 +132,7 @@ class MultiBlock(
                 self.SetBlock(i, pyvista.wrap(block))
 
     @property
-    def bounds(self):
+    def bounds(self) -> tuple:
         """Find min/max for bounds across blocks.
 
         Returns
