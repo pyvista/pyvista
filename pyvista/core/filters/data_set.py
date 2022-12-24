@@ -940,6 +940,7 @@ class DataSetFilters:
         progress_bar=False,
         component_mode="all",
         component=0,
+        method='between',
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -1003,6 +1004,13 @@ class DataSetFilters:
         component : int, default: 0
             When using ``component_mode='selected'``, this sets
             which component to threshold on.
+
+        method : str, default: 'between'
+            Set the threshold method, defining which threshold bounds to use.
+            The default is ``'between'``. ``'lower'`` will extract data lower
+            than the lower ``value``. ``'upper'`` will extract data larger
+            than the upper ``value``. ``'between'`` will extract data between
+            the lower and upper values.
 
         Returns
         -------
@@ -1123,6 +1131,18 @@ class DataSetFilters:
         else:
             raise ValueError(
                 f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+            )
+        # Set the threshold method
+        methods = {
+            'between': _vtk.vtkThreshold.THRESHOLD_BETWEEN,
+            'lower': _vtk.vtkThreshold.THRESHOLD_BETWEEN,
+            'upper': _vtk.vtkThreshold.THRESHOLD_UPPER,
+        }
+        try:
+            alg.SetThresholdFunction(methods[method.lower()])
+        except KeyError:
+            raise ValueError(
+                f"Threshold method '{method}' not implemented. Choices are 'lower', 'upper', and 'between'"
             )
         # Run the threshold
         _update_alg(alg, progress_bar, 'Thresholding')
