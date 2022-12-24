@@ -935,7 +935,7 @@ class DataSetFilters:
         scalars=None,
         invert=False,
         continuous=False,
-        preference='point',
+        preference='cell',
         all_scalars=False,
         progress_bar=False,
         component_mode="all",
@@ -1134,7 +1134,7 @@ class DataSetFilters:
         scalars=None,
         invert=False,
         continuous=False,
-        preference='point',
+        preference='cell',
         progress_bar=False,
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
