@@ -354,7 +354,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return the_bounds.tolist()
+        return tuple(the_bounds)
 
     @property
     def length(self):

@@ -132,7 +132,7 @@ class MultiBlock(
                 self.SetBlock(i, pyvista.wrap(block))
 
     @property
-    def bounds(self) -> List[float]:
+    def bounds(self):
         """Find min/max for bounds across blocks.
 
         Returns
@@ -162,7 +162,7 @@ class MultiBlock(
             maxima = np.maximum.reduce(all_bounds)[1::2]
 
         # interleave minima and maxima for bounds
-        return np.stack([minima, maxima]).ravel('F').tolist()
+        return tuple(np.stack([minima, maxima]).ravel('F'))
 
     @property
     def center(self) -> Any:

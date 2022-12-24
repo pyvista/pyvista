@@ -11,7 +11,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict
+from typing import Dict, Tuple
 import warnings
 import weakref
 
@@ -1388,7 +1388,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera_set = is_set
 
     @property
-    def bounds(self):
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounds of the active renderer.
 
         Returns
