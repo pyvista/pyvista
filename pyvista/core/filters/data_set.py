@@ -989,7 +989,7 @@ class DataSetFilters:
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``. Throughout PyVista, the preference
             is typically ``'point'` but since the threshold filter is a
-            cell-wise operation, we prefere cell data for thresholding
+            cell-wise operation, we prefer cell data for thresholding
             operations.
 
         all_scalars : bool, optional
