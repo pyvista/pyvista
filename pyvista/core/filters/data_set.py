@@ -2304,7 +2304,7 @@ class DataSetFilters:
         bodies = pyvista.MultiBlock()
         for vid in np.unique(classifier):
             # Now extract it:
-            b = labeled.threshold([vid - 0.5, vid + 0.5], scalars='RegionId', progress_bar=progress_bar)
+            b = labeled.threshold([vid - 0.5, vid + 0.5], scalars='RegionId', progress_bar=False)
             if not label:
                 # strange behavior:
                 # must use this method rather than deleting from the point_data
