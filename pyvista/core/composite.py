@@ -148,7 +148,7 @@ class MultiBlock(
         >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        [-0.5, 2.5, -0.5, 2.5, -0.5, 0.5]
+        (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
 
         """
         # apply reduction of min and max over each block

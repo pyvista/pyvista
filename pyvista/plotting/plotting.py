@@ -1402,7 +1402,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.bounds
-        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
         return self.renderer.bounds
