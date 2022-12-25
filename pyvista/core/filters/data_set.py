@@ -1084,7 +1084,7 @@ class DataSetFilters:
         if value is None:
             value = self.get_data_range(scalars)
 
-        _set_threshold_limit(alg, value, method)
+        _set_threshold_limit(alg, value, method, invert)
 
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
