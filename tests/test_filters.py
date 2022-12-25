@@ -450,7 +450,7 @@ def test_threshold_percent(datasets):
         dataset.threshold_percent({18.0, 85.0})
 
 
-def test_threshold_paraview_consistence():
+def test_threshold_paraview_consistency():
     """Validate expected results that match ParaView."""
     x = np.arange(5, dtype=float)
     y = np.arange(6, dtype=float)
@@ -485,6 +485,7 @@ def test_threshold_paraview_consistence():
     #    [3, 4, 4, 4, 4]]
     thresh = mesh.threshold(0, invert=True, method='lower')
     assert thresh.n_cells == 16
+    assert thresh.get_data_range() == (1, 4)
 
     # upper(2)
     #   [[         2, 2],
@@ -492,11 +493,13 @@ def test_threshold_paraview_consistence():
     #    [3, 4, 4, 4, 4]]
     thresh = mesh.threshold(2, invert=False, method='upper')
     assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (2, 4)
     # upper(2),invert
     #   [[0, 0, 0, 0, 1],
     #    [1, 1, 1,     ]]
     thresh = mesh.threshold(2, invert=True, method='upper')
     assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (0, 1)
 
     # lower(2)
     #   [[0, 0, 0, 0, 1],
@@ -504,11 +507,13 @@ def test_threshold_paraview_consistence():
     #    [2, 2,        ]]
     thresh = mesh.threshold(2, invert=False, method='lower')
     assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (0, 2)
     # lower(2),invert
     #   [[      3, 3, 3],
     #    [3, 4, 4, 4, 4]]
     thresh = mesh.threshold(2, invert=True, method='lower')
     assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (3, 4)
 
     # between(0, 0)
     #   [[0, 0, 0, 0   ]]
@@ -522,6 +527,7 @@ def test_threshold_paraview_consistence():
     #    [3, 4, 4, 4, 4]]
     thresh = mesh.threshold((0, 0), invert=True)
     assert thresh.n_cells == 16
+    assert thresh.get_data_range() == (1, 4)
 
 
 def test_outline(datasets):
