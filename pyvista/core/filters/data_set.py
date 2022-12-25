@@ -968,7 +968,7 @@ class DataSetFilters:
         Parameters
         ----------
         value : float or sequence, optional
-            Single value or (min, max) to be used for the data threshold.  If
+            Single value or (min, max) to be used for the data threshold. If
             a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
             Please reference the ``method`` parameter for how single values
@@ -978,11 +978,9 @@ class DataSetFilters:
             Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, optional
-            If value is a single value, when invert is ``True`` cells
-            are kept when their values are below parameter ``"value"``.
-            When invert is ``False`` cells are kept when their value is
-            above the threshold ``"value"``.  Default is ``False``:
-            yielding above the threshold ``"value"``.
+            Invert the threshold results. That is, cells that would have been
+            in the output with this option off are excluded, while cells that
+            would have been excluded from the output are included.
             WARNING: This option is not supported for VTK<9.
 
         continuous : bool, optional
