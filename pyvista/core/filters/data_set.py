@@ -957,6 +957,14 @@ class DataSetFilters:
            thresholding depends on whether that point is part of a cell that
            is kept after thresholding.
 
+           Please also note the default ``preference`` choice for CELL data
+           over POINT data. This is contrary to most other places in PyVista's
+           API where the preference typically defaults to POINT data. We chose
+           to prefer CELL data here so that if thresholding by a named array
+           that exists for both the POINT and CELL data, this filter will
+           default to the CELL data array while performing the CELL-wise
+           operation.
+
         Parameters
         ----------
         value : float or sequence, optional
