@@ -1247,6 +1247,8 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         continuous=False,
+        all_scalars=False,
+        method='upper',
         **kwargs,
     ):
         """Apply a threshold on a mesh with a slider.
@@ -1301,6 +1303,21 @@ class WidgetHelper:
             to intersect the threshold bound, rather than the set of
             discrete scalar values from the vertices.
 
+        all_scalars : bool, optional
+            If using scalars from point data, all
+            points in a cell must satisfy the threshold when this
+            value is ``True``.  When ``False``, any point of the cell
+            with a scalar value satisfying the threshold criterion
+            will extract the cell. Has no effect when using cell data.
+
+        method : str, default: 'upper'
+            Set the threshold method for single-values, defining which
+            threshold bounds to use. If the ``value`` is a range, this
+            parameter will be ignored, extracting data between the two
+            values. For single values, ``'lower'`` will extract data
+            lower than the  ``value``. ``'upper'`` will extract data
+            larger than the ``value``.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
@@ -1333,6 +1350,7 @@ class WidgetHelper:
         self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
+        alg.SetInvert(invert)
         alg.SetInputDataObject(mesh)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
@@ -1343,7 +1361,7 @@ class WidgetHelper:
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
-            _set_threshold_limit(alg, value, invert)
+            _set_threshold_limit(alg, value, method)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 

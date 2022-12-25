@@ -450,6 +450,80 @@ def test_threshold_percent(datasets):
         dataset.threshold_percent({18.0, 85.0})
 
 
+def threshold_paraview_consistence():
+    """Validate expected results that match ParaView."""
+    x = np.arange(5, dtype=float)
+    y = np.arange(6, dtype=float)
+    z = np.arange(2, dtype=float)
+    xx, yy, zz = np.meshgrid(x, y, z)
+    mesh = pyvista.StructuredGrid(xx, yy, zz)
+    mesh.cell_data.set_scalars(np.repeat(range(5), 4))
+
+    # Input mesh
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+
+    # upper(0): extract all
+    thresh = mesh.threshold(0, invert=False, method='upper')
+    assert thresh.n_cells == mesh.n_cells
+    assert np.allclose(thresh.active_scalars, mesh.active_scalars)
+    # upper(0),invert: extract none
+    thresh = mesh.threshold(0, invert=True, method='upper')
+    assert thresh.n_cells == 0
+
+    # lower(0)
+    #   [[0, 0, 0, 0   ]]
+    thresh = mesh.threshold(0, invert=False, method='lower')
+    assert thresh.n_cells == 4
+    assert np.allclose(thresh.active_scalars, np.array([0, 0, 0, 0]))
+    # lower(0),invert
+    #   [[            1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(0, invert=True, method='lower')
+    assert thresh.n_cells == 16
+
+    # upper(2)
+    #   [[         2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(2, invert=False, method='upper')
+    assert thresh.n_cells == 12
+    # upper(2),invert
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1,     ]]
+    thresh = mesh.threshold(2, invert=True, method='upper')
+    assert thresh.n_cells == 8
+
+    # lower(2)
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2,        ]]
+    thresh = mesh.threshold(2, invert=False, method='lower')
+    assert thresh.n_cells == 12
+    # lower(2),invert
+    #   [[      3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(2, invert=True, method='lower')
+    assert thresh.n_cells == 8
+
+    # between(0, 0)
+    #   [[0, 0, 0, 0   ]]
+    thresh = mesh.threshold((0, 0), invert=False)
+    assert thresh.n_cells == 4
+    assert np.allclose(thresh.active_scalars, np.array([0, 0, 0, 0]))
+    # between(0,0),invert
+    #   [[            1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold((0, 0), invert=True)
+    assert thresh.n_cells == 16
+
+
 def test_outline(datasets):
     for dataset in datasets:
         outline = dataset.outline(progress_bar=True)

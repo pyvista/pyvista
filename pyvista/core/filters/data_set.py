@@ -938,9 +938,9 @@ class DataSetFilters:
         preference='cell',
         all_scalars=False,
         progress_bar=False,
-        component_mode="all",
+        component_mode='all',
         component=0,
-        method='between',
+        method='upper',
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -963,6 +963,11 @@ class DataSetFilters:
             Single value or (min, max) to be used for the data threshold.  If
             a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
+            Set the threshold method, defining which threshold bounds to use.
+            The default is ``'between'``. ``'lower'`` will extract data lower
+            than the lower ``value``. ``'upper'`` will extract data larger
+            than the upper ``value``. ``'between'`` will extract data between
+            the lower and upper values.
 
         scalars : str, optional
             Name of scalars to threshold on. Defaults to currently active scalars.
@@ -1005,12 +1010,13 @@ class DataSetFilters:
             When using ``component_mode='selected'``, this sets
             which component to threshold on.
 
-        method : str, default: 'between'
-            Set the threshold method, defining which threshold bounds to use.
-            The default is ``'between'``. ``'lower'`` will extract data lower
-            than the lower ``value``. ``'upper'`` will extract data larger
-            than the upper ``value``. ``'between'`` will extract data between
-            the lower and upper values.
+        method : str, default: 'upper'
+            Set the threshold method for single-values, defining which
+            threshold bounds to use. If the ``value`` is a range, this
+            parameter will be ignored, extracting data between the two
+            values. For single values, ``'lower'`` will extract data
+            lower than the  ``value``. ``'upper'`` will extract data
+            larger than the ``value``.
 
         Returns
         -------
@@ -1065,34 +1071,10 @@ class DataSetFilters:
 
         field = get_array_association(self, scalars, preference=preference)
 
-        # If using an inverted range, merge the result of two filters:
-        if isinstance(value, (np.ndarray, collections.abc.Sequence)) and invert:
-            valid_range = [np.nanmin(arr), np.nanmax(arr)]
-            # Create two thresholds
-            t1 = self.threshold(
-                [valid_range[0], value[0]],
-                scalars=scalars,
-                continuous=continuous,
-                preference=preference,
-                invert=False,
-            )
-            t2 = self.threshold(
-                [value[1], valid_range[1]],
-                scalars=scalars,
-                continuous=continuous,
-                preference=preference,
-                invert=False,
-            )
-            # Use an AppendFilter to merge the two results
-            appender = _vtk.vtkAppendFilter()
-            appender.AddInputData(t1)
-            appender.AddInputData(t2)
-            _update_alg(appender, progress_bar, 'Thresholding')
-            return _get_output(appender)
-
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
         alg.SetAllScalars(all_scalars)
+        alg.SetInvert(invert)
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
@@ -1102,18 +1084,9 @@ class DataSetFilters:
         # use valid range if no value given
         if value is None:
             value = self.get_data_range(scalars)
-        # check if value is a sequence (if so threshold by min max range like ParaView)
-        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
-            if len(value) != 2:
-                raise ValueError(
-                    f'Value range must be length one for a float value or two for min/max; not ({value}).'
-                )
-            alg.ThresholdBetween(value[0], value[1])
-        elif isinstance(value, collections.abc.Iterable):
-            raise TypeError('Value must either be a single scalar or a sequence.')
-        else:
-            # just a single value
-            _set_threshold_limit(alg, value, invert)
+
+        _set_threshold_limit(alg, value, method)
+
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
@@ -1132,18 +1105,7 @@ class DataSetFilters:
             raise ValueError(
                 f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
             )
-        # Set the threshold method
-        methods = {
-            'between': _vtk.vtkThreshold.THRESHOLD_BETWEEN,
-            'lower': _vtk.vtkThreshold.THRESHOLD_BETWEEN,
-            'upper': _vtk.vtkThreshold.THRESHOLD_UPPER,
-        }
-        try:
-            alg.SetThresholdFunction(methods[method.lower()])
-        except KeyError:
-            raise ValueError(
-                f"Threshold method '{method}' not implemented. Choices are 'lower', 'upper', and 'between'"
-            )
+
         # Run the threshold
         _update_alg(alg, progress_bar, 'Thresholding')
         return _get_output(alg)
@@ -5502,20 +5464,49 @@ class DataSetFilters:
         return self.shrink(1.0)
 
 
-def _set_threshold_limit(alg, value, invert):
-    """Set vtkThreshold limit.
+def _set_threshold_limit(alg, value, method):
+    """Set vtkThreshold limits and function.
 
-    Addresses VTK API deprecation as pointed out in
-    https://github.com/pyvista/pyvista/issues/2850
+    Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
+
+    * https://github.com/pyvista/pyvista/issues/2850
+    * https://github.com/pyvista/pyvista/issues/3610
+    * https://discourse.vtk.org/t/unnecessary-vtk-api-change/9929
 
     """
-    if invert:
-        if pyvista.vtk_version_info >= (9, 1):
-            alg.SetUpperThreshold(value)
-        else:  # pragma: no cover
-            alg.ThresholdByLower(value)
-    else:
-        if pyvista.vtk_version_info >= (9, 1):
-            alg.SetLowerThreshold(value)
-        else:  # pragma: no cover
-            alg.ThresholdByUpper(value)
+    # Check value
+    if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+        if len(value) != 2:
+            raise ValueError(
+                f'Value range must be length one for a float value or two for min/max; not ({value}).'
+            )
+    elif isinstance(value, collections.abc.Iterable):
+        raise TypeError('Value must either be a single scalar or a sequence.')
+    # Set values and function
+    if pyvista.vtk_version_info >= (9, 1):
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
+            alg.SetLowerThreshold(value[0])
+            alg.SetUpperThreshold(value[1])
+        else:
+            # Single value
+            if method.lower() == 'lower':
+                alg.SetLowerThreshold(value)
+                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
+            elif method.lower() == 'upper':
+                alg.SetUpperThreshold(value)
+                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
+            else:
+                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+    else:  # pragma: no cover
+        # ThresholdByLower, ThresholdByUpper, ThresholdBetween
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+            alg.ThresholdBetween(value[0], value[1])
+        else:
+            # Single value
+            if method.lower() == 'lower':
+                alg.ThresholdByLower(value)
+            elif method.lower() == 'upper':
+                alg.ThresholdByUpper(value)
+            else:
+                raise ValueError('Invalid method choice. Either `lower` or `upper`')
