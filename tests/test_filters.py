@@ -348,9 +348,10 @@ def test_threshold(datasets):
     thresh = dataset.threshold([100, 500], invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
-    thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
-    assert thresh is not None
-    assert isinstance(thresh, pyvista.UnstructuredGrid)
+    if pyvista.vtk_version_info >= (9,):
+        thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
+        assert thresh is not None
+        assert isinstance(thresh, pyvista.UnstructuredGrid)
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold({100, 500}, progress_bar=True)
@@ -434,6 +435,8 @@ def test_threshold_percent(datasets):
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
     for i, dataset in enumerate(datasets[0:3]):
+        if inverts[i] and pyvista.vtk_version_info < (9,):
+            continue
         thresh = dataset.threshold_percent(
             percent=percents[i], invert=inverts[i], progress_bar=True
         )
@@ -450,6 +453,10 @@ def test_threshold_percent(datasets):
         dataset.threshold_percent({18.0, 85.0})
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9,),
+    reason='The invert parameter is not supported for VTK<9. The general logic for the API differences is tested for VTK<9.1 though.',
+)
 def test_threshold_paraview_consistency():
     """Validate expected results that match ParaView."""
     x = np.arange(5, dtype=float)
@@ -991,6 +998,10 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9,),
+    reason='The invert parameter is not supported for VTK<9.',
+)
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()

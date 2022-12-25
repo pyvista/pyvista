@@ -975,6 +975,7 @@ class DataSetFilters:
             When invert is ``False`` cells are kept when their value is
             above the threshold ``"value"``.  Default is ``False``:
             yielding above the threshold ``"value"``.
+            WARNING: This option is not supported for VTK<9.
 
         continuous : bool, optional
             When True, the continuous interval [minimum cell scalar,
@@ -5491,9 +5492,12 @@ def _set_threshold_limit(alg, value, method, invert):
             )
     elif isinstance(value, collections.abc.Iterable):
         raise TypeError('Value must either be a single scalar or a sequence.')
+    if pyvista.vtk_version_info >= (9,):
+        alg.SetInvert(invert)
+    elif invert:
+        raise ValueError('PyVista no longer supports inverted thresholds for VTK<9.')
     # Set values and function
     if pyvista.vtk_version_info >= (9, 1):
-        alg.SetInvert(invert)
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])
@@ -5511,21 +5515,12 @@ def _set_threshold_limit(alg, value, method, invert):
     else:  # pragma: no cover
         # ThresholdByLower, ThresholdByUpper, ThresholdBetween
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
-            if invert:
-                alg.ThresholdBetween(value[1], value[0])
-            else:
-                alg.ThresholdBetween(value[0], value[1])
+            alg.ThresholdBetween(value[0], value[1])
         else:
             # Single value
             if method.lower() == 'lower':
-                if invert:
-                    alg.ThresholdByUpper(value)
-                else:
-                    alg.ThresholdByLower(value)
+                alg.ThresholdByLower(value)
             elif method.lower() == 'upper':
-                if invert:
-                    alg.ThresholdByLower(value)
-                else:
-                    alg.ThresholdByUpper(value)
+                alg.ThresholdByUpper(value)
             else:
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
