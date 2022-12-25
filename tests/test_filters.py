@@ -450,7 +450,7 @@ def test_threshold_percent(datasets):
         dataset.threshold_percent({18.0, 85.0})
 
 
-def threshold_paraview_consistence():
+def test_threshold_paraview_consistence():
     """Validate expected results that match ParaView."""
     x = np.arange(5, dtype=float)
     y = np.arange(6, dtype=float)
