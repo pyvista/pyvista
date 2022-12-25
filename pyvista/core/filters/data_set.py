@@ -5511,7 +5511,10 @@ def _set_threshold_limit(alg, value, method, invert):
     else:  # pragma: no cover
         # ThresholdByLower, ThresholdByUpper, ThresholdBetween
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
-            alg.ThresholdBetween(value[0], value[1])
+            if invert:
+                alg.ThresholdBetween(value[1], value[0])
+            else:
+                alg.ThresholdBetween(value[0], value[1])
         else:
             # Single value
             if method.lower() == 'lower':
