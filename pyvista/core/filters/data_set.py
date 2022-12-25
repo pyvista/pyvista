@@ -963,11 +963,8 @@ class DataSetFilters:
             Single value or (min, max) to be used for the data threshold.  If
             a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
-            Set the threshold method, defining which threshold bounds to use.
-            The default is ``'between'``. ``'lower'`` will extract data lower
-            than the lower ``value``. ``'upper'`` will extract data larger
-            than the upper ``value``. ``'between'`` will extract data between
-            the lower and upper values.
+            Please reference the ``method`` parameter for how single values
+            are handled.
 
         scalars : str, optional
             Name of scalars to threshold on. Defaults to currently active scalars.
@@ -1077,7 +1074,6 @@ class DataSetFilters:
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
         alg.SetAllScalars(all_scalars)
-        alg.SetInvert(invert)
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
@@ -1121,6 +1117,7 @@ class DataSetFilters:
         continuous=False,
         preference='cell',
         progress_bar=False,
+        method='upper',
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
@@ -1157,6 +1154,14 @@ class DataSetFilters:
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
+
+        method : str, default: 'upper'
+            Set the threshold method for single-values, defining which
+            threshold bounds to use. If the ``value`` is a range, this
+            parameter will be ignored, extracting data between the two
+            values. For single values, ``'lower'`` will extract data
+            lower than the  ``value``. ``'upper'`` will extract data
+            larger than the ``value``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1224,6 +1229,7 @@ class DataSetFilters:
             invert=invert,
             continuous=continuous,
             preference=preference,
+            method=method,
             progress_bar=progress_bar,
         )
 
@@ -2298,7 +2304,7 @@ class DataSetFilters:
         bodies = pyvista.MultiBlock()
         for vid in np.unique(classifier):
             # Now extract it:
-            b = labeled.threshold([vid - 0.5, vid + 0.5], scalars='RegionId', progress_bar=False)
+            b = labeled.threshold([vid - 0.5, vid + 0.5], scalars='RegionId', progress_bar=progress_bar)
             if not label:
                 # strange behavior:
                 # must use this method rather than deleting from the point_data
@@ -5467,7 +5473,7 @@ class DataSetFilters:
         return self.shrink(1.0)
 
 
-def _set_threshold_limit(alg, value, method):
+def _set_threshold_limit(alg, value, method, invert):
     """Set vtkThreshold limits and function.
 
     Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
@@ -5487,6 +5493,7 @@ def _set_threshold_limit(alg, value, method):
         raise TypeError('Value must either be a single scalar or a sequence.')
     # Set values and function
     if pyvista.vtk_version_info >= (9, 1):
+        alg.SetInvert(invert)
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])
@@ -5508,8 +5515,14 @@ def _set_threshold_limit(alg, value, method):
         else:
             # Single value
             if method.lower() == 'lower':
-                alg.ThresholdByLower(value)
+                if invert:
+                    alg.ThresholdByUpper(value)
+                else:
+                    alg.ThresholdByLower(value)
             elif method.lower() == 'upper':
-                alg.ThresholdByUpper(value)
+                if invert:
+                    alg.ThresholdByLower(value)
+                else:
+                    alg.ThresholdByUpper(value)
             else:
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')

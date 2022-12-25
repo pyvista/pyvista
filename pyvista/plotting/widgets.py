@@ -1350,7 +1350,6 @@ class WidgetHelper:
         self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
-        alg.SetInvert(invert)
         alg.SetInputDataObject(mesh)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
@@ -1361,7 +1360,7 @@ class WidgetHelper:
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
-            _set_threshold_limit(alg, value, method)
+            _set_threshold_limit(alg, value, method, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 
