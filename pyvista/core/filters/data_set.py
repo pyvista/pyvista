@@ -984,10 +984,13 @@ class DataSetFilters:
             maximum cell scalar] will be used to intersect the threshold bound,
             rather than the set of discrete scalar values from the vertices.
 
-        preference : str, optional
+        preference : str, default: 'cell'
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``.
+            ``'point'`` or ``'cell'``. Throughout PyVista, the preference
+            is typically ``'point'` but since the threshold filter is a
+            cell-wise operation, we prefere cell data for thresholding
+            operations.
 
         all_scalars : bool, optional
             If using scalars from point data, all
