@@ -1123,8 +1123,8 @@ class DataSetFilters:
         invert=False,
         continuous=False,
         preference='cell',
-        progress_bar=False,
         method='upper',
+        progress_bar=False,
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
