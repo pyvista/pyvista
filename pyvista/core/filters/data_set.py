@@ -983,7 +983,7 @@ class DataSetFilters:
             would have been excluded from the output are included.
 
             .. warning::
-                This option is only support for VTK version 9+
+                This option is only supported for VTK version 9+
 
         continuous : bool, default: False
             When True, the continuous interval [minimum cell scalar,
