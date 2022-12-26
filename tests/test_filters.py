@@ -365,6 +365,13 @@ def test_threshold(datasets):
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
 
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(ValueError):
+            dataset.threshold([100, 500], invert=True)
+
+    with pytest.raises(ValueError):
+        dataset.threshold(100, method='between')
+
 
 def test_threshold_all_scalars():
     mesh = pyvista.Sphere()
