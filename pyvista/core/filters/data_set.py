@@ -937,10 +937,10 @@ class DataSetFilters:
         continuous=False,
         preference='cell',
         all_scalars=False,
-        progress_bar=False,
         component_mode='all',
         component=0,
         method='upper',
+        progress_bar=False,
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -1005,9 +1005,6 @@ class DataSetFilters:
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
         component_mode : {'selected', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
             multicomponent scalars.  'selected' (default)
@@ -1026,6 +1023,9 @@ class DataSetFilters:
             values. For single values, ``'lower'`` will extract data
             lower than the  ``value``. ``'upper'`` will extract data
             larger than the ``value``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -1155,15 +1155,17 @@ class DataSetFilters:
                 This option is only supported for VTK version 9+
 
         continuous : bool, default: False
-            When ``True``, the continuous interval [minimum cell scalar,
-            maximum cell scalar] will be used to intersect the threshold
-            bound, rather than the set of discrete scalar values from
-            the vertices.
+            When True, the continuous interval [minimum cell scalar,
+            maximum cell scalar] will be used to intersect the threshold bound,
+            rather than the set of discrete scalar values from the vertices.
 
         preference : str, default: 'cell'
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``.
+            ``'point'`` or ``'cell'``. Throughout PyVista, the preference
+            is typically ``'point'`` but since the threshold filter is a
+            cell-wise operation, we prefer cell data for thresholding
+            operations.
 
         method : str, default: 'upper'
             Set the threshold method for single-values, defining which
@@ -1173,7 +1175,7 @@ class DataSetFilters:
             lower than the  ``value``. ``'upper'`` will extract data
             larger than the ``value``.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
