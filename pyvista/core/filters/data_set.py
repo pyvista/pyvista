@@ -992,7 +992,7 @@ class DataSetFilters:
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``. Throughout PyVista, the preference
-            is typically ``'point'` but since the threshold filter is a
+            is typically ``'point'`` but since the threshold filter is a
             cell-wise operation, we prefer cell data for thresholding
             operations.
 
