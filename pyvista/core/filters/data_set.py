@@ -1147,11 +1147,12 @@ class DataSetFilters:
             Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, default: False
-            When invert is ``True`` cells are kept when their values are
-            below the percentage of the range.  When invert is
-            ``False``, cells are kept when their value is above the
-            percentage of the range. Default is ``False``: yielding
-            above the threshold ``"value"``.
+            Invert the threshold results. That is, cells that would have been
+            in the output with this option off are excluded, while cells that
+            would have been excluded from the output are included.
+
+            .. warning::
+                This option is only supported for VTK version 9+
 
         continuous : bool, default: False
             When ``True``, the continuous interval [minimum cell scalar,
