@@ -977,13 +977,15 @@ class DataSetFilters:
         scalars : str, optional
             Name of scalars to threshold on. Defaults to currently active scalars.
 
-        invert : bool, optional
+        invert : bool, default: False
             Invert the threshold results. That is, cells that would have been
             in the output with this option off are excluded, while cells that
             would have been excluded from the output are included.
-            WARNING: This option is not supported for VTK<9.
 
-        continuous : bool, optional
+            .. warning::
+                This option is only support for VTK version 9+
+
+        continuous : bool, default: False
             When True, the continuous interval [minimum cell scalar,
             maximum cell scalar] will be used to intersect the threshold bound,
             rather than the set of discrete scalar values from the vertices.
@@ -996,14 +998,14 @@ class DataSetFilters:
             cell-wise operation, we prefer cell data for thresholding
             operations.
 
-        all_scalars : bool, optional
+        all_scalars : bool, default: False
             If using scalars from point data, all
             points in a cell must satisfy the threshold when this
             value is ``True``.  When ``False``, any point of the cell
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         component_mode : {'selected', 'all', 'any'}
@@ -1144,20 +1146,20 @@ class DataSetFilters:
         scalars : str, optional
             Name of scalars to threshold on. Defaults to currently active scalars.
 
-        invert : bool, optional
+        invert : bool, default: False
             When invert is ``True`` cells are kept when their values are
             below the percentage of the range.  When invert is
             ``False``, cells are kept when their value is above the
             percentage of the range. Default is ``False``: yielding
             above the threshold ``"value"``.
 
-        continuous : bool, optional
+        continuous : bool, default: False
             When ``True``, the continuous interval [minimum cell scalar,
             maximum cell scalar] will be used to intersect the threshold
             bound, rather than the set of discrete scalar values from
             the vertices.
 
-        preference : str, optional
+        preference : str, default: 'cell'
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
