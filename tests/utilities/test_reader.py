@@ -513,6 +513,23 @@ def test_pvdreader_no_time_group():
         assert dataset.part == i
 
 
+def test_pvdreader_no_part_group():
+    filename = examples.download_dual_sphere_animation(load=False)  # download all the files
+    # Use a pvd file that has no parts and with timesteps.
+    filename = os.path.join(os.path.dirname(filename), 'dualSphereAnimation4NoPart.pvd')
+
+    reader = pyvista.PVDReader(filename)
+    assert reader.active_time_value == 0.0
+    assert len(reader.active_datasets) == 1
+
+    reader.set_active_time_value(1.0)
+    assert len(reader.active_datasets) == 2
+    for i, dataset in enumerate(reader.active_datasets):
+        assert dataset.time == 1.0
+        assert dataset.group == ""
+        assert dataset.part == 0
+
+
 def get_cavity_reader():
     filename = examples.download_cavity(load=False)
     return pyvista.get_reader(filename)
