@@ -359,7 +359,7 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
 
     # PointData TCoords
     dump_t_coords(dataset_dir, data_dir, dataset, container, compress)
-    # dump_normals(dataset_dir, data_dir, dataset, container, compress)
+    dump_normals(dataset_dir, data_dir, dataset, container, compress)
 
     return root
 

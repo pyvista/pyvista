@@ -17,9 +17,9 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 test_path = os.path.dirname(os.path.abspath(__file__))
 
 # must be manually set until pytest adds parametrize with fixture feature
-HEXBEAM_CELLS_BOOL = np.ones(40, np.bool_)  # matches hexbeam.n_cells == 40
-STRUCTGRID_CELLS_BOOL = np.ones(729, np.bool_)  # struct_grid.n_cells == 729
-STRUCTGRID_POINTS_BOOL = np.ones(1000, np.bool_)  # struct_grid.n_points == 1000
+HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
+STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
+STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
 pointsetmark = pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
@@ -259,6 +259,31 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
         pyvista.UnstructuredGrid(input_cells_dict, points[..., :-1])
 
 
+def test_init_polyhedron():
+
+    polyhedron_nodes = [
+        [0.02, 0.0, 0.02],  # 17
+        [0.02, 0.01, 0.02],  # 18
+        [0.03, 0.01, 0.02],  # 19
+        [0.035, 0.005, 0.02],  # 20
+        [0.03, 0.0, 0.02],  # 21
+        [0.02, 0.0, 0.03],  # 22
+        [0.02, 0.01, 0.03],  # 23
+        [0.03, 0.01, 0.03],  # 24
+        [0.035, 0.005, 0.03],  # 25
+        [0.03, 0.0, 0.03],  # 26
+    ]
+    nodes = np.array(polyhedron_nodes)
+
+    polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
+    cells = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
+    cell_type = np.array([pyvista.CellType.POLYHEDRON])
+    grid = pyvista.UnstructuredGrid(cells, cell_type, nodes)
+
+    assert grid.n_cells == len(cell_type)
+    assert grid.cell_type(0) == pyvista.CellType.POLYHEDRON
+
+
 def test_cells_dict_hexbeam_file():
     grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
     cells = np.delete(grid.cells, np.arange(0, grid.cells.size, 9)).reshape([-1, 8])
@@ -429,7 +454,7 @@ def test_extract_cells(hexbeam):
     assert part_beam.n_points < hexbeam.n_points
     assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], ind)
 
-    mask = np.zeros(hexbeam.n_cells, np.bool_)
+    mask = np.zeros(hexbeam.n_cells, dtype=bool)
     mask[ind] = True
     part_beam = hexbeam.extract_cells(mask)
     assert part_beam.n_cells == len(ind)
@@ -817,7 +842,7 @@ def test_create_uniform_grid_from_specs():
 
     # create UniformGrid
     dims = (10, 10, 10)
-    grid = pyvista.UniformGrid(dims=dims)  # Using default spacing and origin
+    grid = pyvista.UniformGrid(dimensions=dims)  # Using default spacing and origin
     assert grid.dimensions == dims
     assert grid.extent == (0, 9, 0, 9, 0, 9)
     assert grid.origin == (0.0, 0.0, 0.0)
@@ -825,21 +850,21 @@ def test_create_uniform_grid_from_specs():
 
     # Using default origin
     spacing = (2, 1, 5)
-    grid = pyvista.UniformGrid(dims=dims, spacing=spacing)
+    grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing)
     assert grid.dimensions == dims
     assert grid.origin == (0.0, 0.0, 0.0)
     assert grid.spacing == spacing
     origin = (10, 35, 50)
 
     # Everything is specified
-    grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
+    grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
     assert grid.dimensions == dims
     assert grid.origin == origin
     assert grid.spacing == spacing
 
     # ensure negative spacing is not allowed
     with pytest.raises(ValueError, match="Spacing must be non-negative"):
-        grid = pyvista.UniformGrid(dims=dims, spacing=(-1, 1, 1))
+        grid = pyvista.UniformGrid(dimensions=dims, spacing=(-1, 1, 1))
 
     # all args (deprecated)
     with pytest.warns(
@@ -857,8 +882,16 @@ def test_create_uniform_grid_from_specs():
         grid = pyvista.UniformGrid(dims)
         assert grid.dimensions == dims
 
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='`dims` argument is deprecated. Please use `dimensions`.',
+    ):
+        grid = pyvista.UniformGrid(dims=dims)
+    with pytest.raises(TypeError):
+        grid = pyvista.UniformGrid(dimensions=dims, dims=dims)
+
     # uniform grid from a uniform grid
-    grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
+    grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
     grid_from_grid = pyvista.UniformGrid(grid)
     assert grid == grid_from_grid
 
@@ -934,13 +967,13 @@ def test_cast_uniform_to_rectilinear():
 
 
 def test_uniform_grid_to_tetrahedra():
-    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
     ugrid = grid.to_tetrahedra()
     assert ugrid.n_cells == 5
 
 
 def test_fft_and_rfft(noise_2d):
-    grid = pyvista.UniformGrid(dims=(10, 10, 1))
+    grid = pyvista.UniformGrid(dimensions=(10, 10, 1))
     with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
         grid.fft()
 
@@ -1131,7 +1164,7 @@ def test_remove_cells_not_inplace(ind, hexbeam):
 def test_remove_cells_invalid(hexbeam):
     grid_copy = hexbeam.copy()
     with pytest.raises(ValueError):
-        grid_copy.remove_cells(np.ones(10, np.bool_), inplace=True)
+        grid_copy.remove_cells(np.ones(10, dtype=bool), inplace=True)
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_CELLS_BOOL])
@@ -1144,7 +1177,7 @@ def test_hide_cells(ind, struct_grid):
     assert out.HasAnyBlankCells()
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
-        struct_grid.hide_cells(np.ones(10, dtype=np.bool), inplace=True)
+        struct_grid.hide_cells(np.ones(10, dtype=bool), inplace=True)
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_POINTS_BOOL])
@@ -1153,11 +1186,11 @@ def test_hide_points(ind, struct_grid):
     assert struct_grid.HasAnyBlankPoints()
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
-        struct_grid.hide_points(np.ones(10, dtype=np.bool))
+        struct_grid.hide_points(np.ones(10, dtype=bool))
 
 
 def test_set_extent():
-    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
+    uni_grid = pyvista.UniformGrid(dimensions=[10, 10, 10])
     with pytest.raises(ValueError):
         uni_grid.extent = [0, 1]
 

@@ -1,5 +1,6 @@
 """PyVista plotting module."""
 import collections.abc
+from copy import deepcopy
 import ctypes
 from functools import wraps
 import io
@@ -31,6 +32,7 @@ from pyvista.utilities import (
     raise_not_matching,
     wrap,
 )
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 
 from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
@@ -41,10 +43,18 @@ from ._plotting import (
     process_opacity,
 )
 from ._property import Property
+from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs
-from .mapper import make_mapper
+from .mapper import (
+    DataSetMapper,
+    FixedPointVolumeRayCastMapper,
+    GPUVolumeRayCastMapper,
+    OpenGLGPUVolumeRayCastMapper,
+    PointGaussianMapper,
+    SmartVolumeMapper,
+)
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
@@ -55,7 +65,6 @@ from .widgets import WidgetHelper
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
-
 
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
@@ -78,10 +87,9 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for _, p in _ALL_PLOTTERS.items():
-        if not p._closed:
-            p.close()
-        p.deep_clean()
+    for pl in list(_ALL_PLOTTERS.values()):
+        if not pl._closed:
+            pl.close()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -259,7 +267,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized != 'none':
             raise ValueError(f'Invalid lighting option "{lighting}".')
 
-        # Add self to open plotters
+        # Track all active plotters. This has the side effect of ensuring that plotters are not
+        # collected until `close()`. See https://github.com//pull/3216
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         _ALL_PLOTTERS[self._id_name] = self
 
@@ -567,7 +576,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             mapper = actor.GetMapper()
                             if mapper is None:
                                 continue
-                            dataset = mapper.GetInputAsDataSet()
+                            dataset = mapper.dataset
                             if not isinstance(dataset, pyvista.PolyData):
                                 warnings.warn(
                                     'Plotter contains non-PolyData datasets. These have been '
@@ -650,7 +659,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         the rendering engine supports it.
 
         Disable this with :func:`disable_hidden_line_removal
-        <BasePlotter.disable_hidden_line_removal>`
+        <Plotter.disable_hidden_line_removal>`.
 
         Parameters
         ----------
@@ -687,7 +696,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Disable hidden line removal.
 
         Enable again with :func:`enable_hidden_line_removal
-        <BasePlotter.enable_hidden_line_removal>`
+        <Plotter.enable_hidden_line_removal>`.
 
         Parameters
         ----------
@@ -1504,7 +1513,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
         >>> pl.background_color = "pink"
         >>> pl.background_color
-        Color(name='pink', hex='#ffc0cbff')
+        Color(name='pink', hex='#ffc0cbff', opacity=255)
         >>> pl.show()
 
         """
@@ -1604,16 +1613,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.add_key_event(*args, **kwargs)
 
-    def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key.
-
-        Parameters
-        ----------
-        key : str
-            Key to clear events for.
-
-        """
-        self.iren.clear_events_for_key(key)
+    @wraps(RenderWindowInteractor.clear_events_for_key)
+    def clear_events_for_key(self, *args, **kwargs):
+        """Wrap RenderWindowInteractor.clear_events_for_key."""
+        if hasattr(self, 'iren'):
+            self.iren.clear_events_for_key(*args, **kwargs)
 
     def store_mouse_position(self, *args):
         """Store mouse position."""
@@ -1633,7 +1637,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         This will potentially slow down the interactor. No callbacks
         supported here - use
-        :func:`pyvista.BasePlotter.track_click_position` instead.
+        :func:`pyvista.Plotter.track_click_position` instead.
 
         """
         self.iren.track_mouse_position(self.store_mouse_position)
@@ -1748,8 +1752,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
-        if hasattr(self, 'iren'):
-            self.iren.clear_key_event_callbacks()
+        if not hasattr(self, 'iren'):
+            return
+
+        self.iren.clear_key_event_callbacks()
 
         self.add_key_event('q', self._prep_for_close)  # Add no matter what
         b_left_down_callback = lambda: self.iren.add_observer(
@@ -1830,10 +1836,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.iren.enable_rubber_band_2d_style()
 
     def enable_stereo_render(self):
-        """Enable stereo rendering.
+        """Enable anaglyph stereo rendering.
 
         Disable this with :func:`disable_stereo_render
-        <BasePlotter.disable_stereo_render>`
+        <Plotter.disable_stereo_render>`
 
         Examples
         --------
@@ -1847,14 +1853,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if hasattr(self, 'ren_win'):
-            self.ren_win.StereoRenderOn()
             self.ren_win.SetStereoTypeToAnaglyph()
+            self.ren_win.StereoRenderOn()
 
     def disable_stereo_render(self):
-        """Disable stereo rendering.
+        """Disable anaglyph stereo rendering.
 
         Enable again with :func:`enable_stereo_render
-        <BasePlotter.enable_stereo_render>`
+        <Plotter.enable_stereo_render>`
 
         Examples
         --------
@@ -1936,7 +1942,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.iren is not None:
             update_rate = self.iren.get_desired_update_rate()
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
-                self.right_timer_id = self.iren.create_repeating_timer(stime)
+                # Allow interaction for a brief moment during interactive updating
+                if self.iren.can_process_events:
+                    # For newer VTK versions we can use the non-blocking ProcessEvents method.
+                    self.iren.process_events()
+                else:
+                    # For older VTK versions we have to use the blocking Start method instead.
+                    # Setup a timer to break out of the next blocking call
+                    Plotter.update_timer_id = self.iren.create_timer(stime)
+                    # Allow interaction for a brief moment during interactive updating, blocking call.
+                    self.iren.start()
+                    # Execution resumed after TerminateApp() call in on_timer callback, destroy the timer
+                    self.iren.destroy_timer(Plotter.update_timer_id)
+                # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time
                 return
@@ -2009,7 +2027,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
-        style : str, default='wireframe'
+        style : str, default: 'wireframe'
             Visualization style of the mesh.  One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``.
             Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
@@ -2065,22 +2083,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str or list, default :attr:`pyvista.themes.DefaultTheme.cmap`
-            Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
-            are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
 
-            You can also specify a list of colors to override an
-            existing colormap with a custom one.  For example, to
-            create a three color colormap you might specify
-            ``['green', 'red', 'blue']``.
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         label : str, optional
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
         reset_camera : bool, optional
             Reset the camera after adding this mesh to the scene. The default
@@ -2092,7 +2113,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -2248,8 +2269,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the composite dataset.
+        pyvista.Actor
+            Actor of the composite dataset.
 
         pyvista.CompositePolyDataMapper
             Composite PolyData mapper.
@@ -2318,6 +2339,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             color,
             None,
             rgb,
+            style,
             **kwargs,
         )
 
@@ -2331,6 +2353,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper = CompositePolyDataMapper(
             dataset,
+            theme=self._theme,
             color_missing_with_nan=color_missing_with_nan,
             interpolate_before_map=interpolate_before_map,
         )
@@ -2405,7 +2428,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     cmap,
                     flip_scalars,
                     categories,
-                    self._theme,
                     log_scale,
                 )
             else:
@@ -2480,14 +2502,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=0.5,
         render=True,
         component=None,
+        emissive=False,
         copy_mesh=False,
+        backface_params=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
         and/or geometry of datasets. For volume rendering, see
-        :func:`pyvista.BasePlotter.add_volume`.
+        :func:`pyvista.Plotter.add_volume`.
 
         To see the what most of the following parameters look like in action,
         please refer to :class:`pyvista.Property`.
@@ -2511,9 +2535,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         style : str, optional
             Visualization style of the mesh.  One of the following:
-            ``style='surface'``, ``style='wireframe'``, ``style='points'``.
-            Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
-            wireframe of the outer geometry.
+            ``style='surface'``, ``style='wireframe'``, ``style='points'``,
+            ``style='points_gaussian'``. Defaults to ``'surface'``. Note that
+            ``'wireframe'`` only shows a wireframe of the outer geometry.
+            ``'points_gaussian'`` can be modified with the ``emissive``,
+            ``render_points_as_spheres`` options.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name
@@ -2577,22 +2603,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str, list, optional
-            Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only
-            applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an
-            accepted alias for this. If ``colorcet`` or ``cmocean``
-            are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
 
-            You can also specify a list of colors to override an
-            existing colormap with a custom one.  For example, to
-            create a three color colormap you might specify
-            ``['green', 'red', 'blue']``.
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         label : str, optional
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
         reset_camera : bool, optional
             Reset the camera after adding this mesh to the scene. The default
@@ -2604,7 +2633,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -2757,36 +2786,53 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when ``True``.  Default ``True``.
 
-        component :  int, optional
+        component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
+        emissive : bool, default: False
+            Treat the points/splats as emissive light sources. Only valid for
+            ``style='points_gaussian'`` representation.
+
         copy_mesh : bool, optional
-            If ``True``, a copy of the mesh will be made before adding it to the plotter.
-            This is useful if e.g. you would like to add the same mesh to a plotter multiple
-            times and display different scalars. Setting ``copy_mesh`` to ``False`` is necessary
-            if you would like to update the mesh after adding it to the plotter and have these
-            updates rendered, e.g. by changing the active scalars or through an interactive widget.
-            Defaults to ``False``.
+            If ``True``, a copy of the mesh will be made before adding it to
+            the plotter.  This is useful if you would like to add the same
+            mesh to a plotter multiple times and display different
+            scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
+            would like to update the mesh after adding it to the plotter and
+            have these updates rendered, e.g. by changing the active scalars or
+            through an interactive widget. This should only be set to ``True``
+            with caution. Defaults to ``False``.
+
+        backface_params : dict or pyvista.Property, optional
+            A :class:`pyvista.Property` or a dict of parameters to use for
+            backface rendering. This is useful for instance when the inside of
+            oriented surfaces has a different color than the outside. When a
+            :class:`pyvista.Property`, this is directly used for backface
+            rendering. When a dict, valid keys are :class:`pyvista.Property`
+            attributes, and values are corresponding values to use for the
+            given property. Omitted keys (or the default of
+            ``backface_params=None``) default to the corresponding frontface
+            properties.
 
         **kwargs : dict, optional
             Optional developer keyword arguments.
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the mesh.
+        pyvista.plotting.actor.Actor
+            Actor of the mesh.
 
         Examples
         --------
         Add a sphere to the plotter and show it with a custom scalar
         bar title.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
         >>> plotter.show()
@@ -2795,16 +2841,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points and the number of cells are identical, we have to pass
         ``preference='cell'``.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [.5, .667, 0], [0.5, .33, 0.667]])
         >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
-        >>> mesh = pyvista.PolyData(vertices, faces)
+        >>> mesh = pv.PolyData(vertices, faces)
         >>> mesh.cell_data['colors'] = [[255, 255, 255],
         ...                               [0, 255, 0],
         ...                               [0, 0, 255],
         ...                               [255, 0, 0]]
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
         ...                      rgb=True, preference='cell')
         >>> plotter.camera_position='xy'
@@ -2815,7 +2861,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         in ``preference=='point'``, each cell face is individually
         colored.
 
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
         ...                      rgb=True, preference='point')
         >>> plotter.camera_position='xy'
@@ -2823,12 +2869,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot a plane with a constant color and vary its opacity by point.
 
-        >>> plane = pyvista.Plane()
+        >>> plane = pv.Plane()
         >>> plane.plot(color='b', opacity=np.linspace(0, 1, plane.n_points),
         ...            show_edges=True)
 
+        Plot the points of a sphere with gaussian smoothing while coloring by z
+        position.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.plot(
+        ...     scalars=mesh.points[:, 2],
+        ...     style='points_gaussian',
+        ...     opacity=0.5,
+        ...     point_size=10,
+        ...     render_points_as_spheres=False,
+        ...     show_scalar_bar=False,
+        ... )
+
         """
-        self.mapper = make_mapper(_vtk.vtkDataSetMapper)
+        if style == 'points_gaussian':
+            self.mapper = PointGaussianMapper(theme=self.theme)
+        else:
+            self.mapper = DataSetMapper(theme=self.theme)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
@@ -2837,7 +2899,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
-        elif isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):
@@ -2929,8 +2991,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             color,
             texture,
             rgb,
+            style,
             **kwargs,
         )
+
         if silhouette:
             if isinstance(silhouette, dict):
                 self.add_silhouette(mesh, silhouette)
@@ -2954,9 +3018,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
-        scalars_name = 'Data'
+        scalars_name = pyvista.DEFAULT_SCALARS_NAME
         if isinstance(scalars, str):
-            self.mapper.SetArrayName(scalars)
+            self.mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None:
@@ -2974,10 +3038,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             if field == FieldAssociation.POINT:
                 mesh.point_data.active_scalars_name = original_scalar_name
-                self.mapper.SetScalarModeToUsePointData()
+                self.mapper.scalar_map_mode = 'point'
             elif field == FieldAssociation.CELL:
                 mesh.cell_data.active_scalars_name = original_scalar_name
-                self.mapper.SetScalarModeToUseCellData()
+                self.mapper.scalar_map_mode = 'cell'
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2985,18 +3049,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mesh, scalars, texture, split_sharp_edges, feature_angle, preference
             )
 
+        if rgb:
+            show_scalar_bar = False
+            if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
+                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+
         if mesh.n_points < 1:
             raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
         # set main values
         self.mesh = mesh
-        self.mapper.SetInputData(self.mesh)
-        self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-        if interpolate_before_map:
-            self.mapper.InterpolateScalarsBeforeMappingOn()
+        self.mapper.dataset = self.mesh
+        self.mapper.interpolate_before_map = interpolate_before_map
 
-        actor = _vtk.vtkActor()
-        actor.SetMapper(self.mapper)
+        actor = Actor(mapper=self.mapper)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -3011,13 +3077,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError(
                     'Input mesh does not have texture coordinates to support the texture.'
                 )
-            actor.SetTexture(texture)
+            actor.texture = texture
             # Set color to white by default when using a texture
             if color is None:
                 color = 'white'
             if scalars is None:
                 show_scalar_bar = False
-            self.mapper.SetScalarModeToUsePointFieldData()
+            self.mapper.scalar_visibility = False
 
             # see https://github.com/pyvista/pyvista/issues/950
             mesh.set_active_scalars(None)
@@ -3029,15 +3095,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars formatting ==================================================
         if scalars is not None:
-            show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
-                mesh,
+            self.mapper.set_scalars(
                 scalars,
                 scalars_name,
+                n_colors,
                 scalar_bar_args,
                 rgb,
                 component,
                 preference,
-                interpolate_before_map,
                 custom_opac,
                 annotations,
                 log_scale,
@@ -3048,28 +3113,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 flip_scalars,
                 opacity,
                 categories,
-                n_colors,
                 clim,
-                self._theme,
-                show_scalar_bar,
             )
+            self.mapper.scalar_visibility = True
         elif custom_opac:  # no scalars but custom opacity
             self.mapper.set_custom_opacity(
                 opacity,
                 color,
-                mesh,
                 n_colors,
                 preference,
-                interpolate_before_map,
-                rgb,
-                self._theme,
             )
+            self.mapper.scalar_visibility = True
         else:
-            self.mapper.SetScalarModeToUseFieldData()
+            self.mapper.scalar_visibility = False
 
         # Set actor properties ================================================
-        prop = Property(
-            self._theme,
+        prop_kwargs = dict(
+            theme=self._theme,
             interpolation=interpolation,
             metallic=metallic,
             roughness=roughness,
@@ -3080,21 +3140,51 @@ class BasePlotter(PickingHelper, WidgetHelper):
             specular_power=specular_power,
             show_edges=show_edges,
             color=color,
-            style=style,
+            style=style if style != 'points_gaussian' else 'points',
             edge_color=edge_color,
-            render_points_as_spheres=render_points_as_spheres,
             render_lines_as_tubes=render_lines_as_tubes,
             lighting=lighting,
             line_width=line_width,
             culling=culling,
         )
+
+        if style == 'points_gaussian':
+            self.mapper.emissive = emissive
+            self.mapper.scale_factor = point_size * self.mapper.dataset.length / 1300
+            if not render_points_as_spheres and not emissive:
+                if opacity >= 1.0:
+                    opacity = 0.9999  # otherwise, weird triangles
+
         if isinstance(opacity, (float, int)):
-            prop.opacity = opacity
+            prop_kwargs['opacity'] = opacity
+        prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
+
+        if render_points_as_spheres:
+            if style == 'points_gaussian':
+                self.mapper.use_circular_splat(opacity)
+                prop.opacity = 1.0
+            else:
+                prop.render_points_as_spheres = render_points_as_spheres
+
+        if backface_params is not None:
+            if isinstance(backface_params, Property):
+                backface_prop = backface_params
+            elif isinstance(backface_params, dict):
+                # preserve omitted kwargs from frontface
+                backface_kwargs = deepcopy(prop_kwargs)
+                backface_kwargs.update(backface_params)
+                backface_prop = Property(**backface_kwargs)
+            else:
+                raise TypeError(
+                    'Backface params must be a pyvista.Property or a dict, '
+                    f'not {type(backface_params).__name__}.'
+                )
+            actor.backface_prop = backface_prop
 
         # legend label
         if label is not None:
-            self._add_legend_label(actor, label, scalars, prop.color)
+            self._add_legend_label(actor, label, scalars, actor.prop.color)
 
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
@@ -3199,12 +3289,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
 
-        cmap : str, optional
-            Name of the Matplotlib colormap to us when mapping the ``scalars``.
-            See available Matplotlib colormaps.  Only applicable for when
-            displaying ``scalars``. Requires Matplotlib to be installed.
-            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-            ``cmocean`` are installed, their colormaps can be specified by name.
+        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+            If a string, this is the name of the ``matplotlib`` colormap to use
+            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            Only applicable for when displaying ``scalars``. Requires
+            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            for this. If ``colorcet`` or ``cmocean`` are installed, their
+            colormaps can be specified by name.
+
+            You can also specify a list of colors to override an existing
+            colormap with a custom one.  For example, to create a three color
+            colormap you might specify ``['green', 'red', 'blue']``.
+
+            This parameter also accepts a :class:`pyvista.LookupTable`. If this
+            is set, all parameters controlling the color map like ``n_colors``
+            will be ignored.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -3252,7 +3351,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -3306,8 +3405,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the volume.
+        pyvista.Actor
+            Actor of the volume.
 
         Examples
         --------
@@ -3341,6 +3440,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = scalar_bar_args.copy()
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
+            # Deprecated on ..., estimated removal on v0.40.0
             warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
@@ -3464,25 +3564,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = scalars.ravel()
 
         # Define mapper, volume, and add the correct properties
-        mappers = {
-            'fixed_point': _vtk.vtkFixedPointVolumeRayCastMapper,
-            'gpu': _vtk.vtkGPUVolumeRayCastMapper,
-            'open_gl': _vtk.vtkOpenGLGPUVolumeRayCastMapper,
-            'smart': _vtk.vtkSmartVolumeMapper,
+        mappers_lookup = {
+            'fixed_point': FixedPointVolumeRayCastMapper,
+            'gpu': GPUVolumeRayCastMapper,
+            'open_gl': OpenGLGPUVolumeRayCastMapper,
+            'smart': SmartVolumeMapper,
         }
-        if not isinstance(mapper, str) or mapper not in mappers.keys():
+        if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
             raise TypeError(
-                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers.keys())}"
+                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
             )
-        self.mapper = make_mapper(mappers[mapper])
+        self.mapper = mappers_lookup[mapper](self._theme)
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
             volume.point_data.set_array(scalars, title, True)
-            self.mapper.SetScalarModeToUsePointData()
+            self.mapper.scalar_mode = 'point'
         elif scalars.shape[0] == volume.n_cells:
             volume.cell_data.set_array(scalars, title, True)
-            self.mapper.SetScalarModeToUseCellData()
+            self.mapper.scalar_mode = 'cell'
         else:
             raise_not_matching(scalars, volume)
 
@@ -3502,22 +3602,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper.scalar_range = clim
 
-        # Set colormap and build lookup table
-        table = _vtk.vtkLookupTable()
-        # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
-        # above/below colors not supported with volume rendering
+        if isinstance(cmap, pyvista.LookupTable):
+            self.mapper.lookup_table = cmap
+        else:
+            if cmap is None:
+                if not has_module('matplotlib'):
+                    raise ImportError('Please install matplotlib for color maps.')
 
-        if isinstance(annotations, dict):
-            for val, anno in annotations.items():
-                table.SetAnnotation(float(val), str(anno))
-
-        if cmap is None:  # Set default map if matplotlib is available
-            if has_module('matplotlib'):
                 cmap = self._theme.cmap
-
-        if cmap is not None:
-            if not has_module('matplotlib'):
-                raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
             if categories:
@@ -3525,36 +3617,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     n_colors = len(np.unique(scalars))
                 elif isinstance(categories, int):
                     n_colors = categories
-        if flip_scalars:
-            cmap = cmap.reversed()
 
-        color_tf = _vtk.vtkColorTransferFunction()
-        for ii in range(n_colors):
-            color_tf.AddRGBPoint(ii, *cmap(ii)[:-1])
+            if flip_scalars:
+                cmap = cmap.reversed()
 
-        # Set opacities
-        if isinstance(opacity, (float, int)):
-            opacity_values = [opacity] * n_colors
-        elif isinstance(opacity, str):
-            opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
-        elif isinstance(opacity, (np.ndarray, list, tuple)):
-            opacity = np.array(opacity)
-            opacity_values = opacity_transfer_function(opacity, n_colors)
+            # Set colormap and build lookup table
+            self.mapper.lookup_table.apply_cmap(cmap, n_colors)
+            self.mapper.lookup_table.apply_opacity(opacity)
+            self.mapper.lookup_table.scalar_range = clim
+            if isinstance(annotations, dict):
+                self.mapper.lookup_table.annotations = annotations
 
-        opacity_tf = _vtk.vtkPiecewiseFunction()
-        for ii in range(n_colors):
-            opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
-
-        # Now put color tf and opacity tf into a lookup table for the scalar bar
-        table.SetNumberOfTableValues(n_colors)
-        lut = cmap(np.array(range(n_colors))) * 255
-        lut[:, 3] = opacity_values
-        lut = lut.astype(np.uint8)
-        table.SetTable(_vtk.numpy_to_vtk(lut))
-        table.SetRange(*clim)
-        self.mapper.lookup_table = table
-
-        self.mapper.SetInputData(volume)
+        self.mapper.dataset = volume
 
         blending = blending.lower()
         if blending in ['additive', 'add', 'sum']:
@@ -3570,17 +3644,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             raise ValueError(
                 f'Blending mode {blending!r} invalid. '
-                'Please choose one of "additive", '
+                'Please choose either "additive", '
                 '"composite", "minimum" or "maximum".'
             )
-        self.mapper.Update()
+        self.mapper.update()
 
         self.volume = _vtk.vtkVolume()
         self.volume.SetMapper(self.mapper)
 
         prop = _vtk.vtkVolumeProperty()
-        prop.SetColor(color_tf)
-        prop.SetScalarOpacity(opacity_tf)
+        prop.SetColor(self.mapper.lookup_table.to_color_tf())
+        prop.SetScalarOpacity(self.mapper.lookup_table.to_opacity_tf())
         prop.SetAmbient(ambient)
         prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
         prop.SetShade(shade)
@@ -3667,7 +3741,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             alg.SetFeatureAngle(silhouette_params["feature_angle"])
         else:
             alg.SetEnableFeatureAngle(False)
-        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(silhouette_params["color"]).float_rgb)
@@ -3709,6 +3783,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         except KeyError:
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
+
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        self.renderers.clear_actors()
 
     def clear(self):
         """Clear plot by removing all actors and properties.
@@ -3979,7 +4057,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
-        self.clear()
+        self.scalar_bars.clear()
+        self.mesh = None
+        self.mapper = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -3990,8 +4070,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._clear_ren_win()
 
         if self.iren is not None:
-            self.iren.remove_observers()
-            self.iren.terminate_app()
+            self.iren.close()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
@@ -4006,6 +4085,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             except BaseException:
                 pass
 
+        # Remove the global reference to this plotter unless building the
+        # gallery to allow it to collect.
+        if not pyvista.BUILDING_GALLERY:
+            if _ALL_PLOTTERS is not None:
+                _ALL_PLOTTERS.pop(self._id_name, None)
+
         # this helps managing closed plotters
         self._closed = True
 
@@ -4015,8 +4100,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        if getattr(self, 'mapper', None) is not None:
-            self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
         self.textActor = None
@@ -4390,7 +4473,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : color_like, optional
+        color : color_like, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4398,14 +4481,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        width : float, optional
+        width : float, default: 5
             Thickness of lines.
 
-        label : str, optional
+        label : str, default: None
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
-        name : str, optional
+        name : str, default: None
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
@@ -4429,29 +4512,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.lines_from_points(lines)
+        lines = pyvista.line_segments_from_points(lines)
 
-        # Create mapper and add lines
-        mapper = _vtk.vtkDataSetMapper()
-        mapper.SetInputData(lines)
-
-        rgb_color = Color(color)
-
-        # Create actor
-        actor = _vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetLineWidth(width)
-        actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(rgb_color.float_rgb)
-        actor.GetProperty().SetColor(rgb_color.float_rgb)
-        actor.GetProperty().LightingOff()
+        actor = Actor(mapper=DataSetMapper(lines))
+        actor.prop.line_width = width
+        actor.prop.show_edges = True
+        actor.prop.edge_color = color
+        actor.prop.color = color
+        actor.prop.lighting = False
 
         # legend label
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [lines, label, rgb_color]
+            self.renderer._labels[addr] = [lines, label, Color(color)]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
@@ -4545,7 +4620,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rendering window, it will be replaced by the new actor.
 
         shape_color : color_like, optional
-            Color of points (if visible).  Either a string, rgb
+            Color of shape (if visible).  Either a string, rgb
             sequence, or hex color string.
 
         shape : str, optional
@@ -4700,15 +4775,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
         """Label the points from a dataset with the values of their scalars.
 
-        Wrapper for :func:`pyvista.BasePlotter.add_point_labels`.
+        Wrapper for :func:`pyvista.Plotter.add_point_labels`.
 
         Parameters
         ----------
-        points : numpy.ndarray or pyvista.DataSet
+        points : Sequence(float) or np.ndarray or pyvista.DataSet
             An ``n x 3`` numpy.ndarray or pyvista dataset with points.
 
-        labels : str, optional
-            String name of the point data array to use.
+        labels : list or str
+            List of scalars of labels.  Must be the same length as points. If a
+            string name is given with a :class:`pyvista.DataSet` input for
+            points, then these are fetched.
 
         fmt : str, optional
             String formatter used to format numerical data.
@@ -4718,7 +4795,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         **kwargs : dict, optional
             Keyword arguments passed to
-            :func:`pyvista.BasePlotter.add_point_labels`.
+            :func:`pyvista.Plotter.add_point_labels`.
 
         Returns
         -------
@@ -4727,19 +4804,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not is_pyvista_dataset(points):
-            raise TypeError(f'input points must be a pyvista dataset, not: {type(points)}')
-        if not isinstance(labels, str):
-            raise TypeError('labels must be a string name of the scalars array to use')
+            points, _ = _coerce_pointslike_arg(points, copy=False)
+        if not isinstance(labels, (str, list)):
+            raise TypeError(
+                'labels must be a string name of the scalars array to use or list of scalars'
+            )
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
             fmt = '%.6e'
-        scalars = points.point_data[labels]
-        phrase = f'{preamble} %.3e'
+        if isinstance(points, np.ndarray):
+            scalars = labels
+        elif is_pyvista_dataset(points):
+            scalars = points.point_data[labels]
+        phrase = f'{preamble} {fmt}'
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
-    def add_points(self, points, **kwargs):
+    def add_points(self, points, style='points', **kwargs):
         """Add points to a mesh.
 
         Parameters
@@ -4747,13 +4829,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points : numpy.ndarray or pyvista.DataSet
             Array of points or the points from a pyvista object.
 
+        style : str, default: 'points'
+            Visualization style of the mesh.  One of the following:
+            ``style='points'``, ``style='points_gaussian'``.
+            ``'points_gaussian'`` can be controlled with the ``emissive`` and
+            ``render_points_as_spheres`` options.
+
         **kwargs : dict, optional
-            See :func:`pyvista.BasePlotter.add_mesh` for optional
+            See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
         Returns
         -------
-        vtk.vtkActor
+        pyvista.Actor
             Actor of the mesh.
 
         Examples
@@ -4768,9 +4856,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                       point_size=100.0)
         >>> pl.show()
 
+        Plot using the ``'points_gaussian'`` style
+
+        >>> points = np.random.random((10, 3))
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_points(points, style='points_gaussian')
+        >>> pl.show()
+
         """
-        kwargs['style'] = 'points'
-        return self.add_mesh(points, **kwargs)
+        if style not in ['points', 'points_gaussian']:
+            raise ValueError(
+                f'Invalid style {style} for add_points. Should be either "points" or '
+                '"points_gaussian".'
+            )
+        return self.add_mesh(points, style=style, **kwargs)
 
     def add_arrows(self, cent, direction, mag=1, **kwargs):
         """Add arrows to the plotter.
@@ -4787,13 +4886,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Amount to scale the direction vectors.
 
         **kwargs : dict, optional
-            See :func:`pyvista.BasePlotter.add_mesh` for optional
+            See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the arrows.
+        pyvista.Actor
+            Actor of the arrows.
 
         Examples
         --------
@@ -5097,7 +5196,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The point of focus the camera.
 
         step : float, optional
-            The timestep between flying to each camera position.
+            The timestep between flying to each camera position. Ignored when
+            the plotter run "off screen".
 
         viewup : list(float), optional
             The normal to the orbital plane.
@@ -5173,7 +5273,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     self.render()
                 sleep_time = step - (time.time() - tstart)
-                if sleep_time > 0:
+                if sleep_time > 0 and not self.off_screen:
                     time.sleep(sleep_time)
             if write_frames:
                 self.mwriter.close()
@@ -5674,7 +5774,7 @@ class Plotter(BasePlotter):
     """
 
     last_update_time = 0.0
-    right_timer_id = -1
+    update_timer_id = -1
 
     def __init__(
         self,
@@ -5720,8 +5820,13 @@ class Plotter(BasePlotter):
         _warn_xserver()
 
         def on_timer(iren, event_id):
-            """Exit application if interactive renderer stops."""
+            """Resume execution after processing interaction events during an interactive update."""
+            # For some odd reason when vtkContextInteractorStyle is active, TimerEvents
+            # are constantly being fired. As we cannot differentiate between different
+            # timers from the python side, we assume all TimerEvents that are fired while
+            # the ContextInteractorStyle is not active are coming from the update_timer.
             if event_id == 'TimerEvent' and self.iren._style != "Context":
+                # Simulate 'q' press to break out of blocking call in the update method.
                 self.iren.terminate_app()
 
         if off_screen is None:
@@ -5782,6 +5887,7 @@ class Plotter(BasePlotter):
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.ren_win)
+        self.reset_key_events()
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
@@ -5796,8 +5902,9 @@ class Plotter(BasePlotter):
         # Set window size
         self.window_size = window_size
 
-        # add timer event if interactive render exists
-        self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
+        # add timer event callback to break out of blocking interactive update call (only needed for VTK<9)
+        if not self.iren.can_process_events:
+            self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
         if self._theme.depth_peeling.enabled:
             if self.enable_depth_peeling():
@@ -5827,6 +5934,7 @@ class Plotter(BasePlotter):
         jupyter_backend=None,
         return_viewer=False,
         return_cpos=None,
+        before_close_callback=None,
         **kwargs,
     ):
         """Display the plotting window.
@@ -5853,7 +5961,7 @@ class Plotter(BasePlotter):
 
         interactive_update : bool, optional
             Disabled by default.  Allows user to non-blocking draw,
-            user should call :func:`BasePlotter.update` in each iteration.
+            user should call :func:`Plotter.update` in each iteration.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
@@ -5870,11 +5978,11 @@ class Plotter(BasePlotter):
             screenshot in a separate call to ``show()`` or
             :func:`Plotter.screenshot`.
 
-        return_img : bool
+        return_img : bool, default: False
             Returns a numpy array representing the last image along
             with the camera position.
 
-        cpos : list(tuple(floats))
+        cpos : list(tuple(floats)), optional
             The camera position.  You can also set this with
             :attr:`Plotter.camera_position`.
 
@@ -5904,6 +6012,15 @@ class Plotter(BasePlotter):
             Return the last camera position from the render window
             when enabled.  Default based on theme setting.  See
             :attr:`pyvista.themes.DefaultTheme.return_cpos`.
+
+        before_close_callback : Callable, optional
+            Callback that is called before the plotter is closed.
+            The function takes a single parameter, which is the plotter object
+            before it closes. An example of use is to capture a screenshot after
+            interaction::
+
+                def fun(plotter):
+                    plotter.screenshot('file.png')
 
         **kwargs : dict, optional
             Developer keyword arguments.
@@ -5973,10 +6090,12 @@ class Plotter(BasePlotter):
         (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
 
         """
-        # developer keyword argument: runs a function immediately prior to ``close``
-        self._before_close_callback = kwargs.pop('before_close_callback', None)
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
+
+        if before_close_callback is None:
+            before_close_callback = pyvista.global_theme._before_close_callback
+        self._before_close_callback = before_close_callback
 
         if interactive_update and auto_close is None:
             auto_close = False
@@ -6196,7 +6315,7 @@ class Plotter(BasePlotter):
 
         Parameters
         ----------
-        bounds : length 6 sequence
+        bounds : length 6 sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
             Specify the bounds in the format of:
 
             - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
@@ -6236,7 +6355,7 @@ class Plotter(BasePlotter):
         alg.SetModelBounds(bounds)
         alg.SetFocalPoint(focal_point)
         alg.AllOn()
-        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(color).float_rgb)
@@ -6244,8 +6363,11 @@ class Plotter(BasePlotter):
         return actor
 
 
-# Tracks created plotters.  At the end of the file as we need to
+# Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
+#
+# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
+# when True, BasePlotter.
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 

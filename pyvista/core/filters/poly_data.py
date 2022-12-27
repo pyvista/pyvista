@@ -1,6 +1,5 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
 import collections.abc
-import logging
 import warnings
 
 import numpy as np
@@ -18,6 +17,7 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.errors import MissingDataError
 from pyvista.utilities.misc import PyVistaFutureWarning
 
 
@@ -653,7 +653,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(trifilter)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -745,7 +745,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -869,7 +869,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -988,7 +988,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -999,7 +999,8 @@ class PolyDataFilters(DataSetFilters):
         scalars=None,
         capping=True,
         n_sides=20,
-        radius_factor=10,
+        radius_factor=10.0,
+        absolute=False,
         preference='point',
         inplace=False,
         progress_bar=False,
@@ -1011,32 +1012,34 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        radius : float
+        radius : float, optional
             Minimum tube radius (minimum because the tube radius may
             vary).
 
         scalars : str, optional
             Scalars array by which the radius varies.
 
-        capping : bool, optional
-            Turn on/off whether to cap the ends with polygons. Default
-            ``True``.
+        capping : bool, default: True
+            Turn on/off whether to cap the ends with polygons.
 
-        n_sides : int, optional
+        n_sides : int, default: 20
             Set the number of sides for the tube. Minimum of 3.
 
-        radius_factor : float, optional
+        radius_factor : float, default: 10.0
             Maximum tube radius in terms of a multiple of the minimum
             radius.
 
-        preference : str, optional
+        absolute : bool, default: False
+            Vary the radius with values from scalars in absolute units.
+
+        preference : str, default: 'point'
             The field preference when searching for the scalars array by
             name.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1080,13 +1083,16 @@ class PolyDataFilters(DataSetFilters):
             field = poly_data.get_array_association(scalars, preference=preference)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-            tube.SetVaryRadiusToVaryRadiusByScalar()
+            if absolute:
+                tube.SetVaryRadiusToVaryRadiusByAbsoluteScalar()
+            else:
+                tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
         _update_alg(tube, progress_bar, 'Creating Tube')
 
         mesh = _get_output(tube)
         if inplace:
-            poly_data.overwrite(mesh)
+            poly_data.copy_from(mesh)
             return poly_data
         return mesh
 
@@ -1185,7 +1191,7 @@ class PolyDataFilters(DataSetFilters):
 
         submesh = _get_output(sfilter)
         if inplace:
-            self.overwrite(submesh)
+            self.copy_from(submesh)
             return self
 
         return submesh
@@ -1289,7 +1295,7 @@ class PolyDataFilters(DataSetFilters):
         submesh = _get_output(sfilter)
 
         if inplace:
-            self.overwrite(submesh)
+            self.copy_from(submesh)
             return self
 
         return submesh
@@ -1428,7 +1434,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1581,7 +1587,7 @@ class PolyDataFilters(DataSetFilters):
             mesh.GetCellData().SetActiveNormals('Normals')
 
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
 
         return mesh
@@ -1674,7 +1680,7 @@ class PolyDataFilters(DataSetFilters):
         result = _get_output(alg)
 
         if inplace:
-            self.overwrite(result)
+            self.copy_from(result)
             return self
         else:
             return result
@@ -1722,7 +1728,6 @@ class PolyDataFilters(DataSetFilters):
         >>> assert edges.n_cells == 0  # doctest:+SKIP
 
         """
-        logging.warning('pyvista.PolyData.fill_holes is known to segfault. Use at your own risk')
         alg = _vtk.vtkFillHolesFilter()
         alg.SetHoleSize(hole_size)
         alg.SetInputData(self)
@@ -1730,7 +1735,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -1831,12 +1836,18 @@ class PolyDataFilters(DataSetFilters):
             raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
     def geodesic(
-        self, start_vertex, end_vertex, inplace=False, keep_order=True, progress_bar=False
+        self,
+        start_vertex,
+        end_vertex,
+        inplace=False,
+        keep_order=True,
+        use_scalar_weights=False,
+        progress_bar=False,
     ):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
@@ -1863,6 +1874,10 @@ class PolyDataFilters(DataSetFilters):
             to start with the start vertex (as opposed to the end vertex).
 
             .. versionadded:: 0.32.0
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1899,6 +1914,8 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetInputData(self)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
+        if _vtk.VTK9:
+            dijkstra.SetUseScalarWeights(use_scalar_weights)
         _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
@@ -1920,12 +1937,14 @@ class PolyDataFilters(DataSetFilters):
             output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
 
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
 
         return output
 
-    def geodesic_distance(self, start_vertex, end_vertex, progress_bar=False):
+    def geodesic_distance(
+        self, start_vertex, end_vertex, use_scalar_weights=False, progress_bar=False
+    ):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
 
         Parameters
@@ -1935,6 +1954,10 @@ class PolyDataFilters(DataSetFilters):
 
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1955,7 +1978,7 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`geodesic_example` for more examples using this filter.
 
         """
-        path = self.geodesic(start_vertex, end_vertex)
+        path = self.geodesic(start_vertex, end_vertex, use_scalar_weights=use_scalar_weights)
         sizes = path.compute_cell_sizes(
             length=True, area=False, volume=False, progress_bar=progress_bar
         )
@@ -2127,7 +2150,9 @@ class PolyDataFilters(DataSetFilters):
         )
         if retry:
             # gather intersecting rays in lists
-            loc_lst, ray_lst, tri_lst = [arr.tolist() for arr in [locations, index_ray, index_tri]]
+            loc_lst = locations.tolist()
+            ray_lst = index_ray.tolist()
+            tri_lst = index_tri.tolist()
 
             # find indices that trimesh failed on
             all_ray_indices = np.arange(len(origins))
@@ -2175,7 +2200,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------
@@ -2233,7 +2258,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------
@@ -2366,11 +2391,11 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]
                 except:
-                    logging.warning(f'Unable to pass cell key {key} onto reduced mesh')
+                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array
         if inplace:
-            self.overwrite(newmesh)
+            self.copy_from(newmesh)
             return self, ridx
         return newmesh, ridx
 
@@ -2423,33 +2448,32 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        tol : float, optional
+        tol : float, default: 1e-05
             Specify a tolerance to control discarding of closely
             spaced points. This tolerance is specified as a fraction
             of the diagonal length of the bounding box of the points.
-            Defaults to ``1e-05``.
 
-        alpha : float, optional
+        alpha : float, default: 0.0
             Specify alpha (or distance) value to control output of
             this filter. For a non-zero alpha value, only edges or
             triangles contained within a sphere centered at mesh
             vertices will be output. Otherwise, only triangles will be
-            output. Defaults to ``0.0``.
+            output.
 
-        offset : float, optional
+        offset : float, default: 1.0
             Specify a multiplier to control the size of the initial,
-            bounding Delaunay triangulation. Defaults to ``1.0``.
+            bounding Delaunay triangulation.
 
-        bound : bool, optional
+        bound : bool, default: False
             Boolean controls whether bounding triangulation points
             and associated triangles are included in the
             output. These are introduced as an initial triangulation
             to begin the triangulation process. This feature is nice
-            for debugging output. Default ``False``.
+            for debugging output.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             If ``True``, overwrite this mesh with the triangulated
-            mesh. Default ``False``.
+            mesh.
 
         edge_source : pyvista.PolyData, optional
             Specify the source object used to specify constrained
@@ -2459,9 +2483,8 @@ class PolyDataFilters(DataSetFilters):
             (i.e. point ids are identical in the input and
             source).
 
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress. Default
-            ``False``.
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -2472,15 +2495,26 @@ class PolyDataFilters(DataSetFilters):
         --------
         First, generate 30 points on circle and plot them.
 
-        >>> import pyvista
-        >>> points = pyvista.Polygon(n_sides=30).points
-        >>> circle = pyvista.PolyData(points)
+        >>> import pyvista as pv
+        >>> points = pv.Polygon(n_sides=30).points
+        >>> circle = pv.PolyData(points)
         >>> circle.plot(show_edges=True, point_size=15)
 
         Use :func:`delaunay_2d` to fill the interior of the circle.
 
         >>> filled_circle = circle.delaunay_2d()
         >>> filled_circle.plot(show_edges=True, line_width=5)
+
+        Use the ``edge_source`` parameter to create a constrained delaunay
+        triangulation and plot it.
+
+        >>> squar = pv.Polygon(n_sides=4, radius=8, fill=False)
+        >>> squar = squar.rotate_z(45, inplace=False)
+        >>> circ0 = pv.Polygon(center=(2, 3, 0), n_sides=30, radius=1)
+        >>> circ1 = pv.Polygon(center=(-2, -3, 0), n_sides=30, radius=1)
+        >>> comb = circ0 + circ1 + squar
+        >>> tess = comb.delaunay_2d(edge_source=comb)
+        >>> tess.plot(cpos='xy', show_edges=True)
 
         See :ref:`triangulated_surface` for more examples using this filter.
 
@@ -2500,7 +2534,7 @@ class PolyDataFilters(DataSetFilters):
         # `.triangulate()` filter cleans those
         mesh = _get_output(alg).triangulate()
         if inplace:
-            self.overwrite(mesh)
+            self.copy_from(mesh)
             return self
         return mesh
 
@@ -2790,7 +2824,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = _get_output(alg)
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -2944,7 +2978,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -3053,7 +3087,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding with trimming')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.overwrite(output)
+            self.copy_from(output)
             return self
         return output
 
@@ -3306,6 +3340,143 @@ class PolyDataFilters(DataSetFilters):
             output.cell_data.GetAbstractArray(0).SetName('collision_rgba')
 
         return output, alg.GetNumberOfContacts()
+
+    def contour_banded(
+        self,
+        n_contours,
+        rng=None,
+        scalars=None,
+        component=0,
+        clip_tolerance=1e-6,
+        generate_contour_edges=True,
+        scalar_mode="value",
+        clipping=True,
+        progress_bar=False,
+    ):
+        """Generate filled contours.
+
+        Generates filled contours for vtkPolyData. Filled contours are
+        bands of cells that all have the same cell scalar value, and can
+        therefore be colored the same. The method is also referred to as
+        filled contour generation.
+
+        This filter implements `vtkBandedPolyDataContourFilter
+        <https://vtk.org/doc/nightly/html/classvtkBandedPolyDataContourFilter.html>`_.
+
+        Parameters
+        ----------
+        n_contours : int
+            Number of contours.
+
+        rng : Sequence, optional
+            Range of the scalars. Optional and defaults to the minimum and
+            maximum of the active scalars of ``scalars``.
+
+        scalars : str, optional
+            The name of the scalar array to use for contouring.  If ``None``,
+            the active scalar array will be used.
+
+        component : int, default: 0
+            The component to use of an input scalars array with more than one
+            component.
+
+        clip_tolerance : float, optional
+            Set/Get the clip tolerance.  Warning: setting this too large will
+            certainly cause numerical issues. Change from the default value at
+            your own risk. The actual internal clip tolerance is computed by
+            multiplying ``clip_tolerance`` by the scalar range.
+
+        generate_contour_edges : bool, default: True
+            Controls whether contour edges are generated.  Contour edges are
+            the edges between bands. If enabled, they are generated from
+            polygons/triangle strips and returned as a second output.
+
+        scalar_mode : str, default: 'value'
+            Control whether the cell scalars are output as an integer index or
+            a scalar value.  If ``'index'``, the index refers to the bands
+            produced by the clipping range. If ``'value'``, then a scalar value
+            which is a value between clip values is used.
+
+        clipping : bool, default: True
+            Indicate whether to clip outside ``rng`` and only return cells with
+            values within ``rng``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        output : pyvista.Polydata
+            Surface containing the contour surface.
+
+        edges : pyvista.PolyData
+            Optional edges when ``generate_contour_edges`` is ``True``.
+
+        Examples
+        --------
+        Plot the random hills dataset and with 10 contour lines. Note how we use 9
+        colors here (``n_contours - 1``).
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_random_hills()
+        >>> _, edges = mesh.contour_banded(10)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
+        >>> _ = pl.add_mesh(mesh, n_colors=9)
+        >>> pl.show()
+
+        Extract the surface from the uniform grid dataset and plot its contours
+        alongside the output from the banded contour filter.
+
+        >>> surf = examples.load_uniform().extract_surface()
+        >>> output, edges = surf.contour_banded(5, rng=[200, 500])
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
+        >>> _ = pl.add_mesh(surf, opacity=0.3, show_scalar_bar=False)
+        >>> _ = pl.add_mesh(output)
+        >>> pl.show()
+
+        """
+        # check active scalars
+        if scalars is not None:
+            self.point_data.active_scalars_name = scalars
+        else:
+            pyvista.set_default_active_scalars(self)
+            if self.point_data.active_scalars_name is None:
+                raise MissingDataError('No point scalars to contour.')
+
+        if rng is None:
+            rng = (self.active_scalars.min(), self.active_scalars.max())
+
+        alg = _vtk.vtkBandedPolyDataContourFilter()
+
+        alg.GenerateValues(n_contours, rng[0], rng[1])
+        alg.SetInputDataObject(self)
+        alg.SetClipping(clipping)
+        if scalar_mode == 'value':
+            alg.SetScalarModeToValue()
+        elif scalar_mode == 'index':
+            alg.SetScalarModeToValue()
+        else:
+            raise ValueError(
+                f'Invalid scalar mode "{scalar_mode}". Should be either "value" or "index".'
+            )
+        alg.SetGenerateContourEdges(generate_contour_edges)
+        alg.SetClipTolerance(clip_tolerance)
+        alg.SetComponent(component)
+        _update_alg(alg, progress_bar, 'Contouring Mesh')
+        mesh = _get_output(alg)
+
+        # Must rename array as VTK sets the active scalars array name to a nullptr.
+        if mesh.point_data and mesh.point_data.GetAbstractArray(0).GetName() is None:
+            mesh.point_data.GetAbstractArray(0).SetName(self.point_data.active_scalars_name)
+        if mesh.cell_data and mesh.cell_data.GetAbstractArray(0).GetName() is None:
+            mesh.cell_data.GetAbstractArray(0).SetName(self.cell_data.active_scalars_name)
+
+        if generate_contour_edges:
+            return mesh, pyvista.wrap(alg.GetContourEdgesOutput())
+        return mesh
 
     def reconstruct_surface(self, nbr_sz=None, sample_spacing=None, progress_bar=False):
         """Reconstruct a surface from the points in this dataset.

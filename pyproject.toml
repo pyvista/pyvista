@@ -1,17 +1,153 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'pyvista'
+description = 'Easier Pythonic interface to VTK'
+authors = [
+    {name = 'PyVista Developers', email = 'info@pyvista.org'},
+]
+readme = 'README.rst'
+requires-python = '>=3.7'
+keywords = ['vtk', 'numpy', 'plotting', 'mesh']
+license = {text = 'MIT'}
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Science/Research',
+    'Topic :: Scientific/Engineering :: Information Analysis',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: MacOS',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+]
+dependencies = [
+    'imageio',
+    'numpy',
+    'pillow',
+    'pooch',
+    'scooby>=0.5.1',
+    "typing-extensions; python_version < '3.8'",
+    'vtk',
+]
+dynamic = ['version']
+
+[project.optional-dependencies]
+all = [
+    'cmocean',
+    'colorcet',
+    'ipyvtklink',
+    'matplotlib',
+    'meshio>=5.2',
+    'panel',
+    'pythreejs',
+]
+colormaps = [
+    'cmocean',
+    'colorcet',
+    'matplotlib',
+]
+io = ['meshio>=5.2']
+jupyter = [
+    'ipyvtklink',
+    'panel',
+    'pythreejs',
+]
+
+[project.urls]
+Documentation = 'https://docs.pyvista.org/'
+"Bug Tracker" = 'https://github.com/pyvista/pyvista/issues'
+"Source Code" = 'https://github.com/pyvista/pyvista'
+
+[tool.setuptools.dynamic]
+version = {attr = 'pyvista._version.__version__'}
+
+[tool.setuptools.packages.find]
+include = [
+    'pyvista',
+    'pyvista.*',
+]
+
+[tool.setuptools.package-data]
+pyvista = [
+    'py.typed',
+]
+"pyvista.examples" = [
+    '2k_earth_daymap.jpg',
+    'airplane.ply',
+    'ant.ply',
+    'channels.vti',
+    'globe.vtk',
+    'hexbeam.vtk',
+    'nut.ply',
+    'rectilinear.vtk',
+    'sphere.ply',
+    'uniform.vtk',
+]
+
 [tool.isort]
-profile = "black"
+profile = 'black'
 line_length = 100
 # Sort by name, don't cluster "from" vs "import"
 force_sort_within_sections = true
 # Combines "as" imports on the same line
 combine_as_imports = true
-skip_glob = "pyvista/**/__init__.py,pyvista/__init__.py"
+skip_glob = 'pyvista/**/__init__.py,pyvista/__init__.py'
 
 [tool.black]
 line-length = 100
 skip-string-normalization = true
-target-version = ["py39"]
+target-version = ['py39']
 exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist|node_modules'
+
+[tool.build_sphinx]
+source-dir = 'doc'
+build-dir  = './doc/_build'
+all_files  = 1
+
+[tool.upload_sphinx]
+upload-dir = 'doc/_build/html'
 
 [tool.pydocstyle]
 match = '(?!coverage).*.py'
+
+[tool.codespell]
+skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
+ignore-words-list = 'lod,byteorder,flem,parm,doubleclick,revered,lamda'
+quiet-level = 3
+
+[tool.coverage.run]
+omit = [
+    'pyvista/ext/coverage.py',
+    'pyvista/conftest.py',
+    # kept for backwards compatibility:
+    'pyvista/plotting/theme.py',
+]
+
+[tool.pytest.ini_options]
+junit_family='legacy'
+filterwarnings = [
+    'ignore::FutureWarning',
+    'ignore::PendingDeprecationWarning',
+    'ignore::DeprecationWarning',
+    # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*numpy.dtype size changed.*:RuntimeWarning',
+    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
+    'ignore:.*Given trait value dtype "float64":UserWarning',
+    'ignore:.*The NumPy module was reloaded*:UserWarning',
+]
+doctest_optionflags = 'NUMBER ELLIPSIS'
+testpaths = 'tests'
+markers = [
+    'needs_vtk9: skip test unless VTK is 9.0 or newer.',
+    'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
+    'needs_download: this test downloads data during execution',
+]
+
+
+[tool.mypy]
+ignore_missing_imports = true

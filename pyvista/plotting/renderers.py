@@ -29,6 +29,7 @@ class Renderers:
         self._active_index = 0  # index of the active renderer
         self._plotter = proxy(plotter)
         self._renderers = []
+        self._shadow_renderer = None
 
         # by default add border for multiple plots
         if border is None:
@@ -245,8 +246,7 @@ class Renderers:
 
     def __iter__(self):
         """Return a iterable of renderers."""
-        for renderer in self._renderers:
-            yield renderer
+        yield from self._renderers
 
     @property
     def active_index(self):
@@ -343,7 +343,7 @@ class Renderers:
         # Do not remove the renderers on the clean
         for renderer in self:
             renderer.deep_clean()
-        if hasattr(self, '_shadow_renderer'):
+        if self._shadow_renderer is not None:
             self._shadow_renderer.deep_clean()
         if hasattr(self, '_background_renderers'):
             for renderer in self._background_renderers:
@@ -399,6 +399,11 @@ class Renderers:
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.clear()
+
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        for renderer in self:
+            renderer.clear_actors()
 
     def clear(self):
         """Clear all renders."""
@@ -459,7 +464,7 @@ class Renderers:
         >>> plotter = pyvista.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
-        Color(name='black', hex='#000000ff')
+        Color(name='black', hex='#000000ff', opacity=255)
         >>> plotter.close()
 
         Set the background color at the bottom to black and white at
@@ -505,5 +510,4 @@ class Renderers:
 
     def __del__(self):
         """Destructor."""
-        if hasattr(self, '_shadow_renderer'):
-            del self._shadow_renderer
+        self._shadow_renderer = None

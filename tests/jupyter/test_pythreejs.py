@@ -25,11 +25,11 @@ def test_export_to_html(sphere, tmpdir):
 
     pl = pyvista.Plotter(shape=(1, 2))
     pl.add_text("Sphere 1\n", font_size=30, color='grey')
-    pl.add_mesh(sphere, show_edges=False, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey', culling='back')
 
     pl.subplot(0, 1)
     pl.add_text("Sphere 2\n", font_size=30, color='grey')
-    pl.add_mesh(sphere, show_edges=False, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey', culling='front')
     pl.link_views()
 
     with pytest.raises(ValueError, match="Invalid backend"):
@@ -188,6 +188,17 @@ def test_not_polydata(hexbeam):
     pv_pythreejs.convert_plotter(pl)
 
 
+def test_just_points():
+    pdata = pyvista.PolyData(np.random.random((10, 3)))
+    pl = pyvista.Plotter()
+    pl.add_mesh(pdata)
+    output = pv_pythreejs.convert_plotter(pl)
+
+    # ensure points in output
+    pos = output.scene.children[0].geometry.attributes['position']
+    assert np.allclose(pos.array, pdata.points)
+
+
 @pytest.mark.parametrize('with_scalars', [False, True])
 def test_output_wireframe(sphere, with_scalars):
     pl = pyvista.Plotter()
@@ -242,9 +253,9 @@ def test_labels():
     pl = pyvista.Plotter()
     pl.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
 
-    # ensure that we ignore labels
-    with pytest.warns(UserWarning):
-        pv_pythreejs.convert_plotter(pl)
+    # TODO: ensure point labels at least don't raise a warning
+    # For now, just make sure it doesn't error
+    pv_pythreejs.convert_plotter(pl)
 
 
 def test_linked_views(sphere):

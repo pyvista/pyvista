@@ -7,7 +7,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.examples.downloads import _download_file
+from pyvista.examples.downloads import download_file
 
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
@@ -262,6 +262,9 @@ def test_ensightreader_timepoints():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
 
+    with pytest.raises(ValueError, match="Not a valid time"):
+        reader.set_active_time_value(1000.0)
+
 
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
@@ -357,10 +360,10 @@ def test_facetreader():
 
 
 def test_plot3dmetareader():
-    filename, _ = _download_file('multi.p3d')
-    _download_file('multi-bin.xyz')
-    _download_file('multi-bin.q')
-    _download_file('multi-bin.f')
+    filename = download_file('multi.p3d')
+    download_file('multi-bin.xyz')
+    download_file('multi-bin.q')
+    download_file('multi-bin.f')
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.Plot3DMetaReader)
     assert reader.path == filename
@@ -371,8 +374,8 @@ def test_plot3dmetareader():
 
 
 def test_multiblockplot3dreader():
-    filename, _ = _download_file('multi-bin.xyz')
-    q_filename, _ = _download_file('multi-bin.q')
+    filename = download_file('multi-bin.xyz')
+    q_filename = download_file('multi-bin.q')
     reader = pyvista.MultiBlockPlot3DReader(filename)
     assert reader.path == filename
 
@@ -463,7 +466,7 @@ def test_pvdreader():
 
     assert reader.number_time_points == 15
     assert reader.time_point_value(1) == 1.0
-    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=np.float))
+    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=float))
 
     assert reader.active_time_value == reader.time_values[0]
 
@@ -787,7 +790,7 @@ def test_demreader():
 
 
 def test_jpegreader():
-    filename = examples.download_mars_jpg()
+    filename = examples.planets.download_mars_surface(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.JPEGReader)
     assert reader.path == filename
@@ -800,6 +803,16 @@ def test_meta_image_reader():
     filename = examples.download_chest(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.MetaImageReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_nifti_reader():
+    filename = examples.download_brain_atlas_with_sides(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.NIFTIReader)
     assert reader.path == filename
 
     mesh = reader.read()
@@ -901,7 +914,7 @@ def test_gif_reader(gif_file):
     assert grid.n_arrays == 3
 
     img = Image.open(gif_file)
-    new_grid = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+    new_grid = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):

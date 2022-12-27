@@ -41,7 +41,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
+class _vtkWrapper(metaclass=_vtkWrapperMeta):
     def __getattribute__(self, item):
         unwrapped_attrs = ["_wrapped", "__class__", "__init__"]
         wrapped = super().__getattribute__("_wrapped")
@@ -978,7 +978,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 
 class _CustomContextItem(_vtk.vtkPythonItem):
-    class ItemWrapper(object):
+    class ItemWrapper:
         def Initialize(self, item):
             # item is the _CustomContextItem subclass instance
             return True
@@ -1068,6 +1068,10 @@ class _Chart(DocSubs):
             ``True`` if the chart was resized, ``False`` otherwise.
 
         """
+        # edge race case
+        if self._renderer is None:  # pragma: no cover
+            return
+
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self._geometry
@@ -1370,7 +1374,7 @@ class _Chart(DocSubs):
 
         Parameters
         ----------
-        off_screen : bool
+        off_screen : bool, optional
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up.  Defaults to active theme setting in
             :attr:`pyvista.global_theme.full_screen
@@ -3416,8 +3420,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
         for plot_type in plot_types:
-            for plot in self._plots[plot_type]:
-                yield plot
+            yield from self._plots[plot_type]
 
     def remove_plot(self, plot):
         """Remove the given plot from this chart.
@@ -4126,7 +4129,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     Parameters
     ----------
-    figure : matplotlib.figure.Figure
+    figure : matplotlib.figure.Figure, optional
         The matplotlib figure to draw.
 
     size : list or tuple, optional
@@ -4402,7 +4405,8 @@ class Charts:
             charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
                 self.remove_chart(chart)
-            self._renderer.RemoveActor(self._actor)
+            if self._renderer is not None:
+                self._renderer.RemoveActor(self._actor)
         self._scene = None
         self._actor = None
 
@@ -4513,8 +4517,7 @@ class Charts:
 
     def __iter__(self):
         """Return an iterable of charts."""
-        for chart in self._charts:
-            yield chart
+        yield from self._charts
 
     def __del__(self):
         """Clean up before being destroyed."""

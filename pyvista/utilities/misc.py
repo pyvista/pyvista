@@ -7,6 +7,7 @@ import warnings
 
 import numpy as np
 
+import pyvista
 from pyvista import _vtk
 
 
@@ -151,3 +152,31 @@ def can_create_mpl_figure():  # pragma: no cover
 
 
 vtk_version_info = VTKVersionInfo()
+
+
+def set_pickle_format(format: str):
+    """Set the format used to serialize :class:`pyvista.DataObject` when pickled."""
+    supported = {'xml', 'legacy'}
+    format = format.lower()
+    if format not in supported:
+        raise ValueError(
+            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
+        )
+    pyvista.PICKLE_FORMAT = format
+
+
+def no_new_attr(cls):
+    """Override __setattr__ to not permit new attributes."""
+
+    def __setattr__(self, name, value):
+        """Do not allow setting attributes."""
+        if hasattr(self, name):
+            object.__setattr__(self, name, value)
+        else:
+            raise AttributeError(
+                f'Attribute "{name}" does not exist and cannot be added to type '
+                f'{self.__class__.__name__}'
+            )
+
+    setattr(cls, '__setattr__', __setattr__)
+    return cls

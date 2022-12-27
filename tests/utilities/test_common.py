@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from pyvista.utilities.common import _coerce_pointslike_arg
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 
 
 def test_coerce_point_like_arg():

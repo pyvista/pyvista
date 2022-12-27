@@ -307,6 +307,7 @@ if VTK9:
     from vtkmodules.vtkFiltersHybrid import vtkPolyDataSilhouette
     from vtkmodules.vtkFiltersModeling import (
         vtkAdaptiveSubdivisionFilter,
+        vtkBandedPolyDataContourFilter,
         vtkButterflySubdivisionFilter,
         vtkCollisionDetectionFilter,
         vtkDijkstraGraphGeodesicPath,
@@ -374,6 +375,7 @@ if VTK9:
         vtkHDRReader,
         vtkJPEGReader,
         vtkMetaImageReader,
+        vtkNIFTIImageReader,
         vtkNrrdReader,
         vtkPNGReader,
         vtkPNMReader,
@@ -412,6 +414,8 @@ if VTK9:
         vtkXMLRectilinearGridWriter,
         vtkXMLStructuredGridReader,
         vtkXMLStructuredGridWriter,
+        vtkXMLTableReader,
+        vtkXMLTableWriter,
         vtkXMLUnstructuredGridReader,
         vtkXMLUnstructuredGridWriter,
         vtkXMLWriter,
@@ -476,6 +480,7 @@ if VTK9:
         vtkImageRFFT,
     )
     from vtkmodules.vtkRenderingCore import (
+        vtkAbstractMapper,
         vtkActor,
         vtkActor2D,
         vtkCamera,
@@ -489,6 +494,7 @@ if VTK9:
         vtkLightActor,
         vtkLightKit,
         vtkMapper,
+        vtkPointGaussianMapper,
         vtkPointPicker,
         vtkPolyDataMapper,
         vtkPolyDataMapper2D,

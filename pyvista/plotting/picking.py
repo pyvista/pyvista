@@ -1,7 +1,7 @@
 """Module managing picking events."""
 
 from functools import partial
-import logging
+import warnings
 import weakref
 
 import numpy as np
@@ -137,7 +137,7 @@ class PickingHelper:
             self_ = weakref.ref(self)
             actor = picked.GetActor()
             if actor:
-                mesh = actor.GetMapper().GetInput()
+                mesh = actor.GetMapper().GetInputAsDataSet()
                 is_valid_selection = True
 
             if is_valid_selection:
@@ -154,7 +154,10 @@ class PickingHelper:
                     renderer = self.renderers[index]
                     for actor in renderer._actors.values():
                         mapper = actor.GetMapper()
-                        if isinstance(mapper, _vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                        if (
+                            isinstance(mapper, _vtk.vtkDataSetMapper)
+                            and mapper.GetInputAsDataSet() == mesh
+                        ):
                             loc = self_().renderers.index_to_loc(index)
                             self_().subplot(*loc)
                             break
@@ -172,7 +175,7 @@ class PickingHelper:
                         **kwargs,
                     )
                 except Exception as e:  # pragma: no cover
-                    logging.warning("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -209,7 +212,6 @@ class PickingHelper:
 
     def enable_cell_picking(
         self,
-        mesh=None,
         callback=None,
         through=True,
         show=True,
@@ -228,9 +230,14 @@ class PickingHelper:
         ``self.picked_cells``. Also press ``"p"`` to pick a single
         cell under the mouse location.
 
-        When using ``through=False``, and multiple cells are being
-        picked, the picked cells in ````self.picked_cells`` will be a
-        :class:`MultiBlock` dataset for each mesh's selection.
+        All meshes in the scene are available for picking by default.
+        If you would like to only pick a single mesh in the scene,
+        use the ``pickable=False`` argument when adding the other
+        meshes to the scene.
+
+        When multiple meshes are being picked, the picked cells
+        in ``self.picked_cells`` will be a :class:`MultiBlock`
+        dataset for each mesh's selection.
 
         Uses last input mesh for input by default.
 
@@ -239,17 +246,12 @@ class PickingHelper:
            the mesh is displayed with a ``'surface'`` representation
            style (the default).
 
+        .. warning::
+            Cell picking can only be enabled for a single renderer
+            or subplot at a time.
+
         Parameters
         ----------
-        mesh : pyvista.DataSet, optional
-            Mesh to select cells from. When ``through`` is ``True``,
-            uses last input mesh by default. When ``through`` is
-            ``False``, all meshes in the scene are available for
-            picking and this argument is ignored. If you would like to
-            only pick a single mesh in the scene, use the
-            ``pickable=False`` argument when adding the other meshes
-            to the scene.
-
         callback : function, optional
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this
@@ -257,8 +259,8 @@ class PickingHelper:
 
         through : bool, optional
             When ``True`` (default) the picker will select all cells
-            through the mesh. When ``False``, the picker will select
-            only visible cells on the mesh's surface.
+            through the mesh(es). When ``False``, the picker will select
+            only visible cells on the selected surface(s).
 
         show : bool, optional
             Show the selection interactively.
@@ -301,12 +303,6 @@ class PickingHelper:
         >>> _ = pl.enable_cell_picking(left_clicking=True)
 
         """
-        if mesh is None:
-            if not hasattr(self, 'mesh') or self.mesh is None:
-                raise AttributeError(
-                    'Input a mesh into the Plotter class first or or set it in this function'
-                )
-            mesh = self.mesh
         self_ = weakref.ref(self)
 
         # make sure to consistently use renderer
@@ -330,7 +326,7 @@ class PickingHelper:
                     renderer = self.renderers[index]
                     for actor in renderer._actors.values():
                         mapper = actor.GetMapper()
-                        if isinstance(mapper, _vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                        if isinstance(mapper, _vtk.vtkDataSetMapper):
                             loc = self_().renderers.index_to_loc(index)
                             self_().subplot(*loc)
                             break
@@ -364,12 +360,21 @@ class PickingHelper:
             return
 
         def through_pick_call_back(picker, event_id):
-            extract = _vtk.vtkExtractGeometry()
-            mesh.cell_data['orig_extract_id'] = np.arange(mesh.n_cells)
-            extract.SetInputData(mesh)
-            extract.SetImplicitFunction(picker.GetFrustum())
-            extract.Update()
-            self_().picked_cells = pyvista.wrap(extract.GetOutput())
+            picked = pyvista.MultiBlock()
+            for actor in renderer_().actors.values():
+                if actor.GetMapper() and actor.GetPickable():
+                    input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
+                    extract = _vtk.vtkExtractGeometry()
+                    extract.SetInputData(input_mesh)
+                    extract.SetImplicitFunction(picker.GetFrustum())
+                    extract.Update()
+                    picked.append(pyvista.wrap(extract.GetOutput()))
+
+            if len(picked) == 1:
+                self_().picked_cells = picked[0]
+            else:
+                self_().picked_cells = picked
             return end_pick_helper(picker, event_id)
 
         def visible_pick_call_back(picker, event_id):
@@ -390,12 +395,18 @@ class PickingHelper:
                     cids = pyvista.convert_array(selection_node.GetSelectionList())
                     actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
 
+                    # TODO: this is too hacky - find better way to avoid non-dataset actors
+                    if not actor.GetMapper() or not hasattr(
+                        actor.GetProperty(), 'GetRepresentation'
+                    ):
+                        continue
+
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
-                        logging.warning(
+                        warnings.warn(
                             "Display representations other than `surface` will result in incorrect results."
                         )
-                    smesh = actor.GetMapper().GetInputAsDataSet()
+                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()
                     smesh["original_cell_ids"] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
@@ -1266,5 +1277,5 @@ class PickingHelper:
 
         # remove any picking text
         if hasattr(self, 'renderers'):
-            self.remove_actor(self._picking_text)
+            self.remove_actor(self._picking_text, render=False)
         self._picking_text = None

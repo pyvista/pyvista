@@ -128,7 +128,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         of failed doctests under the specified modules.
 
     """
-    skip_pattern = re.compile('doctest: *\+SKIP')  # noqa: W605
+    skip_pattern = re.compile(r'doctest: *\+SKIP')
 
     if modules is None:
         modules = discover_modules()

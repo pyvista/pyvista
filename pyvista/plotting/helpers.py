@@ -1,11 +1,11 @@
 """This module contains some convenience helper functions."""
 
+from typing import Tuple
+
 import numpy as np
 
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
-
-from .plotting import Plotter
 
 
 def plot(
@@ -170,7 +170,7 @@ def plot(
         Width of the border in pixels when enabled.
 
     ssao : bool, optional
-        Enable surface space ambient occulusion (SSAO). See
+        Enable surface space ambient occlusion (SSAO). See
         :func:`Plotter.enable_ssao` for more details.
 
     **kwargs : optional keyword arguments
@@ -210,7 +210,7 @@ def plot(
     UniformGrid. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(dims=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
     >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
     >>> grid.plot(volume=True)
@@ -227,7 +227,7 @@ def plot(
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
-    pl = Plotter(
+    pl = pyvista.Plotter(
         window_size=window_size,
         off_screen=off_screen,
         notebook=notebook,
@@ -414,51 +414,50 @@ def plot_compare_four(
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
-    """Plot a PyVista/VTK mesh or dataset.
-
-    Adds any PyVista/VTK mesh that itkwidgets can wrap to the
-    scene.
+def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """Given a plane to view, return vectors for setting up camera.
 
     Parameters
     ----------
-    mesh : pyvista.DataSet or pyvista.MultiBlock
-        Any PyVista or VTK mesh is supported. Also, any dataset that
-        :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
-        points.
+    view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
+        Plane to return vectors for.
 
-    color : color_like, optional, defaults to white
-        Use to make the entire mesh have a single solid color.  Either
-        a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-        ``color='#FFFFFF'``. Color will be overridden if scalars are
-        specified.
-
-    scalars : str or numpy.ndarray, optional
-        Scalars used to "color" the mesh.  Accepts a string name of an
-        array that is present on the mesh or an array equal to the
-        number of cells or the number of points in the mesh.  Array
-        should be sized as a single vector. If both ``color`` and
-        ``scalars`` are ``None``, then the active scalars are used.
-
-    opacity : float, optional
-        Opacity of the mesh. If a single float value is given, it will
-        be the global opacity of the mesh and uniformly applied
-        everywhere - should be between 0 and 1.  Default 1.0
-
-    smooth_shading : bool, optional
-        Smooth mesh surface mesh by taking into account surface
-        normals.  Surface will appear smoother while sharp edges will
-        still look sharp.  Default ``False``.
+    negative : bool
+        Whether to view from opposite direction.  Default ``False``.
 
     Returns
-    --------
-    itkwidgets.Viewer
-        ITKwidgets viewer.
+    -------
+    vec : numpy.ndarray
+        ``[x, y, z]`` vector that points in the viewing direction
+
+    viewup : numpy.ndarray
+        ``[x, y, z]`` vector that points to the viewup direction
+
     """
-    pl = pyvista.PlotterITK()
-    if isinstance(mesh, np.ndarray):
-        pl.add_points(mesh, color)
+    if view == 'xy':
+        vec = np.array([0, 0, 1])
+        viewup = np.array([0, 1, 0])
+    elif view == 'yx':
+        vec = np.array([0, 0, -1])
+        viewup = np.array([1, 0, 0])
+    elif view == 'xz':
+        vec = np.array([0, -1, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zx':
+        vec = np.array([0, 1, 0])
+        viewup = np.array([1, 0, 0])
+    elif view == 'yz':
+        vec = np.array([1, 0, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zy':
+        vec = np.array([-1, 0, 0])
+        viewup = np.array([0, 1, 0])
     else:
-        pl.add_mesh(mesh, color, scalars, opacity, smooth_shading)
-    return pl.show()
+        raise ValueError(
+            f"Unexpected value for direction {view}\n"
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
+        )
+
+    if negative:
+        vec *= -1
+    return vec, viewup

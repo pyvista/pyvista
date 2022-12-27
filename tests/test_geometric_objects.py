@@ -275,6 +275,24 @@ def test_circle():
     assert mesh.n_cells
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
     assert np.isclose(diameter, radius * 2.0, rtol=1e-3)
+    line_lengths = np.linalg.norm(
+        np.roll(mesh.points, shift=1, axis=0) - mesh.points,
+        axis=1,
+    )
+    assert np.allclose(line_lengths[0], line_lengths)
+
+
+def test_ellipse():
+    semi_major_axis = 8.0
+    semi_minor_axis = 4.0
+
+    mesh = pyvista.Ellipse(semi_major_axis, semi_minor_axis)
+    assert mesh.n_points
+    assert mesh.n_cells
+    major_axis_diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
+    minor_axis_diameter = np.max(mesh.points[:, 1]) - np.min(mesh.points[:, 1])
+    assert np.isclose(major_axis_diameter, semi_major_axis * 2.0, rtol=1e-3)
+    assert np.isclose(minor_axis_diameter, semi_minor_axis * 2.0, rtol=1e-3)
 
 
 @pytest.mark.parametrize(

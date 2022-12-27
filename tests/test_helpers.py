@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import trimesh
 import vtk
+from vtk.util import numpy_support
 
 import pyvista
 from pyvista import _vtk
@@ -322,3 +323,41 @@ def test_set_default_active_scalarrs():
     with pytest.raises(AmbiguousDataError):
         pyvista.set_default_active_scalars(mesh)
     assert mesh.active_scalars_name is None
+
+
+def test_vtk_points_deep_shallow():
+
+    points = np.array([[0.0, 0.0, 0.0]])
+    vtk_points = pyvista.vtk_points(points, deep=False)
+
+    assert vtk_points.GetNumberOfPoints() == 1
+    assert np.array_equal(vtk_points.GetPoint(0), points[0])
+
+    # test shallow copy
+    vtk_points.SetPoint(0, [1.0, 1.0, 1.0])
+
+    assert np.array_equal(vtk_points.GetPoint(0), points[0])
+    assert np.array_equal(vtk_points.GetPoint(0), [1.0, 1.0, 1.0])
+
+    # test deep copy
+
+    points = np.array([[0.0, 0.0, 0.0]])
+    vtk_points = pyvista.vtk_points(points, deep=True)
+
+    vtk_points.SetPoint(0, [1.0, 1.0, 1.0])
+
+    assert not np.array_equal(vtk_points.GetPoint(0), points[0])
+    assert np.array_equal(points[0], [0.0, 0.0, 0.0])
+
+
+@pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
+def test_vtk_points_force_float(force_float, expected_data_type):
+    np_points = np.array([[1, 2, 3]], dtype=np.int64)
+    if force_float:
+        with pytest.warns(UserWarning, match='Points is not a float type'):
+            vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+    else:
+        vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+    as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
+
+    assert as_numpy.dtype == expected_data_type

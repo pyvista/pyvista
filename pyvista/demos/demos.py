@@ -15,7 +15,7 @@ def glyphs(grid_sz=3):
 
     Parameters
     ----------
-    grid_sz : int, optional
+    grid_sz : int, default: 3
         Create ``grid_sz x grid_sz`` supertoroids.
 
     Returns
@@ -63,7 +63,7 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
     Parameters
     ----------
-    grid_sz : int, optional
+    grid_sz : int, default: 3
         Create ``grid_sz x grid_sz`` supertoroids.
 
     **kwargs : dict, optional
@@ -212,18 +212,18 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
 
     Parameters
     ----------
-    fps : int, optional
-        Maximum frames per second to display.  Defaults to 30.
+    fps : int, default: 30
+        Maximum frames per second to display.
 
-    frequency : float, optional
-        Wave cycles per second.  Defaults to 1 Hz.
+    frequency : float, default: 1.0
+        Wave cycles per second (Hz).
 
-    wavetime : float, optional
-        The desired total display time in seconds.  Defaults to 3 seconds.
+    wavetime : float, default: 3.0
+        The desired total display time in seconds.
 
-    interactive : bool, optional
+    interactive : bool, default: False
         Allows the user to set the camera position before the start of the
-        wave movement.  Default ``False``.
+        wave movement.
 
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
@@ -474,7 +474,7 @@ def plot_datasets(dataset_type=None):
 
     ###########################################################################
     # uniform grid
-    image = pv.UniformGrid(dims=(6, 6, 1))
+    image = pv.UniformGrid(dimensions=(6, 6, 1))
     image.spacing = (3, 2, 1)
 
     ###########################################################################

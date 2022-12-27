@@ -23,7 +23,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import check_valid_vector
-from pyvista.utilities.common import _coerce_pointslike_arg
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -72,23 +72,23 @@ def Cylinder(
 
     Parameters
     ----------
-    center : sequence, optional
+    center : sequence, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence, optional
+    direction : sequence, default: (1.0, 0.0, 0.0)
         Direction cylinder points to  in ``[x, y, z]``.
 
-    radius : float, optional
+    radius : float, default: 0.5
         Radius of the cylinder.
 
-    height : float, optional
+    height : float, default: 1.0
         Height of the cylinder.
 
-    resolution : int, optional
+    resolution : int, default: 100
         Number of points on the circular face of the cylinder.
 
-    capping : bool, optional
-        Cap cylinder ends with polygons.  Default ``True``.
+    capping : bool, default: True
+        Cap cylinder ends with polygons.
 
     Returns
     -------
@@ -131,31 +131,37 @@ def CylinderStructured(
 
     Parameters
     ----------
-    radius : float, sequence, optional
+    radius : float, sequence, default: 0.5
         Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
         specified by the ``radius``.
 
-    height : float, optional
+    height : float, default: 1.0
         Height of the cylinder along its Z-axis.
 
-    center : sequence
+    center : sequence, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence
+    direction : sequence, default: (1.0, 0.0, 0.0)
         Direction cylinder Z-axis in ``[x, y, z]``.
 
-    theta_resolution : int, optional
+    theta_resolution : int, default: 32
         Number of points on the circular face of the cylinder.
         Ignored if ``radius`` is an iterable.
 
-    z_resolution : int, optional
+    z_resolution : int, default: 10
         Number of points along the height (Z-axis) of the cylinder.
 
     Returns
     -------
     pyvista.StructuredGrid
         Structured cylinder.
+
+    Notes
+    -----
+    .. versionchanged:: 0.38.0
+       Prior to version 0.38, this method had incorrect results, producing
+       inconsistent number of points on the circular face of the cylinder.
 
     Examples
     --------
@@ -176,7 +182,7 @@ def CylinderStructured(
     # Define grid in polar coordinates
     r = np.array([radius]).ravel()
     nr = len(r)
-    theta = np.linspace(0, 2 * np.pi, num=theta_resolution)
+    theta = np.linspace(0, 2 * np.pi, num=theta_resolution + 1)
     radius_matrix, theta_matrix = np.meshgrid(r, theta)
 
     # Transform to cartesian space
@@ -195,7 +201,7 @@ def CylinderStructured(
     # Create the grid
     grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
-    grid.dimensions = [nr, theta_resolution, z_resolution]
+    grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
     # Orient properly in user direction
     vx = np.array([0.0, 0.0, 1.0])
@@ -227,31 +233,30 @@ def Arrow(
 
     Parameters
     ----------
-    start : iterable, optional
+    start : iterable, default: (0.0, 0.0, 0.0)
         Start location in ``[x, y, z]``.
 
-    direction : iterable, optional
+    direction : iterable, default: (1.0, 0.0, 0.0)
         Direction the arrow points to in ``[x, y, z]``.
 
-    tip_length : float, optional
+    tip_length : float, default: 0.25
         Length of the tip.
 
-    tip_radius : float, optional
+    tip_radius : float, default: 0.1
         Radius of the tip.
 
-    tip_resolution : int, optional
+    tip_resolution : int, default: 20
         Number of faces around the tip.
 
-    shaft_radius : float, optional
+    shaft_radius : float, default: 0.05
         Radius of the shaft.
 
-    shaft_resolution : int, optional
+    shaft_resolution : int, default: 20
         Number of faces around the shaft.
 
     scale : float or str, optional
-        Scale factor of the entire object, default is ``None``
-        (i.e. scale of 1).  ``'auto'`` scales to length of direction
-        array.
+        Scale factor of the entire object, defaults to a scale of 1.
+        ``'auto'`` scales to length of direction array.
 
     Returns
     -------
@@ -303,33 +308,33 @@ def Sphere(
 
     Parameters
     ----------
-    radius : float, optional
+    radius : float, default: 0.5
         Sphere radius.
 
-    center : np.ndarray or list, optional
+    center : Sequence, default: (0, 0, 0)
         Center in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray, optional
+    direction : Sequence, default: (0, 0, 1)
         Direction the top of the sphere points to in ``[x, y, z]``.
 
-    theta_resolution : int , optional
+    theta_resolution : int, default: 30
         Set the number of points in the longitude direction (ranging
         from ``start_theta`` to ``end_theta``).
 
-    phi_resolution : int, optional
+    phi_resolution : int, default: 30
         Set the number of points in the latitude direction (ranging from
         ``start_phi`` to ``end_phi``).
 
-    start_theta : float, optional
+    start_theta : float, default: 0
         Starting longitude angle.
 
-    end_theta : float, optional
+    end_theta : float, default: 360
         Ending longitude angle.
 
-    start_phi : float, optional
+    start_phi : float, default: 0
         Starting latitude angle.
 
-    end_phi : float, optional
+    end_phi : float, default: 180
         Ending latitude angle.
 
     Returns
@@ -373,22 +378,22 @@ def Plane(
 
     Parameters
     ----------
-    center : list or tuple or np.ndarray
+    center : list or tuple or np.ndarray, default: (0, 0, 0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : list or tuple or np.ndarray, default: (0, 0, 1)
         Direction of the plane's normal in ``[x, y, z]``.
 
-    i_size : float
+    i_size : float, default: 1.0
         Size of the plane in the i direction.
 
-    j_size : float
+    j_size : float, default: 1.0
         Size of the plane in the j direction.
 
-    i_resolution : int
+    i_resolution : int, default: 10
         Number of points on the plane in the i direction.
 
-    j_resolution : int
+    j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
     Returns
@@ -424,13 +429,13 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
 
     Parameters
     ----------
-    pointa : np.ndarray or list, optional
+    pointa : np.ndarray or list, default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : np.ndarray or list, optional
+    pointb : np.ndarray or list, default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    resolution : int, optional
+    resolution : int, default: 1
         Number of pieces to divide line into.
 
     Returns
@@ -471,8 +476,8 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
 
     Parameters
     ----------
-    points : np.ndarray or list, optional
-        List of points defining a broken line, default is ``[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]``.
+    points : np.ndarray or list, default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+        List of points defining a broken line.
 
     Returns
     -------
@@ -502,19 +507,19 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
 
     Parameters
     ----------
-    pointa : np.ndarray or list, optional
+    pointa : Sequence, default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : np.ndarray or list, optional
+    pointb : sequence: default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    resolution : int, optional
+    resolution : int, default: 1
         Number of pieces to divide tube into.
 
-    radius : float, optional
+    radius : float, default: 1.0
         Minimum tube radius (minimum because the tube radius may vary).
 
-    n_sides : int, optional
+    n_sides : int, default: 15
         Number of sides for the tube.
 
     Returns
@@ -572,23 +577,23 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     Parameters
     ----------
-    center : sequence, optional
+    center : sequence, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
 
-    x_length : float, optional
+    x_length : float, default: 1.0
         Length of the cube in the x-direction.
 
-    y_length : float, optional
+    y_length : float, default: 1.0
         Length of the cube in the y-direction.
 
-    z_length : float, optional
+    z_length : float, default: 1.0
         Length of the cube in the z-direction.
 
     bounds : sequence, optional
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
-    clean : bool, optional
+    clean : bool, default: True
         Whether to clean the raw points of the mesh, making the cube
         manifold. Note that this will degrade the texture coordinates
         that come with the mesh, so if you plan to map a texture on
@@ -641,16 +646,16 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
 
     Parameters
     ----------
-    bounds : iterable, optional
+    bounds : Sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounding box of the cube.
         ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
-    level : int, optional
+    level : int, default: 0
         Level of subdivision of the faces.
 
-    quads : bool, optional
+    quads : bool, default: True
         Flag to tell the source to generate either a quad or two
-        triangle for a set of four points.  Default ``True``.
+        triangle for a set of four points.
 
     Returns
     -------
@@ -691,15 +696,15 @@ def Cone(
 
     Parameters
     ----------
-    center : iterable, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Axis of the cone passes through this
         point.
 
-    direction : iterable, optional
+    direction : Sequence, default: (1.0, 0.0, 0.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the
         cone.
 
-    height : float, optional
+    height : float, default: 1.0
         Height along the cone in its specified direction.
 
     radius : float, optional
@@ -713,7 +718,7 @@ def Cone(
         The angle in degrees between the axis of the cone and a
         generatrix.
 
-    resolution : int, optional
+    resolution : int, default: 6
         Number of facets used to represent the cone.
 
     Returns
@@ -747,25 +752,25 @@ def Cone(
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6, fill=True):
+def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0, 0, 1), n_sides=6, fill=True):
     """Create a polygon.
 
     Parameters
     ----------
-    center : iterable, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Central axis of the polygon passes
         through this point.
 
-    radius : float, optional
+    radius : float, default: 1.0
         The radius of the polygon.
 
-    normal : iterable, optional
+    normal : Sequence, default: (0, 0, 1)
         Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
 
-    n_sides : int, optional
+    n_sides : int, default: 6
         Number of sides of the polygon.
 
-    fill : bool, optional
+    fill : bool, default: True
         Enable or disable producing filled polygons.
 
     Returns
@@ -801,22 +806,22 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
 
     Parameters
     ----------
-    center : iterable
+    center : iterable, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Middle of the axis of the disc.
 
-    inner : float, optional
+    inner : float, default: 0.25
         The inner radius.
 
-    outer : float, optional
+    outer : float, default: 0.5
         The outer radius.
 
-    normal : iterable
+    normal : iterable, default: (0, 0, 1)
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
-    r_res : int, optional
+    r_res : int, default: 1
         Number of points in radial direction.
 
-    c_res : int, optional
+    c_res : int, default: 6
         Number of points in circumferential direction.
 
     Returns
@@ -855,8 +860,8 @@ def Text3D(string, depth=0.5):
     string : str
         String to generate 3D text from.
 
-    depth : float, optional
-        Depth of the text.  Defaults to ``0.5``.
+    depth : float, default: 0.5
+        Depth of the text.
 
     Returns
     -------
@@ -906,38 +911,37 @@ def Wavelet(
 
     Parameters
     ----------
-    extent : sequence, optional
-        Set/Get the extent of the whole output image.  Default
-        ``(-10, 10, -10, 10, -10, 10)``.
+    extent : Sequence, default: (-10, 10, -10, 10, -10, 10)
+        Set/Get the extent of the whole output image.
 
-    center : list, optional
+    center : list, default: (0, 0, 0)
         Center of the wavelet.
 
-    maximum : float, optional
+    maximum : float, default: 255
         Maximum of the wavelet function.
 
-    x_freq : float, optional
+    x_freq : float, default: 60
         Natural frequency in the x direction.
 
-    y_freq : float, optional
+    y_freq : float, default: 30
         Natural frequency in the y direction.
 
-    z_freq : float, optional
+    z_freq : float, default: 40
         Natural frequency in the z direction.
 
-    x_mag : float, optional
+    x_mag : float, default: 10
         Magnitude in the x direction.
 
-    y_mag : float, optional
+    y_mag : float, default: 18
         Magnitude in the y direction.
 
-    z_mag : float, optional
+    z_mag : float, default: 5
         Magnitude in the z direction.
 
-    std : float, optional
+    std : float, default: 0.5
         Standard deviation.
 
-    subsample_rate : int, optional
+    subsample_rate : int, default: 1
         The sub-sample rate.
 
     Returns
@@ -988,20 +992,20 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
 
     Parameters
     ----------
-    pointa : sequence
+    pointa : Sequence
         Position of the first end point.
 
-    pointb : sequence
+    pointb : Sequence
         Position of the other end point.
 
-    center : sequence
+    center : Sequence
         Center of the circle that defines the arc.
 
-    resolution : int, optional
+    resolution : int, default: 100
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    negative : bool, optional
+    negative : bool, default: False
         By default the arc spans the shortest angular sector between
         ``pointa`` and ``pointb``.
 
@@ -1070,7 +1074,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     center : sequence
         Center of the circle that defines the arc.
 
-    resolution : int, optional
+    resolution : int, default: 100
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
@@ -1273,10 +1277,10 @@ def Circle(radius=0.5, resolution=100):
 
     Parameters
     ----------
-    radius : float, optional
+    radius : float, default: 0.5
         Radius of circle.
 
-    resolution : int, optional
+    resolution : int, default: 100
         Number of points on the circle.
 
     Returns
@@ -1284,17 +1288,63 @@ def Circle(radius=0.5, resolution=100):
     pyvista.PolyData
         Circle mesh.
 
+    Notes
+    -----
+    .. versionchanged:: 0.38.0
+       Prior to version 0.38, this method had incorrect results, producing
+       inconsistent edge lengths and a duplicated point which is now fixed.
+
     Examples
     --------
     >>> import pyvista
     >>> radius = 0.5
     >>> circle = pyvista.Circle(radius)
     >>> circle.plot(show_edges=True, line_width=5)
+
     """
     points = np.zeros((resolution, 3))
-    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution, endpoint=False)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
+    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
+    return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
+def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
+    """Create a single PolyData ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
+
+    Parameters
+    ----------
+    semi_major_axis : float, default: 0.5
+        Semi-major axis of ellipse.
+
+    semi_minor_axis : float, default: 0.2
+        Semi-minor axis of ellipse.
+
+    resolution : int, default: 100
+        Number of points on the ellipse.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Ellipse mesh.
+
+    Notes
+    -----
+    .. versionchanged:: 0.38.0
+       Prior to version 0.38, this method had incorrect results, producing
+       inconsistent edge lengths and a duplicated point which is now fixed.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> ellipse = pyvista.Ellipse(semi_major_axis=8, semi_minor_axis=4)
+    >>> ellipse.plot(show_edges=True, line_width=5)
+    """
+    points = np.zeros((resolution, 3))
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution, endpoint=False)
+    points[:, 0] = semi_major_axis * np.cos(theta)
+    points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
 
@@ -1314,36 +1364,36 @@ def Superquadric(
 
     Parameters
     ----------
-    center : iterable, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Center of the superquadric in ``[x, y, z]``.
 
-    scale : iterable, optional
+    scale :  Sequence, default: (1.0, 1.0, 1.0)
         Scale factors of the superquadric in ``[x, y, z]``.
 
-    size : float, optional
+    size : float, default: 0.5
         Superquadric isotropic size.
 
-    theta_roundness : float, optional
+    theta_roundness : float, default: 1.0
         Superquadric east/west roundness.
         Values range from 0 (rectangular) to 1 (circular) to higher orders.
 
-    phi_roundness : float, optional
+    phi_roundness : float, default: 1.0
         Superquadric north/south roundness.
         Values range from 0 (rectangular) to 1 (circular) to higher orders.
 
-    theta_resolution : int, optional
+    theta_resolution : int, default: 16
         Number of points in the longitude direction.
         Values are rounded to nearest multiple of 4.
 
-    phi_resolution : int, optional
+    phi_resolution : int, default: 16
         Number of points in the latitude direction.
         Values are rounded to nearest multiple of 8.
 
-    toroidal : bool, optional
+    toroidal : bool, default: False
         Whether or not the superquadric is toroidal (``True``)
         or ellipsoidal (``False``).
 
-    thickness : float, optional
+    thickness : float, default: 0.3333333333
         Superquadric ring thickness.
         Only applies if toroidal is set to ``True``.
 
@@ -1387,7 +1437,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    kind : str or int, optional
+    kind : str or int, default: 'tetrahedron'
         The kind of Platonic solid to create. Either the name of the
         polyhedron or an integer index:
 
@@ -1397,10 +1447,10 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
             * ``'icosahedron'`` or ``3``
             * ``'dodecahedron'`` or ``4``
 
-    radius : float, optional
+    radius : float, default: 1.0
         The radius of the circumscribed sphere for the solid to create.
 
-    center : sequence, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the solid to create.
 
     Returns
@@ -1459,10 +1509,10 @@ def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    radius : float, optional
+    radius : float, default: 1.0
         The radius of the circumscribed sphere for the tetrahedron.
 
-    center : sequence, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the tetrahedron.
 
     Returns
@@ -1493,10 +1543,10 @@ def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    radius : float, optional
+    radius : float, default: 1.0
         The radius of the circumscribed sphere for the octahedron.
 
-    center : sequence, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the octahedron.
 
     Returns
@@ -1526,10 +1576,10 @@ def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    radius : float, optional
+    radius : float, default: 1.0
         The radius of the circumscribed sphere for the dodecahedron.
 
-    center : sequence, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the dodecahedron.
 
     Returns
@@ -1560,10 +1610,10 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    radius : float, optional
+    radius : float, default: 1.0
         The radius of the circumscribed sphere for the icosahedron.
 
-    center : sequence, optional
+    center : Sequence, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the icosahedron.
 
     Returns

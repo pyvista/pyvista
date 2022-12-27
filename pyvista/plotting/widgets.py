@@ -1040,6 +1040,8 @@ class WidgetHelper:
         title_opacity=1.0,
         title_color=None,
         fmt=None,
+        slider_width=None,
+        tube_width=None,
     ):
         """Add a slider bar widget.
 
@@ -1050,9 +1052,10 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The method called every time the slider is updated. This
-            should take a single parameter: the float value of the
-            slider.
+            Called every time the slider is updated. This should take a single
+            parameter: the float value of the slider. If ``pass_widget=True``,
+            callable should take two parameters: the float value of the slider
+            and the widget itself.
 
         rng : tuple(float)
             Length two tuple of the minimum and maximum ranges of the
@@ -1105,6 +1108,12 @@ class WidgetHelper:
             String formatter used to format numerical data. Defaults
             to ``None``.
 
+        slider_width : float, optional
+            Normalized width of the slider. Defaults to the theme's slider width.
+
+        tube_width : float, optional
+            Normalized width of the tube. Defaults to the theme's tube width.
+
         Returns
         -------
         vtk.vtkSliderWidget
@@ -1129,6 +1138,9 @@ class WidgetHelper:
         ... )
         >>> pl.show()
         """
+        if self.iren is None:
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
+
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
@@ -1177,6 +1189,11 @@ class WidgetHelper:
             slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
             slider_rep.SetEndCapLength(slider_style.cap_length)
             slider_rep.SetEndCapWidth(slider_style.cap_width)
+
+        if slider_width is not None:
+            slider_rep.SetSliderWidth(slider_width)
+        if tube_width is not None:
+            slider_rep.SetTubeWidth(tube_width)
 
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()
@@ -1593,7 +1610,7 @@ class WidgetHelper:
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
-            spline_widget.InitializeHandles(pyvista.vtk_points((initial_points)))
+            spline_widget.InitializeHandles(pyvista.vtk_points(initial_points))
         else:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
@@ -1757,11 +1774,12 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The function to call back when the widget is modified. It
-            takes a single argument: the center of the sphere as an
-            XYZ coordinate (a 3-length sequence).  If multiple centers
-            are passed in the ``center`` parameter, the callback must
-            also accept an index of that widget.
+            The function to call back when the widget is modified. It takes a
+            single argument: the center of the sphere as an XYZ coordinate (a
+            3-length sequence), unless ``pass_widget=True``, in which case the
+            callback must accept the widget object as the second parameter.  If
+            multiple centers are passed in the ``center`` parameter, the
+            callback must also accept an index of that widget.
 
         center : tuple(float), optional
             Length 3 array for the XYZ coordinate of the sphere's
@@ -1950,6 +1968,8 @@ class WidgetHelper:
         Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
+        if self.iren is None:  # pragma: no cover
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
@@ -1957,7 +1977,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pyvista.UniformGrid(dims=dims)
+            button = pyvista.UniformGrid(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[

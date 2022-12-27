@@ -1,4 +1,5 @@
 import datetime
+import faulthandler
 import locale
 import os
 import sys
@@ -6,10 +7,7 @@ import sys
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
-if sys.version_info >= (3, 0):
-    import faulthandler
-
-    faulthandler.enable()
+faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
 import make_external_gallery
@@ -62,21 +60,22 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.autosummary",
     "enum_tools.autoenum",
-    "notfound.extension",
-    "sphinx_copybutton",
-    "sphinx_gallery.gen_gallery",
-    "sphinx.ext.extlinks",
     "jupyter_sphinx",
-    "sphinx_panels",
-    "pyvista.ext.plot_directive",
-    "pyvista.ext.coverage",
+    "notfound.extension",
     "numpydoc",
+    "pyvista.ext.coverage",
+    "pyvista.ext.plot_directive",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_gallery.gen_gallery",
+    "sphinxcontrib.asciinema",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -96,15 +95,12 @@ coverage_additional_modules = [
     'pyvista.plotting.theme',
     'pyvista.plotting.tools',
     'pyvista.plotting.widgets',
-    'pyvista.core.common_data',
-    'pyvista.core.common_data',
     'pyvista.core.composite',
     'pyvista.core.dataobject',
     'pyvista.core.datasetattributes',
     'pyvista.core.dataset',
     'pyvista.core.errors',
     'pyvista.core.grid',
-    'pyvista.core.imaging',
     'pyvista.core.objects',
     'pyvista.core.pointset',
     'pyvista.core.pyvista_ndarray',
@@ -116,6 +112,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.unstructured_grid',
     'pyvista.demos',
     'pyvista.examples.examples',
+    'pyvista.utilities.common',
     'pyvista.utilities.features',
     'pyvista.utilities.fileio',
     'pyvista.utilities.geometric_objects',
@@ -196,7 +193,6 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
-    r'\.PlotterITK$',
     r'\.MultiBlock\.copy_meta_from$',
     r'\.DataObject\.copy_meta_from$',
     # wraps
@@ -222,7 +218,7 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'python': ('https://docs.python.org/3', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
@@ -427,15 +423,18 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    "google_analytics_id": "UA-140243896-1",
+    "analytics": {"google_analytics_id": "UA-140243896-1"},
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
+    "collapse_navigation": True,
+    "use_edit_page_button": True,
     "icon_links": [
         {
             "name": "Slack Community",
@@ -468,7 +467,9 @@ panels_add_bootstrap_css = False
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
+html_css_files = [
+    'cards.css',  # used in card CSS
+]
 
 # -- Options for HTMLHelp output ------------------------------------------
 

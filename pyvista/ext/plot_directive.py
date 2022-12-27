@@ -113,8 +113,8 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
-# must enable BUILDING_GALLERY to to keep windows active
-# enable offscreen to hide figures when generating them
+# must enable BUILDING_GALLERY to keep windows active
+# enable offscreen to hide figures when generating them.
 import pyvista
 
 pyvista.BUILDING_GALLERY = True
@@ -538,7 +538,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             images = []
 
         opts = [
-            ':%s: %s' % (key, val)
+            f':{key}: {val}'
             for key, val in options.items()
             if key in ('alt', 'height', 'width', 'scale', 'align')
         ]

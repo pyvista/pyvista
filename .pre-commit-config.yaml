@@ -1,11 +1,11 @@
 repos:
 - repo: https://github.com/psf/black
-  rev: 22.8.0
+  rev: 22.12.0
   hooks:
   - id: black
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.10.1
+  rev: 5.11.4
   hooks:
   - id: isort
 
@@ -20,12 +20,15 @@ repos:
     ]
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.1
+  rev: v2.2.2
   hooks:
   - id: codespell
     args: [
       "doc examples examples_flask pyvista tests",
       "*.py *.rst *.md",
+    ]
+    additional_dependencies: [
+      "tomli"
     ]
 
 - repo: https://github.com/pycqa/pydocstyle
@@ -37,7 +40,7 @@ repos:
     exclude: ^pyvista/ext/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.971
+  rev: v0.991
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
@@ -47,16 +50,23 @@ repos:
     "typing-extensions==4.1.1",
   ]
 
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.3.1
+  hooks:
+  - id: pyupgrade
+    args: [--py37-plus, --keep-runtime-typing]
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.3.0
+  rev: v4.4.0
   hooks:
   - id: check-merge-conflict
   - id: debug-statements
   - id: no-commit-to-branch
     args: [--branch, main]
+  - id: requirements-txt-fixer
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.18.2
+  rev: 0.19.2
   hooks:
     - id: check-github-workflows

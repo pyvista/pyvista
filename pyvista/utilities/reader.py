@@ -69,6 +69,10 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
     +----------------+---------------------------------------------+
+    | ``.nii``       | :class:`pyvista.NIFTIReader`                |
+    +----------------+---------------------------------------------+
+    | ``.nii.gz``    | :class:`pyvista.NIFTIReader`                |
+    +----------------+---------------------------------------------+
     | ``.nhdr``      | :class:`pyvista.NRRDReader`                 |
     +----------------+---------------------------------------------+
     | ``.nrrd``      | :class:`pyvista.NRRDReader`                 |
@@ -305,7 +309,7 @@ class BaseReader:
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
-            raise RuntimeError("Failed to read file.")
+            raise RuntimeError("File reader failed to read and/or produced no output.")
         data._post_file_load_processing()
 
         # check for any pyvista metadata
@@ -745,7 +749,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
             )
         self.reader.SetTimeValue(time_value)
 
@@ -1383,7 +1387,7 @@ class MultiBlockPlot3DReader(BaseReader):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> filename, _  = examples.downloads._download_file('multi-bin.xyz')
+        >>> filename  = examples.download_file('multi-bin.xyz')
         >>> reader = pyvista.reader.MultiBlockPlot3DReader(filename)
         >>> reader.add_function(112)  # add a function by its integer value
         >>> reader.add_function(reader.PRESSURE_COEFFICIENT)  # add a function by enumeration via class variable alias
@@ -1892,7 +1896,7 @@ class PVDReader(BaseReader, TimeReader):
                 )
             )
         self._datasets = sorted(datasets)
-        self._time_values = sorted(list(set([dataset.time for dataset in self.datasets])))
+        self._time_values = sorted({dataset.time for dataset in self.datasets})
 
         self.set_active_time_value(self.time_values[0])
 
@@ -1996,7 +2000,7 @@ class JPEGReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_mars_jpg()
+    >>> filename = examples.planets.download_mars_surface(load=False)
     >>> filename.split("/")[-1]  # omit the path
     'mars.jpg'
     >>> reader = pyvista.get_reader(filename)
@@ -2025,6 +2029,25 @@ class MetaImageReader(BaseReader):
     """
 
     _class_reader = _vtk.vtkMetaImageReader
+
+
+class NIFTIReader(BaseReader):
+    """NIFTI Reader for .nii and .nii.gz files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_brain_atlas_with_sides(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'avg152T1_RL_nifti.nii.gz'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkNIFTIImageReader
 
 
 class NRRDReader(BaseReader):
@@ -2262,7 +2285,7 @@ class _GIFReader:
         from PIL import Image, ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+        self._data_object = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames
@@ -2327,6 +2350,8 @@ CLASS_READERS = {
     '.hdr': HDRReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.nii': NIFTIReader,
+    '.nii.gz': NIFTIReader,
     '.nhdr': NRRDReader,
     '.nrrd': NRRDReader,
     '.obj': OBJReader,

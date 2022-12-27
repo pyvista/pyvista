@@ -1,5 +1,6 @@
 """Tests for pyvista.core.dataset."""
 
+import multiprocessing
 import pickle
 
 from hypothesis import HealthCheck, assume, given, settings
@@ -25,7 +26,13 @@ def grid():
 
 def test_invalid_overwrite(grid):
     with pytest.raises(TypeError):
-        grid.overwrite(pyvista.Plane())
+        grid.copy_from(pyvista.Plane())
+
+
+def test_overwrite_deprecation(grid):
+    mesh = type(grid)()
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.overwrite(grid)
 
 
 @composite
@@ -265,11 +272,6 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
 def test_translate_should_fail_given_none(grid):
     with pytest.raises(TypeError):
         grid.transform(None)
-
-
-def test_translate_deprecation(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid.translate((0.0, 0.0, 0.0))
 
 
 def test_set_points():
@@ -618,8 +620,11 @@ def test_set_t_coords(grid):
 
 
 def test_activate_texture_none(grid):
-    assert grid._activate_texture('not a key') is None
-    assert grid._activate_texture(True) is None
+    with pytest.warns(UserWarning, match=r'not a key'):
+        assert grid._activate_texture('not a key') is None
+
+    with pytest.warns(UserWarning, match=r'No textures associated'):
+        assert grid._activate_texture(True) is None
 
 
 def test_set_active_vectors_fail(grid):
@@ -790,7 +795,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
@@ -939,14 +944,14 @@ def test_find_closest_cell_surface_point():
 
 
 def test_find_containing_cell():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     node = np.array([0.3, 0.3, 0.0])
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
     points_copy = points.copy()
     indices = mesh.find_containing_cell(points)
@@ -1104,7 +1109,7 @@ def test_cell_type(grid):
 
 
 def test_point_is_inside_cell():
-    grid = pyvista.UniformGrid(dims=(2, 2, 2))
+    grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
     assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
     assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
 
@@ -1131,7 +1136,9 @@ def test_point_is_inside_cell():
     assert np.array_equal(in_cell, np.array([True, False]))
 
 
-def test_serialize_deserialize(datasets):
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_serialize_deserialize(datasets, pickle_format):
+    pyvista.set_pickle_format(pickle_format)
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
@@ -1164,6 +1171,21 @@ def test_serialize_deserialize(datasets):
             arr_have = dataset_2.field_data[name]
             arr_expected = dataset.field_data[name]
             assert arr_have == pytest.approx(arr_expected)
+
+
+def n_points(dataset):
+    # used in multiprocessing test
+    return dataset.n_points
+
+
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_multiprocessing(datasets, pickle_format):
+    # exercise pickling via multiprocessing
+    pyvista.set_pickle_format(pickle_format)
+    with multiprocessing.Pool(2) as p:
+        res = p.map(n_points, datasets)
+    for res, dataset in zip(res, datasets):
+        assert res == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
@@ -1233,13 +1255,6 @@ def test_rotate_z():
         out = mesh.rotate_z(30, point=5)
     with pytest.raises(ValueError):
         out = mesh.rotate_z(30, point=[1, 3])
-
-
-@pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
-def test_deprecation_rotate(sphere, method):
-    meth = getattr(sphere, method)
-    with pytest.warns(PyVistaDeprecationWarning):
-        meth(30)
 
 
 def test_rotate_vector():
@@ -1321,11 +1336,6 @@ def test_transform_integers_vtkbug_present():
     assert poly.points[-1, 1] != 0
 
 
-def test_deprecation_vector(sphere):
-    with pytest.warns(PyVistaDeprecationWarning):
-        sphere.rotate_vector([1, 1, 1], 33)
-
-
 def test_scale():
     mesh = examples.load_airplane()
 
@@ -1348,8 +1358,6 @@ def test_scale():
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        scale1.scale(xyz)
 
 
 def test_flip_x():
@@ -1363,8 +1371,6 @@ def test_flip_x():
     mesh = examples.load_uniform()
     out = mesh.flip_x()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_x1.flip_x(point=(0, 0, 0))
 
 
 def test_flip_y():
@@ -1378,8 +1384,6 @@ def test_flip_y():
     mesh = examples.load_uniform()
     out = mesh.flip_y()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_y1.flip_y(point=(0, 0, 0))
 
 
 def test_flip_z():
@@ -1393,8 +1397,6 @@ def test_flip_z():
     mesh = examples.load_uniform()
     out = mesh.flip_z()
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_z1.flip_z(point=(0, 0, 0))
 
 
 def test_flip_normal():
@@ -1417,9 +1419,6 @@ def test_flip_normal():
     flip_normal6.flip_z(inplace=True)
     assert np.allclose(flip_normal5.points, flip_normal6.points)
 
-    with pytest.warns(PyVistaDeprecationWarning):
-        flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
-
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
@@ -1438,16 +1437,60 @@ def test_active_normals(sphere):
 @pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
-@pytest.mark.parametrize('deep', [False, True])
-def test_cast_to_pointset(sphere, deep):
-    pointset = sphere.cast_to_pointset(deep=deep)
+def test_cast_to_pointset(sphere):
+    sphere = sphere.elevation()
+    pointset = sphere.cast_to_pointset()
     assert isinstance(pointset, pyvista.PointSet)
 
+    assert not np.may_share_memory(sphere.points, pointset.points)
+    assert not np.may_share_memory(sphere.active_scalars, pointset.active_scalars)
+    assert np.allclose(sphere.points, pointset.points)
+    assert np.allclose(sphere.active_scalars, pointset.active_scalars)
+
     pointset.points[:] = 0
-    if deep:
-        assert not np.allclose(sphere.points, pointset.points)
-    else:
-        assert np.allclose(sphere.points, pointset.points)
+    assert not np.allclose(sphere.points, pointset.points)
+
+    pointset.active_scalars[:] = 0
+    assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
+
+
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
+def test_cast_to_pointset_implicit(uniform):
+    pointset = uniform.cast_to_pointset(pass_cell_data=True)
+    assert isinstance(pointset, pyvista.PointSet)
+    assert pointset.n_arrays == uniform.n_arrays
+
+    assert not np.may_share_memory(uniform.active_scalars, pointset.active_scalars)
+    assert np.allclose(uniform.active_scalars, pointset.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], pointset[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        pointset[name][:] = i
+        assert not np.allclose(uniform[name], pointset[name])
+
+
+def test_cast_to_poly_points_implicit(uniform):
+    points = uniform.cast_to_poly_points(pass_cell_data=True)
+    assert isinstance(points, pyvista.PolyData)
+    assert points.n_arrays == uniform.n_arrays
+    assert len(points.cell_data) == len(uniform.cell_data)
+    assert len(points.point_data) == len(uniform.point_data)
+
+    assert not np.may_share_memory(uniform.active_scalars, points.active_scalars)
+    assert np.allclose(uniform.active_scalars, points.active_scalars)
+
+    ctp = uniform.cell_data_to_point_data()
+    for name in ctp.point_data.keys():
+        assert np.allclose(ctp[name], points[name])
+
+    for i, name in enumerate(uniform.point_data.keys()):
+        points[name][:] = i
+        assert not np.allclose(uniform[name], points[name])
 
 
 def test_partition(hexbeam):
@@ -1490,11 +1533,11 @@ def test_volume_area():
         assert np.isclose(grid.area, 16.0)
 
     # UniformGrid 3D size 4x4x4
-    vol_grid = pyvista.UniformGrid(dims=(5, 5, 5))
+    vol_grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
     assert_volume(vol_grid)
 
     # 2D grid size 4x4
-    surf_grid = pyvista.UniformGrid(dims=(5, 5, 1))
+    surf_grid = pyvista.UniformGrid(dimensions=(5, 5, 1))
     assert_area(surf_grid)
 
     # UnstructuredGrid
@@ -1512,6 +1555,6 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pyvista.UniformGrid(dims=(5, 5, 5)).extract_surface()
+    grid = pyvista.UniformGrid(dimensions=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)

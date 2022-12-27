@@ -12,7 +12,7 @@ concurrency:
 jobs:
   doc:
     name: Check Links
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
@@ -26,10 +26,10 @@ jobs:
           cache: 'pip'
           cache-dependency-path: requirements_docs.txt
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.1
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
-          version: 1.0
+          version: 3.0
 
       - name: Install OSMesa VTK
         run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl

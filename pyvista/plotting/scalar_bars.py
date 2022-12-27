@@ -1,4 +1,5 @@
 """PyVista Scalar bar module."""
+import weakref
 
 import numpy as np
 
@@ -14,7 +15,7 @@ class ScalarBars:
 
     def __init__(self, plotter):
         """Initialize ScalarBars."""
-        self._plotter = plotter
+        self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
@@ -409,7 +410,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = _vtk.vtkLookupTable()
+            lut = pyvista.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
@@ -421,8 +422,12 @@ class ScalarBars:
             lut = mapper.lookup_table
 
         scalar_bar.SetLookupTable(lut)
-        if n_colors is not None:
-            scalar_bar.SetMaximumNumberOfColors(n_colors)
+        if n_colors is None:
+            # ensure the number of colors in the scalarbar's lookup table is at
+            # least the number in the mapper
+            n_colors = mapper.lookup_table.n_values
+
+        scalar_bar.SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
             scalar_bar.SetDrawTickLabels(False)
@@ -436,9 +441,15 @@ class ScalarBars:
         if above_label:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
+        elif lut.above_range_color:
+            scalar_bar.DrawAboveRangeSwatchOn()
+            scalar_bar.SetAboveRangeAnnotation('above')
         if below_label:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
+        elif lut.below_range_color:
+            scalar_bar.DrawBelowRangeSwatchOn()
+            scalar_bar.SetBelowRangeAnnotation('below')
 
         # edit the size of the colorbar
         scalar_bar.SetHeight(height)

@@ -123,6 +123,8 @@ def test_remove_scalars_single(sphere, hexbeam):
 
 def test_active_scalars_remain(sphere, hexbeam):
     """Ensure active scalars remain active despite plotting different scalars when copy_mesh=True."""
+    sphere.clear_data()
+    hexbeam.clear_data()
     point_data_name = "point_data"
     cell_data_name = "cell_data"
     sphere[point_data_name] = np.random.random(sphere.n_points)
@@ -206,6 +208,29 @@ def test_remove_blurring(sphere):
     assert pl.renderer.GetPass() is not None
     pl.remove_blurring()
     assert pl.renderer.GetPass() is None
+
+
+def test_add_points_invalid_style(sphere):
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError, match='Should be either "points"'):
+        pl.add_points(sphere, style='wireframe')
+
+
+def test_add_lines():
+    pl = pyvista.Plotter()
+    points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
+    actor = pl.add_lines(points)
+    dataset = actor.mapper.dataset
+    assert dataset.n_cells == 2
+
+
+def test_clear_actors(cube, sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(cube)
+    pl.add_mesh(sphere)
+    assert len(pl.renderer.actors) == 2
+    pl.clear_actors()
+    assert len(pl.renderer.actors) == 0
 
 
 def test_anti_aliasing_multiplot(sphere):

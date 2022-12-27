@@ -1,6 +1,8 @@
 """Module containing pyvista implementation of vtkAxes."""
 from pyvista import _vtk
 
+from .actor import Actor
+
 
 class Axes(_vtk.vtkAxes):
     """PyVista wrapper for the VTK Axes class.
@@ -39,12 +41,10 @@ class Axes(_vtk.vtkAxes):
         self.mapper = _vtk.vtkPolyDataMapper()
         self.mapper.SetInputConnection(self.GetOutputPort())
         # Add the axes actor
-        self.actor = _vtk.vtkActor()
-        self.actor.SetMapper(self.mapper)
-        self.actor.SetVisibility(show_actor)
-        self.actor.SetScale(actor_scale)
-        prop = self.actor.GetProperty()
-        prop.SetLineWidth(line_width)
+        self.actor = Actor(mapper=self.actor)
+        self.actor.visibility = show_actor
+        self.actor.scale = actor_scale
+        self.actor.prop.line_width = line_width
 
     @property
     def origin(self):
@@ -80,7 +80,7 @@ class Axes(_vtk.vtkAxes):
         >>> axes = pv.Axes()
         >>> axes.show_actor()
         """
-        self.actor.VisibilityOn()
+        self.actor.visibility = True
 
     def hide_actor(self):
         """Hide an actor of axes.
@@ -91,7 +91,7 @@ class Axes(_vtk.vtkAxes):
         >>> axes = pv.Axes()
         >>> axes.hide_actor()
         """
-        self.actor.VisibilityOff()
+        self.actor.visibility = False
 
     def show_symmetric(self):
         """Show symmetric of axes.

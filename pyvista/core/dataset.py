@@ -2,7 +2,6 @@
 
 import collections.abc
 from copy import deepcopy
-import logging
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
@@ -26,7 +25,7 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.common import _coerce_pointslike_arg
+from pyvista.utilities.arrays import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
@@ -35,9 +34,6 @@ from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -464,61 +460,6 @@ class DataSet(DataSetFilters, DataObject):
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
-    def vectors(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
-        """Return active vectors.
-
-        .. deprecated:: 0.32.0
-           Use of `DataSet.vectors` to return vector data is deprecated.
-
-        """
-        warnings.warn(
-            "Use of `DataSet.vectors` is deprecated. Use `DataSet.active_vectors` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.active_vectors
-
-    @vectors.setter
-    def vectors(self, array: np.ndarray):  # pragma: no cover
-        warnings.warn(
-            "Use of `DataSet.vectors` to add vector data is deprecated. "
-            "Use `DataSet['vector_name'] = data`. "
-            "Use `DataSet.active_vectors_name = 'vector_name' to make active.",
-            PyVistaDeprecationWarning,
-        )
-        if array.ndim != 2:
-            raise ValueError('vector array must be a 2-dimensional array')
-        elif array.shape[1] != 3:
-            raise ValueError('vector array must be 3D')
-        elif array.shape[0] != self.n_points:
-            raise ValueError('Number of vectors be the same as the number of points')
-
-        self.point_data[DEFAULT_VECTOR_KEY] = array
-        self.active_vectors_name = DEFAULT_VECTOR_KEY
-
-    @property
-    def t_coords(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
-        """Return the active texture coordinates on the points.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSet.active_t_coords` to return the active
-            texture coordinates.
-
-        """
-        warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.active_t_coords
-
-    @t_coords.setter
-    def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
-        warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.active_t_coords = t_coords  # type: ignore
-
-    @property
     def active_t_coords(self) -> Optional[pyvista_ndarray]:
         """Return or set the active texture coordinates on the points.
 
@@ -606,13 +547,13 @@ class DataSet(DataSetFilters, DataObject):
             try:
                 name = keys[idx]
             except IndexError:
-                logging.warning('No textures associated with input mesh.')
+                warnings.warn('No textures associated with input mesh.')
                 return None
         # Grab the texture object by name
         try:
             texture = mesh.textures[name]
         except KeyError:
-            logging.warning(f'Texture ({name}) not associated with this dataset')
+            warnings.warn(f'Texture ({name}) not associated with this dataset')
             texture = None
         else:
             # Be sure to reset the tcoords if present
@@ -1464,20 +1405,6 @@ class DataSet(DataSetFilters, DataObject):
             self._textures = ido.textures
 
     @property
-    def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkPointData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSet.point_data` to return point data.
-
-        """
-        warnings.warn(
-            "Use of `point_arrays` is deprecated. Use `point_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.point_data
-
-    @property
     def point_data(self) -> DataSetAttributes:
         """Return vtkPointData as DataSetAttributes.
 
@@ -1494,13 +1421,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.point_data
         pyvista DataSetAttributes
         Association     : POINT
-        Active Scalars  : my_other_array
+        Active Scalars  : my_array
         Active Vectors  : None
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64    (8,)
-            my_other_array          int64      (8,)                 SCALARS
+            my_array                float64    (8,)                 SCALARS
+            my_other_array          int64      (8,)
 
         Access an array from ``point_data``.
 
@@ -1516,19 +1443,6 @@ class DataSet(DataSetFilters, DataObject):
         return DataSetAttributes(
             self.GetPointData(), dataset=self, association=FieldAssociation.POINT
         )
-
-    def clear_point_arrays(self):  # pragma: no cover
-        """Remove all point data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataSet.clear_point_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.clear_point_data()
 
     def clear_point_data(self):
         """Remove all point arrays.
@@ -1549,35 +1463,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.point_data.clear()
 
-    def clear_cell_arrays(self):  # pragma: no cover
-        """Remove all cell data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataSet.clear_cell_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_cell_arrays` is deprecated. Use `clear_cell_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.clear_cell_data()
-
     def clear_cell_data(self):
         """Remove all cell arrays."""
         self.cell_data.clear()
-
-    def clear_arrays(self):  # pragma: no cover
-        """Remove all arrays from point/cell/field data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataSet.clear_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_arrays` is deprecated. Use `clear_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.clear_data()
 
     def clear_data(self):
         """Remove all arrays from point/cell/field data.
@@ -1601,20 +1489,6 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_field_data()
 
     @property
-    def cell_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkCellData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSet.cell_data` to return cell data.
-
-        """
-        warnings.warn(
-            "Use of `cell_arrays` is deprecated. Use `cell_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.cell_data
-
-    @property
     def cell_data(self) -> DataSetAttributes:
         """Return vtkCellData as DataSetAttributes.
 
@@ -1631,13 +1505,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.cell_data
         pyvista DataSetAttributes
         Association     : CELL
-        Active Scalars  : my_other_array
+        Active Scalars  : my_array
         Active Vectors  : None
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            my_array                float64    (6,)
-            my_other_array          int64      (6,)                 SCALARS
+            my_array                float64    (6,)                 SCALARS
+            my_other_array          int64      (6,)
 
         Access an array from ``cell_data``.
 
@@ -1772,13 +1646,13 @@ class DataSet(DataSetFilters, DataObject):
         Note that there are 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
         >>> mesh.volume
         64.0
 
         A mesh with 2D cells has no volume.
 
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
         >>> mesh.volume
         0.0
 
@@ -1810,7 +1684,7 @@ class DataSet(DataSetFilters, DataObject):
         Note 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 1))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
         >>> mesh.area
         16.0
 
@@ -1818,7 +1692,7 @@ class DataSet(DataSetFilters, DataObject):
         the outer surface area, first extract the surface using
         :func:`pyvista.DataSetFilters.extract_surface`.
 
-        >>> mesh = pv.UniformGrid(dims=(5, 5, 5))
+        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
         >>> mesh.area
         0.0
 
@@ -2086,7 +1960,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def overwrite(self, mesh: _vtk.vtkDataSet):
+    def copy_from(self, mesh: _vtk.vtkDataSet):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -2102,7 +1976,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()
         >>> mesh_b = pyvista.Cube()
-        >>> mesh_a.overwrite(mesh_b)
+        >>> mesh_a.copy_from(mesh_b)
         >>> mesh_a == mesh_b
         True
 
@@ -2116,6 +1990,25 @@ class DataSet(DataSetFilters, DataObject):
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=True)
+
+    def overwrite(self, mesh: _vtk.vtkDataSet):
+        """Overwrite this dataset inplace with the new dataset's geometries and data.
+
+        .. deprecated:: 0.37.0
+            Use :func:`DataSet.copy_from` instead.
+
+        Parameters
+        ----------
+        mesh : vtk.vtkDataSet
+            The overwriting mesh.
+
+        """
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
+        warnings.warn(
+            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.copy_from(mesh)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2144,35 +2037,98 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self, deep: bool = False) -> 'pyvista.PointSet':
-        """Get a new representation of this object as a :class:`pyvista.PointSet`.
+    def cast_to_pointset(self, pass_cell_data: bool = False) -> 'pyvista.PointSet':
+        """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
         ----------
-        deep : bool, optional
-            When ``True`` makes a full copy of the object.  When ``False``,
-            performs a shallow copy where the points and data arrays are
-            references to the original object.
+        pass_cell_data : bool, optional
+            Run the ``cell_data_to_point_data`` filter and pass cell data
+            fields to the new pointset.
 
         Returns
         -------
         pyvista.PointSet
             Dataset cast into a :class:`pyvista.PointSet`.
 
+        Notes
+        -----
+        This will produce a deep copy of the points and point/cell data of
+        the original mesh.
+
         Examples
         --------
         >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pyvista.Wavelet()
         >>> pointset = mesh.cast_to_pointset()
         >>> type(pointset)
         <class 'pyvista.core.pointset.PointSet'>
 
         """
         pset = pyvista.PointSet()
-        pset.SetPoints(self.GetPoints())
-        pset.GetPointData().ShallowCopy(self.GetPointData())
-        if deep:
-            return pset.copy(deep=True)
+        pset.points = self.points.copy()
+        if pass_cell_data:
+            self = self.cell_data_to_point_data()
+        pset.GetPointData().DeepCopy(self.GetPointData())
+        pset.active_scalars_name = self.active_scalars_name
+        return pset
+
+    def cast_to_poly_points(self, pass_cell_data: bool = False) -> 'pyvista.PolyData':
+        """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
+
+        Parameters
+        ----------
+        pass_cell_data : bool, optional
+            Run the ``cell_data_to_point_data`` filter and pass cell data
+            fields to the new pointset.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Dataset cast into a :class:`pyvista.PolyData`.
+
+        Notes
+        -----
+        This will produce a deep copy of the points and point/cell data of
+        the original mesh.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> points = mesh.cast_to_poly_points(pass_cell_data=True)
+        >>> type(points)
+        <class 'pyvista.core.pointset.PolyData'>
+        >>> points.n_arrays
+        2
+        >>> points.point_data
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : Spatial Point Data
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            Spatial Point Data      float64    (1000,)              SCALARS
+        >>> points.cell_data
+        pyvista DataSetAttributes
+        Association     : CELL
+        Active Scalars  : None
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            Spatial Cell Data       float64    (1000,)
+
+        """
+        pset = pyvista.PolyData(self.points.copy())
+        if pass_cell_data:
+            cell_data = self.copy()
+            cell_data.clear_point_data()
+            cell_data = cell_data.cell_data_to_point_data()
+            pset.GetCellData().DeepCopy(cell_data.GetPointData())
+        pset.GetPointData().DeepCopy(self.GetPointData())
+        pset.active_scalars_name = self.active_scalars_name
         return pset
 
     def find_closest_point(self, point: Iterable[float], n=1) -> int:
@@ -2405,7 +2361,7 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista
-        >>> mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1/4, 1/4, 0])
         >>> mesh
         UniformGrid...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
