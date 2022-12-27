@@ -162,7 +162,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera.to_paraview_pvcc("camera.pvcc")
+        >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
         """
         root = ElementTree.Element("PVCameraConfiguration")
         root.attrib["description"] = "ParaView camera configuration"
