@@ -9,6 +9,7 @@ import numpy as np
 from . import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
+    from .plotting.charts import Chart2D, ChartBox, ChartMPL, ChartPie
     from .plotting.colors import Color
 
 Vector = Union[List[float], Tuple[float, float, float], np.ndarray]
@@ -31,3 +32,4 @@ color_like = Union[
 # Overwrite default docstring, as sphinx is not able to capture the docstring
 # when it is put beneath the definition somehow?
 color_like.__doc__ = """Any object convertible to a :class:`Color`."""
+Chart = Union["Chart2D", "ChartBox", "ChartPie", "ChartMPL"]

@@ -51,7 +51,7 @@ class RenderWindowInteractor:
         # enable interaction with visible charts)
         self._context_style = _vtk.vtkContextInteractorStyle()
         self.track_click_position(
-            self._toggle_context_style, side="left", double=True, viewport=True
+            self._toggle_chart_interaction, side="left", double=True, viewport=True
         )
 
     def add_key_event(self, key, callback):
@@ -284,15 +284,58 @@ class RenderWindowInteractor:
             self._style_class = _style_factory(self._style)(self)
         self.interactor.SetInteractorStyle(self._style_class)
 
-    def _toggle_context_style(self, mouse_pos):
-        scene = None
-        for renderer in self._plotter.renderers:
-            if scene is None and renderer.IsInViewport(*mouse_pos):
-                scene = renderer._charts.toggle_interaction(mouse_pos)
-            else:
-                # Not in viewport or already an active chart found (in case they overlap), so disable interaction
-                renderer._charts.toggle_interaction(False)
+    def _toggle_chart_interaction(self, mouse_pos):
+        """
+        Toggle interaction with indicated charts.
 
+        Parameters
+        ----------
+        mouse_pos : tuple of float
+            Tuple containing the mouse position.
+
+        """
+        # Loop over all renderers to see whether any charts need to be made interactive
+        interactive_scene, interactive_charts = None, []
+        for renderer in self._plotter.renderers:
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+                # No interactive charts yet and mouse is within this renderer's viewport,
+                # so collect all charts indicated by the mouse (typically only one, except
+                # when there are overlapping charts).
+                origin = renderer.GetOrigin()  # Correct for viewport origin (see #3278)
+                charts = renderer._get_charts_by_pos(
+                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1])
+                )
+                if charts:
+                    # Toggle interaction for indicated charts and determine whether
+                    # there are any remaining interactive charts.
+                    interactive_charts = renderer.set_chart_interaction(charts, toggle=True)
+                    if interactive_charts:
+                        # Save a reference to this renderer's scene if there are
+                        # remaining interactive charts.
+                        interactive_scene = renderer._charts._scene
+                else:
+                    # No indicated charts, so disable interaction with all charts
+                    # for this renderer.
+                    renderer.set_chart_interaction(False)
+            else:
+                # Not in viewport or interactive charts were already found in another
+                # renderer, so disable interaction with all charts for this renderer.
+                renderer.set_chart_interaction(False)
+        # Manually set context_style based on found interactive scene (or stop interaction
+        # with any scene if there are no interactive charts).
+        self._set_context_style(interactive_scene)
+
+    def _set_context_style(self, scene):
+        """
+        Set the context style interactor or switch back to previous interactor style.
+
+        Parameters
+        ----------
+        scene : vtkContextScene, optional
+            The scene to interact with or ``None`` to stop interaction with any scene.
+
+        """
+        # TODO: fix call to _toggle_context_style in close method when merging latest main
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
         self._context_style.SetScene(scene)
         if scene is None and self._style == "Context":

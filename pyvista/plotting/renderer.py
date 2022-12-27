@@ -1,7 +1,7 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-from functools import partial
+from functools import partial, wraps
 from typing import Sequence
 import warnings
 from weakref import proxy
@@ -553,10 +553,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        chart : Chart2D, ChartBox, ChartPie or ChartMPL
+        chart : Chart
             Chart to add to renderer.
 
-        *charts : Chart2D, ChartBox, ChartPie or ChartMPL
+        *charts : Chart
             Charts to add to renderer.
 
         Examples
@@ -577,12 +577,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             )
         self._charts.add_chart(chart, *charts)
 
+    @property
+    def has_charts(self):
+        """Return whether this renderer has charts."""
+        return self.__charts is not None
+
+    @wraps(Charts.set_interaction)
+    def set_chart_interaction(self, interactive, toggle=False):
+        """Wrap ``Charts.set_interaction``."""
+        # Make sure we don't create the __charts object if this renderer has no charts yet.
+        return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
+
+    @wraps(Charts.get_charts_by_pos)
+    def _get_charts_by_pos(self, pos):
+        """Wrap ``Charts.get_charts_by_pos``."""
+        # Make sure we don't create the __charts object if this renderer has no charts yet.
+        return self._charts.get_charts_by_pos(pos) if self.has_charts else []
+
     def remove_chart(self, chart_or_index):
         """Remove a chart from this renderer.
 
         Parameters
         ----------
-        chart_or_index : Chart2D, ChartBox, ChartPie, ChartMPL or int
+        chart_or_index : Chart or int
             Either the chart to remove from this renderer or its index in the collection of charts.
 
         Examples
@@ -617,7 +634,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self._charts.remove_chart(chart_or_index)
+        # Make sure we don't create the __charts object if this renderer has no charts yet.
+        if self.has_charts:
+            self._charts.remove_chart(chart_or_index)
 
     @property
     def actors(self):

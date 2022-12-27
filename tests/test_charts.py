@@ -1032,11 +1032,85 @@ def test_iren_context_style(pl):
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene().__this__ == chart._scene.__this__
 
-    # Simulate right click outside the chart:
+    # Simulate double left click outside the chart:
     pl.iren._mouse_left_button_click(0, 0, count=2)
     assert not chart.GetInteractive()
     assert pl.iren._style == style
     assert pl.iren._style_class == style_class
+    assert pl.iren._context_style.GetScene() is None
+
+
+@skip_no_plotting
+def test_chart_interaction():
+    # Setup multi renderer plotter with one chart in the top renderer and two charts
+    # in the bottom renderer.
+    pl = pyvista.Plotter(shape=(2, 1))
+    pl.subplot(0, 0)
+    chart_t = pyvista.ChartPie([1, 2, 3])
+    # Ensure set_chart_interaction does not create the __charts object:
+    assert not pl.set_chart_interaction(True)
+    assert not pl.renderer.has_charts
+    pl.add_chart(chart_t)
+    assert pl.renderer.has_charts
+    pl.subplot(1, 0)
+    chart_bl = pyvista.ChartPie([1, 1, 1], size=(0.5, 1), loc=(0, 0))
+    chart_br = pyvista.ChartPie([3, 2, 1], size=(0.5, 1), loc=(0.5, 0))
+    pl.add_chart(chart_bl, chart_br)
+
+    # Check set_chart_interaction bool
+    ics = pl.set_chart_interaction(True)
+    assert chart_bl in ics and chart_br in ics
+    assert chart_bl.GetInteractive() and chart_br.GetInteractive()
+    assert pl.iren._style_class == pl.iren._context_style
+    assert pl.iren._context_style.GetScene() == chart_bl._scene
+    ics = pl.set_chart_interaction(False)
+    assert not ics
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._style_class != pl.iren._context_style
+    assert pl.iren._context_style.GetScene() is None
+
+    # Check set_chart_interaction Chart/id
+    ics = pl.set_chart_interaction(chart_bl)
+    assert chart_bl in ics and chart_br not in ics
+    assert chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    ics = pl.set_chart_interaction(1)
+    assert chart_bl not in ics and chart_br in ics
+    assert not chart_bl.GetInteractive() and chart_br.GetInteractive()
+    ics = pl.set_chart_interaction([0, 1])
+    assert chart_bl in ics and chart_br in ics
+    assert chart_bl.GetInteractive() and chart_br.GetInteractive()
+
+    # Check set_chart_interaction toggle
+    ics = pl.set_chart_interaction(chart_bl, toggle=True)
+    assert chart_bl not in ics and chart_br in ics
+    assert not chart_bl.GetInteractive() and chart_br.GetInteractive()
+
+    # Check wrong charts
+    ics = pl.set_chart_interaction(chart_t)
+    assert not ics
+    assert not chart_t.GetInteractive()
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._context_style.GetScene() is None
+    ics = pl.set_chart_interaction([chart_t, chart_bl])
+    assert chart_t not in ics and chart_bl in ics
+    assert not chart_t.GetInteractive()
+    assert chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._context_style.GetScene() == chart_bl._scene
+
+    # Check double click interaction toggle in multi renderer case
+    pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
+    win_size = pl.window_size
+    # Simulate double left click on the top chart:
+    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.25 * win_size[1]), count=2)
+    assert chart_t.GetInteractive()
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._style_class == pl.iren._context_style
+    assert pl.iren._context_style.GetScene() == chart_t._scene
+    # Simulate second double left click on the top chart:
+    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.25 * win_size[1]), count=2)
+    assert not chart_t.GetInteractive()
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._style_class != pl.iren._context_style
     assert pl.iren._context_style.GetScene() is None
 
 

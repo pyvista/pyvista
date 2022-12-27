@@ -1431,6 +1431,7 @@ class _Chart(DocSubs):
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
+        pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,
@@ -4415,6 +4416,68 @@ class Charts:
             self._scene.AddItem(chart)
             chart.SetInteractive(False)  # Charts are not interactive by default
 
+    def set_interaction(self, interactive, toggle=False):
+        """
+        Set or toggle interaction with charts for this renderer.
+
+        Interaction with other charts in this renderer is disabled when ``toggle``
+        is ``False``.
+
+        Parameters
+        ----------
+        interactive : bool, Chart, int, list of Chart or list of int
+            Following parameter values are accepted:
+
+                * A boolean to enable (``True``) or disable (``False``) interaction
+                  with all charts.
+                * The chart or its index to enable interaction with. Interaction
+                  with multiple charts can be enabled by passing a list of charts
+                  or indices.
+
+        toggle : bool, default: False
+            Instead of enabling interaction with the provided chart(s), interaction
+            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            is not a boolean.
+
+        Returns
+        -------
+        list of Chart
+            The list of all interactive charts for this renderer.
+
+        """
+        if isinstance(interactive, bool):
+            # Disable toggle and convert to list of charts
+            toggle = False
+            interactive = self._charts if interactive else []
+        if not isinstance(interactive, list):
+            # Convert single chart parameter to list
+            interactive = [interactive]
+        # Convert to list of Charts
+        charts = [
+            self._charts[coi] if isinstance(coi, int) and 0 <= coi < len(self) else coi
+            for coi in interactive
+        ]
+        interactive_charts = []
+
+        for chart in self._charts:
+            # Determine whether to enable interaction with the current chart.
+            if toggle:
+                enable = not chart.GetInteractive() if chart in charts else chart.GetInteractive()
+            else:
+                enable = chart in charts
+
+            chart.SetInteractive(enable)
+            if enable:
+                interactive_charts.append(chart)
+                # TODO: below code should be executed AFTER first render (otherwise axes are not properly autoscaled first)
+                # Change the chart's axis behaviour to fixed, such that the user can properly interact with the chart.
+                # if chart._x_axis is not None:
+                #     chart._x_axis.behavior = "fixed"
+                # if chart._y_axis is not None:
+                #     chart._y_axis.behavior = "fixed"
+
+        return interactive_charts
+
     def remove_chart(self, chart_or_index):
         """Remove a chart from the collection."""
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
@@ -4424,41 +4487,21 @@ class Charts:
         self._scene.RemoveItem(chart)
         self._scene.RemoveItem(chart._background)
 
-    def toggle_interaction(self, mouse_pos):
-        """Toggle interaction of the charts based on the given mouse position.
-
-        Disables interaction with all charts, except the one indicated
-        by the mouse position.  In case the indicated chart was
-        already interactive, interaction is disabled again.
+    def get_charts_by_pos(self, pos):
+        """Retrieve visible charts indicated by the given mouse position.
 
         Parameters
         ----------
-        mouse_pos : tuple of float or bool
-            This parameter should be either False, to disable
-            interaction with all charts; or a tuple containing the
-            mouse position, to disable interaction with all charts,
-            except the one indicated by the mouse, if any.
+        pos : tuple of float
+            Tuple containing the mouse position.
 
         Returns
         -------
-        vtk.vtkContextScene, optional
-            Returns the scene if one of the charts got activated, None otherwise.
+        list of Chart
+            Visible charts indicated by the given mouse position.
 
         """
-        enable = False
-        for chart in self._charts:
-            if chart.visible and (mouse_pos is not False and chart._is_within(mouse_pos)):
-                enable = not chart.GetInteractive()
-                chart.SetInteractive(enable)
-                # Change the chart's axis behaviour to fixed, such that the user can properly interact with the chart.
-                if chart._x_axis is not None:
-                    chart._x_axis.behavior = "fixed"
-                if chart._y_axis is not None:
-                    chart._y_axis.behavior = "fixed"
-            else:
-                chart.SetInteractive(False)
-
-        return self._scene if enable else None
+        return [chart for chart in self._charts if chart.visible and chart._is_within(pos)]
 
     def __getitem__(self, index):
         """Return a chart based on an index."""
