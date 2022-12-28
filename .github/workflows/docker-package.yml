@@ -19,7 +19,7 @@ env:
 jobs:
   build-and-publish:
     name: Build and Publish Docker Image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     # For Pull Requests, only runs from `docker`, `feat`, `fix`, `patch`, or `dependabot`
     if: github.event_name == 'push' ||
         ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository &&

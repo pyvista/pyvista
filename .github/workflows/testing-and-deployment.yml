@@ -53,7 +53,7 @@ jobs:
 
 
   LinuxConda:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       CONDA_ALWAYS_YES: 1
       conda_env: pyvista-vtk
@@ -124,7 +124,7 @@ jobs:
 
   Linux:
     name: Linux Unit Testing
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
 
