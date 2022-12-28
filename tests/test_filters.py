@@ -372,6 +372,9 @@ def test_threshold(datasets):
     with pytest.raises(ValueError):
         dataset.threshold(100, method='between')
 
+    with pytest.raises(ValueError):
+        dataset.threshold((2, 1))
+
 
 def test_threshold_all_scalars():
     mesh = pyvista.Sphere()
