@@ -1,7 +1,11 @@
 """This module contains any tests which cause memory leaks."""
+import gc
 import weakref
 
 import numpy as np
+import vtk
+
+import pyvista as pv
 
 
 def test_pyvistandarray_assign(sphere):
@@ -32,3 +36,53 @@ def test_complex_collection(plane):
     assert np.allclose(plane.point_data[name], data_copy)
 
     assert ref() is None
+
+
+def test_add_array(sphere):
+    """Ensure data added dynamically to a plotter is collected."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=range(sphere.n_points))
+
+
+def test_plotting_collection():
+    """Ensure that we don't leak Plotter, Renderer and Charts instances."""
+    pl = pv.Plotter()
+    ref_plotter = weakref.ref(pl)
+    ref_renderers = weakref.ref(pl.renderers)
+    ref_renderer = weakref.ref(pl.renderer)
+    ref_charts = weakref.ref(pl.renderer._charts)  # instantiated on the fly
+
+    # delete known references to Plotter
+    del pv.plotting._ALL_PLOTTERS[pl._id_name]
+    del pl
+
+    # check that everything is eventually destroyed
+    gc.collect()  # small reference cycles allowed
+    assert ref_plotter() is None, gc.get_referrers(ref_plotter())
+    assert ref_renderers() is None
+    assert ref_renderer() is None
+    assert ref_charts() is None
+
+
+def test_vtk_points_slice():
+    mesh = pv.Sphere()
+    n = 10
+    orig_points = np.array(mesh.points[:n])
+    pts = pv.vtk_points(mesh.points[:n], deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
+
+    del mesh
+    gc.collect()
+    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)
+
+
+def test_vtk_points():
+    mesh = pv.Sphere()
+    orig_points = np.array(mesh.points)
+    pts = pv.vtk_points(mesh.points, deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
+    assert np.shares_memory(mesh.points, pv._vtk.vtk_to_numpy(pts.GetData()))
+
+    del mesh
+    gc.collect()
+    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)

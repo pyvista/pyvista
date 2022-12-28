@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -19,8 +19,16 @@ def _get_ext_force(filename, force_ext=None):
 
 
 def get_ext(filename):
-    """Extract the extension of the filename."""
-    ext = os.path.splitext(filename)[1].lower()
+    """Extract the extension of the filename.
+
+    For files with the .gz suffix, the previous extension is returned as well.
+    This is needed e.g. for the compressed NIFTI format (.nii.gz).
+    """
+    base, ext = os.path.splitext(filename)
+    ext = ext.lower()
+    if ext == ".gz":
+        ext_pre = os.path.splitext(base)[1].lower()
+        ext = f"{ext_pre}{ext}"
     return ext
 
 
@@ -52,8 +60,8 @@ def read_legacy(filename, progress_bar=False):
     filename : str
         The string path to the file to read.
 
-    progress_bar : bool, optional
-        Optionally show a progress bar. Default ``False``.
+    progress_bar : bool, default: False
+        Optionally show a progress bar.
 
     Returns
     -------
@@ -66,11 +74,12 @@ def read_legacy(filename, progress_bar=False):
 
     >>> import pyvista
     >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)
+    >>> mesh = pyvista.read_legacy(examples.uniformfile)  # doctest:+SKIP
 
     """
+    # Deprecated on v0.35.0, estimated removal on v0.40.0
     warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyvistaDeprecationWarning
+        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
     )
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     return read(filename, progress_bar=progress_bar)
@@ -116,9 +125,8 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     file_format : str, optional
         Format of file to read with meshio.
 
-    progress_bar : bool, optional
-        Optionally show a progress bar. Default ``False``. Ignored when using
-        ``meshio``.
+    progress_bar : bool, default: False
+        Optionally show a progress bar. Ignored when using ``meshio``.
 
     Returns
     -------
@@ -152,7 +160,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
                 name = os.path.basename(str(each))
             else:
                 name = None
-            multi[-1, name] = read(each, attrs=attrs, file_format=file_format)
+            multi.append(read(each, attrs=attrs, file_format=file_format), name)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
@@ -171,13 +179,13 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise IOError("This file was not able to be automatically read by pvista.")
+            raise OSError("This file was not able to be automatically read by pvista.")
         from meshio._exceptions import ReadError
 
         try:
             return read_meshio(filename)
         except ReadError:
-            raise IOError("This file was not able to be automatically read by pyvista.")
+            raise OSError("This file was not able to be automatically read by pyvista.")
     else:
         observer = pyvista.utilities.errors.Observer()
         observer.observe(reader.reader)
@@ -209,7 +217,7 @@ def _apply_attrs_to_reader(reader, attrs):
     """
     warnings.warn(
         "attrs use is deprecated.  Use a Reader class for more flexible control",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)
@@ -235,7 +243,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
-    progress_bar : bool, optional
+    progress_bar : bool, default: False
         Optionally show a progress bar.
 
     Returns
@@ -289,26 +297,26 @@ def read_exodus(
     filename : str
         The path to the exodus file to read.
 
-    animate_mode_shapes : bool, optional
+    animate_mode_shapes : bool, default: True
         When ``True`` then this reader will report a continuous time
         range [0,1] and animate the displacements in a periodic
         sinusoid.
 
-    apply_displacements : bool, optional
+    apply_displacements : bool, default: True
         Geometric locations can include displacements. When ``True``,
         the nodal positions are 'displaced' by the standard exodus
         displacement vector. If displacements are turned off, the user
         can explicitly add them by applying a warp filter.
 
-    displacement_magnitude : bool, optional
+    displacement_magnitude : bool, default: 1.0
         This is a number between 0 and 1 that is used to scale the
         ``DisplacementMagnitude`` in a sinusoidal pattern.
 
-    read_point_data : bool, optional
-        Read in data associated with points.  Default ``True``.
+    read_point_data : bool, default: True
+        Read in data associated with points.
 
-    read_cell_data : bool, optional
-        Read in data associated with cells.  Default ``True``.
+    read_cell_data : bool, default: True
+        Read in data associated with cells.
 
     enabled_sidesets : str or int, optional
         The name of the array that store the mapping from side set
@@ -373,14 +381,14 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
     filename : str
         The string filename to the data file to read.
 
-    q_filenames : str or tuple(str), optional
+    q_filenames : str or tuple(str), default: ()
         The string filename of the q-file, or iterable of such
         filenames.
 
-    auto_detect : bool, optional
+    auto_detect : bool, default: True
         When this option is turned on, the reader will try to figure
         out the values of various options such as byte order, byte
-        count etc. Default is ``True``.
+        count etc.
 
     attrs : dict, optional
         A dictionary of attributes to call on the reader. Keys of
@@ -388,7 +396,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
-    progress_bar : bool, optional
+    progress_bar : bool, default: True
         Optionally show a progress bar.
 
     Returns
@@ -397,9 +405,10 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
         Data read from the file.
 
     """
+    # Deprecated on v0.35.0, estimated removal on v0.40.0
     warnings.warn(
         "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
-        PyvistaDeprecationWarning,
+        PyVistaDeprecationWarning,
     )
 
     filename = _process_filename(filename)
@@ -429,7 +438,8 @@ def from_meshio(mesh):
     for c in mesh.cells:
         vtk_type = meshio_to_vtk_type[c.type]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        cells.append(np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel())
+        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+        cells.append(np.hstack((fill_values, c.data)).ravel())
         cell_type += [vtk_type] * len(c.data)
         if not _vtk.VTK9:
             offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
@@ -440,19 +450,22 @@ def from_meshio(mesh):
 
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
+
+    # convert to 3D if points are 2D
     if points.shape[1] == 2:
-        points = np.hstack((points, np.zeros((len(points), 1))))
+        zero_points = np.zeros((len(points), 1), dtype=points.dtype)
+        points = np.hstack((points, zero_points))
 
     if _vtk.VTK9:
         grid = pyvista.UnstructuredGrid(
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )
     else:
         grid = pyvista.UnstructuredGrid(
             np.array(offset),
-            np.concatenate(cells),
+            np.concatenate(cells).astype(np.int64, copy=False),
             np.array(cell_type),
             np.array(points, np.float64),
         )

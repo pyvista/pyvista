@@ -73,7 +73,6 @@ Miscellaneous
 ~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Color
 
@@ -82,6 +81,12 @@ Miscellaneous
 
    color_like
    start_xvfb
+
+.. autosummary::
+   :toctree: _autosummary
+
+   Report
+
 
 VTK Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~

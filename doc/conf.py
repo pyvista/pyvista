@@ -1,4 +1,5 @@
 import datetime
+import faulthandler
 import locale
 import os
 import sys
@@ -6,10 +7,7 @@ import sys
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
-if sys.version_info >= (3, 0):
-    import faulthandler
-
-    faulthandler.enable()
+faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
 import make_external_gallery
@@ -62,20 +60,22 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.autosummary",
-    "notfound.extension",
-    "sphinx_copybutton",
-    "sphinx_gallery.gen_gallery",
-    "sphinx.ext.extlinks",
+    "enum_tools.autoenum",
     "jupyter_sphinx",
-    "sphinx_panels",
-    "pyvista.ext.plot_directive",
-    "pyvista.ext.coverage",
+    "notfound.extension",
     "numpydoc",
+    "pyvista.ext.coverage",
+    "pyvista.ext.plot_directive",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_gallery.gen_gallery",
+    "sphinxcontrib.asciinema",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -95,15 +95,12 @@ coverage_additional_modules = [
     'pyvista.plotting.theme',
     'pyvista.plotting.tools',
     'pyvista.plotting.widgets',
-    'pyvista.core.common_data',
-    'pyvista.core.common_data',
     'pyvista.core.composite',
     'pyvista.core.dataobject',
     'pyvista.core.datasetattributes',
     'pyvista.core.dataset',
     'pyvista.core.errors',
     'pyvista.core.grid',
-    'pyvista.core.imaging',
     'pyvista.core.objects',
     'pyvista.core.pointset',
     'pyvista.core.pyvista_ndarray',
@@ -115,6 +112,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.unstructured_grid',
     'pyvista.demos',
     'pyvista.examples.examples',
+    'pyvista.utilities.common',
     'pyvista.utilities.features',
     'pyvista.utilities.fileio',
     'pyvista.utilities.geometric_objects',
@@ -195,18 +193,22 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
-    r'\.PlotterITK$',
     r'\.MultiBlock\.copy_meta_from$',
     r'\.DataObject\.copy_meta_from$',
     # wraps
     r'\.Plotter\.enable_depth_peeling$',
     r'\.add_scalar_bar$',
-    # pending refactor
-    r'\.MultiBlock\.next$',
     # called from inherited
     r'\.Table\.copy_meta_from$',
     # Type alias
     r'\.color_like$',
+    # Mixin methods from collections.abc
+    r'\.MultiBlock\.clear$',
+    r'\.MultiBlock\.count$',
+    r'\.MultiBlock\.index$',
+    r'\.MultiBlock\.remove$',
+    # Enumerations
+    r'\.Plot3DFunctionEnum$',
 }
 
 
@@ -216,7 +218,7 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'python': ('https://docs.python.org/3', (None, 'intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, 'intersphinx/scipy-objects.inv'),
@@ -234,12 +236,25 @@ intersphinx_mapping = {
     'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
 }
+intersphinx_timeout = 10
 
 linkcheck_retries = 3
 linkcheck_timeout = 500
 
-# Add any paths that contain templates here, relative to this directory.
+# Select if we want to generate production or dev documentation
+#
+# Generate class table auto-summary when enabled. This generates one page per
+# class method or attribute and should be used with the production
+# documentation, but local builds and PR commits can get away without this as
+# it takes ~4x as long to generate the documentation.
 templates_path = ["_templates"]
+if os.environ.get('FULL_DOC_BUILD', '').upper() == 'TRUE':
+    templates_path.append("_templates_full")
+else:
+    theme = pyvista.themes.DocumentTheme()
+    theme.window_size = [400, 300]
+    pyvista.PLOT_DIRECTIVE_THEME = theme
+    templates_path.append("_templates_basic")
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
@@ -269,12 +284,19 @@ release = pyvista.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", "_templates*"]
+
+# Pages are not detected correct by ``make linkcheck``
+linkcheck_ignore = [
+    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
+    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
+    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
@@ -286,7 +308,7 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-class ResetPyvista:
+class ResetPyVista:
     """Reset pyvista module to default settings."""
 
     def __call__(self, gallery_conf, fname):
@@ -300,10 +322,10 @@ class ResetPyvista:
         pyvista.set_plot_theme('document')
 
     def __repr__(self):
-        return 'ResetPyvista'
+        return 'ResetPyVista'
 
 
-reset_pyvista = ResetPyvista()
+reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed
@@ -351,6 +373,13 @@ from numpydoc.docscrape_sphinx import SphinxDocString
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
+plot_setup = """
+from pyvista import set_plot_theme as __s_p_t
+__s_p_t('document')
+del __s_p_t
+"""
+plot_cleanup = plot_setup
+
 
 def _str_examples(self):
     examples_str = "\n".join(self['Examples'])
@@ -394,15 +423,18 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    "google_analytics_id": "UA-140243896-1",
+    "analytics": {"google_analytics_id": "UA-140243896-1"},
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
+    "collapse_navigation": True,
+    "use_edit_page_button": True,
     "icon_links": [
         {
             "name": "Slack Community",
@@ -435,7 +467,9 @@ panels_add_bootstrap_css = False
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
+html_css_files = [
+    'cards.css',  # used in card CSS
+]
 
 # -- Options for HTMLHelp output ------------------------------------------
 
@@ -510,64 +544,7 @@ copybutton_prompt_text = r'>>> ?|\.\.\. '
 copybutton_prompt_is_regexp = True
 
 
-from docutils.parsers.rst import directives
-
-# -- Autosummary options
-from sphinx.ext.autosummary import Autosummary, get_documenter
-from sphinx.util.inspect import safe_getattr
-
-
-class AutoAutoSummary(Autosummary):
-
-    option_spec = {
-        "methods": directives.unchanged,
-        "attributes": directives.unchanged,
-    }
-
-    required_arguments = 1
-    app = None
-
-    @staticmethod
-    def get_members(obj, typ, include_public=None):
-        if not include_public:
-            include_public = []
-        items = []
-        for name in sorted(obj.__dict__.keys()):  # dir(obj):
-            try:
-                documenter = get_documenter(AutoAutoSummary.app, safe_getattr(obj, name), obj)
-            except AttributeError:
-                continue
-            if documenter.objtype in typ:
-                items.append(name)
-        public = [x for x in items if x in include_public or not x.startswith("_")]
-        return public, items
-
-    def run(self):
-        clazz = str(self.arguments[0])
-        try:
-            (module_name, class_name) = clazz.rsplit(".", 1)
-            m = __import__(module_name, globals(), locals(), [class_name])
-            c = getattr(m, class_name)
-            if "methods" in self.options:
-                _, methods = self.get_members(c, ["method"], ["__init__"])
-                self.content = [
-                    f"~{clazz}.{method}" for method in methods if not method.startswith("_")
-                ]
-            if "attributes" in self.options:
-                _, attribs = self.get_members(c, ["attribute", "property"])
-                self.content = [
-                    f"~{clazz}.{attrib}" for attrib in attribs if not attrib.startswith("_")
-                ]
-        except:  # noqa: E722
-            print(f"Something went wrong when autodocumenting {clazz}")
-        finally:
-            # TODO: address B012
-            return super().run()  # noqa: B012
-
-
 def setup(app):
-    AutoAutoSummary.app = app
-    app.add_directive("autoautosummary", AutoAutoSummary)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
     app.add_css_file("summary.css")

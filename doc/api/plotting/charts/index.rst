@@ -15,7 +15,6 @@ Unusable features in older VTK versions:
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Chart2D
    ChartBox
@@ -33,7 +32,6 @@ classes above.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Pen
    Brush

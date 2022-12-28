@@ -50,7 +50,7 @@ def _get_output(
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset
     if isinstance(ido, pyvista.PointSet):
-        return data.cast_to_pointset(deep=False)
+        return data.cast_to_pointset()
     return data
 
 
@@ -59,6 +59,7 @@ from .data_set import DataSetFilters
 from .composite import CompositeFilters
 from .poly_data import PolyDataFilters
 from .unstructured_grid import UnstructuredGridFilters
+from .rectilinear_grid import RectilinearGridFilters
 from .structured_grid import StructuredGridFilters
 from .uniform_grid import UniformGridFilters
 
@@ -66,10 +67,11 @@ from .uniform_grid import UniformGridFilters
 __all__ = [
     '_update_alg',
     '_get_output',
-    'DataSetFilters',
     'CompositeFilters',
+    'DataSetFilters',
     'PolyDataFilters',
-    'UnstructuredGridFilters',
+    'RectilinearGridFilters',
     'StructuredGridFilters',
     'UniformGridFilters',
+    'UnstructuredGridFilters',
 ]

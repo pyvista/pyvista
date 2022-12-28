@@ -33,8 +33,8 @@ def test_kochanek_spline():
     assert kochanek_spline.n_points == n_points
 
     # test default
-    kochanek_spline = pyvista.KochanekSpline(points, n_points=n_points)
-    assert kochanek_spline.n_points == n_points
+    kochanek_spline = pyvista.KochanekSpline(points)
+    assert kochanek_spline.n_points == points.shape[0]
 
     # test invalid
     with pytest.raises(ValueError, match='tension'):
@@ -46,7 +46,7 @@ def test_kochanek_spline():
 
 
 def test_ParametricBohemianDome():
-    geom = pyvista.ParametricBohemianDome(direction=[0, 0, 1])
+    geom = pyvista.ParametricBohemianDome(direction=[0, 0, 1], a=0.5, b=1.5, c=1.0)
     assert geom.n_points
 
 

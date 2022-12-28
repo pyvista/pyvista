@@ -227,7 +227,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -576,7 +576,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         if crinkle:
             mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
@@ -712,7 +712,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
@@ -798,7 +798,11 @@ class WidgetHelper:
 
         """
         actors = []
+        name = kwargs.pop("name", None)
         for ax in ["x", "y", "z"]:
+            axkwargs = kwargs.copy()
+            if name:
+                axkwargs["name"] = f"{name}-{ax}"
             a = self.add_mesh_slice(
                 mesh,
                 assign_to_axis=ax,
@@ -808,7 +812,7 @@ class WidgetHelper:
                 widget_color=widget_color,
                 tubing=tubing,
                 interaction_event=interaction_event,
-                **kwargs,
+                **axkwargs,
             )
             actors.append(a)
 
@@ -1036,6 +1040,8 @@ class WidgetHelper:
         title_opacity=1.0,
         title_color=None,
         fmt=None,
+        slider_width=None,
+        tube_width=None,
     ):
         """Add a slider bar widget.
 
@@ -1046,9 +1052,10 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The method called every time the slider is updated. This
-            should take a single parameter: the float value of the
-            slider.
+            Called every time the slider is updated. This should take a single
+            parameter: the float value of the slider. If ``pass_widget=True``,
+            callable should take two parameters: the float value of the slider
+            and the widget itself.
 
         rng : tuple(float)
             Length two tuple of the minimum and maximum ranges of the
@@ -1101,6 +1108,12 @@ class WidgetHelper:
             String formatter used to format numerical data. Defaults
             to ``None``.
 
+        slider_width : float, optional
+            Normalized width of the slider. Defaults to the theme's slider width.
+
+        tube_width : float, optional
+            Normalized width of the tube. Defaults to the theme's tube width.
+
         Returns
         -------
         vtk.vtkSliderWidget
@@ -1125,6 +1138,9 @@ class WidgetHelper:
         ... )
         >>> pl.show()
         """
+        if self.iren is None:
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
+
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
@@ -1173,6 +1189,11 @@ class WidgetHelper:
             slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
             slider_rep.SetEndCapLength(slider_style.cap_length)
             slider_rep.SetEndCapWidth(slider_style.cap_width)
+
+        if slider_width is not None:
+            slider_rep.SetSliderWidth(slider_width)
+        if tube_width is not None:
+            slider_rep.SetTubeWidth(tube_width)
 
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()
@@ -1290,6 +1311,9 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        # avoid circular import
+        from ..core.filters.data_set import _set_threshold_limit
+
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', mesh.memory_address)
@@ -1306,7 +1330,7 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
@@ -1319,10 +1343,7 @@ class WidgetHelper:
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
-            if invert:
-                alg.ThresholdByLower(value)
-            else:
-                alg.ThresholdByUpper(value)
+            _set_threshold_limit(alg, value, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 
@@ -1452,7 +1473,7 @@ class WidgetHelper:
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
@@ -1589,7 +1610,7 @@ class WidgetHelper:
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
-            spline_widget.InitializeHandles(pyvista.vtk_points((initial_points)))
+            spline_widget.InitializeHandles(pyvista.vtk_points(initial_points))
         else:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
@@ -1688,12 +1709,14 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
-        name = kwargs.get('name', mesh.memory_address)
+        name = kwargs.get('name', None)
+        if name is None:
+            name = mesh.memory_address
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
@@ -1751,11 +1774,12 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The function to call back when the widget is modified. It
-            takes a single argument: the center of the sphere as an
-            XYZ coordinate (a 3-length sequence).  If multiple centers
-            are passed in the ``center`` parameter, the callback must
-            also accept an index of that widget.
+            The function to call back when the widget is modified. It takes a
+            single argument: the center of the sphere as an XYZ coordinate (a
+            3-length sequence), unless ``pass_widget=True``, in which case the
+            callback must accept the widget object as the second parameter.  If
+            multiple centers are passed in the ``center`` parameter, the
+            callback must also accept an index of that widget.
 
         center : tuple(float), optional
             Length 3 array for the XYZ coordinate of the sphere's
@@ -1944,6 +1968,8 @@ class WidgetHelper:
         Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
+        if self.iren is None:  # pragma: no cover
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
@@ -1951,7 +1977,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pyvista.UniformGrid(dims=dims)
+            button = pyvista.UniformGrid(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[

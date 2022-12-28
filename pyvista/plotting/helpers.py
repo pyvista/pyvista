@@ -1,12 +1,11 @@
 """This module contains some convenience helper functions."""
 
+from typing import Tuple
+
 import numpy as np
-import scooby
 
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
-
-from .plotting import Plotter
 
 
 def plot(
@@ -35,14 +34,18 @@ def plot(
     hidden_line_removal=None,
     anti_aliasing=None,
     zoom=None,
+    border=None,
+    border_color='k',
+    border_width=2.0,
+    ssao=False,
     **kwargs,
 ):
-    """Plot a vtk or numpy object.
+    """Plot a PyVista, numpy, or vtk object.
 
     Parameters
     ----------
     var_item : pyvista.DataSet, vtk, or numpy object
-        VTK object or ``numpy`` array to be plotted.
+        PyVista, VTK, or ``numpy`` object to be plotted.
 
     off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving
@@ -145,12 +148,30 @@ def plot(
 
     anti_aliasing : bool, optional
         Enable or disable anti-aliasing.  Defaults to the theme
-        setting :attr:`pyvista.global_theme.antialiasing
-        <pyvista.themes.DefaultTheme.antialiasing>`.
+        setting :attr:`pyvista.global_theme.anti_aliasing
+        <pyvista.themes.DefaultTheme.anti_aliasing>`.
 
-    zoom : float, optional
-        Camera zoom.  A value greater than 1 is a zoom-in, a value
-        less than 1 is a zoom-out.  Must be greater than 0.
+    zoom : float, str, optional
+        Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
+        a zoom-in, a value less than 1 is a zoom-out.  Must be greater than 0.
+
+    border : bool, optional
+        Draw a border around each render window.  Default ``False``.
+
+    border_color : color_like, optional
+        Either a string, rgb list, or hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1.0, 1.0, 1.0]``
+            * ``color='#FFFFFF'``
+
+    border_width : float, optional
+        Width of the border in pixels when enabled.
+
+    ssao : bool, optional
+        Enable surface space ambient occlusion (SSAO). See
+        :func:`Plotter.enable_ssao` for more details.
 
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
@@ -181,91 +202,104 @@ def plot(
     --------
     Plot a simple sphere while showing its edges.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Sphere()
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
     >>> mesh.plot(show_edges=True)
 
+    Plot a volume mesh. Color by distance from the center of the
+    UniformGrid. Note ``volume=True`` is passed.
+
+    >>> import numpy as np
+    >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
+    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
+    >>> grid.plot(volume=True)
+
     """
-    if notebook is None:
-        notebook = scooby.in_ipykernel()
-
-    if theme is None:
-        theme = pyvista.global_theme
-
-    if anti_aliasing is not None:
-        theme.antialiasing = anti_aliasing
-
     if jupyter_kwargs is None:
         jupyter_kwargs = {}
 
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
 
+    # pop from kwargs here to avoid including them in add_mesh or add_volume
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    auto_close = kwargs.get('auto_close', theme.auto_close)
+    auto_close = kwargs.get('auto_close')
 
-    if notebook:
-        off_screen = notebook
-    plotter = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
+    pl = pyvista.Plotter(
+        window_size=window_size,
+        off_screen=off_screen,
+        notebook=notebook,
+        theme=theme,
+        border=border,
+        border_color=border_color,
+        border_width=border_width,
+    )
 
     if show_axes is None:
-        show_axes = theme.axes.show
+        show_axes = pl.theme.axes.show
     if show_axes:
-        plotter.add_axes()
+        pl.add_axes()
+    if anti_aliasing:
+        pl.enable_anti_aliasing()
 
-    plotter.set_background(background)
+    pl.set_background(background)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
             isarr_0 = isinstance(var_item[0], np.ndarray)
             isarr_1 = isinstance(var_item[1], np.ndarray)
             if isarr_0 and isarr_1:
-                plotter.add_arrows(var_item[0], var_item[1])
+                pl.add_arrows(var_item[0], var_item[1])
             else:
                 for item in var_item:
                     if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                        plotter.add_volume(item, **kwargs)
+                        pl.add_volume(item, **kwargs)
                     else:
-                        plotter.add_mesh(item, **kwargs)
+                        pl.add_mesh(item, **kwargs)
         else:
             for item in var_item:
                 if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                    plotter.add_volume(item, **kwargs)
+                    pl.add_volume(item, **kwargs)
                 else:
-                    plotter.add_mesh(item, **kwargs)
+                    pl.add_mesh(item, **kwargs)
     else:
         if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
-            plotter.add_volume(var_item, **kwargs)
+            pl.add_volume(var_item, **kwargs)
+        elif isinstance(var_item, pyvista.MultiBlock):
+            pl.add_composite(var_item, **kwargs)
         else:
-            plotter.add_mesh(var_item, **kwargs)
+            pl.add_mesh(var_item, **kwargs)
 
     if text:
-        plotter.add_text(text)
+        pl.add_text(text)
 
     if show_grid:
-        plotter.show_grid()
+        pl.show_grid()
     elif show_bounds:
-        plotter.show_bounds()
+        pl.show_bounds()
 
     if cpos is None:
-        cpos = plotter.get_default_cam_pos()
-        plotter.camera_position = cpos
-        plotter.camera_set = False
+        cpos = pl.get_default_cam_pos()
+        pl.camera_position = cpos
+        pl.camera_set = False
     else:
-        plotter.camera_position = cpos
-
-    if zoom is not None:
-        plotter.camera.zoom(zoom)
+        pl.camera_position = cpos
 
     if eye_dome_lighting:
-        plotter.enable_eye_dome_lighting()
+        pl.enable_eye_dome_lighting()
 
     if parallel_projection:
-        plotter.enable_parallel_projection()
+        pl.enable_parallel_projection()
 
-    return plotter.show(
-        window_size=window_size,
+    if ssao:
+        pl.enable_ssao()
+
+    if zoom is not None:
+        pl.camera.zoom(zoom)
+
+    return pl.show(
         auto_close=auto_close,
         interactive=interactive,
         full_screen=full_screen,
@@ -380,51 +414,50 @@ def plot_compare_four(
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
-    """Plot a PyVista/VTK mesh or dataset.
-
-    Adds any PyVista/VTK mesh that itkwidgets can wrap to the
-    scene.
+def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """Given a plane to view, return vectors for setting up camera.
 
     Parameters
     ----------
-    mesh : pyvista.DataSet or pyvista.MultiBlock
-        Any PyVista or VTK mesh is supported. Also, any dataset that
-        :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
-        points.
+    view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
+        Plane to return vectors for.
 
-    color : color_like, optional, defaults to white
-        Use to make the entire mesh have a single solid color.  Either
-        a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-        ``color='#FFFFFF'``. Color will be overridden if scalars are
-        specified.
-
-    scalars : str or numpy.ndarray, optional
-        Scalars used to "color" the mesh.  Accepts a string name of an
-        array that is present on the mesh or an array equal to the
-        number of cells or the number of points in the mesh.  Array
-        should be sized as a single vector. If both ``color`` and
-        ``scalars`` are ``None``, then the active scalars are used.
-
-    opacity : float, optional
-        Opacity of the mesh. If a single float value is given, it will
-        be the global opacity of the mesh and uniformly applied
-        everywhere - should be between 0 and 1.  Default 1.0
-
-    smooth_shading : bool, optional
-        Smooth mesh surface mesh by taking into account surface
-        normals.  Surface will appear smoother while sharp edges will
-        still look sharp.  Default ``False``.
+    negative : bool
+        Whether to view from opposite direction.  Default ``False``.
 
     Returns
-    --------
-    itkwidgets.Viewer
-        ITKwidgets viewer.
+    -------
+    vec : numpy.ndarray
+        ``[x, y, z]`` vector that points in the viewing direction
+
+    viewup : numpy.ndarray
+        ``[x, y, z]`` vector that points to the viewup direction
+
     """
-    pl = pyvista.PlotterITK()
-    if isinstance(mesh, np.ndarray):
-        pl.add_points(mesh, color)
+    if view == 'xy':
+        vec = np.array([0, 0, 1])
+        viewup = np.array([0, 1, 0])
+    elif view == 'yx':
+        vec = np.array([0, 0, -1])
+        viewup = np.array([1, 0, 0])
+    elif view == 'xz':
+        vec = np.array([0, -1, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zx':
+        vec = np.array([0, 1, 0])
+        viewup = np.array([1, 0, 0])
+    elif view == 'yz':
+        vec = np.array([1, 0, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zy':
+        vec = np.array([-1, 0, 0])
+        viewup = np.array([0, 1, 0])
     else:
-        pl.add_mesh(mesh, color, scalars, opacity, smooth_shading)
-    return pl.show()
+        raise ValueError(
+            f"Unexpected value for direction {view}\n"
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
+        )
+
+    if negative:
+        vec *= -1
+    return vec, viewup

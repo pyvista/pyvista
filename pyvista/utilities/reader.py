@@ -1,11 +1,14 @@
 """Fine-grained control of reading data files."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import enum
 from functools import wraps
 import os
 import pathlib
-from typing import Any, List
+from typing import Any, Callable, List, Union
 from xml.etree import ElementTree
+
+import numpy as np
 
 import pyvista
 from pyvista import _vtk
@@ -44,6 +47,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.g``         | :class:`pyvista.BYUReader`                  |
     +----------------+---------------------------------------------+
+    | ``.gif``       | :class:`pyvista.GIFReader`                  |
+    +----------------+---------------------------------------------+
     | ``.glb``       | :class:`pyvista.GLTFReader`                 |
     +----------------+---------------------------------------------+
     | ``.gltf``      | :class:`pyvista.GLTFReader`                 |
@@ -63,6 +68,10 @@ def get_reader(filename, force_ext=None):
     | ``.mha``       | :class:`pyvista.MetaImageReader`            |
     +----------------+---------------------------------------------+
     | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
+    +----------------+---------------------------------------------+
+    | ``.nii``       | :class:`pyvista.NIFTIReader`                |
+    +----------------+---------------------------------------------+
+    | ``.nii.gz``    | :class:`pyvista.NIFTIReader`                |
     +----------------+---------------------------------------------+
     | ``.nhdr``      | :class:`pyvista.NRRDReader`                 |
     +----------------+---------------------------------------------+
@@ -300,8 +309,11 @@ class BaseReader:
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
-            raise RuntimeError("Failed to read file.")
+            raise RuntimeError("File reader failed to read and/or produced no output.")
         data._post_file_load_processing()
+
+        # check for any pyvista metadata
+        data._restore_metadata()
         return data
 
     def _update_information(self):
@@ -737,7 +749,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
             )
         self.reader.SetTimeValue(time_value)
 
@@ -810,10 +822,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @decompose_polyhedra.setter
     def decompose_polyhedra(self, value):
-        if value:
-            self.reader.DecomposePolyhedraOn()
-        else:
-            self.reader.DecomposePolyhedraOff()
+        self.reader.SetDecomposePolyhedra(value)
 
     @property
     def skip_zero_time(self):
@@ -839,11 +848,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @skip_zero_time.setter
     def skip_zero_time(self, value):
-        if value:
-            self.reader.SkipZeroTimeOn()
-        else:
-            self.reader.SkipZeroTimeOff()
-
+        self.reader.SetSkipZeroTime(value)
         self._update_information()
         self.reader.SetRefresh()
 
@@ -876,10 +881,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @cell_to_point_creation.setter
     def cell_to_point_creation(self, value):
-        if value:
-            self.reader.CreateCellToPointOn()
-        else:
-            self.reader.CreateCellToPointOff()
+        self.reader.SetCreateCellToPoint(value)
 
     @property
     def number_patch_arrays(self):
@@ -1251,10 +1253,80 @@ class Plot3DMetaReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
+class Plot3DFunctionEnum(enum.IntEnum):
+    """An enumeration for the functions used in :class:`MultiBlockPlot3DReader`."""
+
+    DENSITY = 100
+    PRESSURE = 110
+    PRESSURE_COEFFICIENT = 111
+    MACH = 112
+    SPEED_OF_SOUND = 113
+    TEMPERATURE = 120
+    ENTHALPY = 130
+    INTERNAL_ENERGY = 140
+    KINETIC_ENERGY = 144
+    VELOCITY_MAGNITUDE = 153
+    STAGNATION_ENERGY = 163
+    ENTROPY = 170
+    SWIRL = 184
+    VELOCITY = 200
+    VORTICITY = 201
+    MOMENTUM = 202
+    PRESSURE_GRADIENT = 210
+    STRAIN_RATE = 212
+    VORTICITY_MAGNITUDE = 211
+
+
 class MultiBlockPlot3DReader(BaseReader):
-    """MultiBlock Plot3D Reader."""
+    """MultiBlock Plot3D Reader.
+
+    The methods :meth:`add_function()` and :meth:`remove_function()` accept values from
+    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as class variables,
+    as shown below.
+
+        - ``MultiBlockPlot3DReader.DENSITY = Plot3DFunctionEnum.DENSITY``
+        - ``MultiBlockPlot3DReader.PRESSURE = Plot3DFunctionEnum.PRESSURE``
+        - ``MultiBlockPlot3DReader.PRESSURE_COEFFICIENT = Plot3DFunctionEnum.PRESSURE_COEFFICIENT``
+        - ``MultiBlockPlot3DReader.MACH = Plot3DFunctionEnum.MACH``
+        - ``MultiBlockPlot3DReader.SPEED_OF_SOUND = Plot3DFunctionEnum.SPEED_OF_SOUND``
+        - ``MultiBlockPlot3DReader.TEMPERATURE = Plot3DFunctionEnum.TEMPERATURE``
+        - ``MultiBlockPlot3DReader.ENTHALPY = Plot3DFunctionEnum.ENTHALPY``
+        - ``MultiBlockPlot3DReader.INTERNAL_ENERGY = Plot3DFunctionEnum.INTERNAL_ENERGY``
+        - ``MultiBlockPlot3DReader.KINETIC_ENERGY = Plot3DFunctionEnum.KINETIC_ENERGY``
+        - ``MultiBlockPlot3DReader.VELOCITY_MAGNITUDE = Plot3DFunctionEnum.VELOCITY_MAGNITUDE``
+        - ``MultiBlockPlot3DReader.STAGNATION_ENERGY = Plot3DFunctionEnum.STAGNATION_ENERGY``
+        - ``MultiBlockPlot3DReader.ENTROPY = Plot3DFunctionEnum.ENTROPY``
+        - ``MultiBlockPlot3DReader.SWIRL = Plot3DFunctionEnum.SWIRL``
+        - ``MultiBlockPlot3DReader.VELOCITY = Plot3DFunctionEnum.VELOCITY``
+        - ``MultiBlockPlot3DReader.VORTICITY = Plot3DFunctionEnum.VORTICITY``
+        - ``MultiBlockPlot3DReader.MOMENTUM = Plot3DFunctionEnum.MOMENTUM``
+        - ``MultiBlockPlot3DReader.PRESSURE_GRADIENT = Plot3DFunctionEnum.PRESSURE_GRADIENT``
+        - ``MultiBlockPlot3DReader.STRAIN_RATE = Plot3DFunctionEnum.STRAIN_RATE``
+        - ``MultiBlockPlot3DReader.VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE``
+    """
 
     _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+
+    # pull in function name enum values as class constants
+    DENSITY = Plot3DFunctionEnum.DENSITY
+    PRESSURE = Plot3DFunctionEnum.PRESSURE
+    PRESSURE_COEFFICIENT = Plot3DFunctionEnum.PRESSURE_COEFFICIENT
+    MACH = Plot3DFunctionEnum.MACH
+    SPEED_OF_SOUND = Plot3DFunctionEnum.SPEED_OF_SOUND
+    TEMPERATURE = Plot3DFunctionEnum.TEMPERATURE
+    ENTHALPY = Plot3DFunctionEnum.ENTHALPY
+    INTERNAL_ENERGY = Plot3DFunctionEnum.INTERNAL_ENERGY
+    KINETIC_ENERGY = Plot3DFunctionEnum.KINETIC_ENERGY
+    VELOCITY_MAGNITUDE = Plot3DFunctionEnum.VELOCITY_MAGNITUDE
+    STAGNATION_ENERGY = Plot3DFunctionEnum.STAGNATION_ENERGY
+    ENTROPY = Plot3DFunctionEnum.ENTROPY
+    SWIRL = Plot3DFunctionEnum.SWIRL
+    VELOCITY = Plot3DFunctionEnum.VELOCITY
+    VORTICITY = Plot3DFunctionEnum.VORTICITY
+    MOMENTUM = Plot3DFunctionEnum.MOMENTUM
+    PRESSURE_GRADIENT = Plot3DFunctionEnum.PRESSURE_GRADIENT
+    STRAIN_RATE = Plot3DFunctionEnum.STRAIN_RATE
+    VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE
 
     def _set_defaults(self):
         self.auto_detect_format = True
@@ -1297,6 +1369,85 @@ class MultiBlockPlot3DReader(BaseReader):
     @auto_detect_format.setter
     def auto_detect_format(self, value):
         self.reader.SetAutoDetectFormat(value)
+
+    def add_function(self, value: Union[int, Plot3DFunctionEnum]):
+        """Specify additional functions to compute.
+
+        The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
+        easily accessed by their aliases as class variables.
+
+        Multiple functions may be requested by calling this method multiple times.
+
+        Parameters
+        ----------
+        value : int or Plot3DFunctionEnum
+            The function to add.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename  = examples.download_file('multi-bin.xyz')
+        >>> reader = pyvista.reader.MultiBlockPlot3DReader(filename)
+        >>> reader.add_function(112)  # add a function by its integer value
+        >>> reader.add_function(reader.PRESSURE_COEFFICIENT)  # add a function by enumeration via class variable alias
+
+        """
+        if isinstance(value, enum.Enum):
+            value = value.value
+        self.reader.AddFunction(value)
+
+    def remove_function(self, value: Union[int, Plot3DFunctionEnum]):
+        """Remove one function from list of functions to compute.
+
+        For details on the types of accepted values, see :meth:``add_function``.
+
+        Parameters
+        ----------
+        value : int or Plot3DFunctionEnum
+            The function to remove.
+        """
+        if isinstance(value, enum.Enum):
+            value = value.value
+        self.reader.RemoveFunction(value)
+
+    def remove_all_functions(self):
+        """Remove all functions from list of functions to compute."""
+        self.reader.RemoveAllFunctions()
+
+    @property
+    def preserve_intermediate_functions(self):
+        """When ``True`` (default), intermediate computed quantities will be preserved.
+
+        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still needs to compute
+        ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the output will not have ``Velocity``
+        array, only the requested ``VelocityMagnitude``.
+
+        This is useful to avoid using up memory for arrays that are not relevant for the analysis.
+        """
+        return self.reader.GetPreserveIntermediateFunctions()
+
+    @preserve_intermediate_functions.setter
+    def preserve_intermediate_functions(self, val):
+        self.reader.SetPreserveIntermediateFunctions(val)
+
+    @property
+    def gamma(self):
+        """Ratio of specific heats."""
+        return self.reader.GetGamma()
+
+    @gamma.setter
+    def gamma(self, val):
+        self.reader.SetGamma(val)
+
+    @property
+    def r_gas_constant(self):
+        """Gas constant."""
+        return self.reader.GetR()
+
+    @r_gas_constant.setter
+    def r_gas_constant(self, val):
+        self.reader.SetR(val)
 
 
 class CGNSReader(BaseReader, PointCellDataSelection):
@@ -1745,7 +1896,7 @@ class PVDReader(BaseReader, TimeReader):
                 )
             )
         self._datasets = sorted(datasets)
-        self._time_values = sorted(list(set([dataset.time for dataset in self.datasets])))
+        self._time_values = sorted({dataset.time for dataset in self.datasets})
 
         self.set_active_time_value(self.time_values[0])
 
@@ -1849,7 +2000,7 @@ class JPEGReader(BaseReader):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_mars_jpg()
+    >>> filename = examples.planets.download_mars_surface(load=False)
     >>> filename.split("/")[-1]  # omit the path
     'mars.jpg'
     >>> reader = pyvista.get_reader(filename)
@@ -1878,6 +2029,25 @@ class MetaImageReader(BaseReader):
     """
 
     _class_reader = _vtk.vtkMetaImageReader
+
+
+class NIFTIReader(BaseReader):
+    """NIFTI Reader for .nii and .nii.gz files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_brain_atlas_with_sides(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'avg152T1_RL_nifti.nii.gz'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _vtk.vtkNIFTIImageReader
 
 
 class NRRDReader(BaseReader):
@@ -2078,6 +2248,85 @@ class SegYReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
 
+class _GIFReader:
+    """Simulate a VTK reader for GIF files."""
+
+    _data_object = None
+    _observers: List[Union[int, Callable]] = []
+    _n_frames = 0
+    _current_frame = 0
+
+    def SetFileName(self, filename):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._filename = filename
+
+    def UpdateInformation(self):
+        """Needed for VTK-like compatibility with BaseReader."""
+        pass
+
+    def AddObserver(self, event_type, callback):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._observers.append([event_type, callback])
+
+    def RemoveObservers(self, *args):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._observers = []
+
+    def GetProgress(self):
+        return self._current_frame / self._n_frames
+
+    def UpdateObservers(self, event_type):
+        for event_type_allowed, observer in self._observers:
+            if event_type_allowed == event_type:
+                observer(self, event_type)
+
+    def Update(self):
+        """Read the GIF and store internally to `_data_object`."""
+        from PIL import Image, ImageSequence
+
+        img = Image.open(self._filename)
+        self._data_object = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
+
+        # load each frame to the grid (RGB since gifs do not support transparency
+        self._n_frames = img.n_frames
+        for i, frame in enumerate(ImageSequence.Iterator(img)):
+            self._current_frame = i
+            data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
+            self._data_object.point_data.set_array(data, f'frame{i}')
+            self.UpdateObservers(6)
+
+        if 'frame0' in self._data_object.point_data:
+            self._data_object.point_data.active_scalars_name = 'frame0'
+
+    def GetOutputDataObject(self, *args):
+        """Needed for VTK-like compatibility with BaseReader."""
+        return self._data_object
+
+
+class GIFReader(BaseReader):
+    """GIFReader for .gif files.
+
+    Parameters
+    ----------
+    path : str
+        Path of the GIF to read.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_gif_simple(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'sample.gif'
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(rgba=True, zoom='tight', border=True, border_width=2)
+
+    """
+
+    _class_reader = _GIFReader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2090,6 +2339,7 @@ CLASS_READERS = {
     '.facet': FacetReader,
     '.foam': POpenFOAMReader,
     '.g': BYUReader,
+    '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
     '.img': DICOMReader,
@@ -2100,6 +2350,8 @@ CLASS_READERS = {
     '.hdr': HDRReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.nii': NIFTIReader,
+    '.nii.gz': NIFTIReader,
     '.nhdr': NRRDReader,
     '.nrrd': NRRDReader,
     '.obj': OBJReader,

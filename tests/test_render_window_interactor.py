@@ -1,5 +1,8 @@
 """Test render window interactor"""
 
+import platform
+import time
+
 import pytest
 
 import pyvista
@@ -15,6 +18,7 @@ def empty_callback():
     return
 
 
+@pytest.mark.needs_vtk_version(9, 1)
 def test_observers():
     pl = pyvista.Plotter()
 
@@ -27,6 +31,10 @@ def test_observers():
     assert key in pl.iren._key_press_event_callbacks
     pl.clear_events_for_key(key)
     assert key not in pl.iren._key_press_event_callbacks
+    # attempting to clear non-existing events doesn't raise by default
+    pl.clear_events_for_key(key)
+    with pytest.raises(ValueError, match='No events found for key'):
+        pl.clear_events_for_key(key, raise_on_missing=True)
 
     # Custom events
     assert not pl.iren.interactor.HasObserver(
@@ -98,3 +106,53 @@ def test_track_click_position_multi_render():
     pl.untrack_click_position(side='left')
     pl.iren._mouse_left_button_click(50, 50)
     assert len(points) == 1
+
+
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason='vtkCocoaRenderWindowInteractor (MacOS) does not invoke TimerEvents during ProcessEvents. ',
+)
+@pytest.mark.needs_vtk_version(
+    (9, 2),
+    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents until VTK9.2.',
+)
+def test_timer():
+    # Create a normal interactor from the offscreen plotter (not generic,
+    # which is the default for offscreen rendering)
+    pl = pyvista.Plotter()
+    iren = pyvista.plotting.RenderWindowInteractor(pl)
+    iren.set_render_window(pl.ren_win)
+
+    duration = 50  # Duration of created timers
+    delay = 5 * duration  # Extra time we wait for the timers to fire at least once
+    events = []
+
+    def on_timer(obj, event):
+        # TimerEvent callback
+        events.append(event)
+
+    def process_events(iren, duration):
+        # Helper function to call process_events for the given duration (in milliseconds).
+        t = 1000 * time.time()
+        while 1000 * time.time() - t < duration:
+            iren.process_events()
+
+    # Setup interactor
+    iren.add_observer("TimerEvent", on_timer)
+    iren.initialize()
+
+    # Test one-shot timer (only fired once for the extended duration)
+    iren.create_timer(duration, repeating=False)
+    process_events(iren, delay)
+    assert len(events) == 1
+
+    # Test repeating timer (fired multiple times for extended duration)
+    repeating_timer = iren.create_timer(duration, repeating=True)
+    process_events(iren, 2 * delay)
+    assert len(events) >= 3
+    E = len(events)
+
+    # Test timer destruction (no more events fired)
+    iren.destroy_timer(repeating_timer)
+    process_events(iren, delay)
+    assert len(events) == E

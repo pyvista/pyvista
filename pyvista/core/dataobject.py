@@ -2,22 +2,16 @@
 
 from abc import abstractmethod
 import collections.abc
-import logging
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, Type, Union
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import FieldAssociation, abstract_class, fileio
-from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 from .datasetattributes import DataSetAttributes
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -127,6 +121,9 @@ class DataObject:
                 f' Must be one of: {self._WRITERS.keys()}'
             )
 
+        # store complex and bitarray types as field data
+        self._store_metadata()
+
         writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
@@ -145,6 +142,34 @@ class DataObject:
                 writer.SetEnableAlpha(True)
         writer.Write()
 
+    def _store_metadata(self):
+        """Store metadata as field data."""
+        fdata = self.field_data
+        for assoc_name in ('bitarray', 'complex'):
+            for assoc_type in ('POINT', 'CELL'):
+                assoc_data = getattr(self, f'_association_{assoc_name}_names')
+                array_names = assoc_data.get(assoc_type)
+                if array_names:
+                    key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                    fdata[key] = list(array_names)
+
+    def _restore_metadata(self):
+        """Restore PyVista metadata from field data.
+
+        Metadata is stored using ``_store_metadata`` and contains entries in
+        the format of f'_PYVISTA_{assoc_name}_{assoc_type}_'. These entries are
+        removed when calling this method.
+
+        """
+        fdata = self.field_data
+        for assoc_name in ('bitarray', 'complex'):
+            for assoc_type in ('POINT', 'CELL'):
+                key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                if key in fdata:
+                    assoc_data = getattr(self, f'_association_{assoc_name}_names')
+                    assoc_data[assoc_type] = set(fdata[key])
+                    del fdata[key]
+
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
@@ -156,7 +181,7 @@ class DataObject:
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html: bool = None):
+    def head(self, display=True, html=None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -293,18 +318,6 @@ class DataObject:
 
         return True
 
-    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):  # pragma: no cover
-        """Add field data.
-
-        .. deprecated:: 0.32.0
-           Use :func:`DataObject.add_field_data` instead.
-        """
-        warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyvistaDeprecationWarning,
-        )
-        return self.clear_point_data()
-
     def add_field_data(self, array: np.ndarray, name: str, deep=True):
         """Add field data.
 
@@ -337,7 +350,7 @@ class DataObject:
 
         Add field data to a UniformGrid dataset.
 
-        >>> mesh = pyvista.UniformGrid(dims=(2, 2, 1))
+        >>> mesh = pyvista.UniformGrid(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
@@ -354,20 +367,6 @@ class DataObject:
 
         """
         self.field_data.set_array(array, name, deep_copy=deep)
-
-    @property
-    def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkFieldData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataObject.field_data` to return field data.
-
-        """
-        warnings.warn(
-            "Use of `field_arrays` is deprecated. Use `field_data` instead.",
-            PyvistaDeprecationWarning,
-        )
-        return self.field_data
 
     @property
     def field_data(self) -> DataSetAttributes:
@@ -392,19 +391,6 @@ class DataObject:
         return DataSetAttributes(
             self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
         )
-
-    def clear_field_arrays(self):  # pragma: no cover
-        """Remove all field data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataObject.clear_field_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
-            PyvistaDeprecationWarning,
-        )
-        self.field_data
 
     def clear_field_data(self):
         """Remove all field data.
@@ -475,7 +461,7 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
+        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> target = pv.UniformGrid()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
@@ -494,9 +480,9 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
+        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid(dims=(10, 10, 5))
+        >>> target = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 
@@ -504,28 +490,97 @@ class DataObject:
         self.CopyAttributes(dataset)
 
     def __getstate__(self):
-        """Support pickle. Serialize the VTK object to ASCII string."""
+        """Support pickle by serializing the VTK object data to something which can be pickled natively.
+
+        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
+        - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
+        - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
+        """
         state = self.__dict__.copy()
-        writer = _vtk.vtkDataSetWriter()
-        writer.SetInputDataObject(self)
-        writer.SetWriteToOutputString(True)
-        writer.SetFileTypeToBinary()
-        writer.Write()
-        to_serialize = writer.GetOutputStdString()
+
+        if pyvista.PICKLE_FORMAT.lower() == 'xml':
+            # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
+            # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+            writers = {
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
+                _vtk.vtkTable: _vtk.vtkXMLTableWriter,
+            }
+
+            for parent_type, writer_type in writers.items():
+                if isinstance(self, parent_type):
+                    writer = writer_type()
+                    break
+            else:
+                raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+
+            writer.SetInputDataObject(self)
+            writer.SetWriteToOutputString(True)
+            writer.SetDataModeToBinary()
+            writer.SetCompressorTypeToNone()
+            writer.Write()
+            to_serialize = writer.GetOutputString()
+
+        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
+            writer = _vtk.vtkDataSetWriter()
+            writer.SetInputDataObject(self)
+            writer.SetWriteToOutputString(True)
+            writer.SetFileTypeToBinary()
+            writer.Write()
+            to_serialize = writer.GetOutputStdString()
+
         state['vtk_serialized'] = to_serialize
+
+        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
+        # processes
+        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
     def __setstate__(self, state):
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
+        pickle_format = state.pop(
+            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'legacy'
+        )
         self.__dict__.update(state)
-        reader = _vtk.vtkDataSetReader()
-        reader.ReadFromInputStringOn()
-        if isinstance(vtk_serialized, bytes):
-            reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
-        elif isinstance(vtk_serialized, str):
+
+        if pickle_format.lower() == 'xml':
+            # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
+            # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+            readers = {
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
+                _vtk.vtkTable: _vtk.vtkXMLTableReader,
+            }
+
+            for parent_type, reader_type in readers.items():
+                if isinstance(self, parent_type):
+                    reader = reader_type()
+                    break
+            else:
+                raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
+
+            reader.ReadFromInputStringOn()
             reader.SetInputString(vtk_serialized)
-        reader.Update()
+            reader.Update()
+
+        elif pickle_format.lower() == 'legacy':
+            reader = _vtk.vtkDataSetReader()
+            reader.ReadFromInputStringOn()
+            if isinstance(vtk_serialized, bytes):
+                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+            elif isinstance(vtk_serialized, str):
+                reader.SetInputString(vtk_serialized)
+            reader.Update()
+
         mesh = pyvista.wrap(reader.GetOutput())
 
         # copy data

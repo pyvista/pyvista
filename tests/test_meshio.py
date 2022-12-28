@@ -1,5 +1,6 @@
 import pathlib
 
+import meshio
 import numpy as np
 import pytest
 
@@ -9,10 +10,17 @@ from pyvista import examples
 beam = pyvista.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
+mesh2d = meshio.Mesh(
+    points=[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+    cells=[("triangle", [[0, 1, 2], [1, 3, 2]])],
+)
 
 
-@pytest.mark.parametrize("mesh_in", [beam, airplane, uniform])
+@pytest.mark.parametrize("mesh_in", [beam, airplane, uniform, mesh2d])
 def test_meshio(mesh_in, tmpdir):
+    if isinstance(mesh_in, meshio.Mesh):
+        mesh_in = pyvista.from_meshio(mesh_in)
+
     # Save and read reference mesh using meshio
     filename = tmpdir.mkdir("tmpdir").join("test_mesh.vtk")
     pyvista.save_meshio(filename, mesh_in)

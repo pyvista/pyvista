@@ -15,7 +15,7 @@ Create interactive physically based rendering using `pythreejs`_.
 
    import pyvista
    pyvista.global_theme.background = 'white'
-   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.anti_aliasing = 'fxaa'
    pyvista.global_theme.window_size = [600, 600]
 
 .. jupyter-execute::
@@ -67,7 +67,6 @@ a jupyter notebook:
 * Client-side rendering with `pythreejs`_ using ``threejs``.
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
 * Client-side rendering using `panel <https://github.com/holoviz/panel>`_ using ``vtk.js``.
-* Client-side rendering with `itkwidgets <https://github.com/InsightSoftwareConsortium/itkwidgets>`_ using ``itk.js`` and ``vtk.js``.
 * Static images.
 
 ------------
@@ -84,7 +83,6 @@ details on how to use these plotting backends.
    ipygany
    panel
    ipyvtk_plotting
-   itk_plotting
 
 
 State of 3D Interactive Jupyterlab Plotting
@@ -126,12 +124,8 @@ jupyter notebook plotting modules:
 +---------------+--------------+--------------------+---------+----------------------+
 | ipyvtklink    | Yes          | Server             | vtk     | Yes                  |
 +---------------+--------------+--------------------+---------+----------------------+
-| itkwidgets    | No           | Client             | vtk.js  | Yes                  |
-+---------------+--------------+--------------------+---------+----------------------+
 
-At the moment, ``itkwidgets`` and ``ipyvtklink`` are incompatible with
-Jupyterlab 3, and will result in a "Error displaying widget: model not
-found" message from juptyer.  Additionally, all the modules other than
+All the modules other than
 ``ipygany`` and ``pythreejs`` require a framebuffer, which can be
 set up on a headless environment with :func:`pyvista.start_xvfb`.
 However, on Google Colab, where it's not possible to install system

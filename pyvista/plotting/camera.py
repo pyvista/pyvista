@@ -1,12 +1,18 @@
 """Module containing pyvista implementation of vtkCamera."""
-import warnings
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Union
 from weakref import proxy
+import xml.dom.minidom as md
+from xml.etree import ElementTree
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+
+from .helpers import view_vectors
 
 
 class Camera(_vtk.vtkCamera):
@@ -87,6 +93,128 @@ class Camera(_vtk.vtkCamera):
         """Delete the camera."""
         self.RemoveAllObservers()
         self.parent = None
+
+    @classmethod
+    def from_paraview_pvcc(cls, filename: Union[str, Path]) -> Camera:
+        """Load a Paraview camera file (.pvcc extension).
+
+        Returns a pyvista.Camera object for which attributes has been read
+        from the filename argument.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            Path to Paraview camera file (.pvcc).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc") # doctest:+SKIP
+        >>> pl.camera.position
+        (1.0, 1.0, 1.0)
+        """
+        to_find = {
+            "CameraPosition": ("position", float),
+            "CameraFocalPoint": ("focal_point", float),
+            "CameraViewAngle": ("view_angle", float),
+            "CameraViewUp": ("up", float),
+            "CameraParallelProjection": ("parallel_projection", int),
+            "CameraParallelScale": ("parallel_scale", float),
+        }
+        camera = cls()
+
+        tree = ElementTree.parse(filename)
+        root = tree.getroot()[0]
+        for element in root:
+            attrib = element.attrib
+            attrib_name = attrib["name"]
+
+            if attrib_name in to_find:
+                name, typ = to_find[attrib_name]
+                nelems = int(attrib["number_of_elements"])
+
+                # Set the camera attributes
+                if nelems == 3:
+                    values = [typ(e.attrib["value"]) for e in element]
+                    setattr(camera, name, values)
+                elif nelems == 1:
+
+                    # Special case for bool since bool("0") returns True.
+                    # So first convert to int from `to_find` and then apply bool
+                    if "name" in element[-1].attrib and element[-1].attrib["name"] == "bool":
+                        val = bool(typ(element[0].attrib["value"]))
+                    else:
+                        val = typ(element[0].attrib["value"])
+                    setattr(camera, name, val)
+
+        return camera
+
+    def to_paraview_pvcc(self, filename: Union[str, Path]):
+        """Write the camera parameters to a Paraview camera file (.pvcc extension).
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            Path to Paraview camera file (.pvcc).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
+        """
+        root = ElementTree.Element("PVCameraConfiguration")
+        root.attrib["description"] = "ParaView camera configuration"
+        root.attrib["version"] = "1.0"
+
+        dico = dict(group="views", type="RenderView", id="0", servers="21")
+        proxy = ElementTree.SubElement(root, "Proxy", dico)
+
+        # Add tuples
+        to_find = {
+            "CameraPosition": "position",
+            "CameraFocalPoint": "focal_point",
+            "CameraViewUp": "up",
+        }
+        for name, attr in to_find.items():
+            e = ElementTree.SubElement(
+                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="3")
+            )
+
+            for i in range(3):
+                tmp = ElementTree.Element("Element")
+                tmp.attrib["index"] = str(i)
+                tmp.attrib["value"] = str(getattr(self, attr)[i])
+                e.append(tmp)
+
+        # Add single values
+        to_find = {
+            "CameraViewAngle": "view_angle",
+            "CameraParallelScale": "parallel_scale",
+            "CameraParallelProjection": "parallel_projection",
+        }
+
+        for name, attr in to_find.items():
+            e = ElementTree.SubElement(
+                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="1")
+            )
+            tmp = ElementTree.Element("Element")
+            tmp.attrib["index"] = "0"
+
+            val = getattr(self, attr)
+            if type(val) is not bool:
+                tmp.attrib["value"] = str(val)
+                e.append(tmp)
+            else:
+                tmp.attrib["value"] = "1" if val else "0"
+                e.append(tmp)
+                e.append(ElementTree.Element("Domain", dict(name="bool", id=f"0.{name}.bool")))
+
+        xmlstr = ElementTree.tostring(root).decode()
+        newxml = md.parseString(xmlstr)
+        with open(filename, 'w') as outfile:
+            outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property
     def position(self):
@@ -192,16 +320,6 @@ class Camera(_vtk.vtkCamera):
         self.SetModelTransformMatrix(vtk_matrix)
 
     @property
-    def is_parallel_projection(self):
-        """Return True if parallel projection is set."""
-        warnings.warn(
-            "Use of `Camera.is_parallel_projection` is deprecated. "
-            "Use `Camera.parallel_projection` instead.",
-            PyvistaDeprecationWarning,
-        )
-        return self._parallel_projection
-
-    @property
     def distance(self):
         """Return or set the distance of the focal point from the camera.
 
@@ -283,16 +401,42 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        value : float
-            Zoom of the camera.  Must be greater than 0.
+        value : float or str
+            Zoom of the camera. If a float, must be greater than 0. Otherwise,
+            if a string, must be ``"tight"``. If tight, the plot will be zoomed
+            such that the actors fill the entire viewport.
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        Show the Default zoom.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.camera.zoom(1.0)
+        >>> pl.show()
+
+        Show 2x zoom.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.camera.zoom(2.0)
+        >>> pl.show()
+
+        Zoom so the actor fills the entire render window.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
 
         """
+        if isinstance(value, str):
+            if not value == 'tight':
+                raise ValueError('If a string, ``zoom`` can only be "tight"')
+            self.tight()
+            return
+
         self.Zoom(value)
 
     @property
@@ -453,9 +597,8 @@ class Camera(_vtk.vtkCamera):
 
         Parameters
         ----------
-        aspect : float, optional
-            The aspect of the viewport to compute the planes. Defaults
-            to 1.0.
+        aspect : float, default: 1.0
+            The aspect of the viewport to compute the planes.
 
         Returns
         -------
@@ -618,3 +761,106 @@ class Camera(_vtk.vtkCamera):
             setattr(new_camera, attr, value)
 
         return new_camera
+
+    def tight(self, padding=0.0, adjust_render_window=True, view='xy', negative=False):
+        """Adjust the camera position so that the actors fill the entire renderer.
+
+        The camera view direction is reoriented to be normal to the ``view``
+        plane. When ``negative=False``, The first letter of ``view`` refers
+        to the axis that points to the right. The second letter of ``view``
+        refers to axis that points up.  When ``negative=True``, the first
+        letter refers to the axis that points left.  The up direction is
+        unchanged.
+
+        Parallel projection is enabled when using this function.
+
+        Parameters
+        ----------
+        padding : float, default: 0.0
+            Additional padding around the actor(s). This is effectively a zoom,
+            where a value of 0.01 results in a zoom out of 1%.
+
+        adjust_render_window : bool, default: True
+            Adjust the size of the render window as to match the dimensions of
+            the visible actors.
+
+        view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}, default: 'xy'
+            Plane to which the view is oriented.
+
+        negative : bool, default: False
+            Whether to view in opposite direction.
+
+        Notes
+        -----
+        This resets the view direction to look at a plane with parallel projection.
+
+        Examples
+        --------
+        Display the puppy image with a tight view.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> puppy = examples.download_puppy()
+        >>> pl = pv.Plotter(border=True, border_width=5)
+        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> pl.camera.tight()
+        >>> pl.show()
+
+        Set the background to blue use a 5% padding around the image.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> pl.background_color = 'b'
+        >>> pl.camera.tight(padding=0.05)
+        >>> pl.show()
+
+        """
+        # inspired by vedo resetCamera. Thanks @marcomusy!
+        x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+
+        self.enable_parallel_projection()
+
+        self._renderer.ComputeAspect()
+        aspect = self._renderer.GetAspect()
+
+        position0 = np.array([x0, y0, z0])
+        position1 = np.array([x1, y1, z1])
+        objects_size = position1 - position0
+        position = position0 + objects_size / 2
+
+        direction, viewup = view_vectors(view, negative)
+        horizontal = np.cross(direction, viewup)
+
+        vert_dist = abs(objects_size @ viewup)
+        horiz_dist = abs(objects_size @ horizontal)
+
+        # set focal point to objects' center
+        # offset camera position from objects center by dist in opposite of viewing direction
+        # (actual distance doesn't matter due to parallel projection)
+        dist = 1
+        camera_position = position + dist * direction
+
+        self.SetViewUp(*viewup)
+        self.SetPosition(*camera_position)
+        self.SetFocalPoint(*position)
+
+        ps = max(horiz_dist / aspect[0], vert_dist) / 2
+        self.parallel_scale = ps * (1 + padding)
+        self._renderer.ResetCameraClippingRange(x0, x1, y0, y1, z0, z1)
+
+        if adjust_render_window:
+            ren_win = self._renderer.GetRenderWindow()
+            size = list(ren_win.GetSize())
+            size_ratio = size[0] / size[1]
+            tight_ratio = horiz_dist / vert_dist
+            resize_ratio = tight_ratio / size_ratio
+            if resize_ratio < 1:
+                size[0] = round(size[0] * resize_ratio)
+            else:
+                size[1] = round(size[1] / resize_ratio)
+
+            ren_win.SetSize(size)
+
+            # simply call tight again to reset the parallel scale due to the
+            # resized window
+            self.tight(padding=padding, adjust_render_window=False, view=view, negative=negative)

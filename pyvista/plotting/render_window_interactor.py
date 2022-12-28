@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
+_CLASSES = {}
+
 
 class RenderWindowInteractor:
     """Wrap vtk.vtkRenderWindowInteractor.
@@ -45,7 +47,7 @@ class RenderWindowInteractor:
         # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
-        self._plotter = plotter
+        self.__plotter = weakref.ref(plotter)
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
@@ -53,6 +55,11 @@ class RenderWindowInteractor:
         self.track_click_position(
             self._toggle_context_style, side="left", double=True, viewport=True
         )
+
+    @property
+    def _plotter(self):
+        """Return the plotter."""
+        return self.__plotter()
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -163,15 +170,29 @@ class RenderWindowInteractor:
         for observer in observers:
             self.remove_observer(observer)
 
-    def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key."""
-        self._key_press_event_callbacks.pop(key)
+    def clear_events_for_key(self, key, raise_on_missing=False):
+        """Remove the callbacks associated to the key.
+
+        Parameters
+        ----------
+        key : str
+            Key to clear events for.
+
+        raise_on_missing : bool, default: False
+            Whether to raise a :class:`ValueError` if there are no events
+            registered for the given key.
+        """
+        try:
+            self._key_press_event_callbacks.pop(key)
+        except KeyError:
+            if raise_on_missing:
+                raise ValueError(f'No events found for key {key!r}.') from None
 
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
 
         This will potentially slow down the interactor. No callbacks supported
-        here - use :func:`pyvista.BasePlotter.track_click_position` instead.
+        here - use :func:`pyvista.Plotter.track_click_position` instead.
 
         """
         self.add_observer(_vtk.vtkCommand.MouseMoveEvent, callback)
@@ -233,7 +254,6 @@ class RenderWindowInteractor:
         """
         event = self._get_click_event(side)
         add_observer = all(len(cbs) == 0 for cbs in self._click_event_callbacks[event].values())
-
         if callback is None and add_observer:
             # No observers for this event yet and custom callback not given => insert dummy callback
             callback = lambda obs, event: None
@@ -286,9 +306,19 @@ class RenderWindowInteractor:
         self.interactor.SetInteractorStyle(self._style_class)
 
     def _toggle_context_style(self, mouse_pos):
+        """Toggle the context style for chart interaction.
+
+        Parameters
+        ----------
+        mouse_pos : tuple or None
+            Either a valid mouse position (to toggle interaction
+            with the chart pointed at) or ``None`` (to disable
+            interaction with all charts).
+
+        """
         scene = None
         for renderer in self._plotter.renderers:
-            if scene is None and renderer.IsInViewport(*mouse_pos):
+            if scene is None and mouse_pos is not None and renderer.IsInViewport(*mouse_pos):
                 scene = renderer._charts.toggle_interaction(mouse_pos)
             else:
                 # Not in viewport or already an active chart found (in case they overlap), so disable interaction
@@ -585,7 +615,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
-                self._style_class.AddObserver(event, callback)
+                self._style_class.add_observer(event, callback)
 
         if shift_pans:
 
@@ -603,7 +633,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
-                self._style_class.AddObserver(event, callback)
+                self._style_class.add_observer(event, callback)
 
     def enable_rubber_band_style(self):
         """Set the interactive style to Rubber Band Picking.
@@ -758,21 +788,34 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_repeating_timer(self, stime):
-        """Create a repeating timer.
+    def create_timer(self, duration, repeating=True):
+        """Create a timer.
+
+        Parameters
+        ----------
+        duration : int
+            Time (in milliseconds) before the timer emits a TimerEvent.
+
+        repeating : bool
+            When ``False`` a one-shot timer is created, which only fires
+            once. When ``True`` a repeating timer is created, which
+            continuously fires (every ``duration`` milliseconds) until
+            destruction.
 
         Returns
         -------
         int
             Timer ID.
         """
-        timer_id = self.interactor.CreateRepeatingTimer(stime)
-        if hasattr(self.interactor, 'ProcessEvents'):
-            self.process_events()
+        if repeating:
+            timer_id = self.interactor.CreateRepeatingTimer(duration)
         else:
-            self.interactor.Start()
-        self.interactor.DestroyTimer(timer_id)
+            timer_id = self.interactor.CreateOneShotTimer(duration)
         return timer_id
+
+    def destroy_timer(self, timer_id):
+        """Destroy the given timer."""
+        self.interactor.DestroyTimer(timer_id)
 
     def start(self):
         """Start interactions."""
@@ -785,6 +828,11 @@ class RenderWindowInteractor:
     def set_render_window(self, ren_win):
         """Set the render window."""
         self.interactor.SetRenderWindow(ren_win)
+
+    @property
+    def can_process_events(self):
+        """Return whether the interactor can process events (only available in VTK 9+)."""
+        return hasattr(self.interactor, 'ProcessEvents')
 
     def process_events(self):
         """Process events."""
@@ -831,6 +879,22 @@ class RenderWindowInteractor:
 
             self.interactor.TerminateApp()
 
+    def close(self):
+        """Close out the render window interactor.
+
+        This will terminate the render window if it is not already closed.
+        """
+        self.remove_observers()
+        if self._style_class == self._context_style:
+            self._toggle_context_style(None)  # Disable context interactor style first
+        if self._style_class is not None:
+            self._style_class.remove_observers()
+            self._style_class = None
+
+        self.terminate_app()
+        self.interactor = None
+        self._click_event_callbacks = None
+
 
 def _style_factory(klass):
     """Create a subclass with capturing ability, return it."""
@@ -838,34 +902,54 @@ def _style_factory(klass):
     # swallow the release events
     # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
 
-    try:
-        from vtkmodules import vtkInteractionStyle
-    except ImportError:  # pragma: no cover
-        import vtk as vtkInteractionStyle
+    def _make_class(klass):
+        """Make the class."""
+        try:
+            from vtkmodules import vtkInteractionStyle
+        except ImportError:  # pragma: no cover
+            import vtk as vtkInteractionStyle
 
-    class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-        def __init__(self, parent):
-            super().__init__()
-            self._parent = weakref.ref(parent)
-            self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
-            self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+        class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
+            def __init__(self, parent):
+                super().__init__()
+                self._parent = weakref.ref(parent)
 
-        def _press(self, obj, event):
-            # Figure out which renderer has the event and disable the
-            # others
-            super().OnLeftButtonDown()
-            parent = self._parent()
-            if len(parent._plotter.renderers) > 1:
-                click_pos = parent.get_event_position()
-                for renderer in parent._plotter.renderers:
-                    interact = renderer.IsInViewport(*click_pos)
-                    renderer.SetInteractive(interact)
+                self._observers = []
+                self._observers.append(
+                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+                )
+                self._observers.append(
+                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+                )
 
-        def _release(self, obj, event):
-            super().OnLeftButtonUp()
-            parent = self._parent()
-            if len(parent._plotter.renderers) > 1:
-                for renderer in parent._plotter.renderers:
-                    renderer.SetInteractive(True)
+            def _press(self, obj, event):
+                # Figure out which renderer has the event and disable the
+                # others
+                super().OnLeftButtonDown()
+                parent = self._parent()
+                if len(parent._plotter.renderers) > 1:
+                    click_pos = parent.get_event_position()
+                    for renderer in parent._plotter.renderers:
+                        interact = renderer.IsInViewport(*click_pos)
+                        renderer.SetInteractive(interact)
 
-    return CustomStyle
+            def _release(self, obj, event):
+                super().OnLeftButtonUp()
+                parent = self._parent()
+                if len(parent._plotter.renderers) > 1:
+                    for renderer in parent._plotter.renderers:
+                        renderer.SetInteractive(True)
+
+            def add_observer(self, event, callback):
+                self._observers.append(self.AddObserver(event, callback))
+
+            def remove_observers(self):
+                for obs in self._observers:
+                    self.RemoveObserver(obs)
+
+        return CustomStyle
+
+    # cache classes
+    if klass not in _CLASSES:
+        _CLASSES[klass] = _make_class(klass)
+    return _CLASSES[klass]

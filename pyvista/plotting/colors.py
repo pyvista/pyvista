@@ -170,14 +170,13 @@ tab:cyan
 from __future__ import annotations
 
 from typing import Optional, Tuple, Union
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista._typing import color_like
-from pyvista.utilities import PyvistaDeprecationWarning
+from pyvista.utilities.misc import has_module
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -428,7 +427,7 @@ class Color:
 
        <details><summary>Refer to the table below for a list of supported colors.</summary>
 
-    .. include:: ../colors.rst
+    .. include:: ../color_table/color_table.rst
 
     .. raw:: html
 
@@ -441,13 +440,13 @@ class Color:
 
     >>> import pyvista
     >>> pyvista.Color("green", opacity=0.5)
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
     >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
     >>> pyvista.Color([0, 128, 0, 128])
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
     >>> pyvista.Color("#00800080")
-    Color(name='green', hex='#00800080')
+    Color(name='green', hex='#00800080', opacity=128)
 
     """
 
@@ -587,9 +586,9 @@ class Color:
         try:
             if len(rgba) != 4:
                 raise ValueError("Invalid length for RGBA sequence.")
-            self._red, self._green, self._blue, self._opacity = [
+            self._red, self._green, self._blue, self._opacity = (
                 self.convert_color_channel(c) for c in rgba
-            ]
+            )
         except ValueError:
             raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
 
@@ -640,7 +639,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", opacity=128)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgba
         (0, 0, 255, 128)
 
@@ -648,7 +647,7 @@ class Color:
 
         >>> c = pyvista.Color([255, 0, 0, 64])
         >>> c
-        Color(name='red', hex='#ff000040')
+        Color(name='red', hex='#ff000040', opacity=64)
         >>> c.int_rgba
         (255, 0, 0, 64)
 
@@ -666,7 +665,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", opacity=128)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgb
         (0, 0, 255)
 
@@ -674,7 +673,7 @@ class Color:
 
         >>> c = pyvista.Color([255, 0, 0])
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.int_rgb
         (255, 0, 0)
 
@@ -692,7 +691,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", opacity=0.6)
         >>> c
-        Color(name='blue', hex='#0000ff99')
+        Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgba
         (0.0, 0.0, 1.0, 0.6)
 
@@ -700,7 +699,7 @@ class Color:
 
         >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
-        Color(name='red', hex='#ff000033')
+        Color(name='red', hex='#ff000033', opacity=51)
         >>> c.float_rgba
         (1.0, 0.0, 0.0, 0.2)
 
@@ -718,7 +717,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity=0.6)
         >>> c
-        Color(name='blue', hex='#0000ff99')
+        Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgb
         (0.0, 0.0, 1.0)
 
@@ -726,7 +725,7 @@ class Color:
 
         >>> c = pyvista.Color([1.0, 0.0, 0.0])
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.float_rgb
         (1.0, 0.0, 0.0)
 
@@ -744,7 +743,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity="#80")
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgba
         '#0000ff80'
 
@@ -752,7 +751,7 @@ class Color:
 
         >>> c = pyvista.Color("0xff000040")
         >>> c
-        Color(name='red', hex='#ff000040')
+        Color(name='red', hex='#ff000040', opacity=64)
         >>> c.hex_rgba
         '#ff000040'
 
@@ -772,7 +771,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity="#80")
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgb
         '#0000ff'
 
@@ -780,7 +779,7 @@ class Color:
 
         >>> c = pyvista.Color("0xff0000")
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.hex_rgb
         '#ff0000'
 
@@ -809,7 +808,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
 
         """
         return self._name
@@ -825,7 +824,7 @@ class Color:
         >>> import pyvista
         >>> c = pyvista.Color("blue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.vtk_c3ub
         vtkmodules.vtkCommonDataModel.vtkColor3ub([0, 0, 255])
 
@@ -871,6 +870,22 @@ class Color:
         """Convert to dictionary for JSON serialization."""
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
+    @property
+    def opacity(self):
+        """Return the opacity of this color in the range of ``(0-255)``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> color = pv.Color('r', opacity=0.5)
+        >>> color.opacity
+        128
+        >>> color
+        Color(name='red', hex='#ff000080', opacity=128)
+
+        """
+        return self._opacity
+
     def __eq__(self, other):
         """Equality comparison."""
         try:
@@ -901,7 +916,7 @@ class Color:
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
-        kwargs = f"hex={self.hex_rgba!r}"
+        kwargs = f"hex={self.hex_rgba!r}, opacity={self.opacity}"
         if self._name is not None:
             kwargs = f"name={self._name!r}, " + kwargs
         return f"Color({kwargs})"
@@ -910,78 +925,63 @@ class Color:
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
-def hex_to_rgb(h):  # pragma: no cover
-    """Return 0 to 1 rgb from a hex list or tuple."""
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
-    )
-    return Color(h).float_rgb
-
-
-def string_to_rgb(string):  # pragma: no cover
-    """Convert a literal color string (i.e. white) to a color rgb.
-
-    Also accepts hex strings or single characters from the following list.
-
-        b: blue
-        g: green
-        r: red
-        c: cyan
-        m: magenta
-        y: yellow
-        k: black
-        w: white
-
-    """
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
-    )
-    return Color(string).float_rgb
-
-
 def get_cmap_safe(cmap):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
-    try:
-        from matplotlib.cm import get_cmap
-    except ImportError:  # pragma: no cover
-        raise ImportError(
-            'The use of custom colormaps requires the installation of matplotlib'
-        ) from None
-
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        try:
+        if has_module('colorcet'):
             import colorcet
 
-            cmap = colorcet.cm[cmap]
-        except (ImportError, KeyError):
-            pass
-        else:
-            return cmap
+            try:
+                return colorcet.cm[cmap]
+            except KeyError:
+                pass
+
         # Try cmocean second
-        try:
+        if has_module('cmocean'):
             import cmocean
 
-            cmap = getattr(cmocean.cm, cmap)
-        except (ImportError, AttributeError):
-            pass
-        else:
-            return cmap
+            try:
+                return getattr(cmocean.cm, cmap)
+            except AttributeError:
+                pass
+
         # Else use Matplotlib
-        cmap = get_cmap(cmap)
+        if not has_module('matplotlib'):
+            raise ImportError(
+                'The use of custom colormaps requires the installation of matplotlib.'
+            )  # pragma: no cover
+
+        try:
+            from matplotlib import colormaps, colors
+        except ImportError:  # pragma: no cover
+            import matplotlib
+            import scooby
+
+            min_req = '3.5.0'
+            if not scooby.meets_version(matplotlib.__version__, min_req):
+                raise ImportError(
+                    'The use of custom colormaps requires the installation of '
+                    f'matplotlib>={min_req}.'
+                ) from None
+
+        if not isinstance(cmap, colors.Colormap):
+            cmap = colormaps[cmap]
 
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
                 raise TypeError('When inputting a list as a cmap, each item should be a string.')
+
+        if not has_module('matplotlib'):
+            raise ImportError(
+                'The use of custom colormaps requires the installation of matplotlib.'
+            )  # pragma: no cover
+
         from matplotlib.colors import ListedColormap
 
         cmap = ListedColormap(cmap)

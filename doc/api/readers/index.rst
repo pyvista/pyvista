@@ -21,7 +21,6 @@ Reader Classes
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
     AVSucdReader
     BMPReader
@@ -33,6 +32,7 @@ Reader Classes
     EnSightReader
     FacetReader
     FluentReader
+    GIFReader
     GLTFReader
     HDFReader
     HDRReader
@@ -40,6 +40,7 @@ Reader Classes
     MFIXReader
     MetaImageReader
     MultiBlockPlot3DReader
+    NIFTIReader
     NRRDReader
     OBJReader
     OpenFOAMReader
@@ -82,8 +83,19 @@ and setting time or iterations for reading.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    BaseReader
    PointCellDataSelection
    TimeReader
+
+
+Enumerations
+~~~~~~~~~~~~
+
+Enumerations are available to simplify inputs to certain readers.
+
+.. toctree::
+    :maxdepth: 2
+
+    enums
+

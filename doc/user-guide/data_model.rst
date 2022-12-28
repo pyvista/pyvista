@@ -220,7 +220,7 @@ of a PyVista geometry class. Here, we create a simple point mesh
 containing just the three points:
 
 .. jupyter-execute::
-   
+
    >>> from_vtk = pyvista.PolyData(vtk_array)
    >>> from_np = pyvista.PolyData(np_points)
    >>> from_list = pyvista.PolyData(points)
@@ -275,11 +275,23 @@ in the same order as we defined earlier.
 
 .. note::
    Observe how we had to insert a leading ``3`` to tell VTK that our
-   face will contain three points. In our |PolyData| VTK
+   face is described by three elements, in this case, three points. In our |PolyData| VTK
    doesn't assume that faces always contain three points, so we have
    to define that. This actually gives us the flexibility to define
    as many (or as few as one) points per cell as we wish.
 
+.. note::
+   All cell types follow the same connectivity array format: 
+
+   ``[Number of points, Point 1, Point 2, ...]`` 
+
+
+   Except for ``polyhedron`` type, in which we need to define each face of the cell. The
+   format for this type is the following:
+
+   ``[Number of elements, Number of faces, Face1NPoints, Point1, Point2, ..., PointN, Face2NPoints, ...]``.
+
+   Where `number of elements` is the total number of elements in the array that describe this cell.
 
 Now we have all the necessary pieces to assemble an instance of
 |PolyData| that contains a single triangle. To do
@@ -308,7 +320,7 @@ While we're at it, let's annotate this plot to describe this mesh.
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
    >>> label_coords = mesh.points + [0, 0, 0.01]
-   >>> pl.add_point_labels(label_coords, [f'Point {i}' for i in range(3)], 
+   >>> pl.add_point_labels(label_coords, [f'Point {i}' for i in range(3)],
    ...                     font_size=20, point_size=20)
    >>> pl.add_point_labels([0.43, 0.2, 0], ['Cell 0'], font_size=20)
    >>> pl.camera_position = 'xy'
@@ -383,7 +395,7 @@ a simple mesh containing four isometric cells by starting with a
 
 .. jupyter-execute::
 
-   >>> grid = pyvista.UniformGrid(dims=(3, 3, 1))
+   >>> grid = pyvista.UniformGrid(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
    >>> ugrid
 
@@ -393,7 +405,7 @@ Let's also plot this basic mesh:
    :context:
    :include-source: False
 
-   >>> grid = pyvista.UniformGrid(dims=(3, 3, 1))
+   >>> grid = pyvista.UniformGrid(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
 
 .. pyvista-plot::

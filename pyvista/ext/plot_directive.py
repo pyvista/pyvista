@@ -3,7 +3,7 @@
 A directive for including a PyVista plot in a Sphinx document
 =============================================================
 
-The `.. pyvista-plot::` sphinx directive will include an inline
+The ``.. pyvista-plot::`` sphinx directive will include an inline
 ``.png`` image.
 
 The source code for the plot may be included in one of two ways:
@@ -75,19 +75,28 @@ Configuration options
 ---------------------
 The plot directive has the following configuration options:
 
-    plot_include_source
-        Default value for the include-source option.
+    plot_include_source : bool
+        Default value for the include-source option. Default is ``True``.
 
-    plot_basedir
+    plot_basedir : str
         Base directory, to which ``plot::`` file names are relative
-        to.  (If ``None`` or empty, file names are relative to the
-        directory where the file containing the directive is.)
+        to.  If ``None`` or unset, file names are relative to the
+        directory where the file containing the directive is.
 
-    plot_html_show_formats
-        Whether to show links to the files in HTML.
+    plot_html_show_formats : bool
+        Whether to show links to the files in HTML. Default ``True``.
 
-    plot_template
-        Provide a customized template for preparing restructured text.
+    plot_template : str
+        Provide a customized Jinja2 template for preparing restructured text.
+
+    plot_setup : str
+        Python code to be run before every plot directive block.
+
+    plot_cleanup : str
+        Python code to be run after every plot directive block.
+
+These options can be set by defining global variables of the same name in
+:file:`conf.py`.
 
 """
 
@@ -104,8 +113,8 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
-# must enable BUILDING_GALLERY to to keep windows active
-# enable offscreen to hide figures when generating them
+# must enable BUILDING_GALLERY to keep windows active
+# enable offscreen to hide figures when generating them.
 import pyvista
 
 pyvista.BUILDING_GALLERY = True
@@ -125,7 +134,7 @@ def _option_boolean(arg):
     elif arg.strip().lower() in ('yes', '1', 'true'):
         return True
     else:  # pragma: no cover
-        raise ValueError('"%s" unknown boolean' % arg)
+        raise ValueError(f'"{arg}" unknown boolean')
 
 
 def _option_context(arg):
@@ -183,6 +192,8 @@ def setup(app):
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
     app.add_config_value('plot_template', None, True)
+    app.add_config_value('plot_setup', None, True)
+    app.add_config_value('plot_cleanup', None, True)
     return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
@@ -312,6 +323,8 @@ def _run_code(code, code_path, ns=None, function_name=None):
         return ns
 
     try:
+        if pyvista.PLOT_DIRECTIVE_THEME is not None:
+            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err
@@ -331,7 +344,8 @@ def render_figures(
     """Run a pyplot script and save the images in *output_dir*.
 
     Save the images under *output_dir* with file names derived from
-    *output_base*
+    *output_base*. Closed plotters are ignored if they were never
+    rendered.
     """
     # Try to determine if all images already exist
     is_doctest, code_pieces = _split_code_at_show(code)
@@ -340,30 +354,45 @@ def render_figures(
     results = []
     ns = plot_context if context else {}
 
-    for i, code_piece in enumerate(code_pieces):
-        # generate the plot
-        _run_code(
-            doctest.script_from_examples(code_piece) if is_doctest else code_piece,
-            code_path,
-            ns,
-            function_name,
-        )
+    # Check for setup and teardown code for plots
+    code_setup = config.plot_setup
+    code_cleanup = config.plot_cleanup
 
-        images = []
-        figures = pyvista.plotting._ALL_PLOTTERS
+    if code_setup:
+        _run_code(code_setup, code_path, ns, function_name)
 
-        for j, (_, plotter) in enumerate(figures.items()):
-            if hasattr(plotter, '_gif_filename'):
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
-                shutil.move(plotter._gif_filename, image_file.filename)
-            else:
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-                plotter.screenshot(image_file.filename)
-            images.append(image_file)
+    try:
+        for i, code_piece in enumerate(code_pieces):
+            # generate the plot
+            _run_code(
+                doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code_path,
+                ns,
+                function_name,
+            )
 
-        pyvista.close_all()  # close and clear all plotters
+            images = []
+            figures = pyvista.plotting._ALL_PLOTTERS
 
-        results.append((code_piece, images))
+            for j, (_, plotter) in enumerate(figures.items()):
+                if hasattr(plotter, '_gif_filename'):
+                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
+                    shutil.move(plotter._gif_filename, image_file.filename)
+                else:
+                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+                    try:
+                        plotter.screenshot(image_file.filename)
+                    except RuntimeError:  # pragma no cover
+                        # ignore closed, unrendered plotters
+                        continue
+                images.append(image_file)
+
+            pyvista.close_all()  # close and clear all plotters
+
+            results.append((code_piece, images))
+    finally:
+        if code_cleanup:
+            _run_code(code_cleanup, code_path, ns, function_name)
 
     return results
 
@@ -509,7 +538,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             images = []
 
         opts = [
-            ':%s: %s' % (key, val)
+            f':{key}: {val}'
             for key, val in options.items()
             if key in ('alt', 'height', 'width', 'scale', 'align')
         ]

@@ -9,7 +9,6 @@ See :ref:`pyvista_data_model` for further details.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.DataObject
 
@@ -22,6 +21,5 @@ VTK pipelines and holds arrays of data.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    pyvista.Table

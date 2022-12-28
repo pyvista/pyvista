@@ -164,6 +164,7 @@ def test_widget_slider(uniform):
     p.add_mesh_isovalue(uniform)
     p.close()
 
+    func = lambda value: value  # Does nothing
     p = pyvista.Plotter()
     title_height = np.random.random()
     s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
@@ -190,12 +191,29 @@ def test_widget_slider(uniform):
     assert s.GetRepresentation().GetLabelFormat() == fmt
     p.close()
 
+    # custom width
+    p = pyvista.Plotter()
+    slider = p.add_slider_widget(
+        callback=func, rng=[0, 10], fmt=fmt, tube_width=0.1, slider_width=0.2
+    )
+    assert slider.GetRepresentation().GetSliderWidth() == 0.2
+    assert slider.GetRepresentation().GetTubeWidth() == 0.1
+    p.close()
+
 
 def test_widget_spline(uniform):
     p = pyvista.Plotter()
     func = lambda spline: spline  # Does nothing
     p.add_mesh(uniform)
     p.add_spline_widget(callback=func)
+    p.close()
+
+    p = pyvista.Plotter()
+    p.add_mesh(uniform)
+    pts = np.array([[1, 5, 4], [2, 4, 9], [3, 6, 2]])
+    with pytest.raises(ValueError, match='`initial_points` must be length `n_handles`'):
+        p.add_spline_widget(callback=func, n_handles=4, initial_points=pts)
+    p.add_spline_widget(callback=func, n_handles=3, initial_points=pts)
     p.close()
 
     p = pyvista.Plotter()
@@ -215,9 +233,10 @@ def test_widget_uniform(uniform):
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
     p.close()
 
+    # pass multiple centers
     nodes = np.array([[-1, -1, -1], [1, 1, 1]])
     p = pyvista.Plotter()
-    func = lambda center: center  # Does nothing
+    func = lambda center, index: center  # Does nothing
     p.add_sphere_widget(callback=func, center=nodes)
     p.close()
 
@@ -230,7 +249,15 @@ def test_widget_checkbox_button(uniform):
     p.close()
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires vtk>=9.1")
+def test_widget_closed(uniform):
+    pl = pyvista.Plotter()
+    pl.add_mesh(uniform)
+    pl.close()
+    with pytest.raises(RuntimeError, match='closed plotter'):
+        pl.add_checkbox_button_widget(callback=lambda value: value)
+
+
+@pytest.mark.needs_vtk_version(9, 1)
 def test_add_camera_orientation_widget(uniform):
     p = pyvista.Plotter()
     p.add_camera_orientation_widget()

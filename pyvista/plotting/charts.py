@@ -38,7 +38,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
+class _vtkWrapper(metaclass=_vtkWrapperMeta):
     def __getattribute__(self, item):
         unwrapped_attrs = ["_wrapped", "__class__", "__init__"]
         wrapped = super().__getattribute__("_wrapped")
@@ -983,7 +983,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 
 class _CustomContextItem(_vtk.vtkPythonItem):
-    class ItemWrapper(object):
+    class ItemWrapper:
         def Initialize(self, item):
             # item is the _CustomContextItem subclass instance
             return True
@@ -1038,7 +1038,6 @@ class _Chart(DocSubs):
     def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
         self._background = _ChartBackground(self) if vtk_version_info.major >= 9 else None
-        # TODO: active background & border when double clicked
         self._x_axis = Axis()
         self._y_axis = Axis()
         if size is not None:
@@ -1065,16 +1064,28 @@ class _Chart(DocSubs):
 
         Resize this chart such that it always occupies the specified
         geometry (matching the specified location and size).
+
+        Returns
+        -------
+        bool
+            ``True`` if the chart was resized, ``False`` otherwise.
+
         """
+        # edge race case
+        if self._renderer is None:  # pragma: no cover
+            return
+
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self._geometry
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
-        if c_w != t_w or c_h != t_h:
+        resize = c_w != t_w or c_h != t_h
+        if resize:
             # Mismatch between current size and target size, so resize chart:
             self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+        return resize
 
     @property
     def _geometry(self):
@@ -1403,12 +1414,13 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
+        dev_kwargs={},
     ):
         """Show this chart in a self contained plotter.
 
         Parameters
         ----------
-        off_screen : bool
+        off_screen : bool, optional
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up.  Defaults to active theme setting in
             :attr:`pyvista.global_theme.full_screen
@@ -1443,6 +1455,9 @@ class _Chart(DocSubs):
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``.  Defaults to ``'w'``.
 
+        dev_kwargs : dict, optional
+            Optional developer keyword arguments.
+
         Returns
         -------
         np.ndarray
@@ -1469,6 +1484,7 @@ class _Chart(DocSubs):
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,
+            **dev_kwargs,
         )
 
 
@@ -3450,8 +3466,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
         for plot_type in plot_types:
-            for plot in self._plots[plot_type]:
-                yield plot
+            yield from self._plots[plot_type]
 
     def remove_plot(self, plot):
         """Remove the given plot from this chart.
@@ -4296,7 +4311,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     Parameters
     ----------
-    figure : matplotlib.figure.Figure
+    figure : matplotlib.figure.Figure, optional
         The matplotlib figure to draw.
 
     size : list or tuple, optional
@@ -4404,12 +4419,14 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         # Calculate target size from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
-        if c_w != t_w or c_h != t_h:
+        resize = c_w != t_w or c_h != t_h
+        if resize:
             # Mismatch between canvas size and target size, so resize figure:
             f_w = t_w / self._fig.dpi
             f_h = t_h / self._fig.dpi
             self._fig.set_size_inches(f_w, f_h)
             self.position = (self._loc[0] * r_w, self._loc[1] * r_h)
+        return resize
 
     def _redraw(self, event=None):
         """Redraw the chart."""
@@ -4427,8 +4444,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self.SetImage(img_data)
 
     def _render_event(self, *args, **kwargs):
-        self._resize()  # Update figure dimensions if needed
-        self._redraw()  # Redraw figure
+        if self._resize():  # Update figure dimensions if needed
+            self._redraw()  # Redraw figure when geometry has changed
 
     @property
     def _geometry(self):
@@ -4543,7 +4560,16 @@ class Charts:
         # needed.
         self._scene = None
         self._actor = None
-        self._renderer = renderer
+
+        # a weakref.proxy would be nice here, but that doesn't play
+        # nicely with SetRenderer, so instead we'll use a weak reference
+        # plus a property to call it
+        self.__renderer = weakref.ref(renderer)
+
+    @property
+    def _renderer(self):
+        """Return the weakly dereferenced renderer, maybe None."""
+        return self.__renderer()
 
     def _setup_scene(self):
         """Set up a new context scene and actor for these charts."""
@@ -4557,10 +4583,11 @@ class Charts:
     def deep_clean(self):
         """Remove all references to the chart objects and internal objects."""
         if self._scene is not None:
-            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_plot
+            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
                 self.remove_chart(chart)
-            self._renderer.RemoveActor(self._actor)
+            if self._renderer is not None:
+                self._renderer.RemoveActor(self._actor)
         self._scene = None
         self._actor = None
 
@@ -4631,5 +4658,8 @@ class Charts:
 
     def __iter__(self):
         """Return an iterable of charts."""
-        for chart in self._charts:
-            yield chart
+        yield from self._charts
+
+    def __del__(self):
+        """Clean up before being destroyed."""
+        self.deep_clean()
