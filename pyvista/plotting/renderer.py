@@ -2891,12 +2891,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
-    def update(self):
-        """Update the renderer."""
+    def render(self):
+        """Notify renderer components of manual render call."""
         if self.__charts is not None:
             for chart in self.__charts:
-                # Notify ChartMPLs to redraw themselves when plotter.update() is called
-                chart._render_event(plotter_update=True)
+                # Notify ChartMPLs to redraw themselves when plotter.render() is called
+                chart._render_event(plotter_render=True)
 
     def deep_clean(self, render=False):
         """Clean the renderer of the memory.

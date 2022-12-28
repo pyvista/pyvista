@@ -1599,6 +1599,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if hasattr(self, 'ren_win') and not self._first_time:
             log.debug('Rendering')
+            self.renderers.render()
             self.ren_win.Render()
             self._rendered = True
 
@@ -1950,13 +1951,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     # Execution resumed after TerminateApp() call in on_timer callback, destroy the timer
                     self.iren.destroy_timer(Plotter.update_timer_id)
                 # Rerender
-                self.renderers.update()
                 self.render()
                 Plotter.last_update_time = curr_time
                 return
 
         if force_redraw:
-            self.renderers.update()
             self.render()
 
     def add_composite(

@@ -4142,9 +4142,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         renderer's bottom left corner, a location of ``(1, 1)``
         corresponds to the renderer's top right corner.
 
-    redraw_on_update : bool, default: True
+    redraw_on_render : bool, default: True
         Flag indicating whether the chart should be redrawn when
-        the plotter is updated. For static charts, setting this
+        the plotter is rendered. For static charts, setting this
         to ``False`` can improve performance.
 
     Examples
@@ -4182,7 +4182,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
-    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_update=True):
+    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
         """Initialize chart."""
         try:
             from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -4203,7 +4203,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         for ax in self._fig.axes:
             ax.patch.set_alpha(0)
         self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
-        self._redraw_on_update = redraw_on_update
+        self._redraw_on_render = redraw_on_render
 
         self._redraw()
 
@@ -4237,8 +4237,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         return self._fig
 
     @property
-    def redraw_on_update(self):
-        """Return or set the chart's redraw-on-update behavior.
+    def redraw_on_render(self):
+        """Return or set the chart's redraw-on-render behavior.
 
         Notes
         -----
@@ -4246,15 +4246,15 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         Plotter window is resized or the matplotlib figure is
         manually redrawn using ``fig.canvas.draw()``.
         When enabled, the chart will also be automatically
-        redrawn whenever the Plotter is updated using
-        ``plotter.update()``.
+        redrawn whenever the Plotter is rendered using
+        ``plotter.render()``.
 
         """
-        return self._redraw_on_update
+        return self._redraw_on_render
 
-    @redraw_on_update.setter
-    def redraw_on_update(self, val):
-        self._redraw_on_update = bool(val)
+    @redraw_on_render.setter
+    def redraw_on_render(self, val):
+        self._redraw_on_render = bool(val)
 
     def _resize(self):
         r_w, r_h = self._renderer.GetSize()
@@ -4286,12 +4286,12 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def _render_event(self, *args, plotter_update=False, **kwargs):
+    def _render_event(self, *args, plotter_render=False, **kwargs):
         # Redraw figure when geometry has changed (self._resize call
         # already updated figure dimensions in that case) OR the
-        # plotter's update method was called and redraw_on_update is
+        # plotter's render method was called and redraw_on_render is
         # enabled.
-        if (self.redraw_on_update and plotter_update) or self._resize():
+        if (self.redraw_on_render and plotter_render) or self._resize():
             self._redraw()
 
     @property

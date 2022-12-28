@@ -997,28 +997,24 @@ def test_chart_mpl_update(pl):
     x0, y0, y1 = [0, 1, 2], [2, 1, 3], [-1, 0, 2]
     f, ax = plt.subplots()
     line = ax.plot(x0, y0)[0]
-    chart = pyvista.ChartMPL(f, redraw_on_update=False)
+    chart = pyvista.ChartMPL(f, redraw_on_render=False)
     pl.add_chart(chart)
     pl_changed = PlotterChanged(pl)
 
     # Update matplotlib figure without redraw_on_update
     line.set_ydata(y1)
-    # No changes without canvas.draw or plotter.update call:
-    assert not pl_changed()
-    # No changes when pl.update() is called (as redraw_on_update is False)
-    pl.update()
+    # No changes when pl.render() is called (as redraw_on_render is False)
+    pl.render()
     assert not pl_changed()
     # Changes when figure is explicitly redrawn:
     f.canvas.draw()
     assert pl_changed()
 
-    # Update matplotlib figure with redraw_on_update
-    chart.redraw_on_update = True
+    # Update matplotlib figure with redraw_on_render
+    chart.redraw_on_render = True
     line.set_ydata(y0)
-    # Still no changes without pl.update call:
-    assert not pl_changed()
-    # Changes when pl.update() is called (as redraw_on_update is True now)
-    pl.update()
+    # Changes when pl.render() is called (as redraw_on_render is True now)
+    pl.render()
     assert pl_changed()
 
 
