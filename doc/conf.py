@@ -202,6 +202,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.Table\.copy_meta_from$',
     # Type alias
     r'\.color_like$',
+    r'\._typing\.Chart$',
     # Mixin methods from collections.abc
     r'\.MultiBlock\.clear$',
     r'\.MultiBlock\.count$',
