@@ -240,12 +240,16 @@ def test_point_picking(left_clicking):
         plotter = pyvista.Plotter(
             window_size=(100, 100),
         )
+        if use_mesh:
+            callback = (lambda picked_point, picked_mesh: None,)
+        else:
+            callback = (lambda picked_point: None,)
         plotter.add_mesh(sphere)
         plotter.enable_point_picking(
             show_message=True,
             use_mesh=use_mesh,
             left_clicking=left_clicking,
-            callback=lambda: None,
+            callback=callback,
         )
         # must show to activate the interactive renderer (for left_clicking)
         plotter.show(auto_close=False)
@@ -308,7 +312,7 @@ def test_path_picking():
     plotter.add_mesh(sphere)
     plotter.enable_path_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
     )
     # simulate the pick
     renderer = plotter.renderer
@@ -331,7 +335,7 @@ def test_geodesic_picking():
     plotter.add_mesh(sphere)
     plotter.enable_geodesic_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
         show_path=True,
         keep_order=True,
     )
@@ -359,7 +363,7 @@ def test_horizon_picking():
     plotter.add_mesh(sphere)
     plotter.enable_horizon_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
         show_horizon=True,
     )
     # simulate the pick
