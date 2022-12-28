@@ -1094,6 +1094,22 @@ class _Chart(DocSubs):
         """Set the chart geometry."""
         self.SetSize(_vtk.vtkRectf(*val))
 
+    @property
+    def _interactive(self):
+        """Return or set the chart's interactivity.
+
+        Notes
+        -----
+        Users should not set this property directly, but use the
+        :func:`Renderer.set_chart_interaction` method instead.
+
+        """
+        return self.GetInteractive()
+
+    @_interactive.setter
+    def _interactive(self, val):
+        self.SetInteractive(val)
+
     def _is_within(self, pos):
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
         l, b, w, h = self._geometry
@@ -4423,7 +4439,7 @@ class Charts:
             self._charts.append(chart)
             self._scene.AddItem(chart._background)
             self._scene.AddItem(chart)
-            chart.SetInteractive(False)  # Charts are not interactive by default
+            chart._interactive = False  # Charts are not interactive by default
 
     def set_interaction(self, interactive, toggle=False):
         """
@@ -4471,11 +4487,11 @@ class Charts:
         for chart in self._charts:
             # Determine whether to enable interaction with the current chart.
             if toggle:
-                enable = not chart.GetInteractive() if chart in charts else chart.GetInteractive()
+                enable = not chart._interactive if chart in charts else chart._interactive
             else:
                 enable = chart in charts
 
-            chart.SetInteractive(enable)
+            chart._interactive = enable
             if enable:
                 interactive_charts.append(chart)
 
@@ -4499,7 +4515,7 @@ class Charts:
             # Observer was removed already, so don't continue
             return
         for chart in self:
-            if chart.GetInteractive():
+            if chart._interactive:
                 # Change the chart's axis behaviour to fixed, such that the user can properly interact with the chart.
                 if chart._x_axis is not None:
                     chart._x_axis.behavior = "fixed"
