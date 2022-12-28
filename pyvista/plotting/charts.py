@@ -1432,10 +1432,13 @@ class _Chart(DocSubs):
         >>> chart.show()
 
         """
+        if off_screen is None:
+            off_screen = pyvista.OFF_SCREEN
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
-        pl.set_chart_interaction(self)
+        if not off_screen:
+            pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,
@@ -4384,6 +4387,7 @@ class Charts:
         # nicely with SetRenderer, so instead we'll use a weak reference
         # plus a property to call it
         self.__renderer = weakref.ref(renderer)
+        self._init_interaction_obs = None
 
     @property
     def _renderer(self):
@@ -4401,6 +4405,7 @@ class Charts:
 
     def deep_clean(self):
         """Remove all references to the chart objects and internal objects."""
+        self._set_init_interaction_observer(False)
         if self._scene is not None:
             charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
@@ -4473,14 +4478,35 @@ class Charts:
             chart.SetInteractive(enable)
             if enable:
                 interactive_charts.append(chart)
-                # TODO: below code should be executed AFTER first render (otherwise axes are not properly autoscaled first)
-                # Change the chart's axis behaviour to fixed, such that the user can properly interact with the chart.
-                # if chart._x_axis is not None:
-                #     chart._x_axis.behavior = "fixed"
-                # if chart._y_axis is not None:
-                #     chart._y_axis.behavior = "fixed"
 
+        self._set_init_interaction_observer(bool(interactive_charts))
         return interactive_charts
+
+    def _set_init_interaction_observer(self, enable):
+        # Set or remove the init_interaction observer
+        if enable and self._init_interaction_obs is None:
+            self._init_interaction_obs = self._renderer.add_render_event(
+                self._init_interaction, "after"
+            )
+        elif not enable and self._init_interaction_obs is not None:
+            self._renderer.remove_render_event(self._init_interaction_obs)
+            self._init_interaction_obs = None
+
+    def _init_interaction(self, *args, **kwargs):
+        # This code should be executed AFTER the first rendering of the charts.
+        # Otherwise the axes are not properly autoscaled first.
+        if self._init_interaction_obs is None:
+            # Observer was removed already, so don't continue
+            return
+        for chart in self:
+            if chart.GetInteractive():
+                # Change the chart's axis behaviour to fixed, such that the user can properly interact with the chart.
+                if chart._x_axis is not None:
+                    chart._x_axis.behavior = "fixed"
+                if chart._y_axis is not None:
+                    chart._y_axis.behavior = "fixed"
+        # Remove this observer, such that the above code is only executed once.
+        self._set_init_interaction_observer(False)
 
     def remove_chart(self, chart_or_index):
         """Remove a chart from the collection."""
