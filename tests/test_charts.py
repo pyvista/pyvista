@@ -982,19 +982,13 @@ def test_charts(pl):
     pl.add_chart(bottom_right)
     assert len(pl.renderer._charts) == 2
 
-    # Test toggle_interaction
+    # Test get_charts_by_pos
     pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
-    assert not top_left.GetInteractive()
-    assert not bottom_right.GetInteractive()
-    assert (
-        pl.renderer._charts.toggle_interaction((0.75 * win_size[0], 0.25 * win_size[1]))
-        is bottom_right._scene
-    )
-    assert not top_left.GetInteractive()
-    assert bottom_right.GetInteractive()
-    assert pl.renderer._charts.toggle_interaction((0, 0)) is None
-    assert not top_left.GetInteractive()
-    assert not bottom_right.GetInteractive()
+    cs = pl.renderer._get_charts_by_pos((0.75 * win_size[0], 0.25 * win_size[1]))
+    assert len(cs) == 1
+    assert bottom_right in cs
+    cs = pl.renderer._get_charts_by_pos((0, 0))
+    assert not cs
 
     # Test remove_chart
     pl.remove_chart(1)
@@ -1112,6 +1106,15 @@ def test_chart_interaction():
     assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
     assert pl.iren._style_class != pl.iren._context_style
     assert pl.iren._context_style.GetScene() is None
+
+    # Check init_interaction observer functionality
+    pl.set_chart_interaction(chart_bl)
+    assert chart_bl.x_axis.behavior == "auto"
+    pl.show(auto_close=False)
+    assert chart_bl.x_axis.behavior == "fixed"
+    chart_bl.x_axis.behavior = "auto"
+    pl.show(auto_close=False)
+    assert chart_bl.x_axis.behavior == "auto"
 
 
 @skip_mac

@@ -10,6 +10,7 @@ version of at least 9.0 and in a future release will require
 .. autosummary::
    :toctree: _autosummary
 
+   _typing.Chart
    Chart2D
    ChartBox
    ChartPie
