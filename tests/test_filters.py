@@ -543,6 +543,22 @@ def test_threshold_paraview_consistency():
     assert thresh.n_cells == 16
     assert thresh.get_data_range() == (1, 4)
 
+    # between(2,3)
+    #   [[         2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3,           ]]
+    thresh = mesh.threshold((2, 3), invert=False)
+    assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (2, 3)
+    # between(2,3),invert
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1,     ],
+    #    [             ],
+    #    [   4, 4, 4, 4]]
+    thresh = mesh.threshold((2, 3), invert=True)
+    assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (0, 4)
+
 
 def test_outline(datasets):
     for dataset in datasets:
