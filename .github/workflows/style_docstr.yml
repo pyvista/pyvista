@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   stylecheck:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
 
@@ -26,7 +26,7 @@ jobs:
         run: pre-commit run --all-files
 
   docstringcheck:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
 
