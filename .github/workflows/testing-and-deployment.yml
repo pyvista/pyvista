@@ -53,11 +53,10 @@ jobs:
 
 
   LinuxConda:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       CONDA_ALWAYS_YES: 1
-      VTK_VERSION: 8.2
-      conda_env: pyvista-vtk8.2
+      conda_env: pyvista-vtk
       DISPLAY: ':99.0'
       PYVISTA_OFF_SCREEN: True
 
@@ -97,7 +96,6 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
           conda env create --quiet -n ${{ env.conda_env }} --file environment.yml --experimental-solver=libmamba
           conda activate ${{ env.conda_env }}
           conda list
@@ -126,7 +124,7 @@ jobs:
 
   Linux:
     name: Linux Unit Testing
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
 
@@ -136,7 +134,7 @@ jobs:
           - python-version: '3.7'
             vtk-version: '8.1.2'
           - python-version: '3.8'
-            vtk-version: '9.0.3'
+            vtk-version: '9.0.3'  # Requires numpy<1.24
           - python-version: '3.9'
             vtk-version: '9.1'
           - python-version: '3.10'
@@ -177,6 +175,10 @@ jobs:
 
       - name: Install Testing Requirements
         run: pip install -r requirements_test.txt
+
+      - name: Limit NumPy for VTK 9.0.3
+        if: ${{ matrix.vtk-version == '9.0.3' }}
+        run: pip install 'numpy<1.24'
 
       - name: Software Report
         run: |
