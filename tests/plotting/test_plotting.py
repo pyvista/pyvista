@@ -328,6 +328,17 @@ def test_plot_return_cpos(sphere):
     assert sphere.plot(return_cpos=False) is None
 
 
+def test_plot_return_img_without_cpos(sphere: pyvista.PolyData):
+    img = sphere.plot(return_cpos=False, return_img=True, screenshot=True)
+    assert isinstance(img, np.ndarray)
+
+
+def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
+    cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
+    assert isinstance(cpos, pyvista.CameraPosition)
+    assert isinstance(img, np.ndarray)
+
+
 def test_add_title(verify_image_cache):
     verify_image_cache.high_variance_test = True
     plotter = pyvista.Plotter()
