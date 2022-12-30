@@ -226,7 +226,12 @@ from pyvista.utilities.reader import (
     XMLUnstructuredGridReader,
 )
 from pyvista.utilities.regression import compare_images
-from pyvista.utilities.sphinx_gallery import Scraper
+from pyvista.utilities.sphinx_gallery import (
+    Scraper,
+    # needs to be available per contract with Sphinx-Gallery:
+    _get_sg_image_scraper,
+)
+from pyvista.utilities.wrappers import _wrappers
 from pyvista.utilities.xvfb import start_xvfb
 
 from pyvista.core import *
@@ -235,10 +240,6 @@ from pyvista.jupyter import set_jupyter_backend
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
 from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 
-# Per contract with Sphinx-Gallery, this method must be available at top level
-from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
-
-from pyvista.utilities.wrappers import _wrappers
 
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
@@ -377,7 +378,6 @@ __all__ = [
     'Observer',
     'Octahedron',
     'OpenFOAMReader',
-    'Optional',
     'PLYReader',
     'PNGReader',
     'PNMReader',
