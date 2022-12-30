@@ -2,7 +2,7 @@
 
 import collections.abc
 from functools import partial
-from typing import Sequence
+from typing import Sequence, Tuple
 import warnings
 from weakref import proxy
 
@@ -325,9 +325,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self) -> tuple:
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounds of all actors present in the rendering window."""
-        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf], dtype=float)
 
         def _update_bounds(bounds):
             def update_axis(ax):
@@ -354,7 +354,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return tuple(the_bounds)
+        return (
+            float(the_bounds[0]),
+            float(the_bounds[1]),
+            float(the_bounds[2]),
+            float(the_bounds[3]),
+            float(the_bounds[4]),
+            float(the_bounds[5]),
+        )
 
     @property
     def length(self):
