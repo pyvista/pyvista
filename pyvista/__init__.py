@@ -10,24 +10,37 @@ import os
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import (
+    # arrays,
+    # cells,
+    # common,
+    # errors,
+    # features,
     fileio,
+    # geometric_objects,
+    # helpers,
+    # misc,
+    # parametric_objects,
     reader,
+    # regression,
+    # sphinx_gallery,
     transformations,
+    # wrappers,
+    # xvfb,
 )
 from pyvista.utilities.common import (
     perlin_noise,
     sample_function,
 )
 from pyvista.utilities.errors import (
-    assert_empty_kwargs,
-    check_valid_vector,
-    get_gpu_info,
     GPUInfo,
     Observer,
     Report,
+    VtkErrorCatcher,
+    assert_empty_kwargs,
+    check_valid_vector,
+    get_gpu_info,
     send_errors_to_logging,
     set_error_output_file,
-    VtkErrorCatcher,
 )
 from pyvista.utilities.features import (
     create_grid,
@@ -64,6 +77,7 @@ from pyvista.utilities.geometric_objects import (
     Icosahedron,
     Line,
     MultipleLines,
+    NORMALS,
     Octahedron,
     Plane,
     PlatonicSolid,
@@ -78,9 +92,12 @@ from pyvista.utilities.geometric_objects import (
     Triangle,
     Tube,
     Wavelet,
-    NORMALS,
 )
 from pyvista.utilities.helpers import (
+    AmbiguousDataError,
+    FieldAssociation,
+    MissingDataError,
+    ProgressMonitor,
     abstract_class,
     array_from_vtkmatrix,
     axis_rotation,
@@ -92,7 +109,6 @@ from pyvista.utilities.helpers import (
     cubemap_from_filenames,
     cubemap,
     field_array,
-    FieldAssociation,
     fit_plane_to_points,
     generate_plane,
     get_array_association,
@@ -108,7 +124,6 @@ from pyvista.utilities.helpers import (
     numpy_to_texture,
     parse_field_choice,
     point_array,
-    ProgressMonitor,
     raise_not_matching,
     row_array,
     set_default_active_scalars,
@@ -426,7 +441,7 @@ __all__ = [
     'Tetrahedron',
     'Text3D',
     'Texture',
-    'Thread',
+    #'Thread', # stdlib threading.Thread
     'TimeReader',
     'Triangle',
     'Tube',
@@ -463,7 +478,7 @@ __all__ = [
     'abstract_class',
     'actor',
     'array_from_vtkmatrix',
-    'arrays',
+    #'arrays',  # utilities.arrays
     'assert_empty_kwargs',
     'axes',
     'axis_rotation',
@@ -479,7 +494,7 @@ __all__ = [
     'color_char_to_word',
     'color_like',
     'colors',
-    'common',
+    #'common',  # utilities.common
     'compare_images',
     'composite',
     'composite_mapper',
@@ -499,14 +514,14 @@ __all__ = [
     'errors',
     'export_plotter_vtkjs',
     'export_vtkjs',
-    'features',
+    #'features',  # utilities.features
     'field_array',
     'fileio',
     'filters',
     'fit_plane_to_points',
     'from_meshio',
     'generate_plane',
-    'geometric_objects',
+    #'geometric_objects',  # utilities.geometric_objects
     'get_array',
     'get_array_association',
     'get_cmap_safe',
@@ -534,14 +549,14 @@ __all__ = [
     'make_tri_mesh',
     'mapper',
     'merge',
-    'misc',
+    #'misc',  # utilities.misc
     #'np',  # third-party lib
     'numpy_to_texture',
     'objects',
     'opacity_transfer_function',
     #'os',  # stdlib
     'parametric_keywords',
-    'parametric_objects',
+    #'parametric_objects',  # utilities.parametric_objects
     'parse_field_choice',
     'parse_font_family',
     #'pathlib',  # stdlib
@@ -565,7 +580,7 @@ __all__ = [
     'read_plot3d',
     'read_texture',
     'reader',
-    'regression',
+    #'regression',  # utilities.regression
     'render_passes',
     'render_window_interactor',
     'renderer',
@@ -584,7 +599,7 @@ __all__ = [
     'set_plot_theme',
     'set_vtkwriter_mode',
     # 'signal',  # stdlib
-    'sphinx_gallery',
+    #'sphinx_gallery',  # utilities.sphinx_gallery
     'start_xvfb',
     'surface_from_para',
     #'sys',  # stdlib
@@ -593,7 +608,7 @@ __all__ = [
     'threaded',
     #'threading',  # stdlib
     'tools',
-    'traceback',
+    #'traceback',  # stdlib
     'trans_from_matrix',
     'transform_vectors_sph_to_cart',
     'transformations',
@@ -610,5 +625,5 @@ __all__ = [
     #'warnings',  # stdlib
     'widgets',
     'wrap',
-    'xvfb',
+    #'xvfb',  # utilities.xvfb
 ]
