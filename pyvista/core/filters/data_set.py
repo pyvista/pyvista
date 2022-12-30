@@ -5501,17 +5501,17 @@ def _set_threshold_limit(alg, value, method, invert):
             raise ValueError(
                 f'Value range must be length one for a float value or two for min/max; not ({value}).'
             )
+        # Check range
+        if value[0] > value[1]:
+            raise ValueError(
+                'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
+            )
     elif isinstance(value, collections.abc.Iterable):
         raise TypeError('Value must either be a single scalar or a sequence.')
     if pyvista.vtk_version_info >= (9,):
         alg.SetInvert(invert)
     elif invert:  # pragma: no cover
         raise ValueError('PyVista no longer supports inverted thresholds for VTK<9.')
-    # Check range
-    if isinstance(value, (np.ndarray, collections.abc.Sequence)) and value[0] > value[1]:
-        raise ValueError(
-            'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
-        )
     # Set values and function
     if pyvista.vtk_version_info >= (9, 1):
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
