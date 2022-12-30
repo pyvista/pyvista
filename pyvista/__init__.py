@@ -292,9 +292,9 @@ PICKLE_FORMAT = 'xml'
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
 
-# __all__ only left for mypy --strict to work when pyvista is installed
+# __all__ only left for mypy --strict to work when pyvista is a dependency
 __all__ = [
-    # constants
+    # constants:
     'BUILDING_GALLERY',
     'DEFAULT_SCALARS_NAME',
     'FIGURE_PATH',
@@ -308,7 +308,7 @@ __all__ = [
     'PICKLE_FORMAT',
     'PLOT_DIRECTIVE_THEME',
     'REPR_VOLUME_MAX_CELLS',
-    # classes
+    # classes:
     'AVSucdReader',
     'Actor',
     'AmbiguousDataError',
@@ -464,22 +464,22 @@ __all__ = [
     'XMLRectilinearGridReader',
     'XMLStructuredGridReader',
     'XMLUnstructuredGridReader',
-    # privates and dunders
+    # privates and dunders:
     '__version__',
-    #'_GlobalTheme',
-    #'_get_sg_image_scraper',
-    #'_get_vtk_id_type',
-    #'_rcParams',
-    #'_set_plot_theme_from_env',
-    #'_typing',
-    #'_version',
-    #'_vtk',
-    #'_wrappers',
-    # helpers and modules
+    # '_GlobalTheme',
+    # '_get_sg_image_scraper',
+    # '_get_vtk_id_type',
+    # '_rcParams',
+    # '_set_plot_theme_from_env',
+    # '_typing',
+    # '_version',
+    # '_vtk',
+    # '_wrappers',
+    # helpers and modules:
     'abstract_class',
     'actor',
     'array_from_vtkmatrix',
-    #'arrays',  # utilities.arrays
+    # 'arrays',  # utilities.arrays
     'assert_empty_kwargs',
     'axes',
     'axis_rotation',
@@ -494,7 +494,7 @@ __all__ = [
     'color_char_to_word',
     'color_like',
     'colors',
-    #'common',  # utilities.common
+    # 'common',  # utilities.common
     'compare_images',
     'composite',
     'composite_mapper',
@@ -513,14 +513,14 @@ __all__ = [
     'errors',
     'export_plotter_vtkjs',
     'export_vtkjs',
-    #'features',  # utilities.features
+    # 'features',  # utilities.features
     'field_array',
     'fileio',
     'filters',
     'fit_plane_to_points',
     'from_meshio',
     'generate_plane',
-    #'geometric_objects',  # utilities.geometric_objects
+    # 'geometric_objects',  # utilities.geometric_objects
     'get_array',
     'get_array_association',
     'get_cmap_safe',
@@ -547,12 +547,12 @@ __all__ = [
     'make_tri_mesh',
     'mapper',
     'merge',
-    #'misc',  # utilities.misc
+    # 'misc',  # utilities.misc
     'numpy_to_texture',
     'objects',
     'opacity_transfer_function',
     'parametric_keywords',
-    #'parametric_objects',  # utilities.parametric_objects
+    # 'parametric_objects',  # utilities.parametric_objects
     'parse_field_choice',
     'parse_font_family',
     'perlin_noise',
@@ -563,7 +563,7 @@ __all__ = [
     'plotting',
     'point_array',
     'pointset',
-    #'pyvista',  # self-reference
+    # 'pyvista',  # self-reference
     'pyvista_ndarray',
     'raise_not_matching',
     'rcParams',
@@ -574,7 +574,7 @@ __all__ = [
     'read_plot3d',
     'read_texture',
     'reader',
-    #'regression',  # utilities.regression
+    # 'regression',  # utilities.regression
     'render_passes',
     'render_window_interactor',
     'renderer',
@@ -592,7 +592,7 @@ __all__ = [
     'set_pickle_format',
     'set_plot_theme',
     'set_vtkwriter_mode',
-    #'sphinx_gallery',  # utilities.sphinx_gallery
+    # 'sphinx_gallery',  # utilities.sphinx_gallery
     'start_xvfb',
     'surface_from_para',
     'system_supports_plotting',
