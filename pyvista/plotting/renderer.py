@@ -327,7 +327,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @property
     def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounds of all actors present in the rendering window."""
-        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf], dtype=float)
+        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
         def _update_bounds(bounds):
             def update_axis(ax):
