@@ -925,7 +925,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
 
     def disable_3_lights(self):
-        """Please use ``enable_lightkit``, this method has been depreciated."""
+        """Please use ``enable_lightkit``, this method has been deprecated."""
         from pyvista.core.errors import DeprecationError
 
         raise DeprecationError('DEPRECATED: Please use ``enable_lightkit``')

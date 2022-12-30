@@ -31,9 +31,9 @@ class InvalidCameraError(ValueError):
 
 
 class DeprecationError(RuntimeError):
-    """Used for depreciated methods and functions."""
+    """Used for deprecated methods and functions."""
 
-    def __init__(self, message='This feature has been depreciated'):
+    def __init__(self, message='This feature has been deprecated'):
         """Empty init."""
         RuntimeError.__init__(self, message)
 
