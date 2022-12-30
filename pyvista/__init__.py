@@ -441,7 +441,6 @@ __all__ = [
     'Tetrahedron',
     'Text3D',
     'Texture',
-    #'Thread', # stdlib threading.Thread
     'TimeReader',
     'Triangle',
     'Tube',
@@ -490,7 +489,6 @@ __all__ = [
     'check_depth_peeling',
     'check_valid_vector',
     'close_all',
-    #'collections',  # stdlib
     'color_char_to_word',
     'color_like',
     'colors',
@@ -510,7 +508,6 @@ __all__ = [
     'dataobject',
     'dataset',
     'datasetattributes',
-    #'enum',  # stdlib
     'errors',
     'export_plotter_vtkjs',
     'export_vtkjs',
@@ -544,24 +541,19 @@ __all__ = [
     'line_segments_from_points',
     'lines_from_points',
     'load_theme',
-    #'logging',  # stdlib
     'lookup_table',
     'make_tri_mesh',
     'mapper',
     'merge',
     #'misc',  # utilities.misc
-    #'np',  # third-party lib
     'numpy_to_texture',
     'objects',
     'opacity_transfer_function',
-    #'os',  # stdlib
     'parametric_keywords',
     #'parametric_objects',  # utilities.parametric_objects
     'parse_field_choice',
     'parse_font_family',
-    #'pathlib',  # stdlib
     'perlin_noise',
-    #'pi',
     'picking',
     'plot',
     'plot_arrows',
@@ -598,17 +590,13 @@ __all__ = [
     'set_pickle_format',
     'set_plot_theme',
     'set_vtkwriter_mode',
-    # 'signal',  # stdlib
     #'sphinx_gallery',  # utilities.sphinx_gallery
     'start_xvfb',
     'surface_from_para',
-    #'sys',  # stdlib
     'system_supports_plotting',
     'themes',
     'threaded',
-    #'threading',  # stdlib
     'tools',
-    #'traceback',  # stdlib
     'trans_from_matrix',
     'transform_vectors_sph_to_cart',
     'transformations',
@@ -622,7 +610,6 @@ __all__ = [
     'vtk_points',
     'vtk_version_info',
     'vtkmatrix_from_array',
-    #'warnings',  # stdlib
     'widgets',
     'wrap',
     #'xvfb',  # utilities.xvfb
