@@ -9,6 +9,11 @@ import os
 # Load default theme.  Must be loaded first.
 from pyvista._version import __version__
 from pyvista.plotting import *
+from pyvista.utilities import (
+    fileio,
+    reader,
+    transformations,
+)
 from pyvista.utilities.common import (
     perlin_noise,
     sample_function,
@@ -470,7 +475,7 @@ __all__ = [
     'check_depth_peeling',
     'check_valid_vector',
     'close_all',
-    'collections',
+    #'collections',  # stdlib
     'color_char_to_word',
     'color_like',
     'colors',
