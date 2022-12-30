@@ -5505,7 +5505,7 @@ def _set_threshold_limit(alg, value, method, invert):
         raise TypeError('Value must either be a single scalar or a sequence.')
     if pyvista.vtk_version_info >= (9,):
         alg.SetInvert(invert)
-    elif invert:
+    elif invert:  # pragma: no cover
         raise ValueError('PyVista no longer supports inverted thresholds for VTK<9.')
     # Check range
     if isinstance(value, (np.ndarray, collections.abc.Sequence)) and value[0] > value[1]:
