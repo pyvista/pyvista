@@ -231,10 +231,12 @@ from pyvista.utilities.sphinx_gallery import (
     # needs to be available per contract with Sphinx-Gallery:
     _get_sg_image_scraper,
 )
-from pyvista.utilities.wrappers import _wrappers
 from pyvista.utilities.xvfb import start_xvfb
 
 from pyvista.core import *
+
+# needs to come after core import to avoid circular import:
+from pyvista.utilities.wrappers import _wrappers
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
