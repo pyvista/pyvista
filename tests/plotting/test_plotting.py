@@ -2226,6 +2226,9 @@ def test_chart_plot():
 @skip_no_mpl_figure
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
+    # Seeing CI failures for Conda job that need to be addressed
+    verify_image_cache.high_variance_test = True
+
     import matplotlib.pyplot as plt
 
     rng = np.random.default_rng(1)
@@ -2250,9 +2253,6 @@ def test_chart_matplotlib_plot(verify_image_cache):
     chart = pyvista.ChartMPL(fig)
     pl.add_chart(chart)
     pl.show()
-
-    # Seeing CI failures for Conda job that need to be addressed
-    verify_image_cache.high_variance_test = True
 
 
 def test_add_remove_background(sphere):
@@ -2475,7 +2475,7 @@ def test_ssaa_pass():
 
 
 @skip_windows_mesa
-def test_ssao_pass(verify_image_cache):
+def test_ssao_pass():
     ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pyvista.Plotter()
     pl.add_mesh(ugrid)
