@@ -17,7 +17,7 @@ from pyvista.utilities import (
     # features,
     fileio,
     # geometric_objects,
-    # helpers,
+    helpers,
     # misc,
     # parametric_objects,
     reader,
