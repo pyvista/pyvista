@@ -2486,10 +2486,12 @@ def test_ssao_pass(verify_image_cache):
         return
 
     pl.enable_ssao()
-    pl.show()
+    pl.show(auto_close=False)
 
-    # Seeing CI failures that need to be addressed
-    verify_image_cache.high_variance_test = True
+    # ensure this fails when ssao disabled
+    pl.disable_ssao()
+    with pytest.raises(RuntimeError):
+        pl.show()
 
 
 @skip_mesa
