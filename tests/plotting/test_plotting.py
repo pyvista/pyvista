@@ -2982,13 +2982,13 @@ def test_plot_above_below_color(uniform):
 
 
 def test_plotter_lookup_table(sphere, verify_image_cache):
+    # Image regression test fails within OSMesa on Windows
+    verify_image_cache.skip = os.name == 'nt'
+
     lut = pyvista.LookupTable('Reds')
     lut.n_values = 3
     lut.scalar_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
     sphere.plot(scalars=sphere.points[:, 2], cmap=lut)
-
-    # Image regression test fails within OSMesa on Windows
-    verify_image_cache.skip = os.name == 'nt'
 
 
 @skip_windows_mesa  # due to opacity
