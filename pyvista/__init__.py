@@ -39,7 +39,7 @@ from pyvista.plotting import (
     # axes,
     # background_renderer,
     # camera,
-    # charts,
+    charts,
     close_all,
     color_char_to_word,
     color_like,
@@ -586,7 +586,7 @@ __all__ = [
     # 'cell',  # core.cell
     'cells',
     'cell_array',
-    # 'charts',  # plotting.charts
+    'charts',
     'check_depth_peeling',
     'check_valid_vector',
     'close_all',
