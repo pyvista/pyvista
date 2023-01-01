@@ -11,7 +11,7 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import (
     # arrays,
-    # cells,
+    cells,
     # common,
     # errors,
     # features,
@@ -233,7 +233,40 @@ from pyvista.utilities.sphinx_gallery import (
 )
 from pyvista.utilities.xvfb import start_xvfb
 
-from pyvista.core import *
+from pyvista.core import (
+    CellType,
+    CompositeFilters,
+    DataObject,
+    DataSet,
+    DataSetAttributes,
+    DataSetFilters,
+    ExplicitStructuredGrid,
+    Grid,
+    MultiBlock,
+    PointGrid,
+    PointSet,
+    PolyData,
+    PolyDataFilters,
+    RectilinearGrid,
+    StructuredGrid,
+    Table,
+    Texture,
+    UniformGrid,
+    UniformGridFilters,
+    UnstructuredGrid,
+    UnstructuredGridFilters,
+    # cell,
+    # composite,
+    # dataobject,
+    # dataset,
+    # datasetattributes,
+    errors,
+    filters,
+    # grid,
+    # objects,
+    # pointset,
+    pyvista_ndarray,
+)
 
 # needs to come after core import to avoid circular import:
 from pyvista.utilities.wrappers import _wrappers
@@ -485,7 +518,8 @@ __all__ = [
     'axis_rotation',
     'background_renderer',
     'camera',
-    'cell',
+    # 'cell',  # core.cell
+    'cells',
     'cell_array',
     'charts',
     'check_depth_peeling',
@@ -496,7 +530,7 @@ __all__ = [
     'colors',
     # 'common',  # utilities.common
     'compare_images',
-    'composite',
+    # 'composite',  # core.composite
     'composite_mapper',
     'conditional_decorator',
     'convert_array',
@@ -507,9 +541,9 @@ __all__ = [
     'create_grid',
     'cubemap',
     'cubemap_from_filenames',
-    'dataobject',
-    'dataset',
-    'datasetattributes',
+    # 'dataobject',  # core.dataobject
+    # 'dataset',  # core.dataset
+    # 'datasetattributes',  # core.datasetattributes
     'errors',
     'export_plotter_vtkjs',
     'export_vtkjs',
@@ -530,7 +564,7 @@ __all__ = [
     'get_vtk_type',
     'get_vtkjs_url',
     'global_theme',
-    'grid',
+    # 'grid',  # core.grid
     'grid_from_sph_coords',
     'helpers',
     'hexcolors',
@@ -549,7 +583,7 @@ __all__ = [
     'merge',
     # 'misc',  # utilities.misc
     'numpy_to_texture',
-    'objects',
+    # 'objects',  # core.objects
     'opacity_transfer_function',
     'parametric_keywords',
     # 'parametric_objects',  # utilities.parametric_objects
@@ -562,7 +596,7 @@ __all__ = [
     'plot_compare_four',
     'plotting',
     'point_array',
-    'pointset',
+    # 'pointset',  # core.pointset
     # 'pyvista',  # self-reference
     'pyvista_ndarray',
     'raise_not_matching',
