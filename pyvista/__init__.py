@@ -8,7 +8,72 @@ import os
 
 # Load default theme.  Must be loaded first.
 from pyvista._version import __version__
-from pyvista.plotting import *
+
+from pyvista.plotting import (
+    Actor,
+    Axes,
+    BackgroundPlotter,
+    BasePlotter,
+    BlockAttributes,
+    Camera,
+    CameraPosition,
+    Chart2D,
+    ChartBox,
+    ChartMPL,
+    ChartPie,
+    Color,
+    CompositeAttributes,
+    CompositePolyDataMapper,
+    DataSetMapper,
+    FONTS,
+    Light,
+    LookupTable,
+    PARAVIEW_BACKGROUND,
+    Plotter,
+    Property,
+    QtDeprecationError,
+    QtInteractor,
+    Renderer,
+    WidgetHelper,
+    # actor,
+    # axes,
+    # background_renderer,
+    # camera,
+    # charts,
+    close_all,
+    color_char_to_word,
+    color_like,
+    colors,
+    # composite_mapper,
+    create_axes_marker,
+    create_axes_orientation_box,
+    export_plotter_vtkjs,
+    # export_vtkjs,
+    get_cmap_safe,
+    get_vtkjs_url,
+    hexcolors,
+    # lights,
+    # lookup_table,
+    # mapper,
+    opacity_transfer_function,
+    parse_font_family,
+    # picking,
+    plot,
+    plot_arrows,
+    plot_compare_four,
+    plotting,
+    # render_passes,
+    # render_window_interactor,
+    # renderer,
+    # renderers,
+    # scalar_bars,
+    scale_point,
+    system_supports_plotting,
+    # theme,
+    # tools,
+    # widgets,
+)
+
 from pyvista.utilities import (
     # arrays,
     cells,
@@ -510,18 +575,18 @@ __all__ = [
     # '_wrappers',
     # helpers and modules:
     'abstract_class',
-    'actor',
+    # 'actor',  # plotting.actor
     'array_from_vtkmatrix',
     # 'arrays',  # utilities.arrays
     'assert_empty_kwargs',
-    'axes',
+    # 'axes',  # plotting.axes
     'axis_rotation',
-    'background_renderer',
-    'camera',
+    # 'background_renderer',  # plotting.background_renderer
+    # 'camera',  # plotting.camera
     # 'cell',  # core.cell
     'cells',
     'cell_array',
-    'charts',
+    # 'charts',  # plotting.charts
     'check_depth_peeling',
     'check_valid_vector',
     'close_all',
@@ -531,7 +596,7 @@ __all__ = [
     # 'common',  # utilities.common
     'compare_images',
     # 'composite',  # core.composite
-    'composite_mapper',
+    # 'composite_mapper',  # plotting.composite_mapper
     'conditional_decorator',
     'convert_array',
     'convert_string_array',
@@ -546,7 +611,7 @@ __all__ = [
     # 'datasetattributes',  # core.datasetattributes
     'errors',
     'export_plotter_vtkjs',
-    'export_vtkjs',
+    # 'export_vtkjs',  # plotting.export_vtkjs
     # 'features',  # utilities.features
     'field_array',
     'fileio',
@@ -573,13 +638,13 @@ __all__ = [
     'is_meshio_mesh',
     'is_pyvista_dataset',
     'jupyter',
-    'lights',
+    # 'lights',  # plotting.lights
     'line_segments_from_points',
     'lines_from_points',
     'load_theme',
-    'lookup_table',
+    #'lookup_table',  # plotting.lookup_table
     'make_tri_mesh',
-    'mapper',
+    # 'mapper',  # plotting.mapper
     'merge',
     # 'misc',  # utilities.misc
     'numpy_to_texture',
@@ -590,7 +655,7 @@ __all__ = [
     'parse_field_choice',
     'parse_font_family',
     'perlin_noise',
-    'picking',
+    # 'picking',  # plotting.picking
     'plot',
     'plot_arrows',
     'plot_compare_four',
@@ -609,14 +674,14 @@ __all__ = [
     'read_texture',
     'reader',
     # 'regression',  # utilities.regression
-    'render_passes',
-    'render_window_interactor',
-    'renderer',
-    'renderers',
+    # 'render_passes',  # plotting.render_passes
+    # 'render_window_interactor',  # plotting.render_window_interactor
+    # 'renderer',  # plotting.renderer
+    # 'renderers',  # plotting.renderers
     'row_array',
     'sample_function',
     'save_meshio',
-    'scalar_bars',
+    # 'scalar_bars',  # plotting.scalar_bars
     'scale_point',
     'send_errors_to_logging',
     'set_default_active_scalars',
@@ -630,9 +695,10 @@ __all__ = [
     'start_xvfb',
     'surface_from_para',
     'system_supports_plotting',
+    # 'theme',  # plotting.theme
     'themes',
     'threaded',
-    'tools',
+    # 'tools',  # plotting.tools
     'trans_from_matrix',
     'transform_vectors_sph_to_cart',
     'transformations',
@@ -646,7 +712,7 @@ __all__ = [
     'vtk_points',
     'vtk_version_info',
     'vtkmatrix_from_array',
-    'widgets',
+    # 'widgets',  # plotting.widgets
     'wrap',
-    #'xvfb',  # utilities.xvfb
+    # 'xvfb',  # utilities.xvfb
 ]

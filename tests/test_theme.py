@@ -2,7 +2,7 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import colors
+from pyvista.plotting import colors
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
