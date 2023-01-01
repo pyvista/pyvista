@@ -57,7 +57,7 @@ def _get_vtk_id_type():
 
 
 class PyVistaDeprecationWarning(Warning):
-    """Non-supressed Depreciation Warning."""
+    """Non-supressed Deprecation Warning."""
 
     pass
 
