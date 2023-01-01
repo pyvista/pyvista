@@ -348,9 +348,10 @@ def test_threshold(datasets):
     thresh = dataset.threshold([100, 500], invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
-    thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
-    assert thresh is not None
-    assert isinstance(thresh, pyvista.UnstructuredGrid)
+    if pyvista.vtk_version_info >= (9,):
+        thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
+        assert thresh is not None
+        assert isinstance(thresh, pyvista.UnstructuredGrid)
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold({100, 500}, progress_bar=True)
@@ -363,6 +364,16 @@ def test_threshold(datasets):
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
+
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(ValueError):
+            dataset.threshold([100, 500], invert=True)
+
+    with pytest.raises(ValueError):
+        dataset.threshold(100, method='between')
+
+    with pytest.raises(ValueError):
+        dataset.threshold((2, 1))
 
 
 def test_threshold_all_scalars():
@@ -434,6 +445,8 @@ def test_threshold_percent(datasets):
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
     for i, dataset in enumerate(datasets[0:3]):
+        if inverts[i] and pyvista.vtk_version_info < (9,):
+            continue
         thresh = dataset.threshold_percent(
             percent=percents[i], invert=inverts[i], progress_bar=True
         )
@@ -448,6 +461,106 @@ def test_threshold_percent(datasets):
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold_percent({18.0, 85.0})
+
+
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9,),
+    reason='The invert parameter is not supported for VTK<9. The general logic for the API differences is tested for VTK<9.1 though.',
+)
+def test_threshold_paraview_consistency():
+    """Validate expected results that match ParaView."""
+    x = np.arange(5, dtype=float)
+    y = np.arange(6, dtype=float)
+    z = np.arange(2, dtype=float)
+    xx, yy, zz = np.meshgrid(x, y, z)
+    mesh = pyvista.StructuredGrid(xx, yy, zz)
+    mesh.cell_data.set_scalars(np.repeat(range(5), 4))
+
+    # Input mesh
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+
+    # upper(0): extract all
+    thresh = mesh.threshold(0, invert=False, method='upper')
+    assert thresh.n_cells == mesh.n_cells
+    assert np.allclose(thresh.active_scalars, mesh.active_scalars)
+    # upper(0),invert: extract none
+    thresh = mesh.threshold(0, invert=True, method='upper')
+    assert thresh.n_cells == 0
+
+    # lower(0)
+    #   [[0, 0, 0, 0   ]]
+    thresh = mesh.threshold(0, invert=False, method='lower')
+    assert thresh.n_cells == 4
+    assert np.allclose(thresh.active_scalars, np.array([0, 0, 0, 0]))
+    # lower(0),invert
+    #   [[            1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(0, invert=True, method='lower')
+    assert thresh.n_cells == 16
+    assert thresh.get_data_range() == (1, 4)
+
+    # upper(2)
+    #   [[         2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(2, invert=False, method='upper')
+    assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (2, 4)
+    # upper(2),invert
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1,     ]]
+    thresh = mesh.threshold(2, invert=True, method='upper')
+    assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (0, 1)
+
+    # lower(2)
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2,        ]]
+    thresh = mesh.threshold(2, invert=False, method='lower')
+    assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (0, 2)
+    # lower(2),invert
+    #   [[      3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(2, invert=True, method='lower')
+    assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (3, 4)
+
+    # between(0, 0)
+    #   [[0, 0, 0, 0   ]]
+    thresh = mesh.threshold((0, 0), invert=False)
+    assert thresh.n_cells == 4
+    assert np.allclose(thresh.active_scalars, np.array([0, 0, 0, 0]))
+    # between(0,0),invert
+    #   [[            1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold((0, 0), invert=True)
+    assert thresh.n_cells == 16
+    assert thresh.get_data_range() == (1, 4)
+
+    # between(2,3)
+    #   [[         2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3,           ]]
+    thresh = mesh.threshold((2, 3), invert=False)
+    assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (2, 3)
+    # between(2,3),invert
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1,     ],
+    #    [             ],
+    #    [   4, 4, 4, 4]]
+    thresh = mesh.threshold((2, 3), invert=True)
+    assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (0, 4)
 
 
 def test_outline(datasets):
@@ -911,6 +1024,10 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9,),
+    reason='The invert parameter is not supported for VTK<9.',
+)
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
