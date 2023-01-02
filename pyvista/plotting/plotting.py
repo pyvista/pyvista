@@ -6246,6 +6246,7 @@ class Plotter(BasePlotter):
         if return_img or screenshot is True:
             if return_cpos:
                 return self.camera_position, self.last_image
+            return self.last_image
 
         if return_cpos:
             return self.camera_position

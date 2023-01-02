@@ -1247,6 +1247,8 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         continuous=False,
+        all_scalars=False,
+        method='upper',
         **kwargs,
     ):
         """Apply a threshold on a mesh with a slider.
@@ -1265,8 +1267,13 @@ class WidgetHelper:
         scalars : str, optional
             The string name of the scalars on the mesh to threshold and display.
 
-        invert : bool, optional
-            Invert (flip) the threshold.
+        invert : bool, default: False
+            Invert the threshold results. That is, cells that would have been
+            in the output with this option off are excluded, while cells that
+            would have been excluded from the output are included.
+
+            .. warning::
+                This option is only supported for VTK version 9+
 
         widget_color : color_like, optional
             Color of the widget.  Either a string, RGB sequence, or
@@ -1277,7 +1284,7 @@ class WidgetHelper:
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        preference : str, optional
+        preference : str, default: 'cell'
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
             mapped to the mesh.  Default ``'cell'``, causes the
@@ -1287,19 +1294,34 @@ class WidgetHelper:
         title : str, optional
             The string label of the slider widget.
 
-        pointa : sequence, optional
+        pointa : sequence, default: (0.4, 0.9)
             The relative coordinates of the left point of the slider
             on the display port.
 
-        pointb : sequence, optional
+        pointb : sequence, default: (0.9, 0.9)
             The relative coordinates of the right point of the slider
             on the display port.
 
-        continuous : bool, optional
+        continuous : bool, default: False
             If this is enabled (default is ``False``), use the continuous
             interval ``[minimum cell scalar, maximum cell scalar]``
             to intersect the threshold bound, rather than the set of
             discrete scalar values from the vertices.
+
+        all_scalars : bool, default: False
+            If using scalars from point data, all
+            points in a cell must satisfy the threshold when this
+            value is ``True``.  When ``False``, any point of the cell
+            with a scalar value satisfying the threshold criterion
+            will extract the cell. Has no effect when using cell data.
+
+        method : str, default: 'upper'
+            Set the threshold method for single-values, defining which
+            threshold bounds to use. If the ``value`` is a range, this
+            parameter will be ignored, extracting data between the two
+            values. For single values, ``'lower'`` will extract data
+            lower than the  ``value``. ``'upper'`` will extract data
+            larger than the ``value``.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -1338,12 +1360,13 @@ class WidgetHelper:
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
+        alg.SetAllScalars(all_scalars)
 
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
-            _set_threshold_limit(alg, value, invert)
+            _set_threshold_limit(alg, value, method, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 

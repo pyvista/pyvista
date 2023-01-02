@@ -149,5 +149,6 @@ markers = [
 ]
 addopts = '--image_cache_dir ./tests/plotting/image_cache'
 
+
 [tool.mypy]
 ignore_missing_imports = true
