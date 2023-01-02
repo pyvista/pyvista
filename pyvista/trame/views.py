@@ -3,10 +3,9 @@
 This requires trame v2.3.0
 
 """
-from pyvista import _vtk
-
 import weakref
-from trame.widgets.vtk import VtkLocalView, VtkRemoteView, VtkRemoteLocalView
+
+from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
 
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
