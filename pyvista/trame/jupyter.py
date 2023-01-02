@@ -6,7 +6,8 @@ from trame.app import get_server
 from trame_vtk.modules import vtk as vtk_module
 
 import pyvista
-from pyvista.trame import CLOSED_PLOTTER_ERROR, ui
+from pyvista.trame.ui import initialize
+from pyvista.trame.views import CLOSED_PLOTTER_ERROR
 
 JUPYTER_SERVER_NAME = 'pyvista-jupyter'
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
@@ -68,7 +69,7 @@ def launch_server(server):
     server.enable_module(vtk_module)
 
     # HACK: Need to register CSS
-    ui.initialize(server, pyvista.Plotter(off_screen=True, notebook=False), local_rendering=False)
+    initialize(server, pyvista.Plotter(off_screen=True, notebook=False), local_rendering=False)
 
     def on_ready(**_):
         logger.debug(f'Server ready: {server}')
@@ -147,7 +148,7 @@ def show_trame(
         raise TrameServerDownError(name)
 
     # Initialize app
-    ui_name = ui.initialize(server, plotter, local_rendering=local_rendering)
+    ui_name = initialize(server, plotter, local_rendering=local_rendering)
 
     # Show as cell result
     return build_iframe(

@@ -12,7 +12,7 @@ from trame.ui.vuetify import VAppLayout
 from trame.widgets import vuetify
 
 import pyvista
-from pyvista.trame import PyVistaLocalView, PyVistaRemoteView
+from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteView
 
 UI_TITLE = "PyVista"
 
