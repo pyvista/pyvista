@@ -30,4 +30,5 @@ def test_star_imports(module_name):
         pytest.skip()
     # star imports will fail if __all__ contains any names
     # that aren't actually accessible in the namespace
-    assert all(hasattr(module, attr) for attr in dunder_all)
+    missing_names = {attr for attr in dunder_all if not hasattr(module, attr)}
+    assert not missing_names
