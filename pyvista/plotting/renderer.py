@@ -2,7 +2,7 @@
 
 import collections.abc
 from functools import partial
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, cast
 import warnings
 from weakref import proxy
 
@@ -354,14 +354,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return (
-            float(the_bounds[0]),
-            float(the_bounds[1]),
-            float(the_bounds[2]),
-            float(the_bounds[3]),
-            float(the_bounds[4]),
-            float(the_bounds[5]),
-        )
+        return cast(Tuple[float, float, float, float, float, float], tuple(the_bounds))
 
     @property
     def length(self):

@@ -164,14 +164,7 @@ class MultiBlock(
         # interleave minima and maxima for bounds
         the_bounds = np.stack([minima, maxima]).ravel('F')
 
-        return (
-            float(the_bounds[0]),
-            float(the_bounds[1]),
-            float(the_bounds[2]),
-            float(the_bounds[3]),
-            float(the_bounds[4]),
-            float(the_bounds[5]),
-        )
+        return cast(Tuple[float, float, float, float, float, float], tuple(the_bounds))
 
     @property
     def center(self) -> Any:
