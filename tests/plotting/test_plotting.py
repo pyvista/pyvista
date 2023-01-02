@@ -1176,11 +1176,15 @@ def test_vector_array_with_points(multicomp_poly):
     # test no component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_points')
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
     # test component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
 
@@ -1188,11 +1192,15 @@ def test_vector_array_with_cells(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
     # test component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
 
@@ -1201,6 +1209,8 @@ def test_vector_array(multicomp_poly):
     pl = pyvista.Plotter(shape=(2, 2))
     pl.subplot(0, 0)
     pl.add_mesh(multicomp_poly, scalars="vector_values_points", show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.subplot(0, 1)
     pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=0)
     pl.subplot(1, 0)
@@ -1208,7 +1218,6 @@ def test_vector_array(multicomp_poly):
     pl.subplot(1, 1)
     pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=2)
     pl.link_views()
-    pl.reset_camera()
     pl.show()
 
 
