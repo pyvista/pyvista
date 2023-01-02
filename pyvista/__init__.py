@@ -309,8 +309,10 @@ from pyvista.core import (
     # grid,
     # objects,
     # pointset,
-    pyvista_ndarray,
 )
+
+# mypy gets confused if this is added to the pyvista.core import:
+from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 # needs to come after core import to avoid circular import:
 from pyvista.utilities.wrappers import _wrappers

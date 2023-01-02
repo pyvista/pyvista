@@ -22,3 +22,30 @@ from .pointset import (
 )
 from .pyvista_ndarray import pyvista_ndarray
 from .cell import CellType
+
+
+# __all__ only left for mypy --strict to work when pyvista is a dependency
+__all__ = [
+    'CellType',
+    'CompositeFilters',
+    'DataObject',
+    'DataSet',
+    'DataSetAttributes',
+    'DataSetFilters',
+    'ExplicitStructuredGrid',
+    'Grid',
+    'MultiBlock',
+    'PointGrid',
+    'PointSet',
+    'PolyData',
+    'PolyDataFilters',
+    'RectilinearGrid',
+    'StructuredGrid',
+    'Table',
+    'Texture',
+    'UniformGrid',
+    'UniformGridFilters',
+    'UnstructuredGrid',
+    'UnstructuredGridFilters',
+    'pyvista_ndarray',
+]

@@ -138,3 +138,11 @@ def set_jupyter_backend(backend):
 
     """
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
+
+
+# __all__ only left for mypy --strict to work when pyvista is a dependency
+__all__ = [
+    'ALLOWED_BACKENDS',
+    '_validate_jupyter_backend',
+    'set_jupyter_backend',
+]
