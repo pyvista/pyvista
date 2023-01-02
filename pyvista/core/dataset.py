@@ -30,8 +30,9 @@ from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .._typing import Number, NumericArray, Vector, VectorArray
-from .cell import Cell
 from .dataobject import DataObject
+
+# from .cell import Cell
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
@@ -2480,8 +2481,8 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self, i: int) -> Cell:
-        """Return a pyvista.Cell object.
+    def get_cell(self, i: int) -> 'pyvista.Cell':
+        """Return a :class:`pyvista.Cell` object.
 
         Parameters
         ----------
@@ -2493,9 +2494,15 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.Cell
             The i-th pyvista.Cell.
 
+        Notes
+        -----
+        Cells returned from this method are deep copies of the original
+        cells. Changing properties (for example, ``points``) will not affect
+        the dataset they originated from.
+
         Examples
         --------
-        Get the 0-th cell
+        Get the 0-th cell.
 
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
@@ -2511,47 +2518,42 @@ class DataSet(DataSetFilters, DataObject):
           Y Bounds:	4.876e+01, 5.549e+01
           Z Bounds:	8.075e+01, 8.366e+01
         """
+        # Note: GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
+        # while GetCell(vtkIdType cellId) is not.
         vtkCell = _vtk.vtkGenericCell()
         self.GetCell(i, vtkCell)
-        return Cell(vtkCell)
+        return pyvista.Cell(vtkCell)
 
     @property
-    def cell(self) -> List[Cell]:
+    def cell(self) -> List['pyvista.Cell']:
         """Return a list of cells.
 
         Returns
         -------
         list[pyvista.Cell]
-            A list of `pyvista.Cell` objects.
+            A list of :class:`pyvista.Cell` objects.
 
         Warnings
         --------
-        The ``edges`` and ``faces`` properties of the :class:`pyvista.Cell`
-        object are generators that should NEVER be converted to a list
-        since repeated calls to the vtk underlying methods can change the
-        returned data.
-        See https://vtk.org/doc/nightly/html/classvtkCell.html#a11b6ba66e9f7e193b204d478379e32ea.
-
-        For large meshes, the list can take some time to compute and you might prefer to
-        use the :func:`DataSet.get_cell` method within a for-loop.
+        For large meshes, the list can take some time to compute and you might
+        prefer to use the :func:`DataSet.get_cell` method within a for-loop.
 
         Examples
         --------
-        Get the last cell
+        Get the last cell of a dataset.
 
         >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
+        >>> mesh = examples.load_hexbeam()
         >>> mesh.cell[-1] # doctest:+SKIP
-        Cell (0x7f62d214c310)
-          Type:	CellType.TRIANGLE
-          Linear: True
-          Dimension: 2
-          N Points:	3
-          N Faces: 0
-          N Edges: 3
-          X Bounds:	7.420e+02, 8.067e+02
-          Y Bounds:	6.815e+02, 7.094e+02
-          Z Bounds:	9.487e+00, 1.449e+01
+        Type: CellType.HEXAHEDRON
+        Linear: True
+        Dimension: 3
+        N Points: 8
+        N Faces: 6
+        N Edges: 12
+        X Bounds: 5.000e-01, 1.000e+00
+        Y Bounds: 5.000e-01, 1.000e+00
+        Z Bounds: 4.500e+00, 5.000e+00
 
         Get the point ids of the last cell
 

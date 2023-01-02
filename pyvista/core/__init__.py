@@ -21,4 +21,5 @@ from .pointset import (
     ExplicitStructuredGrid,
 )
 from .pyvista_ndarray import pyvista_ndarray
-from .cell import CellType, Cell
+from .celltype import CellType
+from .cell import Cell

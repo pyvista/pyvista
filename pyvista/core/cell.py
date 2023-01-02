@@ -1,54 +1,87 @@
-"""Define types of cells."""
+"""Contains the Cell class."""
 from __future__ import annotations
 
-from enum import IntEnum
-from typing import Generator, List, Tuple
+from typing import List, Tuple
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 
+from .celltype import CellType
+from .dataset import DataObject
 
-class Cell(_vtk.VTKObjectWrapper):
+
+class Cell(_vtk.VTKObjectWrapper, DataObject):
     """Wrapping of vtkCell.
 
-    This class provide the capability to access a given cell topology.
+    This class provides the capability to access a given cell topology and can
+    be useful when walking through a cell's individual faces or investigating
+    cell properties.
 
     Parameters
     ----------
     vtkobject : vtk.vtkCell
-        The vtk object to wrap as Cell, that must be of vtk.vtkCell type.
+        The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
+
+    Notes
+    -----
+    Accessing individual cells from a :class:`pyvista.DataSet` using this class
+    will be much slower than accessing bulk data from the
+    :attr:`pyvista.pyvista.PolyData.faces` or
+    :attr:`pyvista.UnstructuredGrid.cells` attributes.
+
+    Also note that the the cell object is a deep copy of the original cell and
+    is unassociated with the original cell. Changing any data of that points of
+    that cell (for example, ``points``) will not change the original dataset.
 
     Examples
     --------
-    Get the 0-th cell information
+    Get the 0-th cell from a :class:`pyvista.PolyData`.
 
     >>> import pyvista
     >>> mesh = pyvista.Sphere()
-    >>> mesh.cell[0] # doctest: +SKIP
-    Cell (0x7fda00ddec70)
-      Type:	CellType.TRIANGLE
-      Linear: True
-      Dimension: 2
-      N Points:	3
-      N Faces: 0
-      N Edges: 3
-      X Bounds:	-5.406e-02, -5.551e-17
-      Y Bounds:	0.000e+00, 1.124e-02
-      Z Bounds:	-5.000e-01, -4.971e-01
+    >>> cell = mesh.cell[0]
+    >>> cell  # doctest: +SKIP
+    Cell (0x7fa760075a10)
+      Type:       <CellType.TRIANGLE: 5>
+      Linear:     True
+      Dimension:  2
+      N Points:	  3
+      N Faces:    0
+      N Edges:    3
+      X Bounds:   -5.406e-02, -5.551e-17
+      Y Bounds:	  0.000e+00, 1.124e-02
+      Z Bounds:   -5.000e-01, -4.971e-01
+
+    Get the 0-th cell from a :class:`pyvista.UnstructuredGrid`.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.load_hexbeam()
+    >>> cell = mesh.cell[0]
+    >>> cell
+    Cell (0x7fdc71a3c210)
+      Type:       <CellType.HEXAHEDRON: 12>
+      Linear:     True
+      Dimension:  3
+      N Points:   8
+      N Faces:    6
+      N Edges:    12
+      X Bounds:   0.000e+00, 5.000e-01
+      Y Bounds:   0.000e+00, 5.000e-01
+      Z Bounds:   0.000e+00, 5.000e-01
+
     """
 
     def __init__(self, vtkobject: _vtk.vtkCell) -> None:
-        """Init the cell object with a _vtk.vtkCell."""
+        """Initialize the cell object using a _vtk.vtkCell."""
         if not isinstance(vtkobject, _vtk.vtkCell):
-            msg = f"`vtkobject` must be of vtkCell type (got {type(vtkobject)}) instead"
-            raise TypeError(msg)
+            raise TypeError(f"`vtkobject` must be of vtkCell type (got {type(vtkobject)}) instead")
         super().__init__(vtkobject=vtkobject)
 
     @property
     def type(self) -> CellType:
-        """Get the cell type from the enum `CellType`.
+        """Get the cell type from the enum :class:`pyvista.CellType`.
 
         Examples
         --------
@@ -61,7 +94,7 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def is_linear(self) -> bool:
-        """Get if the cell is linear.
+        """Return if the cell is linear.
 
         Examples
         --------
@@ -69,12 +102,67 @@ class Cell(_vtk.VTKObjectWrapper):
         >>> mesh = pyvista.Sphere()
         >>> mesh.cell[0].is_linear
         True
+
         """
         return bool(self.IsLinear())
 
+    def plot(self, **kwargs):
+        """Plot this cell.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            See :func:`pyvista.plot` for a description of the optional keyword
+            arguments.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> cell = mesh.cell[0]
+        >>> cell.plot()
+
+        """
+        self.cast_to_unstructured_grid().plot(**kwargs)
+
+    def cast_to_unstructured_grid(self):
+        """Cast this cell to an unstructured grid.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> cell = mesh.cell[0]
+        >>> grid = cell.cast_to_unstructured_grid()
+        UnstructuredGrid (0x7f9383619540)
+          N Cells:      1
+          N Points:     8
+          X Bounds:     0.000e+00, 5.000e-01
+          Y Bounds:     0.000e+00, 5.000e-01
+          Z Bounds:     0.000e+00, 5.000e-01
+          N Arrays:     0
+
+        """
+        if _vtk.VTK9:
+            return pyvista.UnstructuredGrid(
+                [len(self.point_ids)] + list(range(len(self.point_ids))),
+                [int(self.type)],
+                self.points,
+            )
+        else:  # pragma: no cover
+            return pyvista.UnstructuredGrid(
+                [0],
+                self.point_ids,
+                [int(self.type)],
+                self.points,
+            )
+
     @property
     def dimension(self) -> int:
-        """Get the cell dimension. For example, 2 for a triangle and 3 for a tetrahedron.
+        """Return the cell dimension.
+
+        This returns the dimensionality of the cell. For example, 1 for an edge,
+        2 for a triangle and 3 for a tetrahedron.
 
         Examples
         --------
@@ -87,7 +175,7 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def n_points(self) -> int:
-        """Get the number of points building the cell.
+        """Get the number of points composing the cell.
 
         Examples
         --------
@@ -100,7 +188,7 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def n_faces(self) -> int:
-        """Get the number of faces building the cell.
+        """Get the number of faces composing the cell.
 
         Examples
         --------
@@ -113,7 +201,7 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def n_edges(self) -> int:
-        """Get the number of edges building the cell.
+        """Get the number of edges composing the cell.
 
         Examples
         --------
@@ -126,7 +214,7 @@ class Cell(_vtk.VTKObjectWrapper):
 
     @property
     def point_ids(self) -> List[int]:
-        """Get the point ids building the cell.
+        """Get the point ids composing the cell.
 
         Examples
         --------
@@ -156,52 +244,54 @@ class Cell(_vtk.VTKObjectWrapper):
         points = _vtk.vtk_to_numpy(self.GetPoints().GetData())
         return points.copy()
 
-    @property
-    def edges(self) -> Generator[Cell, None, None]:
-        """Get an iterator of edges building the cell.
+    def get_edge(self, index: int) -> Cell:
+        """Get the i-th edge composing the cell.
+
+        Parameters
+        ----------
+        index : int
+            Edge ID.
 
         Examples
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> for e in mesh.cell[0].edges:
-        ...     print(e.point_ids)
+        >>> cell = mesh.cell[0]
+        >>> for i in range(cell.n_edges):
+        ...     edge = cell.get_edge(i)
+        ...     print(edge.point_ids)
         [2, 30]
         [30, 0]
         [0, 2]
+
         """
-        for i in range(self.n_edges):
-            yield self.get_edge(i)
+        return Cell(self.GetEdge(index))
 
-    def get_edge(self, i) -> Cell:
-        """Get the i-th edge building the cell."""
-        return Cell(self.GetEdge(i))
+    def get_face(self, index: int) -> Cell:
+        """Get the i-th face composing the cell.
 
-    @property
-    def faces(self) -> Generator[Cell, None, None]:
-        """Get an iterator of cell faces.
+        Parameters
+        ----------
+        index : int
+            Face ID.
 
-        Examples
-        --------
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> for f in mesh.cell[0].faces:
-        ...     print(f.point_ids)
+        >>> cell = mesh.cell[0]
+        >>> for i in range(cell.n_faces):
+        ...     face = cell.get_face(i)
+        ...     print(face.point_ids)
         [0, 1, 3]
         [1, 2, 3]
         [2, 0, 3]
         [0, 2, 1]
-        """
-        for i in range(self.n_faces):
-            yield self.get_face(i)
 
-    def get_face(self, i) -> Cell:
-        """Get the i-th face building the cell."""
-        return Cell(self.GetFace(i))
+        """
+        return Cell(self.GetFace(index))
 
     @property
     def bounds(self) -> Tuple[float, float, float, float, float, float]:
-        """Get the cell bounds [xmin, xmax, ymin, ymax, zmin, zmax].
+        """Get the cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Examples
         --------
@@ -215,7 +305,7 @@ class Cell(_vtk.VTKObjectWrapper):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("Type", str(self.type), "{}" * len(str(self.type))))
+        attrs.append(("Type", repr(self.type), "{}" * len(repr(self.type))))
         attrs.append(("Linear", self.is_linear, "{}"))
         attrs.append(("Dimension", self.dimension, "{}"))
         attrs.append(("N Points", self.n_points, "{}"))
@@ -229,131 +319,10 @@ class Cell(_vtk.VTKObjectWrapper):
 
         return attrs
 
-    def _str(self, html=False):
-        """Return a string with the cell info."""
-        fmt = ""
-        if html:
-            return "Not implemented yet"
-
-        # Otherwise return a string that is Python console friendly
-        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
-        # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}: {}\n"
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
-        return fmt
-
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the object representation."""
-        return self._str(html=False)
+        return self.head(display=False, html=False)
 
-
-class CellType(IntEnum):
-    """Define types of cells.
-
-    Warnings
-    --------
-    The following types need ``vtk >=v9.0.0`` (See `Implementation of vtkTriQuadraticPyramid cell
-    <https://gitlab.kitware.com/vtk/vtk/-/merge_requests/8295>`_ and `Add Bezier cell types <https://gitlab.kitware.com/vtk/vtk/-/merge_requests/6055>`_ ).
-    * TRIQUADRATIC_PYRAMID
-    * BEZIER_TRIANGLE
-    * BEZIER_QUADRILATERAL
-    * BEZIER_TETRAHEDRON
-    * BEZIER_HEXAHEDRON
-    * BEZIER_WEDGE
-    * BEZIER_PYRAMID
-
-    """
-
-    # Linear cells
-    EMPTY_CELL = _vtk.VTK_EMPTY_CELL
-    VERTEX = _vtk.VTK_VERTEX
-    POLY_VERTEX = _vtk.VTK_POLY_VERTEX
-    LINE = _vtk.VTK_LINE
-    POLY_LINE = _vtk.VTK_POLY_LINE
-    TRIANGLE = _vtk.VTK_TRIANGLE
-    TRIANGLE_STRIP = _vtk.VTK_TRIANGLE_STRIP
-    POLYGON = _vtk.VTK_POLYGON
-    PIXEL = _vtk.VTK_PIXEL
-    QUAD = _vtk.VTK_QUAD
-    TETRA = _vtk.VTK_TETRA
-    VOXEL = _vtk.VTK_VOXEL
-    HEXAHEDRON = _vtk.VTK_HEXAHEDRON
-    WEDGE = _vtk.VTK_WEDGE
-    PYRAMID = _vtk.VTK_PYRAMID
-    PENTAGONAL_PRISM = _vtk.VTK_PENTAGONAL_PRISM
-    HEXAGONAL_PRISM = _vtk.VTK_HEXAGONAL_PRISM
-
-    # Quadratic, isoparametric cells
-    QUADRATIC_EDGE = _vtk.VTK_QUADRATIC_EDGE
-    QUADRATIC_TRIANGLE = _vtk.VTK_QUADRATIC_TRIANGLE
-    QUADRATIC_QUAD = _vtk.VTK_QUADRATIC_QUAD
-    QUADRATIC_POLYGON = _vtk.VTK_QUADRATIC_POLYGON
-    QUADRATIC_TETRA = _vtk.VTK_QUADRATIC_TETRA
-    QUADRATIC_HEXAHEDRON = _vtk.VTK_QUADRATIC_HEXAHEDRON
-    QUADRATIC_WEDGE = _vtk.VTK_QUADRATIC_WEDGE
-    QUADRATIC_PYRAMID = _vtk.VTK_QUADRATIC_PYRAMID
-    BIQUADRATIC_QUAD = _vtk.VTK_BIQUADRATIC_QUAD
-    TRIQUADRATIC_HEXAHEDRON = _vtk.VTK_TRIQUADRATIC_HEXAHEDRON
-    if hasattr(_vtk, "VTK_TRIQUADRATIC_PYRAMID"):
-        TRIQUADRATIC_PYRAMID = _vtk.VTK_TRIQUADRATIC_PYRAMID
-    QUADRATIC_LINEAR_QUAD = _vtk.VTK_QUADRATIC_LINEAR_QUAD
-    QUADRATIC_LINEAR_WEDGE = _vtk.VTK_QUADRATIC_LINEAR_WEDGE
-    BIQUADRATIC_QUADRATIC_WEDGE = _vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE
-    BIQUADRATIC_QUADRATIC_HEXAHEDRON = _vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON
-    BIQUADRATIC_TRIANGLE = _vtk.VTK_BIQUADRATIC_TRIANGLE
-
-    # Cubic, isoparametric cell
-    CUBIC_LINE = _vtk.VTK_CUBIC_LINE
-
-    # Special class of cells formed by convex group of points
-    CONVEX_POINT_SET = _vtk.VTK_CONVEX_POINT_SET
-
-    # Polyhedron cell (consisting of polygonal faces)
-    POLYHEDRON = _vtk.VTK_POLYHEDRON
-
-    # Higher order cells in parametric form
-    PARAMETRIC_CURVE = _vtk.VTK_PARAMETRIC_CURVE
-    PARAMETRIC_SURFACE = _vtk.VTK_PARAMETRIC_SURFACE
-    PARAMETRIC_TRI_SURFACE = _vtk.VTK_PARAMETRIC_TRI_SURFACE
-    PARAMETRIC_QUAD_SURFACE = _vtk.VTK_PARAMETRIC_QUAD_SURFACE
-    PARAMETRIC_TETRA_REGION = _vtk.VTK_PARAMETRIC_TETRA_REGION
-    PARAMETRIC_HEX_REGION = _vtk.VTK_PARAMETRIC_HEX_REGION
-
-    # Higher order cells
-    HIGHER_ORDER_EDGE = _vtk.VTK_HIGHER_ORDER_EDGE
-    HIGHER_ORDER_TRIANGLE = _vtk.VTK_HIGHER_ORDER_TRIANGLE
-    HIGHER_ORDER_QUAD = _vtk.VTK_HIGHER_ORDER_QUAD
-    HIGHER_ORDER_POLYGON = _vtk.VTK_HIGHER_ORDER_POLYGON
-    HIGHER_ORDER_TETRAHEDRON = _vtk.VTK_HIGHER_ORDER_TETRAHEDRON
-    HIGHER_ORDER_WEDGE = _vtk.VTK_HIGHER_ORDER_WEDGE
-    HIGHER_ORDER_PYRAMID = _vtk.VTK_HIGHER_ORDER_PYRAMID
-    HIGHER_ORDER_HEXAHEDRON = _vtk.VTK_HIGHER_ORDER_HEXAHEDRON
-
-    # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    LAGRANGE_CURVE = _vtk.VTK_LAGRANGE_CURVE
-    LAGRANGE_TRIANGLE = _vtk.VTK_LAGRANGE_TRIANGLE
-    LAGRANGE_QUADRILATERAL = _vtk.VTK_LAGRANGE_QUADRILATERAL
-    LAGRANGE_TETRAHEDRON = _vtk.VTK_LAGRANGE_TETRAHEDRON
-    LAGRANGE_HEXAHEDRON = _vtk.VTK_LAGRANGE_HEXAHEDRON
-    LAGRANGE_WEDGE = _vtk.VTK_LAGRANGE_WEDGE
-    LAGRANGE_PYRAMID = _vtk.VTK_LAGRANGE_PYRAMID
-
-    # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    if hasattr(_vtk, "VTK_BEZIER_CURVE"):
-        BEZIER_CURVE = _vtk.VTK_BEZIER_CURVE
-    if hasattr(_vtk, "VTK_BEZIER_TRIANGLE"):
-        BEZIER_TRIANGLE = _vtk.VTK_BEZIER_TRIANGLE
-    if hasattr(_vtk, "VTK_BEZIER_QUADRILATERAL"):
-        BEZIER_QUADRILATERAL = _vtk.VTK_BEZIER_QUADRILATERAL
-    if hasattr(_vtk, "VTK_BEZIER_TETRAHEDRON"):
-        BEZIER_TETRAHEDRON = _vtk.VTK_BEZIER_TETRAHEDRON
-    if hasattr(_vtk, "VTK_BEZIER_HEXAHEDRON"):
-        BEZIER_HEXAHEDRON = _vtk.VTK_BEZIER_HEXAHEDRON
-    if hasattr(_vtk, "VTK_BEZIER_WEDGE"):
-        BEZIER_WEDGE = _vtk.VTK_BEZIER_WEDGE
-    if hasattr(_vtk, "VTK_BEZIER_PYRAMID"):
-        BEZIER_PYRAMID = _vtk.VTK_BEZIER_PYRAMID
+    def __str__(self) -> str:
+        """Return the object string representation."""
+        return self.head(display=False, html=False)

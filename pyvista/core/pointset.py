@@ -22,7 +22,7 @@ from pyvista.utilities.cells import (
 )
 
 from ..utilities.fileio import get_ext
-from .cell import CellType
+from .celltype import CellType
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
