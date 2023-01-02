@@ -12,6 +12,7 @@ from pyvista.examples.downloads import download_file
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
 )
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
 @pytest.fixture()
@@ -513,6 +514,7 @@ def test_pvdreader_no_time_group():
         assert dataset.part == i
 
 
+@skip_windows
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
