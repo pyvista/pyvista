@@ -69,7 +69,6 @@ from pyvista.plotting import (
     # scalar_bars,
     scale_point,
     system_supports_plotting,
-    # theme,
     # tools,
     # widgets,
 )
@@ -323,6 +322,7 @@ from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
+from pyvista.plotting import theme  # backwards compatibility
 
 # Set preferred plot theme
 _set_plot_theme_from_env()
@@ -675,7 +675,7 @@ __all__ = [
     'start_xvfb',
     'surface_from_para',
     'system_supports_plotting',
-    # 'theme',  # plotting.theme
+    'theme',
     'themes',
     'threaded',
     # 'tools',  # plotting.tools
