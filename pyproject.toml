@@ -147,7 +147,7 @@ markers = [
     'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
     'needs_download: this test downloads data during execution',
 ]
-image_cache_dir = "tests/plotting/image_cache"
+addopts = '--image_cache_dir=./tests/plotting/image_cache'
 
 [tool.mypy]
 ignore_missing_imports = true
