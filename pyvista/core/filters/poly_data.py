@@ -2638,7 +2638,7 @@ class PolyDataFilters(DataSetFilters):
         factor=2.0,
         normal=None,
         tcoords=False,
-        preference='points',
+        preference='point',
         progress_bar=False,
     ):
         """Create a ribbon of the lines in this dataset.
@@ -3352,6 +3352,7 @@ class PolyDataFilters(DataSetFilters):
         scalar_mode="value",
         clipping=True,
         progress_bar=False,
+        preference='point',
     ):
         """Generate filled contours.
 
@@ -3404,6 +3405,11 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
         Returns
         -------
         output : pyvista.Polydata
@@ -3440,7 +3446,7 @@ class PolyDataFilters(DataSetFilters):
         """
         # check active scalars
         if scalars is not None:
-            self.point_data.active_scalars_name = scalars
+            self.set_active_scalars(scalars, preference=preference)
         else:
             pyvista.set_default_active_scalars(self)
             if self.point_data.active_scalars_name is None:

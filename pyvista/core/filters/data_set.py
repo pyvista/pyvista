@@ -346,7 +346,14 @@ class DataSetFilters:
         return result
 
     def clip_scalar(
-        self, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False
+        self,
+        scalars=None,
+        invert=True,
+        value=0.0,
+        inplace=False,
+        progress_bar=False,
+        both=False,
+        preference='point',
     ):
         """Clip a dataset by a scalar.
 
@@ -371,6 +378,11 @@ class DataSetFilters:
 
         both : bool, optional
             If ``True``, also returns the complementary clipped mesh.
+
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
 
         Returns
         -------
@@ -414,7 +426,7 @@ class DataSetFilters:
         if scalars is None:
             pyvista.set_default_active_scalars(self)
         else:
-            self.set_active_scalars(scalars)
+            self.set_active_scalars(scalars, preference=preference)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
@@ -3720,6 +3732,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar=False,
+        preference='point',
     ):
         """Sample a dataset along a high resolution line and plot.
 
@@ -3768,6 +3781,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
         Examples
         --------
         See the :ref:`plot_over_line_example` example.
@@ -3788,7 +3806,7 @@ class DataSetFilters:
         if scalars is None:
             pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
-        values = sampled.get_array(scalars)
+        values = sampled.get_array(scalars, preference=preference)
         distance = sampled['Distance']
 
         # Remainder is plotting
@@ -4020,6 +4038,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar=False,
+        preference='point',
     ):
         """Sample a dataset along a circular arc and plot it.
 
@@ -4073,6 +4092,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
         Examples
         --------
         Sample a dataset along a high resolution circular arc and plot.
@@ -4100,7 +4124,7 @@ class DataSetFilters:
         if scalars is None:
             pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
-        values = sampled.get_array(scalars)
+        values = sampled.get_array(scalars, preference=preference)
         distance = sampled['Distance']
 
         # create the matplotlib figure
@@ -4143,6 +4167,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar=False,
+        preference='point',
     ):
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
@@ -4202,6 +4227,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
         Examples
         --------
         Sample a dataset along a high resolution circular arc and plot.
@@ -4230,7 +4260,7 @@ class DataSetFilters:
         if scalars is None:
             pyvista.set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
-        values = sampled.get_array(scalars)
+        values = sampled.get_array(scalars, preference=preference)
         distance = sampled['Distance']
 
         # create the matplotlib figure
