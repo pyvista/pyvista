@@ -254,6 +254,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
 
+        Parameters
+        ----------
+        color_cycler : str, cycler.Cycler, list(color_like)
+            The colors to cycle through.
+
         Examples
         --------
         Set the default color cycler to iterate through red, green, and blue.
