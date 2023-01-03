@@ -34,8 +34,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     -----
     Accessing individual cells from a :class:`pyvista.DataSet` using this class
     will be much slower than accessing bulk data from the
-    :attr:`pyvista.pyvista.PolyData.faces` or
-    :attr:`pyvista.UnstructuredGrid.cells` attributes.
+    :attr:`pyvista.PolyData.faces` or :attr:`pyvista.UnstructuredGrid.cells` attributes.
 
     Also note that the the cell object is a deep copy of the original cell and
     is unassociated with the original cell. Changing any data of

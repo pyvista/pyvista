@@ -1,5 +1,5 @@
 Cells
------
+=====
 
 The cell :class:`pyvista.Cell` class is the PyVista representation of the
 `vtkGenericCell <https://vtk.org/doc/nightly/html/classvtkGenericCell.html>`_ and can be used to inspect a :class:`pyvista.DataSet`'s cells, faces, and edges.
@@ -9,7 +9,7 @@ The cell :class:`pyvista.Cell` class is the PyVista representation of the
    parts of a dataset, they are inefficient and should be used only for
    interactive exploration and debugging. When working with larger datasets or
    working with multiple cells it is generally more efficient to use bulk methods
-   like :func:`pyvista.DataSet.extact_cells`.
+   like :func:`pyvista.DataSetFilters.extract_cells`.
 
 Here's a quick example to demonstrate the usage of :func:`pyvista.DataSet.get_cell` by extracting a hexahedral cell from an example :class:`pyvista.UnstructuredGrid`.
 
