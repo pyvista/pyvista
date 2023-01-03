@@ -2,7 +2,7 @@
 
 import collections.abc
 from functools import partial
-from typing import Sequence, Tuple, cast
+from typing import Sequence, cast
 import warnings
 from weakref import proxy
 
@@ -13,6 +13,7 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
+from .._typing import bounds_like
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
@@ -325,7 +326,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def bounds(self) -> bounds_like:
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -354,7 +355,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(Tuple[float, float, float, float, float, float], tuple(the_bounds))
+        return cast(bounds_like, tuple(the_bounds))
 
     @property
     def length(self):

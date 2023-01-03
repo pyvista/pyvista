@@ -11,7 +11,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict, Tuple
+from typing import Dict
 import warnings
 import weakref
 
@@ -34,6 +34,7 @@ from pyvista.utilities import (
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
 
+from .._typing import bounds_like
 from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import (
@@ -1388,7 +1389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera_set = is_set
 
     @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def bounds(self) -> bounds_like:
         """Return the bounds of the active renderer.
 
         Returns
