@@ -2634,7 +2634,7 @@ class DataSet(DataSetFilters, DataObject):
             '`cell_n_points` is deprecated. Use `cell[i].n_points` instead',
             PyVistaDeprecationWarning,
         )
-        return self.get_cell[ind].n_points
+        return self.get_cell(ind).n_points
 
     def cell_points(self, ind: int) -> np.ndarray:
         """Return the points in a cell.
@@ -2697,7 +2697,7 @@ class DataSet(DataSetFilters, DataObject):
         warnings.warn(
             '`cell_bounds` is deprecated. Use `cell[i].bounds` instead', PyVistaDeprecationWarning
         )
-        return self.get_cell[ind].bounds
+        return self.get_cell(ind).bounds
 
     def cell_type(self, ind: int) -> int:
         """Return the type of a cell.
