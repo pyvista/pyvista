@@ -53,11 +53,10 @@ jobs:
 
 
   LinuxConda:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       CONDA_ALWAYS_YES: 1
-      VTK_VERSION: 8.2
-      conda_env: pyvista-vtk8.2
+      conda_env: pyvista-vtk
       DISPLAY: ':99.0'
       PYVISTA_OFF_SCREEN: True
 
@@ -97,7 +96,6 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
           conda env create --quiet -n ${{ env.conda_env }} --file environment.yml --experimental-solver=libmamba
           conda activate ${{ env.conda_env }}
           conda list
@@ -126,7 +124,7 @@ jobs:
 
   Linux:
     name: Linux Unit Testing
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
 
@@ -189,7 +187,7 @@ jobs:
           pip list
 
       - name: Unit Testing
-        run: xvfb-run coverage run -m --source=pyvista --module pytest --image_cache_dir ./image_cache
+        run: xvfb-run coverage run -m --source=pyvista --module pytest  --skip_image_cache_vtk8
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
@@ -257,4 +255,4 @@ jobs:
         run: python -m pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: python -m pytest -v tests/plotting --image_cache_dir ./image_cache
+        run: python -m pytest -v tests/plotting
