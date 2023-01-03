@@ -1,6 +1,6 @@
 """Wrap vtkActor."""
 
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 import weakref
 
 import numpy as np
@@ -556,7 +556,7 @@ class Actor(pv._vtk.vtkActor):
         self.SetUserMatrix(value)
 
     @property
-    def bounds(self) -> tuple:
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounds of the actor.
 
         Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``

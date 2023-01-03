@@ -1176,11 +1176,15 @@ def test_vector_array_with_points(multicomp_poly):
     # test no component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_points')
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
     # test component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
 
@@ -1188,11 +1192,15 @@ def test_vector_array_with_cells(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
     # test component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
 
@@ -1201,6 +1209,8 @@ def test_vector_array(multicomp_poly):
     pl = pyvista.Plotter(shape=(2, 2))
     pl.subplot(0, 0)
     pl.add_mesh(multicomp_poly, scalars="vector_values_points", show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.subplot(0, 1)
     pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=0)
     pl.subplot(1, 0)
@@ -1208,7 +1218,6 @@ def test_vector_array(multicomp_poly):
     pl.subplot(1, 1)
     pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=2)
     pl.link_views()
-    pl.reset_camera()
     pl.show()
 
 
@@ -1445,6 +1454,30 @@ def test_link_views(sphere):
     plotter.unlink_views(2)
     plotter.unlink_views()
     plotter.show()
+
+
+@skip_windows
+def test_link_views_camera_set(sphere, verify_image_cache):
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(pyvista.Cone())
+    assert not p.renderer.camera_set
+    p.subplot(0, 1)
+    p.add_mesh(pyvista.Cube())
+    assert not p.renderer.camera_set
+    p.link_views()  # make sure the default isometric view is used
+    for renderer in p.renderers:
+        assert not renderer.camera_set
+    p.show()
+
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(pyvista.Cone())
+    p.subplot(0, 1)
+    p.add_mesh(pyvista.Cube())
+    p.link_views()
+    p.unlink_views()
+    for renderer in p.renderers:
+        assert not renderer.camera_set
+    p.show()
 
 
 def test_orthographic_slicer(uniform):
