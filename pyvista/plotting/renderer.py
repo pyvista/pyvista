@@ -266,10 +266,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> p = pv.Plotter()
         >>> p.renderer.set_color_cycler(['red', 'green', 'blue'])
-        >>> p.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
-        >>> p.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
-        >>> p.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
-        >>> p.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> _ = p.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = p.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = p.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = p.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
         >>> p.show()
 
         """
