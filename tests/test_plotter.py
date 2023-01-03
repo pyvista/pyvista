@@ -255,3 +255,14 @@ def test_anti_aliasing_invalid():
     pl = pyvista.Plotter()
     with pytest.raises(ValueError, match='Should be either "fxaa" or "ssaa"'):
         pl.renderer.enable_anti_aliasing('invalid')
+
+
+def test_plot_return_img_without_cpos(sphere: pyvista.PolyData):
+    img = sphere.plot(return_cpos=False, return_img=True, screenshot=True)
+    assert isinstance(img, np.ndarray)
+
+
+def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
+    cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
+    assert isinstance(cpos, pyvista.CameraPosition)
+    assert isinstance(img, np.ndarray)
