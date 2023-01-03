@@ -1929,7 +1929,7 @@ class DataSet(DataSetFilters, DataObject):
 
             def format_array(name, arr, field):
                 """Format array information for printing (internal helper)."""
-                dl, dh = self.get_data_range(arr)
+                dl, dh = self.get_data_range(arr, preference=field)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
                 if name == self.active_scalars_info.name:

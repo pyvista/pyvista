@@ -235,7 +235,7 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore
+    def get_data_range(self, name: str, allow_missing: bool = False, preference='point') -> Tuple[float, float]:  # type: ignore
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
@@ -245,6 +245,11 @@ class MultiBlock(
 
         allow_missing : bool, optional
             Allow a block to be missing the named array.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
 
         Returns
         -------
@@ -259,7 +264,7 @@ class MultiBlock(
                 continue
             # get the scalars if available - recursive
             try:
-                tmi, tma = data.get_data_range(name)
+                tmi, tma = data.get_data_range(name, preference=preference)
             except KeyError as err:
                 if allow_missing:
                     continue

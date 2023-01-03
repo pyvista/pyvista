@@ -332,7 +332,7 @@ def parse_field_choice(field):
             field = FieldAssociation.POINT
         elif field in ['field', 'f', 'fields']:
             field = FieldAssociation.NONE
-        elif field in ['row', 'r']:
+        elif field in ['row', 'r', 'rows']:
             field = FieldAssociation.ROW
         else:
             raise ValueError(f'Data field ({field}) not supported.')

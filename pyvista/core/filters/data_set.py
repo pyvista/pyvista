@@ -1103,7 +1103,7 @@ class DataSetFilters:
         alg.SetUseContinuousCellRange(continuous)
         # use valid range if no value given
         if value is None:
-            value = self.get_data_range(scalars)
+            value = self.get_data_range(scalars, preference=preference)
 
         _set_threshold_limit(alg, value, method, invert)
 
@@ -1703,7 +1703,7 @@ class DataSetFilters:
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars_name)
+                rng = self.get_data_range(scalars_name, preference=preference)
             alg.GenerateValues(isosurfaces, rng)
         elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
@@ -3281,6 +3281,7 @@ class DataSetFilters:
         rotation_scale=1.0,
         interpolator_type='point',
         progress_bar=False,
+        preference='point',
     ):
         """Generate streamlines of vectors from the points of a source mesh.
 
@@ -3363,6 +3364,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        preference : str, default: 'point'
+            When ``vectors`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
         Returns
         -------
         pyvista.PolyData
@@ -3394,13 +3400,13 @@ class DataSetFilters:
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
         if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
+            self.set_active_scalars(vectors, preference=preference)
+            self.set_active_vectors(vectors, preference=preference)
         elif vectors is None:
             pyvista.set_default_active_vectors(self)
 
         if max_time is None:
-            max_velocity = self.get_data_range()[-1]
+            max_velocity = self.get_data_range(preference=preference)[-1]
             max_time = 4.0 * self.GetLength() / max_velocity
         if not isinstance(source, pyvista.DataSet):
             raise TypeError("source must be a pyvista.DataSet")
@@ -3468,6 +3474,7 @@ class DataSetFilters:
         minimum_number_of_loop_points=4,
         compute_vorticity=True,
         progress_bar=False,
+        preference='point',
     ):
         """Generate evenly spaced streamlines on a 2D dataset.
 
@@ -3542,6 +3549,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        preference : str, default: 'point'
+            When ``vectors`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
         Returns
         -------
         pyvista.PolyData
@@ -3581,8 +3593,8 @@ class DataSetFilters:
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
         if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
+            self.set_active_scalars(vectors, preference=preference)
+            self.set_active_vectors(vectors, preference=preference)
         elif vectors is None:
             pyvista.set_default_active_vectors(self)
 

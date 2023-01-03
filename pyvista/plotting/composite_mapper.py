@@ -778,7 +778,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         scalar_bar_args.setdefault('title', scalars_name)
 
         if clim is None:
-            clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
+            clim = self._dataset.get_data_range(
+                scalars_name, allow_missing=True, preference=preference
+            )
         self.scalar_range = clim
 
         if log_scale:

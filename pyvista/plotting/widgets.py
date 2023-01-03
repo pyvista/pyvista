@@ -222,10 +222,13 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        preference = kwargs.get('preference', 'point')
         name = kwargs.get('name', mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars', None), preference=preference)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        mesh.set_active_scalars(
+            kwargs.get('scalars', mesh.active_scalars_name), preference=preference
+        )
 
         self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
@@ -569,10 +572,13 @@ class WidgetHelper:
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
+        preference = kwargs.get('preference', 'point')
         name = kwargs.get('name', mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars', None), preference=preference)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        mesh.set_active_scalars(
+            kwargs.get('scalars', mesh.active_scalars_name), preference=preference
+        )
         if origin is None:
             origin = mesh.center
 
@@ -705,10 +711,13 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        preference = kwargs.get('preference', 'point')
         name = kwargs.get('name', mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars', None), preference=preference)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        mesh.set_active_scalars(
+            kwargs.get('scalars', mesh.active_scalars_name), preference=preference
+        )
         if origin is None:
             origin = mesh.center
 
@@ -1346,11 +1355,11 @@ class WidgetHelper:
             raise ValueError('No arrays present to threshold.')
         field = get_array_association(mesh, scalars, preference=preference)
 
-        rng = mesh.get_data_range(scalars)
+        rng = mesh.get_data_range(scalars, preference=preference)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
             title = scalars
-        mesh.set_active_scalars(scalars)
+        mesh.set_active_scalars(scalars, preference=preference)
 
         self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
@@ -1482,11 +1491,11 @@ class WidgetHelper:
                 f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
             )
 
-        rng = mesh.get_data_range(scalars)
+        rng = mesh.get_data_range(scalars, preference=preference)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
             title = scalars
-        mesh.set_active_scalars(scalars)
+        mesh.set_active_scalars(scalars, preference=preference)
 
         alg = _vtk.vtkContourFilter()
         alg.SetInputDataObject(mesh)
@@ -1732,12 +1741,15 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        preference = kwargs.get('preference', 'point')
         name = kwargs.get('name', None)
         if name is None:
             name = mesh.memory_address
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars', None), preference=preference)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        mesh.set_active_scalars(
+            kwargs.get('scalars', mesh.active_scalars_name), preference=preference
+        )
 
         self.add_mesh(mesh.outline(), name=f"{name}-outline", opacity=0.0)
 
