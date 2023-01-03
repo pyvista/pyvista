@@ -13,18 +13,19 @@ mesh = examples.download_bunny_coarse()
 cpos = [(0.036, 0.367, 0.884), (0.024, 0.033, -0.022), (-0.303, 0.895, -0.325)]
 
 ###############################################################################
-# We can easily display all vertices of a mesh with a `points` style
+# We can easily display all vertices of a mesh with a ``points` style
 # representation when plotting:
-p = pv.Plotter()
-p.add_mesh(mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10)
+pl.show(cpos=cpos)
+
 
 ###############################################################################
 # However, we often want to see the vertices of a mesh rendered atop the
 # surface geometry. Much like how we can render the edges of a mesh:
-p = pv.Plotter()
-p.add_mesh(mesh, show_edges=True)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(mesh, show_edges=True)
+pl.show(cpos=cpos)
 
 
 ###############################################################################
@@ -39,15 +40,14 @@ p.show(cpos=cpos)
 #
 # The first step is to extract the outer surface geometry of the mesh then
 # grab all the points of that extraction.
+surf_points = mesh.extract_surface().points
 
-# Extract surface vertices
-nodes = mesh.extract_surface().points
 
 ###############################################################################
-# Now that we have the vertices extracted, we can use `add_points` to render
-# them along side the original geometry.
-
-p = pv.Plotter()
-p.add_mesh(mesh, show_edges=True)
-p.add_points(nodes, color='magenta', render_points_as_spheres=True, point_size=10)
-p.show(cpos=cpos)
+# Now that we have the vertices extracted, we can use :func:`add_points()
+# <pyvista.Plotter.add_points>` to render them along side the original
+# geometry.
+pl = pv.Plotter()
+pl.add_mesh(mesh, show_edges=True)
+pl.add_points(surf_points, color='magenta', render_points_as_spheres=True, point_size=10)
+pl.show(cpos=cpos)
