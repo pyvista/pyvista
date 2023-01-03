@@ -239,9 +239,7 @@ class ColorSchemeTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``COLOR_SCHEMES`` dictionary.
-        return [
-            {"scheme": cs, **data} for (cs, data) in pv.charts._MultiCompPlot.COLOR_SCHEMES.items()
-        ]
+        return [{"scheme": cs, **data} for (cs, data) in pv.plotting.colors.COLOR_SCHEMES.items()]
 
     @classmethod
     def get_header(cls, data):

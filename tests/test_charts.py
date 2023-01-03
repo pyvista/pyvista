@@ -503,7 +503,7 @@ def test_multicomp_plot_common(plot_f, request):
 
     plot.color_scheme = cs
     assert plot.color_scheme == cs
-    assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
+    assert plot._color_series.GetColorScheme() == pyvista.plotting.colors.COLOR_SCHEMES[cs]["id"]
     assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
         pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
