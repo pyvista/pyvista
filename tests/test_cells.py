@@ -66,7 +66,7 @@ cell_ids = list(map(repr, types))
 
 
 def test_bad_init():
-    with pytest.raises(TypeError, match="abstract class"):
+    with pytest.raises(TypeError, match="must be a vtkCell"):
         _ = Cell(1)
 
 
@@ -131,6 +131,14 @@ def test_cell_edges(cell):
     assert all(edge.type == CellType.LINE for edge in cell.edges)
 
 
+def test_cell_no_field_data():
+    with pytest.raises(NotImplementedError, match='does not support field data'):
+        cells[0].add_field_data([1, 2, 3], 'field_data')
+
+    with pytest.raises(NotImplementedError, match='does not support field data'):
+        cells[0].clear_field_data()
+
+
 @pytest.mark.parametrize("cell", cells[:5])
 def test_cell_copy_generic(cell):
     cell = cell.copy()
@@ -147,7 +155,7 @@ def test_cell_copy_generic(cell):
 
 def test_cell_copy():
     cell = cells[0].get_face(0)
-    assert isinstance(cell, pyvista.core.cell.Quad)
+    assert isinstance(cell, pyvista.Cell)
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
     cell_copy.points[:] = 0

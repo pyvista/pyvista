@@ -181,71 +181,32 @@ if VTK9:
         VTK_VERTEX,
         VTK_VOXEL,
         VTK_WEDGE,
-        vtkBiQuadraticQuadraticHexahedron,
-        vtkBiQuadraticQuadraticWedge,
-        vtkBiQuadraticTriangle,
         vtkCell,
-        vtkCell3D,
         vtkCellArray,
         vtkCellLocator,
         vtkColor3ub,
         vtkCompositeDataSet,
-        vtkConvexPointSet,
-        vtkCubicLine,
         vtkDataObject,
         vtkDataSet,
         vtkDataSetAttributes,
-        vtkEmptyCell,
         vtkExplicitStructuredGrid,
         vtkFieldData,
         vtkGenericCell,
-        vtkHexagonalPrism,
-        vtkHexahedron,
-        vtkHigherOrderCurve,
-        vtkHigherOrderHexahedron,
-        vtkHigherOrderQuadrilateral,
-        vtkHigherOrderTetra,
-        vtkHigherOrderTriangle,
-        vtkHigherOrderWedge,
         vtkImageData,
         vtkImplicitFunction,
-        vtkLagrangeCurve,
-        vtkLagrangeHexahedron,
-        vtkLagrangeQuadrilateral,
-        vtkLagrangeTetra,
-        vtkLagrangeTriangle,
-        vtkLagrangeWedge,
-        vtkLine,
         vtkMultiBlockDataSet,
-        vtkNonLinearCell,
         vtkNonMergingPointLocator,
-        vtkPentagonalPrism,
         vtkPerlinNoise,
         vtkPiecewiseFunction,
-        vtkPixel,
         vtkPlane,
         vtkPlaneCollection,
         vtkPlanes,
         vtkPointLocator,
         vtkPointSet,
         vtkPolyData,
-        vtkPolygon,
-        vtkPolyhedron,
         vtkPolyLine,
         vtkPolyPlane,
-        vtkPolyVertex,
         vtkPyramid,
-        vtkQuad,
-        vtkQuadraticEdge,
-        vtkQuadraticHexahedron,
-        vtkQuadraticLinearQuad,
-        vtkQuadraticLinearWedge,
-        vtkQuadraticPolygon,
-        vtkQuadraticPyramid,
-        vtkQuadraticQuad,
-        vtkQuadraticTetra,
-        vtkQuadraticTriangle,
-        vtkQuadraticWedge,
         vtkRectf,
         vtkRectilinearGrid,
         vtkSelection,
@@ -254,14 +215,7 @@ if VTK9:
         vtkStaticPointLocator,
         vtkStructuredGrid,
         vtkTable,
-        vtkTetra,
-        vtkTriangle,
-        vtkTriangleStrip,
-        vtkTriQuadraticHexahedron,
         vtkUnstructuredGrid,
-        vtkVertex,
-        vtkVoxel,
-        vtkWedge,
     )
 
     try:  # Introduced prior to VTK 9.2
@@ -274,97 +228,9 @@ if VTK9:
             VTK_BEZIER_TRIANGLE,
             VTK_BEZIER_WEDGE,
             VTK_TRIQUADRATIC_PYRAMID,
-            vtkBezierCurve,
-            vtkBezierHexahedron,
-            vtkBezierQuadrilateral,
-            vtkBezierTetra,
-            vtkBezierTriangle,
-            vtkBezierWedge,
-            vtkBiQuadraticQuad,
-            vtkTriQuadraticPyramid,
         )
     except ImportError:  # pragma: no cover
-
-        class vtkBiQuadraticQuad:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBiQuadraticQuad requires VTK v9 or newer')
-
-        class vtkBezierCurve:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBezierCurve requires VTK v9.2 or newer.')
-
-        class vtkBezierHexahedron:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBezierHexahedron requires VTK v9.2 or newer.')
-
-        class vtkBezierQuadrilateral:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBezierQuadrilateral requires VTK v9.2 or newer.')
-
-        class vtkBezierTriangle:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBezierTriangle requires VTK v9.2 or newer.')
-
-        class vtkBezierWedge:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBezierWedge requires VTK v9.2 or newer.')
-
-        class vtkBiQuadraticQuad:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBiQuadraticQuad requires VTK v9.2 or newer.')
-
-        class vtkBezierTetra:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkBezierTetra requires VTK v9.2 or newer.')
-
-        class vtkTriQuadraticPyramid:  # type: ignore
-            """Empty placeholder for < VTK9.2 compatibility."""
-
-            def __init__(self):  # pragma: no cover
-                """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
-                raise VTKVersionError('vtkTriQuadraticPyramid requires VTK v9.2 or newer.')
+        pass
 
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4

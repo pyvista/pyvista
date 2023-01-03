@@ -35,8 +35,6 @@ from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
 
-from .cell import GenericCell  # isort: skip
-
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 ActiveArrayInfoTuple = collections.namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
@@ -2521,7 +2519,7 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = GenericCell()
+        cell = pyvista.Cell()
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
