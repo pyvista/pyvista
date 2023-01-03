@@ -7,12 +7,14 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.utilities import abstract_class
 
 from .celltype import CellType
 from .dataset import DataObject
 
 
-class Cell(_vtk.VTKObjectWrapper, DataObject):
+@abstract_class
+class Cell(_vtk.vtkCell, DataObject):
     """Wrapping of vtkCell.
 
     This class provides the capability to access a given cell topology and can
@@ -23,6 +25,9 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
     ----------
     vtkobject : vtk.vtkCell
         The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
+
+    deep : bool, default: False
+        Perform a deep copy of the original cell.
 
     Notes
     -----
@@ -73,11 +78,14 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
 
     """
 
-    def __init__(self, vtkobject: _vtk.vtkCell) -> None:
-        """Initialize the cell object using a _vtk.vtkCell."""
-        if not isinstance(vtkobject, _vtk.vtkCell):
-            raise TypeError(f"`vtkobject` must be of vtkCell type (got {type(vtkobject)}) instead")
-        super().__init__(vtkobject=vtkobject)
+    def __init__(self, vtk_cell=None, deep=False):
+        """Initialize the cell."""
+        super().__init__()
+        if vtk_cell is not None:
+            if deep:
+                self.DeepCopy(vtk_cell)
+            else:
+                self.ShallowCopy(vtk_cell)
 
     @property
     def type(self) -> CellType:
@@ -241,8 +249,7 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
         """
         # A copy of the points must be returned to avoid overlapping them since the
         # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
-        points = _vtk.vtk_to_numpy(self.GetPoints().GetData())
-        return points.copy()
+        return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     def get_edge(self, index: int) -> Cell:
         """Get the i-th edge composing the cell.
@@ -251,6 +258,13 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
         ----------
         index : int
             Edge ID.
+
+        Warnings
+        --------
+        This method is not thread safe. Using this in a ``generator``, for
+        example ``[cell.get_edge(i) for i in range(cell.n_edges)]`` will return
+        the incorrect faces. Use :attr:`pyvista.Cell.faces` to access all the
+        faces.
 
         Examples
         --------
@@ -265,7 +279,41 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
         [0, 2]
 
         """
-        return Cell(self.GetEdge(index))
+        from .cells import wrap_cell
+
+        if index + 1 > self.n_edges:
+            raise IndexError(f'Invalid index {index} for a cell with {self.n_edges} edges.')
+
+        # must deep copy here as sequental calls overwrite the underlying pointer
+        return wrap_cell(self.GetEdge(index), deep=True)
+
+    @property
+    def edges(self) -> list[Cell]:
+        """Return a list of edges composing the cell.
+
+        >>> from pyvista.examples.cells import Hexahedron
+        >>> mesh = Hexahedron()
+        >>> cell = mesh.cell[0]
+        >>> edges = cell.edges
+        >>> len(edges)
+        12
+
+        """
+        return [self.get_edge(i) for i in range(self.n_edges)]
+
+    @property
+    def faces(self) -> list[Cell]:
+        """Return a list of faces composing the cell.
+
+        >>> from pyvista.examples.cells import Tetrahedron
+        >>> mesh = Tetrahedron()
+        >>> cell = mesh.cell[0]
+        >>> faces = cell.faces
+        >>> len(faces)
+        4
+
+        """
+        return [self.get_face(i) for i in range(self.n_faces)]
 
     def get_face(self, index: int) -> Cell:
         """Get the i-th face composing the cell.
@@ -275,6 +323,8 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
         index : int
             Face ID.
 
+        Examples
+        --------
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
         >>> cell = mesh.cell[0]
@@ -287,7 +337,13 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
         [0, 2, 1]
 
         """
-        return Cell(self.GetFace(index))
+        from .cells import wrap_cell
+
+        # must deep copy here as sequental calls overwrite the underlying pointer
+        if index + 1 > self.n_faces:
+            raise IndexError(f'Invalid index {index} for a cell with {self.n_faces} faces.')
+        face = self.GetFace(index)
+        return wrap_cell(face, deep=True)
 
     @property
     def bounds(self) -> Tuple[float, float, float, float, float, float]:
@@ -326,3 +382,33 @@ class Cell(_vtk.VTKObjectWrapper, DataObject):
     def __str__(self) -> str:
         """Return the object string representation."""
         return self.head(display=False, html=False)
+
+    def copy(self, deep=True) -> Cell:
+        """Return a copy of the cell.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            When ``True`` makes a full copy of the cell.  When ``False``,
+            performs a shallow copy where the new cell still references the
+            original cell.
+
+        Returns
+        -------
+        pyvista.Cell
+            Deep or shallow copy of the cell.
+
+        Examples
+        --------
+        Create a shallow copy of the cell and demonstrate it is shallow.
+
+        >>> from pyvista.examples.cells import Tetrahedron
+        >>> mesh = Tetrahedron()
+        >>> cell = mesh.cell[0]
+        >>> cell = mesh.cell[0]
+        >>> deep_cell = cell.copy(deep=True)
+        >>> deep_cell.points[:] = 0
+        >>> cell == deep_cell
+
+        """
+        return type(self)(self, deep=deep)

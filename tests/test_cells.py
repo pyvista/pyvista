@@ -24,7 +24,6 @@ cells = [
     example_cells.Tetrahedron().cell[0],
     example_cells.Voxel().cell[0],
 ]
-
 grids = [
     load_hexbeam(),
     load_airplane(),
@@ -63,10 +62,11 @@ if pyvista._vtk.VTK9:
     nfaces.append(6)
     nedges.append(12)
 ids = list(map(type, grids))
+cell_ids = list(map(repr, types))
 
 
 def test_bad_init():
-    with pytest.raises(TypeError, match="must be of vtkCell"):
+    with pytest.raises(TypeError, match="abstract class"):
         _ = Cell(1)
 
 
@@ -74,7 +74,7 @@ def test_bad_init():
 def test_cell_attribute(grid):
     assert isinstance(grid.cell, list)
     assert len(grid.cell) == grid.n_cells
-    assert all(t == Cell for t in map(type, grid.cell[:]))
+    assert all([issubclass(type(cell), Cell) for cell in grid.cell])
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
@@ -122,8 +122,13 @@ def test_cell_n_edges(cell, ne):
 
 
 @pytest.mark.parametrize("cell", cells[:5])
-def test_cell_edges(cell):
+def test_cell_get_edges(cell):
     assert all(cell.get_edge(i).type == CellType.LINE for i in range(cell.n_edges))
+
+
+@pytest.mark.parametrize("cell", cells[:5])
+def test_cell_edges(cell):
+    assert all(edge.type == CellType.LINE for edge in cell.edges)
 
 
 @pytest.mark.parametrize("cell", cells[:5])
@@ -136,6 +141,16 @@ def test_cell_edges_point_ids(cell):
 def test_cell_faces_point_ids(cell):
     point_ids = {frozenset(cell.get_face(i).point_ids) for i in range(cell.n_faces)}
     assert len(point_ids) == cell.n_faces
+
+
+@pytest.mark.parametrize("cell", cells[:5], ids=cell_ids[:5])
+def test_cell_faces(cell):
+    if cell.n_faces:
+        assert cell.get_face(0) == cell.faces[0]
+        assert cell.get_face(1) != cell.faces[0]
+    else:
+        with pytest.raises(IndexError, match='Invalid index'):
+            cell.get_face(0)
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)

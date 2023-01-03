@@ -30,9 +30,8 @@ from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .._typing import Number, NumericArray, Vector, VectorArray
+from .cells import GenericCell
 from .dataobject import DataObject
-
-# from .cell import Cell
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
@@ -2481,12 +2480,12 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self, i: int) -> 'pyvista.Cell':
+    def get_cell(self, index: int, deep=False) -> 'pyvista.Cell':
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
         ----------
-        i : int
+        index : int
             Cell ID.
 
         Returns
@@ -2518,11 +2517,13 @@ class DataSet(DataSetFilters, DataObject):
           Y Bounds:	4.876e+01, 5.549e+01
           Z Bounds:	8.075e+01, 8.366e+01
         """
-        # Note: GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
+        # Note: we have to use vtkGenericCell here since
+        # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        vtkCell = _vtk.vtkGenericCell()
-        self.GetCell(i, vtkCell)
-        return pyvista.Cell(vtkCell)
+        cell = GenericCell()
+        self.GetCell(index, cell)
+        cell.SetCellType(self.GetCellType(index))
+        return cell
 
     @property
     def cell(self) -> List['pyvista.Cell']:
