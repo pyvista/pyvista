@@ -111,7 +111,7 @@ class Cell(_vtk.vtkCell, DataObject):
     >>> from pyvista import examples
     >>> mesh = examples.load_hexbeam()
     >>> cell = mesh.cell[0]
-    >>> cell
+    >>> cell  # doctest: +SKIP
     Cell (0x7fdc71a3c210)
       Type:       <CellType.HEXAHEDRON: 12>
       Linear:     True
@@ -189,6 +189,7 @@ class Cell(_vtk.vtkCell, DataObject):
         >>> mesh = examples.load_hexbeam()
         >>> cell = mesh.cell[0]
         >>> grid = cell.cast_to_unstructured_grid()
+        >>> grid  # doctest: +SKIP
         UnstructuredGrid (0x7f9383619540)
           N Cells:      1
           N Points:     8
@@ -202,14 +203,14 @@ class Cell(_vtk.vtkCell, DataObject):
             return pyvista.UnstructuredGrid(
                 [len(self.point_ids)] + list(range(len(self.point_ids))),
                 [int(self.type)],
-                self.points,
+                self.points.copy(),
             )
         else:  # pragma: no cover
             return pyvista.UnstructuredGrid(
                 [0],
                 self.point_ids,
                 [int(self.type)],
-                self.points,
+                self.points.copy(),
             )
 
     @property
@@ -442,17 +443,26 @@ class Cell(_vtk.vtkCell, DataObject):
 
         Examples
         --------
-        Create a shallow copy of the cell and demonstrate it is shallow.
+        Create a deep copy of the cell and demonstrate its deep.
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
         >>> cell = mesh.cell[0]
-        >>> cell = mesh.cell[0]
         >>> deep_cell = cell.copy(deep=True)
         >>> deep_cell.points[:] = 0
-        >>> cell == deep_cell
+        >>> cell != deep_cell
+        True
+
+        Create a shallow copy of the cell and demonstrate it is shallow.
+
+        >>> shallow_cell = cell.copy(deep=False)
+        >>> shallow_cell.points[:] = 0
+        >>> cell == shallow_cell
+        True
 
         """
+        if isinstance(self, GenericCell):
+            return GenericCell(self, deep=deep, cell_type=self.GetCellType())
         return type(self)(self, deep=deep)
 
 
@@ -687,6 +697,12 @@ class GenericCell(_vtk.vtkGenericCell, Cell):
         """Initialize cell."""
         if cell_type is not None:
             self.SetCellType(cell_type)
+
+        if vtk_cell is not None:
+            if deep:
+                self.DeepCopy(vtk_cell)
+            else:
+                self.ShallowCopy(vtk_cell)
 
     def __repr__(self) -> str:
         """Return the object representation."""

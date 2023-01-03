@@ -2659,7 +2659,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         def connectivity(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
-            cell_points = self.cell_points(ind)
+            cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 faces = [
                     [(-1, 0, 0), (0, 4, 7, 3), (1, 5, 6, 2)],
@@ -2673,7 +2673,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                     coords = np.sum([cell_coords, f[0]], axis=0)
                     ind = self.cell_id(coords)
                     if ind:
-                        points = self.cell_points(ind)
+                        points = self.get_cell(ind).points
                         if points.shape[0] == 8:
                             a1 = cell_points[f[1], :]
                             a2 = points[f[2], :]
@@ -2695,7 +2695,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         def geometric(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
-            cell_points = self.cell_points(ind)
+            cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 for k in [-1, 1]:
                     coords = np.sum([cell_coords, (0, 0, k)], axis=0)
@@ -2720,7 +2720,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                         coords[2] = k
                         ind = self.cell_id(coords)
                         if ind:
-                            points = self.cell_points(ind)
+                            points = self.get_cell(ind).points
                             if points.shape[0] == 8:
                                 z = points[f[2], 2]
                                 z = np.abs(z)

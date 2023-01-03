@@ -132,6 +132,34 @@ def test_cell_edges(cell):
 
 
 @pytest.mark.parametrize("cell", cells[:5])
+def test_cell_copy_generic(cell):
+    cell = cell.copy()
+    cell_copy = cell.copy(deep=True)
+    assert cell_copy == cell
+    cell_copy.points[:] = 0
+    assert cell_copy != cell
+
+    cell_copy = cell.copy(deep=False)
+    assert cell_copy == cell
+    cell_copy.points[:] = 0
+    assert cell_copy == cell
+
+
+def test_cell_copy():
+    cell = cells[0].get_face(0)
+    assert isinstance(cell, pyvista.core.cell.Quad)
+    cell_copy = cell.copy(deep=True)
+    assert cell_copy == cell
+    cell_copy.points[:] = 0
+    assert cell_copy != cell
+
+    cell_copy = cell.copy(deep=False)
+    assert cell_copy == cell
+    cell_copy.points[:] = 0
+    assert cell_copy == cell
+
+
+@pytest.mark.parametrize("cell", cells[:5])
 def test_cell_edges_point_ids(cell):
     point_ids = {frozenset(cell.get_edge(i).point_ids) for i in range(cell.n_edges)}
     assert len(point_ids) == cell.n_edges
