@@ -2732,8 +2732,8 @@ class DataSet(DataSetFilters, DataObject):
     def cell_point_ids(self, ind: int) -> List[int]:
         """Return the point ids in a cell.
 
-        ..  deprecated:: 0.38.0
-            You can use :py:attr:`DataSet.cell[i].point_ids` instead.
+        .. deprecated:: 0.38.0
+            You can use :attr:`DataSet.Cell.point_ids` instead.
 
         Parameters
         ----------
