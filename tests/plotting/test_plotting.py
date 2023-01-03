@@ -3150,3 +3150,24 @@ def test_color_cycler():
 
     assert a0.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
     assert a1.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
+
+    p = pyvista.Plotter()
+    with pytest.raises(ValueError):
+        p.set_color_cycler('foo')
+    with pytest.raises(TypeError):
+        p.set_color_cycler(5)
+
+
+@pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])
+def test_color_cycler_names(name):
+    p = pyvista.Plotter()
+    p.set_color_cycler(name)
+    a0 = p.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = p.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    a2 = p.add_mesh(pyvista.Sphere(center=(1, 1, 0)))
+    a3 = p.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))
+    p.show()
+    assert a0.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a1.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a2.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb

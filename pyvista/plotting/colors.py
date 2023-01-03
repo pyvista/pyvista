@@ -1247,7 +1247,7 @@ def get_default_cycler():
     """Return the default color cycler (matches matplotlib's default)."""
     try:
         from cycler import cycler
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('cycler not installed. Please install matplotlib.')
     return cycler('color', matplotlib_default_colors)
 
@@ -1259,7 +1259,7 @@ def get_hexcolors_cycler():
     """
     try:
         from cycler import cycler
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('cycler not installed. Please install matplotlib.')
     return cycler('color', hexcolors.keys())
 
@@ -1268,7 +1268,7 @@ def get_matplotlib_theme_cycler():
     """Return matplotlib's current theme's color cycler."""
     try:
         import matplotlib.pyplot as plt
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('Please install matplotlib.')
     return plt.rcParams['axes.prop_cycle']
 
@@ -1277,7 +1277,7 @@ def color_scheme_to_cycler(scheme):
     """Convert a color scheme to a Cycler."""
     try:
         from cycler import cycler
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('cycler not installed. Please install matplotlib.')
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
@@ -1309,7 +1309,7 @@ def get_cycler(color_cycler):
     """
     try:
         from cycler import Cycler, cycler
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('cycler not installed. Please install matplotlib.')
     if color_cycler is None:
         return None
