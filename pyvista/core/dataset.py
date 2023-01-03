@@ -30,11 +30,12 @@ from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .._typing import Number, NumericArray, Vector, VectorArray
-from .cells import GenericCell
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
+
+from .cell import GenericCell  # isort: skip
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
