@@ -281,7 +281,7 @@ def test_init_polyhedron():
     grid = pyvista.UnstructuredGrid(cells, cell_type, nodes)
 
     assert grid.n_cells == len(cell_type)
-    assert grid.cell[0].type == pyvista.CellType.POLYHEDRON
+    assert grid.get_cell(0).type == pyvista.CellType.POLYHEDRON
 
 
 def test_cells_dict_hexbeam_file():

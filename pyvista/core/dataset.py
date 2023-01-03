@@ -2608,8 +2608,8 @@ class DataSet(DataSetFilters, DataObject):
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
-        ..  deprecated:: 0.38.0
-            You can use :py:attr:`DataSet.cell[i].n_points` instead.
+        .. deprecated:: 0.38.0
+            Use :attr:`pyvista.Cell.n_points` instead.
 
         Parameters
         ----------
@@ -2634,13 +2634,13 @@ class DataSet(DataSetFilters, DataObject):
             '`cell_n_points` is deprecated. Use `cell[i].n_points` instead',
             PyVistaDeprecationWarning,
         )
-        return self.cell[ind].n_points
+        return self.get_cell[ind].n_points
 
     def cell_points(self, ind: int) -> np.ndarray:
         """Return the points in a cell.
 
         ..  deprecated:: 0.38.0
-            You can use :py:attr:`DataSet.cell[i].points` instead.
+            Use :attr:`pyvista.Cell.points` instead.
 
         Parameters
         ----------
@@ -2673,7 +2673,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the bounding box of a cell.
 
         ..  deprecated:: 0.38.0
-            You can use :py:attr:`DataSet.cell[i].bounds` instead.
+            Use :attr:`pyvista.Cell.bounds` instead.
 
         Parameters
         ----------
@@ -2697,13 +2697,13 @@ class DataSet(DataSetFilters, DataObject):
         warnings.warn(
             '`cell_bounds` is deprecated. Use `cell[i].bounds` instead', PyVistaDeprecationWarning
         )
-        return self.cell[ind].bounds
+        return self.get_cell[ind].bounds
 
     def cell_type(self, ind: int) -> int:
         """Return the type of a cell.
 
-        ..  deprecated:: 0.38.0
-            You can use :py:attr:`DataSet.cell[i].type` instead.
+        .. deprecated:: 0.38.0
+            You can use :attr:`DataSet.Cell.type` instead.
 
         Parameters
         ----------
@@ -2727,7 +2727,7 @@ class DataSet(DataSetFilters, DataObject):
         warnings.warn(
             '`cell_type` is deprecated. Use `cell[i].type` instead', PyVistaDeprecationWarning
         )
-        return self.cell[ind].type
+        return self.get_cell(ind).type
 
     def cell_point_ids(self, ind: int) -> List[int]:
         """Return the point ids in a cell.

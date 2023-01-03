@@ -21,7 +21,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     Parameters
     ----------
-    vtk_cell : vtk.vtkCell
+    vtk_cell : vtk.vtkCell, optional
         The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
 
     cell_type : int, optional
@@ -38,8 +38,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     :attr:`pyvista.UnstructuredGrid.cells` attributes.
 
     Also note that the the cell object is a deep copy of the original cell and
-    is unassociated with the original cell. Changing any data of that points of
-    that cell (for example, ``points``) will not change the original dataset.
+    is unassociated with the original cell. Changing any data of
+    that cell (for example, :attr:`pyvista.Cell.points`) will not change the original dataset.
 
     Examples
     --------
@@ -82,11 +82,10 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def __init__(self, vtk_cell=None, cell_type=None, deep=False):
         """Initialize the cell."""
         super().__init__()
-        # cell type must be set first before deep or shallow copy
-
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
                 raise TypeError(f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}')
+            # cell type must be set first before deep or shallow copy
             if cell_type is None:
                 self.SetCellType(vtk_cell.GetCellType())
             else:
@@ -183,7 +182,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """Return the cell dimension.
 
         This returns the dimensionality of the cell. For example, 1 for an edge,
-        2 for a triangle and 3 for a tetrahedron.
+        2 for a triangle, and 3 for a tetrahedron.
 
         Examples
         --------
@@ -235,7 +234,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     @property
     def point_ids(self) -> List[int]:
-        """Get the point ids composing the cell.
+        """Get the point IDs composing the cell.
 
         Examples
         --------
@@ -260,8 +259,6 @@ class Cell(_vtk.vtkGenericCell, DataObject):
                [-5.28781787e-02,  1.12396041e-02, -4.97068971e-01],
                [-5.55111512e-17,  0.00000000e+00, -5.00000000e-01]])
         """
-        # A copy of the points must be returned to avoid overlapping them since the
-        # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     def get_edge(self, index: int) -> Cell:

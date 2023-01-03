@@ -2,11 +2,11 @@ Cells
 -----
 
 The cell :class:`pyvista.Cell` class is the PyVista representation of the
-`vtkGenericCell <https://vtk.org/doc/nightly/html/classvtkGenericCell.html>`_ and can be used to inspect a dataset's cells, faces, and edges.
+`vtkGenericCell <https://vtk.org/doc/nightly/html/classvtkGenericCell.html>`_ and can be used to inspect a :class:`pyvista.DataSet`'s cells, faces, and edges.
 
 .. note::
    While methods and classes are quite effective at inspecting and plotting
-   parts of a dataset, they are quite inefficient and should be used only for
+   parts of a dataset, they are inefficient and should be used only for
    interactive exploration and debugging. When working with larger datasets or
    working with multiple cells it is generally more efficient to use bulk methods
    like :func:`pyvista.DataSet.extact_cells`.
