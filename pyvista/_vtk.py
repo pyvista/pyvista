@@ -277,10 +277,10 @@ if VTK9:
             vtkBezierCurve,
             vtkBezierHexahedron,
             vtkBezierQuadrilateral,
+            vtkBezierTetra,
             vtkBezierTriangle,
             vtkBezierWedge,
             vtkBiQuadraticQuad,
-            vtkBezierTetra,
             vtkTriQuadraticPyramid,
         )
     except ImportError:  # pragma: no cover
@@ -365,7 +365,6 @@ if VTK9:
                 from pyvista.core.errors import VTKVersionError
 
                 raise VTKVersionError('vtkTriQuadraticPyramid requires VTK v9.2 or newer.')
-
 
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
@@ -875,6 +874,7 @@ else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('vtkHDFReader requires VTK v9 or newer')
+
 
 # lazy import as this was added in 9.1.0
 def lazy_vtkCameraOrientationWidget():
