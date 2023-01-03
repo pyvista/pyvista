@@ -1890,7 +1890,7 @@ class PVDReader(BaseReader, TimeReader):
             datasets.append(
                 PVDDataSet(
                     float(element_attrib.get('timestep', 0)),
-                    int(element_attrib['part']),
+                    int(element_attrib.get('part', 0)),
                     element_attrib['file'],
                     element_attrib.get('group'),
                 )
