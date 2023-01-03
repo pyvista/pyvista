@@ -61,7 +61,7 @@ if pyvista._vtk.VTK9:
     npoints.append(8)
     nfaces.append(6)
     nedges.append(12)
-ids = list(map(type, grids))
+ids = [str(type(grid)) for grid in grids]
 cell_ids = list(map(repr, types))
 
 
