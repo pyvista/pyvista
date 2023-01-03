@@ -181,13 +181,6 @@ if VTK9:
         VTK_VERTEX,
         VTK_VOXEL,
         VTK_WEDGE,
-        vtkBezierCurve,
-        vtkBezierHexahedron,
-        vtkBezierQuadrilateral,
-        vtkBezierTetra,
-        vtkBezierTriangle,
-        vtkBezierWedge,
-        vtkBiQuadraticQuad,
         vtkBiQuadraticQuadraticHexahedron,
         vtkBiQuadraticQuadraticWedge,
         vtkBiQuadraticTriangle,
@@ -265,14 +258,13 @@ if VTK9:
         vtkTriangle,
         vtkTriangleStrip,
         vtkTriQuadraticHexahedron,
-        vtkTriQuadraticPyramid,
         vtkUnstructuredGrid,
         vtkVertex,
         vtkVoxel,
         vtkWedge,
     )
 
-    try:
+    try:  # Introduced prior to VTK 9.2
         from vtkmodules.vtkCommonDataModel import (
             VTK_BEZIER_CURVE,
             VTK_BEZIER_HEXAHEDRON,
@@ -282,9 +274,98 @@ if VTK9:
             VTK_BEZIER_TRIANGLE,
             VTK_BEZIER_WEDGE,
             VTK_TRIQUADRATIC_PYRAMID,
+            vtkBezierCurve,
+            vtkBezierHexahedron,
+            vtkBezierQuadrilateral,
+            vtkBezierTriangle,
+            vtkBezierWedge,
+            vtkBiQuadraticQuad,
+            vtkBezierTetra,
+            vtkTriQuadraticPyramid,
         )
     except ImportError:  # pragma: no cover
-        pass
+
+        class vtkBiQuadraticQuad:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBiQuadraticQuad requires VTK v9 or newer')
+
+        class vtkBezierCurve:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBezierCurve requires VTK v9.2 or newer.')
+
+        class vtkBezierHexahedron:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBezierHexahedron requires VTK v9.2 or newer.')
+
+        class vtkBezierQuadrilateral:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBezierQuadrilateral requires VTK v9.2 or newer.')
+
+        class vtkBezierTriangle:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBezierTriangle requires VTK v9.2 or newer.')
+
+        class vtkBezierWedge:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBezierWedge requires VTK v9.2 or newer.')
+
+        class vtkBiQuadraticQuad:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBiQuadraticQuad requires VTK v9.2 or newer.')
+
+        class vtkBezierTetra:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkBezierTetra requires VTK v9.2 or newer.')
+
+        class vtkTriQuadraticPyramid:  # type: ignore
+            """Empty placeholder for < VTK9.2 compatibility."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('vtkTriQuadraticPyramid requires VTK v9.2 or newer.')
+
 
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
@@ -794,7 +875,6 @@ else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('vtkHDFReader requires VTK v9 or newer')
-
 
 # lazy import as this was added in 9.1.0
 def lazy_vtkCameraOrientationWidget():

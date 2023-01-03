@@ -2481,7 +2481,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self, index: int, deep=False) -> 'pyvista.Cell':
+    def get_cell(self, index: int) -> 'pyvista.Cell':
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2507,7 +2507,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.get_cell(0) # doctest:+SKIP
-        Cell (0x7f6304e0a730)
+        GenericCell (0x7f6304e0a730)
           Type:	CellType.TRIANGLE
           Linear:	True
           Dimension:	2
