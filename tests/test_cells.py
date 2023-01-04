@@ -86,6 +86,13 @@ def test_cell_point_ids(grid):
     assert len(point_ids) == grid.n_cells
 
 
+def test_cell_get_cell():
+    hexbeam = grids[0]
+    with pytest.raises(IndexError, match='Invalid index'):
+        hexbeam.get_cell(hexbeam.n_cells)
+    assert isinstance(hexbeam.get_cell(0), pyvista.Cell)
+
+
 @pytest.mark.parametrize("cell", cells[:5])
 def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
@@ -124,6 +131,9 @@ def test_cell_n_edges(cell, ne):
 @pytest.mark.parametrize("cell", cells[:5])
 def test_cell_get_edges(cell):
     assert all(cell.get_edge(i).type == CellType.LINE for i in range(cell.n_edges))
+
+    with pytest.raises(IndexError, match='Invalid index'):
+        cell.get_edge(cell.n_edges)
 
 
 @pytest.mark.parametrize("cell", cells[:5])

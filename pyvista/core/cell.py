@@ -171,7 +171,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
             self.points.copy(),
         ]
 
-        if not _vtk.VTK9:
+        if not _vtk.VTK9:  # pragma: no cover
             args.insert(0, [0])
 
         return pyvista.UnstructuredGrid(*args)

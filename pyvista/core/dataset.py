@@ -2516,6 +2516,10 @@ class DataSet(DataSetFilters, DataObject):
           Y Bounds:	4.876e+01, 5.549e+01
           Z Bounds:	8.075e+01, 8.366e+01
         """
+        # must check upper bounds, otherwise segfaults (on Linux, 9.2)
+        if index + 1 > self.n_cells:
+            raise IndexError(f'Invalid index {index} for a dataset with {self.n_cells} cells.')
+
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
