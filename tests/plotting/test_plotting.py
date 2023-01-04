@@ -3090,7 +3090,7 @@ def test_plot_points_gaussian_as_spheres(sphere):
 
 
 @skip_windows_mesa  # due to opacity
-def test_plot_show_vertices(sphere, hexbeam):
+def test_plot_show_vertices(sphere, hexbeam, multiblock_all):
     sphere.plot(
         color='w',
         show_vertices=True,
@@ -3111,6 +3111,13 @@ def test_plot_show_vertices(sphere, hexbeam):
         render_points_as_spheres=True,
         vertex_style='points',
         vertex_color='r',
+    )
+
+    multiblock_all.plot(
+        color='w',
+        show_vertices=True,
+        point_size=3,
+        render_points_as_spheres=True,
     )
 
 
