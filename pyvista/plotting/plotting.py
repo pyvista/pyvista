@@ -62,6 +62,7 @@ from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
@@ -3631,16 +3632,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.volume = Volume()
         self.volume.mapper = self.mapper
 
-        prop = _vtk.vtkVolumeProperty()
-        prop.SetColor(self.mapper.lookup_table.to_color_tf())
-        prop.SetScalarOpacity(self.mapper.lookup_table.to_opacity_tf())
-        prop.SetAmbient(ambient)
-        prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
-        prop.SetShade(shade)
-        prop.SetDiffuse(diffuse)
-        prop.SetSpecular(specular)
-        prop.SetSpecularPower(specular_power)
-        self.volume.prop = prop
+        self.volume.prop = VolumeProperty(
+            lookup_table=self.mapper.lookup_table,
+            ambient=ambient,
+            shade=shade,
+            specular=specular,
+            specular_power=specular_power,
+            diffuse=diffuse,
+            opacity_unit_distance=opacity_unit_distance,
+        )
 
         actor, prop = self.add_actor(
             self.volume,
