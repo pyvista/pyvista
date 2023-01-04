@@ -1,6 +1,6 @@
 """Wrap vtkActor."""
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 import weakref
 
 import numpy as np
@@ -11,7 +11,7 @@ from pyvista.utilities.misc import no_new_attr
 
 from ._property import Property
 from .mapper import _BaseMapper
-from .prop3D import Prop3D
+from .prop3d import Prop3D
 
 
 @no_new_attr
@@ -380,38 +380,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         if isinstance(value, np.ndarray):
             value = pv.vtkmatrix_from_array(value)
         self.SetUserMatrix(value)
-
-    @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
-        """Return the bounds of the actor.
-
-        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> mesh = pv.Cube(x_length=0.1, y_length=0.2, z_length=0.3)
-        >>> actor = pl.add_mesh(mesh)
-        >>> actor.bounds
-        (-0.05, 0.05, -0.1, 0.1, -0.15, 0.15)
-
-        """
-        return self.GetBounds()
-
-    @property
-    def center(self) -> tuple:
-        """Return the center of the actor.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere(center=(0.5, 0.5, 1)))
-        >>> actor.center  # doctest:+SKIP
-        (0.5, 0.5, 1)
-        """
-        return self.GetCenter()
 
     @property
     def backface_prop(self) -> Optional['pv.Property']:

@@ -3,7 +3,7 @@ from pyvista import _vtk
 
 from ._property import Property
 from .mapper import _BaseMapper
-from .prop3D import Prop3D
+from .prop3d import Prop3D
 
 
 class Volume(Prop3D, _vtk.vtkVolume):

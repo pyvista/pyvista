@@ -922,7 +922,10 @@ class _BaseVolumeMapper(_BaseMapper):
             return 'average'
         elif value == 4:
             return 'additive'
-        return ''
+
+        raise NotImplementedError(
+            f'Unsupported blend mode return value {value}'
+        )  # pragma: no cover
 
     @blend_mode.setter
     def blend_mode(self, value: str):
