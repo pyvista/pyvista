@@ -21,7 +21,7 @@ from pyvista.utilities.cells import (
     numpy_to_idarr,
 )
 
-from .._typing import bounds_like
+from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
 from .cell import CellType
 from .dataset import DataSet
@@ -2491,7 +2491,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return self._dimensions()
 
     @property
-    def visible_bounds(self) -> bounds_like:
+    def visible_bounds(self) -> BoundsLike:
         """Return the bounding box of the visible cells.
 
         Different from `bounds`, which returns the bounding box of the

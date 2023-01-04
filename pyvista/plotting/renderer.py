@@ -13,7 +13,7 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
-from .._typing import bounds_like
+from .._typing import BoundsLike
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
@@ -326,7 +326,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self) -> bounds_like:
+    def bounds(self) -> BoundsLike:
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -355,7 +355,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(bounds_like, tuple(the_bounds))
+        return cast(BoundsLike, tuple(the_bounds))
 
     @property
     def length(self):

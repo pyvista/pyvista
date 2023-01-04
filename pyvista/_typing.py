@@ -31,4 +31,4 @@ color_like = Union[
 # Overwrite default docstring, as sphinx is not able to capture the docstring
 # when it is put beneath the definition somehow?
 color_like.__doc__ = """Any object convertible to a :class:`Color`."""
-bounds_like = Tuple[Number, Number, Number, Number, Number, Number]
+BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]

@@ -29,7 +29,7 @@ from pyvista.utilities.arrays import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
-from .._typing import Number, NumericArray, Vector, VectorArray, bounds_like
+from .._typing import BoundsLike, Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -1578,7 +1578,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> bounds_like:
+    def bounds(self) -> BoundsLike:
         """Return the bounding box of this dataset.
 
         The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
@@ -1593,7 +1593,7 @@ class DataSet(DataSetFilters, DataObject):
         (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
-        return cast(bounds_like, self.GetBounds())
+        return cast(BoundsLike, self.GetBounds())
 
     @property
     def length(self) -> float:
@@ -2532,7 +2532,7 @@ class DataSet(DataSetFilters, DataObject):
         points = _vtk.vtk_to_numpy(points)
         return points.copy()
 
-    def cell_bounds(self, ind: int) -> bounds_like:
+    def cell_bounds(self, ind: int) -> BoundsLike:
         """Return the bounding box of a cell.
 
         Parameters

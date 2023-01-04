@@ -14,7 +14,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
-from .._typing import bounds_like
+from .._typing import BoundsLike
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
@@ -133,7 +133,7 @@ class MultiBlock(
                 self.SetBlock(i, pyvista.wrap(block))
 
     @property
-    def bounds(self) -> bounds_like:
+    def bounds(self) -> BoundsLike:
         """Find min/max for bounds across blocks.
 
         Returns
@@ -153,6 +153,7 @@ class MultiBlock(
 
         """
         # apply reduction of min and max over each block
+        # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
         all_bounds = [cast(list, block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
@@ -165,7 +166,7 @@ class MultiBlock(
         # interleave minima and maxima for bounds
         the_bounds = np.stack([minima, maxima]).ravel('F')
 
-        return cast(bounds_like, tuple(the_bounds))
+        return cast(BoundsLike, tuple(the_bounds))
 
     @property
     def center(self) -> Any:
@@ -180,6 +181,7 @@ class MultiBlock(
         array([1., 1., 0.])
 
         """
+        # (typing.cast necessary to make mypy happy with np.reshape())
         return np.reshape(cast(list, self.bounds), (3, 2)).mean(axis=1)
 
     @property
