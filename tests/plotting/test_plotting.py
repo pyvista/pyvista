@@ -3121,6 +3121,37 @@ def test_plot_show_vertices(sphere, hexbeam, multiblock_all):
     )
 
 
+def test_remove_vertices_actor(sphere):
+    # Test remove by name
+    pl = pyvista.Plotter()
+    pl.add_mesh(
+        sphere,
+        color='w',
+        show_vertices=True,
+        point_size=20,
+        lighting=False,
+        vertex_style='points',
+        vertex_color='b',
+        name='sphere',
+    )
+    pl.remove_actor('sphere')
+    pl.show()
+    # Test remove by Actor
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        color='w',
+        show_vertices=True,
+        point_size=20,
+        lighting=False,
+        vertex_style='points',
+        vertex_color='b',
+        name='sphere',
+    )
+    pl.remove_actor(actor)
+    pl.show()
+
+
 @skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
