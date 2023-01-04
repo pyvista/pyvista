@@ -2703,7 +2703,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the type of a cell.
 
         .. deprecated:: 0.38.0
-            You can use :attr:`DataSet.Cell.type` instead.
+            You can use :attr:`pyvista.Cell.type` instead.
 
         Parameters
         ----------
@@ -2733,7 +2733,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the point ids in a cell.
 
         .. deprecated:: 0.38.0
-            You can use :attr:`DataSet.Cell.point_ids` instead.
+            You can use :attr:`pyvista.Cell.point_ids` instead.
 
         Parameters
         ----------
