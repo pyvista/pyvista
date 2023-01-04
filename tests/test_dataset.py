@@ -787,8 +787,11 @@ def test_set_t_coords(grid):
 
 
 def test_activate_texture_none(grid):
-    assert grid._activate_texture('not a key') is None
-    assert grid._activate_texture(True) is None
+    with pytest.warns(UserWarning, match=r'not a key'):
+        assert grid._activate_texture('not a key') is None
+
+    with pytest.warns(UserWarning, match=r'No textures associated'):
+        assert grid._activate_texture(True) is None
 
 
 def test_set_active_vectors_fail(grid):

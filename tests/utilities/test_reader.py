@@ -12,6 +12,7 @@ from pyvista.examples.downloads import download_file
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
 )
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
 @pytest.fixture()
@@ -466,7 +467,7 @@ def test_pvdreader():
 
     assert reader.number_time_points == 15
     assert reader.time_point_value(1) == 1.0
-    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=np.float))
+    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=float))
 
     assert reader.active_time_value == reader.time_values[0]
 
@@ -511,6 +512,24 @@ def test_pvdreader_no_time_group():
         assert dataset.time == 0.0
         assert dataset.group is None
         assert dataset.part == i
+
+
+@skip_windows
+def test_pvdreader_no_part_group():
+    filename = examples.download_dual_sphere_animation(load=False)  # download all the files
+    # Use a pvd file that has no parts and with timesteps.
+    filename = os.path.join(os.path.dirname(filename), 'dualSphereAnimation4NoPart.pvd')
+
+    reader = pyvista.PVDReader(filename)
+    assert reader.active_time_value == 0.0
+    assert len(reader.active_datasets) == 1
+
+    reader.set_active_time_value(1.0)
+    assert len(reader.active_datasets) == 2
+    for i, dataset in enumerate(reader.active_datasets):
+        assert dataset.time == 1.0
+        assert dataset.group == ""
+        assert dataset.part == 0
 
 
 def get_cavity_reader():

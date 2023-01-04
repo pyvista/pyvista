@@ -11,7 +11,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict
+from typing import Dict, Tuple
 import warnings
 import weakref
 
@@ -659,7 +659,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         the rendering engine supports it.
 
         Disable this with :func:`disable_hidden_line_removal
-        <BasePlotter.disable_hidden_line_removal>`
+        <Plotter.disable_hidden_line_removal>`.
 
         Parameters
         ----------
@@ -696,7 +696,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Disable hidden line removal.
 
         Enable again with :func:`enable_hidden_line_removal
-        <BasePlotter.enable_hidden_line_removal>`
+        <Plotter.enable_hidden_line_removal>`.
 
         Parameters
         ----------
@@ -1388,7 +1388,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera_set = is_set
 
     @property
-    def bounds(self):
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounds of the active renderer.
 
         Returns
@@ -1402,7 +1402,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.bounds
-        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
         return self.renderer.bounds
@@ -1608,16 +1608,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.add_key_event(*args, **kwargs)
 
-    def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key.
-
-        Parameters
-        ----------
-        key : str
-            Key to clear events for.
-
-        """
-        self.iren.clear_events_for_key(key)
+    @wraps(RenderWindowInteractor.clear_events_for_key)
+    def clear_events_for_key(self, *args, **kwargs):
+        """Wrap RenderWindowInteractor.clear_events_for_key."""
+        if hasattr(self, 'iren'):
+            self.iren.clear_events_for_key(*args, **kwargs)
 
     def store_mouse_position(self, *args):
         """Store mouse position."""
@@ -1637,7 +1632,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         This will potentially slow down the interactor. No callbacks
         supported here - use
-        :func:`pyvista.BasePlotter.track_click_position` instead.
+        :func:`pyvista.Plotter.track_click_position` instead.
 
         """
         self.iren.track_mouse_position(self.store_mouse_position)
@@ -1752,8 +1747,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
-        if hasattr(self, 'iren'):
-            self.iren.clear_key_event_callbacks()
+        if not hasattr(self, 'iren'):
+            return
+
+        self.iren.clear_key_event_callbacks()
 
         self.add_key_event('q', self._prep_for_close)  # Add no matter what
         b_left_down_callback = lambda: self.iren.add_observer(
@@ -1837,7 +1834,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enable anaglyph stereo rendering.
 
         Disable this with :func:`disable_stereo_render
-        <BasePlotter.disable_stereo_render>`
+        <Plotter.disable_stereo_render>`
 
         Examples
         --------
@@ -1858,7 +1855,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Disable anaglyph stereo rendering.
 
         Enable again with :func:`enable_stereo_render
-        <BasePlotter.enable_stereo_render>`
+        <Plotter.enable_stereo_render>`
 
         Examples
         --------
@@ -1940,7 +1937,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.iren is not None:
             update_rate = self.iren.get_desired_update_rate()
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
-                self.right_timer_id = self.iren.create_repeating_timer(stime)
+                # Allow interaction for a brief moment during interactive updating
+                if self.iren.can_process_events:
+                    # For newer VTK versions we can use the non-blocking ProcessEvents method.
+                    self.iren.process_events()
+                else:
+                    # For older VTK versions we have to use the blocking Start method instead.
+                    # Setup a timer to break out of the next blocking call
+                    Plotter.update_timer_id = self.iren.create_timer(stime)
+                    # Allow interaction for a brief moment during interactive updating, blocking call.
+                    self.iren.start()
+                    # Execution resumed after TerminateApp() call in on_timer callback, destroy the timer
+                    self.iren.destroy_timer(Plotter.update_timer_id)
+                # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time
                 return
@@ -1997,6 +2006,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
+        show_vertices=False,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2087,7 +2097,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label : str, optional
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
         reset_camera : bool, optional
             Reset the camera after adding this mesh to the scene. The default
@@ -2099,7 +2109,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -2250,8 +2260,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
 
+        show_vertices : bool, default: False
+            When ``style`` is not ``'points'``, render the external surface
+            vertices. The following optional keyword arguments may be used to
+            control the style of the vertices:
+
+            * ``vertex_color`` - The color of the vertices
+            * ``vertex_style`` - Change style to ``'points_gaussian'``
+            * ``vertex_opacity`` - Control the opacity of the vertices
+
         **kwargs : dict, optional
-            Optional developer keyword arguments.
+            Optional keyword arguments.
 
         Returns
         -------
@@ -2306,6 +2325,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             interpolation,
             remove_existing_actor,
+            vertex_color,
+            vertex_style,
+            vertex_opacity,
         ) = _common_arg_parser(
             dataset,
             self._theme,
@@ -2427,6 +2449,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
 
+        # add this immediately prior to adding the actor to ensure vertices
+        # are rendered
+        if show_vertices and style not in ['points', 'points_gaussian']:
+            self.add_composite(
+                dataset,
+                style=vertex_style,
+                point_size=point_size,
+                color=vertex_color,
+                render_points_as_spheres=render_points_as_spheres,
+                name=f'{name}-vertices',
+                opacity=vertex_opacity,
+                lighting=lighting,
+                render=False,
+            )
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
@@ -2491,13 +2528,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         emissive=False,
         copy_mesh=False,
         backface_params=None,
+        show_vertices=False,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
         and/or geometry of datasets. For volume rendering, see
-        :func:`pyvista.BasePlotter.add_volume`.
+        :func:`pyvista.Plotter.add_volume`.
 
         To see the what most of the following parameters look like in action,
         please refer to :class:`pyvista.Property`.
@@ -2607,7 +2645,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label : str, optional
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
         reset_camera : bool, optional
             Reset the camera after adding this mesh to the scene. The default
@@ -2619,7 +2657,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -2802,8 +2840,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``backface_params=None``) default to the corresponding frontface
             properties.
 
+        show_vertices : bool, default: False
+            When ``style`` is not ``'points'``, render the external surface
+            vertices. The following optional keyword arguments may be used to
+            control the style of the vertices:
+
+            * ``vertex_color`` - The color of the vertices
+            * ``vertex_style`` - Change style to ``'points_gaussian'``
+            * ``vertex_opacity`` - Control the opacity of the vertices
+
         **kwargs : dict, optional
-            Optional developer keyword arguments.
+            Optional keyword arguments.
 
         Returns
         -------
@@ -2958,6 +3005,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             interpolation,
             remove_existing_actor,
+            vertex_color,
+            vertex_style,
+            vertex_opacity,
         ) = _common_arg_parser(
             mesh,
             self._theme,
@@ -3176,6 +3226,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
 
+        # add this immediately prior to adding the actor to ensure vertices
+        # are rendered
+        if show_vertices and style not in ['points', 'points_gaussian']:
+            if not isinstance(mesh, pyvista.PolyData):
+                surf = mesh.extract_surface()
+            else:
+                surf = mesh
+
+            self.add_mesh(
+                surf,
+                style=vertex_style,
+                point_size=point_size,
+                color=vertex_color,
+                render_points_as_spheres=render_points_as_spheres,
+                name=f'{name}-vertices',
+                opacity=vertex_opacity,
+                lighting=lighting,
+                render=False,
+            )
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
@@ -3194,6 +3264,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
+
         return actor
 
     def _add_legend_label(self, actor, label, scalars, color):
@@ -3337,7 +3408,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         show_scalar_bar : bool
             If ``False``, a scalar bar will not be added to the
@@ -3856,13 +3927,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if isinstance(views, (int, np.integer)):
+            camera = self.renderers[views].camera
+            camera_status = self.renderers[views].camera_set
             for renderer in self.renderers:
-                renderer.camera = self.renderers[views].camera
+                renderer.camera = camera
+                renderer.camera_set = camera_status
             return
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
+            camera = self.renderers[views[0]].camera
+            camera_status = self.renderers[views[0]].camera_set
             for view_index in views:
-                self.renderers[view_index].camera = self.renderers[views[0]].camera
+                self.renderers[view_index].camera = camera
+                self.renderers[view_index].camera_set = camera_status
         else:
             raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
@@ -3881,13 +3958,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 renderer.camera = Camera()
                 renderer.reset_camera()
+                renderer.camera_set = False
         elif isinstance(views, int):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
+            self.renderers[views].camera_set = False
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
+                self.renderers[view_index].cemera_set = False
         else:
             raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 
@@ -4459,7 +4539,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : color_like, optional
+        color : color_like, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4467,14 +4547,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        width : float, optional
+        width : float, default: 5
             Thickness of lines.
 
-        label : str, optional
+        label : str, default: None
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`.
+            :func:`pyvista.Plotter.add_legend`.
 
-        name : str, optional
+        name : str, default: None
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
@@ -4498,7 +4578,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.lines_from_points(lines)
+        lines = pyvista.line_segments_from_points(lines)
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
@@ -4761,7 +4841,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
         """Label the points from a dataset with the values of their scalars.
 
-        Wrapper for :func:`pyvista.BasePlotter.add_point_labels`.
+        Wrapper for :func:`pyvista.Plotter.add_point_labels`.
 
         Parameters
         ----------
@@ -4781,7 +4861,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         **kwargs : dict, optional
             Keyword arguments passed to
-            :func:`pyvista.BasePlotter.add_point_labels`.
+            :func:`pyvista.Plotter.add_point_labels`.
 
         Returns
         -------
@@ -4822,7 +4902,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``render_points_as_spheres`` options.
 
         **kwargs : dict, optional
-            See :func:`pyvista.BasePlotter.add_mesh` for optional
+            See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
         Returns
@@ -4872,7 +4952,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Amount to scale the direction vectors.
 
         **kwargs : dict, optional
-            See :func:`pyvista.BasePlotter.add_mesh` for optional
+            See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
         Returns
@@ -5760,7 +5840,7 @@ class Plotter(BasePlotter):
     """
 
     last_update_time = 0.0
-    right_timer_id = -1
+    update_timer_id = -1
 
     def __init__(
         self,
@@ -5806,8 +5886,13 @@ class Plotter(BasePlotter):
         _warn_xserver()
 
         def on_timer(iren, event_id):
-            """Exit application if interactive renderer stops."""
+            """Resume execution after processing interaction events during an interactive update."""
+            # For some odd reason when vtkContextInteractorStyle is active, TimerEvents
+            # are constantly being fired. As we cannot differentiate between different
+            # timers from the python side, we assume all TimerEvents that are fired while
+            # the ContextInteractorStyle is not active are coming from the update_timer.
             if event_id == 'TimerEvent' and self.iren._style != "Context":
+                # Simulate 'q' press to break out of blocking call in the update method.
                 self.iren.terminate_app()
 
         if off_screen is None:
@@ -5868,6 +5953,7 @@ class Plotter(BasePlotter):
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.ren_win)
+        self.reset_key_events()
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
@@ -5882,8 +5968,9 @@ class Plotter(BasePlotter):
         # Set window size
         self.window_size = window_size
 
-        # add timer event if interactive render exists
-        self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
+        # add timer event callback to break out of blocking interactive update call (only needed for VTK<9)
+        if not self.iren.can_process_events:
+            self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
         if self._theme.depth_peeling.enabled:
             if self.enable_depth_peeling():
@@ -5940,7 +6027,7 @@ class Plotter(BasePlotter):
 
         interactive_update : bool, optional
             Disabled by default.  Allows user to non-blocking draw,
-            user should call :func:`BasePlotter.update` in each iteration.
+            user should call :func:`Plotter.update` in each iteration.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
@@ -6221,6 +6308,7 @@ class Plotter(BasePlotter):
         if return_img or screenshot is True:
             if return_cpos:
                 return self.camera_position, self.last_image
+            return self.last_image
 
         if return_cpos:
             return self.camera_position

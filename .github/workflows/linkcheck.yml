@@ -12,7 +12,7 @@ concurrency:
 jobs:
   doc:
     name: Check Links
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true

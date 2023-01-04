@@ -216,6 +216,14 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
+def test_add_lines():
+    pl = pyvista.Plotter()
+    points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
+    actor = pl.add_lines(points)
+    dataset = actor.mapper.dataset
+    assert dataset.n_cells == 2
+
+
 def test_clear_actors(cube, sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(cube)
@@ -247,3 +255,14 @@ def test_anti_aliasing_invalid():
     pl = pyvista.Plotter()
     with pytest.raises(ValueError, match='Should be either "fxaa" or "ssaa"'):
         pl.renderer.enable_anti_aliasing('invalid')
+
+
+def test_plot_return_img_without_cpos(sphere: pyvista.PolyData):
+    img = sphere.plot(return_cpos=False, return_img=True, screenshot=True)
+    assert isinstance(img, np.ndarray)
+
+
+def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
+    cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
+    assert isinstance(cpos, pyvista.CameraPosition)
+    assert isinstance(img, np.ndarray)
