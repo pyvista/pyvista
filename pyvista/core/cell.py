@@ -410,7 +410,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        Create a deep copy of the cell and demonstrate its deep.
+        Create a deep copy of the cell and demonstrate it is deep.
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
