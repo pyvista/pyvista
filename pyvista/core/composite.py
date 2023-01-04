@@ -132,7 +132,7 @@ class MultiBlock(
                 self.SetBlock(i, pyvista.wrap(block))
 
     @property
-    def bounds(self) -> List[float]:
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Find min/max for bounds across blocks.
 
         Returns
@@ -148,21 +148,23 @@ class MultiBlock(
         >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        [-0.5, 2.5, -0.5, 2.5, -0.5, 0.5]
+        (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
 
         """
         # apply reduction of min and max over each block
         all_bounds = [block.bounds for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
-            minima = np.array([0, 0, 0])
-            maxima = np.array([0, 0, 0])
+            minima = np.array([0.0, 0.0, 0.0])
+            maxima = np.array([0.0, 0.0, 0.0])
         else:
             minima = np.minimum.reduce(all_bounds)[::2]
             maxima = np.maximum.reduce(all_bounds)[1::2]
 
         # interleave minima and maxima for bounds
-        return np.stack([minima, maxima]).ravel('F').tolist()
+        the_bounds = np.stack([minima, maxima]).ravel('F')
+
+        return cast(Tuple[float, float, float, float, float, float], tuple(the_bounds))
 
     @property
     def center(self) -> Any:

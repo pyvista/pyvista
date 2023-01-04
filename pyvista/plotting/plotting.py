@@ -11,7 +11,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict
+from typing import Dict, Tuple
 import warnings
 import weakref
 
@@ -1389,7 +1389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera_set = is_set
 
     @property
-    def bounds(self):
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounds of the active renderer.
 
         Returns
@@ -1403,7 +1403,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.bounds
-        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
         return self.renderer.bounds
@@ -3849,13 +3849,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if isinstance(views, (int, np.integer)):
+            camera = self.renderers[views].camera
+            camera_status = self.renderers[views].camera_set
             for renderer in self.renderers:
-                renderer.camera = self.renderers[views].camera
+                renderer.camera = camera
+                renderer.camera_set = camera_status
             return
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
+            camera = self.renderers[views[0]].camera
+            camera_status = self.renderers[views[0]].camera_set
             for view_index in views:
-                self.renderers[view_index].camera = self.renderers[views[0]].camera
+                self.renderers[view_index].camera = camera
+                self.renderers[view_index].camera_set = camera_status
         else:
             raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
@@ -3874,13 +3880,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 renderer.camera = Camera()
                 renderer.reset_camera()
+                renderer.camera_set = False
         elif isinstance(views, int):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
+            self.renderers[views].camera_set = False
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
+                self.renderers[view_index].cemera_set = False
         else:
             raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 
@@ -6221,6 +6230,7 @@ class Plotter(BasePlotter):
         if return_img or screenshot is True:
             if return_cpos:
                 return self.camera_position, self.last_image
+            return self.last_image
 
         if return_cpos:
             return self.camera_position
