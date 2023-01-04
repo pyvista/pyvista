@@ -2006,6 +2006,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
+        show_vertices=False,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2259,8 +2260,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
 
+        show_vertices : bool, default: False
+            When ``style`` is not ``'points'``, render the external surface
+            vertices. The following optional keyword arguments may be used to
+            control the style of the vertices:
+
+            * ``vertex_color`` - The color of the vertices
+            * ``vertex_style`` - Change style to ``'points_gaussian'``
+            * ``vertex_opacity`` - Control the opacity of the vertices
+
         **kwargs : dict, optional
-            Optional developer keyword arguments.
+            Optional keyword arguments.
 
         Returns
         -------
@@ -2315,6 +2325,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             interpolation,
             remove_existing_actor,
+            vertex_color,
+            vertex_style,
+            vertex_opacity,
         ) = _common_arg_parser(
             dataset,
             self._theme,
@@ -2436,6 +2449,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
 
+        # add this immediately prior to adding the actor to ensure vertices
+        # are rendered
+        if show_vertices and style not in ['points', 'points_gaussian']:
+            self.add_composite(
+                dataset,
+                style=vertex_style,
+                point_size=point_size,
+                color=vertex_color,
+                render_points_as_spheres=render_points_as_spheres,
+                name=f'{name}-vertices',
+                opacity=vertex_opacity,
+                lighting=lighting,
+                render=False,
+            )
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
@@ -2500,6 +2528,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         emissive=False,
         copy_mesh=False,
         backface_params=None,
+        show_vertices=False,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2811,8 +2840,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``backface_params=None``) default to the corresponding frontface
             properties.
 
+        show_vertices : bool, default: False
+            When ``style`` is not ``'points'``, render the external surface
+            vertices. The following optional keyword arguments may be used to
+            control the style of the vertices:
+
+            * ``vertex_color`` - The color of the vertices
+            * ``vertex_style`` - Change style to ``'points_gaussian'``
+            * ``vertex_opacity`` - Control the opacity of the vertices
+
         **kwargs : dict, optional
-            Optional developer keyword arguments.
+            Optional keyword arguments.
 
         Returns
         -------
@@ -2967,6 +3005,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             interpolation,
             remove_existing_actor,
+            vertex_color,
+            vertex_style,
+            vertex_opacity,
         ) = _common_arg_parser(
             mesh,
             self._theme,
@@ -3185,6 +3226,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
 
+        # add this immediately prior to adding the actor to ensure vertices
+        # are rendered
+        if show_vertices and style not in ['points', 'points_gaussian']:
+            if not isinstance(mesh, pyvista.PolyData):
+                surf = mesh.extract_surface()
+            else:
+                surf = mesh
+
+            self.add_mesh(
+                surf,
+                style=vertex_style,
+                point_size=point_size,
+                color=vertex_color,
+                render_points_as_spheres=render_points_as_spheres,
+                name=f'{name}-vertices',
+                opacity=vertex_opacity,
+                lighting=lighting,
+                render=False,
+            )
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
@@ -3203,6 +3264,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
+
         return actor
 
     def _add_legend_label(self, actor, label, scalars, color):
