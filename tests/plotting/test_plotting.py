@@ -3089,6 +3089,31 @@ def test_plot_points_gaussian_as_spheres(sphere):
     )
 
 
+@skip_windows_mesa  # due to opacity
+def test_plot_show_vertices(sphere, hexbeam):
+    sphere.plot(
+        color='w',
+        show_vertices=True,
+        point_size=20,
+        lighting=False,
+        render_points_as_spheres=True,
+        vertex_style='points',
+        vertex_opacity=0.1,
+        vertex_color='b',
+    )
+
+    hexbeam.plot(
+        color='w',
+        opacity=0.5,
+        show_vertices=True,
+        point_size=20,
+        lighting=True,
+        render_points_as_spheres=True,
+        vertex_style='points',
+        vertex_color='r',
+    )
+
+
 @skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
