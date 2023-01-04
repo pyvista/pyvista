@@ -97,6 +97,3 @@ venv/
 
 # VSCode
 .vscode/
-
-# Image cache
-*image_cache/*

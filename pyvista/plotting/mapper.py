@@ -29,6 +29,20 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self._theme = theme
         self.lookup_table = LookupTable()
 
+    @property
+    def bounds(self) -> tuple:
+        """Return the bounds of this mapper.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mapper = pv.DataSetMapper(dataset=pv.Cube())
+        >>> mapper.bounds
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+
+        """
+        return self.GetBounds()
+
     def copy(self) -> '_BaseMapper':
         """Create a copy of this mapper.
 
@@ -869,7 +883,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def dataset(self):
         """Return or set the dataset assigned to this mapper."""
-        return self.GetInputAsDataSet()
+        return self.GetDataSetInput()
 
     @dataset.setter
     def dataset(self, new_dataset: 'pv.core.dataset.DataSet'):
@@ -893,6 +907,42 @@ class _BaseVolumeMapper(_BaseMapper):
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
         self._scalar_range = clim
+
+    @property
+    def blend_mode(self) -> str:
+        """Blend mode."""
+        value = self.GetBlendMode()
+        if value == 0:
+            return 'composite'
+        elif value == 1:
+            return 'maximum'
+        elif value == 2:
+            return 'minimum'
+        elif value == 3:
+            return 'average'
+        elif value == 4:
+            return 'additive'
+        return ''
+
+    @blend_mode.setter
+    def blend_mode(self, value: str):
+        value = value.lower()
+        if value in ['additive', 'add', 'sum']:
+            self.SetBlendModeToAdditive()
+        elif value in ['average', 'avg', 'average_intensity']:
+            self.SetBlendModeToAverageIntensity()
+        elif value in ['composite', 'comp']:
+            self.SetBlendModeToComposite()
+        elif value in ['maximum', 'max', 'maximum_intensity']:
+            self.SetBlendModeToMaximumIntensity()
+        elif value in ['minimum', 'min', 'minimum_intensity']:
+            self.SetBlendModeToMinimumIntensity()
+        else:
+            raise ValueError(
+                f'Blending mode {value!r} invalid. '
+                'Please choose either "additive", '
+                '"composite", "minimum" or "maximum".'
+            )
 
     def __del__(self):
         self._lut = None

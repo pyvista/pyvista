@@ -25,6 +25,11 @@ def test_scalar_range(dataset_mapper):
     assert dataset_mapper.scalar_range == rng
 
 
+def test_bounds(dataset_mapper):
+    assert isinstance(dataset_mapper.bounds, tuple)
+    assert dataset_mapper.bounds == (-126.0, 125.0, -127.0, 126.0, -127.0, 127.0)
+
+
 def test_lookup_table(dataset_mapper):
     assert isinstance(dataset_mapper.lookup_table, vtk.vtkLookupTable)
 

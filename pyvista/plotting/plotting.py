@@ -3625,24 +3625,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.mapper.lookup_table.annotations = annotations
 
         self.mapper.dataset = volume
-
-        blending = blending.lower()
-        if blending in ['additive', 'add', 'sum']:
-            self.mapper.SetBlendModeToAdditive()
-        elif blending in ['average', 'avg', 'average_intensity']:
-            self.mapper.SetBlendModeToAverageIntensity()
-        elif blending in ['composite', 'comp']:
-            self.mapper.SetBlendModeToComposite()
-        elif blending in ['maximum', 'max', 'maximum_intensity']:
-            self.mapper.SetBlendModeToMaximumIntensity()
-        elif blending in ['minimum', 'min', 'minimum_intensity']:
-            self.mapper.SetBlendModeToMinimumIntensity()
-        else:
-            raise ValueError(
-                f'Blending mode {blending!r} invalid. '
-                'Please choose either "additive", '
-                '"composite", "minimum" or "maximum".'
-            )
+        self.mapper.blend_mode = blending
         self.mapper.update()
 
         self.volume = Volume()
