@@ -366,6 +366,9 @@ class DataObject:
         pyvista_ndarray([1, 2, 3])
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
@@ -409,6 +412,9 @@ class DataObject:
         0
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.clear()
 
     @property
