@@ -16,6 +16,65 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     scalar opacity of a volume, the gradient opacity of a volume, and the
     shading parameters of a volume.
 
+    Parameters
+    ----------
+    lookup_table : pyvista.LookupTable, optional
+        Lookup table to set the color and opacity transfer functions.
+
+    interpolation_type : str, optional
+        Value must be either ``'linear'`` or ``'nearest'``.
+
+    ambient : float, optional
+        When lighting is enabled, this is the amount of light in
+        the range of 0 to 1 (default 0.0) that reaches the actor
+        when not directed at the light source emitted from the
+        viewer.
+
+    diffuse : float, optional
+        The diffuse lighting coefficient. Default 1.0.
+
+    specular : float, optional
+        The specular lighting coefficient. Default 0.0.
+
+    specular_power : float, optional
+        The specular power. Between 0.0 and 128.0.
+
+    shade : bool, optional
+        Enable or disable volume shading.  If shading is turned off, then the
+        mapper for the volume will not perform shading calculations. If shading
+        is turned on, the mapper may perform shading calculations - in some
+        cases shading does not apply (for example, in a maximum intensity
+        projection) and therefore shading will not be performed even if this
+        flag is on. For a compositing type of mapper, turning shading off is
+        generally the same as setting ``ambient=1``, ``diffuse=0``,
+        ``specular=0``. Shading can be independently turned on/off per
+        component.
+
+    opacity_unit_distance : float, optional
+        This is the unit distance on which the scalar opacity transfer function
+        is defined. By default this is 1.0, meaning that over a distance of 1.0
+        units, a given opacity (from the transfer function) is
+        accumulated. This is adjusted for the actual sampling distance during
+        rendering.
+
+    Examples
+    --------
+    Create a sample dataset from perlin noise and apply a lookup table to the
+    :class:`VolumeProperty`.
+
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
+    >>> grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40))
+    >>> grid['scalars'] -= grid['scalars'].min()
+    >>> grid['scalars']*= 255/grid['scalars'].max()
+    >>> pl = pv.Plotter()
+    >>> actor = pl.add_volume(grid, show_scalar_bar=False)
+    >>> lut = pv.LookupTable(cmap='bwr')
+    >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
+    >>> actor.prop.apply_lookup_table(lut)
+    >>> pl.show()
+
+
     """
 
     def __init__(
@@ -53,6 +112,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         Applies both the color and opacity of the lookup table as transfer
         functions.
+
+        Parameters
+        ----------
+        lookup_table : pyvista.LookupTable, optional
+            Lookup table to set the color and opacity transfer functions.
 
         Examples
         --------
@@ -137,7 +201,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         """Return or set the opacity unit distance.
 
         This is the unit distance on which the scalar opacity transfer function
-        is defined
+        is defined.
 
         By default this is 1.0, meaning that over a distance of 1.0 units, a
         given opacity (from the transfer function) is accumulated. This is
