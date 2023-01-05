@@ -3,8 +3,6 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities.misc import no_new_attr
 
-# from .colors import Color
-
 
 @no_new_attr
 class VolumeProperty(_vtk.vtkVolumeProperty):
