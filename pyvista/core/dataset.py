@@ -2983,6 +2983,61 @@ class DataSet(DataSetFilters, DataObject):
         """
         return DatasetConnectivity(self, "cell")
 
+    def cell_neighbors(self, ind: int, connections: str = "points"):
+
+        # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+        if hasattr(self, "BuildLinks"):
+            self.BuildLinks()
+
+        needed = ["points", "edges", "faces"]
+        if connections not in needed:
+            raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
+
+        cell = self.get_cell(ind)
+
+        iterators = {
+            "points": cell.point_ids,
+            "edges": range(cell.n_edges),
+            "faces": range(cell.n_faces),
+        }
+
+        def generate_ids(i: int, connections: str):
+            if connections == "points":
+                ids = _vtk.vtkIdList()
+                ids.InsertNextId(i)
+                return ids
+            elif connections == "edges":
+                return cell.get_edge(i).GetPointIds()
+            elif connections == "faces":
+                return cell.get_face(i).GetPointIds()
+
+        neighbors = set()
+        for i in iterators[connections]:
+            point_ids = generate_ids(i, connections)
+            cell_ids = _vtk.vtkIdList()
+            self.GetCellNeighbors(ind, point_ids, cell_ids)
+
+            neighbors.update([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
+
+        return list(neighbors)
+
+    def point_cell_ids(self, ind: int):
+
+        # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+        if hasattr(self, "BuildLinks"):
+            self.BuildLinks()
+
+        ids = _vtk.vtkIdList()
+        self.GetPointCells(ind, ids)
+        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+
+    def point_neighbors(self, ind: int) -> List[int]:
+
+        out = []
+        for cell in self.point_cell_ids(ind):
+            out.extend([i for i in self.get_cell(cell).point_ids if i != ind])
+        return list(set(out))
+
     @property
     def points_connectivity(self) -> DatasetConnectivity:
         """Return points connectivity.
