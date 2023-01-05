@@ -3023,7 +3023,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def point_cell_ids(self, ind: int):
 
-        # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+        # Build links as recommended:
+        # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
         if hasattr(self, "BuildLinks"):
             self.BuildLinks()
 
