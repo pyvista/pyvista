@@ -3162,6 +3162,10 @@ def test_add_point_scalar_labels_fmt():
     p.show()
 
 
+def test_plot_individual_cell(hexbeam):
+    hexbeam.cell[0].plot(color='b')
+
+
 def test_add_point_scalar_labels_list():
     plotter = pyvista.Plotter()
 
