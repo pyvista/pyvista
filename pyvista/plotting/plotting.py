@@ -11,7 +11,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict, Tuple
+from typing import Dict
 import warnings
 import weakref
 
@@ -34,6 +34,7 @@ from pyvista.utilities import (
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
 
+from .._typing import BoundsLike
 from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import (
@@ -155,7 +156,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : color_like, optional
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -1388,7 +1389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera_set = is_set
 
     @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def bounds(self) -> BoundsLike:
         """Return the bounds of the active renderer.
 
         Returns
@@ -2016,7 +2017,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         dataset : pyvista.MultiBlock
             A :class:`pyvista.MultiBlock` dataset.
 
-        color : color_like, default: :attr:`pyvista.themes.DefaultTheme.color`
+        color : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.color`
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -2043,7 +2044,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, default: :attr:`pyvista.global_theme.edge_color`
+        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color`
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -2158,7 +2159,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, default: 1.0
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : color_like, default: :attr:`pyvista.themes.DefaultTheme.nan_color`
+        nan_color : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.nan_color`
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -2192,12 +2193,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the scalar array will be used as the ``n_colors``
             argument.
 
-        below_color : color_like, optional
+        below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        above_color : color_like, optional
+        above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
@@ -2547,7 +2548,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -2582,7 +2583,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, optional
+        edge_color : ColorLike, optional
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -2716,7 +2717,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, optional
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : color_like, optional, defaults to gray
+        nan_color : ColorLike, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -2750,7 +2751,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``PolyData``.  As a ``dict``, it contains the properties
             of the silhouette to display:
 
-                * ``color``: ``color_like``, color of the silhouette
+                * ``color``: ``ColorLike``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
                 * ``feature_angle``: If a ``float``, display sharp edges
@@ -2761,12 +2762,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Invert the opacity mappings and make the values correspond
             to transparency.
 
-        below_color : color_like, optional
+        below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        above_color : color_like, optional
+        above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
@@ -3752,7 +3753,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         params : dict, optional
 
             * If not supplied, the default theme values will be used.
-            * ``color``: ``color_like``, color of the silhouette
+            * ``color``: ``ColorLike``, color of the silhouette
             * ``line_width``: ``float``, edge width
             * ``opacity``: ``float`` between 0 and 1, edge transparency
             * ``feature_angle``: If a ``float``, display sharp edges
@@ -4207,7 +4208,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 18.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4539,7 +4540,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : color_like, default: 'w'
+        color : ColorLike, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4650,7 +4651,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
-        text_color : color_like, optional
+        text_color : ColorLike, optional
             Color of text. Either a string, RGB sequence, or hex color string.
 
             * ``text_color='white'``
@@ -4668,7 +4669,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_points : bool, optional
             Controls if points are visible.  Default ``True``.
 
-        point_color : color_like, optional
+        point_color : ColorLike, optional
             Either a string, rgb list, or hex color string.  One of
             the following.
 
@@ -4685,7 +4686,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        shape_color : color_like, optional
+        shape_color : ColorLike, optional
             Color of shape (if visible).  Either a string, rgb
             sequence, or hex color string.
 
@@ -5788,7 +5789,7 @@ class Plotter(BasePlotter):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : color_like, optional
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -6328,7 +6329,7 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : color_like, optional,
+        color : ColorLike, optional,
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -6394,7 +6395,7 @@ class Plotter(BasePlotter):
 
             Defaults to ``(0.0, 0.0, 0.0)``.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.  For one
             of the following.
 
