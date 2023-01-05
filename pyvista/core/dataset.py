@@ -2984,8 +2984,44 @@ class DataSet(DataSetFilters, DataObject):
         return DatasetConnectivity(self, "cell")
 
     def cell_neighbors(self, ind: int, connections: str = "points"):
+        """Return cells connectivity.
 
-        # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+        
+        connections: str, optional
+            How the neighbor cell must be connected to the current
+            cell so it can be considered as a neighbor.
+            Can be either ``'points'``, ``'edges'`` or ``'faces'``.
+        
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+
+        Get the neighbor cell ids that have at least one point in common with
+        the 0-th cell
+
+        >>> mesh.cell_neighbors(0,"points")
+        [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
+
+        Get the neighbor cell ids that have at least one edge in common with
+        the 0-th cell
+
+        >>> mesh.cell_neighbors(0,"edges")
+        [1, 3, 12]
+
+        For unstructured grids, cell neighbors can be defined using faces
+
+        >>> mesh = examples.download_tetrahedron()
+        >>> mesh.cell_neighbors(0,"faces")
+        [0, 8, 11]
+        """
+
+        # Build links as recommended:
+        # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
         if hasattr(self, "BuildLinks"):
             self.BuildLinks()
 
