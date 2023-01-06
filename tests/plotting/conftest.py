@@ -2,6 +2,7 @@
 memory leaks for all plotting tests
 """
 import gc
+import inspect
 
 import pytest
 
@@ -10,6 +11,13 @@ import pyvista
 # these are set here because we only need them for plotting tests
 pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
+
+
+def pytest_configure(config):
+    """Configure pytest options."""
+    # Fixtures
+    for fixture in ('check_gc',):
+        config.addinivalue_line('usefixtures', fixture)
 
 
 def _is_vtk(obj):
@@ -22,6 +30,7 @@ def _is_vtk(obj):
 @pytest.fixture(autouse=True)
 def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
+    gc.collect()
     before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
     yield
 
@@ -35,12 +44,40 @@ def check_gc(request):
         return
 
     pyvista.close_all()
-
-    gc.collect()
-    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
-    assert len(after) == 0, 'Not all objects GCed:\n' + '\n'.join(
-        sorted(o.__class__.__name__ for o in after)
-    )
+    after = [
+        o
+        for o in gc.get_objects()
+        if _is_vtk(o) and id(o) not in before
+    ]
+    msg = 'Not all objects GCed:\n'
+    for obj in after:
+        cn = obj.__class__.__name__
+        cf = inspect.currentframe()
+        referrers = [
+            v for v in gc.get_referrers(obj)
+            if v is not after and v is not cf
+        ]
+        del cf
+        for ri, referrer in enumerate(referrers):
+            if isinstance(referrer, dict):
+                for k, v in referrer.items():
+                    if k is obj:
+                        referrers[ri] = f'dict: d key'
+                        del k, v
+                        break
+                    elif v is obj:
+                        referrers[ri] = f'dict: d[{k!r}]'
+                        del k, v
+                        break
+                    del k, v
+                else:
+                    referrers[ri] = f'dict: len={len(referrer)}'
+            else:
+                referrers[ri] = repr(referrer)
+            del ri, referrer
+        msg += f'{cn}: {referrers}\n'
+        del cn, referrers
+    assert len(after) == 0, msg
 
 
 @pytest.fixture()
