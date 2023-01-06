@@ -257,7 +257,7 @@ class DataObject:
         Parameters
         ----------
         ido : pyvista.DataObject
-            Dataset to copy the metadata from.
+            Data object to copy the metadata from.
 
         deep : bool, optional
             Deep or shallow copy.
