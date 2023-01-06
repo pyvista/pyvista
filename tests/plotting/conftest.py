@@ -48,7 +48,7 @@ def check_gc(request):
             if isinstance(referrer, dict):
                 for k, v in referrer.items():
                     if k is obj:
-                        referrers[ri] = f'dict: d key'
+                        referrers[ri] = 'dict: d key'
                         del k, v
                         break
                     elif v is obj:
