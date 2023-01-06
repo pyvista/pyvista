@@ -23,6 +23,7 @@ from pyvista._vtk import VTK9, VTK91
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.utilities import algorithms
 from pyvista.utilities.misc import can_create_mpl_figure
 
 # skip all tests if unable to render
@@ -3240,3 +3241,32 @@ def test_algorithm_add_point_labels():
     pl.add_point_labels(elev, 'Elevation', always_visible=False)
     # pl.add_slider_widget(lambda x: algo.SetResolution(int(x)), [3, 10])
     pl.show()
+
+
+def test_pointset_to_polydata_algorithm(pointset):
+    alg = vtk.vtkElevationFilter()
+    alg.SetInputDataObject(pointset)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='Elevation')
+    pl.show()
+
+    assert isinstance(alg.GetOutputDataObject(0), vtk.vtkPointSet)
+
+
+def test_add_ids_algorithm():
+    algo = vtk.vtkCubeSource()
+
+    alg = algorithms.add_ids_algorithm(algo)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='point_ids')
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='cell_ids')
+    pl.show()
+
+    result = pyvista.wrap(alg.GetOutputDataObject(0))
+    assert 'point_ids' in result.point_data
+    assert 'cell_ids' in result.cell_data

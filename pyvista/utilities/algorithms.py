@@ -20,7 +20,19 @@ def algorithm_to_mesh_handler(mesh_or_algo, default_port=0):
             port = default_port
         algo.Update()
         mesh_or_algo = wrap(algo.GetOutputDataObject(port))
+        if mesh_or_algo is None:
+            # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase
+            raise RuntimeError('The passed algorithm is failing to produce an output.')
     return mesh_or_algo, algo
+
+
+def _set_input(alg, port, inp):
+    if isinstance(inp, _vtk.vtkAlgorithm):
+        alg.SetInputConnection(port, inp.GetOutputPort())
+    elif isinstance(inp, _vtk.vtkAlgorithmOutput):
+        alg.SetInputConnection(port, inp)
+    else:
+        alg.SetInputDataObject(port, inp)
 
 
 class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
@@ -67,13 +79,6 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         self.scalars_name = name
         self.preference = preference
 
-    # THIS IS CRUCIAL to preserve data type through filter
-    def RequestDataObject(self, request, inInfo, outInfo):
-        """Preserve data type."""
-        self.OutputType = self.GetInputData(inInfo, 0, 0).GetClassName()
-        self.FillOutputPortInformation(0, outInfo.GetInformationObject(0))
-        return 1
-
     def RequestData(self, request, inInfo, outInfo):
         """Perform algorithm execution."""
         try:
@@ -83,7 +88,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
             if output.n_arrays:
                 output.set_active_scalars(self.scalars_name, preference=self.preference)
             out.ShallowCopy(output)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             traceback.print_exc()
             raise e
         return 1
@@ -109,7 +114,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
             out = self.GetOutputData(outInfo, 0)
             output = inp.cast_to_polydata(deep=False)
             out.ShallowCopy(output)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             traceback.print_exc()
             raise e
         return 1
@@ -121,7 +126,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
     def __init__(self, point_ids=True, cell_ids=True):
         """Initialize algorithm."""
         super().__init__()
-        if not point_ids and not cell_ids:
+        if not point_ids and not cell_ids:  # pragma: no cover
             raise ValueError('IDs must be set for points or cells or both.')
         self.point_ids = point_ids
         self.cell_ids = cell_ids
@@ -137,7 +142,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
             if self.cell_ids:
                 output.cell_data['cell_ids'] = np.arange(0, output.n_cells, dtype=int)
             out.ShallowCopy(output)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             traceback.print_exc()
             raise e
         return 1
@@ -161,7 +166,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
             out = self.GetOutputData(outInfo, 0)
             output = source.extract_cells(np.unique(clipped.cell_data['cell_ids']))
             out.ShallowCopy(output)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             traceback.print_exc()
             raise e
         return 1
@@ -170,12 +175,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
 def outline_algorithm(inp, generate_faces=False):
     """Add vtkOutlineFilter to pipeline."""
     alg = _vtk.vtkOutlineFilter()
-    if isinstance(inp, _vtk.vtkAlgorithm):
-        alg.SetInputConnection(0, inp.GetOutputPort())
-    elif isinstance(inp, _vtk.vtkAlgorithmOutput):
-        alg.SetInputConnection(0, inp)
-    else:
-        alg.SetInputDataObject(0, inp)
+    _set_input(alg, 0, inp)
     alg.SetGenerateFaces(generate_faces)
     return alg
 
@@ -186,52 +186,27 @@ def active_scalars_algorithm(inp, name, preference='point'):
         name=name,
         preference=preference,
     )
-    if isinstance(inp, _vtk.vtkAlgorithm):
-        alg.SetInputConnection(0, inp.GetOutputPort())
-    elif isinstance(inp, _vtk.vtkAlgorithmOutput):
-        alg.SetInputConnection(0, inp)
-    else:
-        alg.SetInputDataObject(0, inp)
+    _set_input(alg, 0, inp)
     return alg
 
 
 def pointset_to_polydata_algorithm(inp):
     """Add a filter that casts PointSet to PolyData."""
     alg = PointSetToPolyDataAlgorithm()
-    if isinstance(inp, _vtk.vtkAlgorithm):
-        alg.SetInputConnection(0, inp.GetOutputPort())
-    elif isinstance(inp, _vtk.vtkAlgorithmOutput):
-        alg.SetInputConnection(0, inp)
-    else:
-        alg.SetInputDataObject(0, inp)
+    _set_input(alg, 0, inp)
     return alg
 
 
 def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
     """Add a filter that adds point or cell IDs."""
     alg = AddIDsAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
-    if isinstance(inp, _vtk.vtkAlgorithm):
-        alg.SetInputConnection(0, inp.GetOutputPort())
-    elif isinstance(inp, _vtk.vtkAlgorithmOutput):
-        alg.SetInputConnection(0, inp)
-    else:
-        alg.SetInputDataObject(0, inp)
+    _set_input(alg, 0, inp)
     return alg
 
 
 def crinkle_algorithm(clip, source, point_ids=True, cell_ids=True):
     """Add a filter that crinkles a clip."""
     alg = CrinkleAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
-    if isinstance(clip, _vtk.vtkAlgorithm):
-        alg.SetInputConnection(0, clip.GetOutputPort())
-    elif isinstance(clip, _vtk.vtkAlgorithmOutput):
-        alg.SetInputConnection(0, clip)
-    else:
-        alg.SetInputDataObject(0, clip)
-    if isinstance(source, _vtk.vtkAlgorithm):
-        alg.SetInputConnection(1, source.GetOutputPort())
-    elif isinstance(source, _vtk.vtkAlgorithmOutput):
-        alg.SetInputConnection(1, source)
-    else:
-        alg.SetInputDataObject(1, source)
+    _set_input(alg, 0, clip)
+    _set_input(alg, 0, source)
     return alg
