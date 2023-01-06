@@ -351,12 +351,14 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.dataset = dataset
 
     @property
-    def dataset(self) -> Optional['pv.DataSet']:
+    def dataset(self) -> Optional['pv.core.dataset.DataSet']:
         """Return or set the dataset assigned to this mapper."""
         return wrap(self.GetInputAsDataSet())
 
     @dataset.setter
-    def dataset(self, obj: 'pv.core.dataset.DataSet'):
+    def dataset(
+        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+    ):
         if isinstance(obj, _vtk.vtkAlgorithm):
             return self.SetInputConnection(obj.GetOutputPort())
         elif isinstance(obj, _vtk.vtkAlgorithmOutput):
@@ -879,11 +881,18 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def dataset(self):
         """Return or set the dataset assigned to this mapper."""
-        return self.GetInputAsDataSet()
+        return wrap(self.GetDataSetInput())
 
     @dataset.setter
-    def dataset(self, new_dataset: 'pv.core.dataset.DataSet'):
-        return self.SetInputData(new_dataset)
+    def dataset(
+        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+    ):
+        if isinstance(obj, _vtk.vtkAlgorithm):
+            return self.SetInputConnection(obj.GetOutputPort())
+        elif isinstance(obj, _vtk.vtkAlgorithmOutput):
+            return self.SetInputConnection(obj)
+        else:
+            return self.SetInputData(obj)
 
     @property
     def lookup_table(self):
