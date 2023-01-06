@@ -442,6 +442,14 @@ class Renderers:
         else:
             self.active_renderer.set_background(color, top=top)
 
+    def set_color_cycler(self, color_cycler, all_renderers=True):
+        """Set the color cycler for each renderer."""
+        if all_renderers:
+            for renderer in self:
+                renderer.set_color_cycler(color_cycler)
+        else:
+            self.active_renderer.set_color_cycler(color_cycler)
+
     def remove_background_image(self):
         """Remove the background image at the current renderer.
 
