@@ -2022,7 +2022,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
-            specified.
+            specified. To color each element of the composite dataset
+            individually, you will need to iteratively call ``add_mesh`` for
+            each sub-dataset.
 
         style : str, default: 'wireframe'
             Visualization style of the mesh.  One of the following:
@@ -2380,7 +2382,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=color,
+            color=self.renderer.next_color if color is None else color,
             style=style,
             edge_color=edge_color,
             render_points_as_spheres=render_points_as_spheres,
@@ -3176,7 +3178,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=color,
+            color=self.renderer.next_color if color is None else color,
             style=style if style != 'points_gaussian' else 'points',
             edge_color=edge_color,
             render_lines_as_tubes=render_lines_as_tubes,
@@ -5178,6 +5180,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def set_background(self, *args, **kwargs):
         """Wrap ``Renderers.set_background``."""
         self.renderers.set_background(*args, **kwargs)
+
+    @wraps(Renderers.set_color_cycler)
+    def set_color_cycler(self, *args, **kwargs):
+        """Wrap ``Renderers.set_color_cycler``."""
+        self.renderers.set_color_cycler(*args, **kwargs)
 
     def generate_orbital_path(self, factor=3.0, n_points=20, viewup=None, shift=0.0):
         """Generate an orbital path around the data scene.

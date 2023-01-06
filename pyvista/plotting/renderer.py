@@ -17,7 +17,7 @@ from .._typing import BoundsLike
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
-from .colors import Color
+from .colors import Color, get_cycler
 from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
@@ -235,6 +235,58 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._border_actor = None
         if border:
             self.add_border(border_color, border_width)
+
+        self.set_color_cycler(self._theme.color_cycler)
+
+    def set_color_cycler(self, color_cycler):
+        """Set or reset this renderer's color cycler.
+
+        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        call to set the default color of the dataset being plotted.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler on this
+        renderer.
+
+        Parameters
+        ----------
+        color_cycler : str, cycler.Cycler, list(ColorLike)
+            The colors to cycle through.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.renderer.set_color_cycler(['red', 'green', 'blue'])
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        cycler = get_cycler(color_cycler)
+        if cycler is not None:
+            # Color cycler - call object to generate `cycle` instance
+            self._color_cycle = cycler()
+        else:
+            self._color_cycle = None
+
+    @property
+    def next_color(self):
+        """Return next color from this renderer's color cycler."""
+        if self._color_cycle is None:
+            return self._theme.color
+        return next(self._color_cycle)['color']
 
     @property
     def _charts(self):
