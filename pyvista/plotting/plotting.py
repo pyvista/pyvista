@@ -21,6 +21,7 @@ import scooby
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (
+    FieldAssociation,
     abstract_class,
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
@@ -2941,8 +2942,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
         if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
-            algo = pointset_to_polydata_algorithm(algo or mesh)
-            mesh, algo = algorithm_to_mesh_handler(algo)
+            if algo is not None:
+                algo = pointset_to_polydata_algorithm(algo)
+                mesh, algo = algorithm_to_mesh_handler(algo)
+            else:
+                mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):
             if algo is not None:
                 raise TypeError(
@@ -3087,12 +3091,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             self.mapper.scalar_map_mode = field.name
 
-            # Ensures that the right scalars are set as active on
-            # each pipeline request
-            algo = active_scalars_algorithm(
-                algo or mesh, original_scalar_name, preference=preference
-            )
-            mesh, algo = algorithm_to_mesh_handler(algo)
+            if algo is not None:
+                # Ensures that the right scalars are set as active on
+                # each pipeline request
+                algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
+                mesh, algo = algorithm_to_mesh_handler(algo)
+            else:
+                # Otherwise, make sure the mesh object's scalars are set
+                if field == FieldAssociation.POINT:
+                    mesh.point_data.active_scalars_name = original_scalar_name
+                elif field == FieldAssociation.CELL:
+                    mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
