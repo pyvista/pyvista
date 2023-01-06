@@ -2469,7 +2469,7 @@ def test_add_text():
 
 
 @pytest.mark.skipif(
-    vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported(),
+    not vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported(),
     reason='Math text is not supported.',
 )
 def test_add_text_latex():
