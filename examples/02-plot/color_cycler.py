@@ -29,12 +29,12 @@ pv.global_theme.color_cycler
 ###############################################################################
 # Create a plotter and add data to the scene. You'll notice that each
 # ``add_mesh`` call iterates over the colors in ``pv.global_theme.color_cycler``
-p = pv.Plotter()
-p.add_mesh(pv.Cone(center=(0, 0, 0)))
-p.add_mesh(pv.Cube(center=(1, 0, 0)))
-p.add_mesh(pv.Sphere(center=(1, 1, 0)))
-p.add_mesh(pv.Cylinder(center=(0, 1, 0)))
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(pv.Cone(center=(0, 0, 0)))
+pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+pl.add_mesh(pv.Sphere(center=(1, 1, 0)))
+pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))
+pl.show()
 
 ###############################################################################
 # Reset the theme to not use a cycler and instead set on individual plotters.
@@ -44,40 +44,40 @@ pv.global_theme.color_cycler = None
 # If you do not want to set a global color cycler but instead just want to
 # use a cycler for a single plotter, you can set this on with
 # :func:`set_color_cycler() <pyvista.Plotter.set_color_cycler>`.
-p = pv.Plotter()
+pl = pv.Plotter()
 
 # Set to iterate over Red, Green, and Blue
-p.set_color_cycler(['red', 'green', 'blue'])
+pl.set_color_cycler(['red', 'green', 'blue'])
 
-p.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
-p.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
-p.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
-p.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
-p.show()
+pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
+pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+pl.show()
 
 ###############################################################################
 # Further, you can control this on a per-renderer basis by calling
 # :func:`set_color_cycler() <pyvista.Renderer.set_color_cycler>` on the active
 # ``renderer``.
-p = pv.Plotter(shape=(1, 2))
+pl = pv.Plotter(shape=(1, 2))
 
-p.subplot(0, 0)
-p.renderer.set_color_cycler('default')
-p.add_mesh(pv.Cone(center=(0, 0, 0)))
-p.add_mesh(pv.Cube(center=(1, 0, 0)))
-p.add_mesh(pv.Sphere(center=(1, 1, 0)))
-p.add_mesh(pv.Cylinder(center=(0, 1, 0)))
+pl.subplot(0, 0)
+pl.renderer.set_color_cycler('default')
+pl.add_mesh(pv.Cone(center=(0, 0, 0)))
+pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+pl.add_mesh(pv.Sphere(center=(1, 1, 0)))
+pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))
 
-p.subplot(0, 1)
-p.renderer.set_color_cycler(['magenta', 'seagreen', 'aqua', 'orange'])
-p.add_mesh(pv.Cone(center=(0, 0, 0)))
-p.add_mesh(pv.Cube(center=(1, 0, 0)))
-p.add_mesh(pv.Sphere(center=(1, 1, 0)))
-p.add_mesh(pv.Cylinder(center=(0, 1, 0)))
+pl.subplot(0, 1)
+pl.renderer.set_color_cycler(['magenta', 'seagreen', 'aqua', 'orange'])
+pl.add_mesh(pv.Cone(center=(0, 0, 0)))
+pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+pl.add_mesh(pv.Sphere(center=(1, 1, 0)))
+pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))
 
-p.link_views()
-p.view_isometric()
-p.show()
+pl.link_views()
+pl.view_isometric()
+pl.show()
 
 
 ###############################################################################
@@ -88,11 +88,11 @@ p.show()
 # randomly select colors.
 from cycler import cycler
 
-p = pv.Plotter()
-p.add_mesh(pv.Cone(center=(0, 0, 0)))
-p.add_mesh(pv.Cube(center=(1, 0, 0)))
-p.add_mesh(pv.Sphere(center=(1, 1, 0)))
-p.add_mesh(pv.Cylinder(center=(0, 1, 0)))
+pl = pv.Plotter()
+pl.add_mesh(pv.Cone(center=(0, 0, 0)))
+pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+pl.add_mesh(pv.Sphere(center=(1, 1, 0)))
+pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))
 
 colors = cycler('color', ['lightcoral', 'seagreen', 'aqua', 'firebrick'])()
 
@@ -100,4 +100,4 @@ for actor in p.renderer.actors.values():
     if isinstance(actor, pv.Actor):
         actor.prop.color = next(colors)['color']
 
-p.show()
+pl.show()
