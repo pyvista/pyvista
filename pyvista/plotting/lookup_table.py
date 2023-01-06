@@ -8,7 +8,7 @@ from pyvista import _vtk
 from pyvista.utilities.helpers import convert_array
 from pyvista.utilities.misc import has_module, no_new_attr
 
-from .._typing import color_like
+from .._typing import ColorLike
 from .colors import Color, get_cmap_safe
 from .tools import opacity_transfer_function
 
@@ -132,13 +132,13 @@ class LookupTable(_vtk.vtkLookupTable):
     log_scale : bool, optional
         Use a log scale when mapping scalar values.
 
-    nan_color : color_like, optional
+    nan_color : ColorLike, optional
         Color to render any values that are NANs.
 
-    above_range_color : color_like, optional
+    above_range_color : ColorLike, optional
         Color to render any values above :attr:`LookupTable.scalar_range`.
 
-    below_range_color : color_like, optional
+    below_range_color : ColorLike, optional
         Color to render any values below :attr:`LookupTable.scalar_range`.
 
     ramp : str, optional
@@ -629,7 +629,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: Union[bool, color_like]):
+    def above_range_color(self, value: Union[bool, ColorLike]):
         if value in (None, False):
             self.SetUseAboveRangeColor(False)
         elif value is True:
@@ -693,7 +693,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: Union[bool, color_like]):
+    def below_range_color(self, value: Union[bool, ColorLike]):
         if value in (None, False):
             self.SetUseBelowRangeColor(False)
         elif value is True:

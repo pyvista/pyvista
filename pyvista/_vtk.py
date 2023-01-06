@@ -184,6 +184,7 @@ if VTK9:
         VTK_VERTEX,
         VTK_VOXEL,
         VTK_WEDGE,
+        vtkCell,
         vtkCellArray,
         vtkCellLocator,
         vtkColor3ub,
@@ -220,7 +221,7 @@ if VTK9:
         vtkUnstructuredGrid,
     )
 
-    try:
+    try:  # Introduced prior to VTK 9.2
         from vtkmodules.vtkCommonDataModel import (
             VTK_BEZIER_CURVE,
             VTK_BEZIER_HEXAHEDRON,

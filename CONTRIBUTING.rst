@@ -262,11 +262,11 @@ Note the following:
   ``numpydoc``'s documentation where there are no empty lines between parameter
   docstrings.
 * This docstring also contains a returns section and an examples section.
-* The returns section does not include the parameter name if the function has 
-  a single return value. Multiple return values (not shown) should have 
+* The returns section does not include the parameter name if the function has
+  a single return value. Multiple return values (not shown) should have
   descriptive parameter names for each returned value, in the same format as
   the input parameters.
-* The examples section references the "full example" in the gallery if it 
+* The examples section references the "full example" in the gallery if it
   exists.
 
 
@@ -413,7 +413,7 @@ Run the primary test suite and generate coverage report:
 
 .. code:: bash
 
-   python -m pytest -v --cov pyvista --image_cache_dir ./image_cache
+   python -m pytest -v --cov pyvista
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
@@ -421,7 +421,7 @@ leverage multiple processes. Example usage:
 
 .. code:: bash
 
-   python -m pytest -n <NUMCORE> --cov pyvista --image_cache_dir ./image_cache
+   python -m pytest -n <NUMCORE> --cov pyvista
 
 Documentation Testing
 ~~~~~~~~~~~~~~~~~~~~~
@@ -441,7 +441,7 @@ To ensure your code meets minimum code styling standards, run::
   pip install pre-commit
   pre-commit run --all-files
 
-If you have issues related to ``setuptools`` when installing ``pre-commit``, see 
+If you have issues related to ``setuptools`` when installing ``pre-commit``, see
 `pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
 for a potential resolution.
 
@@ -460,7 +460,7 @@ requirements::
   flake8...................................................................Passed
   codespell................................................................Passed
 
-The actual installation of the environment happens before the first commit 
+The actual installation of the environment happens before the first commit
 following ``pre-commit install``. This will take a bit longer, but subsequent
 commits will only trigger the actual style checks.
 
@@ -488,7 +488,7 @@ Based on these points, image regression testing only occurs on Linux CI,
 and multi-sampling is disabled as that seems to be one of the biggest
 difference between software and hardware based rendering.
 
-Image cache is stored here as ``./image_cache``.
+Image cache is stored here as ``./tests/plotting/image_cache``.
 
 Image resolution is kept low at 400x400 as we don’t want to pollute git
 with large images. Small variations between versions and environments

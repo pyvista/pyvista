@@ -39,7 +39,7 @@ class Property(_vtk.vtkProperty):
 
         This parameter is case insensitive.
 
-    color : color_like, optional
+    color : ColorLike, optional
         Used to make the entire mesh have a single solid color.
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -90,7 +90,7 @@ class Property(_vtk.vtkProperty):
         Shows the edges.  Does not apply to a wireframe
         representation.
 
-    edge_color : color_like, optional
+    edge_color : ColorLike, optional
         The solid color to give the edges when ``show_edges=True``.
         Either a string, RGB list, or hex color string.
 
