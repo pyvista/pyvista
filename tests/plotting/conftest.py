@@ -37,6 +37,8 @@ def check_gc(request):
         return
 
     pyvista.close_all()
+
+    gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
     msg = 'Not all objects GCed:\n'
     for obj in after:
