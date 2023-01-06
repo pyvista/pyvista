@@ -515,16 +515,16 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : color_like, optional
+        nan_color : ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : color_like, optional
+        above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
 
-        below_color : color_like, optional
+        below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
@@ -735,7 +735,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             Opacity array to color the dataset. Array length must match either
             the number of points or cells.
 
-        color : color_like
+        color : ColorLike
             The color to use with the opacity array.
 
         n_colors : int

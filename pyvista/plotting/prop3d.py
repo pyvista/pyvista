@@ -1,6 +1,8 @@
 """Prop3D module."""
 from pyvista import _vtk
 
+from .._typing import BoundsLike
+
 
 class Prop3D(_vtk.vtkProp3D):
     """Prop3D wrapper for vtkProp3D.
@@ -191,7 +193,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetOrientation(value)
 
     @property
-    def bounds(self) -> tuple:
+    def bounds(self) -> BoundsLike:
         """Return the bounds of the entity.
 
         Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
