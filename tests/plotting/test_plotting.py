@@ -2461,6 +2461,10 @@ def test_culling_frontface(sphere):
     pl.show()
 
 
+@pytest.mark.skipif(
+    vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported(),
+    reason='Math text is not supported.',
+)
 def test_add_text():
     plotter = pyvista.Plotter()
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
