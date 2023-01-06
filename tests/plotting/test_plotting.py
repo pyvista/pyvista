@@ -19,7 +19,7 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista._vtk import VTK9, VTK91
+from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
@@ -3229,7 +3229,7 @@ def test_algorithm_add_points():
     pl.show()
 
 
-@pytest.mark.skipif(not VTK91, reason='Requires VTK 9.1 or later')
+@skip_9_1_0
 def test_algorithm_add_point_labels():
     algo = vtk.vtkConeSource()
     elev = vtk.vtkElevationFilter()
@@ -3243,6 +3243,7 @@ def test_algorithm_add_point_labels():
     pl.show()
 
 
+@skip_9_1_0
 def test_pointset_to_polydata_algorithm(pointset):
     alg = vtk.vtkElevationFilter()
     alg.SetInputDataObject(pointset)
