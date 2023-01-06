@@ -2468,6 +2468,16 @@ def test_add_text():
     plotter.show()
 
 
+def test_add_text_latex():
+    """Test LaTeX symbols.
+
+    For VTK<=9.2.2, this requires matplotlib<3.6
+    """
+    plotter = pyvista.Plotter()
+    plotter.add_text(r'$\rho$', position='upper_left', font_size=150, color='blue')
+    plotter.show()
+
+
 def test_plot_categories_int(sphere):
     sphere['data'] = sphere.points[:, 2]
     pl = pyvista.Plotter()
