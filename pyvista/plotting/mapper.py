@@ -12,6 +12,7 @@ from pyvista.utilities import (
     convert_array,
     convert_string_array,
     raise_not_matching,
+    set_algorithm_input,
     wrap,
 )
 from pyvista.utilities.misc import has_module, no_new_attr
@@ -359,12 +360,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     def dataset(
         self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
     ):
-        if isinstance(obj, _vtk.vtkAlgorithm):
-            return self.SetInputConnection(obj.GetOutputPort())
-        elif isinstance(obj, _vtk.vtkAlgorithmOutput):
-            return self.SetInputConnection(obj)
-        else:
-            return self.SetInputData(obj)
+        set_algorithm_input(self, obj)
 
     def as_rgba(self):
         """Convert the active scalars to RGBA.
@@ -887,12 +883,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def dataset(
         self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
     ):
-        if isinstance(obj, _vtk.vtkAlgorithm):
-            return self.SetInputConnection(obj.GetOutputPort())
-        elif isinstance(obj, _vtk.vtkAlgorithmOutput):
-            return self.SetInputConnection(obj)
-        else:
-            return self.SetInputData(obj)
+        set_algorithm_input(self, obj)
 
     @property
     def lookup_table(self):
