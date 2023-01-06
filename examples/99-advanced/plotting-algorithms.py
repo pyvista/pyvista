@@ -4,6 +4,10 @@ Plotting with VTK Algorithms
 
 Pass a ``vtkAlgorithm`` to the ``Plotter`` for dynamic visualizations.
 
+.. note::
+    By "dynamic visualization" we mean that as the input data/source
+    changes, so will the visualization in real time.
+
 A ``vtkAlgorithm`` is the superclass for all sources, filters, and sinks
 in VTK. It defines a generalized interface for executing data processing
 algorithms. Pipeline connections are associated with input and output
@@ -11,9 +15,10 @@ ports that are independent of the type of data passing through the
 connections.
 
 We can connect the output port of a ``vtkAlgorithm`` to PyVista's rendering
-pipeline when adding data to the scene through methods like ``add_mesh``.
+pipeline when adding data to the scene through methods like
+:func:`add_mesh <pyvista.Plotter.add_mesh>`.
 
-This example will walk through using some ``vtkAlgorithm``'s directly and
+This example will walk through using a few ``vtkAlgorithm``'s directly and
 passing them to PyVista for dynamic visualization.
 """
 import vtk
@@ -23,29 +28,29 @@ from pyvista import examples
 
 ###############################################################################
 # Use ``vtkConeSource`` as a source algorithm. This source will dynamically
-# create a cone object depending on the class's parameters. In this example,
-# we will connect a callback to set the cone source algorithm's resolution
-# via ``vtkConeSource.SetResolution``
+# create a cone object depending on the instances's parameters. In this
+# example, we will connect a callback to set the cone source algorithm's
+# resolution via :func:`vtkConeSource.SetResolution()`
 algo = vtk.vtkConeSource()
 
 
 def update_resolution(value):
-    """Callback to easily set the resolution of the cone generator."""
+    """Callback to set the resolution of the cone generator."""
     res = int(value)
     algo.SetResolution(res)
-    return
 
 
 ###############################################################################
 # Pass the ``vtkConeSource`` (a ``vtkAlgorithm`` subclass) directly to the
-# Plotter and connect a slider widget to our callback to adjust the resolution
+# plotter and connect a slider widget to our callback that adjusts the
+# resolution.
 p = pv.Plotter()
 p.add_mesh(algo, color='red')
 p.add_slider_widget(update_resolution, [5, 100], title='Resolution')
 p.show()
 
 ###############################################################################
-# Or we can use ``vtkRegularPolygonSource``
+# Here is another example using ``vtkRegularPolygonSource``.
 poly_source = vtk.vtkRegularPolygonSource()
 poly_source.GeneratePolygonOff()
 poly_source.SetRadius(5.0)
@@ -53,10 +58,9 @@ poly_source.SetCenter(0.0, 0.0, 0.0)
 
 
 def update_n_sides(value):
-    """Callback to easily set the number of sides."""
+    """Callback to set the number of sides."""
     res = int(value)
     poly_source.SetNumberOfSides(res)
-    return
 
 
 p = pv.Plotter()
