@@ -8,6 +8,7 @@ import numpy as np
 import pyvista as pv
 from pyvista.utilities.misc import no_new_attr
 
+from .._typing import BoundsLike
 from ._property import Property
 from .mapper import _BaseMapper
 
@@ -556,7 +557,7 @@ class Actor(pv._vtk.vtkActor):
         self.SetUserMatrix(value)
 
     @property
-    def bounds(self) -> tuple:
+    def bounds(self) -> BoundsLike:
         """Return the bounds of the actor.
 
         Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
