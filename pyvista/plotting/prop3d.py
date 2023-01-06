@@ -1,7 +1,9 @@
 """Prop3D module."""
+from typing import Tuple
+
 from pyvista import _vtk
 
-from .._typing import BoundsLike
+from .._typing import BoundsLike, Vector
 
 
 class Prop3D(_vtk.vtkProp3D):
@@ -17,7 +19,7 @@ class Prop3D(_vtk.vtkProp3D):
         super().__init__()
 
     @property
-    def scale(self) -> tuple:
+    def scale(self) -> Tuple[float, float, float]:
         """Return or set entity scale.
 
         Examples
@@ -36,11 +38,11 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: tuple):
+    def scale(self, value: Vector):
         return self.SetScale(value)
 
     @property
-    def position(self):
+    def position(self) -> Tuple[float, float, float]:
         """Return or set the entity position.
 
         Examples
@@ -61,7 +63,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: tuple):
+    def position(self, value: Vector):
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
