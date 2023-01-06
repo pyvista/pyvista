@@ -13,13 +13,6 @@ pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
 
 
-def pytest_configure(config):
-    """Configure pytest options."""
-    # Fixtures
-    for fixture in ('check_gc',):
-        config.addinivalue_line('usefixtures', fixture)
-
-
 def _is_vtk(obj):
     try:
         return obj.__class__.__name__.startswith('vtk')
