@@ -175,7 +175,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista._typing import color_like
+from pyvista._typing import ColorLike
 from pyvista.utilities.misc import has_module
 
 IPYGANY_MAP = {
@@ -372,17 +372,17 @@ color_synonyms = {
 class Color:
     """Helper class to convert between different color representations used in the pyvista library.
 
-    Many pyvista methods accept :data:`color_like` parameters. This helper class
+    Many pyvista methods accept :data:`ColorLike` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
-    or ``float``) is considered a :data:`color_like` parameter and can be converted
+    or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
     See :attr:`Color.name` for a list of supported color names.
 
     Parameters
     ----------
-    color : color_like, optional
+    color : ColorLike, optional
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should either be provided as floats between 0 and 1
         or as ints between 0 and 255. Hex color strings can contain optional
@@ -408,7 +408,7 @@ class Color:
         * ``255``
         * ``'#ff'``
 
-    default_color : color_like, optional
+    default_color : ColorLike, optional
         Default color to use when ``color`` is ``None``. If this value is
         ``None``, then defaults to the global theme color. Format is
         identical to ``color``.
@@ -460,9 +460,9 @@ class Color:
 
     def __init__(
         self,
-        color: Optional[color_like] = None,
+        color: Optional[ColorLike] = None,
         opacity: Optional[Union[int, float, str]] = None,
-        default_color: Optional[color_like] = None,
+        default_color: Optional[ColorLike] = None,
         default_opacity: Union[int, float, str] = 255,
     ):
         """Initialize new instance."""

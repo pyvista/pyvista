@@ -34,6 +34,7 @@ from pyvista.utilities import (
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
 
+from .._typing import BoundsLike
 from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import (
@@ -155,7 +156,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : color_like, optional
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -1388,7 +1389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera_set = is_set
 
     @property
-    def bounds(self):
+    def bounds(self) -> BoundsLike:
         """Return the bounds of the active renderer.
 
         Returns
@@ -1402,7 +1403,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.bounds
-        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
         return self.renderer.bounds
@@ -2006,6 +2007,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
+        show_vertices=False,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2015,7 +2017,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         dataset : pyvista.MultiBlock
             A :class:`pyvista.MultiBlock` dataset.
 
-        color : color_like, default: :attr:`pyvista.themes.DefaultTheme.color`
+        color : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.color`
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -2042,7 +2044,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, default: :attr:`pyvista.global_theme.edge_color`
+        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color`
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -2157,7 +2159,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, default: 1.0
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : color_like, default: :attr:`pyvista.themes.DefaultTheme.nan_color`
+        nan_color : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.nan_color`
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -2191,12 +2193,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the scalar array will be used as the ``n_colors``
             argument.
 
-        below_color : color_like, optional
+        below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        above_color : color_like, optional
+        above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
@@ -2259,8 +2261,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
 
+        show_vertices : bool, default: False
+            When ``style`` is not ``'points'``, render the external surface
+            vertices. The following optional keyword arguments may be used to
+            control the style of the vertices:
+
+            * ``vertex_color`` - The color of the vertices
+            * ``vertex_style`` - Change style to ``'points_gaussian'``
+            * ``vertex_opacity`` - Control the opacity of the vertices
+
         **kwargs : dict, optional
-            Optional developer keyword arguments.
+            Optional keyword arguments.
 
         Returns
         -------
@@ -2315,6 +2326,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             interpolation,
             remove_existing_actor,
+            vertex_color,
+            vertex_style,
+            vertex_opacity,
         ) = _common_arg_parser(
             dataset,
             self._theme,
@@ -2436,6 +2450,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
 
+        # add this immediately prior to adding the actor to ensure vertices
+        # are rendered
+        if show_vertices and style not in ['points', 'points_gaussian']:
+            self.add_composite(
+                dataset,
+                style=vertex_style,
+                point_size=point_size,
+                color=vertex_color,
+                render_points_as_spheres=render_points_as_spheres,
+                name=f'{name}-vertices',
+                opacity=vertex_opacity,
+                lighting=lighting,
+                render=False,
+            )
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
@@ -2500,6 +2529,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         emissive=False,
         copy_mesh=False,
         backface_params=None,
+        show_vertices=False,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2518,7 +2548,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -2553,7 +2583,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : color_like, optional
+        edge_color : ColorLike, optional
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -2687,7 +2717,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, optional
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : color_like, optional, defaults to gray
+        nan_color : ColorLike, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -2721,7 +2751,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``PolyData``.  As a ``dict``, it contains the properties
             of the silhouette to display:
 
-                * ``color``: ``color_like``, color of the silhouette
+                * ``color``: ``ColorLike``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
                 * ``feature_angle``: If a ``float``, display sharp edges
@@ -2732,12 +2762,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Invert the opacity mappings and make the values correspond
             to transparency.
 
-        below_color : color_like, optional
+        below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        above_color : color_like, optional
+        above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
@@ -2811,8 +2841,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``backface_params=None``) default to the corresponding frontface
             properties.
 
+        show_vertices : bool, default: False
+            When ``style`` is not ``'points'``, render the external surface
+            vertices. The following optional keyword arguments may be used to
+            control the style of the vertices:
+
+            * ``vertex_color`` - The color of the vertices
+            * ``vertex_style`` - Change style to ``'points_gaussian'``
+            * ``vertex_opacity`` - Control the opacity of the vertices
+
         **kwargs : dict, optional
-            Optional developer keyword arguments.
+            Optional keyword arguments.
 
         Returns
         -------
@@ -2967,6 +3006,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rgb,
             interpolation,
             remove_existing_actor,
+            vertex_color,
+            vertex_style,
+            vertex_opacity,
         ) = _common_arg_parser(
             mesh,
             self._theme,
@@ -3185,6 +3227,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
 
+        # add this immediately prior to adding the actor to ensure vertices
+        # are rendered
+        if show_vertices and style not in ['points', 'points_gaussian']:
+            if not isinstance(mesh, pyvista.PolyData):
+                surf = mesh.extract_surface()
+            else:
+                surf = mesh
+
+            self.add_mesh(
+                surf,
+                style=vertex_style,
+                point_size=point_size,
+                color=vertex_color,
+                render_points_as_spheres=render_points_as_spheres,
+                name=f'{name}-vertices',
+                opacity=vertex_opacity,
+                lighting=lighting,
+                render=False,
+            )
+
         self.add_actor(
             actor,
             reset_camera=reset_camera,
@@ -3203,6 +3265,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
+
         return actor
 
     def _add_legend_label(self, actor, label, scalars, color):
@@ -3690,7 +3753,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         params : dict, optional
 
             * If not supplied, the default theme values will be used.
-            * ``color``: ``color_like``, color of the silhouette
+            * ``color``: ``ColorLike``, color of the silhouette
             * ``line_width``: ``float``, edge width
             * ``opacity``: ``float`` between 0 and 1, edge transparency
             * ``feature_angle``: If a ``float``, display sharp edges
@@ -3865,13 +3928,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if isinstance(views, (int, np.integer)):
+            camera = self.renderers[views].camera
+            camera_status = self.renderers[views].camera_set
             for renderer in self.renderers:
-                renderer.camera = self.renderers[views].camera
+                renderer.camera = camera
+                renderer.camera_set = camera_status
             return
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
+            camera = self.renderers[views[0]].camera
+            camera_status = self.renderers[views[0]].camera_set
             for view_index in views:
-                self.renderers[view_index].camera = self.renderers[views[0]].camera
+                self.renderers[view_index].camera = camera
+                self.renderers[view_index].camera_set = camera_status
         else:
             raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
@@ -3890,13 +3959,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 renderer.camera = Camera()
                 renderer.reset_camera()
+                renderer.camera_set = False
         elif isinstance(views, int):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
+            self.renderers[views].camera_set = False
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
+                self.renderers[view_index].cemera_set = False
         else:
             raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 
@@ -4136,7 +4208,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 18.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4468,7 +4540,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : color_like, default: 'w'
+        color : ColorLike, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4579,7 +4651,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
-        text_color : color_like, optional
+        text_color : ColorLike, optional
             Color of text. Either a string, RGB sequence, or hex color string.
 
             * ``text_color='white'``
@@ -4597,7 +4669,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_points : bool, optional
             Controls if points are visible.  Default ``True``.
 
-        point_color : color_like, optional
+        point_color : ColorLike, optional
             Either a string, rgb list, or hex color string.  One of
             the following.
 
@@ -4614,7 +4686,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        shape_color : color_like, optional
+        shape_color : ColorLike, optional
             Color of shape (if visible).  Either a string, rgb
             sequence, or hex color string.
 
@@ -5717,7 +5789,7 @@ class Plotter(BasePlotter):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : color_like, optional
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -6237,6 +6309,7 @@ class Plotter(BasePlotter):
         if return_img or screenshot is True:
             if return_cpos:
                 return self.camera_position, self.last_image
+            return self.last_image
 
         if return_cpos:
             return self.camera_position
@@ -6256,7 +6329,7 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : color_like, optional,
+        color : ColorLike, optional,
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -6322,7 +6395,7 @@ class Plotter(BasePlotter):
 
             Defaults to ``(0.0, 0.0, 0.0)``.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.  For one
             of the following.
 
