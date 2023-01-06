@@ -5470,7 +5470,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
                 # ignore any mappers whose inputs are not datasets
                 if hasattr(mapper, 'GetInputAsDataSet'):
-                    datasets.append(mapper.GetInputAsDataSet())
+                    datasets.append(wrap(mapper.GetInputAsDataSet()))
 
         return datasets
 
