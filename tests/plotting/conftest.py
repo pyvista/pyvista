@@ -44,19 +44,12 @@ def check_gc(request):
         return
 
     pyvista.close_all()
-    after = [
-        o
-        for o in gc.get_objects()
-        if _is_vtk(o) and id(o) not in before
-    ]
+    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
     msg = 'Not all objects GCed:\n'
     for obj in after:
         cn = obj.__class__.__name__
         cf = inspect.currentframe()
-        referrers = [
-            v for v in gc.get_referrers(obj)
-            if v is not after and v is not cf
-        ]
+        referrers = [v for v in gc.get_referrers(obj) if v is not after and v is not cf]
         del cf
         for ri, referrer in enumerate(referrers):
             if isinstance(referrer, dict):
