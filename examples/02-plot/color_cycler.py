@@ -96,7 +96,7 @@ pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))
 
 colors = cycler('color', ['lightcoral', 'seagreen', 'aqua', 'firebrick'])()
 
-for actor in p.renderer.actors.values():
+for actor in pl.renderer.actors.values():
     if isinstance(actor, pv.Actor):
         actor.prop.color = next(colors)['color']
 
