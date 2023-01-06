@@ -43,7 +43,7 @@ pv.global_theme.color_cycler = None
 ###############################################################################
 # If you do not want to set a global color cycler but instead just want to
 # use a cycler for a single plotter, you can set this on with
-# ``set_color_cycler``.
+# :func:`set_color_cycler() <pyvista.Plotter.set_color_cycler>`.
 p = pv.Plotter()
 
 # Set to iterate over Red, Green, and Blue
@@ -56,7 +56,9 @@ p.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
 p.show()
 
 ###############################################################################
-# Further, you can control this on a per-renderer-basis by calling ``set_color_cycler()`` on the activer ``renderer``.
+# Further, you can control this on a per-renderer basis by calling
+# :func:`set_color_cycler() <pyvista.Renderer.set_color_cycler>` on the active
+# ``renderer``.
 p = pv.Plotter(shape=(1, 2))
 
 p.subplot(0, 0)
