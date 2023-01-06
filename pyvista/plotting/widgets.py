@@ -13,6 +13,7 @@ from pyvista.utilities import (
     get_array,
     get_array_association,
     outline_algorithm,
+    set_algorithm_input,
     try_callback,
 )
 
@@ -745,10 +746,7 @@ class WidgetHelper:
         self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
-        if algo is not None:
-            alg.SetInputConnection(algo.GetOutputPort())
-        else:
-            alg.SetInputDataObject(mesh)
+        set_algorithm_input(alg, algo or mesh)
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
@@ -1390,10 +1388,7 @@ class WidgetHelper:
         self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
-        if algo is not None:
-            alg.SetInputConnection(algo.GetOutputPort())
-        else:
-            alg.SetInputDataObject(mesh)
+        set_algorithm_input(alg, algo or mesh)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -1528,10 +1523,7 @@ class WidgetHelper:
         mesh.set_active_scalars(scalars)
 
         alg = _vtk.vtkContourFilter()
-        if algo is not None:
-            alg.SetInputConnection(algo.GetOutputPort())
-        else:
-            alg.SetInputDataObject(mesh)
+        set_algorithm_input(alg, algo or mesh)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
@@ -1786,10 +1778,7 @@ class WidgetHelper:
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         # Use the grid as the data we desire to cut
-        if algo is not None:
-            alg.SetInputConnection(algo.GetOutputPort())
-        else:
-            alg.SetInputDataObject(mesh)
+        set_algorithm_input(alg, algo or mesh)
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 

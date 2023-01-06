@@ -21,7 +21,6 @@ import scooby
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (
-    FieldAssociation,
     abstract_class,
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
@@ -33,6 +32,7 @@ from pyvista.utilities import (
     numpy_to_texture,
     pointset_to_polydata_algorithm,
     raise_not_matching,
+    set_algorithm_input,
     wrap,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
@@ -2941,11 +2941,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
         if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
-            if algo is not None:
-                algo = pointset_to_polydata_algorithm(algo)
-                mesh, algo = algorithm_to_mesh_handler(algo)
-            else:
-                mesh = mesh.cast_to_polydata(deep=False)
+            algo = pointset_to_polydata_algorithm(algo or mesh)
+            mesh, algo = algorithm_to_mesh_handler(algo)
         elif isinstance(mesh, pyvista.MultiBlock):
             if algo is not None:
                 raise TypeError(
@@ -3090,17 +3087,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             self.mapper.scalar_map_mode = field.name
 
-            if algo is not None:
-                # Ensures that the right scalars are set as active on
-                # each pipeline request
-                algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
-                mesh, algo = algorithm_to_mesh_handler(algo)
-            else:
-                # Otherwise, make sure the mesh object's scalars are set
-                if field == FieldAssociation.POINT:
-                    mesh.point_data.active_scalars_name = original_scalar_name
-                elif field == FieldAssociation.CELL:
-                    mesh.cell_data.active_scalars_name = original_scalar_name
+            # Ensures that the right scalars are set as active on
+            # each pipeline request
+            algo = active_scalars_algorithm(
+                algo or mesh, original_scalar_name, preference=preference
+            )
+            mesh, algo = algorithm_to_mesh_handler(algo)
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -3125,11 +3117,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mesh = mesh
         self.mapper.dataset = self.mesh
         self.mapper.interpolate_before_map = interpolate_before_map
-        if algo is not None:
-            self.mapper.SetInputConnection(algo.GetOutputPort())
-        else:
-            self.mapper.SetInputData(mesh)
-        # self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
+        set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
 
@@ -3830,10 +3818,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             silhouette_mesh = mesh
         alg = _vtk.vtkPolyDataSilhouette()
-        if algo is not None:
-            alg.SetInputConnection(algo.GetOutputPort())
-        else:
-            alg.SetInputData(silhouette_mesh)
+        set_algorithm_input(alg, algo or silhouette_mesh)
         alg.SetCamera(self.renderer.camera)
         if silhouette_params["feature_angle"] is not None:
             alg.SetEnableFeatureAngle(True)
@@ -4836,17 +4821,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             hier.SetLabelArrayName(labels)
 
         if always_visible:
-            if algo is not None:
-                hier.SetInputConnection(algo.GetOutputPort())
-            else:
-                hier.SetInputData(points)
+            set_algorithm_input(hier, algo or points)
         else:
             # Only show visible points
             vis_points = _vtk.vtkSelectVisiblePoints()
-            if algo is not None:
-                vis_points.SetInputConnection(algo.GetOutputPort())
-            else:
-                vis_points.SetInputData(points)
+            set_algorithm_input(vis_points, algo or points)
             vis_points.SetRenderer(self.renderer)
             vis_points.SetTolerance(tolerance)
 

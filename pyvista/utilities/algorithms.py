@@ -26,7 +26,21 @@ def algorithm_to_mesh_handler(mesh_or_algo, default_port=0):
     return mesh_or_algo, algo
 
 
-def _set_input(alg, port, inp):
+def set_algorithm_input(alg, inp, port=0):
+    """Set the input to a vtkAlgorithm.
+
+    Parameters
+    ----------
+    alg : vtk.vtkAlgorith
+        The algorithm who's input is being set
+
+    inp : vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput or vtk.vtkDataObject
+        The input to the algorithm
+
+    port : int, default: 0
+        The input port
+
+    """
     if isinstance(inp, _vtk.vtkAlgorithm):
         alg.SetInputConnection(port, inp.GetOutputPort())
     elif isinstance(inp, _vtk.vtkAlgorithmOutput):
@@ -175,7 +189,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
 def outline_algorithm(inp, generate_faces=False):
     """Add vtkOutlineFilter to pipeline."""
     alg = _vtk.vtkOutlineFilter()
-    _set_input(alg, 0, inp)
+    set_algorithm_input(alg, inp)
     alg.SetGenerateFaces(generate_faces)
     return alg
 
@@ -186,27 +200,27 @@ def active_scalars_algorithm(inp, name, preference='point'):
         name=name,
         preference=preference,
     )
-    _set_input(alg, 0, inp)
+    set_algorithm_input(alg, inp)
     return alg
 
 
 def pointset_to_polydata_algorithm(inp):
     """Add a filter that casts PointSet to PolyData."""
     alg = PointSetToPolyDataAlgorithm()
-    _set_input(alg, 0, inp)
+    set_algorithm_input(alg, inp)
     return alg
 
 
 def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
     """Add a filter that adds point or cell IDs."""
     alg = AddIDsAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
-    _set_input(alg, 0, inp)
+    set_algorithm_input(alg, inp)
     return alg
 
 
 def crinkle_algorithm(clip, source, point_ids=True, cell_ids=True):
     """Add a filter that crinkles a clip."""
     alg = CrinkleAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
-    _set_input(alg, 0, clip)
-    _set_input(alg, 0, source)
+    set_algorithm_input(alg, clip, 0)
+    set_algorithm_input(alg, source, 1)
     return alg
