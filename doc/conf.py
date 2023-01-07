@@ -4,8 +4,6 @@ import locale
 import os
 import sys
 
-from pyvista.utilities.misc import PyVistaDeprecationWarning
-
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
@@ -50,7 +48,6 @@ warnings.filterwarnings(
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
-warnings.filterwarnings("ignore", category=PyVistaDeprecationWarning)
 
 # -- General configuration ------------------------------------------------
 numfig = False
