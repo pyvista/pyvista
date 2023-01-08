@@ -42,183 +42,6 @@ from .pyvista_ndarray import pyvista_ndarray
 DEFAULT_VECTOR_KEY = '_vectors'
 ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
 
-CellConnectivityTuple = namedtuple(
-    'CellConnectivityTuple', ["point_neighbors", "edge_neighbors", "face_neighbors", "points"]
-)
-PointConnectivityTuple = namedtuple('PointConnectivityTuple', ["neighbors", "cells"])
-
-
-class DatasetConnectivity:
-    """Container class for connectivity.
-
-    This class provides read-only access to point and cell connectivity
-    of a dataset.
-
-    Parameters
-    ----------
-    dataset : vtkDataSet
-        The dataset object from which the connectivity is accessed.
-
-    preference : str, optional
-        Connectivity preference. Must be either ``'point'`` or ``'cell'``.
-        Default to ``cell``.
-
-    Examples
-    --------
-    Plot the point neighbors of the 0-th point:
-
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> mesh = examples.load_sphere()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh,show_edges=True)
-    >>>
-    >>> # Label the 0-th point
-    >>> i0 = 0
-    >>> _ = pl.add_point_labels(mesh.points[i0],[f"{i0}"],text_color="blue", font_size=20)
-    >>>
-    >>> # Get the point neighbors and plot them
-    >>> neighbors = mesh.points_connectivity[i0].neighbors
-    >>> _ = pl.add_point_labels(mesh.points[neighbors], labels=[f"{i}" for i in neighbors], text_color="red", font_size=20)
-    >>> pl.camera_position = "yx"
-    >>> pl.camera.zoom(4.)
-    >>> pl.show()
-
-    Now, plot the cells that use the 0-th point
-
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_point_labels(mesh.points[i0],[f"{i0}"],text_color="blue",font_size=20)
-    >>>
-    >>> # Get the cells ids using the 0-th point
-    >>> ids = mesh.points_connectivity[i0].cells
-    >>> cells = mesh.extract_cells(ids)
-    >>> _ = pl.add_mesh(cells,color="red", show_edges=True)
-    >>> centers = cells.cell_centers().points
-    >>> _ = pl.add_point_labels(centers, labels=[f"{i}" for i in ids], text_color="white", font_size=20, shape=None,show_points=False)
-    >>>
-    >>> # Plot the other cells
-    >>> others = mesh.extract_cells([i for i in range(mesh.n_cells) if i not in ids])
-    >>> _ = pl.add_mesh(others,show_edges=True)
-    >>>
-    >>> pl.camera_position = "yx"
-    >>> pl.camera.zoom(6.)
-    >>> pl.show()
-
-    """
-
-    def __init__(self, dataset: DataSet, preference="cell") -> None:
-        """Initialize DatasetConnectivity."""
-        # Build links as recommended https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-        if hasattr(dataset, "BuildLinks"):
-            dataset.BuildLinks()
-        self.dataset = dataset
-
-        if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
-            msg = f'``preference`` must be either "point" or "cell" (got "{preference}")'
-            raise ValueError(msg)
-        self.preference = preference
-
-    def __getitem__(self, ind: int) -> Union[CellConnectivityTuple, PointConnectivityTuple]:
-        """Implement the ``[]`` operator.
-
-        Accepts an integer only (positive or negative).
-        """
-        if type(ind) is not int:
-            raise TypeError("Non-integers indexing is not supported yet.")
-
-        ind = self._convert_negative_index(ind)
-
-        if self.preference == "point":
-            return PointConnectivityTuple(self._point_neighbors_ids(ind), self._point_cell_ids(ind))
-        else:
-            return CellConnectivityTuple(
-                self._cell_neighbors(ind, "points"),
-                self._cell_neighbors(ind, "edges"),
-                self._cell_neighbors(ind, "faces"),
-                self._cell_point_ids(ind),
-            )
-
-    def _convert_negative_index(self, ind: int):
-
-        n = self.dataset.n_cells if self.preference == "cell" else self.dataset.n_points
-        return ind if ind >= 0 else ind - 1 + n
-
-    def _cell_point_ids(self, ind: int):
-
-        cell = self.dataset.GetCell(ind)
-        point_ids = cell.GetPointIds()
-        return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
-
-    def _point_cell_ids(self, ind: int):
-
-        ids = _vtk.vtkIdList()
-        self.dataset.GetPointCells(ind, ids)
-        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-
-    def _point_neighbors_ids(self, ind: int) -> List[int]:
-
-        out = []
-        for cell in self._point_cell_ids(ind):
-            out.extend([i for i in self._cell_point_ids(cell) if i != ind])
-        return list(set(out))
-
-    def _cell_neighbors(self, ind: int, connections: str = "points"):
-
-        needed = ["points", "edges", "faces"]
-        if connections not in needed:
-            raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
-
-        iterators = {
-            "points": self._cell_point_ids(ind),
-            "edges": range(self.dataset.GetCell(ind).GetNumberOfEdges()),
-            "faces": range(self.dataset.GetCell(ind).GetNumberOfFaces()),
-        }
-
-        def generate_ids(i: int, connections: str):
-            if connections == "points":
-                ids = _vtk.vtkIdList()
-                ids.InsertNextId(i)
-                return ids
-            elif connections == "edges":
-                return self.dataset.GetCell(ind).GetEdge(i).GetPointIds()
-            elif connections == "faces":
-                return self.dataset.GetCell(ind).GetFace(i).GetPointIds()
-
-        neighbors = set()
-        for i in iterators[connections]:
-            point_ids = generate_ids(i, connections)
-            cell_ids = _vtk.vtkIdList()
-            self.dataset.GetCellNeighbors(ind, point_ids, cell_ids)
-
-            neighbors.update([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
-
-        return list(neighbors)
-
-    def get_neighbors(self, ind: int, *, connections="points", n_levels: int = 1):
-
-        if self.preference == "point":
-            method = self._point_neighbors_ids
-        else:
-            method = partial(self._cell_neighbors, connections=connections)
-
-        ind = self._convert_negative_index(ind)
-        neighbors = set(method(ind))
-        yield list(neighbors)
-
-        all_visited = neighbors.copy()
-        all_visited.add(ind)
-
-        for _ in range(n_levels - 1):
-            new_visited = set()
-
-            for n in neighbors:
-                new_neighbors = method(n)
-                new_visited.update(new_neighbors)
-            neighbors = new_visited
-
-            yield list(neighbors.difference(all_visited))
-            all_visited.update(neighbors)
-
 
 class ActiveArrayInfo:
     """Active array info class with support for pickling."""
@@ -2949,41 +2772,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return self.cell[ind].point_ids
 
-    @property
-    def cells_connectivity(self) -> DatasetConnectivity:
-        """Return cells connectivity.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-
-        Get the point ids of the 0-th cell
-
-        >>> mesh.cells_connectivity[0].points
-        [0, 1, 2]
-
-        Get the neighbor cell ids that have at least one point in common with
-        the 0-th cell
-
-        >>> mesh.cells_connectivity[0].point_neighbors
-        [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
-
-        Get the neighbor cell ids that have at least one edge in common with
-        the 0-th cell
-
-        >>> mesh.cells_connectivity[0].edge_neighbors
-        [1, 3, 12]
-
-        For unstructured grids, cell neighbors can be defined using faces
-
-        >>> mesh = examples.download_tetrahedron()
-        >>> mesh.cells_connectivity[1].face_neighbors
-        [0, 8, 11]
-        """
-        return DatasetConnectivity(self, "cell")
-
-    def cell_neighbors(self, ind: int, connections: str = "points"):
+    def cell_neighbors(self, ind: int, connections: str = "points") -> List[int]:
         """Get the cell neighbors of the ind-th cell.
 
         Parameters
@@ -2991,10 +2780,15 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        connections: str, optional
+        connections : str, optional
             Describe how the neighbor cell(s) must be connected to the current
             cell to be considered as a neighbor.
             Can be either ``'points'``, ``'edges'`` or ``'faces'``.
+
+        Returns
+        -------
+        List[int]
+            List of neighbor cells IDs for the ind-th cell.
 
         Examples
         --------
@@ -3063,7 +2857,12 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         ind : int
-            Point ID
+            Point ID.
+
+        Returns
+        -------
+        List[int]
+            List of neighbor points IDs for the ind-th point.
 
         Examples
         --------
@@ -3086,7 +2885,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> neighbors = mesh.point_neighbors(0)
         >>> _ = pl.add_point_labels(mesh.points[neighbors], labels=[f"{i}" for i in neighbors], text_color="red", font_size=20)
         >>> pl.camera_position = "yx"
-        >>> pl.camera.zoom(4.)
+        >>> pl.camera.zoom(7.)
         >>> pl.show()
 
         """
@@ -3131,8 +2930,53 @@ class DataSet(DataSetFilters, DataObject):
             yield list(neighbors.difference(all_visited))
             all_visited.update(neighbors)
 
-    def point_cell_ids(self, ind: int):
+    def point_cell_ids(self, ind: int) -> List[int]:
+        """Get the cell IDs that use the ind-th point.
 
+        Implements vtkDataSet's ``GetPointCells`` method (https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49)
+
+        Parameters
+        ----------
+        ind : int
+            Point ID.
+
+        Returns
+        -------
+        List[int]
+            List of cell IDs using the ind-th point.
+
+        Examples
+        --------
+        Get the cell ids using the 0-th point
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>> mesh.point_cell_ids(0)
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        Plot them
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh,show_edges=True)
+        >>>
+        >>> # Label the 0-th point
+        >>> _ = pl.add_point_labels(mesh.points[0],["0"],text_color="blue", font_size=20)
+        >>>
+        >>> # Get the cells ids using the 0-th point
+        >>> ids = mesh.point_cell_ids(0)
+        >>> cells = mesh.extract_cells(ids)
+        >>> _ = pl.add_mesh(cells,color="red", show_edges=True)
+        >>> centers = cells.cell_centers().points
+        >>> _ = pl.add_point_labels(centers, labels=[f"{i}" for i in ids], text_color="white", font_size=20, shape=None,show_points=False)
+        >>>
+        >>> # Plot the other cells
+        >>> others = mesh.extract_cells([i for i in range(mesh.n_cells) if i not in ids])
+        >>> _ = pl.add_mesh(others,show_edges=True)
+        >>>
+        >>> pl.camera_position = "yx"
+        >>> pl.camera.zoom(7.)
+        >>> pl.show()
+        """
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
         if hasattr(self, "BuildLinks"):
@@ -3141,27 +2985,6 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-
-    @property
-    def points_connectivity(self) -> DatasetConnectivity:
-        """Return points connectivity.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-
-        Get the cell ids that use the 0-th point
-
-        >>> mesh.points_connectivity[0].cells
-        [0, 1, 3, 209, 211, 212]
-
-        Get the neighbor points ids of the 0-th point
-
-        >>> mesh.points_connectivity[0].neighbors
-        [1, 2, 3, 4, 115, 117]
-        """
-        return DatasetConnectivity(self, "point")
 
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
