@@ -86,7 +86,7 @@ pl.show()
 
 
 ###############################################################################
-# Bolt nut MultiBlock Dataset
+# Bolt-Nut MultiBlock Dataset
 # """""""""""""""""""""""""""
 # .. note::
 #    See how we set interpolation to ``'linear'`` here to smooth out scalars of
