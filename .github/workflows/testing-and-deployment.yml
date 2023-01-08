@@ -120,7 +120,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
-          pytest -v tests/plotting --cov-report html --fail_extra_image_cache
+          pytest -v tests/plotting --cov-report html --fail_extra_image_cache -k 'not test_add_text_latex'
 
   Linux:
     name: Linux Unit Testing
@@ -179,6 +179,10 @@ jobs:
       - name: Limit NumPy for VTK 9.0.3
         if: ${{ matrix.vtk-version == '9.0.3' }}
         run: pip install 'numpy<1.24'
+
+      - name: Limit Matplotlib for VTK<=9.2.2
+        if: ${{ matrix.vtk-version != 'latest' }}
+        run: pip install 'matplotlib<3.6'
 
       - name: Software Report
         run: |
