@@ -6,7 +6,7 @@ import collections.abc
 from copy import deepcopy
 from functools import partial
 import sys
-from typing import Any, Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union, cast
 import warnings
 
 if sys.version_info >= (3, 8):
@@ -32,7 +32,7 @@ from pyvista.utilities.arrays import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
-from .._typing import Number, NumericArray, Vector, VectorArray
+from .._typing import BoundsLike, Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -1581,7 +1581,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def bounds(self) -> BoundsLike:
         """Return the bounding box of this dataset.
 
         The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
@@ -1596,7 +1596,7 @@ class DataSet(DataSetFilters, DataObject):
         (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
-        return self.GetBounds()
+        return cast(BoundsLike, self.GetBounds())
 
     @property
     def length(self) -> float:
@@ -2676,7 +2676,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return self.get_cell(ind).points
 
-    def cell_bounds(self, ind: int) -> Tuple[float, float, float, float, float, float]:
+    def cell_bounds(self, ind: int) -> BoundsLike:
         """Return the bounding box of a cell.
 
         ..  deprecated:: 0.38.0

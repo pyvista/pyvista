@@ -396,7 +396,7 @@ class Renderers:
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Defaults
             to current theme parameters.  For example:
 
@@ -405,7 +405,7 @@ class Renderers:
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : color_like, optional
+        top : ColorLike, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
@@ -441,6 +441,14 @@ class Renderers:
             self._shadow_renderer.set_background(color)
         else:
             self.active_renderer.set_background(color, top=top)
+
+    def set_color_cycler(self, color_cycler, all_renderers=True):
+        """Set the color cycler for each renderer."""
+        if all_renderers:
+            for renderer in self:
+                renderer.set_color_cycler(color_cycler)
+        else:
+            self.active_renderer.set_color_cycler(color_cycler)
 
     def remove_background_image(self):
         """Remove the background image at the current renderer.
