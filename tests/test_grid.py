@@ -447,19 +447,23 @@ def test_linear_copy_surf_elem():
     assert np.allclose(qual, [1, 1.4], atol=0.01)
 
 
-def test_extract_cells(hexbeam):
+@pytest.mark.parametrize("invert", [True, False])
+def test_extract_cells(hexbeam, invert):
+
     ind = [1, 2, 3]
-    part_beam = hexbeam.extract_cells(ind)
-    assert part_beam.n_cells == len(ind)
+    n_ind = [i for i in range(hexbeam.n_cells) if i not in ind] if invert else ind
+
+    part_beam = hexbeam.extract_cells(ind, invert=invert)
+    assert part_beam.n_cells == len(n_ind)
     assert part_beam.n_points < hexbeam.n_points
-    assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], ind)
+    assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], n_ind)
 
     mask = np.zeros(hexbeam.n_cells, dtype=bool)
     mask[ind] = True
-    part_beam = hexbeam.extract_cells(mask)
-    assert part_beam.n_cells == len(ind)
+    part_beam = hexbeam.extract_cells(ind, invert=invert)
+    assert part_beam.n_cells == len(n_ind)
     assert part_beam.n_points < hexbeam.n_points
-    assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], ind)
+    assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], n_ind)
 
     ind = np.vstack(([1, 2], [4, 5]))[:, 0]
     part_beam = hexbeam.extract_cells(ind)
