@@ -299,7 +299,7 @@ class Renderers:
     def on_plotter_render(self):
         """Notify all renderers of explicit plotter render call."""
         for renderer in self:
-            renderer.render()
+            renderer.on_plotter_render()
 
     def deep_clean(self):
         """Clean all renderers."""
