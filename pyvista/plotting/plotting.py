@@ -1599,7 +1599,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if hasattr(self, 'ren_win') and not self._first_time:
             log.debug('Rendering')
-            self.renderers.render()
+            self.renderers.on_plotter_render()
             self.ren_win.Render()
             self._rendered = True
 
