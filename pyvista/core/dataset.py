@@ -6,7 +6,7 @@ import collections.abc
 from copy import deepcopy
 from functools import partial
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union
 import warnings
 
 if sys.version_info >= (3, 8):
@@ -602,7 +602,7 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self) -> Optional['pyvista.PolyData']:
+    def arrows(self) -> Optional[pyvista.PolyData]:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -1554,7 +1554,7 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def copy_meta_from(self, ido: 'DataSet', deep: bool = True):
+    def copy_meta_from(self, ido: DataSet, deep: bool = True):
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1888,7 +1888,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
-    ) -> 'pyvista.pyvista_ndarray':
+    ) -> pyvista.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -2190,7 +2190,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         self.copy_from(mesh)
 
-    def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
+    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
         Returns
@@ -2217,7 +2217,7 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self, pass_cell_data: bool = False) -> 'pyvista.PointSet':
+    def cast_to_pointset(self, pass_cell_data: bool = False) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -2253,7 +2253,7 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self, pass_cell_data: bool = False) -> 'pyvista.PolyData':
+    def cast_to_poly_points(self, pass_cell_data: bool = False) -> pyvista.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -2659,7 +2659,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self, index: int) -> 'pyvista.Cell':
+    def get_cell(self, index: int) -> pyvista.Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2709,7 +2709,7 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self) -> List['pyvista.Cell']:
+    def cell(self) -> List[pyvista.Cell]:
         """Return a list of cells.
 
         Returns
@@ -2984,18 +2984,18 @@ class DataSet(DataSetFilters, DataObject):
         return DatasetConnectivity(self, "cell")
 
     def cell_neighbors(self, ind: int, connections: str = "points"):
-        """Return cells connectivity.
+        """Get the cell neighbors of the ind-th cell.
 
         Parameters
         ----------
         ind : int
             Cell ID.
-        
+
         connections: str, optional
-            How the neighbor cell must be connected to the current
-            cell so it can be considered as a neighbor.
+            Describe how the neighbor cell(s) must be connected to the current
+            cell to be considered as a neighbor.
             Can be either ``'points'``, ``'edges'`` or ``'faces'``.
-        
+
         Examples
         --------
         >>> from pyvista import examples
@@ -3013,13 +3013,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.cell_neighbors(0,"edges")
         [1, 3, 12]
 
-        For unstructured grids, cell neighbors can be defined using faces
+        For unstructured grids with cells of dimension 3 (Tetrahedron for example),
+        cell neighbors can be defined using faces
 
         >>> mesh = examples.download_tetrahedron()
         >>> mesh.cell_neighbors(0,"faces")
-        [0, 8, 11]
+        [1, 5, 7]
         """
-
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
         if hasattr(self, "BuildLinks"):
@@ -3057,6 +3057,80 @@ class DataSet(DataSetFilters, DataObject):
 
         return list(neighbors)
 
+    def point_neighbors(self, ind: int) -> List[int]:
+        """Get the point neighbors of the ind-th point.
+
+        Parameters
+        ----------
+        ind : int
+            Point ID
+
+        Examples
+        --------
+        Get the point neighbors of the 0-th point
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>> mesh.point_neighbors(0)
+        [2, 226, 198, 170, 142, 114, 86, 254, 58, 30]
+
+        Plot them:
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh,show_edges=True)
+        >>>
+        >>> # Label the 0-th point
+        >>> _ = pl.add_point_labels(mesh.points[0],["0"],text_color="blue", font_size=20)
+        >>>
+        >>> # Get the point neighbors and plot them
+        >>> neighbors = mesh.point_neighbors(0)
+        >>> _ = pl.add_point_labels(mesh.points[neighbors], labels=[f"{i}" for i in neighbors], text_color="red", font_size=20)
+        >>> pl.camera_position = "yx"
+        >>> pl.camera.zoom(4.)
+        >>> pl.show()
+
+        """
+        if ind + 1 > self.n_points:
+            raise IndexError(f'Invalid index {ind} for a dataset with {self.n_points} points.')
+
+        out = []
+        for cell in self.point_cell_ids(ind):
+            out.extend([i for i in self.get_cell(cell).point_ids if i != ind])
+        return list(set(out))
+
+    def point_neighbors_levels(
+        self, ind: int, n_levels: int = 1
+    ) -> Generator[List[int], None, None]:
+        method = self.point_neighbors
+        return self._get_levels_neihgbors(ind, n_levels, method)
+
+    def cell_neighbors_levels(
+        self, ind: int, connections: str = "points", n_levels: int = 1
+    ) -> Generator[List[int], None, None]:
+        method = partial(self.cell_neighbors, connections=connections)
+        return self._get_levels_neihgbors(ind, n_levels, method)
+
+    def _get_levels_neihgbors(
+        self, ind: int, n_levels: int, method: Callable
+    ) -> Generator[List[int], None, None]:
+
+        neighbors = set(method(ind))
+        yield list(neighbors)
+
+        all_visited = neighbors.copy()
+        all_visited.add(ind)
+
+        for _ in range(n_levels - 1):
+            new_visited = set()
+
+            for n in neighbors:
+                new_neighbors = method(n)
+                new_visited.update(new_neighbors)
+            neighbors = new_visited
+
+            yield list(neighbors.difference(all_visited))
+            all_visited.update(neighbors)
+
     def point_cell_ids(self, ind: int):
 
         # Build links as recommended:
@@ -3067,13 +3141,6 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-
-    def point_neighbors(self, ind: int) -> List[int]:
-
-        out = []
-        for cell in self.point_cell_ids(ind):
-            out.extend([i for i in self.get_cell(cell).point_ids if i != ind])
-        return list(set(out))
 
     @property
     def points_connectivity(self) -> DatasetConnectivity:

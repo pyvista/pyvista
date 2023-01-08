@@ -1,6 +1,5 @@
 """Tests for pyvista.core.dataset."""
 
-import itertools
 import multiprocessing
 import pickle
 
@@ -1748,7 +1747,7 @@ def test_volume_area():
 # Connectivity tests
 # ------------------
 
-i0s = [1, 2]
+i0s = [0, 1]
 grids = [
     load_airplane(),
     load_structured(),
@@ -1852,8 +1851,6 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 
 
 # Slice grids since some do not contain faces
-
-
 @pytest.mark.parametrize("grid", grids[2:], ids=ids[2:])
 @pytest.mark.parametrize("i0", i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
@@ -1893,3 +1890,59 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
             neighbor_points.add(frozenset(f.point_ids))
 
         assert neighbor_points.isdisjoint(current_points)
+
+
+@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
+@pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
+@pytest.mark.parametrize(
+    "connections", ["points", "edges", "faces"], ids=lambda x: f"connections={x}"
+)
+def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
+
+    cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)
+
+    if connections == "faces" and grid.get_cell(i0).dimension != 3:
+        pytest.skip("Grid's cells does not contain faces")
+
+    if n_levels == 1:
+        # Consume generator and check length and consistency
+        # with underlying method
+        cell_ids = list(cell_ids)
+        assert len(cell_ids) == 1
+        cell_ids = cell_ids[0]
+        assert len(cell_ids) > 0
+        assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
+
+    else:
+        for i, ids in enumerate(cell_ids):
+            assert isinstance(ids, list)
+            assert all([isinstance(id, int) for id in ids])
+            assert all([0 <= id < grid.n_cells for id in ids])
+            assert len(ids) > 0
+        assert i == n_levels - 1
+
+
+@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize("i0", i0s)
+@pytest.mark.parametrize("n_levels", [1, 3])
+def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
+
+    point_ids = grid.point_neighbors_levels(i0, n_levels=n_levels)
+
+    if n_levels == 1:
+        # Consume generator and check length and consistency
+        # with underlying method
+        point_ids = list(point_ids)
+        assert len(point_ids) == 1
+        point_ids = point_ids[0]
+        assert len(point_ids) > 0
+        assert set(point_ids) == set(grid.point_neighbors(i0))
+
+    else:
+        for i, ids in enumerate(point_ids):
+            assert isinstance(ids, list)
+            assert all([isinstance(id, int) for id in ids])
+            assert all([0 <= id < grid.n_points for id in ids])
+            assert len(ids) > 0
+        assert i == n_levels - 1
