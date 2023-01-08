@@ -20,6 +20,7 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
+from pyvista.plotting.volume import Volume
 from pyvista.utilities import (
     FieldAssociation,
     abstract_class,
@@ -62,6 +63,7 @@ from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
@@ -3689,39 +3691,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.mapper.lookup_table.annotations = annotations
 
         self.mapper.dataset = volume
-
-        blending = blending.lower()
-        if blending in ['additive', 'add', 'sum']:
-            self.mapper.SetBlendModeToAdditive()
-        elif blending in ['average', 'avg', 'average_intensity']:
-            self.mapper.SetBlendModeToAverageIntensity()
-        elif blending in ['composite', 'comp']:
-            self.mapper.SetBlendModeToComposite()
-        elif blending in ['maximum', 'max', 'maximum_intensity']:
-            self.mapper.SetBlendModeToMaximumIntensity()
-        elif blending in ['minimum', 'min', 'minimum_intensity']:
-            self.mapper.SetBlendModeToMinimumIntensity()
-        else:
-            raise ValueError(
-                f'Blending mode {blending!r} invalid. '
-                'Please choose either "additive", '
-                '"composite", "minimum" or "maximum".'
-            )
+        self.mapper.blend_mode = blending
         self.mapper.update()
 
-        self.volume = _vtk.vtkVolume()
-        self.volume.SetMapper(self.mapper)
+        self.volume = Volume()
+        self.volume.mapper = self.mapper
 
-        prop = _vtk.vtkVolumeProperty()
-        prop.SetColor(self.mapper.lookup_table.to_color_tf())
-        prop.SetScalarOpacity(self.mapper.lookup_table.to_opacity_tf())
-        prop.SetAmbient(ambient)
-        prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
-        prop.SetShade(shade)
-        prop.SetDiffuse(diffuse)
-        prop.SetSpecular(specular)
-        prop.SetSpecularPower(specular_power)
-        self.volume.SetProperty(prop)
+        self.volume.prop = VolumeProperty(
+            lookup_table=self.mapper.lookup_table,
+            ambient=ambient,
+            shade=shade,
+            specular=specular,
+            specular_power=specular_power,
+            diffuse=diffuse,
+            opacity_unit_distance=opacity_unit_distance,
+        )
 
         actor, prop = self.add_actor(
             self.volume,

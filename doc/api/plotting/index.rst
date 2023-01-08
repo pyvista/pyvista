@@ -29,6 +29,8 @@ all plotting functionality in PyVista.
    Plotter
    Renderer
    Property
+   plotting.volume_property.VolumeProperty
+   plotting.volume.Volume
    Actor
    DataSetMapper
    LookupTable
