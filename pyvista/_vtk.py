@@ -506,6 +506,7 @@ if VTK9:
         vtkPointPicker,
         vtkPolyDataMapper,
         vtkPolyDataMapper2D,
+        vtkProp3D,
         vtkPropAssembly,
         vtkProperty,
         vtkPropPicker,

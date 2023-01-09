@@ -654,11 +654,11 @@ def test_no_copy_rectilinear_grid():
 def test_grid_repr(struct_grid):
     str_ = str(struct_grid)
     assert 'StructuredGrid' in str_
-    assert f'N Points:\t{struct_grid.n_points}\n' in str_
+    assert f'N Points:     {struct_grid.n_points}\n' in str_
 
     repr_ = repr(struct_grid)
     assert 'StructuredGrid' in repr_
-    assert f'N Points:\t{struct_grid.n_points}\n' in repr_
+    assert f'N Points:     {struct_grid.n_points}\n' in repr_
 
 
 def test_slice_structured(struct_grid):

@@ -9,6 +9,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.plotting import charts, system_supports_plotting
+from pyvista.plotting.colors import COLOR_SCHEMES
 from pyvista.utilities.misc import can_create_mpl_figure
 
 skip_mac = pytest.mark.skipif(
@@ -503,7 +504,7 @@ def test_multicomp_plot_common(plot_f, request):
 
     plot.color_scheme = cs
     assert plot.color_scheme == cs
-    assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
+    assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]["id"]
     assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
         pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
