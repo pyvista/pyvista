@@ -9,6 +9,8 @@ from pyvista.plotting import system_supports_plotting
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
+skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
+
 
 def test_widget_box(uniform):
     p = pyvista.Plotter()
@@ -297,6 +299,7 @@ def test_plot_algorithm_widgets():
     pl.close()
 
 
+@skip_9_1_0
 def test_plot_pointset_widgets(pointset):
     pointset = pointset.elevation()
 
