@@ -1369,6 +1369,9 @@ class WidgetHelper:
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
+        if isinstance(mesh, pyvista.PointSet):
+            raise TypeError('PointSet meshes are not well handled with thresholding.')
+
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', mesh.memory_address)
@@ -1500,6 +1503,8 @@ class WidgetHelper:
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
+        if isinstance(mesh, pyvista.PointSet):
+            raise TypeError('PointSet meshes are not well handled with isovalue.')
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
         name = kwargs.get('name', mesh.memory_address)

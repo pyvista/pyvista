@@ -3,6 +3,7 @@ import traceback
 
 import numpy as np
 
+import pyvista
 from pyvista import _vtk
 
 from .helpers import wrap
@@ -60,10 +61,25 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
             nOutputPorts=nOutputPorts,
         )
 
+    def GetInputData(self, inInfo, port, idx):
+        """Get input data object.
+
+        This will convert ``vtkPointSet`` to ``vtkPolyData``
+        """
+        inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
+        if isinstance(inp, pyvista.PointSet):
+            return inp.cast_to_polydata()
+        return inp
+
     # THIS IS CRUCIAL to preserve data type through filter
     def RequestDataObject(self, request, inInfo, outInfo):
         """Preserve data type."""
-        self.OutputType = self.GetInputData(inInfo, 0, 0).GetClassName()
+        class_name = self.GetInputData(inInfo, 0, 0).GetClassName()
+        if class_name == 'vtkPointSet':
+            # See https://gitlab.kitware.com/vtk/vtk/-/issues/18771
+            self.OutputType = 'vtkPolyData'
+        else:
+            self.OutputType = class_name
         self.FillOutputPortInformation(0, outInfo.GetInformationObject(0))
         return 1
 
@@ -96,9 +112,9 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
     def RequestData(self, request, inInfo, outInfo):
         """Perform algorithm execution."""
         try:
-            inp = self.GetInputData(inInfo, 0, 0)
+            inp = wrap(self.GetInputData(inInfo, 0, 0))
             out = self.GetOutputData(outInfo, 0)
-            output = wrap(inp).copy()
+            output = inp.copy()
             if output.n_arrays:
                 output.set_active_scalars(self.scalars_name, preference=self.preference)
             out.ShallowCopy(output)

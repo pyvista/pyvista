@@ -295,3 +295,25 @@ def test_plot_algorithm_widgets():
     pl = pyvista.Plotter()
     pl.add_mesh_slice_spline(algo)
     pl.close()
+
+
+def test_plot_pointset_widgets(pointset):
+    pointset = pointset.elevation()
+
+    assert isinstance(pointset, pyvista.PointSet)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_box(pointset, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_plane(pointset, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice(pointset)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice_spline(pointset)
+    pl.close()
