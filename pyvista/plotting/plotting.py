@@ -3344,7 +3344,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Block resolution. For example ``[1, 1, 1]``. Resolution must be
             non-negative. While VTK accepts negative spacing, this results in
             unexpected behavior. See:
-            `pyvista #1967 <https://github.com/pyvista/pyvista/issues/1967>`_
+            `pyvista #1967 <https://github.com/pyvista/pyvista/issues/1967>`_.
 
         opacity : str or numpy.ndarray, optional
             Opacity mapping for the scalars array.
