@@ -73,7 +73,10 @@ jobs:
       # configure building documentation with methods on individual pages on
       # main, release, or tags with v*
       - name: Set building full docs
-        if: ${{ github.ref == 'refs/heads/main' ||  contains(github.ref, 'release') || startsWith(github.ref, 'refs/tags/v') }}
+        if: >-
+          ${{ 
+          ( github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'FullDoc') ) ||
+          github.ref == 'refs/heads/main' ||  contains(github.ref, 'release') || startsWith(github.ref, 'refs/tags/v') }}
         run: |
            echo "FULL_DOC_BUILD=TRUE" >> $GITHUB_ENV
 
