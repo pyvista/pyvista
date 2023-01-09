@@ -2827,25 +2827,24 @@ class DataSet(DataSetFilters, DataObject):
         >>> for i,connection in enumerate(["points","edges"]):
         ...     pl.subplot(0,i)
         ...     pl.view_yx()
-        ...     _ = pl.add_title(f"{connection.capitalize()} neighbors",color="red",shadow=True)
-
+        ...     _ = pl.add_title(f"{connection.capitalize()} neighbors",color="red",shadow=True, font_size=8)
+        ...
         ...     # Add current cell
         ...     i_cell = 0
         ...     current_cell = mesh.extract_cells(i_cell)
         ...     _ = pl.add_mesh(current_cell,show_edges=True, color = "blue" )
         ...     _ = add_point_labels(current_cell.cell_centers().points, labels=[f"{i_cell}"])
-
+        ...
         ...     # Add neighbors
         ...     ids = mesh.cell_neighbors(i_cell,connection)
         ...     cells = mesh.extract_cells(ids)
         ...     _ = pl.add_mesh(cells,color="red", show_edges=True)
         ...     _ = add_point_labels(cells.cell_centers().points, labels=[f"{i}" for i in ids])
-
+        ...
         ...     # Add other cells
         ...     ids.append(i_cell)
         ...     others = mesh.extract_cells(ids,invert=True)
         ...     _ = pl.add_mesh(others,show_edges=True)
-
         >>> pl.show()
         """
         # Build links as recommended:
