@@ -165,7 +165,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
     """Internal helper algorithm to crinkle cell IDs."""
 
-    def __init__(self, point_ids=True, cell_ids=True):
+    def __init__(self):
         """Initialize algorithm."""
         super().__init__(
             nInputPorts=2,
@@ -194,6 +194,17 @@ def outline_algorithm(inp, generate_faces=False):
     return alg
 
 
+def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlinear_subdivision=1):
+    """Add vtkDataSetSurfaceFilter to pipeline."""
+    surf_filter = _vtk.vtkDataSetSurfaceFilter()
+    surf_filter.SetPassThroughPointIds(pass_pointid)
+    surf_filter.SetPassThroughCellIds(pass_cellid)
+    if nonlinear_subdivision != 1:
+        surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
+    set_algorithm_input(surf_filter, inp)
+    return surf_filter
+
+
 def active_scalars_algorithm(inp, name, preference='point'):
     """Add a filter that sets the active scalars."""
     alg = ActiveScalarsAlgorithm(
@@ -218,9 +229,25 @@ def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
     return alg
 
 
-def crinkle_algorithm(clip, source, point_ids=True, cell_ids=True):
+def crinkle_algorithm(clip, source):
     """Add a filter that crinkles a clip."""
-    alg = CrinkleAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
+    alg = CrinkleAlgorithm()
     set_algorithm_input(alg, clip, 0)
     set_algorithm_input(alg, source, 1)
+    return alg
+
+
+def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
+    """Add a filter that converts cell data to point data."""
+    alg = _vtk.vtkCellDataToPointData()
+    alg.SetPassCellData(pass_cell_data)
+    set_algorithm_input(alg, inp)
+    return alg
+
+
+def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
+    """Add a filter that converts point data to cell data."""
+    alg = _vtk.vtkPointDataToCellData()
+    alg.SetPassPointData(pass_point_data)
+    set_algorithm_input(alg, inp)
     return alg
