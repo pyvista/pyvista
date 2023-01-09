@@ -1562,6 +1562,7 @@ def test_volume_rendering_from_helper(uniform, verify_image_cache):
     uniform.plot(volume=True, opacity='linear')
 
 
+@skip_windows_mesa  # due to opacity
 def test_volume_rendering_from_plotter(uniform):
     plotter = pyvista.Plotter()
     plotter.add_volume(uniform, opacity='sigmoid', cmap='jet', n_colors=15)
@@ -3048,6 +3049,7 @@ def test_plotter_volume_lookup_table(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
 def test_plotter_volume_add_scalars(uniform):
     uniform.clear_data()
     pl = pyvista.Plotter()
