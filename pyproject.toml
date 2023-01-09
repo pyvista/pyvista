@@ -145,6 +145,7 @@ filterwarnings = [
     'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
     'ignore:.*Given trait value dtype "float64":UserWarning',
     'ignore:.*The NumPy module was reloaded*:UserWarning',
+    'error::pyvista.PyVistaDeprecationWarning'
 ]
 doctest_optionflags = 'NUMBER ELLIPSIS'
 testpaths = 'tests'
@@ -154,7 +155,6 @@ markers = [
     'needs_download: this test downloads data during execution',
 ]
 image_cache_dir = "tests/plotting/image_cache"
-
 
 [tool.mypy]
 ignore_missing_imports = true

@@ -87,7 +87,7 @@ def plot(
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : color_like, optional
+    background : ColorLike, optional
         Color of the background.
 
     text : str, optional
@@ -152,7 +152,7 @@ def plot(
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : color_like, optional
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``

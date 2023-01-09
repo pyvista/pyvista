@@ -281,7 +281,7 @@ def test_init_polyhedron():
     grid = pyvista.UnstructuredGrid(cells, cell_type, nodes)
 
     assert grid.n_cells == len(cell_type)
-    assert grid.cell_type(0) == pyvista.CellType.POLYHEDRON
+    assert grid.get_cell(0).type == pyvista.CellType.POLYHEDRON
 
 
 def test_cells_dict_hexbeam_file():
@@ -654,11 +654,11 @@ def test_no_copy_rectilinear_grid():
 def test_grid_repr(struct_grid):
     str_ = str(struct_grid)
     assert 'StructuredGrid' in str_
-    assert f'N Points:\t{struct_grid.n_points}\n' in str_
+    assert f'N Points:     {struct_grid.n_points}\n' in str_
 
     repr_ = repr(struct_grid)
     assert 'StructuredGrid' in repr_
-    assert f'N Points:\t{struct_grid.n_points}\n' in repr_
+    assert f'N Points:     {struct_grid.n_points}\n' in repr_
 
 
 def test_slice_structured(struct_grid):

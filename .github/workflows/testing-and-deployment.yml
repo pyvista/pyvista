@@ -49,7 +49,7 @@ jobs:
         run: pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: pytest -v tests/plotting
+        run: pytest -v tests/plotting --fail_extra_image_cache
 
 
   LinuxConda:
@@ -120,7 +120,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
-          pytest -v tests/plotting --cov-report html
+          pytest -v tests/plotting --cov-report html --fail_extra_image_cache -k 'not test_add_text_latex'
 
   Linux:
     name: Linux Unit Testing
@@ -180,6 +180,10 @@ jobs:
         if: ${{ matrix.vtk-version == '9.0.3' }}
         run: pip install 'numpy<1.24'
 
+      - name: Limit Matplotlib for VTK<=9.2.2
+        if: ${{ matrix.vtk-version != 'latest' }}
+        run: pip install 'matplotlib<3.6'
+
       - name: Software Report
         run: |
           xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
@@ -187,7 +191,7 @@ jobs:
           pip list
 
       - name: Unit Testing
-        run: xvfb-run coverage run -m --source=pyvista --module pytest  --skip_image_cache_vtk8
+        run: xvfb-run coverage run -m --source=pyvista --module pytest --skip_image_cache_vtk8 --fail_extra_image_cache -v
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
@@ -255,4 +259,4 @@ jobs:
         run: python -m pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: python -m pytest -v tests/plotting
+        run: python -m pytest -v tests/plotting --fail_extra_image_cache

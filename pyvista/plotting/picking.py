@@ -90,7 +90,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -277,7 +277,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -524,7 +524,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         show_point : bool, optional
@@ -668,7 +668,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -800,7 +800,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -908,7 +908,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -1049,7 +1049,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the horizon surface if shown.
 
         point_size : int, optional
