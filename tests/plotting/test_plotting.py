@@ -1563,10 +1563,30 @@ def test_volume_rendering_from_helper(uniform, verify_image_cache):
     uniform.plot(volume=True, opacity='linear')
 
 
+@skip_windows_mesa  # due to opacity
 def test_volume_rendering_from_plotter(uniform):
     plotter = pyvista.Plotter()
     plotter.add_volume(uniform, opacity='sigmoid', cmap='jet', n_colors=15)
     plotter.show()
+
+
+@skip_windows_mesa  # due to opacity
+@skip_9_0_X
+def test_volume_rendering_rectilinear(uniform):
+    grid = uniform.cast_to_rectilinear_grid()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid, opacity='sigmoid', cmap='jet', n_colors=15)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.add_volume(grid, mapper='fixed_point')
+    plotter.close()
 
 
 @skip_windows
@@ -3046,6 +3066,14 @@ def test_plotter_volume_lookup_table(uniform):
     lut.alpha_range = (0, 1)
     pl = pyvista.Plotter()
     pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_add_scalars(uniform):
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+    pl.add_volume(uniform, scalars=uniform.z, show_scalar_bar=False)
     pl.show()
 
 

@@ -887,7 +887,7 @@ class _BaseVolumeMapper(_BaseMapper):
         """Initialize this class."""
         super().__init__(theme=theme)
         self._lut = LookupTable()
-        self._scalar_range = None
+        self._scalar_range = (0.0, 256.0)
 
     @property
     def dataset(self):
@@ -910,7 +910,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = lut
 
     @property
-    def scalar_range(self):
+    def scalar_range(self) -> tuple:
         """Return or set the scalar range."""
         return self._scalar_range
 
@@ -918,7 +918,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def scalar_range(self, clim):
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
-        self._scalar_range = clim
+        self._scalar_range = tuple(clim)
 
     @property
     def blend_mode(self) -> str:
