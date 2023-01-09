@@ -1,7 +1,6 @@
 name: Build Documentation
 on:
   pull_request:  # Uses cache
-    types: [opened, reopened, synchronize, labeled]
   workflow_dispatch:  # Able to not use cache by user demand
     inputs:
       cache:
@@ -26,8 +25,6 @@ env:
 
 jobs:
   doc:
-    # Don't run if we labeled with a label other than `full-doc`
-    if: ${{ !(github.event.action == 'labeled' && github.event.label.name != 'full-doc') }}
     name: Build Documentation
     runs-on: ubuntu-20.04
     env:
