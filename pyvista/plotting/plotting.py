@@ -3321,7 +3321,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.UniformGrid
+        volume : 3D numpy.ndarray or pyvista.UniformGrid or pyvista.RectilinearGrid
             The input volume to visualize. 3D numpy arrays are accepted.
 
         scalars : str or numpy.ndarray, optional
@@ -3414,7 +3414,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Volume mapper to use given by name. Options include:
             ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and
             ``'smart'``.  If ``None`` the ``"volume_mapper"`` in the
-            ``self._theme`` is used.
+            ``self._theme`` is used. If using ``'fixed_point'``,
+            only ``UniformGrid`` types can be used.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -3601,9 +3602,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 actors.append(a)
             return actors
 
-        if not isinstance(volume, pyvista.UniformGrid):
+        if not isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
             raise TypeError(
-                f'Type {type(volume)} not supported for volume rendering at this time. Use `pyvista.UniformGrid`.'
+                f'Type {type(volume)} not supported for volume rendering at this time. Use `pyvista.UniformGrid` or `pyvista.RectilinearGrid`.'
+            )
+        if mapper == 'fixed_point' and not isinstance(volume, pyvista.UniformGrid):
+            raise TypeError(
+                f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.UniformGrid`.'
             )
 
         if opacity_unit_distance is None:
