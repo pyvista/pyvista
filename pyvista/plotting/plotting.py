@@ -20,6 +20,7 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
+from pyvista.errors import MissingDataError
 from pyvista.plotting.volume import Volume
 from pyvista.utilities import (
     FieldAssociation,
@@ -3611,12 +3612,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             # Make sure scalars components are not vectors/tuples
-            scalars = volume.active_scalars.copy()
+            scalars = volume.active_scalars
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
                 scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
             else:
-                raise ValueError('No scalars to use for volume rendering.')
+                raise MissingDataError('No scalars to use for volume rendering.')
 
         title = 'Data'
         if isinstance(scalars, str):

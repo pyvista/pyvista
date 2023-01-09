@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista
+from pyvista.errors import MissingDataError
 from pyvista.plotting import _plotting
 
 
@@ -266,3 +267,11 @@ def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
     cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
+
+
+def test_plotter_add_volume_no_scalars(uniform: pyvista.UniformGrid):
+    """Test edge case where add_volume has no scalars."""
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+    with pytest.raises(MissingDataError):
+        pl.add_volume(uniform, cmap="coolwarm", opacity="linear")
