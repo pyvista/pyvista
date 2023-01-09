@@ -171,6 +171,8 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
                 output.point_data['point_ids'] = np.arange(0, output.n_points, dtype=int)
             if self.cell_ids:
                 output.cell_data['cell_ids'] = np.arange(0, output.n_cells, dtype=int)
+            if output.active_scalars_name in ['point_ids', 'cell_ids']:
+                output.active_scalars_name = inp.active_scalars_name
             out.ShallowCopy(output)
         except Exception as e:  # pragma: no cover
             traceback.print_exc()
