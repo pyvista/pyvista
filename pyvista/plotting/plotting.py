@@ -3655,9 +3655,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if clim is None:
             if scalars.dtype == np.uint8:
                 clim = [0, 255]
-
-            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-            clim = [min_, max_]
+            else:
+                min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
+                clim = [min_, max_]
         elif isinstance(clim, float) or isinstance(clim, int):
             clim = [-clim, clim]
 

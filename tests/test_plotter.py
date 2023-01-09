@@ -269,9 +269,30 @@ def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
     assert isinstance(img, np.ndarray)
 
 
-def test_plotter_add_volume_no_scalars(uniform: pyvista.UniformGrid):
+def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista.PolyData):
     """Test edge case where add_volume has no scalars."""
     uniform.clear_data()
     pl = pyvista.Plotter()
     with pytest.raises(MissingDataError):
         pl.add_volume(uniform, cmap="coolwarm", opacity="linear")
+
+    with pytest.raises(TypeError, match='not supported for volume rendering'):
+        pl.add_volume(sphere)
+
+
+def test_plotter_add_volume_clim(uniform: pyvista.UniformGrid):
+    """Verify clim is set correctly for volume."""
+    arr = uniform.x.astype(np.uint8)
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform, scalars=arr)
+    assert vol.mapper.scalar_range == (0, 255)
+
+    clim = [-10, 20]
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform, clim=clim)
+    assert vol.mapper.scalar_range == tuple(clim)
+
+    clim_val = 2.0
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform, clim=clim_val)
+    assert vol.mapper.scalar_range == (-clim_val, clim_val)
