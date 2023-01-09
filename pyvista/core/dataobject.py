@@ -256,10 +256,10 @@ class DataObject:
 
         Parameters
         ----------
-        args : Any
+        *args : tuple
             Positional arguments.
 
-        kwargs : Any
+        **kwargs : dict, optional
             Keyword arguments.
 
         """
