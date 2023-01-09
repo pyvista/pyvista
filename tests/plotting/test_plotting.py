@@ -1569,6 +1569,24 @@ def test_volume_rendering_from_plotter(uniform):
     plotter.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_volume_rendering_rectilinear(uniform):
+    grid = uniform.cast_to_rectilinear_grid()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid, opacity='sigmoid', cmap='jet', n_colors=15)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.add_volume(grid, mapper='fixed_point')
+    plotter.close()
+
+
 @skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
