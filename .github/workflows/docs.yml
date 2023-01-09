@@ -75,7 +75,7 @@ jobs:
       - name: Set building full docs
         if: >-
           ${{ 
-          ( github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'FullDoc') ) ||
+          ( github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full-doc') ) ||
           github.ref == 'refs/heads/main' ||  contains(github.ref, 'release') || startsWith(github.ref, 'refs/tags/v') }}
         run: |
            echo "FULL_DOC_BUILD=TRUE" >> $GITHUB_ENV
