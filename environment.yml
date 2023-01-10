@@ -8,7 +8,7 @@ dependencies:
   - vtk
   - scooby>=0.5.1
   - meshio
-  - matplotlib<3.6
+  - matplotlib
   - imageio>=2.5.0
   - imageio-ffmpeg
   - colorcet
