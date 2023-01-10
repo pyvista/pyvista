@@ -1,5 +1,6 @@
 """Trame utilities for running in Jupyter."""
 import logging
+import warnings
 
 from IPython import display
 from trame.app import get_server
@@ -18,17 +19,17 @@ with PyVista.
 You can use the following snippet to launch the server:
 
     from pyvista.trame.jupyter import launch_server
-    launch_server({name})
+    await launch_server('{name}')
 
 """
 JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
-Prior to plotting, please make sure to run `set_jupyter_backend('server')` when using the `'server'` or `'client'` Jupyter backends.
+Prior to plotting, please make sure to run `await set_jupyter_backend('server')` when using the `'server'` or `'client'` Jupyter backends.
 
     import pyvista as pv
-    pv.set_jupyter_backend('server')
+    await pv.set_jupyter_backend('server')
 
-In Jupyter, this MUST be in a separate cell from your `plotter.show()` call.
+It is critial that this `await` is used.
 
 If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
 
@@ -50,6 +51,10 @@ class TrameJupyterServerDownError(RuntimeError):
 
     def __init__(self):
         """Call the base class constructor with the custom message."""
+        # Be incredibly verbose on how users should launch trame server
+        # Both warn so it appears at top
+        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE)
+        # and Error
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
@@ -76,7 +81,7 @@ def launch_server(server):
 
     if server._running_stage == 0:
         server.controller.on_server_ready.add(on_ready)
-        task = server.start(
+        server.start(
             exec_mode="task",
             port=0,
             open_browser=False,
@@ -84,9 +89,8 @@ def launch_server(server):
             disable_logging=True,
             timeout=0,
         )
-        # TODO: await for server to begin
-        return task
     # else, server is already running
+    return server.ready
 
 
 def build_iframe(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
@@ -141,7 +145,6 @@ def show_trame(
         server = get_server(name=JUPYTER_SERVER_NAME)
     else:
         server = get_server(name=name)
-
     if name is None and not is_server_up(server):
         raise TrameJupyterServerDownError()
     elif not is_server_up(server):

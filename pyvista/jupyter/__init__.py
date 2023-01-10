@@ -84,10 +84,6 @@ def _validate_jupyter_backend(backend):
             raise ImportError(
                 'Please install `trame` and `jupyter-server-proxy` to use this feature.'
             )
-        # Launch the trame server
-        from pyvista.trame.jupyter import launch_server, JUPYTER_SERVER_NAME
-
-        launch_server(JUPYTER_SERVER_NAME)
 
     if backend == 'none':
         backend = None
@@ -188,3 +184,9 @@ def set_jupyter_backend(backend):
 
     """
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
+    if backend in ['server', 'client']:
+        # Launch the trame server
+        from pyvista.trame.jupyter import launch_server, JUPYTER_SERVER_NAME
+
+        return launch_server(JUPYTER_SERVER_NAME)
+    return backend
