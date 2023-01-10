@@ -175,7 +175,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista._typing import color_like
+from pyvista._typing import ColorLike
 from pyvista.utilities.misc import has_module
 
 IPYGANY_MAP = {
@@ -368,21 +368,275 @@ color_synonyms = {
     'slategrey': 'slategray',
 }
 
+matplotlib_default_colors = [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+]
+
+COLOR_SCHEMES = {
+    "spectrum": {
+        "id": _vtk.vtkColorSeries.SPECTRUM,
+        "descr": "black, red, blue, green, purple, orange, brown",
+    },
+    "warm": {"id": _vtk.vtkColorSeries.WARM, "descr": "dark red → yellow"},
+    "cool": {"id": _vtk.vtkColorSeries.COOL, "descr": "green → blue → purple"},
+    "blues": {"id": _vtk.vtkColorSeries.BLUES, "descr": "Different shades of blue"},
+    "wild_flower": {"id": _vtk.vtkColorSeries.WILD_FLOWER, "descr": "blue → purple → pink"},
+    "citrus": {"id": _vtk.vtkColorSeries.CITRUS, "descr": "green → yellow → orange"},
+    "div_purple_orange11": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
+        "descr": "dark brown → white → dark purple",
+    },
+    "div_purple_orange10": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
+        "descr": "dark brown → white → dark purple",
+    },
+    "div_purple_orange9": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange8": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange7": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange6": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange5": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
+        "descr": "orange → white → purple",
+    },
+    "div_purple_orange4": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
+        "descr": "orange → white → purple",
+    },
+    "div_purple_orange3": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
+        "descr": "orange → white → purple",
+    },
+    "div_spectral11": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
+        "descr": "dark red → light yellow → dark blue",
+    },
+    "div_spectral10": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
+        "descr": "dark red → light yellow → dark blue",
+    },
+    "div_spectral9": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral8": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral7": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral6": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral5": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral4": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral3": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
+        "descr": "orange → light yellow → green",
+    },
+    "div_brown_blue_green11": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
+        "descr": "dark brown → white → dark blue-green",
+    },
+    "div_brown_blue_green10": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
+        "descr": "dark brown → white → dark blue-green",
+    },
+    "div_brown_blue_green9": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green8": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green7": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green6": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green5": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green4": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green3": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
+        "descr": "brown → white → blue-green",
+    },
+    "seq_blue_green9": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
+        "descr": "light blue → dark green",
+    },
+    "seq_blue_green8": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
+        "descr": "light blue → dark green",
+    },
+    "seq_blue_green7": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
+        "descr": "light blue → dark green",
+    },
+    "seq_blue_green6": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
+        "descr": "light blue → green",
+    },
+    "seq_blue_green5": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
+        "descr": "light blue → green",
+    },
+    "seq_blue_green4": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
+        "descr": "light blue → green",
+    },
+    "seq_blue_green3": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
+        "descr": "light blue → green",
+    },
+    "seq_yellow_orange_brown9": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
+        "descr": "light yellow → orange → dark brown",
+    },
+    "seq_yellow_orange_brown8": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown7": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown6": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown5": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown4": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
+        "descr": "light yellow → orange",
+    },
+    "seq_yellow_orange_brown3": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
+        "descr": "light yellow → orange",
+    },
+    "seq_blue_purple9": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
+        "descr": "light blue → dark purple",
+    },
+    "seq_blue_purple8": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple7": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple6": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple5": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple4": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple3": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
+        "descr": "light blue → purple",
+    },
+    "qual_accent": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
+        "descr": "pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray",
+    },
+    "qual_dark2": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
+        "descr": "darker shade of qual_set2",
+    },
+    "qual_set3": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
+        "descr": "pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow",
+    },
+    "qual_set2": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
+        "descr": "blue green, orange, purple, pink, green, yellow, brown, gray",
+    },
+    "qual_set1": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
+        "descr": "red, blue, green, purple, orange, yellow, brown, pink, gray",
+    },
+    "qual_pastel2": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
+        "descr": "pastel shade of qual_set2",
+    },
+    "qual_pastel1": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
+        "descr": "pastel shade of qual_set1",
+    },
+    "qual_paired": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
+        "descr": "light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow",
+    },
+    "custom": {"id": _vtk.vtkColorSeries.CUSTOM, "descr": None},
+}
+
+SCHEME_NAMES = {
+    scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
+}
+
 
 class Color:
     """Helper class to convert between different color representations used in the pyvista library.
 
-    Many pyvista methods accept :data:`color_like` parameters. This helper class
+    Many pyvista methods accept :data:`ColorLike` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
-    or ``float``) is considered a :data:`color_like` parameter and can be converted
+    or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
     See :attr:`Color.name` for a list of supported color names.
 
     Parameters
     ----------
-    color : color_like, optional
+    color : ColorLike, optional
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should either be provided as floats between 0 and 1
         or as ints between 0 and 255. Hex color strings can contain optional
@@ -408,7 +662,7 @@ class Color:
         * ``255``
         * ``'#ff'``
 
-    default_color : color_like, optional
+    default_color : ColorLike, optional
         Default color to use when ``color`` is ``None``. If this value is
         ``None``, then defaults to the global theme color. Format is
         identical to ``color``.
@@ -460,9 +714,9 @@ class Color:
 
     def __init__(
         self,
-        color: Optional[color_like] = None,
+        color: Optional[ColorLike] = None,
         opacity: Optional[Union[int, float, str]] = None,
-        default_color: Optional[color_like] = None,
+        default_color: Optional[ColorLike] = None,
         default_opacity: Union[int, float, str] = 255,
     ):
         """Initialize new instance."""
@@ -987,3 +1241,92 @@ def get_cmap_safe(cmap):
         cmap = ListedColormap(cmap)
 
     return cmap
+
+
+def get_default_cycler():
+    """Return the default color cycler (matches matplotlib's default)."""
+    try:
+        from cycler import cycler
+    except ImportError:  # pragma: no cover
+        raise ImportError('cycler not installed. Please install matplotlib.')
+    return cycler('color', matplotlib_default_colors)
+
+
+def get_hexcolors_cycler():
+    """Return a color cycler for all of the available hexcolors.
+
+    See ``pyvista.plotting.colors.hexcolors``.
+    """
+    try:
+        from cycler import cycler
+    except ImportError:  # pragma: no cover
+        raise ImportError('cycler not installed. Please install matplotlib.')
+    return cycler('color', hexcolors.keys())
+
+
+def get_matplotlib_theme_cycler():
+    """Return matplotlib's current theme's color cycler."""
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:  # pragma: no cover
+        raise ImportError('Please install matplotlib.')
+    return plt.rcParams['axes.prop_cycle']
+
+
+def color_scheme_to_cycler(scheme):
+    """Convert a color scheme to a Cycler."""
+    try:
+        from cycler import cycler
+    except ImportError:  # pragma: no cover
+        raise ImportError('cycler not installed. Please install matplotlib.')
+    if not isinstance(scheme, _vtk.vtkColorSeries):
+        series = _vtk.vtkColorSeries()
+        if isinstance(scheme, str):
+            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())["id"])
+        elif isinstance(scheme, int):
+            series.SetColorScheme(scheme)
+        else:
+            raise ValueError(f'Color scheme not understood: {scheme}')
+    else:
+        series = scheme
+    colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
+    return cycler('color', colors)
+
+
+def get_cycler(color_cycler):
+    """Return a color cycler based on the input value.
+
+    The value must be either a list of color-like objects,
+    or a cycler of color-like objects. If the value passed is a single
+    string, it must be one of:
+
+    * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+    * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+    * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+    A named color scheme is also supported. See ``pyvista.plotting.colors.COLOR_SCHEMES``
+
+    """
+    try:
+        from cycler import Cycler, cycler
+    except ImportError:  # pragma: no cover
+        raise ImportError('cycler not installed. Please install matplotlib.')
+    if color_cycler is None:
+        return None
+    elif isinstance(color_cycler, str):
+        if color_cycler == 'default':
+            return get_default_cycler()
+        elif color_cycler == 'matplotlib':
+            return get_matplotlib_theme_cycler()
+        elif color_cycler == 'all':
+            return get_hexcolors_cycler()
+        elif color_cycler in COLOR_SCHEMES:
+            return color_scheme_to_cycler(color_cycler)
+        else:
+            raise ValueError(f'color cycler of name `{color_cycler}` not found.')
+    elif isinstance(color_cycler, (tuple, list)):
+        return cycler('color', color_cycler)
+    elif isinstance(color_cycler, Cycler):
+        return color_cycler
+    else:
+        raise TypeError(f'color cycler of type {type(color_cycler)} not supported.')

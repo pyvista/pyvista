@@ -4,7 +4,7 @@ from pyvista import MAX_N_COLOR_BARS
 from .charts import Chart2D, ChartMPL, ChartBox, ChartPie
 from .colors import (
     Color,
-    color_like,
+    ColorLike,
     color_char_to_word,
     get_cmap_safe,
     hexcolors,

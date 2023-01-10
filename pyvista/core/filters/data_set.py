@@ -5362,60 +5362,60 @@ class DataSetFilters:
     def partition(self, n_partitions, generate_global_id=False, as_composite=True):
         """Break down input dataset into a requested number of partitions.
 
-         Cells on boundaries are uniquely assigned to each partition without duplication.
+        Cells on boundaries are uniquely assigned to each partition without duplication.
 
-         It uses a kdtree implementation that builds balances the cell
-         centers among a requested number of partitions. The current implementation
-         only supports power-of-2 target partition. If a non-power of two value
-         is specified for ``n_partitions``, then the load balancing simply
-         uses the power-of-two greater than the requested value
+        It uses a kdtree implementation that builds balances the cell
+        centers among a requested number of partitions. The current implementation
+        only supports power-of-2 target partition. If a non-power of two value
+        is specified for ``n_partitions``, then the load balancing simply
+        uses the power-of-two greater than the requested value
 
-         For more details, see `vtkRedistributeDataSetFilter
-         <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
+        For more details, see `vtkRedistributeDataSetFilter
+        <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
 
-         Parameters
-         ----------
-         n_partitions : int
-             Specify the number of partitions to split the input dataset
-             into. Current implementation results in a number of partitions equal
-             to the power of 2 greater than or equal to the chosen value.
+        Parameters
+        ----------
+        n_partitions : int
+            Specify the number of partitions to split the input dataset
+            into. Current implementation results in a number of partitions equal
+            to the power of 2 greater than or equal to the chosen value.
 
-         generate_global_id : bool, default: False
-             Generate global cell ids if ``None`` are present in the input.  If
-             global cell ids are present in the input then this flag is
-             ignored.
+        generate_global_id : bool, default: False
+            Generate global cell ids if ``None`` are present in the input.  If
+            global cell ids are present in the input then this flag is
+            ignored.
 
-             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
-             of the output dataset(s).
+            This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
+            of the output dataset(s).
 
-         as_composite : bool, default: False
-             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
+        as_composite : bool, default: False
+            Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
 
-         Returns
-         -------
+        Returns
+        -------
         pyvista.MultiBlock or pyvista.UnstructuredGrid
-             UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
+            UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
 
-         Notes
-         -----
-         This filter requires ``vtk>=9.0.0``.
+        Notes
+        -----
+        This filter requires ``vtk>=9.0.0``.
 
-         Examples
-         --------
-         Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
-         containing each partition.
+        Examples
+        --------
+        Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+        containing each partition.
 
-         >>> import pyvista as pv
-         >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
-         >>> out = grid.partition(4, as_composite=True)
-         >>> out.plot(multi_colors=True, show_edges=True)
+        >>> import pyvista as pv
+        >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
+        >>> out = grid.partition(4, as_composite=True)
+        >>> out.plot(multi_colors=True, show_edges=True)
 
-         Partition of the Stanford bunny.
+        Partition of the Stanford bunny.
 
-         >>> from pyvista import examples
-         >>> mesh = examples.download_bunny()
-         >>> out = mesh.partition(4, as_composite=True)
-         >>> out.plot(multi_colors=True, cpos='xy')
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny()
+        >>> out = mesh.partition(4, as_composite=True)
+        >>> out.plot(multi_colors=True, cpos='xy')
 
         """
         # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't

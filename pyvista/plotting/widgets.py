@@ -79,7 +79,7 @@ class WidgetHelper:
             If ``False``, the box widget cannot be rotated and is
             strictly orthogonal to the cartesian axes.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
             Defaults to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -188,7 +188,7 @@ class WidgetHelper:
             If ``False``, the box widget cannot be rotated and is strictly
             orthogonal to the cartesian axes.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -318,7 +318,7 @@ class WidgetHelper:
         factor : float, optional
             An inflation factor to expand on the bounds when placing.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.
 
         assign_to_axis : str or int, optional
@@ -515,7 +515,7 @@ class WidgetHelper:
         invert : bool, optional
             Flag on whether to flip/invert the clip.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Either a string, RGB list, or hex color string.
 
         value : float, optional
@@ -664,7 +664,7 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.  Defaults
             to ``'white'``.
 
@@ -779,7 +779,7 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -863,7 +863,7 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the line created.
 
-        color : color_like, optional, defaults to white
+        color : ColorLike, optional, defaults to white
             Either a string, rgb sequence, or hex color string.
 
         use_vertices : bool, optional
@@ -957,7 +957,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider on the
             display port.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -1084,7 +1084,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider
             on the display port.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -1109,7 +1109,7 @@ class WidgetHelper:
         title_opacity : float, optional
             Opacity of title. Defaults to 1.0.
 
-        title_color : color_like, optional
+        title_color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.  Defaults
             to the value given in ``color``.
 
@@ -1284,7 +1284,7 @@ class WidgetHelper:
             .. warning::
                 This option is only supported for VTK version 9+
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1455,7 +1455,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider
             on the display port.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1569,13 +1569,13 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the spline created between all the handles.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.
 
         show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
-        ribbon_color : color_like, optional
+        ribbon_color : ColorLike, optional
             Color of the ribbon.  Either a string, RGB sequence, or
             hex color string.
 
@@ -1699,7 +1699,7 @@ class WidgetHelper:
         resolution : int, optional
             The number of points to generate on the spline.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1711,7 +1711,7 @@ class WidgetHelper:
         show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
-        ribbon_color : color_like, optional
+        ribbon_color : ColorLike, optional
             Color of the ribbon.  Either a string, RGB sequence, or
             hex color string.
 
@@ -1832,7 +1832,7 @@ class WidgetHelper:
         phi_resolution : int, optional
             Set the number of points in the latitude direction.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the sphere's surface.  If multiple centers
             are passed, then this must be a list of colors.  Each
             color is either a string, rgb list, or hex color string.
@@ -1846,7 +1846,7 @@ class WidgetHelper:
         style : str, optional
             Representation style: ``'surface'`` or ``'wireframe'``.
 
-        selected_color : color_like, optional
+        selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
 
         indices : sequence, optional
@@ -1973,13 +1973,13 @@ class WidgetHelper:
         border_size : int, optional
             The size of the borders of the button in pixels.
 
-        color_on : color_like, optional
+        color_on : ColorLike, optional
             The color used when the button is checked. Default is ``'blue'``.
 
-        color_off : color_like, optional
+        color_off : ColorLike, optional
             The color used when the button is not checked. Default is ``'grey'``.
 
-        background_color : color_like, optional
+        background_color : ColorLike, optional
             The background color of the button. Default is ``'white'``.
 
         Returns

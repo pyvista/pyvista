@@ -2189,7 +2189,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        edge_color : color_like, optional
+        edge_color : ColorLike, optional
             The color of the edges when they are added to the plotter.
 
         line_width : int, optional
@@ -2252,7 +2252,7 @@ class PolyDataFilters(DataSetFilters):
         faces : bool, optional
             Plot face normals instead of the default point normals.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Color of the arrows.  Defaults to
             :attr:`pyvista.themes.DefaultTheme.edge_color`.
 

@@ -2,7 +2,7 @@ cmocean==2.0
 colorcet==3.0.1
 enum-tools==0.9.0.post1
 imageio>=2.5.0
-imageio-ffmpeg==0.4.7
+imageio-ffmpeg==0.4.8
 ipygany==0.5.0
 ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
@@ -20,7 +20,7 @@ pydata-sphinx-theme==0.12.0
 pypandoc==1.10
 pytest-sphinx==0.5.0
 pythreejs==2.4.1
-scipy==1.9.3
+scipy==1.10.0
 Sphinx==5.3.0
 sphinx-autobuild==2021.3.14
 sphinx-copybutton==0.5.1
