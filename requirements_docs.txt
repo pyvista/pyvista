@@ -21,7 +21,7 @@ pypandoc==1.10
 pytest-sphinx==0.5.0
 pythreejs==2.4.1
 scipy==1.10.0
-Sphinx==5.3.0
+Sphinx==6.1.2
 sphinx-autobuild==2021.3.14
 sphinx-copybutton==0.5.1
 sphinx-design==0.3.0
