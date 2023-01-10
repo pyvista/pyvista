@@ -296,6 +296,11 @@ class Renderers:
             raise IndexError(f'Column index is out of range ({self.shape[1]})')
         self._active_index = self.loc_to_index((index_row, index_column))
 
+    def on_plotter_render(self):
+        """Notify all renderers of explicit plotter render call."""
+        for renderer in self:
+            renderer.on_plotter_render()
+
     def deep_clean(self):
         """Clean all renderers."""
         # Do not remove the renderers on the clean
