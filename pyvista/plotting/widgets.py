@@ -229,11 +229,6 @@ class WidgetHelper:
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
-        if invert and isinstance(mesh, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
-            raise ValueError(
-                'Inverted box clipping is currently not supported with vtkAlgorithm inputs.'
-            )
-
         mesh, algo = algorithm_to_mesh_handler(
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
         )
