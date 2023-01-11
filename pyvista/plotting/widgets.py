@@ -6,15 +6,17 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (
     NORMALS,
-    add_ids_algorithm,
-    algorithm_to_mesh_handler,
-    crinkle_algorithm,
     generate_plane,
     get_array,
     get_array_association,
+    try_callback,
+)
+from pyvista.utilities.algorithms import (
+    add_ids_algorithm,
+    algorithm_to_mesh_handler,
+    crinkle_algorithm,
     outline_algorithm,
     set_algorithm_input,
-    try_callback,
 )
 
 from .colors import Color

@@ -25,18 +25,20 @@ from pyvista.plotting.volume import Volume
 from pyvista.utilities import (
     FieldAssociation,
     abstract_class,
-    active_scalars_algorithm,
-    algorithm_to_mesh_handler,
     assert_empty_kwargs,
     convert_array,
     get_array,
     get_array_association,
     is_pyvista_dataset,
     numpy_to_texture,
-    pointset_to_polydata_algorithm,
     raise_not_matching,
     set_algorithm_input,
     wrap,
+)
+from pyvista.utilities.algorithms import (
+    active_scalars_algorithm,
+    algorithm_to_mesh_handler,
+    pointset_to_polydata_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
 
