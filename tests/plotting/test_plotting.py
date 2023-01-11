@@ -3282,7 +3282,6 @@ def test_algorithm_add_point_labels():
 
     pl = pyvista.Plotter()
     pl.add_point_labels(elev, 'Elevation', always_visible=False)
-    # pl.add_slider_widget(lambda x: algo.SetResolution(int(x)), [3, 10])
     pl.show()
 
 
