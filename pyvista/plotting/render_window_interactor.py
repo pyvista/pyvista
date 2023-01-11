@@ -3,10 +3,13 @@ import collections.abc
 from functools import partial
 import logging
 import time
+import warnings
 import weakref
 
 from pyvista import _vtk
 from pyvista.utilities import try_callback
+
+from ..utilities.misc import vtk_version_info
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -357,6 +360,14 @@ class RenderWindowInteractor:
 
         """
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        if vtk_version_info < (9, 3, 0):
+            # TODO: determine in which VTK version !9811 will be available
+            if scene is not None and len(self._plotter.renderers) > 1:
+                warnings.warn(
+                    "Interaction with charts is not possible when using multiple subplots."
+                    "Upgrade to VTK 9.3 or newer to enable this feature."
+                )
+                scene = None
         self._context_style.SetScene(scene)
         if scene is None and self._style == "Context":
             # Switch back to previous interactor style

@@ -2,6 +2,7 @@
 
 import itertools
 import platform
+import weakref
 
 import numpy as np
 import pytest
@@ -547,7 +548,7 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.label == ""
 
 
-def test_lineplot2d(line_plot_2d):
+def test_lineplot2d(chart_2d, line_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
     c = (1.0, 0.0, 1.0, 1.0)
@@ -556,7 +557,8 @@ def test_lineplot2d(line_plot_2d):
     l = "Line"
 
     # Test constructor
-    plot = charts.LinePlot2D(x, y, c, w, s, l)
+    plot = charts.LinePlot2D(chart_2d, x, y, c, w, s, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
     assert plot.color == c
@@ -570,7 +572,7 @@ def test_lineplot2d(line_plot_2d):
     assert np.allclose(line_plot_2d.y, y)
 
 
-def test_scatterplot2d(scatter_plot_2d):
+def test_scatterplot2d(chart_2d, scatter_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
     c = (1.0, 0.0, 1.0, 1.0)
@@ -582,7 +584,8 @@ def test_scatterplot2d(scatter_plot_2d):
     ), "New marker styles added? Change this test."
 
     # Test constructor
-    plot = charts.ScatterPlot2D(x, y, c, sz, st, l)
+    plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
     assert plot.color == c
@@ -608,7 +611,7 @@ def test_scatterplot2d(scatter_plot_2d):
         scatter_plot_2d.marker_style = st_inv
 
 
-def test_areaplot(area_plot):
+def test_areaplot(chart_2d, area_plot):
     x = [-2, -1, 0, 1, 2]
     y1 = [4, 1, 0, -1, -4]
     y2 = [-4, -2, 0, 2, 4]
@@ -616,7 +619,8 @@ def test_areaplot(area_plot):
     l = "Line"
 
     # Test constructor
-    plot = charts.AreaPlot(x, y1, y2, c, l)
+    plot = charts.AreaPlot(chart_2d, x, y1, y2, c, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y1, y1)
     assert np.allclose(plot.y2, y2)
@@ -630,7 +634,7 @@ def test_areaplot(area_plot):
     assert np.allclose(area_plot.y2, y2)
 
 
-def test_barplot(bar_plot):
+def test_barplot(chart_2d, bar_plot):
     x = [0, 1, 2]
     y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
@@ -639,7 +643,8 @@ def test_barplot(bar_plot):
     assert ori_inv not in charts.BarPlot.ORIENTATIONS, "New orientations added? Change this test."
 
     # Test multi comp constructor
-    plot = charts.BarPlot(x, y, c, ori, l)
+    plot = charts.BarPlot(chart_2d, x, y, c, ori, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
     assert all(pc == ci for pc, ci in zip(plot.colors, c))
@@ -647,7 +652,8 @@ def test_barplot(bar_plot):
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.BarPlot(x, y[0], c[0], ori, l[0])
+    plot = charts.BarPlot(chart_2d, x, y[0], c[0], ori, l[0])
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y[0])
     assert plot.color == c[0]
@@ -656,12 +662,12 @@ def test_barplot(bar_plot):
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y, c[0], ori, l)
-    # charts.BarPlot(x, y, c, off, ori, l[0])  # This one is valid
+        charts.BarPlot(chart_2d, x, y, c[0], ori, l)
+    # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y[0], c, ori, l[0])
+        charts.BarPlot(chart_2d, x, y[0], c, ori, l[0])
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y[0], c[0], ori, l)
+        charts.BarPlot(chart_2d, x, y[0], c[0], ori, l)
 
     # Test remaining properties
     bar_plot.update(x, y)
@@ -675,21 +681,23 @@ def test_barplot(bar_plot):
         bar_plot.orientation = ori_inv
 
 
-def test_stackplot(stack_plot):
+def test_stackplot(chart_2d, stack_plot):
     x = [0, 1, 2]
     ys = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
     l = ["Foo", "Spam", "Bla"]
 
     # Test multi comp constructor
-    plot = charts.StackPlot(x, ys, c, l)
+    plot = charts.StackPlot(chart_2d, x, ys, c, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
     assert all(pc == ci for pc, ci in zip(plot.colors, c))
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.StackPlot(x, ys[0], c[0], l[0])
+    plot = charts.StackPlot(chart_2d, x, ys[0], c[0], l[0])
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys[0])
     assert plot.color == c[0]
@@ -697,12 +705,12 @@ def test_stackplot(stack_plot):
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):
-        charts.StackPlot(x, ys, c[0], l)
-    # charts.StackPlot(x, ys, c, l[0])  # This one is valid
+        charts.StackPlot(chart_2d, x, ys, c[0], l)
+    # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):
-        charts.StackPlot(x, ys[0], c, l[0])
+        charts.StackPlot(chart_2d, x, ys[0], c, l[0])
     with pytest.raises(ValueError):
-        charts.StackPlot(x, ys[0], c[0], l)
+        charts.StackPlot(chart_2d, x, ys[0], c[0], l)
 
     # Test remaining properties
     stack_plot.update(x, ys)

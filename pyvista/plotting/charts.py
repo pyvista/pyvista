@@ -1468,8 +1468,9 @@ class _Plot(DocSubs):
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: Optional[Dict[str, str]] = None
 
-    def __init__(self):
+    def __init__(self, chart):
         super().__init__()
+        self._chart = weakref.proxy(chart)
         self._pen = Pen()
         self._brush = Brush()
         self._label = ""
@@ -1921,8 +1922,8 @@ class _MultiCompPlot(_Plot):
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
     _DOC_SUBS: Optional[Dict[str, str]] = None
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, chart):
+        super().__init__(chart)
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
@@ -2113,6 +2114,9 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
     Parameters
     ----------
+    chart : Chart2D
+        The chart containing this plot.
+
     x : array_like
         X coordinates of the points through which a line should be drawn.
 
@@ -2157,9 +2161,9 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
-    def __init__(self, x, y, color="b", width=1.0, style="-", label=""):
+    def __init__(self, chart, x, y, color="b", width=1.0, style="-", label=""):
         """Initialize a new 2D line plot instance."""
-        super().__init__()
+        super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
         self.update(x, y)
@@ -2232,6 +2236,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         """
         if len(x) > 1:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self._chart.RecalculateBounds()
             self.visible = True
         else:
             # Turn off visibility for fewer than 2 points as otherwise an error message is shown
@@ -2245,6 +2250,9 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     Parameters
     ----------
+    chart : Chart2D
+        The chart containing this plot.
+
     x : array_like
         X coordinates of the points to draw.
 
@@ -2302,9 +2310,9 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
-    def __init__(self, x, y, color="b", size=10, style="o", label=""):
+    def __init__(self, chart, x, y, color="b", size=10, style="o", label=""):
         """Initialize a new 2D scatter plot instance."""
-        super().__init__()
+        super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
         self.update(x, y)
@@ -2377,6 +2385,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         """
         if len(x) > 0:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -2446,6 +2455,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
     Parameters
     ----------
+    chart : Chart2D
+        The chart containing this plot.
+
     x : array_like
         X coordinates of the points outlining the area to draw.
 
@@ -2489,9 +2501,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
     }
 
-    def __init__(self, x, y1, y2=None, color="b", label=""):
+    def __init__(self, chart, x, y1, y2=None, color="b", label=""):
         """Initialize a new 2D area plot instance."""
-        super().__init__()
+        super().__init__(chart)
         self._table = pyvista.Table(
             {
                 "x": np.empty(0, np.float32),
@@ -2600,6 +2612,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                     "y2": np.array(y2, copy=False),
                 }
             )
+            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -2612,6 +2625,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     Parameters
     ----------
+    chart : Chart2D
+        The chart containing this plot.
+
     x : array_like
         Positions (along the x-axis for a vertical orientation, along the y-axis for
         a horizontal orientation) of the bars to draw.
@@ -2664,9 +2680,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, x, y, color=None, orientation="V", label=None):
+    def __init__(self, chart, x, y, color=None, orientation="V", label=None):
         """Initialize a new 2D bar plot instance."""
-        super().__init__()
+        super().__init__(chart)
         if not isinstance(y[0], (Sequence, np.ndarray)):
             y = (y,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(y))}
@@ -2753,6 +2769,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
                 y = (y,)
             y_data = {f"y{i}": np.array(y[i], copy=False) for i in range(len(y))}
             self._table.update({"x": np.array(x, copy=False), **y_data})
+            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -2797,6 +2814,9 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     Parameters
     ----------
+    chart : Chart2D
+        The chart containing this plot.
+
     x : array_like
         X coordinates of the points outlining the stacks (areas) to draw.
 
@@ -2847,9 +2867,9 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, x, ys, colors=None, labels=None):
+    def __init__(self, chart, x, ys, colors=None, labels=None):
         """Initialize a new 2D stack plot instance."""
-        super().__init__()
+        super().__init__(chart)
         if not isinstance(ys[0], (Sequence, np.ndarray)):
             ys = (ys,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(ys))}
@@ -2935,6 +2955,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
                 ys = (ys,)
             y_data = {f"y{i}": np.array(ys[i], copy=False) for i in range(len(ys))}
             self._table.update({"x": np.array(x, copy=False), **y_data})
+            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -3033,13 +3054,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.grid = grid
         self.legend_visible = True
 
-    def _render_event(self, *args, **kwargs):
-        self.RecalculateBounds()
-        super()._render_event(*args, **kwargs)
-
     def _add_plot(self, plot_type, *args, **kwargs):
         """Add a plot of the given type to this chart."""
-        plot = self.PLOT_TYPES[plot_type](*args, **kwargs)
+        plot = self.PLOT_TYPES[plot_type](self, *args, **kwargs)
         self.AddPlot(plot)
         self._plots[plot_type].append(plot)
         return plot
@@ -3501,9 +3518,8 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
         for plot_type in plot_types:
-            plots = [
-                *self._plots[plot_type]
-            ]  # Make a copy, as this list will be modified by remove_plot
+            # Make a copy, as this list will be modified by remove_plot
+            plots = [*self._plots[plot_type]]
             for plot in plots:
                 self.remove_plot(plot)
 
@@ -3691,6 +3707,9 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     Parameters
     ----------
+    chart : ChartBox
+        The chart containing this plot.
+
     data : list or tuple of array_like
         Dataset(s) from which the relevant statistics will be
         calculated used to draw the box plot.
@@ -3724,9 +3743,9 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         "multiplot_init": "chart.plot",
     }
 
-    def __init__(self, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None):
         """Initialize a new box plot instance."""
-        super().__init__()
+        super().__init__(chart)
         self._table = pyvista.Table(
             {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)}
         )
@@ -3841,7 +3860,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new chart containing box plots."""
         super().__init__(None, None)
-        self._plot = BoxPlot(data, colors, labels)
+        self._plot = BoxPlot(self, data, colors, labels)
         self.SetPlot(self._plot)
         self.SetColumnVisibilityAll(True)
         self.legend_visible = True
@@ -3929,6 +3948,9 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     Parameters
     ----------
+    chart : ChartPie
+        The chart containing this plot.
+
     data : array_like
         Relative size of each pie segment.
 
@@ -3965,9 +3987,9 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         "multiplot_init": "chart.plot",
     }
 
-    def __init__(self, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None):
         """Initialize a new pie plot instance."""
-        super().__init__()
+        super().__init__(chart)
         self._table = pyvista.Table(data)
         self.SetInputData(self._table)
         self.SetInputArray(0, self._table.keys()[0])
@@ -4061,7 +4083,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         # We can't manually set a wrapped vtkPlotPie instance (for now), so we
         # have to wrap the existing one.
         self.AddPlot(0)
-        self._plot = PiePlot(data, colors, labels, _wrap=self.GetPlot(0))
+        self._plot = PiePlot(self, data, colors, labels, _wrap=self.GetPlot(0))
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs):
@@ -4403,7 +4425,6 @@ class Charts:
         # nicely with SetRenderer, so instead we'll use a weak reference
         # plus a property to call it
         self.__renderer = weakref.ref(renderer)
-        self._init_interaction_obs = None
 
     @property
     def _renderer(self):
@@ -4421,7 +4442,6 @@ class Charts:
 
     def deep_clean(self):
         """Remove all references to the chart objects and internal objects."""
-        self._set_init_interaction_observer(False)
         if self._scene is not None:
             charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
             for chart in charts:
@@ -4495,34 +4515,7 @@ class Charts:
             if enable:
                 interactive_charts.append(chart)
 
-        self._set_init_interaction_observer(bool(interactive_charts))
         return interactive_charts
-
-    def _set_init_interaction_observer(self, enable):
-        # Set or remove the init_interaction observer
-        if enable and self._init_interaction_obs is None:
-            self._init_interaction_obs = self._renderer.add_render_event(
-                self._init_interaction, "after"
-            )
-        elif not enable and self._init_interaction_obs is not None:
-            self._renderer.remove_render_event(self._init_interaction_obs)
-            self._init_interaction_obs = None
-
-    def _init_interaction(self, *args, **kwargs):
-        # This code should be executed AFTER the first rendering of the charts.
-        # Otherwise the axes are not properly autoscaled first.
-        if self._init_interaction_obs is None:
-            # Observer was removed already, so don't continue
-            return
-        for chart in self:
-            if chart._interactive:
-                # Change the chart's axis behaviour to fixed, such that the user can properly interact with the chart.
-                if chart._x_axis is not None:
-                    chart._x_axis.behavior = "fixed"
-                if chart._y_axis is not None:
-                    chart._y_axis.behavior = "fixed"
-        # Remove this observer, such that the above code is only executed once.
-        self._set_init_interaction_observer(False)
 
     def remove_chart(self, chart_or_index):
         """Remove a chart from the collection."""
