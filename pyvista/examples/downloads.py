@@ -4933,7 +4933,7 @@ def download_dikhololo_night():  # pragma: no cover
     return texture
 
 
-def download_hydrogen_orbital(load=True):
+def download_hydrogen_orbital(load=True):  # pragma: no cover
     """Download a model of the electron cloud of the hydrogen atom.
 
     Dataset originally hosted at
