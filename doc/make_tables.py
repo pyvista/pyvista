@@ -59,7 +59,7 @@ class DocTable:
 
         # write if there is any text to write. This avoids resetting the documentation cache
         if new_txt:
-            with open(cls.path, 'w') as fout:
+            with open(cls.path, 'w', encoding="utf-8") as fout:
                 fout.write(new_txt)
 
         pv.close_all()
