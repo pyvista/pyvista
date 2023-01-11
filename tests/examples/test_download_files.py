@@ -925,6 +925,16 @@ def test_cad_model_case():
     assert dataset.n_points == 7677
 
 
+def test_download_hydrogen_orbital():
+    filename = examples.download_hydrogen_orbital(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vti')
+
+    dataset = examples.download_hydrogen_orbital()
+    assert isinstance(dataset, pv.UniformGrid)
+    assert dataset.n_points == 262144
+
+
 def test_load_sun():
     mesh = examples.planets.load_sun()
     assert mesh.n_cells

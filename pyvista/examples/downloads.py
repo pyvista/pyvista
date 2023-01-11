@@ -4933,6 +4933,48 @@ def download_dikhololo_night():  # pragma: no cover
     return texture
 
 
+def download_hydrogen_orbital(load=True):
+    """Download a model of the electron cloud of the hydrogen atom.
+
+    Dataset originally hosted at
+    https://www.it.uu.se/edu/course/homepage/vetvis/ht11/ComputerExercises/data/a1/hydrogen.vtk
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_hydrogen_orbital()
+    >>> mesh.plot(volume=True, zoom=2)
+
+    Return the statistics of the dataset.
+
+    >>> grid  # doctest:+SKIP
+    UniformGrid (0x7f0e67f3c2e0)
+      N Cells:      250047
+      N Points:     262144
+      X Bounds:     0.000e+00, 6.300e+01
+      Y Bounds:     0.000e+00, 6.300e+01
+      Z Bounds:     0.000e+00, 6.300e+01
+      Dimensions:   64, 64, 64
+      Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+      N Arrays:     1
+
+    """
+    return _download_and_read('hydrogen/hydrogen.vti', load=load)
+
+
 def download_cad_model_case(load=True):  # pragma: no cover
     """Download a CAD model of a Raspberry PI 4 case.
 
