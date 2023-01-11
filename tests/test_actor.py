@@ -2,6 +2,7 @@ import platform
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista import examples
@@ -14,6 +15,14 @@ skip_mac = pytest.mark.skipif(
 @pytest.fixture()
 def actor():
     return pv.Plotter().add_mesh(pv.Plane())
+
+
+@pytest.fixture()
+def vol_actor():
+    vol = pv.UniformGrid(dimensions=(10, 10, 10))
+    vol['scalars'] = 255 - vol.z * 25
+    pl = pv.Plotter()
+    return pl.add_volume(vol)
 
 
 def test_actor_init_empty():
@@ -143,3 +152,11 @@ def test_actor_backface_prop(actor):
 
     actor.backface_prop = None
     assert actor.backface_prop.opacity == actor.prop.opacity
+
+
+def test_vol_actor_prop(vol_actor):
+    assert isinstance(vol_actor.prop, vtk.vtkVolumeProperty)
+
+    prop = vtk.vtkVolumeProperty()
+    vol_actor.prop = prop
+    assert vol_actor.prop is prop

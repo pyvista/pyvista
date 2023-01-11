@@ -16,7 +16,7 @@ Vector = Union[List[float], Tuple[float, float, float], np.ndarray]
 VectorArray = Union[np.ndarray, Sequence[Vector]]
 Number = Union[float, int, np.number]
 NumericArray = Union[Sequence[Number], np.ndarray]
-color_like = Union[
+ColorLike = Union[
     Tuple[int, int, int],
     Tuple[int, int, int, int],
     Tuple[float, float, float],
@@ -31,5 +31,6 @@ color_like = Union[
 ]
 # Overwrite default docstring, as sphinx is not able to capture the docstring
 # when it is put beneath the definition somehow?
-color_like.__doc__ = """Any object convertible to a :class:`Color`."""
+ColorLike.__doc__ = "Any object convertible to a :class:`Color`."
+BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
 Chart = Union["Chart2D", "ChartBox", "ChartPie", "ChartMPL"]

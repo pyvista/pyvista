@@ -2,7 +2,7 @@
 
 import collections.abc
 from functools import partial, wraps
-from typing import Sequence
+from typing import Sequence, cast
 import warnings
 from weakref import proxy
 
@@ -13,10 +13,11 @@ from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
+from .._typing import BoundsLike
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
-from .colors import Color
+from .colors import Color, get_cycler
 from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
@@ -236,6 +237,58 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if border:
             self.add_border(border_color, border_width)
 
+        self.set_color_cycler(self._theme.color_cycler)
+
+    def set_color_cycler(self, color_cycler):
+        """Set or reset this renderer's color cycler.
+
+        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        call to set the default color of the dataset being plotted.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler on this
+        renderer.
+
+        Parameters
+        ----------
+        color_cycler : str, cycler.Cycler, list(ColorLike)
+            The colors to cycle through.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.renderer.set_color_cycler(['red', 'green', 'blue'])
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        cycler = get_cycler(color_cycler)
+        if cycler is not None:
+            # Color cycler - call object to generate `cycle` instance
+            self._color_cycle = cycler()
+        else:
+            self._color_cycle = None
+
+    @property
+    def next_color(self):
+        """Return next color from this renderer's color cycler."""
+        if self._color_cycle is None:
+            return self._theme.color
+        return next(self._color_cycle)['color']
+
     @property
     def _charts(self):
         """Return the charts collection."""
@@ -369,7 +422,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self):
+    def bounds(self) -> BoundsLike:
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -398,7 +451,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return the_bounds.tolist()
+        return cast(BoundsLike, tuple(the_bounds))
 
     @property
     def length(self):
@@ -537,7 +590,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Color of the border.
 
         width : float, optional
@@ -809,13 +862,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        x_color : color_like, optional
+        x_color : ColorLike, optional
             The color of the x axes arrow.
 
-        y_color : color_like, optional
+        y_color : ColorLike, optional
             The color of the y axes arrow.
 
-        z_color : color_like, optional
+        z_color : ColorLike, optional
             The color of the z axes arrow.
 
         xlabel : str, optional
@@ -881,7 +934,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             :attr:`pyvista.global_theme.interactive
             <pyvista.themes.DefaultTheme.interactive>`.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the actor.  This only applies if ``actor`` is
             a :class:`pyvista.DataSet`.
 
@@ -958,16 +1011,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         line_width : int, optional
             The width of the marker lines.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Color of the labels.
 
-        x_color : color_like, optional
+        x_color : ColorLike, optional
             Color used for the x axis arrow.  Defaults to theme axes parameters.
 
-        y_color : color_like, optional
+        y_color : ColorLike, optional
             Color used for the y axis arrow.  Defaults to theme axes parameters.
 
-        z_color : color_like, optional
+        z_color : ColorLike, optional
             Color used for the z axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, optional
@@ -1224,7 +1277,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
             <pyvista.themes._Font.family>`.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Color of all labels and axis titles.  Defaults to
             :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -1589,7 +1642,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Color of all labels and axis titles.  Default white.
             Either a string, rgb sequence, or hex color string.  For
             example:
@@ -1717,7 +1770,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         j_resolution : int, optional
             Number of points on the plane in the j direction.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Color of all labels and axis titles.  Default gray.
             Either a string, rgb list, or hex color string.
 
@@ -1739,7 +1792,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Enable or disable view direction lighting.  Default
             ``False``.
 
-        edge_color : color_like, optional
+        edge_color : ColorLike, optional
             Color of of the edges of the mesh.
 
         reset_camera : bool, optional
@@ -2837,7 +2890,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Defaults
             to theme default.  For example:
 
@@ -2846,7 +2899,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : color_like, optional
+        top : ColorLike, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in
             ``top`` will be the color at the top of the renderer.
@@ -2954,6 +3007,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
+
+    def on_plotter_render(self):
+        """Notify renderer components of explicit plotter render call."""
+        if self.__charts is not None:
+            for chart in self.__charts:
+                # Notify ChartMPLs to redraw themselves when plotter.render() is called
+                chart._render_event(plotter_render=True)
 
     def deep_clean(self, render=False):
         """Clean the renderer of the memory.
@@ -3081,7 +3141,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             color], where label is the name of the item to add, and
             color is the color of the label to add.
 
-        bcolor : color_like, optional
+        bcolor : ColorLike, optional
             Background color, either a three item 0 to 1 RGB color
             list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
             for a white color).  If None, legend background is

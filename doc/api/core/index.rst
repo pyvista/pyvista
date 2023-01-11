@@ -50,5 +50,6 @@ PyVista has the following mesh types:
    filters
    camera
    lights
+   cells
    helpers
    misc
