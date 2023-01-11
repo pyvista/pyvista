@@ -13,7 +13,7 @@ from .helpers import wrap
 def algorithm_to_mesh_handler(mesh_or_algo, port=0):
     """Handle vtkAlgorithms where mesh objects are expected.
 
-    This is a convienance method to handle vtkAlgorithms when passed to methods
+    This is a convenience method to handle vtkAlgorithms when passed to methods
     that expect a :class:`pyvista.DataSet`. This method will check if the passed
     object is a ``vtk.vtkAlgorithm`` or ``vtk.vtkAlgorithmOutput`` and if so,
     return that algorithm's output dataset (mesh) as the mesh to be used by the
@@ -24,7 +24,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
     mesh_or_algo : pyvista.DataSet or vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput
         The input to be used user input as a data set (mesh) or vtkAlgorithm object.
 
-    port : int, default=0
+    port : int, default: 0
         If the input (``mesh_or_algo``) is an algorithm, this specifies which output
         port to use on that algorithm for the returned mesh.
 
