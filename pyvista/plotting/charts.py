@@ -14,7 +14,7 @@ import pyvista
 from pyvista import _vtk
 
 from ..utilities.misc import vtk_version_info
-from .colors import Color, color_synonyms, hexcolors
+from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
 
 
 # region Some metaclass wrapping magic
@@ -1077,14 +1077,14 @@ class _Chart(DocSubs):
 
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
-        _, _, c_w, c_h = self._geometry
+        _, _, c_w, c_h = (int(g) for g in self._geometry)
         # Target size is calculated from specified normalized width and height and the renderer's current size
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
+        t_w = int(self._size[0] * r_w)
+        t_h = int(self._size[1] * r_h)
         resize = c_w != t_w or c_h != t_h
         if resize:
             # Mismatch between current size and target size, so resize chart:
-            self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+            self._geometry = (int(self._loc[0] * r_w), int(self._loc[1] * r_h), t_w, t_h)
         return resize
 
     @property
@@ -1703,245 +1703,6 @@ class _MultiCompPlot(_Plot):
     Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
     """
 
-    COLOR_SCHEMES = {
-        "spectrum": {
-            "id": _vtk.vtkColorSeries.SPECTRUM,
-            "descr": "black, red, blue, green, purple, orange, brown",
-        },
-        "warm": {"id": _vtk.vtkColorSeries.WARM, "descr": "dark red → yellow"},
-        "cool": {"id": _vtk.vtkColorSeries.COOL, "descr": "green → blue → purple"},
-        "blues": {"id": _vtk.vtkColorSeries.BLUES, "descr": "Different shades of blue"},
-        "wild_flower": {"id": _vtk.vtkColorSeries.WILD_FLOWER, "descr": "blue → purple → pink"},
-        "citrus": {"id": _vtk.vtkColorSeries.CITRUS, "descr": "green → yellow → orange"},
-        "div_purple_orange11": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
-            "descr": "dark brown → white → dark purple",
-        },
-        "div_purple_orange10": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
-            "descr": "dark brown → white → dark purple",
-        },
-        "div_purple_orange9": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
-            "descr": "brown → white → purple",
-        },
-        "div_purple_orange8": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
-            "descr": "brown → white → purple",
-        },
-        "div_purple_orange7": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
-            "descr": "brown → white → purple",
-        },
-        "div_purple_orange6": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
-            "descr": "brown → white → purple",
-        },
-        "div_purple_orange5": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
-            "descr": "orange → white → purple",
-        },
-        "div_purple_orange4": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
-            "descr": "orange → white → purple",
-        },
-        "div_purple_orange3": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
-            "descr": "orange → white → purple",
-        },
-        "div_spectral11": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
-            "descr": "dark red → light yellow → dark blue",
-        },
-        "div_spectral10": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
-            "descr": "dark red → light yellow → dark blue",
-        },
-        "div_spectral9": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
-            "descr": "red → light yellow → blue",
-        },
-        "div_spectral8": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
-            "descr": "red → light yellow → blue",
-        },
-        "div_spectral7": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
-            "descr": "red → light yellow → blue",
-        },
-        "div_spectral6": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
-            "descr": "red → light yellow → blue",
-        },
-        "div_spectral5": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
-            "descr": "red → light yellow → blue",
-        },
-        "div_spectral4": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
-            "descr": "red → light yellow → blue",
-        },
-        "div_spectral3": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
-            "descr": "orange → light yellow → green",
-        },
-        "div_brown_blue_green11": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
-            "descr": "dark brown → white → dark blue-green",
-        },
-        "div_brown_blue_green10": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
-            "descr": "dark brown → white → dark blue-green",
-        },
-        "div_brown_blue_green9": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
-            "descr": "brown → white → blue-green",
-        },
-        "div_brown_blue_green8": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
-            "descr": "brown → white → blue-green",
-        },
-        "div_brown_blue_green7": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
-            "descr": "brown → white → blue-green",
-        },
-        "div_brown_blue_green6": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
-            "descr": "brown → white → blue-green",
-        },
-        "div_brown_blue_green5": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
-            "descr": "brown → white → blue-green",
-        },
-        "div_brown_blue_green4": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
-            "descr": "brown → white → blue-green",
-        },
-        "div_brown_blue_green3": {
-            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
-            "descr": "brown → white → blue-green",
-        },
-        "seq_blue_green9": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
-            "descr": "light blue → dark green",
-        },
-        "seq_blue_green8": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
-            "descr": "light blue → dark green",
-        },
-        "seq_blue_green7": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
-            "descr": "light blue → dark green",
-        },
-        "seq_blue_green6": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
-            "descr": "light blue → green",
-        },
-        "seq_blue_green5": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
-            "descr": "light blue → green",
-        },
-        "seq_blue_green4": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
-            "descr": "light blue → green",
-        },
-        "seq_blue_green3": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
-            "descr": "light blue → green",
-        },
-        "seq_yellow_orange_brown9": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
-            "descr": "light yellow → orange → dark brown",
-        },
-        "seq_yellow_orange_brown8": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
-            "descr": "light yellow → orange → brown",
-        },
-        "seq_yellow_orange_brown7": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
-            "descr": "light yellow → orange → brown",
-        },
-        "seq_yellow_orange_brown6": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
-            "descr": "light yellow → orange → brown",
-        },
-        "seq_yellow_orange_brown5": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
-            "descr": "light yellow → orange → brown",
-        },
-        "seq_yellow_orange_brown4": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
-            "descr": "light yellow → orange",
-        },
-        "seq_yellow_orange_brown3": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
-            "descr": "light yellow → orange",
-        },
-        "seq_blue_purple9": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
-            "descr": "light blue → dark purple",
-        },
-        "seq_blue_purple8": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
-            "descr": "light blue → purple",
-        },
-        "seq_blue_purple7": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
-            "descr": "light blue → purple",
-        },
-        "seq_blue_purple6": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
-            "descr": "light blue → purple",
-        },
-        "seq_blue_purple5": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
-            "descr": "light blue → purple",
-        },
-        "seq_blue_purple4": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
-            "descr": "light blue → purple",
-        },
-        "seq_blue_purple3": {
-            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
-            "descr": "light blue → purple",
-        },
-        "qual_accent": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
-            "descr": "pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray",
-        },
-        "qual_dark2": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
-            "descr": "darker shade of qual_set2",
-        },
-        "qual_set3": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
-            "descr": "pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow",
-        },
-        "qual_set2": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
-            "descr": "blue green, orange, purple, pink, green, yellow, brown, gray",
-        },
-        "qual_set1": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
-            "descr": "red, blue, green, purple, orange, yellow, brown, pink, gray",
-        },
-        "qual_pastel2": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
-            "descr": "pastel shade of qual_set2",
-        },
-        "qual_pastel1": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
-            "descr": "pastel shade of qual_set1",
-        },
-        "qual_paired": {
-            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
-            "descr": "light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow",
-        },
-        "custom": {"id": _vtk.vtkColorSeries.CUSTOM, "descr": None},
-    }
-    _SCHEME_NAMES = {
-        scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
-    }
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
@@ -1984,13 +1745,11 @@ class _MultiCompPlot(_Plot):
         >>> chart.show()
 
         """
-        return self._SCHEME_NAMES.get(self._color_series.GetColorScheme(), "custom")
+        return SCHEME_NAMES.get(self._color_series.GetColorScheme(), "custom")
 
     @color_scheme.setter
     def color_scheme(self, val):
-        self._color_series.SetColorScheme(
-            self.COLOR_SCHEMES.get(val, self.COLOR_SCHEMES["custom"])["id"]
-        )
+        self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES["custom"])["id"])
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
@@ -4325,6 +4084,11 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         renderer's bottom left corner, a location of ``(1, 1)``
         corresponds to the renderer's top right corner.
 
+    redraw_on_render : bool, default: True
+        Flag indicating whether the chart should be redrawn when
+        the plotter is rendered. For static charts, setting this
+        to ``False`` can improve performance.
+
     Examples
     --------
     Plot streamlines of a vector field with varying colors (based on `this example <https://matplotlib.org/stable/gallery/images_contours_and_fields/plot_streamplot.html>`_).
@@ -4360,7 +4124,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
-    def __init__(self, figure=None, size=(1, 1), loc=(0, 0)):
+    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
         """Initialize chart."""
         try:
             from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -4381,6 +4145,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         for ax in self._fig.axes:
             ax.patch.set_alpha(0)
         self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
+        self._redraw_on_render = redraw_on_render
 
         self._redraw()
 
@@ -4413,19 +4178,39 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         """
         return self._fig
 
+    @property
+    def redraw_on_render(self):
+        """Return or set the chart's redraw-on-render behavior.
+
+        Notes
+        -----
+        When disabled, the chart will only be redrawn when the
+        Plotter window is resized or the matplotlib figure is
+        manually redrawn using ``fig.canvas.draw()``.
+        When enabled, the chart will also be automatically
+        redrawn whenever the Plotter is rendered using
+        ``plotter.render()``.
+
+        """
+        return self._redraw_on_render
+
+    @redraw_on_render.setter
+    def redraw_on_render(self, val):
+        self._redraw_on_render = bool(val)
+
     def _resize(self):
         r_w, r_h = self._renderer.GetSize()
-        c_w, c_h = self._canvas.get_width_height()
+        c_w, c_h = (int(s) for s in self._canvas.get_width_height())
         # Calculate target size from specified normalized width and height and the renderer's current size
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
+        t_w = int(self._size[0] * r_w)
+        t_h = int(self._size[1] * r_h)
         resize = c_w != t_w or c_h != t_h
         if resize:
             # Mismatch between canvas size and target size, so resize figure:
             f_w = t_w / self._fig.dpi
             f_h = t_h / self._fig.dpi
             self._fig.set_size_inches(f_w, f_h)
-            self.position = (self._loc[0] * r_w, self._loc[1] * r_h)
+            self.position = (int(self._loc[0] * r_w), int(self._loc[1] * r_h))
         return resize
 
     def _redraw(self, event=None):
@@ -4443,9 +4228,13 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def _render_event(self, *args, **kwargs):
-        if self._resize():  # Update figure dimensions if needed
-            self._redraw()  # Redraw figure when geometry has changed
+    def _render_event(self, *args, plotter_render=False, **kwargs):
+        # Redraw figure when geometry has changed (self._resize call
+        # already updated figure dimensions in that case) OR the
+        # plotter's render method was called and redraw_on_render is
+        # enabled.
+        if (self.redraw_on_render and plotter_render) or self._resize():
+            self._redraw()
 
     @property
     def _geometry(self):

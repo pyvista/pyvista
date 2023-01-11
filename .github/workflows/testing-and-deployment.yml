@@ -180,6 +180,10 @@ jobs:
         if: ${{ matrix.vtk-version == '9.0.3' }}
         run: pip install 'numpy<1.24'
 
+      - name: Limit Matplotlib for VTK<=9.2.2
+        if: ${{ matrix.vtk-version != 'latest' }}
+        run: pip install 'matplotlib<3.6'
+
       - name: Software Report
         run: |
           xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"

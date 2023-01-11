@@ -9,6 +9,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.plotting import charts, system_supports_plotting
+from pyvista.plotting.colors import COLOR_SCHEMES
 from pyvista.utilities.misc import can_create_mpl_figure
 
 skip_mac = pytest.mark.skipif(
@@ -39,6 +40,25 @@ def to_vtk_scientific(val):
     return (
         parts[0] + "e" + sign + exp if exp != "" else parts[0]
     )  # Remove exponent altogether if it is 0
+
+
+class PlotterChanged:
+    """Helper class to check whether the plotter's rendered content has changed
+    since the last call."""
+
+    def __init__(self, plotter):
+        self._plotter = plotter
+        self._prev = self._capture()
+
+    def _capture(self):
+        self._plotter.show(auto_close=False)
+        return self._plotter.screenshot()
+
+    def __call__(self):
+        cur = self._capture()
+        changed = pyvista.compare_images(self._prev, cur) > 0
+        self._prev = cur
+        return changed
 
 
 @pytest.fixture
@@ -508,7 +528,7 @@ def test_multicomp_plot_common(plot_f, request):
 
     plot.color_scheme = cs
     assert plot.color_scheme == cs
-    assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
+    assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]["id"]
     assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
         pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
@@ -980,6 +1000,36 @@ def test_chart_mpl(pl, chart_mpl):
     # test set position throw
     with pytest.raises(ValueError, match="must be length 2"):
         chart.position = (1, 2, 3)
+
+
+@skip_no_plotting
+@skip_no_mpl_figure
+def test_chart_mpl_update(pl):
+    import matplotlib.pyplot as plt
+
+    # Create simple chart
+    x0, y0, y1 = [0, 1, 2], [2, 1, 3], [-1, 0, 2]
+    f, ax = plt.subplots()
+    line = ax.plot(x0, y0)[0]
+    chart = pyvista.ChartMPL(f, redraw_on_render=False)
+    pl.add_chart(chart)
+    pl_changed = PlotterChanged(pl)
+
+    # Update matplotlib figure without redraw_on_update
+    line.set_ydata(y1)
+    # No changes when pl.render() is called (as redraw_on_render is False)
+    pl.render()
+    assert not pl_changed()
+    # Changes when figure is explicitly redrawn:
+    f.canvas.draw()
+    assert pl_changed()
+
+    # Update matplotlib figure with redraw_on_render
+    chart.redraw_on_render = True
+    line.set_ydata(y0)
+    # Changes when pl.render() is called (as redraw_on_render is True now)
+    pl.render()
+    assert pl_changed()
 
 
 @skip_no_plotting

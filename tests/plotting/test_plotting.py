@@ -22,6 +22,7 @@ from pyvista import examples
 from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities.misc import can_create_mpl_figure
 
@@ -1561,10 +1562,30 @@ def test_volume_rendering_from_helper(uniform, verify_image_cache):
     uniform.plot(volume=True, opacity='linear')
 
 
+@skip_windows_mesa  # due to opacity
 def test_volume_rendering_from_plotter(uniform):
     plotter = pyvista.Plotter()
     plotter.add_volume(uniform, opacity='sigmoid', cmap='jet', n_colors=15)
     plotter.show()
+
+
+@skip_windows_mesa  # due to opacity
+@skip_9_0_X
+def test_volume_rendering_rectilinear(uniform):
+    grid = uniform.cast_to_rectilinear_grid()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid, opacity='sigmoid', cmap='jet', n_colors=15)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.add_volume(grid, mapper='fixed_point')
+    plotter.close()
 
 
 @skip_windows
@@ -2468,6 +2489,20 @@ def test_add_text():
     plotter.show()
 
 
+@pytest.mark.skipif(
+    not vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported(),
+    reason='Math text is not supported.',
+)
+def test_add_text_latex():
+    """Test LaTeX symbols.
+
+    For VTK<=9.2.2, this requires matplotlib<3.6
+    """
+    plotter = pyvista.Plotter()
+    plotter.add_text(r'$\rho$', position='upper_left', font_size=150, color='blue')
+    plotter.show()
+
+
 def test_plot_categories_int(sphere):
     sphere['data'] = sphere.points[:, 2]
     pl = pyvista.Plotter()
@@ -3033,6 +3068,14 @@ def test_plotter_volume_lookup_table(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_add_scalars(uniform):
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+    pl.add_volume(uniform, scalars=uniform.z, show_scalar_bar=False)
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pyvista.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
@@ -3179,3 +3222,61 @@ def test_add_point_scalar_labels_list():
 
     plotter.add_point_scalar_labels(points, labels)
     plotter.show()
+
+
+def test_color_cycler():
+    pyvista.global_theme.color_cycler = 'default'
+    pl = pyvista.Plotter()
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    a2 = pl.add_mesh(pyvista.Sphere(center=(1, 1, 0)))
+    a3 = pl.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))
+    pl.show()
+    assert a0.prop.color.hex_rgb == matplotlib_default_colors[0]
+    assert a1.prop.color.hex_rgb == matplotlib_default_colors[1]
+    assert a2.prop.color.hex_rgb == matplotlib_default_colors[2]
+    assert a3.prop.color.hex_rgb == matplotlib_default_colors[3]
+
+    pyvista.global_theme.color_cycler = ['red', 'green', 'blue']
+    pl = pyvista.Plotter()
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))  # red
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))  # green
+    a2 = pl.add_mesh(pyvista.Sphere(center=(1, 1, 0)))  # blue
+    a3 = pl.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))  # red again
+    pl.show()
+
+    assert a0.prop.color.name == 'red'
+    assert a1.prop.color.name == 'green'
+    assert a2.prop.color.name == 'blue'
+    assert a3.prop.color.name == 'red'
+
+    # Make sure all solid color matching theme default again
+    pyvista.global_theme.color_cycler = None
+    pl = pyvista.Plotter()
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    pl.show()
+
+    assert a0.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
+    assert a1.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
+
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError):
+        pl.set_color_cycler('foo')
+    with pytest.raises(TypeError):
+        pl.set_color_cycler(5)
+
+
+@pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])
+def test_color_cycler_names(name):
+    pl = pyvista.Plotter()
+    pl.set_color_cycler(name)
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    a2 = pl.add_mesh(pyvista.Sphere(center=(1, 1, 0)))
+    a3 = pl.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))
+    pl.show()
+    assert a0.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a1.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a2.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb

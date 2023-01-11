@@ -2,7 +2,7 @@ cmocean==2.0
 colorcet==3.0.1
 enum-tools==0.9.0.post1
 imageio>=2.5.0
-imageio-ffmpeg==0.4.7
+imageio-ffmpeg==0.4.8
 ipygany==0.5.0
 ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
@@ -30,5 +30,5 @@ sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.2.0
 sphinxcontrib-asciinema==0.3.5
 sphinxcontrib-websupport==1.2.4
-trimesh==3.17.1
+trimesh==3.18.0
 typed-ast==1.5.4
