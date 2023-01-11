@@ -22,14 +22,14 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
             output = algo.GetOutputPort(port)
         algo.Update()  # NOTE: this could be expensive... but we need it to get the mesh
         #                      for legacy implementation. This can be refactored.
-        mesh_or_algo = wrap(algo.GetOutputDataObject(port))
-        if mesh_or_algo is None:
+        mesh = wrap(algo.GetOutputDataObject(port))
+        if mesh is None:
             # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase
             raise RuntimeError('The passed algorithm is failing to produce an output.')
         # NOTE: Return the vtkAlgorithmOutput only if port is non-zero. Segfaults can sometimes
         #       happen with vtkAlgorithmOutput. This logic will mostly avoid those issues.
         #       See https://gitlab.kitware.com/vtk/vtk/-/issues/18776
-        return mesh_or_algo, output if port != 0 else algo
+        return mesh, output if port != 0 else algo
     return mesh_or_algo, None
 
 
