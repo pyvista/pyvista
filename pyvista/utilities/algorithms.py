@@ -94,13 +94,16 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
 
 
 class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
-    """Internal helper algorithm to control active scalars.
+    """Algorithm to control active scalars.
+
+    The output of this filter is a shallow copy of the input data
+    set with the active scalars set as specified.
 
     Parameters
     ----------
     name : str
-        Name of scalars used to "color" the mesh.  Accepts a
-        string name of an array that is present on the mesh.
+        Name of scalars used to set as active on the output mesh.
+        Accepts a string name of an array that is present on the mesh.
         Array should be sized as a single vector.
 
     preference : str, optional
@@ -112,7 +115,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, name, preference='point'):
+    def __init__(self, name: str, preference: str = 'point'):
         """Initialize algorithm."""
         super().__init__()
         self.scalars_name = name
