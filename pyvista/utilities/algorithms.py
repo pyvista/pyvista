@@ -11,7 +11,32 @@ from .helpers import wrap
 
 
 def algorithm_to_mesh_handler(mesh_or_algo, port=0):
-    """Handle vtkAlgorithms where mesh objects are expected."""
+    """Handle vtkAlgorithms where mesh objects are expected.
+
+    This is a convienance method to handle vtkAlgorithms when passed to methods
+    that expect a :class:`pyvista.DataSet`. This method will check if the passed
+    object is a ``vtk.vtkAlgorithm`` or ``vtk.vtkAlgorithmOutput`` and if so,
+    return that algorithm's output dataset (mesh) as the mesh to be used by the
+    calling function.
+
+    Parameters
+    ----------
+    mesh_or_algo : pyvista.DataSet or vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput
+        The input to be used user input as a data set (mesh) or vtkAlgorithm object.
+
+    port : int, default=0
+        If the input (``mesh_or_algo``) is an algorithm, this specifies which output
+        port to use on that algorithm for the returned mesh.
+
+    Returns
+    -------
+    mesh : pyvista.DataSet
+        The resulting mesh data set from the input.
+
+    algorithm : vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput or None
+        If an algorithm is passed, it will be returned. Otherwise returns ``None``.
+
+    """
     if isinstance(mesh_or_algo, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
         if isinstance(mesh_or_algo, _vtk.vtkAlgorithmOutput):
             algo = mesh_or_algo.GetProducer()
@@ -137,7 +162,10 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
 
 class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
-    """Internal helper algorithm to cast PointSets."""
+    """Algorithm to cast PointSet to PolyData.
+
+    This is implemented with :func:`pyvista.PointSet.cast_to_polydata`.
+    """
 
     def __init__(self):
         """Initialize algorithm."""
@@ -163,7 +191,11 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
 
 
 class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
-    """Internal helper algorithm to add point or cell IDs."""
+    """Algorithm to add point or cell IDs.
+
+    Output of this filter is a shallow copy of the input with
+    point and/or cell ID arrays added.
+    """
 
     def __init__(self, point_ids=True, cell_ids=True):
         """Initialize algorithm."""
@@ -193,7 +225,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
 
 class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
-    """Internal helper algorithm to crinkle cell IDs."""
+    """Algorithm to crinkle cell IDs."""
 
     def __init__(self):
         """Initialize algorithm."""
@@ -253,7 +285,7 @@ def pointset_to_polydata_algorithm(inp):
 
 
 def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
-    """Add a filter that adds point or cell IDs."""
+    """Add a filter that adds point and/or cell IDs."""
     alg = AddIDsAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
     set_algorithm_input(alg, inp)
     return alg
