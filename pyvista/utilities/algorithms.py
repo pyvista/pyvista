@@ -5,6 +5,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.errors import PyVistaPipelineError
 
 from .helpers import wrap
 
@@ -25,7 +26,9 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
         mesh = wrap(algo.GetOutputDataObject(port))
         if mesh is None:
             # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase
-            raise RuntimeError('The passed algorithm is failing to produce an output.')
+            #     see workaround in PreserveTypeAlgorithmBase.
+            #     This check remains as a fail-safe.
+            raise PyVistaPipelineError('The passed algorithm is failing to produce an output.')
         # NOTE: Return the vtkAlgorithmOutput only if port is non-zero. Segfaults can sometimes
         #       happen with vtkAlgorithmOutput. This logic will mostly avoid those issues.
         #       See https://gitlab.kitware.com/vtk/vtk/-/issues/18776
