@@ -3123,7 +3123,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
-        if algo is None and mesh.n_points < 1:
+        if algo is None and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
             raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
@@ -4832,7 +4832,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             # Make sure PointData
             if labels not in points.point_data:
-                raise ValueError(f'`{labels}` not found in point data.')
+                raise ValueError(f'Array {labels!r} not found in point data.')
             hier.SetLabelArrayName(labels)
 
         if always_visible:

@@ -38,8 +38,8 @@ def set_algorithm_input(alg, inp, port=0):
 
     Parameters
     ----------
-    alg : vtk.vtkAlgorith
-        The algorithm who's input is being set
+    alg : vtk.vtkAlgorithm
+        The algorithm whose input is being set
 
     inp : vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput or vtk.vtkDataObject
         The input to the algorithm
