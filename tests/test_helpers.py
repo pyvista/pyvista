@@ -122,6 +122,11 @@ def test_wrap_no_copy():
     assert mesh == wrapped
     assert wrapped is mesh
 
+    mesh = vtk.vtkPolyData()
+    wrapped = pyvista.wrap(mesh)
+    assert wrapped == pyvista.wrap(wrapped)
+    assert wrapped is pyvista.wrap(wrapped)
+
 
 def test_inheritance_no_wrappers():
     class Foo(pyvista.PolyData):
