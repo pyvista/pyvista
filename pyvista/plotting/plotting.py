@@ -4808,7 +4808,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
             # Extract points filter
             pc_algo = _vtk.vtkConvertToPointCloud()
-            pc_algo.SetInputConnection(algo.GetOutputPort())
+            set_algorithm_input(pc_algo, algo)
             algo = pc_algo
 
         if name is None:

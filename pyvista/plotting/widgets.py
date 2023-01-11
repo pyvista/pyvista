@@ -246,7 +246,7 @@ class WidgetHelper:
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
             clipper.SetLocator(_vtk.vtkNonMergingPointLocator())
-        clipper.SetInputConnection(algo.GetOutputPort())
+        set_algorithm_input(clipper, algo)
         clipper.GenerateClippedOutputOn()
 
         if crinkle:
@@ -605,7 +605,7 @@ class WidgetHelper:
         #     clipper.SetMixed3DCellGeneration(True)
         else:
             clipper = _vtk.vtkTableBasedClipDataSet()
-        clipper.SetInputConnection(algo.GetOutputPort())
+        set_algorithm_input(clipper, algo)
         clipper.SetValue(value)
         clipper.SetInsideOut(invert)  # invert the clip if needed
 

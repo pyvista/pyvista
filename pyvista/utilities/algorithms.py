@@ -9,22 +9,28 @@ from pyvista import _vtk
 from .helpers import wrap
 
 
-def algorithm_to_mesh_handler(mesh_or_algo, default_port=0):
+def algorithm_to_mesh_handler(mesh_or_algo, port=0):
     """Handle vtkAlgorithms where mesh objects are expected."""
-    algo = None
     if isinstance(mesh_or_algo, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
         if isinstance(mesh_or_algo, _vtk.vtkAlgorithmOutput):
             algo = mesh_or_algo.GetProducer()
+            # If vtkAlgorithmOutput, override port argument
             port = mesh_or_algo.GetIndex()
+            output = mesh_or_algo
         else:
             algo = mesh_or_algo
-            port = default_port
-        algo.Update()
+            output = algo.GetOutputPort(port)
+        algo.Update()  # NOTE: this could be expensive... but we need it to get the mesh
+        #                      for legacy implementation. This can be refactored.
         mesh_or_algo = wrap(algo.GetOutputDataObject(port))
         if mesh_or_algo is None:
             # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase
             raise RuntimeError('The passed algorithm is failing to produce an output.')
-    return mesh_or_algo, algo
+        # NOTE: Return the vtkAlgorithmOutput only if port is non-zero. Segfaults can sometimes
+        #       happen with vtkAlgorithmOutput. This logic will mostly avoid those issues.
+        #       See https://gitlab.kitware.com/vtk/vtk/-/issues/18776
+        return mesh_or_algo, output if port != 0 else algo
+    return mesh_or_algo, None
 
 
 def set_algorithm_input(alg, inp, port=0):
