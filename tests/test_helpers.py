@@ -120,7 +120,7 @@ def test_wrap_no_copy():
     mesh = pyvista.Wavelet()
     wrapped = pyvista.wrap(mesh)
     assert mesh == wrapped
-    assert id(mesh) == id(wrapped)
+    assert wrapped is mesh
 
 
 def test_inheritance_no_wrappers():
