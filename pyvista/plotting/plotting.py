@@ -3794,7 +3794,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(mesh, pyvista.PolyData):
             raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
 
-        if isinstance(silhouette_params["decimate"], float):
+        if silhouette_params["decimate"]:
             silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
         else:
             silhouette_mesh = mesh
