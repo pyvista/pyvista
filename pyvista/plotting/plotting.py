@@ -3419,6 +3419,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``self._theme`` is used. If using ``'fixed_point'``,
             only ``UniformGrid`` types can be used.
 
+            .. note::
+                The ``'smart'`` mapper chooses one of the other listed
+                mappers based on rendering parameters and available
+                hardware.
+
+            .. warning::
+                If your volume contains NaN values, you may want to use
+                ``'fixed_point'`` mapper.
+
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
