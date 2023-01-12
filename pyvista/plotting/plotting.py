@@ -3829,7 +3829,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if isinstance(silhouette_params["decimate"], float):
             if algo is not None:
-                # TODO: run decimate filter as an algorithm
                 raise TypeError('Cannot decimate when an algorithm is passed at this time.')
             silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
         else:
