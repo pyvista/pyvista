@@ -22,7 +22,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
     Parameters
     ----------
     mesh_or_algo : pyvista.DataSet or vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput
-        The input to be used user input as a data set (mesh) or vtkAlgorithm object.
+        The input to be used as a data set (mesh) or vtkAlgorithm object.
 
     port : int, default: 0
         If the input (``mesh_or_algo``) is an algorithm, this specifies which output
