@@ -67,13 +67,13 @@ def set_algorithm_input(alg, inp, port=0):
     Parameters
     ----------
     alg : vtk.vtkAlgorithm
-        The algorithm whose input is being set
+        The algorithm whose input is being set.
 
     inp : vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput or vtk.vtkDataObject
-        The input to the algorithm
+        The input to the algorithm.
 
     port : int, default: 0
-        The input port
+        The input port.
 
     """
     if isinstance(inp, _vtk.vtkAlgorithm):
@@ -98,7 +98,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
     def GetInputData(self, inInfo, port, idx):
         """Get input data object.
 
-        This will convert ``vtkPointSet`` to ``vtkPolyData``
+        This will convert ``vtkPointSet`` to ``vtkPolyData``.
         """
         inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
         if isinstance(inp, pyvista.PointSet):
