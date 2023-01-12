@@ -186,8 +186,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and clip.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and clip or algorithm that
+            produces said mesh.
 
         invert : bool, optional
             Flag on whether to flip/invert the clip.
@@ -522,8 +523,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and clip.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and clip or algorithm that
+            produces said mesh.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -675,8 +677,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and slice.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and slice or algorithm that
+            produces said mesh.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -792,8 +795,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and threshold.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and threshold or algorithm
+            that produces said mesh.
 
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
@@ -1290,8 +1294,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and threshold.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and threshold or algorithm
+            that produces said mesh.
 
         scalars : str, optional
             The string name of the scalars on the mesh to threshold and display.
@@ -1450,8 +1455,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and contour.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and contour or algorithm
+            that produces said mesh.
 
         scalars : str, optional
             The string name of the scalars on the mesh to contour and display.
@@ -1722,8 +1728,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and slice along the spline.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and slice along the spline
+            or algorithm that produces said mesh.
 
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be

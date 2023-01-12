@@ -2557,7 +2557,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mesh : pyvista.DataSet or pyvista.MultiBlock or vtk.vtkAlgorithm
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy
-            arrays of XYZ points.
+            arrays of XYZ points. Plotting also supports VTK algorithm
+            objects (``vtk.vtkAlgorithm`` and ``vtk.vtkAlgorithmOutput``).
+            When passing an algorithm, the rendering pipeline will be
+            connected to the passed algorithm to dynamically update
+            the scene.
 
         color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
@@ -3785,7 +3789,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         mesh : pyvista.PolyData or vtk.vtkAlgorithm
-            Mesh for generating silhouette to plot.
+            Mesh or mesh-producing algorithm for generating silhouette
+            to plot.
 
         params : dict, optional
 
@@ -4676,8 +4681,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : sequence or pyvista.DataSet
-            An ``n x 3`` sequence points or pyvista dataset with points.
+        points : sequence or pyvista.DataSet or vtk.vtkAlgorithm
+            An ``n x 3`` sequence points or pyvista dataset with points or
+            mesh-producing algorithm.
 
         labels : list or str
             List of labels.  Must be the same length as points. If a
