@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista
+from pyvista.errors import MissingDataError
 from pyvista.plotting import _plotting
 
 
@@ -216,6 +217,14 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
+def test_add_lines():
+    pl = pyvista.Plotter()
+    points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
+    actor = pl.add_lines(points)
+    dataset = actor.mapper.dataset
+    assert dataset.n_cells == 2
+
+
 def test_clear_actors(cube, sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(cube)
@@ -247,3 +256,43 @@ def test_anti_aliasing_invalid():
     pl = pyvista.Plotter()
     with pytest.raises(ValueError, match='Should be either "fxaa" or "ssaa"'):
         pl.renderer.enable_anti_aliasing('invalid')
+
+
+def test_plot_return_img_without_cpos(sphere: pyvista.PolyData):
+    img = sphere.plot(return_cpos=False, return_img=True, screenshot=True)
+    assert isinstance(img, np.ndarray)
+
+
+def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
+    cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
+    assert isinstance(cpos, pyvista.CameraPosition)
+    assert isinstance(img, np.ndarray)
+
+
+def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista.PolyData):
+    """Test edge case where add_volume has no scalars."""
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+    with pytest.raises(MissingDataError):
+        pl.add_volume(uniform, cmap="coolwarm", opacity="linear")
+
+    with pytest.raises(TypeError, match='not supported for volume rendering'):
+        pl.add_volume(sphere)
+
+
+def test_plotter_add_volume_clim(uniform: pyvista.UniformGrid):
+    """Verify clim is set correctly for volume."""
+    arr = uniform.x.astype(np.uint8)
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform, scalars=arr)
+    assert vol.mapper.scalar_range == (0, 255)
+
+    clim = [-10, 20]
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform, clim=clim)
+    assert vol.mapper.scalar_range == tuple(clim)
+
+    clim_val = 2.0
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform, clim=clim_val)
+    assert vol.mapper.scalar_range == (-clim_val, clim_val)
