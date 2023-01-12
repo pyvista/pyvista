@@ -18,8 +18,8 @@ We can connect the output port of a ``vtkAlgorithm`` to PyVista's rendering
 pipeline when adding data to the scene through methods like
 :func:`add_mesh() <pyvista.Plotter.add_mesh>`.
 
-This example will walk through using a few ``vtkAlgorithm``s directly and
-passing them to PyVista for dynamic visualization.
+This example will walk through using a few ``vtkAlgorithm`` filters directly
+and passing them to PyVista for dynamic visualization.
 """
 import vtk
 
