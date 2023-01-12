@@ -194,7 +194,7 @@ jobs:
         run: xvfb-run coverage run -m --source=pyvista --module pytest --skip_image_cache_vtk8 --fail_extra_image_cache -v
 
       - uses: codecov/codecov-action@v3
-        if: matrix.python-version == '3.9'
+        if: matrix.python-version == '3.10'
         name: 'Upload coverage to CodeCov'
 
       - name: Check package
