@@ -697,7 +697,8 @@ def get_vtkjs_url(*args):
 
     - Dropbox
 
-    Args:
+    Args
+    ----
         host (str): the name of the file hosting service.
         inURL (str): the web URL to the ``.vtkjs`` file.
 

@@ -120,7 +120,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
-          pytest -v tests/plotting --cov-report html --fail_extra_image_cache -k 'not test_add_text_latex'
+          pytest -v tests/plotting --cov-report html --fail_extra_image_cache
 
   Linux:
     name: Linux Unit Testing

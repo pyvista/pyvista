@@ -1609,6 +1609,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if hasattr(self, 'ren_win') and not self._first_time:
             log.debug('Rendering')
+            self.renderers.on_plotter_render()
             self.ren_win.Render()
             self._rendered = True
 
@@ -3379,7 +3380,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Block resolution. For example ``[1, 1, 1]``. Resolution must be
             non-negative. While VTK accepts negative spacing, this results in
             unexpected behavior. See:
-            `pyvista #1967 <https://github.com/pyvista/pyvista/issues/1967>`_
+            `pyvista #1967 <https://github.com/pyvista/pyvista/issues/1967>`_.
 
         opacity : str or numpy.ndarray, optional
             Opacity mapping for the scalars array.
@@ -3832,7 +3833,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(mesh, pyvista.PolyData):
             raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
 
-        if isinstance(silhouette_params["decimate"], float):
+        if silhouette_params["decimate"]:
             if algo is not None:
                 raise TypeError('Cannot decimate when an algorithm is passed at this time.')
             silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
