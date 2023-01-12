@@ -1451,7 +1451,7 @@ class WidgetHelper:
             creating an isovalue is a dimension reducing operation
             on the geometry and point clouds are zero dimensional.
             This will similarly fail for point clouds in
-            :class:`pyvista.PointSet`.
+            :class:`pyvista.PolyData`.
 
         Parameters
         ----------
