@@ -16,6 +16,7 @@ from pyvista.utilities.algorithms import (
     algorithm_to_mesh_handler,
     crinkle_algorithm,
     outline_algorithm,
+    pointset_to_polydata_algorithm,
     set_algorithm_input,
 )
 
@@ -1367,7 +1368,9 @@ class WidgetHelper:
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         if isinstance(mesh, pyvista.PointSet):
-            raise TypeError('PointSet meshes are not well handled with thresholding.')
+            # vtkThreshold is CELL-wise and PointSets have no cells
+            algo = pointset_to_polydata_algorithm(algo or mesh)
+            mesh, algo = algorithm_to_mesh_handler(algo)
 
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
@@ -1438,6 +1441,13 @@ class WidgetHelper:
         The isovalue mesh is saved to the ``.isovalue_meshes``
         attribute on the plotter.
 
+        .. warning::
+            This will not work with :class:`pyvista.PointSet` as
+            creating an isovalue is a dimension reducing operation
+            on the geometry and point clouds are zero dimensional.
+            This will similarly fail for point clouds in
+            :class:`pyvista.PointSet`.
+
         Parameters
         ----------
         mesh : pyvista.DataSet
@@ -1501,7 +1511,7 @@ class WidgetHelper:
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         if isinstance(mesh, pyvista.PointSet):
-            raise TypeError('PointSet meshes are not well handled with isovalue.')
+            raise TypeError('PointSets are 0-dimensional and thus cannot produce contours.')
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
         name = kwargs.get('name', mesh.memory_address)

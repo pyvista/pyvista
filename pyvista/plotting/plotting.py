@@ -2957,7 +2957,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(mesh, pyvista.MultiBlock):
             if algo is not None:
                 raise TypeError(
-                    'Algorithms with `MultiBlock` output type are not fully supported by `add_mesh` at this time. Please open an issue.'
+                    'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
                 )
             return self.add_composite(
                 mesh,

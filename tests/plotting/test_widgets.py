@@ -316,5 +316,9 @@ def test_plot_pointset_widgets(pointset):
     pl.close()
 
     pl = pyvista.Plotter()
+    pl.add_mesh_threshold(pointset)
+    pl.close()
+
+    pl = pyvista.Plotter()
     pl.add_mesh_slice_spline(pointset)
     pl.close()
