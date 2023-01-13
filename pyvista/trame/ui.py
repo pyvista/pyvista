@@ -69,26 +69,31 @@ class Viewer:
     def view_isometric(self):
         """View isometric."""
         self.plotter.view_isometric()
+        self._ctrl.view_push_camera()
 
     @vuwrap
     def view_yz(self):
         """View YZ plane."""
         self.plotter.view_yz()
+        self._ctrl.view_push_camera()
 
     @vuwrap
     def view_xz(self):
         """View XZ plane."""
         self.plotter.view_xz()
+        self._ctrl.view_push_camera()
 
     @vuwrap
     def view_xy(self):
         """View XY plane."""
         self.plotter.view_xy()
+        self._ctrl.view_push_camera()
 
     @vuwrap
     def reset_camera(self):
         """Reset the camera."""
-        self.plotter.reset_camera()
+        # self.plotter.reset_camera()
+        self._ctrl.view_reset_camera()
 
     @vuwrap
     def on_grid_visiblity_change(self, **kwargs):
@@ -102,7 +107,7 @@ class Viewer:
     def on_outline_visiblity_change(self, **kwargs):
         """Handle outline visibility."""
         if self._state[self.OUTLINE]:
-            self.plotter.add_bounding_box()
+            self.plotter.add_bounding_box(reset_camera=False)
         else:
             self.plotter.remove_bounding_box()
 
@@ -191,8 +196,10 @@ def ui_container(server, plotter, local_rendering=False):
                             vuetify.VIcon('mdi-file-png-box')
         if local_rendering:
             view = PyVistaLocalView(plotter)
+            ctrl.view_push_camera = view.push_camera
         else:
             view = PyVistaRemoteView(plotter)
+            ctrl.view_push_camera = lambda *args: None
         ctrl.view_update = view.update
         ctrl.view_reset_camera = view.reset_camera
 
