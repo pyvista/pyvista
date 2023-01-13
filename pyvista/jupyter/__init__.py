@@ -188,5 +188,11 @@ def set_jupyter_backend(backend):
         # Launch the trame server
         from pyvista.trame.jupyter import launch_server, JUPYTER_SERVER_NAME
 
+        # Returns a future that finalizes when server is ready - should be awaited
         return launch_server(JUPYTER_SERVER_NAME)
-    return backend
+    # Return an awaitable object to prevent errors when accidentally awaiting
+    # other backends
+    async def _():
+        pass
+
+    return _()
