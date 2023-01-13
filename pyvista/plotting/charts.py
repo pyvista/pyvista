@@ -419,7 +419,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     Parameters
     ----------
-    label : str, optional
+    label : str, default: ``""``
         Axis label.
 
     range : list or tuple of float, optional
