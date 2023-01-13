@@ -40,12 +40,13 @@ jobs:
             requirements_test.txt
 
       - name: Install PyVista
-        run: |
-          pip install .
-          python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
+        run: pip install . --no-deps
 
       - name: Install test dependencies
-        run: pip install -r requirements_test.txt
+        run: pip install vtk -r requirements_test.txt
+
+      - name: Report
+        run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
         run: pytest -v --ignore=tests/plotting
@@ -241,9 +242,13 @@ jobs:
         uses: pyvista/setup-headless-display-action@v1
 
       - name: Install PyVista
-        run: |
-          pip install .
-          python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+        run: pip install . --no-deps
+
+      - name: Install test dependencies
+        run: pip install vtk -r requirements_test.txt
+
+      - name: Report
+        run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Set example data path as env variable
         run: |
@@ -257,9 +262,6 @@ jobs:
           key: Examples-1-${{ hashFiles('*') }}
           restore-keys: |
             Examples-1-
-
-      - name: Install test dependencies
-        run: pip install -r requirements_test.txt
 
       - name: Test Core API
         run: python -m pytest -v --ignore=tests/plotting

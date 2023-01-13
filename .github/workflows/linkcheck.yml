@@ -33,11 +33,11 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Install OSMesa VTK
-        run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
+      - name: Install VTK with OSMesa bundled
+        run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl
 
       - name: Install PyVista
-        run: pip install -e .
+        run: pip install -e . --no-deps
 
       - name: Install Dependencies
         run: pip install -r requirements_docs.txt
