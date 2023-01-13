@@ -164,7 +164,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     Other Parameters
     ----------------
     _wrap : vtk.vtkPen, optional
-        Wrap an existing VTK Pen instance (no wrapping when ``None``).
+        Wrap an existing VTK Pen instance. Defaults to ``None`` (no wrapping).
 
     Notes
     -----
