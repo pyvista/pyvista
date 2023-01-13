@@ -89,9 +89,11 @@ jobs:
         run: make -C doc html SPHINXOPTS="-W --keep-going"
 
       - name: Tar build
+        if: always()
         run: tar -zcvf docs-build.tar.gz doc/_build/html/
 
       - name: Upload HTML documentation
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: docs-build
