@@ -3426,7 +3426,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             .. warning::
                 If your volume contains NaN values, you may want to use
-                ``'fixed_point'`` mapper.
+                ``'fixed_point'`` mapper with some graphics hardware.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
