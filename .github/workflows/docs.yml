@@ -53,7 +53,7 @@ jobs:
       - name: Install PyVista and dependencies
         run: |
           pip install -e . --no-deps
-          -r requirements_docs.txt
+          pip install -r requirements_docs.txt
 
       - name: PyVista Report
         run: |
