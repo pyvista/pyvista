@@ -208,6 +208,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.remove$',
     # Enumerations
     r'\.Plot3DFunctionEnum$',
+    # VTK methods
+    r'\.override$',
 }
 
 
