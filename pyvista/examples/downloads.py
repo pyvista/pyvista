@@ -4934,7 +4934,12 @@ def download_dikhololo_night():  # pragma: no cover
 
 
 def download_hydrogen_orbital(load=True):  # pragma: no cover
-    """Download a model of the electron cloud of the hydrogen atom.
+    """Download a model of the 3d orbital of a hydrogen atom.
+
+    The ground state of a hydrogen atom is one electron in the 1s orbital.
+    This atom's single electron has been excited to the 3d orbital and visualized here
+    as a probability distribution within the ``point_data`` of a
+    :class:`pyvista.UniformGrid`.
 
     Dataset originally hosted at
     https://www.it.uu.se/edu/course/homepage/vetvis/ht11/ComputerExercises/data/a1/hydrogen.vtk
