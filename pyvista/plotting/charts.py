@@ -1859,7 +1859,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         Style of the line drawn in this plot. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line
         styles.
 
-    label : str, optional
+    label : str, default: "-"
         Label of this plot, as shown in the chart's legend.
 
     Examples
