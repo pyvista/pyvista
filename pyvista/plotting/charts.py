@@ -276,7 +276,8 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
     texture : Texture, optional
         Texture used to fill shapes drawn using this brush. Any object
-        convertible to a :class:`Texture` is allowed.
+        convertible to a :class:`Texture` is allowed. Defaults to
+        ``None``.
 
     Other Parameters
     ----------------
