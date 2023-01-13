@@ -12,7 +12,7 @@
    .. autosummary::
       :toctree:
    {% for item in methods %}
-      {% if item != "__init__" && item != "override" %}
+      {% if item != "__init__" %}
       {{ name }}.{{ item }}
       {% endif %}
    {%- endfor %}
