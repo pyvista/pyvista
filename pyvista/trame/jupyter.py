@@ -95,7 +95,7 @@ def launch_server(server):
 
 def build_iframe(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
     """Build IPython display.IFrame object for the trame view."""
-    params = f"?ui={ui}" if ui else ""
+    params = f"?ui={ui}&reconnect=auto" if ui else "?reconnect=auto"
     if server_proxy:
         src = f"{server_proxy_prefix + '/' if server_proxy_prefix else ''}proxy/{_server.port}/index.html{params}"
     else:
