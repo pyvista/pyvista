@@ -4945,6 +4945,9 @@ def download_hydrogen_orbital(load=True):  # pragma: no cover
     `Scientific Visualization - Computer exercises and assignments
     <https://www.it.uu.se/edu/course/homepage/vetvis/ht11/ComputerExercises/data/a1/hydrogen.vtk>`_
 
+    For additional information, see `pyvista/pyvista #3811
+    <https://github.com/pyvista/pyvista/pull/3811>`_
+
     Parameters
     ----------
     load : bool, default: True
