@@ -3988,7 +3988,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     data : array_like
         Relative size of each pie segment.
 
-    colors : list or tuple of color_like, default: None
+    colors : list or tuple of color_like, optional
         Color used for each pie segment drawn in this plot.
 
     labels : list or tuple of str, optional
