@@ -150,10 +150,12 @@ def test_widget_slider(uniform):
     p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
     p.close()
 
-    p = pyvista.Plotter()
-    p.add_mesh_threshold(uniform, invert=True)
-    p.add_mesh(uniform.outline())
-    p.close()
+    if pyvista.vtk_version_info >= (9,):
+        # Invert not support for VTK8.1.2
+        p = pyvista.Plotter()
+        p.add_mesh_threshold(uniform, invert=True)
+        p.add_mesh(uniform.outline())
+        p.close()
 
     p = pyvista.Plotter()
     p.add_mesh_threshold(uniform, invert=False)
@@ -164,6 +166,7 @@ def test_widget_slider(uniform):
     p.add_mesh_isovalue(uniform)
     p.close()
 
+    func = lambda value: value  # Does nothing
     p = pyvista.Plotter()
     title_height = np.random.random()
     s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
@@ -232,9 +235,10 @@ def test_widget_uniform(uniform):
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
     p.close()
 
+    # pass multiple centers
     nodes = np.array([[-1, -1, -1], [1, 1, 1]])
     p = pyvista.Plotter()
-    func = lambda center: center  # Does nothing
+    func = lambda center, index: center  # Does nothing
     p.add_sphere_widget(callback=func, center=nodes)
     p.close()
 

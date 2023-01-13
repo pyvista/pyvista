@@ -49,7 +49,6 @@ warnings.filterwarnings(
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
 
-
 # -- General configuration ------------------------------------------------
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
@@ -129,7 +128,7 @@ coverage_ignore_modules = [
 
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {"color_like": "pyvista.color_like"}
+autodoc_type_aliases = {"ColorLike": "pyvista.ColorLike"}
 
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
@@ -193,7 +192,6 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
-    r'\.PlotterITK$',
     r'\.MultiBlock\.copy_meta_from$',
     r'\.DataObject\.copy_meta_from$',
     # wraps
@@ -202,7 +200,7 @@ numpydoc_validation_exclude = {  # set of regex
     # called from inherited
     r'\.Table\.copy_meta_from$',
     # Type alias
-    r'\.color_like$',
+    r'\.ColorLike$',
     # Mixin methods from collections.abc
     r'\.MultiBlock\.clear$',
     r'\.MultiBlock\.count$',

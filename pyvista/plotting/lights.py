@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
 from ..utilities.helpers import vtkmatrix_from_array
-from .colors import Color, color_like
+from .colors import Color, ColorLike
 
 
 class LightType(IntEnum):
@@ -44,7 +44,7 @@ class Light(vtkLight):
         has a transformation matrix.  See also the
         :py:attr:`focal_point` property.
 
-    color : color_like, optional
+    color : ColorLike, optional
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
@@ -301,7 +301,7 @@ class Light(vtkLight):
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, color: color_like):
+    def ambient_color(self, color: ColorLike):
         """Set the ambient color of the light."""
         self.SetAmbientColor(Color(color).float_rgb)
 
@@ -331,7 +331,7 @@ class Light(vtkLight):
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, color: color_like):
+    def diffuse_color(self, color: ColorLike):
         """Set the diffuse color of the light."""
         self.SetDiffuseColor(Color(color).float_rgb)
 
@@ -361,7 +361,7 @@ class Light(vtkLight):
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, color: color_like):
+    def specular_color(self, color: ColorLike):
         """Set the specular color of the light."""
         self.SetSpecularColor(Color(color).float_rgb)
 
