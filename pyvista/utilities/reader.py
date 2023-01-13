@@ -972,6 +972,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         ----------
         name : str
             Which patch array to report status.
+
         Returns
         -------
         bool

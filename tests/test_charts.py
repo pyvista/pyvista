@@ -42,6 +42,25 @@ def to_vtk_scientific(val):
     )  # Remove exponent altogether if it is 0
 
 
+class PlotterChanged:
+    """Helper class to check whether the plotter's rendered content has changed
+    since the last call."""
+
+    def __init__(self, plotter):
+        self._plotter = plotter
+        self._prev = self._capture()
+
+    def _capture(self):
+        self._plotter.show(auto_close=False)
+        return self._plotter.screenshot()
+
+    def __call__(self):
+        cur = self._capture()
+        changed = pyvista.compare_images(self._prev, cur) > 0
+        self._prev = cur
+        return changed
+
+
 @pytest.fixture
 def pl():
     p = pyvista.Plotter(window_size=(600, 600))
@@ -968,6 +987,36 @@ def test_chart_mpl(pl, chart_mpl):
     # test set position throw
     with pytest.raises(ValueError, match="must be length 2"):
         chart.position = (1, 2, 3)
+
+
+@skip_no_plotting
+@skip_no_mpl_figure
+def test_chart_mpl_update(pl):
+    import matplotlib.pyplot as plt
+
+    # Create simple chart
+    x0, y0, y1 = [0, 1, 2], [2, 1, 3], [-1, 0, 2]
+    f, ax = plt.subplots()
+    line = ax.plot(x0, y0)[0]
+    chart = pyvista.ChartMPL(f, redraw_on_render=False)
+    pl.add_chart(chart)
+    pl_changed = PlotterChanged(pl)
+
+    # Update matplotlib figure without redraw_on_update
+    line.set_ydata(y1)
+    # No changes when pl.render() is called (as redraw_on_render is False)
+    pl.render()
+    assert not pl_changed()
+    # Changes when figure is explicitly redrawn:
+    f.canvas.draw()
+    assert pl_changed()
+
+    # Update matplotlib figure with redraw_on_render
+    chart.redraw_on_render = True
+    line.set_ydata(y0)
+    # Changes when pl.render() is called (as redraw_on_render is True now)
+    pl.render()
+    assert pl_changed()
 
 
 @skip_no_plotting
