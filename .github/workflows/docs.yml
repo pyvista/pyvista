@@ -47,7 +47,7 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Install VTK with OSMesa bundled
+      - name: Install custom OSMesa VTK variant
         run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl
 
       - name: Install PyVista and dependencies
