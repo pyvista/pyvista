@@ -149,7 +149,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     Parameters
     ----------
-    color : color_like, default: "k"
+    color : ColorLike, default: "k"
         Color of the lines drawn using this pen. Any color parsable by
         :class:`pyvista.Color` is allowed.
 
@@ -270,7 +270,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
     Parameters
     ----------
-    color : color_like, default: "k"
+    color : ColorLike, default: "k"
         Fill color of the shapes drawn using this brush. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
@@ -1393,7 +1393,7 @@ class _Chart(DocSubs):
             When ``True``, the resulting plot is placed inline a
             jupyter notebook.  Assumes a jupyter console is active.
 
-        background : color_like, default: "w"
+        background : ColorLike, default: "w"
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -1848,7 +1848,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
     y : array_like
         Y coordinates of the points through which a line should be drawn.
 
-    color : color_like, default: "b"
+    color : ColorLike, default: "b"
         Color of the line drawn in this plot. Any color parsable by :class:`pyvista.Color` is allowed.
 
     width : float, default: 1
@@ -1979,7 +1979,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
     y : array_like
         Y coordinates of the points to draw.
 
-    color : color_like, default: "b"
+    color : ColorLike, default: "b"
         Color of the points drawn in this plot. Any color parsable by :class:`pyvista.Color` is allowed.
 
     size : float, default: 10
@@ -2185,7 +2185,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     color : color_like, default: "b"
         Color of the area drawn in this plot. Any color parsable by :class:`pyvista.Color` is allowed.
 
-    label : str, optional
+    label : str, default: ``""``
         Label of this plot, as shown in the chart's legend.
 
     Examples
@@ -2352,7 +2352,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
         vertical orientation.
 
-    label : str, optional
+    label : str, default: ``""``
         Label of this plot, as shown in the chart's legend.
 
     Examples
@@ -2534,7 +2534,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         Color of the stacks (areas) drawn in this plot. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
-    labels : list or tuple of str, optional
+    labels : list or tuple of str, default: ``[]``
         Label for each stack (area) drawn in this plot, as shown in
         the chart's legend.
 
@@ -3059,7 +3059,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             for an horizontal orientation or ``"V"`` for a vertical
             orientation.
 
-        label : str, optional
+        label : str, default: ``""``
             Label of this plot, as shown in the chart's legend.
 
         Returns
@@ -3096,7 +3096,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Color of the stacks (areas) drawn in this plot. Any color
             parsable by :class:`pyvista.Color` is allowed.
 
-        labels : list or tuple of str, optional
+        labels : list or tuple of str, default: ``[]``
             Label for each stack (area) drawn in this plot, as shown
             in the chart's legend.
 
