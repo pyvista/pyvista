@@ -240,7 +240,7 @@ glad to add it!
 
     # write if different or does not exist
     if new_text != existing:
-        with open(path, "w") as fid:
+        with open(path, "w", encoding="utf-8") as fid:
             fid.write(new_text)
 
     return

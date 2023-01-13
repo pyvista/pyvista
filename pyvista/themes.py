@@ -36,8 +36,8 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
-from ._typing import color_like
-from .plotting.colors import Color, get_cmap_safe
+from ._typing import ColorLike
+from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
 from .utilities.misc import PyVistaDeprecationWarning
@@ -324,7 +324,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
 
     @property
@@ -565,7 +565,7 @@ class _AxesConfig(_ThemeConfig):
         return self._x_color
 
     @x_color.setter
-    def x_color(self, color: color_like):
+    def x_color(self, color: ColorLike):
         self._x_color = Color(color)
 
     @property
@@ -580,7 +580,7 @@ class _AxesConfig(_ThemeConfig):
         return self._y_color
 
     @y_color.setter
-    def y_color(self, color: color_like):
+    def y_color(self, color: ColorLike):
         self._y_color = Color(color)
 
     @property
@@ -595,7 +595,7 @@ class _AxesConfig(_ThemeConfig):
         return self._z_color
 
     @z_color.setter
-    def z_color(self, color: color_like):
+    def z_color(self, color: ColorLike):
         self._z_color = Color(color)
 
     @property
@@ -785,7 +785,7 @@ class _Font(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
 
     @property
@@ -903,7 +903,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._tube_color
 
     @tube_color.setter
-    def tube_color(self, tube_color: color_like):
+    def tube_color(self, tube_color: ColorLike):
         self._tube_color = Color(tube_color)
 
     @property
@@ -935,7 +935,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_color
 
     @slider_color.setter
-    def slider_color(self, slider_color: color_like):
+    def slider_color(self, slider_color: ColorLike):
         self._slider_color = Color(slider_color)
 
     @property
@@ -1117,6 +1117,7 @@ class DefaultTheme(_ThemeConfig):
         '_auto_close',
         '_cmap',
         '_color',
+        '_color_cycler',
         '_above_range_color',
         '_below_range_color',
         '_nan_color',
@@ -1165,6 +1166,7 @@ class DefaultTheme(_ThemeConfig):
         self._font = _Font()
         self._cmap = 'viridis'
         self._color = Color('white')
+        self._color_cycler = None
         self._nan_color = Color('darkgray')
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
@@ -1263,7 +1265,7 @@ class DefaultTheme(_ThemeConfig):
         return self._above_range_color
 
     @above_range_color.setter
-    def above_range_color(self, value: color_like):
+    def above_range_color(self, value: ColorLike):
         self._above_range_color = Color(value)
 
     @property
@@ -1283,7 +1285,7 @@ class DefaultTheme(_ThemeConfig):
         return self._below_range_color
 
     @below_range_color.setter
-    def below_range_color(self, value: color_like):
+    def below_range_color(self, value: ColorLike):
         self._below_range_color = Color(value)
 
     @property
@@ -1317,7 +1319,7 @@ class DefaultTheme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: color_like):
+    def background(self, new_background: ColorLike):
         self._background = Color(new_background)
 
     @property
@@ -1636,8 +1638,46 @@ class DefaultTheme(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
+
+    @property
+    def color_cycler(self):
+        """Return or set the default color cycler used to color meshes.
+
+        This color cycler is iterated over by each renderer to sequentially
+        color datasets when displaying them through ``add_mesh``.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        return self._color_cycler
+
+    @color_cycler.setter
+    def color_cycler(self, color_cycler):
+        self._color_cycler = get_cycler(color_cycler)
 
     @property
     def nan_color(self) -> Color:
@@ -1654,7 +1694,7 @@ class DefaultTheme(_ThemeConfig):
         return self._nan_color
 
     @nan_color.setter
-    def nan_color(self, nan_color: color_like):
+    def nan_color(self, nan_color: ColorLike):
         self._nan_color = Color(nan_color)
 
     @property
@@ -1672,7 +1712,7 @@ class DefaultTheme(_ThemeConfig):
         return self._edge_color
 
     @edge_color.setter
-    def edge_color(self, edge_color: color_like):
+    def edge_color(self, edge_color: ColorLike):
         self._edge_color = Color(edge_color)
 
     @property
@@ -1688,7 +1728,7 @@ class DefaultTheme(_ThemeConfig):
         return self._outline_color
 
     @outline_color.setter
-    def outline_color(self, outline_color: color_like):
+    def outline_color(self, outline_color: ColorLike):
         self._outline_color = Color(outline_color)
 
     @property
@@ -1704,7 +1744,7 @@ class DefaultTheme(_ThemeConfig):
         return self._floor_color
 
     @floor_color.setter
-    def floor_color(self, floor_color: color_like):
+    def floor_color(self, floor_color: ColorLike):
         self._floor_color = Color(floor_color)
 
     @property
@@ -2181,6 +2221,7 @@ class DefaultTheme(_ThemeConfig):
             'Auto close': 'auto_close',
             'Colormap': 'cmap',
             'Color': 'color',
+            'Color Cycler': 'color_cycler',
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
             'Outline color': 'outline_color',
