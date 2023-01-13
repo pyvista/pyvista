@@ -31,7 +31,7 @@ plotter.set_background('lightgrey')
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
-    layout.title.set_text("PyVista Local View")
+    layout.title.set_text("PyVistaLocalView")
 
     with layout.toolbar:
         vuetify.VSpacer()

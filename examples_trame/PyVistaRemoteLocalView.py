@@ -10,7 +10,7 @@ from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.trame import PyVistaRemoteView
+from pyvista.trame import PyVistaRemoteLocalView
 
 pv.OFF_SCREEN = True
 
@@ -37,11 +37,21 @@ def update_cmap(cmap="viridis", **kwargs):
 # GUI
 # -----------------------------------------------------------------------------
 
+
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
-    layout.title.set_text("PyVistaRemoteView")
+    layout.title.set_text("PyVistaRemoteLocalView")
 
     with layout.toolbar:
+        vuetify.VSpacer()
+        vuetify.VCheckbox(
+            v_model=("use_server_rendering", False),
+            dense=True,
+            hide_details=True,
+            on_icon="mdi-dns",
+            off_icon="mdi-open-in-app",
+            classes="ma-2",
+        )
         vuetify.VSpacer()
         vuetify.VSelect(
             label="Color map",
@@ -59,7 +69,10 @@ with SinglePageLayout(server) as layout:
             fluid=True,
             classes="pa-0 fill-height",
         ):
-            view = PyVistaRemoteView(plotter)
+            view = PyVistaRemoteLocalView(
+                plotter,
+                mode=("use_server_rendering ? 'remote' : 'local'", "local"),
+            )
             ctrl.view_update = view.update
             ctrl.view_reset_camera = view.reset_camera
 
