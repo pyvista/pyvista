@@ -3422,11 +3422,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             .. note::
                 The ``'smart'`` mapper chooses one of the other listed
                 mappers based on rendering parameters and available
-                hardware.
+                hardware. Most of the time the ``'smart'`` simply checks
+                if a GPU is available and if so, uses the ``'gpu'``
+                mapper, otherwise using the ``'fixed_point'`` mapper.
 
             .. warning::
-                If your volume contains NaN values, you may want to use
-                ``'fixed_point'`` mapper with some graphics hardware.
+                The ``'fixed_point'`` mapper is CPU-based and will have
+                lower performance than the ``'gpu'`` or ``'open_gl'``
+                mappers.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
