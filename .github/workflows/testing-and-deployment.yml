@@ -35,7 +35,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: requirements_test.txt
+          cache-dependency-path:  |
+            requirements.txt
+            requirements_test.txt
 
       - name: Install PyVista
         run: |
@@ -149,7 +151,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: requirements_test.txt
+          cache-dependency-path:  |
+            requirements.txt
+            requirements_test.txt
 
       - uses: actions/cache@v3
         with:
@@ -229,7 +233,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: requirements_test.txt
+          cache-dependency-path:  |
+            requirements.txt
+            requirements_test.txt
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v1

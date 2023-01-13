@@ -35,7 +35,9 @@ jobs:
         with:
           python-version: 3.9
           cache: 'pip'
-          cache-dependency-path: requirements_test.txt
+          cache-dependency-path:  |
+            requirements.txt
+            requirements_test.txt
 
       - uses: actions/cache@v3
         with:
