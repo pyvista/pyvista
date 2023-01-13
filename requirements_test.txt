@@ -1,10 +1,10 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
+-r requirements.txt
 cmocean<2.1
 codecov<2.2.0
 colorcet<3.1.0
 hypothesis<6.62.1
-imageio<2.25.0
 imageio-ffmpeg<0.5.0
 ipygany<0.6.0
 ipython<9.0.0
@@ -15,7 +15,6 @@ meshio<5.4.0
 numpydoc==1.5.0
 panel<0.15.0
 param<1.13.0
-pooch<1.7.0
 pytest<7.3.0
 pytest-cov<4.1.0
 pytest-memprof<0.3.0

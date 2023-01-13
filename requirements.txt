@@ -1,0 +1,8 @@
+# Core dependencies
+# It is critical the VTK is *not* listed here
+imageio<2.25.0
+numpy<1.25.0
+pillow<9.5.0
+pooch<1.7.0
+scooby>=0.5.1,<0.8.0
+typing-extensions<4.5.0
