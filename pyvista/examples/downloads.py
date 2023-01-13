@@ -4937,12 +4937,13 @@ def download_hydrogen_orbital(load=True):  # pragma: no cover
     """Download a model of the 3d orbital of a hydrogen atom.
 
     The ground state of a hydrogen atom is one electron in the 1s orbital.
-    This atom's single electron has been excited to the 3d orbital and visualized here
-    as a probability distribution within the ``point_data`` of a
-    :class:`pyvista.UniformGrid`.
+    This atom's single electron has been excited to the 3d orbital and
+    visualized here as a probability distribution within the ``point_data`` of
+    a :class:`pyvista.UniformGrid`.
 
     Dataset originally hosted at
-    https://www.it.uu.se/edu/course/homepage/vetvis/ht11/ComputerExercises/data/a1/hydrogen.vtk
+    `Scientific Visualization - Computer exercises and assignments
+    <https://www.it.uu.se/edu/course/homepage/vetvis/ht11/ComputerExercises/data/a1/hydrogen.vtk>`_
 
     Parameters
     ----------
@@ -4957,11 +4958,25 @@ def download_hydrogen_orbital(load=True):  # pragma: no cover
 
     Examples
     --------
-    Download and plot the dataset.
+    Download and plot the dataset as a volume.
 
     >>> from pyvista import examples
     >>> mesh = examples.download_hydrogen_orbital()
-    >>> mesh.plot(volume=True, zoom=2)
+    >>> mesh.plot(volume=True, zoom=2.5, opacity=[0.0, 0.1, 0.4, 0.4, 0.8, 0.9, 1.0])
+
+    Plot the dataset as contours.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> import pyvista.examples
+    >>> orbital = pv.examples.download_hydrogen_orbital()
+    >>> contours = orbital.contour(
+    ...     [orbital.active_scalars.max() * 0.1], method="marching_cubes"
+    ... ).connectivity()
+    >>> colors = np.array([[255, 215, 0], [0, 128, 128], [255, 215, 0]])[
+    ...     contours.point_data["RegionId"]
+    ... ]
+    >>> contours.plot(scalars=colors, rgb=True, smooth_shading=True)
 
     Return the statistics of the dataset.
 
