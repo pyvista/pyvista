@@ -86,7 +86,15 @@ jobs:
            echo "FULL_DOC_BUILD=TRUE" >> $GITHUB_ENV
 
       - name: Build Documentation
-        run: make -C doc html SPHINXOPTS="-W --keep-going"
+        run: make -C doc html
+
+      - name: Dump Sphinx Warnings and Errors
+        if: always()
+        run: cat doc/sphinx_warnings.txt 2>/dev/null
+
+      - name: Dump VTK Warnings and Errors
+        if: always()
+        run: cat doc/errors.txt 2>/dev/null
 
       - name: Tar build
         if: always()

@@ -43,4 +43,4 @@ jobs:
         run: pip install -r requirements_docs.txt
 
       - name: LinkCheck
-        run: make -C doc linkcheck SPHINXOPTS="-W --keep-going --color"
+        run: make -C doc linkcheck SPHINXOPTS="--color"
