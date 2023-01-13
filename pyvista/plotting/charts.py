@@ -4107,7 +4107,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     Parameters
     ----------
-    figure : matplotlib.figure.Figure, default: None
+    figure : matplotlib.figure.Figure, optional
         The matplotlib figure to draw. If no figure is
         provided ( ``None`` ), a new figure is created.
 
