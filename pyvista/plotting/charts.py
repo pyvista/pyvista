@@ -444,7 +444,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     Other Parameters
     ----------------
     _wrap : vtk.vtkAxis, optional
-        Wrap an existing VTK Axis instance (no wrapping when ``None``).
+        Wrap an existing VTK Axis instance. Defaults to ``None`` (no wrapping).
 
     """
 
