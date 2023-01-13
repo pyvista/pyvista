@@ -3420,7 +3420,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         Color of the boxes drawn in this plot. Any color parsable by
         :class:`pyvista.Color` is allowed.
 
-    labels : list or tuple of str, optional
+    labels : list or tuple of str, default: ``[]``
         Label for each box drawn in this plot, as shown in the chart's
         legend.
 
@@ -3534,7 +3534,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     colors : list or tuple of color_like, optional
         Color used for each drawn boxplot.
 
-    labels : list or tuple of str, optional
+    labels : list or tuple of str, default: ``[]``
         Label for each drawn boxplot, as shown in the chart's
         legend.
 
