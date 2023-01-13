@@ -583,8 +583,8 @@ class WidgetHelper:
 
         if isinstance(mesh, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
-        # elif isinstance(mesh, vtk.vtkImageData):
-        #     alg = vtk.vtkClipVolume()
+        # elif isinstance(mesh, _vtk.vtkImageData):
+        #     alg = _vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
@@ -621,6 +621,107 @@ class WidgetHelper:
         )
 
         return self.add_mesh(plane_clipped_mesh, **kwargs)
+
+    def add_volume_clipper(
+        self,
+        volume,
+        normal='x',
+        invert=False,
+        widget_color=None,
+        value=0.0,
+        assign_to_axis=None,
+        tubing=False,
+        origin_translation=True,
+        outline_translation=False,
+        implicit=True,
+        normal_rotation=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        origin=None,
+        **kwargs,
+    ):
+        """Clip a volume using a plane widget.
+
+        Parameters
+        ----------
+        volume : pyvista.plotting.volume.Volume
+            The input rendered volume to clip.
+
+        normal : str or tuple(float), optional
+            The starting normal vector of the plane.
+
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
+
+        widget_color : ColorLike, optional
+            Either a string, RGB list, or hex color string.
+
+        value : float, optional
+            Set the clipping value along the normal direction.
+            The default value is 0.0.
+
+        assign_to_axis : str or int, optional
+            Assign the normal of the plane to be parallel with a given
+            axis.  Options are ``(0, 'x')``, ``(1, 'y')``, or ``(2,
+            'z')``.
+
+        tubing : bool, optional
+            When using an implicit plane wiget, this controls whether
+            or not tubing is shown around the plane's boundaries.
+
+        origin_translation : bool, optional
+            If ``False``, the plane widget cannot be translated by its
+            origin and is strictly placed at the given origin. Only
+            valid when using an implicit plane.
+
+        outline_translation : bool, optional
+            If ``False``, the box widget cannot be translated and is
+            strictly placed at the given bounds.
+
+        implicit : bool, optional
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and
+            when ``False``, a ``vtkPlaneWidget`` is used.
+
+        normal_rotation : bool, optional
+            Set the opacity of the normal vector arrow to 0 such that
+            it is effectively disabled. This prevents the user from
+            rotating the normal. This is forced to ``False`` when
+            ``assign_to_axis`` is set.
+
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
+        """
+        plane = _vtk.vtkPlane()
+
+        _widget = []
+
+        def callback(*args):
+            """Update the plane used to clip the volume."""
+            if len(_widget):
+                _widget[0].GetPlane(plane)
+
+        widget = self.add_plane_widget(
+            callback=callback,
+            bounds=volume.bounds,
+            factor=1.25,
+            normal=normal,
+            color=widget_color,
+            tubing=tubing,
+            assign_to_axis=assign_to_axis,
+            origin_translation=origin_translation,
+            outline_translation=outline_translation,
+            implicit=implicit,
+            origin=origin,
+            normal_rotation=normal_rotation,
+            interaction_event=interaction_event,
+        )
+        widget.GetPlane(plane)
+        _widget.append(widget)
+
+        volume.mapper.AddClippingPlane(plane)
 
     def add_mesh_slice(
         self,

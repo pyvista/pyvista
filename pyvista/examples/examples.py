@@ -412,3 +412,65 @@ def load_nut():
 
     """
     return pyvista.read(os.path.join(dir_path, 'nut.ply'))
+
+
+def _cart2sphe(x, y, z):
+    """Convert 3D Cartesian coordinates to spherical coordinates.
+
+    Parameters
+    ----------
+    x, y, z : np.ndarray
+        Coordinates.
+
+    """
+    xy2 = x**2 + y**2
+    r = np.sqrt(xy2 + z**2)
+    theta = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
+    phi = np.arctan2(y, x)  # the azimuth angle in radian angles
+    phi[phi < 0] += np.pi * 2  # np.arctan2 returns the angle in the range [-pi, pi]
+
+    return r, theta, phi
+
+
+def load_hydrogen_orbital(n=1, l=0, m=0, norm=True):
+    """Load the hydrogen wave function for a :class:`pyvista.UniformGrid`.
+
+    Ispired by `Hydrogen Wave Function
+    <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_
+
+    Notes
+    -----
+    This examples requires `sympy <https://www.sympy.org/>`_.
+    """
+    try:
+        from sympy import lambdify
+        from sympy.abc import phi, r, theta
+        from sympy.physics.hydrogen import Psi_nlm
+    except ImportError:
+        raise ImportError('Install sympy to run this example.') from None
+
+    if n < 1 or n > 5:
+        raise ValueError('`n` must be between 1 and 5')
+    if l not in range(n):
+        raise ValueError(f'`l` must be one of: {list(range(n))}')
+    if m not in range(l + 1):
+        raise ValueError(f'`l` must be one of: {list(range(l+1))}')
+
+    psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta), 'numpy')
+
+    if n == 1:
+        l, n = 1.5 * n**2 + 1.0, 200
+    else:
+        l, n = 1.5 * n**2 + 10.0, 200
+
+    n = 100
+    s = (l * 2) / (n - 1)
+    grid = pyvista.UniformGrid(dimensions=(n, n, n), spacing=(s, s, s), origin=(-l, -l, -l))
+
+    r0, theta, phi = _cart2sphe(grid.x, grid.y, grid.z)
+    wfc = psi(r0, phi, theta).reshape(grid.dimensions)
+
+    grid['norm_hwf'] = np.abs(wfc.ravel())
+    grid['hwf'] = wfc.ravel()
+
+    return grid
