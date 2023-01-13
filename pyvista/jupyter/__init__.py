@@ -1,4 +1,5 @@
 """Jupyter notebook plotting module."""
+import asyncio
 import warnings
 
 from turtle import back
@@ -190,9 +191,8 @@ def set_jupyter_backend(backend):
 
         # Returns a future that finalizes when server is ready - should be awaited
         return launch_server(JUPYTER_SERVER_NAME)
-    # Return an awaitable object to prevent errors when accidentally awaiting
+    # Return an awaitable future to prevent errors when accidentally awaiting
     # other backends
-    async def _():
-        pass
-
-    return _()
+    future = asyncio.Future()
+    future.set_result(True)
+    return future
