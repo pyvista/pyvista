@@ -282,7 +282,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
     Other Parameters
     ----------------
     _wrap : vtk.vtkBrush, optional
-        Wrap an existing VTK Brush instance (no wrapping when ``None``).
+        Wrap an existing VTK Brush instance. Defaults to ``None`` (no wrapping).
 
     """
 
