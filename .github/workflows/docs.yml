@@ -44,7 +44,7 @@ jobs:
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
         with:
-          packages: pandoc git-restore-mtime
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
       - name: Install VTK with OSMesa bundled
