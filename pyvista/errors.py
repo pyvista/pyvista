@@ -15,3 +15,11 @@ class AmbiguousDataError(ValueError):
     def __init__(self, message="Multiple data available."):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
+
+
+class PyVistaPipelineError(RuntimeError):
+    """Exception when a VTK pipeline runs into an issue."""
+
+    def __init__(self, message="VTK pipeline issue detected by PyVista."):
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)

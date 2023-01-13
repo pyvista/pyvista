@@ -475,7 +475,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                         gf.Update()
                         dataset = gf.GetOutput()
                 else:
-                    dataset = mapper.GetInput()
+                    dataset = mapper.GetInputAsDataSet()
 
                 if dataset and not isinstance(dataset, (_vtk.vtkPolyData, _vtk.vtkImageData)):
                     # All data must be PolyData surfaces

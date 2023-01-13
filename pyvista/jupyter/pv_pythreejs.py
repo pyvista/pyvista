@@ -587,7 +587,7 @@ def meshes_from_actors(actors, focal_point):
         elif not hasattr(mapper, 'GetInputAsDataSet'):
             continue
         else:
-            dataset = mapper.GetInputAsDataSet()
+            dataset = pv.wrap(mapper.GetInputAsDataSet())
             mesh = dataset_to_mesh(
                 dataset,
                 actor.GetProperty(),
