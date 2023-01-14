@@ -31,6 +31,7 @@ variable spacing in the three coordinate directions.
 
 .. jupyter-execute::
    :hide-code:
+   :stderr:
 
    from pyvista import demos
    demos.plot_datasets('RectilinearGrid')
@@ -41,6 +42,7 @@ uniform spacing in the three coordinate directions.
 
 .. jupyter-execute::
    :hide-code:
+   :stderr:
 
    from pyvista import demos
    demos.plot_datasets('UniformGrid')

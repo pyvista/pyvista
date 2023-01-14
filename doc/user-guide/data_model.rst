@@ -83,6 +83,7 @@ shapes. The most important dataset classes are shown below:
 
 .. jupyter-execute::
    :hide-code:
+   :stderr:
 
    from pyvista import demos
    demos.plot_datasets()
