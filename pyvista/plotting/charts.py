@@ -2186,7 +2186,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     color : color_like, default: "b"
         Color of the area drawn in this plot. Any color parsable by :class:`pyvista.Color` is allowed.
 
-    label : str, default: ``""``
+    label : str, default: ""
         Label of this plot, as shown in the chart's legend.
 
     Examples
