@@ -1,0 +1,30 @@
+name: Feature Request
+description: Request that a feature be added to PyVista
+labels: ["feature-request"]
+body: 
+  - type: markdown
+    attributes:
+      value: |
+          Thanks for taking the time to open this issue to help improve PyVista!
+  - type: textarea
+    id: feature-details
+    attributes:
+      label: Describe the feature you would like to be added.
+      description: |
+        Provide a clear and concise description of what you would like added.
+      placeholder: Tell us what you see!
+      value: "I have an idea for a new feature!"
+    validations:
+      required: true
+  - type: textarea
+    id: VTK-Links
+    attributes:
+      label: Links to VTK Documentation, Examples, or Class Definitions.
+      description: If you are requesting that a feature from VTK be wrapped or exposed, please include the relevant links below.
+  - type: textarea
+    id: pseudocode-and-screenshots
+    attributes:
+      label: Pseudocode or Screenshots
+      description: Feel free to include pseudocode or screenshots of the requested outcome.
+      placeholder: Provide some code for us to reproduce the bug!
+      value: "```python\nInsert code here\n```\nOr drag your screenshot here!"

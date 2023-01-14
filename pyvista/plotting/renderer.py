@@ -2,7 +2,8 @@
 
 import collections.abc
 from functools import partial
-from typing import Sequence
+from typing import Sequence, cast
+import warnings
 from weakref import proxy
 
 import numpy as np
@@ -10,10 +11,15 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
+from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
+from .._typing import BoundsLike
+from .actor import Actor
 from .camera import Camera
 from .charts import Charts
-from .colors import Color
+from .colors import Color, get_cycler
+from .helpers import view_vectors
+from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 
 ACTOR_LOC_MAP = [
@@ -202,7 +208,7 @@ class BaseRenderer:
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
-        self.parent = parent  # the plotter
+        self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
@@ -219,6 +225,7 @@ class BaseRenderer:
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
+        self._render_passes = RenderPasses(self)
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -229,6 +236,58 @@ class BaseRenderer:
         self._border_actor = None
         if border:
             self.add_border(border_color, border_width)
+
+        self.set_color_cycler(self._theme.color_cycler)
+
+    def set_color_cycler(self, color_cycler):
+        """Set or reset this renderer's color cycler.
+
+        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        call to set the default color of the dataset being plotted.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler on this
+        renderer.
+
+        Parameters
+        ----------
+        color_cycler : str, cycler.Cycler, list(ColorLike)
+            The colors to cycle through.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.renderer.set_color_cycler(['red', 'green', 'blue'])
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        cycler = get_cycler(color_cycler)
+        if cycler is not None:
+            # Color cycler - call object to generate `cycle` instance
+            self._color_cycle = cycler()
+        else:
+            self._color_cycle = None
+
+    @property
+    def next_color(self):
+        """Return next color from this renderer's color cycler."""
+        if self._color_cycle is None:
+            return self._theme.color
+        return next(self._color_cycle)['color']
 
     @property
     def _charts(self):
@@ -320,7 +379,7 @@ class BaseRenderer:
         self.camera_set = True
 
     @property
-    def bounds(self):
+    def bounds(self) -> BoundsLike:
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -349,7 +408,7 @@ class BaseRenderer:
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return the_bounds.tolist()
+        return cast(BoundsLike, tuple(the_bounds))
 
     @property
     def length(self):
@@ -399,12 +458,12 @@ class BaseRenderer:
 
         Parameters
         ----------
-        number_of_peels : int
+        number_of_peels : int, optional
             The maximum number of peeling layers. Initial value is 4
             and is set in the ``pyvista.global_theme``. A special value of
             0 means no maximum limit.  It has to be a positive value.
 
-        occlusion_ratio : float
+        occlusion_ratio : float, optional
             The threshold under which the depth peeling algorithm
             stops to iterate over peel layers. This is the ratio of
             the number of pixels that have been touched by the last
@@ -436,35 +495,50 @@ class BaseRenderer:
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self):
-        """Enable anti-aliasing using FXAA.
+    def enable_anti_aliasing(self, aa_type='fxaa'):
+        """Enable anti-aliasing.
 
-        This tends to make edges appear softer and less pixelated.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.enable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
+        Parameters
+        ----------
+        aa_type : str, default: 'fxaa'
+            Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
+        if not isinstance(aa_type, str):
+            raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
+        aa_type = aa_type.lower()
+
+        if aa_type == 'fxaa':
+            if uses_egl():  # pragma: no cover
+                # only display the warning when not building documentation
+                if not pyvista.BUILDING_GALLERY:
+                    warnings.warn(
+                        "VTK compiled with OSMesa does not properly support "
+                        "FXAA anti-aliasing and SSAA will be used instead."
+                    )
+                self._render_passes.enable_ssaa_pass()
+                return
+            self._enable_fxaa()
+
+        elif aa_type == 'ssaa':
+            self._render_passes.enable_ssaa_pass()
+
+        else:
+            raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
+
+    def disable_anti_aliasing(self):
+        """Disable all anti-aliasing."""
+        self._render_passes.disable_ssaa_pass()
+        self.SetUseFXAA(False)
+        self.Modified()
+
+    def _enable_fxaa(self):
+        """Enable FXAA anti-aliasing."""
         self.SetUseFXAA(True)
         self.Modified()
 
-    def disable_anti_aliasing(self):
-        """Disable anti-aliasing.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.disable_anti_aliasing()
-        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.show()
-
-        """
+    def _disable_fxaa(self):
+        """Disable FXAA anti-aliasing."""
         self.SetUseFXAA(False)
         self.Modified()
 
@@ -473,7 +547,7 @@ class BaseRenderer:
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Color of the border.
 
         width : float, optional
@@ -607,7 +681,14 @@ class BaseRenderer:
         return self._actors
 
     def add_actor(
-        self, uinput, reset_camera=False, name=None, culling=False, pickable=True, render=True
+        self,
+        uinput,
+        reset_camera=False,
+        name=None,
+        culling=False,
+        pickable=True,
+        render=True,
+        remove_existing_actor=True,
     ):
         """Add an actor to render window.
 
@@ -639,19 +720,24 @@ class BaseRenderer:
             If the render window is being shown, trigger a render
             after adding the actor.
 
+        remove_existing_actor : bool, optional
+            Removes any existing actor if the named actor ``name`` is already
+            present.
+
         Returns
         -------
-        actor : vtk.vtkActor
+        actor : vtk.vtkActor or pyvista.Actor
             The actor.
 
         actor_properties : vtk.Properties
             Actor properties.
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False, render=False)
+        if name and remove_existing_actor:
+            rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
-            actor = _vtk.vtkActor()
+            actor = Actor()
             actor.SetMapper(uinput)
         else:
             actor = uinput
@@ -691,7 +777,6 @@ class BaseRenderer:
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
-        self.ResetCameraClippingRange()
         self.Modified()
 
         prop = None
@@ -715,13 +800,13 @@ class BaseRenderer:
 
         Parameters
         ----------
-        x_color : color_like, optional
+        x_color : ColorLike, optional
             The color of the x axes arrow.
 
-        y_color : color_like, optional
+        y_color : ColorLike, optional
             The color of the y axes arrow.
 
-        z_color : color_like, optional
+        z_color : ColorLike, optional
             The color of the z axes arrow.
 
         xlabel : str, optional
@@ -787,7 +872,7 @@ class BaseRenderer:
             :attr:`pyvista.global_theme.interactive
             <pyvista.themes.DefaultTheme.interactive>`.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the actor.  This only applies if ``actor`` is
             a :class:`pyvista.DataSet`.
 
@@ -815,12 +900,10 @@ class BaseRenderer:
             mesh = actor.copy()
             mesh.clear_data()
             mapper.SetInputData(mesh)
-            actor = _vtk.vtkActor()
-            actor.SetMapper(mapper)
-            prop = actor.GetProperty()
+            actor = pyvista.Actor(mapper=mapper)
             if color is not None:
-                prop.SetColor(Color(color).float_rgb)
-            prop.SetOpacity(opacity)
+                actor.prop.color = color
+            actor.prop.opacity = opacity
         if hasattr(self, 'axes_widget'):
             # Delete the old one
             self.axes_widget.EnabledOff()
@@ -850,10 +933,11 @@ class BaseRenderer:
         ylabel='Y',
         zlabel='Z',
         labels_off=False,
-        marker_args=None,
         box=None,
         box_args=None,
         viewport=(0, 0, 0.2, 0.2),
+        marker_args=None,
+        **kwargs,
     ):
         """Add an interactive axes widget in the bottom left corner.
 
@@ -865,16 +949,16 @@ class BaseRenderer:
         line_width : int, optional
             The width of the marker lines.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Color of the labels.
 
-        x_color : color_like, optional
+        x_color : ColorLike, optional
             Color used for the x axis arrow.  Defaults to theme axes parameters.
 
-        y_color : color_like, optional
+        y_color : ColorLike, optional
             Color used for the y axis arrow.  Defaults to theme axes parameters.
 
-        z_color : color_like, optional
+        z_color : ColorLike, optional
             Color used for the z axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, optional
@@ -889,10 +973,6 @@ class BaseRenderer:
         labels_off : bool, optional
             Enable or disable the text labels for the axes.
 
-        marker_args : dict, optional
-            Parameters for the orientation marker widget. See the parameters of
-            :func:`pyvista.create_axes_marker`.
-
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
@@ -904,6 +984,18 @@ class BaseRenderer:
 
         viewport : tuple, optional
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        marker_args : dict, optional
+            Marker arguments.
+
+            .. deprecated:: 0.37.0
+               Use ``**kwargs`` for passing parameters for the orientation
+               marker widget. See the parameters of
+               :func:`pyvista.create_axes_marker`.
+
+        **kwargs : dict, optional
+            Used for passing parameters for the orientation marker
+            widget. See the parameters of :func:`pyvista.create_axes_marker`.
 
         Returns
         -------
@@ -932,11 +1024,25 @@ class BaseRenderer:
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
-        >>> marker_args = dict(cone_radius=0.6, shaft_length=0.7, tip_length=0.3, ambient=0.5, label_size=(0.4, 0.16))
-        >>> _ = pl.add_axes(line_width=5, marker_args=marker_args)
+        >>> _ = pl.add_axes(
+        ...     line_width=5,
+        ...     cone_radius=0.6,
+        ...     shaft_length=0.7,
+        ...     tip_length=0.3,
+        ...     ambient=0.5,
+        ...     label_size=(0.4, 0.16)
+        ... )
         >>> pl.show()
 
         """
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
+        if marker_args is not None:  # pragma: no cover
+            warnings.warn(
+                "Use of `marker_args` is deprecated. Use `**kwargs` instead.",
+                PyVistaDeprecationWarning,
+            )
+            kwargs.update(marker_args)
+
         if interactive is None:
             interactive = self._theme.interactive
         if hasattr(self, 'axes_widget'):
@@ -961,8 +1067,6 @@ class BaseRenderer:
                 **box_args,
             )
         else:
-            if marker_args is None:
-                marker_args = {}
             self.axes_actor = create_axes_marker(
                 label_color=color,
                 line_width=line_width,
@@ -973,7 +1077,7 @@ class BaseRenderer:
                 ylabel=ylabel,
                 zlabel=zlabel,
                 labels_off=labels_off,
-                **marker_args,
+                **kwargs,
             )
         axes_widget = self.add_orientation_widget(
             self.axes_actor, interactive=interactive, color=None
@@ -1033,6 +1137,7 @@ class BaseRenderer:
         self,
         mesh=None,
         bounds=None,
+        axes_ranges=None,
         show_xaxis=True,
         show_yaxis=True,
         show_zaxis=True,
@@ -1064,12 +1169,20 @@ class BaseRenderer:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock, optional
             Input mesh to draw bounds axes around.
 
         bounds : list or tuple, optional
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
+
+        axes_ranges : list, tuple, or numpy.ndarray, optional
+            When set, these values override the values that are shown on the
+            axes. This can be useful when plotting scaled datasets or if you wish
+            to manually display different values. These values must be in the
+            form:
+
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
             Makes x axis visible.  Default ``True``.
@@ -1093,15 +1206,21 @@ class BaseRenderer:
             Bolds axis labels and numbers.  Default ``True``.
 
         font_size : float, optional
-            Sets the size of the label font.  Defaults to 16.
+            Sets the size of the label font. Defaults to
+            :attr:`pyvista.global_theme.font.size
+            <pyvista.themes._Font.size>`.
 
         font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
-            or ``'arial'``.
+            or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
+            <pyvista.themes._Font.family>`.
 
-        color : color_like, optional
-            Color of all labels and axis titles.  Default white.
-            Either a string, rgb list, or hex color string.  For
+        color : ColorLike, optional
+            Color of all labels and axis titles.  Defaults to
+            :attr:`pyvista.global_theme.font.color
+            <pyvista.themes._Font.color>`.
+
+            Either a string, RGB list, or hex color string.  For
             example:
 
             * ``color='white'``
@@ -1131,12 +1250,11 @@ class BaseRenderer:
             ``'frontface'``) of the axes actor.
 
         location : str, optional
-            Set how the axes are drawn: either static (``'all'``),
-            closest triad (``front``), furthest triad (``'back'``),
-            static closest to the origin (``'origin'``), or outer
-            edges (``'outer'``) in relation to the camera
-            position. Options include: ``'all', 'front', 'back',
-            'origin', 'outer'``.
+            Set how the axes are drawn: either static (``'all'``), closest
+            triad (``'front'``, ``'closest'``, ``'default'``), furthest triad
+            (``'back'``, ``'furthest'``), static closest to the origin
+            (``'origin'``), or outer edges (``'outer'``) in relation to the
+            camera position.
 
         ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
@@ -1148,7 +1266,7 @@ class BaseRenderer:
             still retaining all edges of the boundary.
 
         corner_factor : float, optional
-            If ``all_edges````, this is the factor along each axis to
+            If ``all_edges``, this is the factor along each axis to
             draw the default box. Default is 0.5 to show the full box.
 
         fmt : str, optional
@@ -1178,8 +1296,11 @@ class BaseRenderer:
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(grid='front', location='outer',
-        ...                             all_edges=True)
+        >>> actor = plotter.show_bounds(
+        ...     grid='front',
+        ...     location='outer',
+        ...     all_edges=True,
+        ... )
         >>> plotter.show()
 
         """
@@ -1194,9 +1315,14 @@ class BaseRenderer:
 
         color = Color(color, default_color=self._theme.font.color)
 
-        # Use the bounds of all data in the rendering window
         if mesh is None and bounds is None:
-            bounds = self.bounds
+            # Use the bounds of all data in the rendering window
+            bounds = np.array(self.bounds)
+        elif bounds is None:
+            # otherwise, use the bounds of the mesh (if available)
+            bounds = np.array(mesh.bounds)
+        else:
+            bounds = np.asanyarray(bounds, dtype=float)
 
         # create actor
         cube_axes_actor = _vtk.vtkCubeAxesActor()
@@ -1230,7 +1356,12 @@ class BaseRenderer:
             elif ticks in ('both'):
                 cube_axes_actor.SetTickLocationToBoth()
             else:
-                raise ValueError(f'Value of ticks ({ticks}) not understood.')
+                raise ValueError(
+                    f'Value of ticks ("{ticks}") should be either "inside", "outside", '
+                    'or "both".'
+                )
+        elif ticks is not None:
+            raise TypeError('ticks must be a string')
 
         if isinstance(location, str):
             location = location.lower()
@@ -1245,11 +1376,13 @@ class BaseRenderer:
             elif location in ('furthest', 'back'):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
-                raise ValueError(f'Value of location ({location}) not understood.')
+                raise ValueError(
+                    f'Value of location ("{location}") should be either "all", "origin",'
+                    ' "outer", "default", "closest", "front", "furthest", or "back".'
+                )
+        elif location is not None:
+            raise TypeError('location must be a string')
 
-        # set bounds
-        if bounds is None:
-            bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
                 cushion = (
@@ -1267,6 +1400,26 @@ class BaseRenderer:
         else:
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
+
+        # set axes ranges if input
+        if axes_ranges is not None:
+            if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
+                axes_ranges = np.asanyarray(axes_ranges)
+            else:
+                raise TypeError('Input axes_ranges must be a numeric sequence.')
+
+            if not np.issubdtype(axes_ranges.dtype, np.number):
+                raise TypeError('All of the elements of axes_ranges must be numbers.')
+
+            # set the axes ranges
+            if axes_ranges.shape != (6,):
+                raise ValueError(
+                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
+                )
+
+            cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
+            cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
+            cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
 
         # show or hide axes
         cube_axes_actor.SetXAxisVisibility(show_xaxis)
@@ -1317,16 +1470,25 @@ class BaseRenderer:
 
         # set font
         font_family = parse_font_family(font_family)
-        for i in range(3):
-            cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetTitleTextProperty(i).SetColor(color.float_rgb)
-            cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
+        props = [
+            cube_axes_actor.GetTitleTextProperty(0),
+            cube_axes_actor.GetTitleTextProperty(1),
+            cube_axes_actor.GetTitleTextProperty(2),
+            cube_axes_actor.GetLabelTextProperty(0),
+            cube_axes_actor.GetLabelTextProperty(1),
+            cube_axes_actor.GetLabelTextProperty(2),
+        ]
 
-            cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetLabelTextProperty(i).SetColor(color.float_rgb)
-            cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
+        for prop in props:
+            prop.SetColor(color.float_rgb)
+            prop.SetFontFamily(font_family)
+            prop.SetBold(bold)
+
+        # Note: font_size does nothing as a property, use SetScreenSize instead
+        # Here, we normalize relative to 12 to give the user an illusion of
+        # just changing the font size relative to a font size of 12. 10 is used
+        # here since it's the default "screen size".
+        cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
@@ -1361,7 +1523,7 @@ class BaseRenderer:
         vtk.vtkAxesActor
             Bounds actor.
 
-         Examples
+        Examples
         --------
         >>> import pyvista
         >>> from pyvista import examples
@@ -1418,7 +1580,7 @@ class BaseRenderer:
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Color of all labels and axis titles.  Default white.
             Either a string, rgb sequence, or hex color string.  For
             example:
@@ -1448,7 +1610,7 @@ class BaseRenderer:
         reset_camera : bool, optional
             Reset camera position when ``True`` to include all actors.
 
-        outline : bool
+        outline : bool, default: True
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
@@ -1546,7 +1708,7 @@ class BaseRenderer:
         j_resolution : int, optional
             Number of points on the plane in the j direction.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Color of all labels and axis titles.  Default gray.
             Either a string, rgb list, or hex color string.
 
@@ -1568,7 +1730,7 @@ class BaseRenderer:
             Enable or disable view direction lighting.  Default
             ``False``.
 
-        edge_color : color_like, optional
+        edge_color : ColorLike, optional
             Color of of the edges of the mesh.
 
         reset_camera : bool, optional
@@ -1787,15 +1949,21 @@ class BaseRenderer:
         self.RemoveAllLights()
         self._lights.clear()
 
-    def clear(self):
-        """Remove all actors and properties."""
+    def clear_actors(self):
+        """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
                 try:
                     self.remove_actor(actor, reset_camera=False, render=False)
                 except KeyError:
                     pass
+            self.Modified()
 
+    def clear(self):
+        """Remove all actors and properties."""
+        self.clear_actors()
+        if self.__charts is not None:
+            self._charts.deep_clean()
         self.remove_all_lights()
         self.RemoveAllViewProps()
         self.Modified()
@@ -1863,13 +2031,17 @@ class BaseRenderer:
         self.camera_set = True
         self.Modified()
 
-    def set_viewup(self, vector):
+    def set_viewup(self, vector, reset=True):
         """Set camera viewup vector.
 
         Parameters
         ----------
         vector : sequence
             New 3 value camera viewup vector.
+
+        reset : bool, optional
+            Whether to reset the camera after setting the camera
+            position.
 
         Examples
         --------
@@ -1885,7 +2057,11 @@ class BaseRenderer:
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
+
         self.camera.up = vector
+        if reset:
+            self.reset_camera()
+
         self.camera_set = True
         self.Modified()
 
@@ -2044,7 +2220,10 @@ class BaseRenderer:
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        try:
+            self.parent.scalar_bars._remove_mapper_from_plotter(actor)
+        except (AttributeError, ReferenceError):
+            pass
         self.RemoveActor(actor)
 
         if name is None:
@@ -2122,7 +2301,7 @@ class BaseRenderer:
 
         Parameters
         ----------
-        negative : bool
+        negative : bool, default: False
             View from the opposite direction.
 
         Returns
@@ -2176,9 +2355,9 @@ class BaseRenderer:
 
         Parameters
         ----------
-        render : bool
+        render : bool, default: True
             Trigger a render after resetting the camera.
-        bounds : iterable(int)
+        bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
@@ -2199,6 +2378,9 @@ class BaseRenderer:
             self.ResetCamera(*bounds)
         else:
             self.ResetCamera()
+
+        self.reset_camera_clipping_range()
+
         if render:
             self.parent.render()
         self.Modified()
@@ -2283,11 +2465,7 @@ class BaseRenderer:
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, 1])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xy', negative=negative))
 
     def view_yx(self, negative=False):
         """View the YX plane.
@@ -2310,11 +2488,7 @@ class BaseRenderer:
         >>> pl.show()
 
         """
-        vec = np.array([0, 0, -1])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yx', negative=negative))
 
     def view_xz(self, negative=False):
         """View the XZ plane.
@@ -2337,11 +2511,7 @@ class BaseRenderer:
         >>> pl.show()
 
         """
-        vec = np.array([0, -1, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('xz', negative=negative))
 
     def view_zx(self, negative=False):
         """View the ZX plane.
@@ -2364,11 +2534,7 @@ class BaseRenderer:
         >>> pl.show()
 
         """
-        vec = np.array([0, 1, 0])
-        viewup = np.array([1, 0, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zx', negative=negative))
 
     def view_yz(self, negative=False):
         """View the YZ plane.
@@ -2391,11 +2557,7 @@ class BaseRenderer:
         >>> pl.show()
 
         """
-        vec = np.array([1, 0, 0])
-        viewup = np.array([0, 0, 1])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('yz', negative=negative))
 
     def view_zy(self, negative=False):
         """View the ZY plane.
@@ -2418,11 +2580,7 @@ class BaseRenderer:
         >>> pl.show()
 
         """
-        vec = np.array([-1, 0, 0])
-        viewup = np.array([0, 1, 0])
-        if negative:
-            vec *= -1
-        self.view_vector(vec, viewup)
+        self.view_vector(*view_vectors('zy', negative=negative))
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
@@ -2431,6 +2589,99 @@ class BaseRenderer:
     def enable(self):
         """Enable this renderer's camera to be interactive."""
         self.SetInteractive(1)
+
+    def add_blurring(self):
+        """Add blurring.
+
+        This can be added several times to increase the degree of blurring.
+
+        Examples
+        --------
+        Add two blurring passes to the plotter and show it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.add_blurring()
+        >>> pl.add_blurring()
+        >>> pl.show()
+
+        See :ref:`blur_example` for a full example using this method.
+
+        """
+        self._render_passes.add_blur_pass()
+
+    def remove_blurring(self):
+        """Remove a single blurring pass.
+
+        You will need to run this multiple times to remove all blurring passes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.add_blurring()
+        >>> pl.remove_blurring()
+        >>> pl.show()
+
+        """
+        self._render_passes.remove_blur_pass()
+
+    def enable_depth_of_field(self, automatic_focal_distance=True):
+        """Enable depth of field plotting.
+
+        Parameters
+        ----------
+        automatic_focal_distance : bool, optional
+            Use automatic focal distance calculation. When enabled, the center
+            of the viewport will always be in focus regardless of where the
+            focal point is. Default ``True``.
+
+        Examples
+        --------
+        Create five spheres and demonstrate the effect of depth of field.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.background_color = "w"
+        >>> for i in range(5):
+        ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
+        ...     color = [0, 255 - i*20, 30 + i*50]
+        ...     _ = pl.add_mesh(
+        ...         mesh,
+        ...         show_edges=False,
+        ...         pbr=True,
+        ...         metallic=1.0,
+        ...         color=color
+        ...     )
+        >>> pl.camera.zoom(1.8)
+        >>> pl.camera_position = [
+        ...     (4.74, 0.959, 0.525),
+        ...     (0.363, 0.3116, 0.132),
+        ...     (-0.088, -0.0075, 0.996),
+        ... ]
+        >>> pl.enable_depth_of_field()
+        >>> pl.show()
+
+        See :ref:`depth_of_field_example` for a full example using this method.
+
+        """
+        self._render_passes.enable_depth_of_field_pass()
+
+    def disable_depth_of_field(self):
+        """Disable depth of field plotting.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl.enable_depth_of_field()
+        >>> pl.disable_depth_of_field()
+
+        """
+        self._render_passes.disable_depth_of_field_pass()
 
     def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL).
@@ -2447,20 +2698,7 @@ class BaseRenderer:
         >>> _ = pl.enable_eye_dome_lighting()
 
         """
-        if hasattr(self, 'edl_pass'):
-            return self
-        # create the basic VTK render steps
-        basic_passes = _vtk.vtkRenderStepsPass()
-        # blur the resulting image
-        # The blur delegates rendering the unblured image to the basic_passes
-        self.edl_pass = _vtk.vtkEDLShading()
-        self.edl_pass.SetDelegatePass(basic_passes)
-
-        # tell the renderer to use our render pass pipeline
-        self.glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
-        self.glrenderer.SetPass(self.edl_pass)
-        self.Modified()
-        return self.glrenderer
+        self._render_passes.enable_edl_pass()
 
     def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL).
@@ -2472,12 +2710,7 @@ class BaseRenderer:
         >>> pl.disable_eye_dome_lighting()
 
         """
-        if not hasattr(self, 'edl_pass'):
-            return
-        self.SetPass(None)
-        self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        del self.edl_pass
-        self.Modified()
+        self._render_passes.disable_edl_pass()
 
     def enable_shadows(self):
         """Enable shadows.
@@ -2510,24 +2743,7 @@ class BaseRenderer:
         >>> pl.show()
 
         """
-        if self._shadow_pass is not None:
-            # shadows are already enabled for this renderer
-            return
-
-        shadows = _vtk.vtkShadowMapPass()
-
-        passes = _vtk.vtkRenderPassCollection()
-        passes.AddItem(shadows.GetShadowMapBakerPass())
-        passes.AddItem(shadows)
-
-        seq = _vtk.vtkSequencePass()
-        seq.SetPasses(passes)
-
-        # Tell the renderer to use our render pass pipeline
-        self._shadow_pass = _vtk.vtkCameraPass()
-        self._shadow_pass.SetDelegatePass(seq)
-        self.SetPass(self._shadow_pass)
-        self.Modified()
+        self._render_passes.enable_shadow_pass()
 
     def disable_shadows(self):
         """Disable shadows.
@@ -2539,15 +2755,58 @@ class BaseRenderer:
         >>> pl.disable_shadows()
 
         """
-        if self._shadow_pass is None:
-            # shadows are already disabled
-            return
+        self._render_passes.disable_shadow_pass()
 
-        self.SetPass(None)
-        if hasattr(self.parent, 'ren_win'):
-            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
-        self._shadow_pass = None
-        self.Modified()
+    def enable_ssao(self, radius=0.5, bias=0.005, kernel_size=256, blur=True):
+        """Enable surface space ambient occlusion (SSAO).
+
+        SSAO can approximate shadows more efficiently than ray-tracing
+        and produce similar results. Use this when you wish to plot the
+        occlusion effect that nearby meshes have on each other by blocking
+        nearby light sources.
+
+        See `Kitware: Screen-Space Ambient Occlusion
+        <https://www.kitware.com/ssao/>`_ for more details
+
+        Parameters
+        ----------
+        radius : float, default: 0.5
+            Neighbor pixels considered when computing the occlusion.
+
+        bias : float, default 0.005
+            Tolerance factor used when comparing pixel depth.
+
+        kernel_size : int, default: 256
+            Number of samples used. This controls the quality where a higher
+            number increases the quality at the expense of computation time.
+
+        blur : bool, default: True
+            Controls if occlusion buffer should be blurred before combining it
+            with the color buffer.
+
+        Examples
+        --------
+        Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
+        nearby each other and plot it without SSAO.
+
+        >>> import pyvista as pv
+        >>> ugrid = pv.UniformGrid(dimensions=(3, 2, 2)).to_tetrahedra(12)
+        >>> exploded = ugrid.explode()
+        >>> exploded.plot()
+
+        Enable SSAO with the default parameters.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(exploded)
+        >>> pl.enable_ssao()
+        >>> pl.show()
+
+        """
+        self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
+
+    def disable_ssao(self):
+        """Disable surface space ambient occlusion (SSAO)."""
+        self._render_passes.disable_ssao_pass()
 
     def get_pick_position(self):
         """Get the pick position/area as ``x0, y0, x1, y1``.
@@ -2569,7 +2828,7 @@ class BaseRenderer:
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Defaults
             to theme default.  For example:
 
@@ -2578,7 +2837,7 @@ class BaseRenderer:
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : color_like, optional
+        top : ColorLike, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in
             ``top`` will be the color at the top of the renderer.
@@ -2601,31 +2860,77 @@ class BaseRenderer:
 
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
         if use_gradient:
-            self.GradientBackgroundOn()
+            self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
         else:
-            self.GradientBackgroundOff()
+            self.SetGradientBackground(False)
         self.Modified()
 
-    def set_environment_texture(self, texture):
+    def set_environment_texture(self, texture, is_srgb=False):
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
         it is not a cubemap, the texture is supposed to represent an
         equirectangular projection. If used with raytracing backends,
         the texture must be an equirectangular projection and must be
-        constructed with a valid vtkImageData. Warning, this texture
-        must be expressed in linear color space. If the texture is in
-        sRGB color space, set the color flag on the texture or set the
-        argument isSRGB to true.
+        constructed with a valid ``vtk.vtkImageData``.
 
         Parameters
         ----------
         texture : vtk.vtkTexture
             Texture.
+
+        is_srgb : bool, optional
+            If the texture is in sRGB color space, set the color flag on the
+            texture or set this parameter to ``True``. Textures are assumed
+            to be in linear color space by default.
+
+        Examples
+        --------
+        Add a skybox cubemap as an environment texture and show that the
+        lighting from the texture is mapped on to a sphere dataset. Note how
+        even when disabling the default lightkit, the scene lighting will still
+        be mapped onto the actor.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting=None)
+        >>> cubemap = examples.download_sky_box_cube_map()
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
+        >>> pl.set_environment_texture(cubemap)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
         """
+        # cube_map textures cannot use spherical harmonics
+        if texture.cube_map:
+            self.AutomaticLightCreationOff()
+            # disable spherical harmonics was added in 9.1.0
+            if hasattr(self, 'UseSphericalHarmonicsOff'):
+                self.UseSphericalHarmonicsOff()
+
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture)
+        self.SetEnvironmentTexture(texture, is_srgb)
+        self.Modified()
+
+    def remove_environment_texture(self):
+        """Remove the environment texture.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(lighting=None)
+        >>> cubemap = examples.download_sky_box_cube_map()
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
+        >>> pl.set_environment_texture(cubemap)
+        >>> pl.remove_environment_texture()
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        """
+        self.UseImageBasedLightingOff()
+        self.SetEnvironmentTexture(None)
         self.Modified()
 
     def close(self):
@@ -2639,6 +2944,13 @@ class BaseRenderer:
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
+
+    def on_plotter_render(self):
+        """Notify renderer components of explicit plotter render call."""
+        if self.__charts is not None:
+            for chart in self.__charts:
+                # Notify ChartMPLs to redraw themselves when plotter.render() is called
+                chart._render_event(plotter_render=True)
 
     def deep_clean(self, render=False):
         """Clean the renderer of the memory.
@@ -2660,7 +2972,9 @@ class BaseRenderer:
             self.disable_shadows()
         if self.__charts is not None:
             self.__charts.deep_clean()
+            self.__charts = None
 
+        self._render_passes.deep_clean()
         self.remove_floors(render=render)
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
@@ -2764,7 +3078,7 @@ class BaseRenderer:
             color], where label is the name of the item to add, and
             color is the color of the label to add.
 
-        bcolor : color_like, optional
+        bcolor : ColorLike, optional
             Background color, either a three item 0 to 1 RGB color
             list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
@@ -2882,9 +3196,9 @@ class BaseRenderer:
             self._legend.SetPosition2(size[0], size[1])
 
         if bcolor is None:
-            self._legend.UseBackgroundOff()
+            self._legend.SetUseBackground(False)
         else:
-            self._legend.UseBackgroundOn()
+            self._legend.SetUseBackground(True)
             self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)

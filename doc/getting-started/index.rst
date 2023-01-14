@@ -1,100 +1,160 @@
 Getting Started
 ***************
 
+This guide is here to help you start creating interactive 3D plots with PyVista
+with the help of our examples and tutorials.
+
+
+.. tab-set::
+
+   .. tab-item:: JupyterLab
+
+      Here's a quick demo of PyVista running within `JupyterLab
+      <https://jupyter.org/>`_.
+
+      .. raw:: html
+
+         <video width="100%" height="auto" controls autoplay muted> <source
+           src="https://tutorial.pyvista.org/_static/pyvista_jupyterlab_demo.mp4"
+           type="video/mp4" style="margin-left: -220px; margin-right: -10.5%">
+           Your browser does not support the video tag.  </video>
+
+   .. tab-item:: IPython
+
+      Here's a quick demo of PyVista running within a terminal using `IPython
+      <https://ipython.org/>`_.
+
+      .. raw:: html
+
+         <video width="100%" height="auto" controls autoplay muted> <source
+           src="https://tutorial.pyvista.org/_static/pyvista_ipython_demo.mp4"
+           type="video/mp4"> Your browser does not support the video tag.
+           </video>
+
+
 .. toctree::
    :hidden:
 
    why
    authors
    installation
+   connections
    external_examples
-
-
-.. panels::
-    :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
-
-    Why PyVista?
-    ^^^^^^^^^^^^
-
-    Learn more about why we created PyVista as an interface to the Visualization Toolkit (VTK).
-
-    .. link-button:: why
-        :type: ref
-        :text: Why PyVista?
-        :classes: btn-outline-primary btn-block stretched-link
-
-
-    ---
-
-    Authors & Citation
-    ^^^^^^^^^^^^^^^^^^
-
-    Using PyVista in your research? Please consider citing or
-    acknowledging us.  We have a publication!
-
-    .. link-button:: authors
-        :type: ref
-        :text: Authors & Citation
-        :classes: btn-outline-primary btn-block stretched-link
-
-    ---
-    :column: col-12 p-3
-
-    See PyVista in External Efforts
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    Take a look at third party projects using PyVista
-
-    .. link-button:: external_examples
-        :type: ref
-        :text: Learn more
-        :classes: btn-outline-primary btn-block stretched-link
 
 
 Installation
 ============
+The only prerequisite for installing PyVista is Python itself. If you don’t
+have Python yet and want the simplest way to get started, we recommend you use
+the `Anaconda Distribution <https://www.anaconda.com/>`_.
 
-.. panels::
-    :card: + install-card
-    :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
+.. grid:: 2
 
-    Working with conda?
-    ^^^^^^^^^^^^^^^^^^^
+    .. grid-item-card:: Working with conda?
+       :class-title: pyvista-card-title
 
-    PyVista is available on `conda-forge <https://anaconda.org/conda-forge/pyvista>`_
+       PyVista is available on `conda-forge
+       <https://anaconda.org/conda-forge/pyvista>`_.
 
-    ++++++++++++++++++++++
+       .. code-block:: bash
 
-    .. code-block:: bash
+          conda install -c conda-forge pyvista
 
-        conda install -c conda-forge pyvista
 
-    ---
+    .. grid-item-card:: Prefer pip?
+       :columns: auto
+       :class-title: pyvista-card-title
 
-    Prefer pip?
-    ^^^^^^^^^^^
+       PyVista can be installed via pip from `PyPI
+       <https://pypi.org/project/pyvista>`__.
 
-    PyVista can be installed via pip from `PyPI <https://pypi.org/project/pyvista>`__.
+       .. code-block:: bash
 
-    ++++
+          pip install pyvista
 
-    .. code-block:: bash
 
-        pip install pyvista
+.. grid::
 
-    ---
-    :column: col-12 p-3
+   .. grid-item-card:: In-depth instructions?
+      :link: install_ref
+      :link-type: ref
+      :class-title: pyvista-card-title
 
-    In-depth instructions?
-    ^^^^^^^^^^^^^^^^^^^^^^
+      Installing a specific version? Installing from source? Check the
+      :ref:`install_ref` page.
 
-    Installing a specific version? Installing from source? Check the advanced
-    installation page.
 
-    .. link-button:: installation
-        :type: ref
-        :text: Installing PyVista
-        :classes: btn-outline-primary btn-block stretched-link
+First Steps
+===========
+We've provided a variety of resources for you to get used to PyVista's API
+through a range of examples and tutorials.
+
+
+.. grid::
+
+   .. grid-item-card:: Tutorial
+      :link: https://tutorial.pyvista.org/tutorial.html
+      :class-title: pyvista-card-title
+
+      Probably the best way for you to get used to PyVista is to visit our
+      dedicated `tutorial <https://tutorial.pyvista.org/tutorial.html>`_.
+
+..
+   This code is used in the plot in the card.
+
+.. pyvista-plot::
+   :include-source: False
+   :context:
+
+   >>> bunny_cpos = [( 0.14826, 0.275729,  0.4215911),
+   ...               (-0.01684, 0.110154, -0.0015369),
+   ...               (-0.15446, 0.939031, -0.3071841)]
+
+
+.. grid:: 2
+
+   .. grid-item-card:: Why PyVista?
+      :link: why_pyvista
+      :link-type: ref
+      :class-title: pyvista-card-title
+
+      Learn more about why we created PyVista as an interface to the
+      Visualization Toolkit (VTK).
+
+      .. code:: python
+
+         import pyvista
+         mesh = pyvista.read('bunny.stl')
+         mesh.plot()
+
+      .. pyvista-plot::
+         :include-source: False
+         :context:
+
+         from pyvista import examples
+         mesh = examples.download_bunny()
+         mesh.plot(cpos=bunny_cpos, anti_aliasing='ssao')
+
+
+   .. grid-item-card:: Authors & Citation
+      :link: authors_ref
+      :link-type: ref
+      :class-title: pyvista-card-title
+
+      Using PyVista in your research? Please consider citing or acknowledging
+      us.  We have a `JOSS Publication`_!
+
+      .. image:: ../images/user-generated/joss.png
+         :target: https://joss.theoj.org/papers/10.21105/joss.01450
+
+.. grid::
+
+   .. grid-item-card:: See PyVista in External Efforts
+      :link: external_examples
+      :link-type: ref
+      :class-title: pyvista-card-title
+
+      Take a look at third party projects using PyVista.
 
 
 Support
@@ -111,42 +171,6 @@ The project support team can be reached at `info@pyvista.org`_.
 .. _info@pyvista.org: mailto:info@pyvista.org
 
 
-Connections
-===========
-
-PyVista is a powerful tool that researchers can harness to create compelling,
-integrated visualizations of large datasets in an intuitive, Pythonic manner.
-Here are a few open-source projects that leverage PyVista:
-
-* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
-* gemgis_: Spatial data processing for geomodeling.
-* gimly_: Geophysical inversion and modeling library.
-* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
-* mne-python_: MNE: Magnetoencephalography (MEG) and Electroencephalography (EEG) in Python.
-* omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
-* pyleecan_: Electrical engineering open-source software providing a user-friendly, unified, flexible simulation framework for the multiphysic design and optimization of electrical machines and drives
-* pymapdl_: Pythonic interface to Ansys MAPDL.
-* pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix_ software.
-* pyprocar_: A Python library for electronic structure pre/post-processing.
-* tetgen_: Python Interface to Hang Si's C++ TetGen Library
-
-.. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
-.. _PVGeo: https://github.com/OpenGeoVis/PVGeo
-.. _creating compelling visualizations: https://discretize.simpeg.xyz/en/main/api/generated/discretize.mixins.vtk_mod.InterfaceVTK.html
-.. _discretize: https://discretize.simpeg.xyz/en/main/
-.. _gemgis: https://github.com/cgre-aachen/gemgis
-.. _gimly: https://github.com/gimli-org/gimli
-.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
-.. _mne-python: https://github.com/mne-tools/mne-python
-.. _omfvista: https://github.com/OpenGeoVis/omfvista
-.. _pyleecan: https://github.com/Eomys/pyleecan
-.. _pymapdl: https://github.com/pyansys/pymapdl
-.. _pymeshfix: https://github.com/pyvista/pymeshfix
-.. _pyprocar: https://github.com/romerogroup/pyprocar
-.. _tetgen: https://github.com/pyvista/tetgen
-
-
 Citing PyVista
 ==============
 
@@ -155,3 +179,5 @@ There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_!
 If you are using PyVista in your scientific research, please help our scientific
 visibility by citing our work! Head over to :ref:`citation_ref` to learn more
 about citing PyVista.
+
+.. _JOSS Publication: https://joss.theoj.org/papers/10.21105/joss.01450

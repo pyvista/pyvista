@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
 from ..utilities.helpers import vtkmatrix_from_array
-from .colors import Color, color_like
+from .colors import Color, ColorLike
 
 
 class LightType(IntEnum):
@@ -44,7 +44,7 @@ class Light(vtkLight):
         has a transformation matrix.  See also the
         :py:attr:`focal_point` property.
 
-    color : color_like, optional
+    color : ColorLike, optional
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
@@ -295,13 +295,13 @@ class Light(vtkLight):
         >>> light = pyvista.Light()
         >>> light.ambient_color = 'red'
         >>> light.ambient_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
 
         """
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, color: color_like):
+    def ambient_color(self, color: ColorLike):
         """Set the ambient color of the light."""
         self.SetAmbientColor(Color(color).float_rgb)
 
@@ -325,13 +325,13 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.diffuse_color = (0.0, 0.0, 1.0)
         >>> light.diffuse_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         """
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, color: color_like):
+    def diffuse_color(self, color: ColorLike):
         """Set the diffuse color of the light."""
         self.SetDiffuseColor(Color(color).float_rgb)
 
@@ -355,13 +355,13 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.specular_color = '#00FF00'
         >>> light.specular_color
-        Color(name='lime', hex='#00ff00ff')
+        Color(name='lime', hex='#00ff00ff', opacity=255)
 
         """
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, color: color_like):
+    def specular_color(self, color: ColorLike):
         """Set the specular color of the light."""
         self.SetSpecularColor(Color(color).float_rgb)
 
@@ -660,7 +660,7 @@ class Light(vtkLight):
         degrees then there is no angular dependence.
 
         If the light's cone angle is increased to 90 degrees or above,
-        its actor (if previousy shown) is automatically hidden.
+        its actor (if previously shown) is automatically hidden.
 
         Examples
         --------

@@ -97,7 +97,7 @@ exponent values of the light.
     grid = pv.Plane(i_size=4, j_size=4)
     plotter.add_mesh(grid, ambient=0, diffuse=0.5, specular=0.8, color='white')
 
-    # setup and show the plotter
+    # set up and show the plotter
     plotter.enable_shadows()
     plotter.set_background('darkgrey')
     plotter.show()
@@ -115,6 +115,5 @@ API reference
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Light

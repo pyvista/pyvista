@@ -1,9 +1,10 @@
 """PyVista Scalar bar module."""
+import weakref
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista import MAX_N_COLOR_BARS, _vtk
 
 from .colors import Color
 from .tools import parse_font_family
@@ -14,7 +15,7 @@ class ScalarBars:
 
     def __init__(self, plotter):
         """Initialize ScalarBars."""
-        self._plotter = plotter
+        self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
@@ -78,8 +79,20 @@ class ScalarBars:
 
         render : bool, optional
             Render upon scalar bar removal.  Set this to ``False`` to
-            stop the render window from rendering when an scalar bar
+            stop the render window from rendering when a scalar bar
             is removed.
+
+        Examples
+        --------
+        Remove a scalar bar from a plotter.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['data'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, cmap='coolwarm')
+        >>> pl.remove_scalar_bar()
+        >>> pl.show()
 
         """
         if title is None:
@@ -189,7 +202,7 @@ class ScalarBars:
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
             in one of the following formats:
@@ -264,7 +277,7 @@ class ScalarBars:
         above_label : str, optional
             String annotation for values above the scalars range.
 
-        background_color : color_like, optional
+        background_color : ColorLike, optional
             The color used for the background in RGB format.
 
         n_colors : int, optional
@@ -362,12 +375,13 @@ class ScalarBars:
 
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
-            try:
-                slot = min(self._plotter._scalar_bar_slots)
-                self._plotter._scalar_bar_slots.remove(slot)
-                self._plotter._scalar_bar_slot_lookup[title] = slot
-            except:
-                raise RuntimeError('Maximum number of color bars reached.')
+            if not self._plotter._scalar_bar_slots:
+                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+
+            slot = min(self._plotter._scalar_bar_slots)
+            self._plotter._scalar_bar_slots.remove(slot)
+            self._plotter._scalar_bar_slot_lookup[title] = slot
+
             if position_x is None:
                 if vertical:
                     position_x = theme.colorbar_vertical.position_x
@@ -396,7 +410,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = _vtk.vtkLookupTable()
+            lut = pyvista.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
@@ -408,13 +422,17 @@ class ScalarBars:
             lut = mapper.lookup_table
 
         scalar_bar.SetLookupTable(lut)
-        if n_colors is not None:
-            scalar_bar.SetMaximumNumberOfColors(n_colors)
+        if n_colors is None:
+            # ensure the number of colors in the scalarbar's lookup table is at
+            # least the number in the mapper
+            n_colors = mapper.lookup_table.n_values
+
+        scalar_bar.SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
-            scalar_bar.DrawTickLabelsOff()
+            scalar_bar.SetDrawTickLabels(False)
         else:
-            scalar_bar.DrawTickLabelsOn()
+            scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetNumberOfLabels(n_labels)
 
         if nan_annotation:
@@ -423,9 +441,15 @@ class ScalarBars:
         if above_label:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
+        elif lut.above_range_color:
+            scalar_bar.DrawAboveRangeSwatchOn()
+            scalar_bar.SetAboveRangeAnnotation('above')
         if below_label:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
+        elif lut.below_range_color:
+            scalar_bar.DrawBelowRangeSwatchOn()
+            scalar_bar.SetBelowRangeAnnotation('below')
 
         # edit the size of the colorbar
         scalar_bar.SetHeight(height)
@@ -441,10 +465,10 @@ class ScalarBars:
             scalar_bar.SetOrientationToHorizontal()
 
         if label_font_size is not None or title_font_size is not None:
-            scalar_bar.UnconstrainedFontSizeOn()
-            scalar_bar.AnnotationTextScalingOff()
+            scalar_bar.SetUnconstrainedFontSize(True)
+            scalar_bar.SetAnnotationTextScaling(False)
         else:
-            scalar_bar.AnnotationTextScalingOn()
+            scalar_bar.SetAnnotationTextScaling(True)
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
@@ -497,7 +521,7 @@ class ScalarBars:
             if vertical is True or vertical is None:
                 rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
             else:
-                # y position determined emperically
+                # y position determined empirically
                 y = -position_y / 2 - height - scalar_bar.GetPosition()[1]
                 rep.GetPositionCoordinate().SetValue(width, y)
                 rep.GetPosition2Coordinate().SetValue(height, width)

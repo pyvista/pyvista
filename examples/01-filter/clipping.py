@@ -75,3 +75,42 @@ p.add_mesh(roi, opacity=0.75, color="red")
 p.link_views()
 p.view_isometric()
 p.show()
+
+###############################################################################
+# Crinkled Clipping
+# +++++++++++++++++
+# Crinkled clipping is useful if you don’t want the clip filter to truly clip
+# cells on the boundary, but want to preserve the input cell structure and to
+# pass the entire cell on through the boundary.
+#
+# This option is available for :func:`pyvista.DataSetFilters.clip`,
+# :func:`pyvista.DataSetFilters.clip_box`, and
+# :func:`pyvista.DataSetFilters.clip_sruface`, but not available when clipping
+# by scalar in :func:`pyvista.DataSetFilters.clip_scalar`.
+
+# Input mesh
+mesh = pv.Wavelet()
+
+###############################################################################
+# Define clipping plane
+normal = (1, 1, 1)
+plane = pv.Plane(i_size=30, j_size=30, direction=normal)
+
+###############################################################################
+# Perform a standard clip
+clipped = mesh.clip(normal=normal)
+
+###############################################################################
+# Perform a crinkled clip
+crinkled = mesh.clip(normal=normal, crinkle=True)
+
+###############################################################################
+# Plot comparison
+p = pv.Plotter(shape=(1, 2))
+p.add_mesh(clipped, show_edges=True)
+p.add_mesh(plane.extract_feature_edges(), color='r')
+p.subplot(0, 1)
+p.add_mesh(crinkled, show_edges=True)
+p.add_mesh(plane.extract_feature_edges(), color='r')
+p.link_views()
+p.show()

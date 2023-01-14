@@ -42,13 +42,12 @@ class VtkErrorCatcher:
 
     Parameters
     ----------
-    raise_errors : bool, optional
+    raise_errors : bool, default: False
         Raise a ``RuntimeError`` when a VTK error is encountered.
-        Defaults to ``False``.
 
-    send_to_logging : bool, optional
+    send_to_logging : bool, default: True
         Determine whether VTK errors raised within the context should
-        also be sent to logging.  Defaults to ``True``.
+        also be sent to logging.
 
     Examples
     --------
@@ -260,34 +259,72 @@ class GPUInfo:
 
 
 class Report(scooby.Report):
-    """A class for custom scooby.Report."""
+    """Generate a PyVista software environment report.
+
+    Parameters
+    ----------
+    additional : list(ModuleType), list(str)
+        List of packages or package names to add to output information.
+
+    ncol : int, default: 3
+        Number of package-columns in html table; only has effect if
+        ``mode='HTML'`` or ``mode='html'``.
+
+    text_width : int, default: 80
+        The text width for non-HTML display modes.
+
+    sort : bool, default: False
+        Alphabetically sort the packages.
+
+    gpu : bool, default: True
+        Gather information about the GPU. Defaults to ``True`` but if
+        experiencing rendering issues, pass ``False`` to safely generate a
+        report.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> pv.Report()  # doctest:+SKIP
+    ---------------------------------------------------------------------------
+      Date: Fri Oct 28 15:54:11 2022 MDT
+    <BLANKLINE>
+                    OS : Linux
+                CPU(s) : 6
+               Machine : x86_64
+          Architecture : 64bit
+                   RAM : 62.6 GiB
+           Environment : IPython
+           File system : ext4
+            GPU Vendor : NVIDIA Corporation
+          GPU Renderer : Quadro P2000/PCIe/SSE2
+           GPU Version : 4.5.0 NVIDIA 470.141.03
+    <BLANKLINE>
+      Python 3.8.10 (default, Jun 22 2022, 20:18:18)  [GCC 9.4.0]
+    <BLANKLINE>
+               pyvista : 0.37.dev0
+                   vtk : 9.1.0
+                 numpy : 1.23.3
+               imageio : 2.22.0
+                scooby : 0.7.1.dev1+gf097dad
+                 pooch : v1.6.0
+            matplotlib : 3.6.0
+               IPython : 7.31.0
+              colorcet : 3.0.1
+               cmocean : 2.0
+            ipyvtklink : 0.2.3
+                 scipy : 1.9.1
+                  tqdm : 4.64.1
+                meshio : 5.3.4
+            jupyterlab : 3.4.7
+             pythreejs : Version unknown
+    ---------------------------------------------------------------------------
+
+    """
 
     def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
-        """Generate a :class:`scooby.Report` instance.
-
-        Parameters
-        ----------
-        additional : list(ModuleType), list(str)
-            List of packages or package names to add to output information.
-
-        ncol : int, optional
-            Number of package-columns in html table; only has effect if
-            ``mode='HTML'`` or ``mode='html'``. Defaults to 3.
-
-        text_width : int, optional
-            The text width for non-HTML display modes
-
-        sort : bool, optional
-            Alphabetically sort the packages
-
-        gpu : bool
-            Gather information about the GPU. Defaults to ``True`` but if
-            experiencing renderinng issues, pass ``False`` to safely generate
-            a report.
-
-        """
-        # Mandatory packages.
-        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+        """Generate a :class:`scooby.Report` instance."""
+        # Mandatory packages
+        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'scooby', 'pooch']
 
         # Optional packages.
         optional = [
@@ -299,9 +336,11 @@ class Report(scooby.Report):
             'cmocean',
             'ipyvtklink',
             'scipy',
-            'itkwidgets',
             'tqdm',
             'meshio',
+            'jupyterlab',
+            'pythreejs',
+            'pytest_pyvista',
         ]
 
         # Information about the GPU - bare except in case there is a rendering

@@ -3,6 +3,7 @@ import vtk
 
 import pyvista
 from pyvista import colors
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 @pytest.fixture
@@ -306,7 +307,7 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match='not a valid value'):
+    with pytest.raises(KeyError, match='not a color map'):
         default_theme.cmap = 'not a color map'
 
 
@@ -348,6 +349,8 @@ def test_set_hidden_line_removal(default_theme):
         ('multi_rendering_splitting_position', 0.1),
         ('smooth_shading', True),
         ('name', 'test_theme'),
+        ('split_sharp_edges', True),
+        ('sharp_edges_feature_angle', 45.0),
     ],
 )
 def test_theme_parm(default_theme, parm):
@@ -379,6 +382,14 @@ def test_repr(default_theme):
     assert default_theme.cmap in rep
     assert str(default_theme.colorbar_orientation) in rep
     assert default_theme._name.capitalize() in rep
+
+    # verify that the key for each line in the repr is less than the minimum
+    # key size. This makes sure that any new keys are either less than the size
+    # of the key in the repr or the key length is increased
+    for line in rep.splitlines():
+        if ':' in line:
+            pref, *rest = line.split(':', 1)
+            assert pref.endswith(' '), f"Key str too long or need to raise key length:\n{pref!r}"
 
 
 def test_theme_slots(default_theme):
@@ -423,9 +434,83 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pyvista.themes.DarkTheme()
 
 
-def test_antialiasing(default_theme):
-    for value in [True, False]:
-        default_theme.antialiasing = value
-        assert default_theme.antialiasing is value
+def test_save_before_close_callback(tmpdir, default_theme):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    dark_theme = pyvista.themes.DarkTheme()
+
+    def fun(plotter):
+        pass
+
+    dark_theme.before_close_callback = fun
+    assert dark_theme != pyvista.themes.DarkTheme()
+    dark_theme.save(filename)
+
+    # fun is stripped from the theme
+    loaded_theme = pyvista.load_theme(filename)
+    assert loaded_theme == pyvista.themes.DarkTheme()
+
+    default_theme.load_theme(filename)
+    assert default_theme == pyvista.themes.DarkTheme()
+
+
+def test_anti_aliasing(default_theme):
+    # test backwards compatibility
+    with pytest.warns(PyVistaDeprecationWarning, match='is now a string'):
+        default_theme.anti_aliasing = True
         pl = pyvista.Plotter(theme=default_theme)
-        assert pl.renderer.GetUseFXAA() is value
+        assert pl.renderer.GetUseFXAA()
+
+    with pytest.raises(ValueError, match='anti_aliasing must be either'):
+        default_theme.anti_aliasing = 'invalid value'
+
+    with pytest.raises(TypeError, match='must be either'):
+        default_theme.anti_aliasing = 42
+
+
+def test_anti_aliasing_fxaa(default_theme):
+    default_theme.anti_aliasing = 'fxaa'
+    assert default_theme.anti_aliasing == 'fxaa'
+    pl = pyvista.Plotter(theme=default_theme)
+    assert pl.renderer.GetUseFXAA()
+
+
+def test_anti_aliasing_ssaa(default_theme):
+
+    # default should is not enabled
+    if default_theme.anti_aliasing != 'ssaa':
+        pl = pyvista.Plotter(theme=default_theme)
+        assert 'vtkSSAAPass' not in pl.renderer._render_passes._passes
+
+    default_theme.anti_aliasing = 'ssaa'
+    assert default_theme.anti_aliasing == 'ssaa'
+    pl = pyvista.Plotter(theme=default_theme)
+    assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
+
+
+def test_anti_aliasing_msaa(default_theme):
+    if default_theme.anti_aliasing != 'msaa':
+        pl = pyvista.Plotter(theme=default_theme)
+        assert pl.ren_win.GetMultiSamples() == 0
+
+    default_theme.anti_aliasing = 'msaa'
+    default_theme.multi_samples = 4
+    assert default_theme.anti_aliasing == 'msaa'
+    pl = pyvista.Plotter(theme=default_theme)
+    assert pl.ren_win.GetMultiSamples() == default_theme.multi_samples
+
+
+def test_antialiasing_deprecation(default_theme):
+    with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
+        default_theme.antialiasing
+    with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
+        default_theme.antialiasing = True
+
+
+def test_above_range_color(default_theme):
+    default_theme.above_range_color = 'r'
+    assert isinstance(default_theme.above_range_color, pyvista.Color)
+
+
+def test_below_range_color(default_theme):
+    default_theme.below_range_color = 'b'
+    assert isinstance(default_theme.below_range_color, pyvista.Color)

@@ -1,6 +1,10 @@
 """Filters module with a class to manage filters/algorithms for composite datasets."""
+
+import numpy as np
+
 import pyvista
 from pyvista import _vtk, abstract_class, wrap
+from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
 
@@ -31,10 +35,10 @@ class CompositeFilters:
 
         Parameters
         ----------
-        merge_points : bool, optional
+        merge_points : bool, default: False
             Merge coincidental points.
 
-        tolerance : float, optional
+        tolerance : float, default: 0.0
             The absolute tolerance to use to find coincident points when
             ``merge_points=True``. Note, this was added in VTK v9.
 
@@ -107,13 +111,13 @@ class CompositeFilters:
 
         Parameters
         ----------
-        generate_faces : bool, optional
-            Generate solid faces for the box. This is disabled by default.
+        generate_faces : bool, default: False
+            Generate solid faces for the box.
 
-        nested : bool, optional
+        nested : bool, default: False
             If ``True``, these creates individual outlines for each nested dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -134,14 +138,14 @@ class CompositeFilters:
 
         Parameters
         ----------
-        factor : float, optional
+        factor : float, default: 0.2
             Controls the relative size of the corners to the length of
             the corresponding bounds.
 
-        nested : bool, optional
+        nested : bool, default: False
             If ``True``, these creates individual outlines for each nested dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -154,3 +158,42 @@ class CompositeFilters:
             return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
         box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
+
+    def _compute_normals(
+        self,
+        cell_normals=True,
+        point_normals=True,
+        split_vertices=False,
+        flip_normals=False,
+        consistent_normals=True,
+        auto_orient_normals=False,
+        non_manifold_traversal=True,
+        feature_angle=30.0,
+        track_vertices=False,
+        progress_bar=False,
+    ):
+        """Compute point and/or cell normals for a multi-block dataset."""
+        if not self.is_all_polydata:
+            raise RuntimeError(
+                'This multiblock contains non-PolyData datasets. Convert all the '
+                'datasets to PolyData with `as_polydata`'
+            )
+
+        # track original point indices
+        if split_vertices and track_vertices:
+            for block in self:
+                ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
+                block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
+
+        alg = _vtk.vtkPolyDataNormals()
+        alg.SetComputeCellNormals(cell_normals)
+        alg.SetComputePointNormals(point_normals)
+        alg.SetSplitting(split_vertices)
+        alg.SetFlipNormals(flip_normals)
+        alg.SetConsistency(consistent_normals)
+        alg.SetAutoOrientNormals(auto_orient_normals)
+        alg.SetNonManifoldTraversal(non_manifold_traversal)
+        alg.SetFeatureAngle(feature_angle)
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, 'Computing Normals')
+        return _get_output(alg)

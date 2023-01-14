@@ -9,7 +9,6 @@ except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista
-from pyvista._vtk import VTK9
 from pyvista.jupyter import pv_pythreejs
 
 
@@ -21,11 +20,21 @@ def test_set_jupyter_backend_ipygany():
         pyvista.global_theme.jupyter_backend = None
 
 
-def test_export_to_html(cube, tmpdir):
+def test_export_to_html(sphere, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.html'))
 
-    pl = pyvista.Plotter()
-    pl.add_mesh(cube)
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.add_text("Sphere 1\n", font_size=30, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey', culling='back')
+
+    pl.subplot(0, 1)
+    pl.add_text("Sphere 2\n", font_size=30, color='grey')
+    pl.add_mesh(sphere, show_edges=False, color='grey', culling='front')
+    pl.link_views()
+
+    with pytest.raises(ValueError, match="Invalid backend"):
+        pl.export_html(filename, backend='not-a-valid-backend')
+
     pl.export_html(filename)
 
     raw = open(filename).read()
@@ -36,6 +45,28 @@ def test_export_to_html(cube, tmpdir):
 
     # at least a single instance of lighting
     assert 'DirectionalLightModel' in raw
+
+
+def test_export_to_html_composite(tmpdir):
+    filename = str(tmpdir.join('tmp.html'))
+
+    blocks = pyvista.MultiBlock()
+    blocks.append(pyvista.Sphere())
+    blocks.append(pyvista.Cube(center=(0, 0, -1)))
+
+    pl = pyvista.Plotter()
+    actor, mapper = pl.add_composite(blocks, show_edges=False, color='red')
+
+    # override the color of the sphere
+    mapper.block_attr[1].color = 'b'
+    mapper.block_attr[1].opacity = 0.5
+
+    pl.export_html(filename)
+
+    # ensure modified block attributes have been outputted
+    raw = open(filename).read()
+    assert f'"opacity": {mapper.block_attr[1].opacity}' in raw
+    assert f'"color": "{mapper.block_attr[1].color.hex_rgb}"' in raw
 
 
 def test_segment_poly_cells(spline):
@@ -58,13 +89,13 @@ def test_buffer_normals(sphere):
 def test_get_coloring(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_points))
-    assert pv_pythreejs.get_coloring(pl.mapper, sphere) == 'VertexColors'
+    assert pv_pythreejs.get_coloring(pl.mapper, pl.mesh) == 'VertexColors'
 
     sphere.clear_data()
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_cells))
-    assert pv_pythreejs.get_coloring(pl.mapper, sphere) == 'FaceColors'
+    assert pv_pythreejs.get_coloring(pl.mapper, pl.mesh) == 'FaceColors'
 
 
 def test_output_point_cloud(sphere):
@@ -101,7 +132,7 @@ def test_cast_to_min_size(max_index):
             buf_attr = pv_pythreejs.cast_to_min_size(np.arange(1000), max_index)
 
 
-@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
+@pytest.mark.needs_vtk9
 def test_pbr(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_cells), pbr=True)
@@ -155,6 +186,17 @@ def test_not_polydata(hexbeam):
     pl = pyvista.Plotter()
     pl.add_mesh(hexbeam)
     pv_pythreejs.convert_plotter(pl)
+
+
+def test_just_points():
+    pdata = pyvista.PolyData(np.random.random((10, 3)))
+    pl = pyvista.Plotter()
+    pl.add_mesh(pdata)
+    output = pv_pythreejs.convert_plotter(pl)
+
+    # ensure points in output
+    pos = output.scene.children[0].geometry.attributes['position']
+    assert np.allclose(pos.array, pdata.points)
 
 
 @pytest.mark.parametrize('with_scalars', [False, True])
@@ -211,6 +253,34 @@ def test_labels():
     pl = pyvista.Plotter()
     pl.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
 
-    # ensure that we ignore labels
-    with pytest.warns(UserWarning):
-        pv_pythreejs.convert_plotter(pl)
+    # TODO: ensure point labels at least don't raise a warning
+    # For now, just make sure it doesn't error
+    pv_pythreejs.convert_plotter(pl)
+
+
+def test_linked_views(sphere):
+    n_row, n_col = (2, 3)
+    pl = pyvista.Plotter(shape=(n_row, n_col))
+
+    for ii in range(n_row):
+        for jj in range(n_col):
+            pl.subplot(ii, jj)
+            pl.add_mesh(sphere)
+
+    pl.link_views((0, 1, 2))  # link first row together
+    pl.link_views((3, 4, 5))  # link second row together
+
+    # validate all cameras are linked
+    widget = pv_pythreejs.convert_plotter(pl)
+
+    # check first row is linked
+    cameras = [widget[0, col].camera for col in range(n_col)]
+    assert all([camera is cameras[0] for camera in cameras])
+
+    # check second row is linked
+    cameras = [widget[0, col].camera for col in range(n_col)]
+    assert all([camera is cameras[0] for camera in cameras])
+
+    # check first row camera is different than the second row
+    cameras = [widget[row, 0].camera for row in range(2)]
+    assert widget[0, 0].camera is not widget[1, 0].camera

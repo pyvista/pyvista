@@ -26,9 +26,6 @@ globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 channelsfile = os.path.join(dir_path, 'channels.vti')
 
-# get location of this folder
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
 
 def load_ant():
     """Load ply ant mesh.
@@ -138,6 +135,29 @@ def load_hexbeam():
     return pyvista.UnstructuredGrid(hexbeamfile)
 
 
+def load_tetbeam():
+    """Load a sample UnstructuredGrid containing only tetrahedral cells.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_tetbeam()
+    >>> dataset.plot()
+
+    """
+    # make the geometry identical to the hexbeam
+    xrng = np.linspace(0, 1, 3)
+    yrng = np.linspace(0, 1, 3)
+    zrng = np.linspace(0, 5, 11)
+    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    return grid.to_tetrahedra()
+
+
 def load_structured():
     """Load a simple StructuredGrid.
 
@@ -224,6 +244,8 @@ def load_spline():
 
     .. code:: python
 
+       >>> import numpy as np
+       >>> import pyvista
        >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
        >>> z = np.linspace(-2, 2, 100)
        >>> r = z**2 + 1
@@ -263,8 +285,8 @@ def load_random_hills():
 
     .. code:: python
 
-       >>> mesh = pyvista.ParametricRandomHills()
-       >>> mesh = mesh.elevation()
+       >>> mesh = pyvista.ParametricRandomHills()  # doctest:+SKIP
+       >>> mesh = mesh.elevation()  # doctest:+SKIP
 
     Returns
     -------
@@ -302,8 +324,8 @@ def load_sphere_vectors():
     Active Texture  : None
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32  (842, 3)             NORMALS
-        vectors                 float32  (842, 3)             VECTORS
+        Normals                 float32    (842, 3)             NORMALS
+        vectors                 float32    (842, 3)             VECTORS
 
     """
     sphere = pyvista.Sphere(radius=3.14)
@@ -323,12 +345,12 @@ def load_sphere_vectors():
     return sphere
 
 
-def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
+def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     """Load a simple explicit structured grid.
 
     Parameters
     ----------
-    dims : tuple(int), optional
+    dimensions : tuple(int), optional
         Grid dimensions. Default is (5, 6, 7).
     spacing : tuple(int), optional
         Grid spacing. Default is (20, 10, 1).
@@ -345,7 +367,7 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
     >>> grid.plot(show_edges=True)
 
     """
-    ni, nj, nk = np.asarray(dims) - 1
+    ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
 
     xcorn = np.arange(0, (ni + 1) * si, si)
@@ -368,7 +390,7 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()
 
-    grid = pyvista.ExplicitStructuredGrid(dims, corners)
+    grid = pyvista.ExplicitStructuredGrid(dimensions, corners)
     return grid
 
 

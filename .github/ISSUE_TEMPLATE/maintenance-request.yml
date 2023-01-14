@@ -1,0 +1,30 @@
+name: Maintenance Request
+description: Request general maintenance to code, CI, deployment, or otherwise
+labels: ["maintenance"]
+body: 
+  - type: markdown
+    attributes:
+      value: |
+          Thanks for taking the time to open this issue to help improve PyVista!
+  - type: textarea
+    id: maintenance-request
+    attributes:
+      label: Describe what maintenance you would like added.
+      description: |
+        Provide a clear and concise description of the maintenance problem.
+      placeholder: Tell us what you see!
+      value: "I have a maintenance suggestion!"
+    validations:
+      required: true
+  - type: textarea
+    id: code-links
+    attributes:
+      label: Links to source code.
+      description: If you are requesting maintenance for a specific line of source code, please include the permanent link for that line.
+  - type: textarea
+    id: pseudocode-and-screenshots
+    attributes:
+      label: Pseudocode or Screenshots
+      description: Feel free to include pseudocode or screenshots of the requested outcome.
+      placeholder: Provide some code for us to reproduce the bug!
+      value: "```python\nInsert code here\n```\nOr drag your screenshot here!"

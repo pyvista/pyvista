@@ -2,15 +2,18 @@ import itertools
 import os
 import platform
 import sys
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from vtk import VTK_QUADRATIC_HEXAHEDRON
+from vtk import VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_TRIANGLE
 
 import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9, vtkStaticCellLocator
-from pyvista.core.errors import VTKVersionError
+from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
+from pyvista.errors import MissingDataError
+from pyvista.utilities.misc import can_create_mpl_figure
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -18,9 +21,10 @@ skip_py2_nobind = pytest.mark.skipif(
     int(sys.version[0]) < 3, reason="Python 2 doesn't support binding methods"
 )
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
-skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
+skip_no_mpl_figure = pytest.mark.skipif(
+    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
+)
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -33,6 +37,26 @@ def aprox_le(a, b, rtol=1e-5, atol=1e-8):
         return True
     else:
         return np.isclose(a, b, rtol, atol)
+
+
+class GetOutput:
+    """Helper class to patch ``pyvista.filters._get_output`` which captures the raw VTK algorithm objects at the time
+    ``_get_output`` is invoked.
+    """
+
+    def __init__(self):
+        self._mock = Mock()
+
+    def __call__(self, algorithm, *args, **kwargs):
+        self._mock(algorithm, *args, **kwargs)
+        return pyvista.core.filters._get_output(algorithm)
+
+    def reset(self, *args, **kwargs):
+        self._mock.reset_mock(*args, **kwargs)
+
+    @property
+    def latest_algorithm(self):
+        return self._mock.call_args_list[-1][0][0]
 
 
 @pytest.fixture
@@ -49,7 +73,7 @@ def grid():
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
     origin = (-(nx - 1) * 0.1 / 2, -(ny - 1) * 0.1 / 2, -(nz - 1) * 0.1 / 2)
-    mesh = pyvista.UniformGrid(dims=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
+    mesh = pyvista.UniformGrid(dimensions=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
     mesh['vectors'] = mesh.points
     return mesh
 
@@ -59,7 +83,6 @@ def test_datasetfilters_init():
         pyvista.core.filters.DataSetFilters()
 
 
-@skip_windows
 def test_clip_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
@@ -79,8 +102,14 @@ def test_clip_filter(datasets):
             else:
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
+    # crinkle clip
+    clp = pyvista.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    assert clp is not None
+    clp1, clp2 = pyvista.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    assert clp1 is not None
+    assert clp2 is not None
 
-@skip_windows
+
 @skip_mac
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
@@ -118,6 +147,14 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert aprox_le(clp.point_data['to_clip'].max(), clip_value, rtol=1e-1)
             else:
                 assert clp.point_data['to_clip'].max() >= clip_value
+
+
+def test_clip_filter_no_active(sphere):
+    # test no active scalars case
+    sphere.point_data.set_array(sphere.points[:, 2], 'data')
+    assert sphere.active_scalars_name is None
+    clp = sphere.clip_scalar()
+    assert clp.n_points < sphere.n_points
 
 
 def test_clip_filter_scalar_multiple():
@@ -174,6 +211,13 @@ def test_clip_box(datasets):
     with pytest.raises(ValueError):
         dataset.clip_box(bounds=pyvista.Sphere(), progress_bar=True)
 
+    # crinkle clip
+    surf = pyvista.Sphere(radius=3)
+    vol = pyvista.voxelize(surf)
+    cube = pyvista.Cube().rotate_x(33, inplace=False)
+    clp = vol.clip_box(bounds=cube, invert=False, crinkle=True)
+    assert clp is not None
+
 
 @skip_py2_nobind
 def test_clip_box_composite(composite):
@@ -199,6 +243,9 @@ def test_clip_surface():
     clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=True)
     assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
+    # Test crinkle
+    clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
 
 
 def test_clip_closed_surface():
@@ -301,9 +348,10 @@ def test_threshold(datasets):
     thresh = dataset.threshold([100, 500], invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
-    thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
-    assert thresh is not None
-    assert isinstance(thresh, pyvista.UnstructuredGrid)
+    if pyvista.vtk_version_info >= (9,):
+        thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
+        assert thresh is not None
+        assert isinstance(thresh, pyvista.UnstructuredGrid)
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold({100, 500}, progress_bar=True)
@@ -316,10 +364,80 @@ def test_threshold(datasets):
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
+
+    if pyvista.vtk_version_info < (9,):
+        with pytest.raises(ValueError):
+            dataset.threshold([100, 500], invert=True)
+
     with pytest.raises(ValueError):
-        datasets[0].threshold(
-            [10, 500], scalars='Spatial Point Data', all_scalars=True, progress_bar=True
-        )
+        dataset.threshold(100, method='between')
+
+    with pytest.raises(ValueError):
+        dataset.threshold((2, 1))
+
+
+def test_threshold_all_scalars():
+    mesh = pyvista.Sphere()
+    mesh.clear_data()
+
+    mesh["scalar0"] = np.zeros(mesh.n_points)
+    mesh["scalar1"] = np.ones(mesh.n_points)
+    mesh.set_active_scalars("scalar1")
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)  # only uses scalar1
+    assert thresh_all.n_points == mesh.n_points
+    assert thresh_all.n_cells == mesh.n_cells
+
+    mesh["scalar1"][0 : int(mesh.n_points / 2)] = 0.0
+    thresh = mesh.threshold(value=0.5, all_scalars=False)
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)
+    assert thresh_all.n_points < mesh.n_points
+    # removes additional cells/points due to all_scalars
+    assert thresh_all.n_points < thresh.n_points
+    assert thresh_all.n_cells < mesh.n_cells
+    assert thresh_all.n_cells < thresh.n_cells
+
+    mesh.clear_data()
+    mesh["scalar0"] = np.zeros(mesh.n_cells)
+    mesh["scalar1"] = np.ones(mesh.n_cells)
+    mesh["scalar1"][0 : int(mesh.n_cells / 2)] = 0.0
+    mesh.set_active_scalars("scalar1")
+    thresh = mesh.threshold(value=0.5, all_scalars=False)
+    thresh_all = mesh.threshold(value=0.5, all_scalars=True)
+    # when thresholding by cell data, all_scalars has no effect since it has 1 value per cell
+    assert thresh_all.n_points < mesh.n_points
+    assert thresh_all.n_points == thresh.n_points
+    assert thresh_all.n_cells < mesh.n_cells
+    assert thresh_all.n_cells == thresh.n_cells
+
+
+def test_threshold_multicomponent():
+    mesh = pyvista.Plane()
+    data = np.zeros((mesh.n_cells, 3))
+    data[0:3, 0] = 1
+    data[2:4, 1] = 2
+    data[2, 2] = 3
+    mesh["data"] = data
+
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0)
+    assert thresh.n_cells == 3
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=1)
+    assert thresh.n_cells == 2
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="all")
+    assert thresh.n_cells == 1
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="any")
+    assert thresh.n_cells == 4
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="not a mode")
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=-1)
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=3)
+
+    with pytest.raises(TypeError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0.5)
 
 
 def test_threshold_percent(datasets):
@@ -327,6 +445,8 @@ def test_threshold_percent(datasets):
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
     for i, dataset in enumerate(datasets[0:3]):
+        if inverts[i] and pyvista.vtk_version_info < (9,):
+            continue
         thresh = dataset.threshold_percent(
             percent=percents[i], invert=inverts[i], progress_bar=True
         )
@@ -341,6 +461,106 @@ def test_threshold_percent(datasets):
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold_percent({18.0, 85.0})
+
+
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9,),
+    reason='The invert parameter is not supported for VTK<9. The general logic for the API differences is tested for VTK<9.1 though.',
+)
+def test_threshold_paraview_consistency():
+    """Validate expected results that match ParaView."""
+    x = np.arange(5, dtype=float)
+    y = np.arange(6, dtype=float)
+    z = np.arange(2, dtype=float)
+    xx, yy, zz = np.meshgrid(x, y, z)
+    mesh = pyvista.StructuredGrid(xx, yy, zz)
+    mesh.cell_data.set_scalars(np.repeat(range(5), 4))
+
+    # Input mesh
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+
+    # upper(0): extract all
+    thresh = mesh.threshold(0, invert=False, method='upper')
+    assert thresh.n_cells == mesh.n_cells
+    assert np.allclose(thresh.active_scalars, mesh.active_scalars)
+    # upper(0),invert: extract none
+    thresh = mesh.threshold(0, invert=True, method='upper')
+    assert thresh.n_cells == 0
+
+    # lower(0)
+    #   [[0, 0, 0, 0   ]]
+    thresh = mesh.threshold(0, invert=False, method='lower')
+    assert thresh.n_cells == 4
+    assert np.allclose(thresh.active_scalars, np.array([0, 0, 0, 0]))
+    # lower(0),invert
+    #   [[            1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(0, invert=True, method='lower')
+    assert thresh.n_cells == 16
+    assert thresh.get_data_range() == (1, 4)
+
+    # upper(2)
+    #   [[         2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(2, invert=False, method='upper')
+    assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (2, 4)
+    # upper(2),invert
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1,     ]]
+    thresh = mesh.threshold(2, invert=True, method='upper')
+    assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (0, 1)
+
+    # lower(2)
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2,        ]]
+    thresh = mesh.threshold(2, invert=False, method='lower')
+    assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (0, 2)
+    # lower(2),invert
+    #   [[      3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold(2, invert=True, method='lower')
+    assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (3, 4)
+
+    # between(0, 0)
+    #   [[0, 0, 0, 0   ]]
+    thresh = mesh.threshold((0, 0), invert=False)
+    assert thresh.n_cells == 4
+    assert np.allclose(thresh.active_scalars, np.array([0, 0, 0, 0]))
+    # between(0,0),invert
+    #   [[            1],
+    #    [1, 1, 1, 2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3, 4, 4, 4, 4]]
+    thresh = mesh.threshold((0, 0), invert=True)
+    assert thresh.n_cells == 16
+    assert thresh.get_data_range() == (1, 4)
+
+    # between(2,3)
+    #   [[         2, 2],
+    #    [2, 2, 3, 3, 3],
+    #    [3,           ]]
+    thresh = mesh.threshold((2, 3), invert=False)
+    assert thresh.n_cells == 8
+    assert thresh.get_data_range() == (2, 3)
+    # between(2,3),invert
+    #   [[0, 0, 0, 0, 1],
+    #    [1, 1, 1,     ],
+    #    [             ],
+    #    [   4, 4, 4, 4]]
+    thresh = mesh.threshold((2, 3), invert=True)
+    assert thresh.n_cells == 12
+    assert thresh.get_data_range() == (0, 4)
 
 
 def test_outline(datasets):
@@ -381,19 +601,32 @@ def test_outline_corners_composite(composite):
 
 def test_extract_geometry(datasets, composite):
     for dataset in datasets:
-        outline = dataset.extract_geometry(progress_bar=True)
-        assert outline is not None
-        assert isinstance(outline, pyvista.PolyData)
+        geom = dataset.extract_geometry(progress_bar=True)
+        assert geom is not None
+        assert isinstance(geom, pyvista.PolyData)
     # Now test composite data structures
     output = composite.extract_geometry()
     assert isinstance(output, pyvista.PolyData)
 
 
-def test_wireframe(datasets):
+def test_extract_geometry_extent(uniform):
+    geom = uniform.extract_geometry(extent=(0, 5, 0, 100, 0, 100))
+    assert isinstance(geom, pyvista.PolyData)
+    assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
+
+
+def test_extract_all_edges(datasets):
     for dataset in datasets:
-        wire = dataset.extract_all_edges(progress_bar=True)
-        assert wire is not None
-        assert isinstance(wire, pyvista.PolyData)
+        edges = dataset.extract_all_edges()
+        assert edges is not None
+        assert isinstance(edges, pyvista.PolyData)
+
+    if pyvista.vtk_version_info < (9, 1):
+        with pytest.raises(VTKVersionError):
+            datasets[0].extract_all_edges(use_all_points=True)
+    else:
+        edges = datasets[0].extract_all_edges(use_all_points=True)
+        assert edges.n_lines
 
 
 @skip_py2_nobind
@@ -417,6 +650,15 @@ def test_contour(uniform, method):
     iso = uniform.contour(isosurfaces=[100, 300, 500], method=method, progress_bar=True)
     assert iso is not None
 
+    # ensure filter can work with non-string inputs
+    iso_new_scalars = uniform.contour(
+        isosurfaces=[100, 300, 500],
+        scalars=range(uniform.n_points),
+        method=method,
+    )
+
+    assert 'Contour Data' in iso_new_scalars.point_data
+
 
 def test_contour_errors(uniform):
     with pytest.raises(TypeError):
@@ -430,6 +672,14 @@ def test_contour_errors(uniform):
         uniform.contour()
     with pytest.raises(ValueError):
         uniform.contour(method='invalid method')
+    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
+        uniform.contour(scalars=1)
+    with pytest.raises(TypeError):
+        uniform.contour(rng={})
+    with pytest.raises(ValueError, match='rng must be a two-length'):
+        uniform.contour(rng=[1])
+    with pytest.raises(ValueError, match='rng must be a sorted'):
+        uniform.contour(rng=[2, 1])
 
 
 def test_elevation():
@@ -521,7 +771,7 @@ def test_compute_cell_sizes(datasets):
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
     # Test the volume property
-    grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
 
@@ -587,7 +837,15 @@ def test_glyph(datasets, sphere):
         geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True
     )
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
-    assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+
+    with pytest.warns(Warning):  # tries to orient but no orientation vector available
+        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+
+    sphere_sans_arrays["vec1"] = np.ones((sphere_sans_arrays.n_points, 3))
+    sphere_sans_arrays["vec2"] = np.ones((sphere_sans_arrays.n_points, 3))
+    with pytest.warns(Warning):  # tries to orient but multiple orientation vectors are possible
+        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+
     with pytest.raises(TypeError):
         # wrong type for the glyph
         sphere.glyph(geom=pyvista.StructuredGrid())
@@ -613,8 +871,145 @@ def test_glyph_cell_point_data(sphere):
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
 
 
+class InterrogateVTKGlyph3D:
+    def __init__(self, alg: pyvista._vtk.vtkGlyph3D):
+        self.alg = alg
+
+    @property
+    def input_data_object(self):
+        return pyvista.wrap(self.alg.GetInputDataObject(0, 0))
+
+    @property
+    def input_active_scalars_info(self):
+        return self.input_data_object.active_scalars_info
+
+    @property
+    def input_active_vectors_info(self):
+        return self.input_data_object.active_vectors_info
+
+    @property
+    def scaling(self):
+        return self.alg.GetScaling()
+
+    @property
+    def scale_mode(self):
+        return self.alg.GetScaleModeAsString()
+
+    @property
+    def scale_factor(self):
+        return self.alg.GetScaleFactor()
+
+    @property
+    def clamping(self):
+        return self.alg.GetClamping()
+
+    @property
+    def vector_mode(self):
+        return self.alg.GetVectorModeAsString()
+
+
+def test_glyph_settings(sphere):
+    sphere['vectors_cell'] = np.ones([sphere.n_cells, 3])
+    sphere['vectors_points'] = np.ones([sphere.n_points, 3])
+    sphere['arr_cell'] = np.ones(sphere.n_cells)
+    sphere['arr_points'] = np.ones(sphere.n_points)
+
+    sphere['arr_both'] = np.ones(sphere.n_points)
+    sphere['arr_both'] = np.ones(sphere.n_cells)
+    sphere['vectors_both'] = np.ones([sphere.n_points, 3])
+    sphere['vectors_both'] = np.ones([sphere.n_cells, 3])
+
+    sphere['active_arr_points'] = np.ones(sphere.n_points)
+    sphere['active_vectors_points'] = np.ones([sphere.n_points, 3])
+
+    with patch('pyvista.core.filters.data_set._get_output', GetOutput()) as go:
+        # no orient with cell scale
+        sphere.glyph(scale='arr_cell', orient=False)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # cell orient with no scale
+        sphere.glyph(scale=False, orient='vectors_cell')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_vectors_info.name == 'vectors_cell'
+        assert alg.scale_mode == 'DataScalingOff'
+        go.reset()
+
+        # cell orient with cell scale
+        sphere.glyph(scale='arr_cell', orient='vectors_cell')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_cell'
+        assert alg.input_active_vectors_info.name == 'vectors_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # cell orient with cell scale and tolerance
+        sphere.glyph(scale='arr_cell', orient='vectors_cell', tolerance=0.05)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_cell'
+        assert alg.input_active_vectors_info.name == 'vectors_cell'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # no orient with point scale
+        sphere.glyph(scale='arr_points', orient=False)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # point orient with no scale
+        sphere.glyph(scale=False, orient='vectors_points')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_mode == 'DataScalingOff'
+        go.reset()
+
+        # point orient with point scale
+        sphere.glyph(scale='arr_points', orient='vectors_points')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # point orient with point scale and tolerance
+        sphere.glyph(scale='arr_points', orient='vectors_points', tolerance=0.05)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_mode == 'ScaleByScalar'
+        go.reset()
+
+        # point orient with point scale + factor
+        sphere.glyph(scale='arr_points', orient='vectors_points', factor=5)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_points'
+        assert alg.input_active_vectors_info.name == 'vectors_points'
+        assert alg.scale_factor == 5
+
+        # ambiguous point/cell prefers points
+        sphere.glyph(scale='arr_both', orient='vectors_both')
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'arr_both'
+        assert alg.input_active_vectors_info.name == 'vectors_both'
+        ## Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
+        assert len(alg.input_data_object.active_scalars) == sphere.n_cells
+        assert len(alg.input_data_object.active_scalars) == sphere.n_cells
+
+        # no fields selected uses active
+        sphere.set_active_scalars('active_arr_points')
+        sphere.set_active_vectors('active_vectors_points')
+        sphere.glyph(scale=True, orient=True)
+        alg = InterrogateVTKGlyph3D(go.latest_algorithm)
+        assert alg.input_active_scalars_info.name == 'active_arr_points'
+        assert alg.input_active_vectors_info.name == 'active_vectors_points'
+
+
 def test_glyph_orient_and_scale():
-    grid = pyvista.UniformGrid(dims=(1, 1, 1))
+    grid = pyvista.UniformGrid(dimensions=(1, 1, 1))
     geom = pyvista.Line()
     scale = 10.0
     orient = np.array([[0.0, 0.0, 1.0]])
@@ -629,6 +1024,10 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9,),
+    reason='The invert parameter is not supported for VTK<9.',
+)
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
@@ -749,12 +1148,31 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
-def test_smooth():
-    data = examples.load_uniform()
-    vol = data.threshold_percent(30)
-    surf = vol.extract_geometry(progress_bar=True)
-    smooth = surf.smooth()
-    assert np.any(smooth.points)
+def test_smooth(uniform):
+    surf = uniform.extract_surface().clean()
+    smoothed = surf.smooth()
+
+    # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
+    assert smoothed.triangulate().curvature().mean() > surf.triangulate().curvature().mean()
+
+    smooth_inplace = surf.smooth(inplace=True)
+    assert np.allclose(surf.points, smoothed.points)
+    assert np.allclose(smooth_inplace.points, smoothed.points)
+
+
+def test_smooth_taubin(uniform):
+    surf = uniform.extract_surface().clean()
+    smoothed = surf.smooth_taubin()
+
+    # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
+    assert smoothed.triangulate().curvature().mean() > surf.triangulate().curvature().mean()
+
+    # while volume is maintained
+    assert np.isclose(smoothed.volume, surf.volume, rtol=0.01)
+
+    smooth_inplace = surf.smooth_taubin(inplace=True)
+    assert np.allclose(surf.points, smoothed.points)
+    assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
 def test_resample():
@@ -862,7 +1280,7 @@ def test_streamlines_from_source(uniform_vec):
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
-    source = pyvista.UniformGrid(dims=[5, 5, 5], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
+    source = pyvista.UniformGrid(dimensions=[5, 5, 5], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
@@ -880,7 +1298,7 @@ def test_streamlines_from_source_structured_grids():
     assert all([stream.n_points, stream.n_cells])
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def mesh_2D_velocity():
     mesh = pyvista.Plane(i_resolution=100, j_resolution=100)
     velocity = np.zeros([mesh.n_points, 3])
@@ -890,28 +1308,28 @@ def mesh_2D_velocity():
     return mesh
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_start_position():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_vectors():
     mesh = mesh_2D_velocity()
     mesh.set_active_vectors(None)
@@ -919,14 +1337,14 @@ def test_streamlines_evenly_spaced_2D_vectors():
     assert all([streams.n_points, streams.n_cells])
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_integrator_type():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@skip_not_vtk9
+@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_interpolator_type():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=True)
@@ -977,9 +1395,9 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@skip_no_mpl_figure
 def test_plot_over_line(tmpdir):
-    """this requires matplotlib"""
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
@@ -1012,6 +1430,22 @@ def test_plot_over_line(tmpdir):
             ylabel='3 Values',
             show=False,
         )
+
+
+def test_sample_over_multiple_lines():
+    """Test that"""
+    name = 'values'
+
+    line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
+    line[name] = np.linspace(0, 10, 10)
+
+    sampled_multiple_lines = line.sample_over_multiple_lines(
+        [[0, 0, 0.5], [0, 0, 1], [0, 0, 1.5]], progress_bar=True
+    )
+
+    expected_result = np.array([0.5, 1, 1.5])
+    assert np.allclose(sampled_multiple_lines[name], expected_result)
+    assert name in sampled_multiple_lines.array_names  # is name in sampled result
 
 
 def test_sample_over_circular_arc():
@@ -1085,10 +1519,9 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@skip_no_mpl_figure
 def test_plot_over_circular_arc(tmpdir):
-    """this requires matplotlib"""
-
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1130,10 +1563,9 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
+@skip_no_mpl_figure
 def test_plot_over_circular_arc_normal(tmpdir):
-    """this requires matplotlib"""
-
-    pytest.importorskip('matplotlib')
+    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1354,7 +1786,7 @@ def test_extract_surface():
 
     cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
     celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
-    if pyvista._vtk.VTK9:
+    if VTK9:
         grid = pyvista.UnstructuredGrid(cells, celltypes, pts)
     else:
         grid = pyvista.UnstructuredGrid(np.array([0]), cells, celltypes, pts)
@@ -1418,7 +1850,7 @@ def test_iadd_general(uniform, hexbeam, sphere):
 
 
 def test_compute_cell_quality():
-    mesh = pyvista.ParametricEllipsoid().decimate(0.8)
+    mesh = pyvista.ParametricEllipsoid().triangulate().decimate(0.8)
     qual = mesh.compute_cell_quality(progress_bar=True)
     assert 'CellQuality' in qual.array_names
     with pytest.raises(KeyError):
@@ -1502,7 +1934,7 @@ def test_compute_derivatives():
         derv = mesh.compute_derivative(object)
 
     mesh.point_data.clear()
-    with pytest.raises(TypeError):
+    with pytest.raises(MissingDataError):
         derv = mesh.compute_derivative()
 
 
@@ -1525,7 +1957,7 @@ def test_gaussian_smooth_output_type():
 
 def test_gaussian_smooth_constant_data():
     point_data = np.ones((10, 10, 10))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.gaussian_smooth()
     assert np.allclose(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
@@ -1534,10 +1966,31 @@ def test_gaussian_smooth_constant_data():
 def test_gaussian_smooth_outlier():
     point_data = np.ones((10, 10, 10))
     point_data[4, 4, 4] = 100
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.gaussian_smooth()
     assert volume_smoothed.get_data_range()[1] < volume.get_data_range()[1]
+
+
+def test_gaussian_smooth_cell_data_specified():
+    point_data = np.zeros((10, 10, 10))
+    cell_data = np.zeros((9, 9, 9))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    with pytest.raises(ValueError):
+        volume.gaussian_smooth(scalars='cell_data')
+
+
+def test_gaussian_smooth_cell_data_active():
+    point_data = np.zeros((10, 10, 10))
+    cell_data = np.zeros((9, 9, 9))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    volume.set_active_scalars('cell_data')
+    with pytest.raises(ValueError):
+        volume.gaussian_smooth()
 
 
 def test_median_smooth_output_type():
@@ -1550,7 +2003,7 @@ def test_median_smooth_output_type():
 
 def test_median_smooth_constant_data():
     point_data = np.ones((10, 10, 10))
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.median_smooth()
     assert np.array_equal(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
@@ -1560,14 +2013,73 @@ def test_median_smooth_outlier():
     point_data = np.ones((10, 10, 10))
     point_data_outlier = point_data.copy()
     point_data_outlier[4, 4, 4] = 100
-    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_outlier = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume_outlier = pyvista.UniformGrid(dimensions=(10, 10, 10))
     volume_outlier.point_data['point_data'] = point_data_outlier.flatten(order='F')
     volume_outlier_smoothed = volume_outlier.median_smooth()
     assert np.array_equal(
         volume.point_data['point_data'], volume_outlier_smoothed.point_data['point_data']
     )
+
+
+def test_image_dilate_erode_output_type():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilate_erode = volume.image_dilate_erode()
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+    volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+
+
+def test_image_dilate_erode_dilation():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_dilated = point_data.copy()
+    point_data_dilated[3:6, 3:6, 4] = 1  # "activate" all voxels within diameter 3 around (4,4,4)
+    point_data_dilated[3:6, 4, 3:6] = 1
+    point_data_dilated[4, 3:6, 3:6] = 1
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.image_dilate_erode()  # default is binary dilation
+    assert np.array_equal(
+        volume_dilated.point_data['point_data'], point_data_dilated.flatten(order='F')
+    )
+
+
+def test_image_dilate_erode_erosion():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_eroded = np.zeros((10, 10, 10))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
+    assert np.array_equal(
+        volume_eroded.point_data['point_data'], point_data_eroded.flatten(order='F')
+    )
+
+
+def test_image_dilate_erode_cell_data_specified():
+    point_data = np.zeros((10, 10, 10))
+    cell_data = np.zeros((9, 9, 9))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    with pytest.raises(ValueError):
+        volume.image_dilate_erode(scalars='cell_data')
+
+
+def test_image_dilate_erode_cell_data_active():
+    point_data = np.zeros((10, 10, 10))
+    cell_data = np.zeros((9, 9, 9))
+    volume = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    volume.set_active_scalars('cell_data')
+    with pytest.raises(ValueError):
+        volume.image_dilate_erode()
 
 
 def test_image_threshold_output_type():
@@ -1604,7 +2116,7 @@ def test_image_threshold_upper(in_value, out_value):
     in_value_mask[in_value_location] = True
     point_data[in_value_mask] = 100  # the only 'in' value
     point_data[~in_value_mask] = -100  # out values
-    volume = pyvista.UniformGrid(dims=array_shape)
+    volume = pyvista.UniformGrid(dimensions=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
     if in_value is not None:
@@ -1630,7 +2142,7 @@ def test_image_threshold_between(in_value, out_value):
     point_data[in_value_mask] = 0  # the only 'in' value
     point_data[~in_value_mask] = 100  # out values
     point_data[low_value_location] = -100  # add a value below the threshold also
-    volume = pyvista.UniformGrid(dims=array_shape)
+    volume = pyvista.UniformGrid(dimensions=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
     if in_value is not None:
@@ -1692,10 +2204,10 @@ def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident
     voi_1, voi_2, structured = structured_grids_split_coincident
 
     # test invalid dimensions
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         voi_1.concatenate(voi_2, axis=0)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         voi_1.concatenate(voi_2, axis=2)
 
 
@@ -1766,7 +2278,7 @@ def test_tessellate():
         ]
     )
     cells = np.array([6, 0, 1, 2, 3, 4, 5])
-    cell_types = np.array([69])
+    cell_types = np.array([VTK_QUADRATIC_TRIANGLE])
     ugrid = pyvista.UnstructuredGrid(cells, cell_types, points)
     tessellated = ugrid.tessellate(progress_bar=True)
     assert tessellated.n_cells > ugrid.n_cells
@@ -1824,10 +2336,13 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
 
         for i in range(num_point_data):
-            dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
+
+        # track original untransformed dataset
+        orig_dataset = dataset.copy(deep=True)
 
         # handle
         f = pyvista._vtk.vtkTransformFilter()
@@ -1838,31 +2353,56 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
         transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
+        # verify that the dataset has not modified
+        if num_cell_arrays:
+            assert dataset.cell_data == orig_dataset.cell_data
+        if num_point_data:
+            assert dataset.point_data == orig_dataset.point_data
+
         assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
         assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
         assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
         for i in range(num_cell_arrays):
-            assert dataset.cell_data['C%d' % i][:, 0] == pytest.approx(
-                transformed.cell_data['C%d' % i][:, 0]
+            assert dataset.cell_data[f'C{i}'][:, 0] == pytest.approx(
+                transformed.cell_data[f'C{i}'][:, 0]
             )
-            assert dataset.cell_data['C%d' % i][:, 2] == pytest.approx(
-                -transformed.cell_data['C%d' % i][:, 1]
+            assert dataset.cell_data[f'C{i}'][:, 2] == pytest.approx(
+                -transformed.cell_data[f'C{i}'][:, 1]
             )
-            assert dataset.cell_data['C%d' % i][:, 1] == pytest.approx(
-                transformed.cell_data['C%d' % i][:, 2]
+            assert dataset.cell_data[f'C{i}'][:, 1] == pytest.approx(
+                transformed.cell_data[f'C{i}'][:, 2]
             )
 
         for i in range(num_point_data):
-            assert dataset.point_data['P%d' % i][:, 0] == pytest.approx(
-                transformed.point_data['P%d' % i][:, 0]
+            assert dataset.point_data[f'P{i}'][:, 0] == pytest.approx(
+                transformed.point_data[f'P{i}'][:, 0]
             )
-            assert dataset.point_data['P%d' % i][:, 2] == pytest.approx(
-                -transformed.point_data['P%d' % i][:, 1]
+            assert dataset.point_data[f'P{i}'][:, 2] == pytest.approx(
+                -transformed.point_data[f'P{i}'][:, 1]
             )
-            assert dataset.point_data['P%d' % i][:, 1] == pytest.approx(
-                transformed.point_data['P%d' % i][:, 2]
+            assert dataset.point_data[f'P{i}'][:, 1] == pytest.approx(
+                transformed.point_data[f'P{i}'][:, 2]
             )
+
+
+@pytest.mark.needs_vtk9
+@pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
+def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+    for dataset in datasets:
+        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        dataset.clear_data()
+        for i in range(num_cell_arrays):
+            dataset.cell_data[f"C{i}"] = np.random.randint(
+                np.iinfo(int).max, size=(dataset.n_cells, 3)
+            )
+        for i in range(num_point_data):
+            dataset.point_data[f"P{i}"] = np.random.randint(
+                np.iinfo(int).max, size=(dataset.n_points, 3)
+            )
+        if not (num_cell_arrays == 0 and num_point_data == 0):
+            with pytest.warns(UserWarning, match="Integer"):
+                _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
 @pytest.mark.parametrize(
@@ -1891,7 +2431,7 @@ def test_reflect_mesh_about_point(datasets):
         assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
 
-@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
+@pytest.mark.needs_vtk9
 def test_reflect_mesh_with_vectors(datasets):
     for dataset in datasets:
         if hasattr(dataset, 'compute_normals'):
@@ -1972,21 +2512,26 @@ def test_extrude_rotate():
     line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
 
     with pytest.raises(ValueError):
-        line.extrude_rotate(resolution=0)
+        line.extrude_rotate(resolution=0, capping=True)
 
-    poly = line.extrude_rotate(resolution=resolution, progress_bar=True)
+    poly = line.extrude_rotate(resolution=resolution, progress_bar=True, capping=True)
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1) * line.n_points
 
     translation = 10.0
     dradius = 1.0
-    poly = line.extrude_rotate(translation=translation, dradius=dradius, progress_bar=True)
+    poly = line.extrude_rotate(
+        translation=translation,
+        dradius=dradius,
+        progress_bar=True,
+        capping=True,
+    )
     zmax = poly.bounds[5]
     assert zmax == translation
     xmax = poly.bounds[1]
     assert xmax == line.bounds[1] + dradius
 
-    poly = line.extrude_rotate(angle=90.0, progress_bar=True)
+    poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
     xmin = poly.bounds[0]
     xmax = poly.bounds[1]
     ymin = poly.bounds[2]
@@ -1998,14 +2543,91 @@ def test_extrude_rotate():
         and (ymax == line.bounds[1])
     )
 
+    rotation_axis = (0, 1, 0)
+    if not pyvista.vtk_version_info >= (9, 1, 0):
+        with pytest.raises(VTKVersionError):
+            poly = line.extrude_rotate(rotation_axis=rotation_axis, capping=True)
+    else:
+        poly = line.extrude_rotate(
+            rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
+        )
+        assert poly.n_cells == line.n_points - 1
+        assert poly.n_points == (resolution + 1) * line.n_points
+
+    with pytest.raises(ValueError):
+        line.extrude_rotate(rotation_axis=[1, 2], capping=True)
+
 
 def test_extrude_rotate_inplace():
     resolution = 4
     poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
     old_line = poly.copy()
-    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True)
+    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True, capping=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
+
+
+@pytest.mark.needs_vtk9
+def test_extrude_trim():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    poly = mesh.extrude_trim(direction, trim_surface)
+    assert np.isclose(poly.volume, 1.0)
+
+
+@pytest.mark.needs_vtk9
+@pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
+@pytest.mark.parametrize(
+    'capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"]
+)
+def test_extrude_trim_strategy(extrusion, capping):
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    poly = mesh.extrude_trim(direction, trim_surface, extrusion=extrusion, capping=capping)
+    assert isinstance(poly, pyvista.PolyData)
+    assert poly.n_cells
+    assert poly.n_points
+
+
+def test_extrude_trim_catch():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane()
+    trim_surface = pyvista.Plane()
+    with pytest.raises(ValueError):
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion="Invalid strategy")
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
+    with pytest.raises(ValueError):
+        _ = mesh.extrude_trim(direction, trim_surface, capping="Invalid strategy")
+    with pytest.raises(TypeError, match='Invalid type'):
+        _ = mesh.extrude_trim(direction, trim_surface, capping=0)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim('foobar', trim_surface)
+    with pytest.raises(TypeError):
+        _ = mesh.extrude_trim([1, 2], trim_surface)
+
+
+@pytest.mark.needs_vtk9
+def test_extrude_trim_inplace():
+    direction = (0, 0, 1)
+    mesh = pyvista.Plane(
+        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    )
+    trim_surface = pyvista.Plane(
+        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+    )
+    mesh.extrude_trim(direction, trim_surface, inplace=True, progress_bar=True)
+    assert np.isclose(mesh.volume, 1.0)
 
 
 @pytest.mark.parametrize('inplace', [True, False])
@@ -2017,7 +2639,13 @@ def test_subdivide_adaptive(sphere, inplace):
         assert sphere.n_faces == sub.n_faces
 
 
-@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
+def test_invalid_subdivide_adaptive(cube):
+    # check non-triangulated
+    with pytest.raises(NotAllTrianglesError):
+        cube.subdivide_adaptive()
+
+
+@pytest.mark.needs_vtk9
 def test_collision(sphere):
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
@@ -2031,7 +2659,7 @@ def test_collision(sphere):
     assert not n_collision
 
 
-@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
+@pytest.mark.needs_vtk9
 def test_collision_solid_non_triangle(hexbeam):
     # test non-triangular mesh with a unstructured grid
     cube = pyvista.Cube()
@@ -2053,7 +2681,40 @@ def test_is_manifold(sphere, plane):
     assert not plane.is_manifold
 
 
-def test_reconstruct_surface_unstructured(datasets):
+def test_reconstruct_surface_unstructured():
     mesh = examples.load_hexbeam().reconstruct_surface()
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
+
+
+@pytest.mark.needs_vtk9
+def test_integrate_data_datasets(datasets):
+    """Test multiple dataset types."""
+    for dataset in datasets:
+        integrated = dataset.integrate_data()
+        if "Area" in integrated.array_names:
+            assert integrated["Area"] > 0
+        elif "Volume" in integrated.array_names:
+            assert integrated["Volume"] > 0
+        else:
+            raise ValueError("Unexpected integration")
+
+
+@pytest.mark.needs_vtk9
+def test_integrate_data():
+    """Test specific case."""
+    # sphere with radius = 0.5, area = pi
+    # increase resolution to increase precision
+    sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+    sphere.cell_data["cdata"] = 2 * np.ones(sphere.n_cells)
+    sphere.point_data["pdata"] = 3 * np.ones(sphere.n_points)
+
+    integrated = sphere.integrate_data()
+    assert np.isclose(integrated["Area"], np.pi, rtol=1e-3)
+    assert np.isclose(integrated["cdata"], 2 * np.pi, rtol=1e-3)
+    assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
+
+
+def test_subdivide_tetra(tetbeam):
+    grid = tetbeam.subdivide_tetra()
+    assert grid.n_cells == tetbeam.n_cells * 12

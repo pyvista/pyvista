@@ -1,0 +1,72 @@
+repos:
+- repo: https://github.com/psf/black
+  rev: 22.12.0
+  hooks:
+  - id: black
+
+- repo: https://github.com/pycqa/isort
+  rev: 5.11.4
+  hooks:
+  - id: isort
+
+- repo: https://github.com/PyCQA/flake8
+  rev: 6.0.0
+  hooks:
+  - id: flake8
+    additional_dependencies: [
+      "flake8-black==0.3.6",
+      "flake8-isort==6.0.0",
+      "flake8-quotes==3.3.2",
+    ]
+
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.2.2
+  hooks:
+  - id: codespell
+    args: [
+      "doc examples examples_flask pyvista tests",
+      "*.py *.rst *.md",
+    ]
+    additional_dependencies: [
+      "tomli"
+    ]
+
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 6.2.2
+  hooks:
+  - id: pydocstyle
+    additional_dependencies: [tomli==2.0.1]
+    files: ^(pyvista/|other/)
+    exclude: ^pyvista/ext/
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v0.991
+  hooks:
+  - id: mypy
+    exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
+    additional_dependencies: [
+    "mypy-extensions==0.4.3",
+    "toml==0.10.2",
+    "typing-extensions==4.1.1",
+  ]
+
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.3.1
+  hooks:
+  - id: pyupgrade
+    args: [--py37-plus, --keep-runtime-typing]
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  - id: check-merge-conflict
+  - id: debug-statements
+  - id: no-commit-to-branch
+    args: [--branch, main]
+  - id: requirements-txt-fixer
+
+# this validates our github workflow files
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.20.0
+  hooks:
+    - id: check-github-workflows

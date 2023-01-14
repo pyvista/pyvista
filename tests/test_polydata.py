@@ -9,6 +9,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.plotting import system_supports_plotting
+from pyvista.utilities.misc import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -221,6 +222,13 @@ def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
 
+    # Use scalar weights
+    if pyvista.vtk_version_info >= (9,):
+        distance_use_scalar_weights = sphere.geodesic_distance(
+            0, sphere.n_points - 1, use_scalar_weights=True
+        )
+        assert isinstance(distance_use_scalar_weights, float)
+
 
 def test_ray_trace(sphere):
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
@@ -247,6 +255,11 @@ def test_multi_ray_trace(sphere):
     assert np.any(points)
     assert np.any(ind_r)
     assert np.any(ind_t)
+
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.multi_ray_trace(origins, directions)
 
 
 @skip_plotting
@@ -479,6 +492,11 @@ def test_invalid_subdivision(sphere):
     with pytest.raises(ValueError):
         sphere.subdivide(1, 'not valid')
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.subdivide(1)
+
 
 def test_extract_feature_edges(sphere):
     # Test extraction of NO edges
@@ -499,15 +517,25 @@ def test_decimate(sphere):
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.decimate(0.5)
+
 
 def test_decimate_pro(sphere):
-    mesh = sphere.decimate_pro(0.5, progress_bar=True)
+    mesh = sphere.decimate_pro(0.5, progress_bar=True, max_degree=10)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
     mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
+
+    # check non-triangulated
+    mesh = pyvista.Cylinder()
+    with pytest.raises(NotAllTrianglesError):
+        mesh.decimate_pro(0.5)
 
 
 def test_compute_normals(sphere):
@@ -520,12 +548,42 @@ def test_compute_normals(sphere):
     assert cell_normals.shape[0] == sphere.n_cells
 
 
+def test_compute_normals_split_vertices(cube):
+    # verify edge splitting occurs and point IDs are tracked
+    cube_split_norm = cube.compute_normals(split_vertices=True)
+    assert cube_split_norm.n_points == 24
+    assert 'pyvistaOriginalPointIds' in cube_split_norm.point_data
+    assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
+
+
 def test_point_normals(sphere):
-    assert sphere.point_normals.shape[0] == sphere.n_points
+    sphere = sphere.compute_normals(cell_normals=False, point_normals=True)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
+    assert np.all(normals == sphere.point_data['Normals'])
+    assert np.shares_memory(normals, sphere.point_data['Normals'])
+
+    # when they don't, compute them
+    sphere.point_data.pop('Normals')
+    normals = sphere.point_normals
+    assert normals.shape[0] == sphere.n_points
 
 
 def test_cell_normals(sphere):
-    assert sphere.cell_normals.shape[0] == sphere.n_cells
+    sphere = sphere.compute_normals(cell_normals=True, point_normals=False)
+
+    # when `Normals` already exist, make sure they are returned
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
+    assert np.all(normals == sphere.cell_data['Normals'])
+    assert np.shares_memory(normals, sphere.cell_data['Normals'])
+
+    # when they don't, compute them
+    sphere.cell_data.pop('Normals')
+    normals = sphere.cell_normals
+    assert normals.shape[0] == sphere.n_cells
 
 
 def test_face_normals(sphere):
@@ -676,7 +734,7 @@ def test_tube(spline):
     # Simple
     line = pyvista.Line()
     tube = line.tube(n_sides=2, progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
 
     # inplace
     line.tube(n_sides=2, inplace=True, progress_bar=True)
@@ -684,7 +742,11 @@ def test_tube(spline):
 
     # Complicated
     tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
+
+    # Complicated with absolute radius
+    tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
+    assert tube.n_points and tube.n_cells
 
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))
@@ -741,6 +803,25 @@ def test_lines():
     assert poly.n_cells == 1
 
 
+def test_strips():
+    # init with strips test
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    strips = np.array([4, 0, 1, 3, 2])
+    strips_init = pyvista.PolyData(vertices, strips=strips)
+    assert len(strips_init.strips) == len(strips)
+
+    # add strips using the setter
+    strips_setter = pyvista.PolyData(vertices)
+    strips_setter.strips = strips
+    assert len(strips_setter.strips) == len(strips)
+
+    # test n_strips function
+    strips = np.array([[4, 0, 1, 3, 2], [4, 1, 2, 3, 0]])
+    strips_stack = np.hstack(strips)
+    n_strips_test = pyvista.PolyData(vertices, strips=strips_stack)
+    assert n_strips_test.n_strips == len(strips)
+
+
 def test_ribbon_filter():
     line = examples.load_spline().compute_arc_length(progress_bar=True)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
@@ -768,13 +849,22 @@ def test_is_all_triangles():
 
 def test_extrude():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    poly = arc.extrude([0, 0, 1], progress_bar=True)
+    poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
+    assert np.any(poly.strips)
 
     n_points_old = arc.n_points
-    arc.extrude([0, 0, 1], inplace=True)
+    arc.extrude([0, 0, 1], inplace=True, capping=True)
     assert arc.n_points != n_points_old
+
+
+def test_extrude_capping_warnings():
+    arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
+        arc.extrude([0, 0, 1])
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
+        arc.extrude_rotate()
 
 
 def test_flip_normals(sphere, plane):
@@ -798,3 +888,18 @@ def test_n_verts():
 def test_n_lines():
     mesh = pyvista.Line()
     assert mesh.n_lines == 1
+
+
+@pytest.mark.needs_vtk9
+def test_geodesic_disconnected(sphere, sphere_shifted):
+    # the sphere and sphere_shifted are disconnected - no path between them
+    combined = sphere + sphere_shifted
+    start_vertex = 0
+    end_vertex = combined.n_points - 1
+    match = f"There is no path between vertices {start_vertex} and {end_vertex}."
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic(start_vertex, end_vertex)
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic_distance(start_vertex, end_vertex)

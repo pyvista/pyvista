@@ -57,6 +57,28 @@ def test_line():
     with pytest.raises(TypeError):
         pyvista.Line(pointa, pointb, 0.1)  # from vtk
 
+    with pytest.raises(TypeError):
+        pyvista.Line((0, 0), pointb)
+
+    with pytest.raises(TypeError):
+        pyvista.Line(pointa, (10, 1.0))
+
+
+def test_multiple_lines():
+    points = np.array([[0, 0, 0], [1, 1, 0], [2, 2, 2], [3, 3, 0]])
+    multiple_lines = pyvista.MultipleLines(points=points)
+    assert multiple_lines.n_points == 4
+    assert multiple_lines.n_cells == 1
+
+    points = np.array([[0, 0, 0], [1, 1 * np.sqrt(3), 0], [2, 0, 0], [3, 3 * np.sqrt(3), 0]])
+    multiple_lines = pyvista.MultipleLines(points=points)
+
+    with pytest.raises(ValueError):
+        pyvista.MultipleLines(points[:, :1])
+
+    with pytest.raises(ValueError):
+        pyvista.MultipleLines(points[0, :])
+
 
 def test_tube():
     pointa = (0, 0, 0)
@@ -74,6 +96,12 @@ def test_tube():
 
     with pytest.raises(TypeError):
         pyvista.Tube(pointa, pointb, 0.1)  # from vtk
+
+    with pytest.raises(TypeError):
+        pyvista.Tube((0, 0), pointb)
+
+    with pytest.raises(TypeError):
+        pyvista.Tube(pointa, (10, 1.0))
 
 
 def test_cube():
@@ -112,6 +140,11 @@ def test_box():
 def test_polygon():
     geom = pyvista.Polygon()
     assert np.any(geom.points)
+
+    geom1 = pyvista.Polygon(fill=True)
+    assert geom1.n_cells == 2
+    geom2 = pyvista.Polygon(fill=False)
+    assert geom2.n_cells == 1
 
 
 def test_disc():
@@ -242,6 +275,24 @@ def test_circle():
     assert mesh.n_cells
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
     assert np.isclose(diameter, radius * 2.0, rtol=1e-3)
+    line_lengths = np.linalg.norm(
+        np.roll(mesh.points, shift=1, axis=0) - mesh.points,
+        axis=1,
+    )
+    assert np.allclose(line_lengths[0], line_lengths)
+
+
+def test_ellipse():
+    semi_major_axis = 8.0
+    semi_minor_axis = 4.0
+
+    mesh = pyvista.Ellipse(semi_major_axis, semi_minor_axis)
+    assert mesh.n_points
+    assert mesh.n_cells
+    major_axis_diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
+    minor_axis_diameter = np.max(mesh.points[:, 1]) - np.min(mesh.points[:, 1])
+    assert np.isclose(major_axis_diameter, semi_major_axis * 2.0, rtol=1e-3)
+    assert np.isclose(minor_axis_diameter, semi_minor_axis * 2.0, rtol=1e-3)
 
 
 @pytest.mark.parametrize(

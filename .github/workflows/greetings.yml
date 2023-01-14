@@ -10,7 +10,10 @@ on:
 
 jobs:
   greeting:
-    runs-on: ubuntu-latest
+    # This job can create issues/PRs/comments, so
+    #   only run on the head `pyvista/pyvista` repo
+    if: github.repository_owner == 'pyvista'
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/first-interaction@v1
         with:

@@ -7,7 +7,13 @@ import sys
 
 import pytest
 
+from pyvista.plotting import system_supports_plotting
+
 pytest.importorskip('sphinx')
+
+# skip all tests if unable to render
+if not system_supports_plotting():
+    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
 
 @pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
@@ -28,7 +34,12 @@ def test_tinypages(tmpdir):
         str(html_dir),
     ]
     proc = Popen(
-        cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True, env={**os.environ, "MPLBACKEND": ""}
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        env={**os.environ, "MPLBACKEND": ""},
+        encoding="utf8",
     )
     out, err = proc.communicate()
 

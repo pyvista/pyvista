@@ -3,15 +3,12 @@
 PyVista within a Docker Container
 =================================
 You can use ``pyvista`` from within a docker container with
-jupyterlab.  To create a local docker image install ``docker`` and be
-sure you've logged into docker by following the directions at
-`Working with the Docker registry <https://docs.github.com/en/enterprise-server@3.0/packages/working-with-a-github-packages-registry/working-with-the-docker-registry>`_)
-
-Next pull and run the image with:
+jupyterlab.  To launch a local docker container, install ``docker``, then
+pull and run the image with:
 
 .. code-block:: bash
 
-  docker run -p 8888:8888 docker.pkg.github.com/pyvista/pyvista/pyvista-jupyterlab:v0.27.0
+  docker run -p 8888:8888 ghcr.io/pyvista/pyvista:latest
 
 Finally, open the link that shows up from the terminal output and
 start playing around with pyvista in jupyterlab!  For example:
@@ -23,6 +20,19 @@ start playing around with pyvista in jupyterlab!  For example:
     Or copy and paste one of these URLs:
         http://861c873f6352:8888/?token=b3ac1f6397188944fb21e1f58b673b5b4e6f1ede1a84787b
      or http://127.0.0.1:8888/?token=b3ac1f6397188944fb21e1f58b673b5b4e6f1ede1a84787b
+
+
+.. note::
+
+    You can see the latest tags of `our Docker containers here <https://github.com/pyvista/pyvista/pkgs/container/pyvista>`_. ``ghcr.io/pyvista/pyvista:latest`` has
+    JupyterLab set up while ``ghcr.io/pyvista/pyvista:latest-slim`` is a
+    lightweight Python environment without Jupyter
+
+
+.. note::
+
+    You may need to log into the GitHub container registry by following the directions at
+    `Working with the Docker registry <https://docs.github.com/en/enterprise-server@3.0/packages/working-with-a-github-packages-registry/working-with-the-docker-registry>`_)
 
 
 Create your own Docker Container with `pyvista`
@@ -105,4 +115,4 @@ Finally, check that your render window is using NVIDIA by running
     GL_ARB_bindless_texture
 
 If you get ``display id not set``, then your environment is likely not
-setup correctly.
+set up correctly.

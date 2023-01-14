@@ -3,86 +3,63 @@ name: Style and Docstring Check
 
 on: [pull_request, workflow_dispatch]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   stylecheck:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
+          cache: 'pip'
 
-      - name: Install style requirements
-        run: |
-          pip install -r requirements_style.txt --disable-pip-version-check
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      - name: Code Linting and Spelling Check
-        run: |
-          make stylecheck
-
-  staticcheck:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Install style requirements
-        run: |
-          pip install -r requirements_static.txt --disable-pip-version-check
-
-      - name: Static code check
-        run: |
-          make mypy
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 
   docstringcheck:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
+          cache: 'pip'
+          cache-dependency-path: requirements_test.txt
 
-      - uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
-
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.local/share/pyvista/examples
-          key: Examples-${{ hashFiles('*') }}
+          key: Examples-Data-${{ hashFiles('*') }}
           restore-keys: |
-            Examples-
+            Examples-Data-
 
-      - name: Install PyVista
+      - name: Install pyvista and doctest requirements
         run: |
-          pip install .
-
-      - name: Install Doctest Requirements
-        run: |
-          sudo apt-get update
-          sudo apt-get install libgl1-mesa-glx xvfb python-tk -y
+          pip install -e .
           pip install -r requirements_test.txt
+
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@v1
 
       - name: Software Report
         run: |
-          xvfb-run python -c "import pyvista; print(pyvista.Report())"
-          xvfb-run python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
+          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
 
       - name: Test Package Docstrings
-        run: |
-          xvfb-run pytest -v --doctest-modules pyvista
+        run: pytest -v --doctest-modules pyvista
 
       - name: Test Package Docstrings with Local Namespace
-        run: |
-          xvfb-run make doctest-modules-local-namespace
+        run: make doctest-modules-local-namespace

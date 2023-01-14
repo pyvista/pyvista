@@ -2,23 +2,21 @@ name: pyvista-env
 channels:
   - conda-forge
 dependencies:
-  - python>=3.5
+  - python>=3.7
+  - jupyterlab
   - numpy
   - vtk
   - scooby>=0.5.1
-  - meshio>=4.0.3, <5.0
+  - meshio
   - matplotlib
-  - appdirs
-  - pyqt
   - imageio>=2.5.0
   - imageio-ffmpeg
   - colorcet
   - cmocean
-  - itkwidgets>=0.25.2
   - tqdm
   - pytest
   - pytest-cov
-  - pytest-qt
+  - pytest-xdist
   - codecov
   - hypothesis>=5.8.0
   - pip
@@ -28,5 +26,7 @@ dependencies:
   - panel
   - ipygany
   - ipyvtklink
+  - pythreejs
+  - pooch
   - pip:
       - pytest-memprof

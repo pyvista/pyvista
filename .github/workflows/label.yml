@@ -5,10 +5,10 @@ on:
 
 jobs:
   triage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Label based on changed files
-      uses: actions/labeler@v3
+      uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         # https://github.com/actions/labeler/issues/112#issuecomment-1000491676
@@ -35,8 +35,15 @@ jobs:
       if: startsWith(github.event.pull_request.head.ref, 'feat')
       with:
         labels: enhancement
-
     - uses: actions-ecosystem/action-add-labels@v1
       if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch')
       with:
         labels: bug
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.event.pull_request.head.ref, 'release')
+      with:
+        labels: release
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.event.pull_request.head.ref, 'breaking-change')
+      with:
+        labels: breaking-change

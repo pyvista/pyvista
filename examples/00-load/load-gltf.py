@@ -19,11 +19,11 @@ import pyvista
 from pyvista import examples
 
 helmet_file = examples.gltf.download_damaged_helmet()
-texture = examples.hdr.download_dikhololo_night()
+texture = examples.download_dikhololo_night()
 
 
 ###############################################################################
-# Setup the plotter and enable environment textures.  This works well
+# Set up the plotter and enable environment textures.  This works well
 # for physically based rendering enabled meshes like the damaged
 # helmet example.
 

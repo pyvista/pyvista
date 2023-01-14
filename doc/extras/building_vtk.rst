@@ -32,19 +32,25 @@ wheel size.
 
     #!/bin/bash
 
-    # install build dependencies (Linux/Debian)
-    sudo apt-get install ninja-build cmake libgl1-mesa-dev python3-dev
+    # Install build dependencies
+
+    # Linux/Debian
+    sudo add-apt-repository -y ppa:deadsnakes/ppa  # if on Ubuntu 20.04 or 18.04, building 3.10 for example
+    sudo apt update
+    sudo apt install -y ninja-build cmake libgl1-mesa-dev python3-dev git
+    sudo apt install -y python3.10-dev python3.10-distutils  # if using deadsnakes + Python 3.10
+    # If on 18.04, you'll need a newer cmake. You can follow VTK's instructions @ https://apt.kitware.com
 
     # Linux/CentOS
     sudo yum install epel-release
     sudo yum install ninja-build cmake mesa-libGL-devel mesa-libGLU-devel
 
-    git clone https://github.com/Kitware/VTK
-    mkdir VTK/build
-    cd VTK/build
+    git clone https://gitlab.kitware.com/vtk/vtk.git
+    mkdir vtk/build
+    cd vtk/build
     git checkout v9.1.0  # optional to select a version, but recommended
 
-    PYBIN=/usr/bin/python3
+    export PYBIN=/usr/bin/python3.10  # select your version of choice
     cmake -GNinja \
           -DCMAKE_BUILD_TYPE=Release \
           -DVTK_BUILD_TESTING=OFF \
@@ -62,7 +68,7 @@ wheel size.
     # build wheel in dist
     $PYBIN -m pip install wheel
     $PYBIN setup.py bdist_wheel
-    pip install dist/vtk-*.whl  # optionally install it
+    $PYBIN -m pip install dist/vtk-*.whl  # optionally install it
 
 .. _gpu_off_screen:
 
@@ -165,6 +171,10 @@ issues with ABI compatibility due to the version of Linux they were
 built on.  You can work around this by building your wheels using a
 `manylinux <https://github.com/pypa/manylinux>`_ docker image.
 
+To do this, create a ``build_wheels.sh`` with the following contents in the
+``git clone``d ``vtk`` directory, and give it executable permissions
+(``chmod +x build_wheels.sh``):
+
 .. code-block:: bash
 
     #!/bin/bash
@@ -189,7 +199,7 @@ built on.  You can work around this by building your wheels using a
       ;;
     esac
 
-    yum install ninja-build cmake mesa-libGL-devel mesa-libGLU-devel
+    yum install -y ninja-build cmake mesa-libGL-devel mesa-libGLU-devel
 
     rm -rf /io/build
     mkdir /io/build -p
@@ -217,16 +227,17 @@ built on.  You can work around this by building your wheels using a
     # cleanup wheel
     rm -rf wheelhouse
     auditwheel repair dist/*.whl
-    cp wheelhouse/vtk*.whl /io/wheels
 
-This script can be called with:
+This script can then be called with:
 
 .. code-block:: bash
 
-    PYTHON_VERSION=3.8
-    docker run -e \
+    export PYTHON_VERSION=3.10
+    docker run --cpus 4.5 -e \
            --rm -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 \
            /io/build_wheels.sh $PYTHON_VERSION
+
+You should end up with a ``build/wheelhouse/vtk-*.whl``.
 
 .. note::
    To build the EGL version of the wheel, follow the directions in the

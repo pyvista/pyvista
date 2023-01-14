@@ -115,7 +115,7 @@ class CoverageBuilder(Builder):
 
     def build_c_coverage(self) -> None:
         # Fetch all the info from the header files
-        c_objects = self.env.domaindata['c']['objects']
+        c_objects = self.env.domaindata['c']['objects']  # type: ignore
         for filename in self.c_sourcefiles:
             undoc: Set[Tuple[str, str]] = set()
             with open(filename) as f:
@@ -168,7 +168,7 @@ class CoverageBuilder(Builder):
         return False
 
     def build_py_coverage(self) -> None:
-        objects = self.env.domaindata['py']['objects']
+        objects = self.env.domaindata['py']['objects']  # type: ignore
 
         # objects are sometimes not referenced in the docs as they are
         # in the source.  Here we simply grab the method and class of
@@ -178,7 +178,7 @@ class CoverageBuilder(Builder):
             # only include method and class
             abbr_names.add(method_from_obj(obj_name))
 
-        modules = self.env.domaindata['py']['modules']
+        modules = self.env.domaindata['py']['modules']  # type: ignore
         for mod_name in self.add_modules:
             modules[mod_name] = None
 
@@ -215,7 +215,7 @@ class CoverageBuilder(Builder):
                     # is not defined in this module
                     continue
 
-                full_name = '%s.%s' % (mod_name, name)
+                full_name = f'{mod_name}.{name}'
                 if self.ignore_pyobj(full_name):
                     continue
 
@@ -257,7 +257,7 @@ class CoverageBuilder(Builder):
                             if skip_undoc and not attr.__doc__:
                                 # skip methods without docstring if wished
                                 continue
-                            full_attr_name = '%s.%s' % (full_name, attr_name)
+                            full_attr_name = f'{full_name}.{attr_name}'
                             if self.ignore_pyobj(full_attr_name):
                                 continue
                             if full_attr_name not in objects:

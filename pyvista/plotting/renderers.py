@@ -1,5 +1,6 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 import collections
+from weakref import proxy
 
 import numpy as np
 
@@ -27,8 +28,9 @@ class Renderers:
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
-        self._plotter = plotter
+        self._plotter = proxy(plotter)
         self._renderers = []
+        self._shadow_renderer = None
 
         # by default add border for multiple plots
         if border is None:
@@ -245,8 +247,7 @@ class Renderers:
 
     def __iter__(self):
         """Return a iterable of renderers."""
-        for renderer in self._renderers:
-            yield renderer
+        yield from self._renderers
 
     @property
     def active_index(self):
@@ -296,12 +297,17 @@ class Renderers:
             raise IndexError(f'Column index is out of range ({self.shape[1]})')
         self._active_index = self.loc_to_index((index_row, index_column))
 
+    def on_plotter_render(self):
+        """Notify all renderers of explicit plotter render call."""
+        for renderer in self:
+            renderer.on_plotter_render()
+
     def deep_clean(self):
         """Clean all renderers."""
         # Do not remove the renderers on the clean
         for renderer in self:
             renderer.deep_clean()
-        if hasattr(self, '_shadow_renderer'):
+        if self._shadow_renderer is not None:
             self._shadow_renderer.deep_clean()
         if hasattr(self, '_background_renderers'):
             for renderer in self._background_renderers:
@@ -358,6 +364,11 @@ class Renderers:
             if renderer is not None:
                 renderer.clear()
 
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        for renderer in self:
+            renderer.clear_actors()
+
     def clear(self):
         """Clear all renders."""
         for renderer in self:
@@ -391,7 +402,7 @@ class Renderers:
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Defaults
             to current theme parameters.  For example:
 
@@ -400,7 +411,7 @@ class Renderers:
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : color_like, optional
+        top : ColorLike, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
@@ -417,7 +428,8 @@ class Renderers:
         >>> plotter = pyvista.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
-        Color(name='black', hex='#000000ff')
+        Color(name='black', hex='#000000ff', opacity=255)
+        >>> plotter.close()
 
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.
@@ -435,6 +447,52 @@ class Renderers:
             self._shadow_renderer.set_background(color)
         else:
             self.active_renderer.set_background(color, top=top)
+
+    def set_color_cycler(self, color_cycler, all_renderers=True):
+        """Set or reset the color cycler.
+
+        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        call to set the default color of the dataset being plotted.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler on this
+        renderer.
+
+        Parameters
+        ----------
+        color_cycler : str, cycler.Cycler, list(ColorLike)
+            The colors to cycle through.
+
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.set_color_cycler(['red', 'green', 'blue'])
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        if all_renderers:
+            for renderer in self:
+                renderer.set_color_cycler(color_cycler)
+        else:
+            self.active_renderer.set_color_cycler(color_cycler)
 
     def remove_background_image(self):
         """Remove the background image at the current renderer.
@@ -462,5 +520,4 @@ class Renderers:
 
     def __del__(self):
         """Destructor."""
-        if hasattr(self, '_shadow_renderer'):
-            del self._shadow_renderer
+        self._shadow_renderer = None

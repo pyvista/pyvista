@@ -23,6 +23,7 @@ Object Conversions
    array_from_vtkmatrix
    vtkmatrix_from_array
    cubemap
+   cubemap_from_filenames
 
 
 File IO
@@ -72,16 +73,20 @@ Miscellaneous
 ~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    Color
 
 .. autosummary::
    :toctree: _autosummary
 
-   color_like
-   parse_color
+   ColorLike
    start_xvfb
+
+.. autosummary::
+   :toctree: _autosummary
+
+   Report
+
 
 VTK Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~

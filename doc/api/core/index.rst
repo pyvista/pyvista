@@ -1,3 +1,5 @@
+.. _core-api-index:
+
 Core API
 ========
 
@@ -15,6 +17,8 @@ how all PyVista types have direct access to common VTK filters
 All PyVista meshes inherit from the DataSet type (see :ref:`ref_dataset`).
 PyVista has the following mesh types:
 
+- :class:`pyvista.PointSet` is used to represent a set of points. This is to provide an interface for datasets that explicitly use "point" arrays to represent geometry. The :class:`pyvista.PointSet` class is an extension of `vtk.vtkPointSet`_.
+
 - :class:`pyvista.PolyData` consists of any 1D or 2D geometries to construct vertices, lines, polygons, and triangles. We generally use :class:`pyvista.PolyData` to construct scattered points and closed/open surfaces (non-volumetric datasets). The :class:`pyvista.PolyData` class is an extension of `vtk.vtkPolyData`_.
 
 - A :class:`pyvista.UnstructuredGrid` is the most general dataset type that can hold any 1D, 2D, or 3D cell geometries. You can think of this as a 3D extension of :class:`pyvista.PolyData` that allows volumetric cells to be present. It's fairly uncommon to explicitly make unstructured grids but they are often the result of different processing routines that might extract subsets of larger datasets. The :class:`pyvista.UnstructuredGrid` class is an extension of `vtk.vtkUnstructuredGrid`_.
@@ -27,6 +31,7 @@ PyVista has the following mesh types:
 
 - :class:`pyvista.MultiBlock` datasets are containers to hold several VTK datasets in one accessible and spatially referenced object. The :class:`pyvista.MultiBlock` class is an extension of `vtk.vtkMultiBlockDataSet`_.
 
+.. _vtk.vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
 .. _vtk.vtkPolyData: https://vtk.org/doc/nightly/html/classvtkPolyData.html
 .. _vtk.vtkUnstructuredGrid: https://vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
 .. _vtk.vtkStructuredGrid: https://vtk.org/doc/nightly/html/classvtkStructuredGrid.html
@@ -45,4 +50,6 @@ PyVista has the following mesh types:
    filters
    camera
    lights
+   cells
    helpers
+   misc

@@ -21,30 +21,52 @@ Reader Classes
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
-    XMLImageDataReader
-    XMLPImageDataReader
-    XMLRectilinearGridReader
-    XMLPRectilinearGridReader
-    XMLUnstructuredGridReader
-    XMLPUnstructuredGridReader
-    XMLPolyDataReader
-    XMLStructuredGridReader
-    XMLMultiBlockDataReader
-    PVDReader
+    AVSucdReader
+    BMPReader
+    BYUReader
+    BinaryMarchingCubesReader
+    CGNSReader
+    DEMReader
+    DICOMReader
     EnSightReader
+    FacetReader
+    FluentReader
+    GIFReader
+    GLTFReader
+    HDFReader
+    HDRReader
+    JPEGReader
+    MFIXReader
+    MetaImageReader
+    MultiBlockPlot3DReader
+    NIFTIReader
+    NRRDReader
+    OBJReader
     OpenFOAMReader
     PLYReader
-    OBJReader
+    PNGReader
+    PNMReader
+    POpenFOAMReader
+    PTSReader
+    PVDReader
+    Plot3DMetaReader
+    SLCReader
     STLReader
+    SegYReader
+    TIFFReader
+    TecplotReader
     VTKDataSetReader
     VTKPDataSetReader
-    BYUReader
-    FacetReader
-    Plot3DMetaReader
-    BinaryMarchingCubesReader
-
+    XMLImageDataReader
+    XMLMultiBlockDataReader
+    XMLPImageDataReader
+    XMLPRectilinearGridReader
+    XMLPUnstructuredGridReader
+    XMLPolyDataReader
+    XMLRectilinearGridReader
+    XMLStructuredGridReader
+    XMLUnstructuredGridReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
@@ -61,8 +83,19 @@ and setting time or iterations for reading.
 
 .. autosummary::
    :toctree: _autosummary
-   :template: custom-class-template.rst
 
    BaseReader
    PointCellDataSelection
    TimeReader
+
+
+Enumerations
+~~~~~~~~~~~~
+
+Enumerations are available to simplify inputs to certain readers.
+
+.. toctree::
+    :maxdepth: 2
+
+    enums
+

@@ -1,7 +1,5 @@
 """Module dedicated to widgets."""
 
-from typing import List
-
 import numpy as np
 
 import pyvista
@@ -12,6 +10,14 @@ from pyvista.utilities import (
     get_array,
     get_array_association,
     try_callback,
+)
+from pyvista.utilities.algorithms import (
+    add_ids_algorithm,
+    algorithm_to_mesh_handler,
+    crinkle_algorithm,
+    outline_algorithm,
+    pointset_to_polydata_algorithm,
+    set_algorithm_input,
 )
 
 from .colors import Color
@@ -24,7 +30,23 @@ class WidgetHelper:
 
     """
 
-    _camera_widgets: List[object] = []
+    def __init__(self, *args, **kwargs):
+        """Initialize widget helper."""
+        super().__init__(*args, **kwargs)
+        self.camera_widgets = []
+        self.box_widgets = []
+        self.box_clipped_meshes = []
+        self.plane_widgets = []
+        self.plane_clipped_meshes = []
+        self.plane_sliced_meshes = []
+        self.line_widgets = []
+        self.slider_widgets = []
+        self.threshold_meshes = []
+        self.isovalue_meshes = []
+        self.spline_widgets = []
+        self.spline_sliced_meshes = []
+        self.sphere_widgets = []
+        self.button_widgets = []
 
     def add_box_widget(
         self,
@@ -36,6 +58,7 @@ class WidgetHelper:
         use_planes=False,
         outline_translation=True,
         pass_widget=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a box widget to the scene.
 
@@ -64,7 +87,7 @@ class WidgetHelper:
             If ``False``, the box widget cannot be rotated and is
             strictly orthogonal to the cartesian axes.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
             Defaults to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -81,15 +104,27 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkBoxWidget
             Box widget.
 
-        """
-        if not hasattr(self, "box_widgets"):
-            self.box_widgets = []
+        Examples
+        --------
+        Shows an interactive clip box.
 
+        >>> import pyvista as pv
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
+
+        For a full example see :ref:`box_widget_example`.
+
+        """
         if bounds is None:
             bounds = self.bounds
 
@@ -119,18 +154,15 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        box_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
         return box_widget
 
     def clear_box_widgets(self):
-        """Disable all of the box widgets."""
-        if hasattr(self, 'box_widgets'):
-            for widget in self.box_widgets:
-                widget.Off()
-            del self.box_widgets
+        """Remove all of the box widgets."""
+        self.box_widgets.clear()
 
     def add_mesh_clip_box(
         self,
@@ -140,6 +172,8 @@ class WidgetHelper:
         widget_color=None,
         outline_translation=True,
         merge_points=True,
+        crinkle=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -152,8 +186,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and clip.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and clip or algorithm that
+            produces said mesh.
 
         invert : bool, optional
             Flag on whether to flip/invert the clip.
@@ -162,7 +197,7 @@ class WidgetHelper:
             If ``False``, the box widget cannot be rotated and is strictly
             orthogonal to the cartesian axes.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -179,6 +214,12 @@ class WidgetHelper:
             If ``True`` (default), coinciding points of independently
             defined mesh elements will be merged.
 
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
+
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -190,25 +231,34 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        from pyvista.core.filters import _get_output  # avoids circular import
+
+        mesh, algo = algorithm_to_mesh_handler(
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+        )
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
 
         port = 1 if invert else 0
 
-        alg = _vtk.vtkBoxClipDataSet()
+        clipper = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
-            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-        alg.SetInputDataObject(mesh)
-        alg.GenerateClippedOutputOn()
+            clipper.SetLocator(_vtk.vtkNonMergingPointLocator())
+        set_algorithm_input(clipper, algo)
+        clipper.GenerateClippedOutputOn()
 
-        if not hasattr(self, "box_clipped_meshes"):
-            self.box_clipped_meshes = []
-        box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
+        if crinkle:
+            crinkler = crinkle_algorithm(clipper.GetOutputPort(port), algo)
+            box_clipped_mesh = _get_output(crinkler)
+        else:
+            box_clipped_mesh = _get_output(clipper, oport=port)
+
         self.box_clipped_meshes.append(box_clipped_mesh)
 
         def callback(planes):
@@ -218,9 +268,13 @@ class WidgetHelper:
                 bounds.append(plane.GetNormal())
                 bounds.append(plane.GetOrigin())
 
-            alg.SetBoxClip(*bounds)
-            alg.Update()
-            box_clipped_mesh.shallow_copy(alg.GetOutput(port))
+            clipper.SetBoxClip(*bounds)
+            clipper.Update()
+            if crinkle:
+                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+            else:
+                clipped = _get_output(clipper, oport=port)
+            box_clipped_mesh.shallow_copy(clipped)
 
         self.add_box_widget(
             callback=callback,
@@ -230,9 +284,12 @@ class WidgetHelper:
             use_planes=True,
             color=widget_color,
             outline_translation=outline_translation,
+            interaction_event=interaction_event,
         )
 
-        return self.add_mesh(box_clipped_mesh, reset_camera=False, **kwargs)
+        if crinkle:
+            return self.add_mesh(crinkler, reset_camera=False, **kwargs)
+        return self.add_mesh(clipper.GetOutputPort(port), reset_camera=False, **kwargs)
 
     def add_plane_widget(
         self,
@@ -250,6 +307,7 @@ class WidgetHelper:
         pass_widget=False,
         test_callback=True,
         normal_rotation=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a plane widget to the scene.
 
@@ -269,7 +327,7 @@ class WidgetHelper:
             The starting normal vector of the plane.
 
         origin : tuple(float)
-            The starting coordinate of the center of the place.
+            The starting coordinate of the center of the plane.
 
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
@@ -277,7 +335,7 @@ class WidgetHelper:
         factor : float, optional
             An inflation factor to expand on the bounds when placing.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.
 
         assign_to_axis : str or int, optional
@@ -317,15 +375,15 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
             Plane widget.
 
         """
-        if not hasattr(self, "plane_widgets"):
-            self.plane_widgets = []
-
         if origin is None:
             origin = self.center
         if bounds is None:
@@ -365,7 +423,7 @@ class WidgetHelper:
 
             plane_widget.SetDrawPlane(False)
             plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
-            plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+            plane_widget.AddObserver(interaction_event, _stop_interact)
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
@@ -426,7 +484,7 @@ class WidgetHelper:
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
         plane_widget.On()
-        plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        plane_widget.AddObserver(interaction_event, _the_callback)
         if test_callback:
             _the_callback(plane_widget, None)  # Trigger immediate update
 
@@ -434,11 +492,8 @@ class WidgetHelper:
         return plane_widget
 
     def clear_plane_widgets(self):
-        """Disable all of the plane widgets."""
-        if hasattr(self, 'plane_widgets'):
-            for widget in self.plane_widgets:
-                widget.Off()
-            del self.plane_widgets
+        """Remove all of the plane widgets."""
+        self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
         self,
@@ -453,6 +508,9 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
+        crinkle=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        origin=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -465,8 +523,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and clip.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and clip or algorithm that
+            produces said mesh.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -474,7 +533,7 @@ class WidgetHelper:
         invert : bool, optional
             Flag on whether to flip/invert the clip.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Either a string, RGB list, or hex color string.
 
         value : float, optional
@@ -509,6 +568,15 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
+
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -520,34 +588,48 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        from pyvista.core.filters import _get_output  # avoids circular import
+
+        mesh, algo = algorithm_to_mesh_handler(
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+        )
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
 
         if isinstance(mesh, _vtk.vtkPolyData):
-            alg = _vtk.vtkClipPolyData()
+            clipper = _vtk.vtkClipPolyData()
         # elif isinstance(mesh, vtk.vtkImageData):
-        #     alg = vtk.vtkClipVolume()
-        #     alg.SetMixed3DCellGeneration(True)
+        #     clipper = vtk.vtkClipVolume()
+        #     clipper.SetMixed3DCellGeneration(True)
         else:
-            alg = _vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
-        alg.SetValue(value)
-        alg.SetInsideOut(invert)  # invert the clip if needed
+            clipper = _vtk.vtkTableBasedClipDataSet()
+        set_algorithm_input(clipper, algo)
+        clipper.SetValue(value)
+        clipper.SetInsideOut(invert)  # invert the clip if needed
 
-        if not hasattr(self, "plane_clipped_meshes"):
-            self.plane_clipped_meshes = []
-        plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
+        if crinkle:
+            crinkler = crinkle_algorithm(clipper, algo)
+            plane_clipped_mesh = _get_output(crinkler)
+        else:
+            plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, origin):
-            function = generate_plane(normal, origin)
-            alg.SetClipFunction(function)  # the implicit function
-            alg.Update()  # Perform the Cut
-            plane_clipped_mesh.shallow_copy(alg.GetOutput())
+        def callback(normal, loc):
+            function = generate_plane(normal, loc)
+            clipper.SetClipFunction(function)  # the implicit function
+            clipper.Update()  # Perform the Cut
+            if crinkle:
+                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+            else:
+                clipped = pyvista.wrap(clipper.GetOutput())
+            plane_clipped_mesh.shallow_copy(clipped)
 
         self.add_plane_widget(
             callback=callback,
@@ -560,11 +642,14 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
+            interaction_event=interaction_event,
         )
 
-        return self.add_mesh(plane_clipped_mesh, **kwargs)
+        if crinkle:
+            return self.add_mesh(crinkler, **kwargs)
+        return self.add_mesh(clipper, **kwargs)
 
     def add_mesh_slice(
         self,
@@ -578,6 +663,8 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        origin=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -590,8 +677,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and slice.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and slice or algorithm that
+            produces said mesh.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -600,7 +688,7 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.  Defaults
             to ``'white'``.
 
@@ -630,6 +718,12 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
+        origin : tuple(float), optional
+            The starting coordinate of the center of the plane.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -641,20 +735,22 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        mesh, algo = algorithm_to_mesh_handler(mesh)
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
+        if origin is None:
+            origin = mesh.center
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
-        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
+        set_algorithm_input(alg, algo or mesh)
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        if not hasattr(self, "plane_sliced_meshes"):
-            self.plane_sliced_meshes = []
         plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
@@ -676,14 +772,21 @@ class WidgetHelper:
             origin_translation=origin_translation,
             outline_translation=outline_translation,
             implicit=implicit,
-            origin=mesh.center,
+            origin=origin,
             normal_rotation=normal_rotation,
+            interaction_event=interaction_event,
         )
 
-        return self.add_mesh(plane_sliced_mesh, **kwargs)
+        return self.add_mesh(alg, **kwargs)
 
     def add_mesh_slice_orthogonal(
-        self, mesh, generate_triangles=False, widget_color=None, tubing=False, **kwargs
+        self,
+        mesh,
+        generate_triangles=False,
+        widget_color=None,
+        tubing=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        **kwargs,
     ):
         """Slice a mesh with three interactive planes.
 
@@ -692,14 +795,15 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and threshold.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and threshold or algorithm
+            that produces said mesh.
 
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -711,6 +815,9 @@ class WidgetHelper:
         tubing : bool, optional
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
+
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -724,7 +831,11 @@ class WidgetHelper:
 
         """
         actors = []
+        name = kwargs.pop("name", None)
         for ax in ["x", "y", "z"]:
+            axkwargs = kwargs.copy()
+            if name:
+                axkwargs["name"] = f"{name}-{ax}"
             a = self.add_mesh_slice(
                 mesh,
                 assign_to_axis=ax,
@@ -733,7 +844,8 @@ class WidgetHelper:
                 generate_triangles=generate_triangles,
                 widget_color=widget_color,
                 tubing=tubing,
-                **kwargs,
+                interaction_event=interaction_event,
+                **axkwargs,
             )
             actors.append(a)
 
@@ -748,6 +860,7 @@ class WidgetHelper:
         color=None,
         use_vertices=False,
         pass_widget=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a line widget to the scene.
 
@@ -774,7 +887,7 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the line created.
 
-        color : color_like, optional, defaults to white
+        color : ColorLike, optional, defaults to white
             Either a string, rgb sequence, or hex color string.
 
         use_vertices : bool, optional
@@ -785,15 +898,15 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkLineWidget
             Created line widget.
 
         """
-        if not hasattr(self, "line_widgets"):
-            self.line_widgets = []
-
         if bounds is None:
             bounds = self.bounds
 
@@ -821,18 +934,15 @@ class WidgetHelper:
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
-        line_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        line_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(line_widget, None)
 
         self.line_widgets.append(line_widget)
         return line_widget
 
     def clear_line_widgets(self):
-        """Disable all of the line widgets."""
-        if hasattr(self, 'line_widgets'):
-            for widget in self.line_widgets:
-                widget.Off()
-            del self.line_widgets
+        """Remove all of the line widgets."""
+        self.line_widgets.clear()
 
     def add_text_slider_widget(
         self,
@@ -871,7 +981,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider on the
             display port.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -963,6 +1073,8 @@ class WidgetHelper:
         title_opacity=1.0,
         title_color=None,
         fmt=None,
+        slider_width=None,
+        tube_width=None,
     ):
         """Add a slider bar widget.
 
@@ -973,9 +1085,10 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The method called every time the slider is updated. This
-            should take a single parameter: the float value of the
-            slider.
+            Called every time the slider is updated. This should take a single
+            parameter: the float value of the slider. If ``pass_widget=True``,
+            callable should take two parameters: the float value of the slider
+            and the widget itself.
 
         rng : tuple(float)
             Length two tuple of the minimum and maximum ranges of the
@@ -995,7 +1108,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider
             on the display port.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -1020,13 +1133,19 @@ class WidgetHelper:
         title_opacity : float, optional
             Opacity of title. Defaults to 1.0.
 
-        title_color : color_like, optional
+        title_color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.  Defaults
             to the value given in ``color``.
 
         fmt : str, optional
             String formatter used to format numerical data. Defaults
             to ``None``.
+
+        slider_width : float, optional
+            Normalized width of the slider. Defaults to the theme's slider width.
+
+        tube_width : float, optional
+            Normalized width of the tube. Defaults to the theme's tube width.
 
         Returns
         -------
@@ -1052,8 +1171,8 @@ class WidgetHelper:
         ... )
         >>> pl.show()
         """
-        if not hasattr(self, "slider_widgets"):
-            self.slider_widgets = []
+        if self.iren is None:
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
@@ -1104,6 +1223,11 @@ class WidgetHelper:
             slider_rep.SetEndCapLength(slider_style.cap_length)
             slider_rep.SetEndCapWidth(slider_style.cap_width)
 
+        if slider_width is not None:
+            slider_rep.SetSliderWidth(slider_width)
+        if tube_width is not None:
+            slider_rep.SetTubeWidth(tube_width)
+
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()
             if callable(callback):
@@ -1142,11 +1266,8 @@ class WidgetHelper:
         return slider_widget
 
     def clear_slider_widgets(self):
-        """Disable all of the slider widgets."""
-        if hasattr(self, 'slider_widgets'):
-            for widget in self.slider_widgets:
-                widget.Off()
-            del self.slider_widgets
+        """Remove all of the slider widgets."""
+        self.slider_widgets.clear()
 
     def add_mesh_threshold(
         self,
@@ -1159,6 +1280,8 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         continuous=False,
+        all_scalars=False,
+        method='upper',
         **kwargs,
     ):
         """Apply a threshold on a mesh with a slider.
@@ -1171,16 +1294,22 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and threshold.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and threshold or algorithm
+            that produces said mesh.
 
         scalars : str, optional
             The string name of the scalars on the mesh to threshold and display.
 
-        invert : bool, optional
-            Invert (flip) the threshold.
+        invert : bool, default: False
+            Invert the threshold results. That is, cells that would have been
+            in the output with this option off are excluded, while cells that
+            would have been excluded from the output are included.
 
-        widget_color : color_like, optional
+            .. warning::
+                This option is only supported for VTK version 9+
+
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1189,29 +1318,44 @@ class WidgetHelper:
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        preference : str, optional
+        preference : str, default: 'cell'
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
-            scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            mapped to the mesh.  Default ``'cell'``, causes the
+            scalars to be associated with the mesh cells.  Can be
+            either ``'point'`` or ``'cell'``.
 
         title : str, optional
             The string label of the slider widget.
 
-        pointa : sequence, optional
+        pointa : sequence, default: (0.4, 0.9)
             The relative coordinates of the left point of the slider
             on the display port.
 
-        pointb : sequence, optional
+        pointb : sequence, default: (0.9, 0.9)
             The relative coordinates of the right point of the slider
             on the display port.
 
-        continuous : bool, optional
+        continuous : bool, default: False
             If this is enabled (default is ``False``), use the continuous
-            interval ``[minimum cell scalar, maxmimum cell scalar]``
+            interval ``[minimum cell scalar, maximum cell scalar]``
             to intersect the threshold bound, rather than the set of
             discrete scalar values from the vertices.
+
+        all_scalars : bool, default: False
+            If using scalars from point data, all
+            points in a cell must satisfy the threshold when this
+            value is ``True``.  When ``False``, any point of the cell
+            with a scalar value satisfying the threshold criterion
+            will extract the cell. Has no effect when using cell data.
+
+        method : str, default: 'upper'
+            Set the threshold method for single-values, defining which
+            threshold bounds to use. If the ``value`` is a range, this
+            parameter will be ignored, extracting data between the two
+            values. For single values, ``'lower'`` will extract data
+            lower than the  ``value``. ``'upper'`` will extract data
+            larger than the ``value``.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -1223,6 +1367,16 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        # avoid circular import
+        from ..core.filters.data_set import _set_threshold_limit
+
+        mesh, algo = algorithm_to_mesh_handler(mesh)
+
+        if isinstance(mesh, pyvista.PointSet):
+            # vtkThreshold is CELL-wise and PointSets have no cells
+            algo = pointset_to_polydata_algorithm(algo or mesh)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', mesh.memory_address)
@@ -1239,25 +1393,21 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
-        alg.SetInputDataObject(mesh)
+        set_algorithm_input(alg, algo or mesh)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
+        alg.SetAllScalars(all_scalars)
 
-        if not hasattr(self, "threshold_meshes"):
-            self.threshold_meshes = []
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
-            if invert:
-                alg.ThresholdByLower(value)
-            else:
-                alg.ThresholdByUpper(value)
+            _set_threshold_limit(alg, value, method, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 
@@ -1271,7 +1421,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault("reset_camera", False)
-        self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
+        return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_mesh_isovalue(
         self,
@@ -1296,10 +1446,18 @@ class WidgetHelper:
         The isovalue mesh is saved to the ``.isovalue_meshes``
         attribute on the plotter.
 
+        .. warning::
+            This will not work with :class:`pyvista.PointSet` as
+            creating an isovalue is a dimension reducing operation
+            on the geometry and point clouds are zero dimensional.
+            This will similarly fail for point clouds in
+            :class:`pyvista.PolyData`.
+
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and contour.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and contour or algorithm
+            that produces said mesh.
 
         scalars : str, optional
             The string name of the scalars on the mesh to contour and display.
@@ -1322,9 +1480,9 @@ class WidgetHelper:
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'points'``, causes the
+            mapped to the mesh.  Default ``'point'``, causes the
             scalars will be associated with the mesh points.  Can be
-            either ``'points'`` or ``'cells'``.
+            either ``'point'`` or ``'cell'``.
 
         title : str, optional
             The string label of the slider widget.
@@ -1337,7 +1495,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider
             on the display port.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1357,6 +1515,9 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        mesh, algo = algorithm_to_mesh_handler(mesh)
+        if isinstance(mesh, pyvista.PointSet):
+            raise TypeError('PointSets are 0-dimensional and thus cannot produce contours.')
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
         name = kwargs.get('name', mesh.memory_address)
@@ -1380,17 +1541,15 @@ class WidgetHelper:
         mesh.set_active_scalars(scalars)
 
         alg = _vtk.vtkContourFilter()
-        alg.SetInputDataObject(mesh)
+        set_algorithm_input(alg, algo or mesh)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
-        if not hasattr(self, "isovalue_meshes"):
-            self.isovalue_meshes = []
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
@@ -1409,7 +1568,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault("reset_camera", False)
-        return self.add_mesh(isovalue_mesh, scalars=scalars, **kwargs)
+        return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_spline_widget(
         self,
@@ -1425,6 +1584,7 @@ class WidgetHelper:
         pass_widget=False,
         closed=False,
         initial_points=None,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Create and add a spline widget to the scene.
 
@@ -1452,13 +1612,13 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the spline created between all the handles.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.
 
         show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
-        ribbon_color : color_like, optional
+        ribbon_color : ColorLike, optional
             Color of the ribbon.  Either a string, RGB sequence, or
             hex color string.
 
@@ -1479,6 +1639,9 @@ class WidgetHelper:
             last point are the same, this will be a closed loop
             spline.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkSplineWidget
@@ -1492,9 +1655,6 @@ class WidgetHelper:
         """
         if initial_points is not None and len(initial_points) != n_handles:
             raise ValueError("`initial_points` must be length `n_handles`.")
-
-        if not hasattr(self, "spline_widgets"):
-            self.spline_widgets = []
 
         color = Color(color, default_color=pyvista.global_theme.color)
 
@@ -1525,12 +1685,12 @@ class WidgetHelper:
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
-            spline_widget.InitializeHandles(pyvista.vtk_points((initial_points)))
+            spline_widget.InitializeHandles(pyvista.vtk_points(initial_points))
         else:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
-        spline_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        spline_widget.AddObserver(interaction_event, _the_callback)
         _the_callback(spline_widget, None)
 
         if show_ribbon:
@@ -1540,11 +1700,8 @@ class WidgetHelper:
         return spline_widget
 
     def clear_spline_widgets(self):
-        """Disable all of the spline widgets."""
-        if hasattr(self, 'spline_widgets'):
-            for widget in self.spline_widgets:
-                widget.Off()
-            del self.spline_widgets
+        """Remove all of the spline widgets."""
+        self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
         self,
@@ -1558,6 +1715,7 @@ class WidgetHelper:
         ribbon_opacity=0.5,
         initial_points=None,
         closed=False,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
         """Slice a mesh with a spline widget.
@@ -1570,8 +1728,9 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            The input dataset to add to the scene and slice along the spline.
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+            The input dataset to add to the scene and slice along the spline
+            or algorithm that produces said mesh.
 
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
@@ -1584,7 +1743,7 @@ class WidgetHelper:
         resolution : int, optional
             The number of points to generate on the spline.
 
-        widget_color : color_like, optional
+        widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1596,7 +1755,7 @@ class WidgetHelper:
         show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
-        ribbon_color : color_like, optional
+        ribbon_color : ColorLike, optional
             Color of the ribbon.  Either a string, RGB sequence, or
             hex color string.
 
@@ -1612,6 +1771,9 @@ class WidgetHelper:
         closed : bool, optional
             Make the spline a closed loop.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -1623,20 +1785,22 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
-        name = kwargs.get('name', mesh.memory_address)
+        mesh, algo = algorithm_to_mesh_handler(mesh)
+        name = kwargs.get('name', None)
+        if name is None:
+            name = mesh.memory_address
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
-        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
+        # Use the grid as the data we desire to cut
+        set_algorithm_input(alg, algo or mesh)
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        if not hasattr(self, "spline_sliced_meshes"):
-            self.spline_sliced_meshes = []
         spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
@@ -1661,9 +1825,10 @@ class WidgetHelper:
             ribbon_opacity=ribbon_opacity,
             initial_points=initial_points,
             closed=closed,
+            interaction_event=interaction_event,
         )
 
-        return self.add_mesh(spline_sliced_mesh, **kwargs)
+        return self.add_mesh(alg, **kwargs)
 
     def add_sphere_widget(
         self,
@@ -1678,6 +1843,7 @@ class WidgetHelper:
         indices=None,
         pass_widget=False,
         test_callback=True,
+        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add one or many sphere widgets to a scene.
 
@@ -1686,11 +1852,12 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The function to call back when the widget is modified. It
-            takes a single argument: the center of the sphere as an
-            XYZ coordinate (a 3-length sequence).  If multiple centers
-            are passed in the ``center`` parameter, the callback must
-            also accept an index of that widget.
+            The function to call back when the widget is modified. It takes a
+            single argument: the center of the sphere as an XYZ coordinate (a
+            3-length sequence), unless ``pass_widget=True``, in which case the
+            callback must accept the widget object as the second parameter.  If
+            multiple centers are passed in the ``center`` parameter, the
+            callback must also accept an index of that widget.
 
         center : tuple(float), optional
             Length 3 array for the XYZ coordinate of the sphere's
@@ -1708,7 +1875,7 @@ class WidgetHelper:
         phi_resolution : int, optional
             Set the number of points in the latitude direction.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the sphere's surface.  If multiple centers
             are passed, then this must be a list of colors.  Each
             color is either a string, rgb list, or hex color string.
@@ -1722,7 +1889,7 @@ class WidgetHelper:
         style : str, optional
             Representation style: ``'surface'`` or ``'wireframe'``.
 
-        selected_color : color_like, optional
+        selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
 
         indices : sequence, optional
@@ -1736,15 +1903,15 @@ class WidgetHelper:
             If ``True``, run the callback function after the widget is
             created.
 
+        interaction_event : vtk.vtkCommand.EventIds, optional
+            The VTK interaction event to use for triggering the callback.
+
         Returns
         -------
         vtk.vtkSphereWidget
             The sphere widget.
 
         """
-        if not hasattr(self, "sphere_widgets"):
-            self.sphere_widgets = []
-
         if color is None:
             color = pyvista.global_theme.color.float_rgb
         selected_color = Color(selected_color)
@@ -1799,7 +1966,7 @@ class WidgetHelper:
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
             sphere_widget.On()
-            sphere_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            sphere_widget.AddObserver(interaction_event, _the_callback)
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
@@ -1811,11 +1978,8 @@ class WidgetHelper:
         return sphere_widget
 
     def clear_sphere_widgets(self):
-        """Disable all of the sphere widgets."""
-        if hasattr(self, 'sphere_widgets'):
-            for widget in self.sphere_widgets:
-                widget.Off()
-            del self.sphere_widgets
+        """Remove all of the sphere widgets."""
+        self.sphere_widgets.clear()
 
     def add_checkbox_button_widget(
         self,
@@ -1852,13 +2016,13 @@ class WidgetHelper:
         border_size : int, optional
             The size of the borders of the button in pixels.
 
-        color_on : color_like, optional
+        color_on : ColorLike, optional
             The color used when the button is checked. Default is ``'blue'``.
 
-        color_off : color_like, optional
+        color_off : ColorLike, optional
             The color used when the button is not checked. Default is ``'grey'``.
 
-        background_color : color_like, optional
+        background_color : ColorLike, optional
             The background color of the button. Default is ``'white'``.
 
         Returns
@@ -1866,9 +2030,24 @@ class WidgetHelper:
         vtk.vtkButtonWidget
             The VTK button widget configured as a checkbox button.
 
+        Examples
+        --------
+        The following example generates a static image of the widget.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> p = pv.Plotter()
+        >>> actor = p.add_mesh(mesh)
+        >>> def toggle_vis(flag):
+        ...     actor.SetVisibility(flag)
+        >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
+        >>> p.show()
+
+        Download the interactive example at :ref:`checkbox_widget_example`.
+
         """
-        if not hasattr(self, "button_widgets"):
-            self.button_widgets = []
+        if self.iren is None:  # pragma: no cover
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
@@ -1876,7 +2055,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pyvista.UniformGrid(dims=dims)
+            button = pyvista.UniformGrid(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[
@@ -1948,21 +2127,16 @@ class WidgetHelper:
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
         widget.On()
-        self._camera_widgets.append(widget)
+        self.camera_widgets.append(widget)
         return widget
 
     def clear_camera_widgets(self):
-        """Disable all of the camera widgets."""
-        for widget in self._camera_widgets:
-            widget.Off()
-        self._camera_widgets = []
+        """Remove all of the camera widgets."""
+        self.camera_widgets.clear()
 
     def clear_button_widgets(self):
-        """Disable all of the button widgets."""
-        if hasattr(self, 'button_widgets'):
-            for widget in self.button_widgets:
-                widget.Off()
-            del self.button_widgets
+        """Remove all of the button widgets."""
+        self.button_widgets.clear()
 
     def close(self):
         """Close the widgets."""

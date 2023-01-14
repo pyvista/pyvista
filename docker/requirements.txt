@@ -1,11 +1,11 @@
 cmocean
 colorcet
-imageio-ffmpeg
 imageio
+imageio-ffmpeg
 ipygany
 ipyvtklink
 matplotlib
 meshio
 panel
-trimesh
 pythreejs
+trimesh

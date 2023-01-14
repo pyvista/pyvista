@@ -59,7 +59,7 @@ PyVista is:
 
    Create the grid.  Note how the values must use Fortran ordering.
 
-   >>> grid = pyvista.UniformGrid(dims=(300, 300, 1))
+   >>> grid = pyvista.UniformGrid(dimensions=(300, 300, 1))
    >>> grid.point_data["values"] = values.flatten(order="F")
 
 Here, PyVista has done several things for us:
@@ -142,7 +142,7 @@ However, with PyVista you only need:
    xi = np.arange(300)
    x, y = np.meshgrid(xi, xi)
    values = 127.5 + (1.0 + np.sin(x/25.0)*np.cos(y/25.0))
-   grid = pv.UniformGrid(dims=(300, 300, 1))
+   grid = pv.UniformGrid(dimensions=(300, 300, 1))
    grid.point_data["values"] = values.flatten(order="F")
    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
@@ -281,7 +281,7 @@ example:
    import pyvista
    pyvista.set_jupyter_backend('pythreejs')
    pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.anti_aliasing = 'fxaa'
 
 
 .. jupyter-execute::
@@ -333,7 +333,7 @@ In this manner, you can get the "best of both worlds" should you need
 the flexibility of PyVista and the raw power of VTK.
 
 .. note::
-   You can use :func:`pyvista.Circle` for a one line replacement of
+   You can use :func:`pyvista.Polygon` for a one line replacement of
    the above VTK code.
 
 

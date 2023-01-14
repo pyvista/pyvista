@@ -1,3 +1,5 @@
+import os
+import platform
 from string import ascii_letters, digits, whitespace
 import sys
 
@@ -9,6 +11,12 @@ from pytest import fixture, mark, raises
 
 import pyvista
 from pyvista.utilities import FieldAssociation
+
+skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+skip_apple_silicon = mark.skipif(
+    platform.system() == 'Darwin' and platform.processor() == 'arm',
+    reason='Test fails on Apple Silicon',
+)
 
 
 @fixture()
@@ -128,6 +136,9 @@ def test_active_scalars_name(sphere):
     sphere.point_data[key] = range(sphere.n_points)
     assert sphere.point_data.active_scalars_name == key
 
+    sphere.point_data.active_scalars_name = None
+    assert sphere.point_data.active_scalars_name is None
+
 
 def test_set_scalars(sphere):
     scalars = np.array(sphere.n_points)
@@ -189,12 +200,45 @@ def test_set_vectors(hexbeam):
     hexbeam.point_data.set_vectors(vectors, 'my-vectors')
     assert np.allclose(hexbeam.point_data.active_vectors, vectors)
 
+    # check clearing
+    hexbeam.point_data.active_vectors_name = None
+    assert hexbeam.point_data.active_vectors_name is None
+
 
 def test_set_invalid_vectors(hexbeam):
     # verify non-vector data does not become active vectors
     not_vectors = np.random.random(hexbeam.n_points)
     with raises(ValueError):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
+
+
+def test_set_tcoords_name():
+    mesh = pyvista.Cube()
+    old_name = mesh.point_data.active_t_coords_name
+    assert mesh.point_data.active_t_coords_name is not None
+    mesh.point_data.active_t_coords_name = None
+    assert mesh.point_data.active_t_coords_name is None
+
+    mesh.point_data.active_t_coords_name = old_name
+    assert mesh.point_data.active_t_coords_name == old_name
+
+
+def test_set_bitarray(hexbeam):
+    """Test bitarrays are properly loaded and represented in datasetattributes."""
+    hexbeam.clear_data()
+    assert 'bool' not in str(hexbeam.point_data)
+
+    arr = np.zeros(hexbeam.n_points, dtype=bool)
+    arr[::2] = 1
+    hexbeam.point_data['bitarray'] = arr
+
+    assert hexbeam.point_data['bitarray'].dtype == np.bool_
+    assert 'bool' in str(hexbeam.point_data)
+    assert np.allclose(hexbeam.point_data['bitarray'], arr)
+
+    # ensure overwriting the type changes association
+    hexbeam.point_data['bitarray'] = arr.astype(np.int32)
+    assert hexbeam.point_data['bitarray'].dtype == np.int32
 
 
 @mark.parametrize('array_key', ['invalid_array_name', -1])
@@ -242,6 +286,12 @@ def test_contains_should_contain_when_added(insert_arange_narray):
     assert 'sample_array' in dsa
 
 
+def test_set_array_catch(hexbeam):
+    data = np.zeros(hexbeam.n_points)
+    with raises(TypeError, match='`name` must be a string'):
+        hexbeam.point_data.set_array(data, name=['foo'])
+
+
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_should_accept_scalar_value(scalar, hexbeam_point_attributes):
@@ -266,6 +316,11 @@ def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
+    if not ''.join(arr).isascii():
+        with raises(ValueError, match='non-ASCII'):
+            hexbeam_field_attributes['string_arr'] = arr
+        return
+
     hexbeam_field_attributes['string_arr'] = arr
     assert np.array_equiv(arr, hexbeam_field_attributes['string_arr'])
 
@@ -412,9 +467,21 @@ def test_active_scalars_setter(hexbeam_point_attributes):
     assert dsa.GetScalars().GetName() == 'sample_point_scalars'
 
 
+def test_active_scalars_setter_no_override(hexbeam):
+    # Test that adding new array does not override
+    assert hexbeam.active_scalars_name == 'sample_cell_scalars'
+    hexbeam.cell_data['test'] = np.arange(0, hexbeam.n_cells, dtype=int)
+    assert hexbeam.active_scalars_name == 'sample_cell_scalars'
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_preserve_field_data_after_extract_cells(hexbeam, arr):
+    if not ''.join(arr).isascii():
+        with raises(ValueError, match='non-ASCII'):
+            hexbeam.field_data["foo"] = arr
+        return
+
     # https://github.com/pyvista/pyvista/pull/934
     hexbeam.field_data["foo"] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
@@ -434,6 +501,9 @@ def test_normals_get(plane):
 
     plane_w_normals = plane.compute_normals()
     assert np.array_equal(plane_w_normals.point_data.active_normals, plane_w_normals.point_normals)
+
+    plane.point_data.active_normals_name = None
+    assert plane.point_data.active_normals_name is None
 
 
 def test_normals_set():
@@ -517,3 +587,35 @@ def test_active_t_coords_name(plane):
 
     with raises(AttributeError):
         plane.field_data.active_t_coords_name = 'arr'
+
+
+@skip_windows  # windows doesn't support np.complex256
+@skip_apple_silicon  # same with Apple silicon (M1/M2)
+def test_complex_raises(plane):
+    with raises(ValueError, match='Only numpy.complex64'):
+        plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
+
+
+@mark.parametrize('dtype_str', ['complex64', 'complex128'])
+def test_complex(plane, dtype_str):
+    """Test if complex data can be properly represented in datasetattributes."""
+    dtype = np.dtype(dtype_str)
+    name = 'my_data'
+
+    with raises(ValueError, match='Complex data must be single dimensional'):
+        plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
+
+    real_type = np.float32 if dtype == np.complex64 else np.float64
+    data = np.random.random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    plane.point_data[name] = data
+    assert np.array_equal(plane.point_data[name], data)
+
+    assert dtype_str in str(plane.point_data)
+
+    # test setter
+    plane.active_scalars_name = name
+
+    # ensure that association is removed when changing datatype
+    assert plane.point_data[name].dtype == dtype
+    plane.point_data[name] = plane.point_data[name].real
+    assert np.issubdtype(plane.point_data[name].dtype, real_type)

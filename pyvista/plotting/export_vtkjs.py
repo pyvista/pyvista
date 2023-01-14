@@ -359,7 +359,7 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
 
     # PointData TCoords
     dump_t_coords(dataset_dir, data_dir, dataset, container, compress)
-    # dump_normals(dataset_dir, data_dir, dataset, container, compress)
+    dump_normals(dataset_dir, data_dir, dataset, container, compress)
 
     return root
 
@@ -475,7 +475,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                         gf.Update()
                         dataset = gf.GetOutput()
                 else:
-                    dataset = mapper.GetInput()
+                    dataset = mapper.GetInputAsDataSet()
 
                 if dataset and not isinstance(dataset, (_vtk.vtkPolyData, _vtk.vtkImageData)):
                     # All data must be PolyData surfaces
@@ -697,7 +697,8 @@ def get_vtkjs_url(*args):
 
     - Dropbox
 
-    Args:
+    Args
+    ----
         host (str): the name of the file hosting service.
         inURL (str): the web URL to the ``.vtkjs`` file.
 

@@ -5,35 +5,14 @@ import os
 
 def format_icon(title, description, link, image):
     body = r"""
+   .. grid-item-card:: {}
+      :link: {}
+      :text-align: center
+      :class-title: pyvista-card-title
 
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="{}">
-
-.. only:: html
-
-    .. figure:: ../images/external-examples/{}
-       :target: {}
-
-       {}
-
-
-
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
-   {} <{}>
-
-
-
+      .. image:: ../images/external-examples/{}
 """
-    content = body.format(description, image, link, title, title, link)
+    content = body.format(title, link, image)
     return content
 
 
@@ -60,7 +39,7 @@ articles = dict(
     discretize=Example(
         title="3D Rendering with Discretize",
         description="3D Rendering with Discretize",
-        link="http://discretize.simpeg.xyz/en/master/examples/plot_pyvista_laguna.html",
+        link="http://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html",
         image="discretize.png",
     ),
     open_foam=Example(
@@ -153,6 +132,48 @@ articles = dict(
         link="https://github.com/camurban/pterasoftware",
         image="ptera_software.gif",
     ),
+    geemap=Example(
+        title="geemap",
+        description="A Python package for interactive mapping with Google Earth Engine, ipyleaflet, and ipywidgets.",
+        link="https://geemap.org/",
+        image="geemap.gif",
+    ),
+    entry=Example(
+        title="GeoVista",
+        description="Cartographic rendering and mesh analytics powered by PyVista",
+        link="https://github.com/bjlittle/geovista",
+        image="geovista_earth.png",
+    ),
+    gmshmodel=Example(
+        title="GmshModel",
+        description="A mesh modeling interface to the Gmsh-Python-API",
+        link="https://gmshmodel.readthedocs.io/en/latest/",
+        image="gmsh_model.png",
+    ),
+    grad_descent_visualizer=Example(
+        title="Gradient Descent Visualizer",
+        description="A Python package used to visualize the gradient descent of function landscapes.",
+        link="https://github.com/JacobBumgarner/grad-descent-visualizer",
+        image="grad_descent_visualizer.gif",
+    ),
+    nikolov1=Example(
+        title="Ivan Nikolov on Visualization Libraries",
+        description="Python Libraries for Mesh, Point Cloud, and Data Visualization (Part 1)",
+        link="https://medium.com/towards-data-science/python-libraries-for-mesh-and-point-cloud-visualization-part-1-daa2af36de30",
+        image="nikolov1.gif",
+    ),
+    nikolov2=Example(
+        title="Ivan Nikolov on Voxelization",
+        description="How to Voxelize Meshes and Point Clouds in Python",
+        link="https://medium.com/towards-data-science/how-to-voxelize-meshes-and-point-clouds-in-python-ca94d403f81d",
+        image="nikolov2.gif",
+    ),
+    nikolov3=Example(
+        title="Ivan Nikolov on Neighbourhood Analysis",
+        description="Neighborhood Analysis, KD-Trees, and Octrees for Meshes and Point Clouds in Python",
+        link="https://medium.com/towards-data-science/neighborhood-analysis-kd-trees-and-octrees-for-meshes-and-point-clouds-in-python-19fa96527b77",
+        image="nikolov3.gif",
+    ),
     # entry=Example(title="",
     #     description="",
     #     link="",
@@ -169,7 +190,8 @@ def make_example_gallery():
 
     with StringIO() as new_fid:
         new_fid.write(
-            """
+            """.. _external_examples:
+
 External Examples
 =================
 
@@ -177,16 +199,19 @@ Here are a list of longer, more technical examples of what PyVista can do!
 
 .. caution::
 
-    Please note that these examples link to external websites.
-    If any of these links are broken, please raise an issue on the repository.
+    Please note that these examples link to external websites.  If any of these
+    links are broken, please raise an `issue
+    <https://github.com/pyvista/pyvista/issues>`_.
 
 
-Do you have a technical processing workflow or visualization routine you
-would like to share?
-If so, please consider sharing your work here submitting a PR at
-https://github.com/pyvista and we would be glad to add it!
+Do you have a technical processing workflow or visualization routine you would
+like to share?  If so, please consider sharing your work here submitting a PR
+at `pyvista/pyvista <https://github.com/pyvista/pyvista/>`_ and we would be
+glad to add it!
 
 
+.. grid:: 3
+   :gutter: 1
 
 """
         )
@@ -215,7 +240,7 @@ https://github.com/pyvista and we would be glad to add it!
 
     # write if different or does not exist
     if new_text != existing:
-        with open(path, "w") as fid:
+        with open(path, "w", encoding="utf-8") as fid:
             fid.write(new_text)
 
     return
