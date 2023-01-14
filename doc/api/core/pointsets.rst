@@ -26,7 +26,6 @@ combinations of all possible cell types:
 
 .. jupyter-execute::
    :hide-code:
-   :stderr:
 
    from pyvista import demos
    demos.plot_datasets('UnstructuredGrid')
@@ -37,7 +36,6 @@ geometry (e.g. vertices, lines, and polygons):
 
 .. jupyter-execute::
    :hide-code:
-   :stderr:
 
    from pyvista import demos
    demos.plot_datasets('PolyData')
@@ -48,7 +46,6 @@ data:
 
 .. jupyter-execute::
    :hide-code:
-   :stderr:
 
    from pyvista import demos
    demos.plot_datasets('StructuredGrid')

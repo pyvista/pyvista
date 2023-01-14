@@ -259,6 +259,9 @@ else:
 
 # Autosummary configuration
 autosummary_context = {
+    # Methods that should be skipped when generating the docs
+    # __init__ should be documented in the class docstring
+    # override is a VTK method
     "skipmethods": ["__init__", "override"]
 }
 
