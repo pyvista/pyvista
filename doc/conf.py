@@ -257,6 +257,11 @@ else:
     pyvista.PLOT_DIRECTIVE_THEME = theme
     templates_path.append("_templates_basic")
 
+# Autosummary configuration
+autosummary_context = {
+    "skipmethods": ["__init__", "override"]
+}
+
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
 
