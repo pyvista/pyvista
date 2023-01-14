@@ -420,7 +420,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     Parameters
     ----------
-    label : str, default: ``""``
+    label : str, default: ""
         Axis label.
 
     range : list or tuple of float, optional
@@ -2353,7 +2353,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
         vertical orientation.
 
-    label : str, default: ``""``
+    label : str, default: ""
         Label of this plot, as shown in the chart's legend.
 
     Examples
@@ -3060,7 +3060,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             for an horizontal orientation or ``"V"`` for a vertical
             orientation.
 
-        label : str, default: ``""``
+        label : str, default: ""
             Label of this plot, as shown in the chart's legend.
 
         Returns
