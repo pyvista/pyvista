@@ -628,9 +628,9 @@ else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
     try:
-        from vtk.vtkCommonKitPython import buffer_shared, vtkAbstractArray, vtkWeakReference
+        from vtk.vtkCommonKitPython import buffer_shared, vtkAbstractArray, vtkLogger, vtkWeakReference
     except ImportError:
-        from vtk.vtkCommonCore import buffer_shared, vtkAbstractArray, vtkWeakReference
+        from vtk.vtkCommonCore import buffer_shared, vtkAbstractArray, vtkLogger, vtkWeakReference
 
     import vtk
 
