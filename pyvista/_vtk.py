@@ -112,6 +112,7 @@ if VTK9:
         vtkFloatArray,
         vtkIdList,
         vtkIdTypeArray,
+        vtkLogger,
         vtkLookupTable,
         vtkOutputWindow,
         vtkPoints,

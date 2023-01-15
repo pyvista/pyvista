@@ -1414,7 +1414,11 @@ class DataSetFilters:
                     'This version of VTK does not support `use_all_points=True`. '
                     'VTK v9.1 or newer is required.'
                 )
+        # vtkExtractEdges improperly uses INFO for debugging messages
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         _update_alg(alg, progress_bar, 'Extracting All Edges')
+        # Reset vtkLogger to default verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
         return _get_output(alg)
 
     def elevation(
