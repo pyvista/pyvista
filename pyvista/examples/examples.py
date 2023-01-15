@@ -427,20 +427,30 @@ def _cart2sphe(x, y, z):
     r = np.sqrt(xy2 + z**2)
     theta = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
     phi = np.arctan2(y, x)  # the azimuth angle in radian angles
-    phi[phi < 0] += np.pi * 2  # np.arctan2 returns the angle in the range [-pi, pi]
 
     return r, theta, phi
 
 
-def load_hydrogen_orbital(n=1, l=0, m=0, norm=True):
+def load_hydrogen_orbital(n=1, l=0, m=0):
     """Load the hydrogen wave function for a :class:`pyvista.UniformGrid`.
 
-    Ispired by `Hydrogen Wave Function
-    <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_
+    Inspired by `Hydrogen Wave Function
+    <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_.
+    
+    Parameters
+    ----------
+    n : int, default: 1
+        Principal quantum number. Must be a positive integer.
+    
+    l : int, default: 0
+        Azimuthal quantum number. Must be a non-negative integer strictly smaller than ``n``.
+    
+    m : int, default: 0
+        Magnetic quantum number. Must be an integer ranging from ``-l`` to ``l`` (inclusive).
 
     Notes
     -----
-    This examples requires `sympy <https://www.sympy.org/>`_.
+    This example requires `sympy <https://www.sympy.org/>`_.
     """
     try:
         from sympy import lambdify
@@ -453,8 +463,8 @@ def load_hydrogen_orbital(n=1, l=0, m=0, norm=True):
         raise ValueError('`n` must be between 1 and 5')
     if l not in range(n):
         raise ValueError(f'`l` must be one of: {list(range(n))}')
-    if m not in range(l + 1):
-        raise ValueError(f'`l` must be one of: {list(range(l+1))}')
+    if m not in range(-l, l + 1):
+        raise ValueError(f'`m` must be one of: {list(range(-l, l+1))}')
 
     psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta), 'numpy')
 

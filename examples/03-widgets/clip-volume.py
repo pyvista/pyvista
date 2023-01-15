@@ -19,7 +19,7 @@ from pyvista import examples
 # pv.set_plot_theme('dark')
 
 
-# Create the dataset
+# Create the dataset (hydrogen 3d orbital with m=0)
 grid = examples.load_hydrogen_orbital(3, 2, 0, norm=False)
 
 
