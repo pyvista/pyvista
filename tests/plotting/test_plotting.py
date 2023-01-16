@@ -3371,3 +3371,34 @@ def test_color_cycler_names(name):
     assert a1.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a2.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+
+
+def test_axes_actor_properties():
+    from pyvista.plotting.actor_properties import ReprModel, ShaderModel
+
+    axes = pyvista.Axes()
+    axes_actor = axes.axes_actor
+
+    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
+    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
+    axes_actor.y_axis_shaft_properties.metallic = 0.2
+    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
+    axes_actor.z_axis_shaft_properties.roughness = 0.3
+    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
+
+    axes_actor.x_axis_tip_properties.anisotropy = 0.4
+    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
+    axes_actor.y_axis_tip_properties.lighting = False
+    assert not axes_actor.y_axis_tip_properties.lighting
+    axes_actor.z_axis_tip_properties.interpolation_model = ShaderModel.PHONG
+    assert axes_actor.z_axis_tip_properties.interpolation_model == ShaderModel.PHONG
+
+    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
+    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
+    axes_actor.y_axis_shaft_properties.opacity = 0.6
+    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
+    axes_actor.z_axis_shaft_properties.shading = False
+    assert not axes_actor.z_axis_shaft_properties.shading
+
+    axes_actor.x_axis_tip_properties.representation = ReprModel.POINTS
+    assert axes_actor.x_axis_tip_properties.representation == ReprModel.POINTS

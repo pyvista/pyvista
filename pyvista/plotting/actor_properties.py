@@ -110,7 +110,7 @@ class ActorProperties:
 
     @interpolation_model.setter
     def interpolation_model(self, model: ShaderModel):
-        self.properties.SetInterpolation(model)
+        self.properties.SetInterpolation(model.value)
 
     @property
     def index_of_refraction(self):
@@ -146,4 +146,4 @@ class ActorProperties:
 
     @representation.setter
     def representation(self, repr: ReprModel):
-        self.properties.SetRepresentation(repr)
+        self.properties.SetRepresentation(repr.value)
