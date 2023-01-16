@@ -11,16 +11,11 @@ If you have a :class:`pyvista.UniformGrid`, you can clip it using the
 """
 
 
-import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
-# pv.set_plot_theme('dark')
-
-
-# Create the dataset (hydrogen 3d orbital with m=0)
-grid = examples.load_hydrogen_orbital(3, 2, 0, norm=False)
+# Create the dataset (hydrogen 3d orbital with n=3, l=2, and m=0)
+grid = examples.load_hydrogen_orbital(3, 2, -2)
 
 
 ###############################################################################
@@ -28,7 +23,7 @@ grid = examples.load_hydrogen_orbital(3, 2, 0, norm=False)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 pl = pv.Plotter(theme=pv.themes.DarkTheme())
-vol = pl.add_volume(grid, opacity='linear', cmap='magma')
+vol = pl.add_volume(grid, cmap='magma', opacity=[1, 0, 1])
 vol.prop.interpolation_type = 'linear'
 # pl.camera_position ='yz'
 pl.add_volume_clipper(vol, normal='-x', implicit=True)
@@ -37,9 +32,9 @@ pl.show()
 
 
 ###############################################################################
-# Plot the 3d Orbital Contours
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the Orbital Contours
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-contours = grid.contour([grid['norm_hwf'].max() * 0.1], method='marching_cubes')
-contours = contours.interpolate(grid)
-contours.plot(scalars=np.real(contours['hwf']), show_scalar_bar=False, smooth_shading=True)
+# contours = grid.contour([grid['norm_hwf'].max() * 0.1], method='marching_cubes')
+# contours = contours.interpolate(grid)
+# contours.plot(scalars=np.real(contours['hwf']), show_scalar_bar=False, smooth_shading=True)

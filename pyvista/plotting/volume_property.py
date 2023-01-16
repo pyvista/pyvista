@@ -232,6 +232,33 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         self.SetShade(value)
 
     @property
+    def independent_components(self) -> bool:
+        """Return or set independent components.
+
+        If ``False``, then you must have either 2 or 4 component data.
+
+        For 2 component data, the first is passed through the
+        first color transfer function and the second component is passed
+        through the first scalar opacity (and gradient opacity) transfer
+        function. Normals will be generated off of the second component. When
+        using gradient based opacity modulation, the gradients are computed off
+        of the second component.
+
+        For 4 component data, the first three will directly represent RGB (no
+        lookup table). The fourth component will be passed through the first
+        scalar opacity transfer function for opacity and first gradient opacity
+        transfer function for gradient based opacity modulation. Normals will
+        be generated from the fourth component. When using gradient based
+        opacity modulation, the gradients are computed off of the fourth
+        component.
+        """
+        return bool(self.GetIndependentComponents())
+
+    @independent_components.setter
+    def independent_components(self, value: bool):
+        self.SetIndependentComponents(value)
+
+    @property
     def ambient(self) -> float:
         """Return or set ambient lighting coefficient.
 

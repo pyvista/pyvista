@@ -3333,6 +3333,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh.  Array should be sized as a single vector. If ``scalars`` is
             ``None``, then the active scalars are used.
 
+            Scalars may be 1 dimensional or 2 dimensional. If 1 dimensional,
+            the scalars will be mapped to the lookup table. If 2 dimensional
+            the scalars will be directly mapped to RGBA values, array should be
+            shaped ``(N, 4)`` where ``N`` is the number of points, and of
+            datatype ``np.uint8``.
+
         clim : 2 item list, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
@@ -3633,10 +3639,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
+        if scalars.ndim != 1:
+            if scalars.ndim != 2:
+                raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
+            if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
+                raise ValueError(
+                    f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape ({scalars.shape}) and ({scalars.dtype})'
+                )
+
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
-        if scalars.ndim != 1:
-            scalars = scalars.ravel()
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {
@@ -3728,6 +3740,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             diffuse=diffuse,
             opacity_unit_distance=opacity_unit_distance,
         )
+
+        if scalars.ndim == 2:
+            self.volume.prop.independent_components = False
+            show_scalar_bar = False
 
         actor, prop = self.add_actor(
             self.volume,

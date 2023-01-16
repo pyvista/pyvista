@@ -87,7 +87,6 @@ Download the surface elevation map of Mount St. Helens and plot it.
     surf = surf.decimate_pro(0.75)  # reduce the density of the mesh by 75%
     surf.plot(cmap='gist_earth')
 
-
 Finite Element Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~
 Plot the 'X' component of elastic stress of a 3D notch specimen.
@@ -164,6 +163,17 @@ Subtract a sphere from a cube mesh.
     # Perform a boolean difference
     boolean = cube.boolean_difference(sphere)
     boolean.plot(color='darkgrey', smooth_shading=True, split_sharp_edges=True)
+
+
+Plot Volumetric Data
+~~~~~~~~~~~~~~~~~~~~
+Plot the 3dxy orbital of a hydrogen atom.
+
+.. jupyter-execute::
+
+    from pyvista import examples
+    grid = examples.load_hydrogen_orbital(3, 2, -2)
+    grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
 
 Translating
