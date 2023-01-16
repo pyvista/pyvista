@@ -115,7 +115,7 @@ def ipygany_block_from_actor(actor):
     mapper = actor.GetMapper()
     if mapper is None:
         return
-    dataset = mapper.GetInputAsDataSet()
+    dataset = pv.wrap(mapper.GetInputAsDataSet())
 
     prop = actor.GetProperty()
     rep_type = prop.GetRepresentationAsString()
