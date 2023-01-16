@@ -3,6 +3,8 @@ from enum import Enum
 
 import pyvista as pv
 
+from .actor_properties import ActorProperties
+
 
 class ShaftType(Enum):
     """Types of shaft shapes available."""
@@ -397,3 +399,12 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @z_axis_label.setter
     def z_axis_label(self, label: str):
         self.SetZAxisLabelText(label)
+
+    @property
+    def z_axis_shaft_properties(self):
+        """Return or set the properties of the Z axis."""
+        return ActorProperties(self.GetZAxisShaftProperty)
+
+    @z_axis_shaft_properties.setter
+    def z_axis_shaft_properties(self, properties: ActorProperties):
+        self.z_axis_shaft_properties = properties
