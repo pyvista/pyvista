@@ -3540,7 +3540,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_volume(grid, opacity='linear')
         >>> pl.show()
 
-        Plot the a volume from scratch using RGBA scalars
+        Plot a volume from scratch using RGBA scalars
 
         >>> import pyvista as pv
         >>> import numpy as np
