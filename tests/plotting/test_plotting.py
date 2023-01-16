@@ -3316,6 +3316,7 @@ def test_add_ids_algorithm():
     assert 'cell_ids' in result.cell_data
 
 
+@skip_windows_mesa
 def test_plot_volume_rgba(uniform):
     with pytest.raises(ValueError, match='dimensions'):
         uniform.plot(volume=True, scalars=np.empty((uniform.n_points, 1, 1)))
