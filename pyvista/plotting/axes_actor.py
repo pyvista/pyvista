@@ -401,10 +401,55 @@ class AxesActor(pv._vtk.vtkAxesActor):
         self.SetZAxisLabelText(label)
 
     @property
+    def x_axis_shaft_properties(self):
+        """Return or set the properties of the X axis shaft."""
+        return ActorProperties(self.GetXAxisShaftProperty)
+
+    @x_axis_shaft_properties.setter
+    def x_axis_shaft_properties(self, properties: ActorProperties):
+        self.x_axis_shaft_properties = properties
+
+    @property
+    def y_axis_shaft_properties(self):
+        """Return or set the properties of the Y axis shaft."""
+        return ActorProperties(self.GetYAxisShaftProperty)
+
+    @y_axis_shaft_properties.setter
+    def y_axis_shaft_properties(self, properties: ActorProperties):
+        self.y_axis_shaft_properties = properties
+
+    @property
     def z_axis_shaft_properties(self):
-        """Return or set the properties of the Z axis."""
+        """Return or set the properties of the Z axis shaft."""
         return ActorProperties(self.GetZAxisShaftProperty)
 
     @z_axis_shaft_properties.setter
     def z_axis_shaft_properties(self, properties: ActorProperties):
         self.z_axis_shaft_properties = properties
+
+    @property
+    def x_axis_tip_properties(self):
+        """Return or set the properties of the X axis tip."""
+        return ActorProperties(self.GetXAxisTipProperty)
+
+    @x_axis_tip_properties.setter
+    def x_axis_tip_properties(self, properties: ActorProperties):
+        self.x_axis_tip_properties = properties
+
+    @property
+    def y_axis_tip_properties(self):
+        """Return or set the properties of the Y axis tip."""
+        return ActorProperties(self.GetYAxisTipProperty)
+
+    @y_axis_tip_properties.setter
+    def y_axis_tip_properties(self, properties: ActorProperties):
+        self.y_axis_tip_properties = properties
+
+    @property
+    def z_axis_tip_properties(self):
+        """Return or set the properties of the Z axis tip."""
+        return ActorProperties(self.GetZAxisTipProperty)
+
+    @z_axis_tip_properties.setter
+    def z_axis_tip_properties(self, properties: ActorProperties):
+        self.z_axis_tip_properties = properties

@@ -41,8 +41,8 @@ class ActorProperties:
     >>> axes.axes_actor.SetShaftTypeToCylinder()
     >>> pl = pv.Plotter()
     >>> pl.add_actor(axes.axes_actor)   # doctest:+SKIP
-    >>> pl.add_mesh(pv.Sphere())
-    >>> pl.show()
+    >>> pl.add_mesh(pv.Sphere())   # doctest:+SKIP
+    >>> pl.show()   # doctest:+SKIP
     """
 
     def __init__(self, properties: pv._vtk.vtkProperty) -> None:
