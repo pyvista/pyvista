@@ -1859,7 +1859,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         Style of the line drawn in this plot. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line
         styles.
 
-    label : str, default: "-"
+    label : str, default: ""
         Label of this plot, as shown in the chart's legend.
 
     Examples
@@ -3418,7 +3418,8 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     colors : list or tuple of ColorLike, optional
         Color of the boxes drawn in this plot. Any color parsable by
-        :class:`pyvista.Color` is allowed.
+        :class:`pyvista.Color` is allowed. If omitted (``None``), the
+        default color scheme is used.
 
     labels : list or tuple of str, default: []
         Label for each box drawn in this plot, as shown in the chart's
@@ -3532,7 +3533,8 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         calculated used to draw the box plot.
 
     colors : list or tuple of ColorLike, optional
-        Color used for each drawn boxplot.
+        Color used for each drawn boxplot. If omitted (``None``), the
+        default color scheme is used.
 
     labels : list or tuple of str, default: []
         Label for each drawn boxplot, as shown in the chart's
@@ -3654,7 +3656,8 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     colors : list or tuple of ColorLike, optional
         Color of the segments drawn in this plot. Any color parsable
-        by :class:`pyvista.Color` is allowed.
+        by :class:`pyvista.Color` is allowed. If omitted (``None``),
+        the default color scheme is used.
 
     labels : list or tuple of str, default: []
         Label for each pie segment drawn in this plot, as shown in the
@@ -3749,7 +3752,8 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         Relative size of each pie segment.
 
     colors : list or tuple of ColorLike, optional
-        Color used for each pie segment drawn in this plot.
+        Color used for each pie segment drawn in this plot. If
+        omitted (``None``), the default color scheme is used.
 
     labels : list or tuple of str, default: []
         Label for each pie segment drawn in this plot, as shown in the
