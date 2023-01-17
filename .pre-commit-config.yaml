@@ -32,10 +32,10 @@ repos:
     ]
 
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 6.1.1
+  rev: 6.2.3
   hooks:
   - id: pydocstyle
-    additional_dependencies: [toml==0.10.2]
+    additional_dependencies: [tomli==2.0.1]
     files: ^(pyvista/|other/)
     exclude: ^pyvista/ext/
 
@@ -67,6 +67,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.19.2
+  rev: 0.20.0
   hooks:
     - id: check-github-workflows
