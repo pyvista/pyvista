@@ -122,7 +122,7 @@ class WidgetHelper:
 
         rotation_enabled : bool, optional
             If ``False``, the box widget cannot be rotated and is
-            strictly orthogonal to the cartesian axes.
+            strictly orthogonal to the Cartesian axes.
 
         color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
@@ -141,8 +141,13 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : vtk.vtkCommand.EventIds, str, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
+
+            .. versionchanged:: 0.38.0
+               Now accepts either strings or ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
@@ -254,8 +259,14 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : vtk.vtkCommand.EventIds, str, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
+
+            .. versionchanged:: 0.38.0
+               Changed from ``event_type`` to ``interaction_event`` and now
+               accepts either strings and ``vtk.vtkCommand.EventIds``.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -414,8 +425,11 @@ class WidgetHelper:
 
         interaction_event : vtk.vtkCommand.EventIds, str, optional
             The VTK interaction event to use for triggering the
-            callback. Accepts either the strings ``'end'``, ``'always'``, or a
-            ``vtk.vtkCommand.EventIds``.
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
+
+            .. versionchanged:: 0.38.0
+               Now accepts either strings and ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
@@ -616,8 +630,13 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : vtk.vtkCommand.EventIds, str, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
+
+            .. versionchanged:: 0.38.0
+               Now accepts either strings or ``vtk.vtkCommand.EventIds``.
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
@@ -1164,8 +1183,8 @@ class WidgetHelper:
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
             .. versionchanged:: 0.38.0
-               Changed from ``event_type`` to ``interaction_event`` and now accepts
-               either strings and ``vtk.vtkCommand.EventIds``.
+               Changed from ``event_type`` to ``interaction_event`` and now
+               accepts either strings or ``vtk.vtkCommand.EventIds``.
 
         style : str, optional
             The name of the slider style. The list of available styles
@@ -1299,7 +1318,7 @@ class WidgetHelper:
 
             .. versionchanged:: 0.38.0
                Changed from ``event_type`` to ``interaction_event`` and now accepts
-               either strings and ``vtk.vtkCommand.EventIds``.
+               either strings or ``vtk.vtkCommand.EventIds``.
 
         style : str, optional
             The name of the slider style. The list of available styles
