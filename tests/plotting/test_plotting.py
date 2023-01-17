@@ -2494,7 +2494,6 @@ def test_add_text():
     not vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported(),
     reason='Math text is not supported.',
 )
-@pytest.mark.needs_vtk_version(9, 2, 2)
 def test_add_text_latex():
     """Test LaTeX symbols.
 
