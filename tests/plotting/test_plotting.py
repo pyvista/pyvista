@@ -22,6 +22,7 @@ from pyvista import examples
 from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.actor_properties import ReprModel, ShaderModel
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities import algorithms
@@ -3374,7 +3375,6 @@ def test_color_cycler_names(name):
 
 
 def test_axes_actor_properties():
-    from pyvista.plotting.actor_properties import ReprModel, ShaderModel
 
     axes = pyvista.Axes()
     axes_actor = axes.axes_actor
@@ -3402,3 +3402,9 @@ def test_axes_actor_properties():
 
     axes_actor.x_axis_tip_properties.representation = ReprModel.POINTS
     assert axes_actor.x_axis_tip_properties.representation == ReprModel.POINTS
+
+    axes.axes_actor.SetShaftTypeToCylinder()
+    pl = pyvista.Plotter()
+    pl.add_actor(axes.axes_actor)
+    pl.add_mesh(pyvista.Sphere())
+    pl.show()

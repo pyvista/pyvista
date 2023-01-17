@@ -191,7 +191,7 @@ jobs:
           pip list
 
       - name: Unit Testing
-        run: xvfb-run coverage run -m --source=pyvista --module pytest --skip_image_cache_vtk8 --fail_extra_image_cache -v
+        run: xvfb-run coverage run -m --source=pyvista --module pytest --skip_image_cache_vtk8 --fail_extra_image_cache -v --add_missing_images
 
       - uses: codecov/codecov-action@v3
         if: matrix.python-version == '3.9'
