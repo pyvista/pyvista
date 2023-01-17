@@ -525,11 +525,26 @@ def vtk_points(points, deep=True, force_float=False):
             f'Shape is {points.shape} and should be (X, 3)'
         )
 
+    # use the underlying vtk data if present to avoid memory leaks
+    if not deep and isinstance(points, pyvista.pyvista_ndarray):
+        if points.VTKObject is not None:
+            vtk_object = points.VTKObject
+
+            # we can only use the underlying data if `points` is not a slice of
+            # the VTK data object
+            if vtk_object.GetSize() == points.size:
+                vtkpts = _vtk.vtkPoints()
+                vtkpts.SetData(points.VTKObject)
+                return vtkpts
+            else:
+                deep = True
+
     # points must be contiguous
     points = np.require(points, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
     vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
     vtkpts.SetData(vtk_arr)
+
     return vtkpts
 
 
@@ -862,6 +877,11 @@ def wrap(dataset):
     * 3D :class:`trimesh.Trimesh` mesh.
     * 3D :class:`meshio.Mesh` mesh.
 
+    .. versionchanged:: 0.38.0
+        If the passed object is already a wrapped PyVista object, then
+        this is no-op and will return that object directly. In previous
+        versions of PyVista, this would perform a shallow copy.
+
     Parameters
     ----------
     dataset : :class:`numpy.ndarray`, :class:`trimesh.Trimesh`, or VTK object
@@ -933,6 +953,10 @@ def wrap(dataset):
     # Return if None
     if dataset is None:
         return
+
+    if isinstance(dataset, tuple(pyvista._wrappers.values())):
+        # Return object if it is already wrapped
+        return dataset
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to

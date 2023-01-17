@@ -123,16 +123,16 @@ def create_axes_marker(
 
     Parameters
     ----------
-    label_color : color_like, optional
+    label_color : ColorLike, optional
         Color of the label text.
 
-    x_color : color_like, optional
+    x_color : ColorLike, optional
         Color of the x axis text.
 
-    y_color : color_like, optional
+    y_color : ColorLike, optional
         Color of the y axis text.
 
-    z_color : color_like, optional
+    z_color : ColorLike, optional
         Color of the z axis text.
 
     xlabel : str, optional
@@ -272,16 +272,16 @@ def create_axes_orientation_box(
     text_scale : float, optional
         Size of the text relative to the faces.
 
-    edge_color : color_like, optional
+    edge_color : ColorLike, optional
         Color of the edges.
 
-    x_color : color_like, optional
+    x_color : ColorLike, optional
         Color of the x axis text.
 
-    y_color : color_like, optional
+    y_color : ColorLike, optional
         Color of the y axis text.
 
-    z_color : color_like, optional
+    z_color : ColorLike, optional
         Color of the z axis text.
 
     xlabel : str, optional
@@ -293,22 +293,22 @@ def create_axes_orientation_box(
     zlabel : str, optional
         Text used for the z axis.
 
-    x_face_color : color_like, optional
+    x_face_color : ColorLike, optional
         Color used for the x axis arrow.  Defaults to theme axes
         parameters.
 
-    y_face_color : color_like, optional
+    y_face_color : ColorLike, optional
         Color used for the y axis arrow.  Defaults to theme axes
         parameters.
 
-    z_face_color : color_like, optional
+    z_face_color : ColorLike, optional
         Color used for the z axis arrow.  Defaults to theme axes
         parameters.
 
     color_box : bool, optional
         Enable or disable the face colors.  Otherwise, box is white.
 
-    label_color : color_like, optional
+    label_color : ColorLike, optional
         Color of the labels.
 
     labels_off : bool, optional

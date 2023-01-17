@@ -202,7 +202,7 @@ class ScalarBars:
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
             in one of the following formats:
@@ -277,7 +277,7 @@ class ScalarBars:
         above_label : str, optional
             String annotation for values above the scalars range.
 
-        background_color : color_like, optional
+        background_color : ColorLike, optional
             The color used for the background in RGB format.
 
         n_colors : int, optional

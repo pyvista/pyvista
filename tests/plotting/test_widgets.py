@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
@@ -150,10 +151,12 @@ def test_widget_slider(uniform):
     p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
     p.close()
 
-    p = pyvista.Plotter()
-    p.add_mesh_threshold(uniform, invert=True)
-    p.add_mesh(uniform.outline())
-    p.close()
+    if pyvista.vtk_version_info >= (9,):
+        # Invert not support for VTK8.1.2
+        p = pyvista.Plotter()
+        p.add_mesh_threshold(uniform, invert=True)
+        p.add_mesh(uniform.outline())
+        p.close()
 
     p = pyvista.Plotter()
     p.add_mesh_threshold(uniform, invert=False)
@@ -164,6 +167,7 @@ def test_widget_slider(uniform):
     p.add_mesh_isovalue(uniform)
     p.close()
 
+    func = lambda value: value  # Does nothing
     p = pyvista.Plotter()
     title_height = np.random.random()
     s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
@@ -232,9 +236,10 @@ def test_widget_uniform(uniform):
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
     p.close()
 
+    # pass multiple centers
     nodes = np.array([[-1, -1, -1], [1, 1, 1]])
     p = pyvista.Plotter()
-    func = lambda center: center  # Does nothing
+    func = lambda center, index: center  # Does nothing
     p.add_sphere_widget(callback=func, center=nodes)
     p.close()
 
@@ -262,3 +267,58 @@ def test_add_camera_orientation_widget(uniform):
     assert p.camera_widgets
     p.close()
     assert not p.camera_widgets
+
+
+def test_plot_algorithm_widgets():
+    algo = vtk.vtkRTAnalyticSource()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_box(algo, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_plane(algo, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice(algo)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_threshold(algo)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_isovalue(algo)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice_spline(algo)
+    pl.close()
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_plot_pointset_widgets(pointset):
+    pointset = pointset.elevation()
+
+    assert isinstance(pointset, pyvista.PointSet)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_box(pointset, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_clip_plane(pointset, crinkle=True)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice(pointset)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_threshold(pointset)
+    pl.close()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh_slice_spline(pointset)
+    pl.close()

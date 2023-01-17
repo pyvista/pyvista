@@ -17,8 +17,10 @@ try:
     from vtkmodules.vtkCommonCore import vtkVersion
 
     VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
+    VTK91 = VTK9 and vtkVersion().GetVTKMinorVersion() >= 1
 except ImportError:  # pragma: no cover
     VTK9 = False
+    VTK91 = False
 
 # for charts
 _has_vtkRenderingContextOpenGL2 = False
@@ -49,6 +51,7 @@ if VTK9:
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
     from vtkmodules.vtkChartsCore import (
         vtkAxis,
         vtkChart,
@@ -112,6 +115,7 @@ if VTK9:
         vtkFloatArray,
         vtkIdList,
         vtkIdTypeArray,
+        vtkLogger,
         vtkLookupTable,
         vtkOutputWindow,
         vtkPoints,
@@ -181,6 +185,7 @@ if VTK9:
         VTK_VERTEX,
         VTK_VOXEL,
         VTK_WEDGE,
+        vtkCell,
         vtkCellArray,
         vtkCellLocator,
         vtkColor3ub,
@@ -217,7 +222,7 @@ if VTK9:
         vtkUnstructuredGrid,
     )
 
-    try:
+    try:  # Introduced prior to VTK 9.2
         from vtkmodules.vtkCommonDataModel import (
             VTK_BEZIER_CURVE,
             VTK_BEZIER_HEXAHEDRON,
@@ -231,7 +236,11 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
-    from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
+    from vtkmodules.vtkCommonExecutionModel import (
+        vtkAlgorithm,
+        vtkAlgorithmOutput,
+        vtkImageToStructuredGrid,
+    )
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (
@@ -498,6 +507,7 @@ if VTK9:
         vtkPointPicker,
         vtkPolyDataMapper,
         vtkPolyDataMapper2D,
+        vtkProp3D,
         vtkPropAssembly,
         vtkProperty,
         vtkPropPicker,
@@ -543,6 +553,10 @@ if VTK9:
         vtkSmartVolumeMapper,
     )
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
+
+    # 9.1+ imports
+    if VTK91:
+        from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
 
     # lazy import for some of the less used readers
     def lazy_vtkOBJExporter():
@@ -641,6 +655,7 @@ else:  # pragma: no cover
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
     # match the imports for VTK9
     def lazy_vtkOBJExporter():

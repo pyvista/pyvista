@@ -79,7 +79,7 @@ Miscellaneous
 .. autosummary::
    :toctree: _autosummary
 
-   color_like
+   ColorLike
    start_xvfb
 
 .. autosummary::

@@ -12,7 +12,7 @@
    .. autosummary::
       :toctree:
    {% for item in methods %}
-      {% if item != "__init__" %}
+      {% if not item in skipmethods %}
       {{ name }}.{{ item }}
       {% endif %}
    {%- endfor %}

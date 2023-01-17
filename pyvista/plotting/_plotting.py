@@ -214,6 +214,9 @@ def _common_arg_parser(
     cmap = kwargs.pop('colormap', cmap)
     culling = kwargs.pop("backface_culling", culling)
     rgb = kwargs.pop('rgba', rgb)
+    vertex_color = kwargs.pop('vertex_color', theme.edge_color)
+    vertex_style = kwargs.pop('vertex_style', 'points')
+    vertex_opacity = kwargs.pop('vertex_opacity', 1.0)
 
     # Support aliases for 'back', 'front', or 'none'. Consider deprecating
     if culling is False:
@@ -303,4 +306,7 @@ def _common_arg_parser(
         rgb,
         interpolation,
         remove_existing_actor,
+        vertex_color,
+        vertex_style,
+        vertex_opacity,
     )

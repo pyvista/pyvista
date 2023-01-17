@@ -228,14 +228,19 @@ class DataObject:
         # Otherwise return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        # get longest row header
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+
+        # now make a call on the object to get its attributes as a list of len
+        # 2 tuples
+        row = "  {:%ds}{}\n" % max_len
         for attr in self._get_attrs():
             try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+                fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
             except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
+                fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
-            fmt += row.format('N Arrays', self.n_arrays)
+            fmt += row.format('N Arrays:', self.n_arrays)
         return fmt
 
     def _repr_html_(self):  # pragma: no cover
@@ -246,8 +251,18 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, ido, deep):  # pragma: no cover
-        """Copy pyvista meta data onto this object from another object."""
+    def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
+        """Copy pyvista meta data onto this object from another object. Intended to be overridden by subclasses.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments.
+
+        **kwargs : dict, optional
+            Keyword arguments.
+
+        """
         pass  # called only by the inherited class
 
     def copy(self, deep=True):
@@ -366,6 +381,9 @@ class DataObject:
         pyvista_ndarray([1, 2, 3])
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
@@ -409,6 +427,9 @@ class DataObject:
         0
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.clear()
 
     @property

@@ -115,6 +115,19 @@ def test_wrappers():
         pyvista._wrappers = default_wrappers  # always reset back to default
 
 
+def test_wrap_no_copy():
+    # makes sure that wrapping an already wrapped object returns source
+    mesh = pyvista.Wavelet()
+    wrapped = pyvista.wrap(mesh)
+    assert mesh == wrapped
+    assert wrapped is mesh
+
+    mesh = vtk.vtkPolyData()
+    wrapped = pyvista.wrap(mesh)
+    assert wrapped == pyvista.wrap(wrapped)
+    assert wrapped is pyvista.wrap(wrapped)
+
+
 def test_inheritance_no_wrappers():
     class Foo(pyvista.PolyData):
         pass
@@ -353,7 +366,11 @@ def test_vtk_points_deep_shallow():
 @pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
-    vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+    if force_float:
+        with pytest.warns(UserWarning, match='Points is not a float type'):
+            vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+    else:
+        vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
     as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
 
     assert as_numpy.dtype == expected_data_type

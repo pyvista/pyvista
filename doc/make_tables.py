@@ -59,7 +59,7 @@ class DocTable:
 
         # write if there is any text to write. This avoids resetting the documentation cache
         if new_txt:
-            with open(cls.path, 'w') as fout:
+            with open(cls.path, 'w', encoding="utf-8") as fout:
                 fout.write(new_txt)
 
         pv.close_all()
@@ -239,9 +239,7 @@ class ColorSchemeTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``COLOR_SCHEMES`` dictionary.
-        return [
-            {"scheme": cs, **data} for (cs, data) in pv.charts._MultiCompPlot.COLOR_SCHEMES.items()
-        ]
+        return [{"scheme": cs, **data} for (cs, data) in pv.colors.COLOR_SCHEMES.items()]
 
     @classmethod
     def get_header(cls, data):

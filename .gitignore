@@ -31,6 +31,7 @@ wiki/
 **/beam.gif
 **/beam_wireframe.gif
 doc/build_errors.txt
+doc/sphinx_warnings.txt
 
 # testing coverage and cache
 .pytest_cache/

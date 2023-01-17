@@ -620,8 +620,11 @@ def test_set_t_coords(grid):
 
 
 def test_activate_texture_none(grid):
-    assert grid._activate_texture('not a key') is None
-    assert grid._activate_texture(True) is None
+    with pytest.warns(UserWarning, match=r'not a key'):
+        assert grid._activate_texture('not a key') is None
+
+    with pytest.warns(UserWarning, match=r'No textures associated'):
+        assert grid._activate_texture(True) is None
 
 
 def test_set_active_vectors_fail(grid):
@@ -1073,13 +1076,19 @@ def test_copy_attributes(grid):
 
 
 def test_cell_n_points(grid):
-    npoints = grid.cell_n_points(0)
+    with pytest.warns(PyVistaDeprecationWarning):
+        npoints = grid.cell_n_points(0)
+    if pyvista._version.version_info >= (0, 42, 0):
+        raise RuntimeError('Remove this deprecated method')
     assert isinstance(npoints, int)
     assert npoints >= 0
 
 
 def test_cell_points(grid):
-    points = grid.cell_points(0)
+    with pytest.warns(PyVistaDeprecationWarning):
+        points = grid.cell_points(0)
+    if pyvista._version.version_info >= (0, 42, 0):
+        raise RuntimeError('Remove this deprecated method')
     assert isinstance(points, np.ndarray)
     assert points.ndim == 2
     assert points.shape[0] > 0
@@ -1087,21 +1096,31 @@ def test_cell_points(grid):
 
 
 def test_cell_point_ids(grid):
-    point_ids = grid.cell_point_ids(0)
+    with pytest.warns(PyVistaDeprecationWarning):
+        point_ids = grid.cell_point_ids(0)
+    if pyvista._version.version_info >= (0, 42, 0):
+        raise RuntimeError('Remove this deprecated method')
     assert isinstance(point_ids, list)
-    assert len(point_ids) == grid.cell_n_points(0)
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert len(point_ids) == grid.cell_n_points(0)
     assert all([isinstance(id, int) for id in point_ids])
     assert all([0 <= id < grid.n_points for id in point_ids])
 
 
 def test_cell_bounds(grid):
-    bounds = grid.cell_bounds(0)
+    with pytest.warns(PyVistaDeprecationWarning):
+        bounds = grid.cell_bounds(0)
+    if pyvista._version.version_info >= (0, 42, 0):
+        raise RuntimeError('Remove this deprecated method')
     assert isinstance(bounds, tuple)
     assert len(bounds) == 6
 
 
 def test_cell_type(grid):
-    ctype = grid.cell_type(0)
+    with pytest.warns(PyVistaDeprecationWarning):
+        ctype = grid.cell_type(0)
+    if pyvista._version.version_info >= (0, 42, 0):
+        raise RuntimeError('Remove this deprecated method')
     assert isinstance(ctype, int)
 
 
