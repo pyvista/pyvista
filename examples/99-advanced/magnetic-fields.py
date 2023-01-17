@@ -9,7 +9,7 @@ fields.
 
 The modeling results are courtesy of `prisae <https://github.com/prisae>`_ and
 are from the `emg3d Minimum working example
-<https://emsig.xyz/emg3d-gallery/gallery/tutorials/minimum_example.html#sphx-glr-gallery-tutorials-minimum-example-py>`_.
+<https://emsig.xyz/emg3d-gallery/gallery/tutorials/minimum_example.html>`_.
 
 """
 # sphinx_gallery_thumbnail_number = 2
