@@ -23,7 +23,38 @@ class _BasePyVistaView:
 
 
 class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
-    """PyVista wrapping of trame VtkRemoteView."""
+    """PyVista wrapping of trame VtkRemoteView for server rendering.
+
+    This will connect to a PyVista plotter and stream the server-side
+    renderings.
+
+    Notes
+    -----
+    * For optimal rendering results, you may want to have the same
+    value for ``interactive_ratio`` and ``still_ratio`` so that
+    the entire rendering is not re-scaled between interaction events.
+
+    Parameters
+    ----------
+    plotter : pyvista.BasePlotter
+        The PyVista Plotter to display in the output view.
+
+    interactive_ratio : int, default=1
+        Image size scale factor while interacting. Increasing this
+        value will give higher resulotuion images during interaction
+        events at the cost of performance. Use lower values (e.g.,
+        ``0.5``) to increase performance while interacting.
+
+    still_ratio : int, default=1
+        Image size scale factor while not interacting (still).
+        Increasing this value will give higher resulotuion images
+        when not interacting with the scene.
+
+    ref : str, optional
+        The identifier for this view component. A default value is
+        chosen based on the ``_id_name`` of the plotter.
+
+    """
 
     def __init__(self, plotter, interactive_ratio=1, still_ratio=1, ref=None, **kwargs):
         """Create a trame remote view from a PyVista Plotter."""
@@ -46,7 +77,20 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
 
 class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
-    """PyVista wrapping of trame VtkLocalView."""
+    """PyVista wrapping of trame VtkLocalView for in-browser rendering.
+
+    This will connect to and synchronize with a PyVista plotter to
+    perform client-side rendering with VTK.js in the browser.
+
+    Parameters
+    ----------
+    plotter : pyvista.BasePlotter
+        The PyVista Plotter to represent in the output view.
+
+    ref : str, optional
+        The identifier for this view component. A default value is
+        chosen based on the ``_id_name`` of the plotter.
+    """
 
     def __init__(self, plotter, ref=None, **kwargs):
         """Create a trame local view from a PyVista Plotter."""
@@ -61,7 +105,30 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
 class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     """PyVista wrapping of trame VtkRemoteLocalView.
 
-    Makes it easy to dynamically switch between client and server rendering.
+    Dynamically switch between client and server rendering.
+
+    Parameters
+    ----------
+    plotter : pyvista.BasePlotter
+        The PyVista Plotter to display in the output view.
+
+    interactive_ratio : int, default=1
+        Image size scale factor while interacting. Increasing this
+        value will give higher resulotuion images during interaction
+        events at the cost of performance. Use lower values (e.g.,
+        ``0.5``) to increase performance while interacting.
+        This is only valid in the ``'remote'`` mode.
+
+    still_ratio : int, default=1
+        Image size scale factor while not interacting (still).
+        Increasing this value will give higher resulotuion images
+        when not interacting with the scene.
+        This is only valid in the ``'remote'`` mode.
+
+    ref : str, optional
+        The identifier for this view component. A default value is
+        chosen based on the ``_id_name`` of the plotter.
+
     """
 
     def __init__(self, plotter, interactive_ratio=1, still_ratio=1, ref=None, **kwargs):
