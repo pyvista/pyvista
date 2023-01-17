@@ -187,10 +187,10 @@ def set_jupyter_backend(backend):
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
     if backend in ['server', 'client']:
         # Launch the trame server
-        from pyvista.trame.jupyter import launch_server, JUPYTER_SERVER_NAME
+        from pyvista.trame.jupyter import launch_server
 
         # Returns a future that finalizes when server is ready - should be awaited
-        return launch_server(JUPYTER_SERVER_NAME)
+        return launch_server(pyvista.global_theme.trame.jupyter_server_name)
     # Return an awaitable future to prevent errors when accidentally awaiting
     # other backends
     future = asyncio.Future()

@@ -10,7 +10,6 @@ import pyvista
 from pyvista.trame.ui import initialize
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR
 
-JUPYTER_SERVER_NAME = 'pyvista-jupyter'
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
 You must start the trame server before attempting to `show()`
@@ -142,7 +141,7 @@ def show_trame(
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
     if name is None:
-        server = get_server(name=JUPYTER_SERVER_NAME)
+        server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
     else:
         server = get_server(name=name)
     if name is None and not is_server_up(server):

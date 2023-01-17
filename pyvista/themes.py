@@ -1095,11 +1095,12 @@ class _TrameConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_interactive_ratio', '_still_ratio']
+    __slots__ = ['_interactive_ratio', '_still_ratio', '_jupyter_server_name']
 
     def __init__(self):
         self._interactive_ratio = 1
         self._still_ratio = 1
+        self._jupyter_server_name = 'pyvista-jupyter'
 
     @property
     def interactive_ratio(self) -> Number:
@@ -1132,6 +1133,24 @@ class _TrameConfig(_ThemeConfig):
     @still_ratio.setter
     def still_ratio(self, still_ratio: Number):
         self._still_ratio = still_ratio
+
+    @property
+    def jupyter_server_name(self):
+        """Return or set the trame server name PyVista uses in Jupyter.
+
+        This defaults to ``'pyvista-jupyter'``.
+
+        This must be set before running :func:`pyvista.set_jupyter_backend`
+        to ensure a server of this name is launched.
+
+        Most users should not need to modify this.
+
+        """
+        return self._jupyter_server_name
+
+    @jupyter_server_name.setter
+    def jupyter_server_name(self, name: str):
+        self._jupyter_server_name = name
 
 
 class DefaultTheme(_ThemeConfig):
