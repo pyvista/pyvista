@@ -1,4 +1,4 @@
-"""Wrap vtkActor."""
+"""Wrap vtkActor module."""
 
 from typing import Optional, Union
 import weakref
