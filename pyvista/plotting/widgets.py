@@ -736,7 +736,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.Volume, pyvista.UniformGrid, pyvista.RectilinearGrid
+        volume : pyvista.plotting.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.UniformGrid` or
             :class:`pyvista.RectilinearGrid`, or the return value from
             :class:`pyvista.plotting.Volume` from :func:`BasePlotter.add_volume`.
@@ -812,12 +812,11 @@ class WidgetHelper:
             assert_empty_kwargs(**kwargs)
 
         plane = _vtk.vtkPlane()
-        _widget = []
 
-        def callback(*args):
+        def callback(normal, origin):
             """Update the plane used to clip the volume."""
-            if len(_widget):
-                _widget[0].GetPlane(plane)
+            plane.SetNormal(normal)
+            plane.SetOrigin(origin)
 
         widget = self.add_plane_widget(
             callback=callback,
@@ -835,10 +834,9 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
         widget.GetPlane(plane)
-        _widget.append(widget)
+        volume.mapper.AddClippingPlane(plane)
         self.plane_widgets.append(widget)
 
-        volume.mapper.AddClippingPlane(plane)
         return widget
 
     def add_mesh_slice(
