@@ -2775,6 +2775,9 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors(self, ind: int, connections: str = "points") -> List[int]:
         """Get the cell neighbors of the ind-th cell.
 
+        Concrete implementation of vtkDataSet's ``GetCellNeighbors`` method
+        (see https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4)
+
         Parameters
         ----------
         ind : int
@@ -2789,6 +2792,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         List[int]
             List of neighbor cells IDs for the ind-th cell.
+
+        Warnings
+        --------
+        For an ExplicitStructuredGrid, use the :func:`pyvista.ExplicitStructuredGrid.neighbors`
+        method.
 
         Examples
         --------
@@ -2847,6 +2855,9 @@ class DataSet(DataSetFilters, DataObject):
         ...     _ = pl.add_mesh(others,show_edges=True)
         >>> pl.show()
         """
+        if isinstance(self, _vtk.vtkExplicitStructuredGrid):
+            raise TypeError("For an ExplicitStructuredGrid, use the `neighbors` method")
+
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
         if hasattr(self, "BuildLinks"):
@@ -2966,7 +2977,8 @@ class DataSet(DataSetFilters, DataObject):
     def point_cell_ids(self, ind: int) -> List[int]:
         """Get the cell IDs that use the ind-th point.
 
-        Implements vtkDataSet's ``GetPointCells`` method (https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49)
+        Implements vtkDataSet's ``GetPointCells`` method
+        (see https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49)
 
         Parameters
         ----------

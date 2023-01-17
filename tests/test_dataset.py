@@ -1601,8 +1601,27 @@ grids = [
 ]
 if pyvista._vtk.VTK9:
     grids.append(load_explicit_structured())
+grids_cells = grids[:-1] if pyvista._vtk.VTK9 else grids
 
 ids = list(map(type, grids))
+ids_cells = list(map(type, grids_cells))
+
+
+@pytest.mark.needs_vtk9
+def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
+    for dataset in datasets_vtk9:
+        with pytest.raises(TypeError):
+            _ = dataset.cell_neighbors(0)
+
+
+def test_raises_point_neighbors_ind_overflow(grid):
+    with pytest.raises(IndexError):
+        _ = grid.point_neighbors(grid.n_points)
+
+
+def test_raises_cell_neighbors_connections(grid):
+    with pytest.raises(ValueError, match='got "topological"'):
+        _ = grid.cell_neighbors(0, "topological")
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
@@ -1626,7 +1645,7 @@ def test_point_cell_ids(grid: DataSet, i0):
         assert i0 not in grid.get_cell(c).point_ids
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
 @pytest.mark.parametrize("i0", i0s)
 def test_cell_point_neighbors_ids(grid: DataSet, i0):
 
@@ -1652,7 +1671,7 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
         assert neighbor_points.isdisjoint(current_points)
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
 @pytest.mark.parametrize("i0", i0s)
 def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 
@@ -1694,7 +1713,7 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 
 
 # Slice grids since some do not contain faces
-@pytest.mark.parametrize("grid", grids[2:], ids=ids[2:])
+@pytest.mark.parametrize("grid", grids_cells[2:], ids=ids_cells[2:])
 @pytest.mark.parametrize("i0", i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
 
@@ -1735,7 +1754,7 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
         assert neighbor_points.isdisjoint(current_points)
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
 @pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
 @pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
 @pytest.mark.parametrize(
