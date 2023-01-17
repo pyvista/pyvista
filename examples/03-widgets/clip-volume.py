@@ -8,13 +8,9 @@ If you have a structured dataset like a :class:`pyvista.UniformGrid` or
 :func:`pyvista.Plotter.add_volume_clipper` widget to better see the internal
 structure of the dataset.
 
-../../images/gifs/volume-clip-plane-widget.gif
+.. image:: ../../images/gifs/volume-clip-plane-widget.gif
 
 """
-
-import numpy as np
-
-import pyvista as pv
 
 ###############################################################################
 # Create the Dataset
@@ -22,6 +18,10 @@ import pyvista as pv
 # Create a dense :class:`pyvista.UniformGrid` with dimensions ``(200, 200,
 # 200)`` and set the active scalars to distance from the :attr:`center
 # <pyvista.UniformGrid.center>` of the grid.
+
+import numpy as np
+
+import pyvista as pv
 
 grid = pv.UniformGrid(dimensions=(200, 200, 200))
 grid['scalars'] = np.linalg.norm(grid.center - grid.points, axis=1)

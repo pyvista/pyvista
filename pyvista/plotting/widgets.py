@@ -51,7 +51,7 @@ def _parse_interaction_event(interaction_event):
             "Expected value for `interaction_event` is 'start', "
             f"'end', or 'always'. {interaction_event} was given."
         )
-    else:
+    elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         raise TypeError(
             "Expected type for `interaction_event` is either a str "
             "or an instance of `vtk.vtkCommand.EventIds`."
