@@ -1074,14 +1074,14 @@ class _Chart(DocSubs):
 
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
-        _, _, c_w, c_h = self._geometry
+        _, _, c_w, c_h = (int(g) for g in self._geometry)
         # Target size is calculated from specified normalized width and height and the renderer's current size
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
+        t_w = int(self._size[0] * r_w)
+        t_h = int(self._size[1] * r_h)
         resize = c_w != t_w or c_h != t_h
         if resize:
             # Mismatch between current size and target size, so resize chart:
-            self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+            self._geometry = (int(self._loc[0] * r_w), int(self._loc[1] * r_h), t_w, t_h)
         return resize
 
     @property
@@ -3901,6 +3901,11 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         renderer's bottom left corner, a location of ``(1, 1)``
         corresponds to the renderer's top right corner.
 
+    redraw_on_render : bool, default: True
+        Flag indicating whether the chart should be redrawn when
+        the plotter is rendered. For static charts, setting this
+        to ``False`` can improve performance.
+
     Examples
     --------
     Plot streamlines of a vector field with varying colors (based on `this example <https://matplotlib.org/stable/gallery/images_contours_and_fields/plot_streamplot.html>`_).
@@ -3936,7 +3941,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
-    def __init__(self, figure=None, size=(1, 1), loc=(0, 0)):
+    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
         """Initialize chart."""
         try:
             from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -3957,6 +3962,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         for ax in self._fig.axes:
             ax.patch.set_alpha(0)
         self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
+        self._redraw_on_render = redraw_on_render
 
         self._redraw()
 
@@ -3989,19 +3995,39 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         """
         return self._fig
 
+    @property
+    def redraw_on_render(self):
+        """Return or set the chart's redraw-on-render behavior.
+
+        Notes
+        -----
+        When disabled, the chart will only be redrawn when the
+        Plotter window is resized or the matplotlib figure is
+        manually redrawn using ``fig.canvas.draw()``.
+        When enabled, the chart will also be automatically
+        redrawn whenever the Plotter is rendered using
+        ``plotter.render()``.
+
+        """
+        return self._redraw_on_render
+
+    @redraw_on_render.setter
+    def redraw_on_render(self, val):
+        self._redraw_on_render = bool(val)
+
     def _resize(self):
         r_w, r_h = self._renderer.GetSize()
-        c_w, c_h = self._canvas.get_width_height()
+        c_w, c_h = (int(s) for s in self._canvas.get_width_height())
         # Calculate target size from specified normalized width and height and the renderer's current size
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
+        t_w = int(self._size[0] * r_w)
+        t_h = int(self._size[1] * r_h)
         resize = c_w != t_w or c_h != t_h
         if resize:
             # Mismatch between canvas size and target size, so resize figure:
             f_w = t_w / self._fig.dpi
             f_h = t_h / self._fig.dpi
             self._fig.set_size_inches(f_w, f_h)
-            self.position = (self._loc[0] * r_w, self._loc[1] * r_h)
+            self.position = (int(self._loc[0] * r_w), int(self._loc[1] * r_h))
         return resize
 
     def _redraw(self, event=None):
@@ -4019,9 +4045,13 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def _render_event(self, *args, **kwargs):
-        if self._resize():  # Update figure dimensions if needed
-            self._redraw()  # Redraw figure when geometry has changed
+    def _render_event(self, *args, plotter_render=False, **kwargs):
+        # Redraw figure when geometry has changed (self._resize call
+        # already updated figure dimensions in that case) OR the
+        # plotter's render method was called and redraw_on_render is
+        # enabled.
+        if (self.redraw_on_render and plotter_render) or self._resize():
+            self._redraw()
 
     @property
     def _geometry(self):

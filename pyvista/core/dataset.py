@@ -2628,13 +2628,6 @@ class DataSet(DataSetFilters, DataObject):
         int
             Number of points in the cell.
 
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-        >>> mesh.cell_n_points(0)
-        3
-
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
@@ -2660,15 +2653,6 @@ class DataSet(DataSetFilters, DataObject):
             An array of floats with shape (number of points, 3) containing the coordinates of the
             cell corners.
 
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-        >>> mesh.cell_points(0)  # doctest:+SKIP
-        [[896.99401855  48.76010132  82.26560211]
-         [906.59301758  48.76010132  80.74520111]
-         [907.53900146  55.49020004  83.65809631]]
-
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
@@ -2691,13 +2675,6 @@ class DataSet(DataSetFilters, DataObject):
         -------
         tuple(float)
             The limits of the cell in the X, Y and Z directions respectively.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-        >>> mesh.cell_bounds(0)
-        (896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461, 80.74520111083984, 83.65809631347656)
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
@@ -2722,13 +2699,6 @@ class DataSet(DataSetFilters, DataObject):
         int
             VTK cell type. See `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
 
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-        >>> mesh.cell_type(0)
-        <CellType.TRIANGLE: 5>
-
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
@@ -2751,18 +2721,6 @@ class DataSet(DataSetFilters, DataObject):
         -------
         list[int]
             Point Ids that are associated with the cell.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-        >>> mesh.cell_type(0)
-        <CellType.TRIANGLE: 5>
-
-        Cell type 5 is a triangular cell with three points.
-
-        >>> mesh.cell_point_ids(0)
-        [0, 1, 2]
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
@@ -3057,7 +3015,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
-        >>> mesh.cell_bounds(0)
+        >>> mesh.cell[0].bounds
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True

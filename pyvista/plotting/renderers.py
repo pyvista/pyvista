@@ -296,6 +296,11 @@ class Renderers:
             raise IndexError(f'Column index is out of range ({self.shape[1]})')
         self._active_index = self.loc_to_index((index_row, index_column))
 
+    def on_plotter_render(self):
+        """Notify all renderers of explicit plotter render call."""
+        for renderer in self:
+            renderer.on_plotter_render()
+
     def deep_clean(self):
         """Clean all renderers."""
         # Do not remove the renderers on the clean
@@ -443,7 +448,45 @@ class Renderers:
             self.active_renderer.set_background(color, top=top)
 
     def set_color_cycler(self, color_cycler, all_renderers=True):
-        """Set the color cycler for each renderer."""
+        """Set or reset the color cycler.
+
+        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        call to set the default color of the dataset being plotted.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler on this
+        renderer.
+
+        Parameters
+        ----------
+        color_cycler : str, cycler.Cycler, list(ColorLike)
+            The colors to cycle through.
+
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.set_color_cycler(['red', 'green', 'blue'])
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
         if all_renderers:
             for renderer in self:
                 renderer.set_color_cycler(color_cycler)

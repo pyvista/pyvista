@@ -7,10 +7,13 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities import (
+    FieldAssociation,
     abstract_class,
     convert_array,
     convert_string_array,
     raise_not_matching,
+    set_algorithm_input,
+    wrap,
 )
 from pyvista.utilities.misc import has_module, no_new_attr
 
@@ -264,7 +267,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: str):
+    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):
+        if isinstance(scalar_mode, FieldAssociation):
+            scalar_mode = scalar_mode.name
+        scalar_mode = scalar_mode.lower()
         if scalar_mode == 'default':
             self.SetScalarModeToDefault()
         elif scalar_mode == 'point':
@@ -361,13 +367,15 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.dataset = dataset
 
     @property
-    def dataset(self) -> Optional['pv.DataSet']:
+    def dataset(self) -> Optional['pv.core.dataset.DataSet']:
         """Return or set the dataset assigned to this mapper."""
-        return self.GetInputAsDataSet()
+        return wrap(self.GetInputAsDataSet())
 
     @dataset.setter
-    def dataset(self, obj: 'pv.core.dataset.DataSet'):
-        return self.SetInputData(obj)
+    def dataset(
+        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+    ):
+        set_algorithm_input(self, obj)
 
     def as_rgba(self):
         """Convert the active scalars to RGBA.
@@ -879,17 +887,19 @@ class _BaseVolumeMapper(_BaseMapper):
         """Initialize this class."""
         super().__init__(theme=theme)
         self._lut = LookupTable()
-        self._scalar_range = None
+        self._scalar_range = (0.0, 256.0)
 
     @property
     def dataset(self):
         """Return or set the dataset assigned to this mapper."""
         # GetInputAsDataSet unavailable on volume mappers
-        return self.GetDataSetInput()
+        return wrap(self.GetDataSetInput())
 
     @dataset.setter
-    def dataset(self, new_dataset: 'pv.core.dataset.DataSet'):
-        return self.SetInputData(new_dataset)
+    def dataset(
+        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+    ):
+        set_algorithm_input(self, obj)
 
     @property
     def lookup_table(self):
@@ -900,7 +910,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = lut
 
     @property
-    def scalar_range(self):
+    def scalar_range(self) -> tuple:
         """Return or set the scalar range."""
         return self._scalar_range
 
@@ -908,7 +918,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def scalar_range(self, clim):
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
-        self._scalar_range = clim
+        self._scalar_range = tuple(clim)
 
     @property
     def blend_mode(self) -> str:
