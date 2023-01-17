@@ -5,6 +5,7 @@ export PYVISTA_OFF_SCREEN := True
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
+DEFAULTS	  = -w sphinx_warnings.txt -W --keep-going
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = pyvista
 SOURCEDIR     = .
@@ -13,7 +14,7 @@ BUILDDIR      = _build
 
 # Put it first so that "make" without argument is like "make help".
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(DEFAULTS) $(O)
 
 .PHONY: help Makefile
 
@@ -21,6 +22,7 @@ clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf examples/
 	rm -f errors.txt
+	rm -f sphinx_warnings.txt
 	rm -rf images/auto-generated
 	rm -f getting-started/external_examples.rst
 	find . -type d -name "_autosummary" -exec rm -rf {} +
@@ -28,6 +30,7 @@ clean:
 clean-except-examples:
 	rm -rf $(BUILDDIR)/*
 	rm -f errors.txt
+	rm -f sphinx_warnings.txt
 	rm -rf images/auto-generated
 	rm -f getting-started/external_examples.rst
 	find . -type d -name "_autosummary" -exec rm -rf {} +
@@ -39,12 +42,12 @@ clean-autosummary:
 # build html docs in parallel using all available CPUs
 # WARNING: this is a resource hog
 phtml:
-	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) -j auto
+	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(DEFAULTS) $(O) -j auto
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(DEFAULTS) $(O)
 
 # deploy to https://github.com/pyvista/pyvista-docs
 # WARNING: Use with care as this overwrites history of gh-pages
