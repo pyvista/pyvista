@@ -94,12 +94,10 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
                 # we must track the original IDs with our own array from compute_normals
                 indices_array = 'pyvistaOriginalPointIds'
     else:
-        # consider checking if mesh contains active normals
-        # if mesh.point_data.active_normals is None:
-
-        # Don't calculate normals in place - it creates a copy of the mesh
-        normals = mesh.compute_normals(cell_normals=False, inplace=False).point_normals
-        mesh.point_data.active_normals = normals
+        if mesh.point_data.active_normals is None:
+            # Don't calculate normals in place - it creates a copy of the mesh
+            normals = mesh.compute_normals(cell_normals=False, inplace=False).point_normals
+            mesh.point_data.active_normals = np.array(normals)  # del VTK pointer
 
     if has_scalars and indices_array is not None:
         ind = mesh[indices_array]
