@@ -3454,6 +3454,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``self._theme`` is used. If using ``'fixed_point'``,
             only ``UniformGrid`` types can be used.
 
+            .. note::
+                The ``'smart'`` mapper chooses one of the other listed
+                mappers based on rendering parameters and available
+                hardware. Most of the time the ``'smart'`` simply checks
+                if a GPU is available and if so, uses the ``'gpu'``
+                mapper, otherwise using the ``'fixed_point'`` mapper.
+
+            .. warning::
+                The ``'fixed_point'`` mapper is CPU-based and will have
+                lower performance than the ``'gpu'`` or ``'open_gl'``
+                mappers.
+
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
