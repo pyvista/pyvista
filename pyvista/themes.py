@@ -36,7 +36,7 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
-from ._typing import ColorLike
+from ._typing import ColorLike, Number
 from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
@@ -1082,6 +1082,58 @@ class _SliderConfig(_ThemeConfig):
             yield style.name
 
 
+class _TrameConfig(_ThemeConfig):
+    """PyVista Trame configuration.
+
+    Examples
+    --------
+    Set global trame view parameters.
+
+    >>> import pyvista as pv
+    >>> pv.global_theme.trame.interactive_ratio = 2
+    >>> pv.global_theme.trame.still_ratio = 2
+
+    """
+
+    __slots__ = ['_interactive_ratio', '_still_ratio']
+
+    def __init__(self):
+        self._interactive_ratio = 1
+        self._still_ratio = 1
+
+    @property
+    def interactive_ratio(self) -> Number:
+        """Return or set the interactive ratio for PyVista Trame views.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.trame.interactive_ratio = 2
+
+        """
+        return self._interactive_ratio
+
+    @interactive_ratio.setter
+    def interactive_ratio(self, interactive_ratio: Number):
+        self._interactive_ratio = interactive_ratio
+
+    @property
+    def still_ratio(self) -> Number:
+        """Return or set the still ratio for PyVista Trame views.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.trame.still_ratio = 2
+
+        """
+        return self._still_ratio
+
+    @still_ratio.setter
+    def still_ratio(self, still_ratio: Number):
+        self._still_ratio = still_ratio
+
+
 class DefaultTheme(_ThemeConfig):
     """PyVista default theme.
 
@@ -1109,6 +1161,7 @@ class DefaultTheme(_ThemeConfig):
         '_name',
         '_background',
         '_jupyter_backend',
+        '_trame',
         '_full_screen',
         '_window_size',
         '_camera',
@@ -1209,6 +1262,7 @@ class DefaultTheme(_ThemeConfig):
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
         self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'server')
+        self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
@@ -1399,6 +1453,17 @@ class DefaultTheme(_ThemeConfig):
         from pyvista.jupyter import _validate_jupyter_backend
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
+
+    @property
+    def trame(self) -> _TrameConfig:
+        """Return or set the default trame parameters."""
+        return self._trame
+
+    @trame.setter
+    def trame(self, config: _TrameConfig):
+        if not isinstance(config, _TrameConfig):
+            raise TypeError('Configuration type must be `_TrameConfig`.')
+        self._trame = config
 
     @property
     def auto_close(self) -> bool:

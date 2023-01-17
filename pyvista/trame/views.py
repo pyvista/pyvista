@@ -7,6 +7,8 @@ import weakref
 
 from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
 
+import pyvista
+
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
 
@@ -39,16 +41,17 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
     plotter : pyvista.BasePlotter
         The PyVista Plotter to display in the output view.
 
-    interactive_ratio : int, default=1
+    interactive_ratio : int, optional
         Image size scale factor while interacting. Increasing this
         value will give higher resulotuion images during interaction
         events at the cost of performance. Use lower values (e.g.,
         ``0.5``) to increase performance while interacting.
+        Defaults to 1.
 
-    still_ratio : int, default=1
+    still_ratio : int, optional
         Image size scale factor while not interacting (still).
         Increasing this value will give higher resulotuion images
-        when not interacting with the scene.
+        when not interacting with the scene. Defaults to 1.
 
     ref : str, optional
         The identifier for this view component. A default value is
@@ -56,11 +59,15 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=1, still_ratio=1, ref=None, **kwargs):
+    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, ref=None, **kwargs):
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if ref is None:
             ref = f'view_{plotter._id_name}'
+        if interactive_ratio is None:
+            interactive_ratio = pyvista.global_theme.trame.interactive_ratio
+        if still_ratio is None:
+            still_ratio = pyvista.global_theme.trame.still_ratio
         VtkRemoteView.__init__(
             self,
             self._plotter().render_window,
@@ -112,17 +119,17 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     plotter : pyvista.BasePlotter
         The PyVista Plotter to display in the output view.
 
-    interactive_ratio : int, default=1
+    interactive_ratio : int, optional
         Image size scale factor while interacting. Increasing this
         value will give higher resulotuion images during interaction
         events at the cost of performance. Use lower values (e.g.,
         ``0.5``) to increase performance while interacting.
-        This is only valid in the ``'remote'`` mode.
+        Defaults to 1. This is only valid in the ``'remote'`` mode.
 
-    still_ratio : int, default=1
+    still_ratio : int, optional
         Image size scale factor while not interacting (still).
         Increasing this value will give higher resulotuion images
-        when not interacting with the scene.
+        when not interacting with the scene. Defaults to 1.
         This is only valid in the ``'remote'`` mode.
 
     ref : str, optional
@@ -131,11 +138,15 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=1, still_ratio=1, ref=None, **kwargs):
+    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, ref=None, **kwargs):
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if ref is None:
             ref = f'view_{plotter._id_name}'
+        if interactive_ratio is None:
+            interactive_ratio = pyvista.global_theme.trame.interactive_ratio
+        if still_ratio is None:
+            still_ratio = pyvista.global_theme.trame.still_ratio
         VtkRemoteLocalView.__init__(
             self,
             self._plotter().render_window,
