@@ -17,8 +17,10 @@ try:
     from vtkmodules.vtkCommonCore import vtkVersion
 
     VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
+    VTK91 = VTK9 and vtkVersion().GetVTKMinorVersion() >= 1
 except ImportError:  # pragma: no cover
     VTK9 = False
+    VTK91 = False
 
 # for charts
 _has_vtkRenderingContextOpenGL2 = False
@@ -49,6 +51,7 @@ if VTK9:
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
     from vtkmodules.vtkChartsCore import (
         vtkAxis,
         vtkChart,
@@ -233,7 +236,11 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
-    from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
+    from vtkmodules.vtkCommonExecutionModel import (
+        vtkAlgorithm,
+        vtkAlgorithmOutput,
+        vtkImageToStructuredGrid,
+    )
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (
@@ -547,6 +554,10 @@ if VTK9:
     )
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
+    # 9.1+ imports
+    if VTK91:
+        from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
+
     # lazy import for some of the less used readers
     def lazy_vtkOBJExporter():
         """Lazy import of the vtkOBJExporter."""
@@ -644,6 +655,7 @@ else:  # pragma: no cover
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
     # match the imports for VTK9
     def lazy_vtkOBJExporter():

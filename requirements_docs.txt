@@ -27,8 +27,8 @@ sphinx-copybutton==0.5.1
 sphinx-design==0.3.0
 sphinx-gallery==0.11.1
 sphinx-notfound-page==0.8.3
-sphinx-toolbox==3.2.0
+sphinx-toolbox==3.3.0
 sphinxcontrib-asciinema==0.3.5
 sphinxcontrib-websupport==1.2.4
-trimesh==3.18.0
+trimesh==3.18.1
 typed-ast==1.5.4

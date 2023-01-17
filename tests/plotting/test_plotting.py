@@ -24,6 +24,7 @@ from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.utilities import algorithms
 from pyvista.utilities.misc import can_create_mpl_figure
 
 # skip all tests if unable to render
@@ -3222,6 +3223,96 @@ def test_add_point_scalar_labels_list():
 
     plotter.add_point_scalar_labels(points, labels)
     plotter.show()
+
+
+def test_plot_algorithm_cone():
+    algo = vtk.vtkConeSource()
+    algo.SetResolution(10)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(algo, color='red')
+    pl.show(auto_close=False)
+    # Use low resolution so it appears in image regression tests easily
+    algo.SetResolution(3)
+    pl.show()
+
+    # Bump resolution and plot with silhouette
+    algo.SetResolution(8)
+    pl = pyvista.Plotter()
+    pl.add_mesh(algo, color='red', silhouette=True)
+    pl.show()
+
+
+@skip_windows_mesa
+def test_plot_algorithm_scalars():
+    name, name2 = 'foo', 'bar'
+    mesh = pyvista.Wavelet()
+    mesh.point_data[name] = np.arange(mesh.n_points)
+    mesh.cell_data[name2] = np.arange(mesh.n_cells)
+    assert mesh.active_scalars_name != name
+    assert mesh.active_scalars_name != name2
+
+    alg = vtk.vtkGeometryFilter()
+    alg.SetInputDataObject(mesh)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars=name)
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars=name2)
+    pl.show()
+
+
+def test_algorithm_add_points():
+    algo = vtk.vtkRTAnalyticSource()
+
+    pl = pyvista.Plotter()
+    pl.add_points(algo)
+    pl.show()
+
+
+@skip_9_1_0
+def test_algorithm_add_point_labels():
+    algo = vtk.vtkConeSource()
+    elev = vtk.vtkElevationFilter()
+    elev.SetInputConnection(algo.GetOutputPort())
+    elev.SetLowPoint(0, 0, -1)
+    elev.SetHighPoint(0, 0, 1)
+
+    pl = pyvista.Plotter()
+    pl.add_point_labels(elev, 'Elevation', always_visible=False)
+    pl.show()
+
+
+@skip_9_1_0
+def test_pointset_to_polydata_algorithm(pointset):
+    alg = vtk.vtkElevationFilter()
+    alg.SetInputDataObject(pointset)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='Elevation')
+    pl.show()
+
+    assert isinstance(alg.GetOutputDataObject(0), vtk.vtkPointSet)
+
+
+def test_add_ids_algorithm():
+    algo = vtk.vtkCubeSource()
+
+    alg = algorithms.add_ids_algorithm(algo)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='point_ids')
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='cell_ids')
+    pl.show()
+
+    result = pyvista.wrap(alg.GetOutputDataObject(0))
+    assert 'point_ids' in result.point_data
+    assert 'cell_ids' in result.cell_data
 
 
 def test_color_cycler():
