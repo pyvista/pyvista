@@ -3395,6 +3395,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             transfer function that is an array either ``n_colors`` in length or
             shorter.
 
+            If RGBA scalars are provided, this parameter is set to ``'linear'``
+            to ensure the opacity transfer function has no effect on the input
+            opacity values.
+
         n_colors : int, optional
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
@@ -3708,6 +3712,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError(
                     f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape {scalars.shape} and datatype {scalars.dtype}'
                 )
+            if opacity != 'linear':
+                opacity = 'linear'
+                warnings.warn('Ignoring custom opacity due to RGBA scalars.')
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {

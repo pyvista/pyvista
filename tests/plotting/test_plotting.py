@@ -3331,6 +3331,11 @@ def test_plot_volume_rgba(uniform):
     scalars = scalars.astype(np.uint8)
     uniform.plot(volume=True, scalars=scalars)
 
+    pl = pyvista.Plotter()
+    with pytest.warns(UserWarning, match='Ignoring custom opacity'):
+        pl.add_volume(uniform, scalars=scalars, opacity='sigmoid_10')
+    pl.show()
+
 
 def test_color_cycler():
     pyvista.global_theme.color_cycler = 'default'
