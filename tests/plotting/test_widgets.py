@@ -297,6 +297,24 @@ def test_plot_algorithm_widgets():
     pl.close()
 
 
+def test_add_volume_clip_plane(uniform):
+    pl = pyvista.Plotter()
+    with pytest.raises(TypeError, match='The `volume` parameter type must'):
+        pl.add_volume_clip_plane(pyvista.Sphere())
+
+    widget = pl.add_volume_clip_plane(uniform)
+    assert isinstance(widget, vtk.vtkImplicitPlaneWidget)
+    assert pl.volume.mapper.GetClippingPlanes().GetNumberOfItems() == 1
+    pl.close()
+
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform)
+    assert vol.mapper.GetClippingPlanes() is None
+    pl.add_volume_clip_plane(vol)
+    assert vol.mapper.GetClippingPlanes().GetNumberOfItems() == 1
+    pl.close()
+
+
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_plot_pointset_widgets(pointset):
     pointset = pointset.elevation()
