@@ -1,5 +1,9 @@
 # Core dependencies
-# It is critical the VTK is *not* listed here
+# `vtk` must be explicitly installed
+# It is critical that VTK is *not* listed here.
+#  This is to prevent installing `vtk` from PyPI
+#  when using a custom variant like `vtk_osmesa`
+#  which we do in some of our CI jobs.
 imageio<2.25.0
 numpy<1.25.0
 pillow<9.5.0
