@@ -90,11 +90,11 @@ jobs:
 
       - name: Dump Sphinx Warnings and Errors
         if: always()
-        run: cat doc/sphinx_warnings.txt 2>/dev/null
+        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
 
       - name: Dump VTK Warnings and Errors
         if: always()
-        run: cat doc/errors.txt 2>/dev/null
+        run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Tar build
         if: always()
