@@ -6,6 +6,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (
     NORMALS,
+    assert_empty_kwargs,
     generate_plane,
     get_array,
     get_array_association,
@@ -45,11 +46,16 @@ def _parse_interaction_event(interaction_event):
         interaction_event = _vtk.vtkCommand.EndInteractionEvent
     elif interaction_event == 'always':
         interaction_event = _vtk.vtkCommand.InteractionEvent
-    elif not isinstance(interaction_event, vtk.vtkCommand.EventIds):
+    elif isinstance(interaction_event, str):
         raise ValueError(
-            "Expected value for `interaction_event` is 'start',"
-            " 'end' or 'always', or an instance of `vtk.vtkCommand.EventIds`."
-            f" {interaction_event} was given."
+            "Expected value for `interaction_event` is 'start', "
+            f"'end', or 'always'. {interaction_event} was given."
+        )
+    else:
+        raise TypeError(
+            "Expected type for `interaction_event` is either a str "
+            "or an instance of `vtk.vtkCommand.EventIds`."
+            f" ({type(interaction_event)}) was given."
         )
     return interaction_event
 
@@ -408,7 +414,7 @@ class WidgetHelper:
 
         interaction_event : vtk.vtkCommand.EventIds, str, optional
             The VTK interaction event to use for triggering the
-            callback. Accepts either the strings ``'end'``, ``'always'`` or a
+            callback. Accepts either the strings ``'end'``, ``'always'``, or a
             ``vtk.vtkCommand.EventIds``.
 
         Returns
@@ -417,6 +423,8 @@ class WidgetHelper:
             Plane widget.
 
         """
+        interaction_event = _parse_interaction_event(interaction_event)
+
         if origin is None:
             origin = self.center
         if bounds is None:
@@ -456,7 +464,7 @@ class WidgetHelper:
 
             plane_widget.SetDrawPlane(False)
             plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
-            plane_widget.AddObserver(_vtk.vtkCommand.StopInteractionEvent, _stop_interact)
+            plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
@@ -517,7 +525,11 @@ class WidgetHelper:
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
         plane_widget.On()
-        plane_widget.AddObserver(interaction_event, _the_callback)
+        plane_widget.AddObserver(
+            interaction_event,
+            # _vtk.vtkCommand.InteractionEvent,
+            _the_callback,
+        )
         if test_callback:
             _the_callback(plane_widget, None)  # Trigger immediate update
 
@@ -705,8 +717,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.volume.Volume
-            The input rendered volume to clip.
+        volume : pyvista.plotting.Volume, pyvista.UniformGrid, pyvista.RectilinearGrid
+            New dataset of type :class:`pyvista.UniformGrid` or
+            :class:`pyvista.RectilinearGrid`, or the return value from
+            :class:`pyvista.plotting.Volume` from :func:`BasePlotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -755,12 +769,29 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
+        **kwargs : dict, optional
+            All additional keyword arguments are passed to
+            :func:`BasePlotter.add_volume` to control how the volume is
+            displayed. Only applicable if ``volume`` is either a
+            :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`
+
         Returns
         -------
         vtk.vtkPlaneWidget or vtk.vtkImplicitPlaneWidget
-            The VTK plane widget.
+            The VTK plane widget depending on the value of ``implicit``.
 
         """
+        if isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+            volume = self.add_volume(volume, **kwargs)
+        elif not isinstance(volume, pyvista.plotting.Volume):
+            raise TypeError(
+                'The `volume` parameter type must be either pyvista.UniformGrid, '
+                'pyvista.RectangularGrid, or a pyvista.plotting.volume.Volume '
+                'from `Plotter.add_volume`.'
+            )
+        else:
+            assert_empty_kwargs(**kwargs)
+
         plane = _vtk.vtkPlane()
         _widget = []
 
@@ -1127,14 +1158,26 @@ class WidgetHelper:
             to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
 
-        event_type : str or vtk.vtkCommand.EventIds, optional
-            Either ``'start'``, ``'end'`` or ``'always'``, this
-            defines how often the slider interacts with the callback.
+        interaction_event : vtk.vtkCommand.EventIds, str, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
+
+            .. versionchanged:: 0.38.0
+               Changed from ``event_type`` to ``interaction_event`` and now accepts
+               either strings and ``vtk.vtkCommand.EventIds``.
 
         style : str, optional
             The name of the slider style. The list of available styles
             are in ``pyvista.global_theme.slider_styles``. Defaults to
             ``None``.
+
+        **kwargs : dict, optional
+            Deprecated keyword arguments.
+
+            .. deprecated:: 0.38.0
+               Keyword argument ``event_type`` deprecated in favor of
+               ``interaction_event``.
 
         Returns
         -------
@@ -1184,17 +1227,7 @@ class WidgetHelper:
                 idx = n_states - 1
             slider_rep.SetTitleText(data[idx])
 
-        if event_type == 'start':
-            slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, title_callback)
-        elif event_type == 'end':
-            slider_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, title_callback)
-        elif event_type == 'always':
-            slider_widget.AddObserver(_vtk.vtkCommand.InteractionEvent, title_callback)
-        else:
-            raise ValueError(
-                "Expected value for `event_type` is 'start',"
-                f" 'end' or 'always': {event_type} was given."
-            )
+        slider_widget.AddObserver(_parse_interaction_event(interaction_event), title_callback)
         title_callback(slider_widget, None)
         return slider_widget
 
@@ -1294,9 +1327,12 @@ class WidgetHelper:
         tube_width : float, optional
             Normalized width of the tube. Defaults to the theme's tube width.
 
-        event_type : str, optional
+        **kwargs : dict, optional
+            Deprecated keyword arguments.
+
             .. deprecated:: 0.38.0
-               Deprecated in favor of ``interaction_event``.
+               Keyword argument ``event_type`` deprecated in favor of
+               ``interaction_event``.
 
         Returns
         -------

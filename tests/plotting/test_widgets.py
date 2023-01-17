@@ -133,16 +133,16 @@ def test_widget_slider(uniform):
     p.close()
 
     p = pyvista.Plotter()
-    for event_type in ['start', 'end', 'always']:
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type=event_type)
+    for interaction_event in ['start', 'end', 'always']:
+        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=interaction_event)
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
     with pytest.raises(AttributeError):
         p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
-    with pytest.raises(TypeError, match='type for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type=0)
-    with pytest.raises(ValueError, match='value for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type='foo')
+    with pytest.raises(TypeError, match='Expected type for `interaction_event`'):
+        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=0)
+    with pytest.raises(ValueError, match='Expected value for `interaction_event`'):
+        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event='foo')
     p.close()
 
     p = pyvista.Plotter()

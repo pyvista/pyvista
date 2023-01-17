@@ -3,11 +3,12 @@
 
 Clip Volume Widget
 ------------------
-If you have a structured dataset like :class:`pyvista.UniformGrid`, or
-:class:`pyvista.RectilinearGrid` you can clip it using the
-:func:`pyvista.Plotter.add_volume_clipper` widget.  .. image::
+If you have a structured dataset like a :class:`pyvista.UniformGrid` or
+:class:`pyvista.RectilinearGrid`, you can clip it using the
+:func:`pyvista.Plotter.add_volume_clipper` widget to better see the internal
+structure of the dataset.
 
-../../images/gifs/box-clip.gif
+../../images/gifs/volume-clip-plane-widget.gif
 
 """
 
@@ -23,18 +24,56 @@ import pyvista as pv
 # <pyvista.UniformGrid.center>` of the grid.
 
 grid = pv.UniformGrid(dimensions=(200, 200, 200))
+grid['scalars'] = np.linalg.norm(grid.center - grid.points, axis=1)
+grid
 
-scalars = np.linalg.norm(grid.center - grid.points, axis=1)
-# scalars = np.abs(scalars.max() - scalars)
-grid['scalars'] = scalars
+
+###############################################################################
+# Generate the Opacity Array
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Create a banded opacity array such that our dataset shows "rings" at certain
+# values. Have this increase such that higher values (values farther away from
+# the center) are more opaque.
 
 opacity = np.zeros(100)
-opacity[::10] = np.geomspace(0.01, 0.5, 10)
-x = np.linspace(0, 1, len(opacity))
+opacity[::10] = np.geomspace(0.01, 0.75, 10)
 
+
+###############################################################################
+# Plot a Single Clip Plane Dataset
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the volume with a single clip plane.
+#
+# Reverse the opacity array such that portions closer to the center are more
+# opaque.
+
+pl = pv.Plotter()
+pl.add_volume_clip_plane(grid, normal='-x', opacity=opacity[::-1], cmap='magma')
+pl.show()
+
+
+###############################################################################
+# Plot Multiple Clip Planes
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the dataset using the :func:`pyvista.Plotter.add_volume_clip_plane` with
+# the output from :func:`pyvista.Plotter.add_volume` Enable constant
+# interaction by setting the ``interaction_event`` to ``'always'``.
+#
+# Disable the arrows to make the plot a bit clearer and flip the opacity array.
 
 pl = pv.Plotter()
 vol = pl.add_volume(grid, opacity=opacity)
 vol.prop.interpolation_type = 'linear'
-pl.add_volume_clip_plane(vol, event_type='always')
+pl.add_volume_clip_plane(
+    vol,
+    normal='-x',
+    interaction_event='always',
+    normal_rotation=False,
+)
+pl.add_volume_clip_plane(
+    vol,
+    normal='-y',
+    interaction_event='always',
+    normal_rotation=False,
+)
 pl.show()

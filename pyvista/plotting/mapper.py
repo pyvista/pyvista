@@ -270,7 +270,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
-        scalar_mode = scalar_mode.lower()
+        scalar_mode = scalar_mode.lower()  # type: ignore
         if scalar_mode == 'default':
             self.SetScalarModeToDefault()
         elif scalar_mode == 'point':
