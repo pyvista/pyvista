@@ -3,8 +3,8 @@ import os
 import pytest
 
 import pyvista as pv
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 from pyvista.plotting import system_supports_plotting
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 has_ipyvtklink = True
 try:
