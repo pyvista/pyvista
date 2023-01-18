@@ -1095,12 +1095,21 @@ class _TrameConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_interactive_ratio', '_still_ratio', '_jupyter_server_name']
+    __slots__ = [
+        '_interactive_ratio',
+        '_still_ratio',
+        '_jupyter_server_name',
+        '_relative_url_enabled',
+        '_relative_url_prefix',
+    ]
 
     def __init__(self):
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
+        self._relative_url_enabled = 'PYVISTA_TRAME_RELATIVE_URL_PREFIX' in os.environ
+        # default for ``jupyter-server-proxy``
+        self._relative_url_prefix = os.environ.get('PYVISTA_TRAME_RELATIVE_URL_PREFIX', '/proxy/')
 
     @property
     def interactive_ratio(self) -> Number:
@@ -1151,6 +1160,24 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_server_name.setter
     def jupyter_server_name(self, name: str):
         self._jupyter_server_name = name
+
+    @property
+    def relative_url_enabled(self) -> bool:
+        """Return or set if use of relative URLs is enabled for the Jupyter interface."""
+        return self._relative_url_enabled
+
+    @relative_url_enabled.setter
+    def relative_url_enabled(self, enabled: bool):
+        self._relative_url_enabled = bool(enabled)
+
+    @property
+    def relative_url_prefix(self):
+        """Return or set URL prefix when using relative URLs with the Jupyter interface."""
+        return self._relative_url_prefix
+
+    @relative_url_prefix.setter
+    def relative_url_prefix(self, prefix: str):
+        self._relative_url_prefix = prefix
 
 
 class DefaultTheme(_ThemeConfig):

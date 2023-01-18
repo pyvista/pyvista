@@ -90,11 +90,18 @@ def launch_server(server):
     return server.ready
 
 
-def build_iframe(_server, ui=None, server_proxy=False, server_proxy_prefix=None, **kwargs):
+def build_iframe(_server, ui=None, relative_url=None, relative_url_prefix=None, **kwargs):
     """Build IPython display.IFrame object for the trame view."""
     params = f"?ui={ui}&reconnect=auto" if ui else "?reconnect=auto"
-    if server_proxy:
-        src = f"{server_proxy_prefix + '/' if server_proxy_prefix else ''}proxy/{_server.port}/index.html{params}"
+    if relative_url is None:
+        relative_url = pyvista.global_theme.trame.relative_url_enabled
+    if relative_url:
+        if relative_url_prefix is None:
+            relative_url_prefix = pyvista.global_theme.trame.relative_url_prefix
+        # relative_url_prefix assumes trailing slash
+        src = (
+            f"{relative_url_prefix if relative_url_prefix else ''}{_server.port}/index.html{params}"
+        )
     else:
         src = f"{kwargs.get('protocol', 'http')}://{kwargs.get('host', 'localhost')}:{_server.port}/index.html{params}"
     iframe_kwargs = {
@@ -110,8 +117,8 @@ def show_trame(
     plotter,
     local_rendering=False,
     name=None,
-    server_proxy=False,
-    server_proxy_prefix=None,
+    relative_url=None,
+    relative_url_prefix=None,
     **kwargs,
 ):
     """Run and display the trame application in jupyter's event loop.
@@ -125,11 +132,13 @@ def show_trame(
     name : str
         The name of the trame server on which the UI is defined
 
-    server_proxy : bool
-        build the URL relative for use with `jupyter-server-proxy`
+    relative_url : bool, default: False
+        Build a relative URL. Often for use with ``jupyter-server-proxy``.
 
-    server_proxy_prefix : str
-        URL prefix when using `jupyter-server-proxy` on JupyterHub instances.
+    relative_url_prefix : str, optional
+        URL prefix when using ``relative_url``. This can be set globally in
+        the theme. To ignore, pass ``False``. For use with
+        ``jupyter-server-proxy``, often set to ``proxy/``.
 
     **kwargs
         any keyword arguments are pass to the Jupyter IFrame. Additionally
@@ -154,7 +163,7 @@ def show_trame(
     return build_iframe(
         server,
         ui=ui_name,
-        server_proxy=server_proxy,
-        server_proxy_prefix=server_proxy_prefix,
+        relative_url=relative_url,
+        relative_url_prefix=relative_url_prefix,
         **kwargs,
     )
