@@ -1,5 +1,6 @@
 """Jupyter notebook plotting module."""
 import asyncio
+from typing import Awaitable
 import warnings
 
 from turtle import back
@@ -91,7 +92,7 @@ def _validate_jupyter_backend(backend):
     return backend
 
 
-def set_jupyter_backend(backend):
+def set_jupyter_backend(backend) -> Awaitable[bool]:
     """Set the plotting backend for a jupyter notebook.
 
     Parameters
@@ -139,12 +140,17 @@ def set_jupyter_backend(backend):
           Supports all VTK methods, but suffers from lag due to remote
           rendering. Requires that a virtual framebuffer be set up when
           displaying on a headless server. Must have ``trame`` and
-        ``jupyter-server-proxy`` installed.
+          ``jupyter-server-proxy`` installed.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
           will generate nothing on headless servers even with a
           virtual framebuffer.
+
+    Returns
+    -------
+    Awaitable[bool]
+        An awaitable future that will finalize when the backend is ready.
 
     Examples
     --------
@@ -193,6 +199,6 @@ def set_jupyter_backend(backend):
         return launch_server(pyvista.global_theme.trame.jupyter_server_name)
     # Return an awaitable future to prevent errors when accidentally awaiting
     # other backends
-    future = asyncio.Future()
+    future = asyncio.Future()  # type: ignore
     future.set_result(True)
     return future
