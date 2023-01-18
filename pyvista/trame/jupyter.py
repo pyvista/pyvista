@@ -79,7 +79,7 @@ def launch_server(server):
     if server._running_stage == 0:
         server.controller.on_server_ready.add(on_ready)
         server.start(
-            exec_mode="task",
+            exec_mode='task',
             port=0,
             open_browser=False,
             show_connection_info=False,
@@ -92,7 +92,7 @@ def launch_server(server):
 
 def build_iframe(_server, ui=None, relative_url=None, relative_url_prefix=None, **kwargs):
     """Build IPython display.IFrame object for the trame view."""
-    params = f"?ui={ui}&reconnect=auto" if ui else "?reconnect=auto"
+    params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if relative_url is None:
         relative_url = pyvista.global_theme.trame.relative_url_enabled
     if relative_url:
@@ -103,10 +103,10 @@ def build_iframe(_server, ui=None, relative_url=None, relative_url_prefix=None, 
             f"{relative_url_prefix if relative_url_prefix else ''}{_server.port}/index.html{params}"
         )
     else:
-        src = f"{kwargs.get('protocol', 'http')}://{kwargs.get('host', 'localhost')}:{_server.port}/index.html{params}"
+        src = f'{kwargs.get("protocol", "http")}://{kwargs.get("host", "localhost")}:{_server.port}/index.html{params}'
     iframe_kwargs = {
-        "width": "100%",
-        "height": 600,
+        'width': '100%',
+        'height': 600,
     }
     iframe_kwargs.update(**kwargs)
     logger.debug(src)

@@ -14,7 +14,7 @@ from trame.widgets import vuetify
 import pyvista
 from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteView
 
-UI_TITLE = "PyVista"
+UI_TITLE = 'PyVista'
 
 
 def vuwrap(func):
@@ -142,18 +142,18 @@ def ui_container(server, plotter, local_rendering=False):
 
     with vuetify.VContainer(
         fluid=True,
-        classes="pa-0 fill-height",
+        classes='pa-0 fill-height',
     ):
         with vuetify.VCard(
-            style="position: absolute; top: 20px; left: 20px; z-index: 1",
+            style='position: absolute; top: 20px; left: 20px; z-index: 1',
         ):
-            with vuetify.VCardTitle(classes="py-0"):
+            with vuetify.VCardTitle(classes='py-0'):
                 # Scene controls
                 with vuetify.VBtn(
-                    icon=True, click=f"{plotter._id_name}_show_ui=!{plotter._id_name}_show_ui"
+                    icon=True, click=f'{plotter._id_name}_show_ui=!{plotter._id_name}_show_ui'
                 ):
                     vuetify.VIcon('mdi-dots-vertical')
-                with vuetify.VRow(v_show=(f"{plotter._id_name}_show_ui", False)):
+                with vuetify.VRow(v_show=(f'{plotter._id_name}_show_ui', False)):
                     with vuetify.VBtn(icon=True, click=viewer.view_isometric):
                         vuetify.VIcon('mdi-axis-arrow')
                     with vuetify.VBtn(icon=True, click=viewer.view_yz):
@@ -168,26 +168,26 @@ def ui_container(server, plotter, local_rendering=False):
                         v_model=(viewer.OUTLINE, False),
                         dense=True,
                         hide_details=True,
-                        on_icon="mdi-cube",
-                        off_icon="mdi-cube-off",
-                        classes="ma-2",
+                        on_icon='mdi-cube',
+                        off_icon='mdi-cube-off',
+                        classes='ma-2',
                     )
                     if not local_rendering:
                         vuetify.VCheckbox(
                             v_model=(viewer.GRID, False),
                             dense=True,
                             hide_details=True,
-                            on_icon="mdi-ruler-square",
-                            off_icon="mdi-ruler-square",
-                            classes="ma-2",
+                            on_icon='mdi-ruler-square',
+                            off_icon='mdi-ruler-square',
+                            classes='ma-2',
                         )
                         vuetify.VCheckbox(
                             v_model=(viewer.AXIS, False),
                             dense=True,
                             hide_details=True,
-                            on_icon="mdi-axis-arrow-info",
-                            off_icon="mdi-axis-arrow-info",
-                            classes="ma-2",
+                            on_icon='mdi-axis-arrow-info',
+                            off_icon='mdi-axis-arrow-info',
+                            classes='ma-2',
                         )
                         with vuetify.VBtn(
                             icon=True,
