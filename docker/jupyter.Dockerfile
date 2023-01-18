@@ -17,11 +17,11 @@ COPY LICENSE /build-context/
 COPY docker/requirements.txt /build-context/requirements.txt
 WORKDIR /build-context/
 
-# Install our custom vtk wheel
-RUN pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl
-
-RUN pip install pyvista*.tar.gz
+RUN pip install --no-cache-dir pyvista*.tar.gz
 RUN pip install -r requirements.txt
+# Install our custom vtk wheel
+RUN pip uninstall vtk -y
+RUN pip install --no-cache-dir https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl
 
 WORKDIR $HOME
 
