@@ -18,7 +18,7 @@ COPY docker/requirements.txt /build-context/requirements.txt
 WORKDIR /build-context/
 
 # Install our custom vtk wheel
-RUN pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk-osmesa-9.1.0-cp39-cp39-linux_x86_64.whl
+RUN pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl
 
 RUN pip install pyvista*.tar.gz
 RUN pip install -r requirements.txt
@@ -28,3 +28,4 @@ WORKDIR $HOME
 # allow jupyterlab for ipyvtk
 ENV JUPYTER_ENABLE_LAB=yes
 ENV PYVISTA_USE_IPYVTK=true
+ENV PYVISTA_TRAME_RELATIVE_URL_PREFIX='/proxy/'

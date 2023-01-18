@@ -4,6 +4,7 @@ imageio
 imageio-ffmpeg
 ipygany
 ipyvtklink
+jupyter-server-proxy
 matplotlib
 meshio
 panel
