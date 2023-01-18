@@ -3392,7 +3392,7 @@ def test_axes_actor_properties():
     axes_actor.x_axis_tip_properties.anisotropy = 0.4
     assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
     axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
+    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
     axes_actor.y_axis_tip_properties.lighting = False
     assert not axes_actor.y_axis_tip_properties.lighting
     axes_actor.z_axis_tip_properties.interpolation_model = ShaderModel.PHONG
