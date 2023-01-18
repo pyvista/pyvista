@@ -3469,10 +3469,17 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
 
         # Must rename array as VTK sets the active scalars array name to a nullptr.
-        if mesh.point_data and mesh.point_data.GetAbstractArray(0).GetName() is None:
-            mesh.point_data.GetAbstractArray(0).SetName(self.point_data.active_scalars_name)
-        if mesh.cell_data and mesh.cell_data.GetAbstractArray(0).GetName() is None:
-            mesh.cell_data.GetAbstractArray(0).SetName(self.cell_data.active_scalars_name)
+        # Please note this was fixed upstream in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/9840
+        for i in range(mesh.GetPointData().GetNumberOfArrays()):
+            array = mesh.GetPointData().GetAbstractArray(i)
+            name = array.GetName()
+            if name is None:
+                array.SetName(self.point_data.active_scalars_name)
+        for i in range(mesh.GetCellData().GetNumberOfArrays()):
+            array = mesh.GetCellData().GetAbstractArray(i)
+            name = array.GetName()
+            if name is None:
+                array.SetName(self.cell_data.active_scalars_name)
 
         if generate_contour_edges:
             return mesh, pyvista.wrap(alg.GetContourEdgesOutput())
