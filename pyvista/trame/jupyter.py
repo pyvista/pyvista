@@ -4,7 +4,7 @@ import warnings
 
 from IPython import display
 from trame.app import get_server
-from trame_vtk.modules import vtk as vtk_module
+from trame.widgets import vtk as vtk_widgets, vuetify as vuetify_widgets
 
 import pyvista
 from pyvista.trame.ui import initialize
@@ -69,11 +69,9 @@ def launch_server(server):
     if isinstance(server, str):
         server = get_server(server)
 
-    # Needed to support multi-instance in Jupyter
-    server.enable_module(vtk_module)
-
-    # HACK: Need to register CSS
-    initialize(server, pyvista.Plotter(off_screen=True, notebook=False), local_rendering=False)
+    # Must enable all used modules
+    vtk_widgets.initialize(server)
+    vuetify_widgets.initialize(server)
 
     def on_ready(**_):
         logger.debug(f'Server ready: {server}')
