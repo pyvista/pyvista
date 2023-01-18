@@ -66,6 +66,9 @@ skip_windows_mesa = pytest.mark.skipif(
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
+skip_lesser_9_0_X = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
+)
 skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
@@ -3374,7 +3377,7 @@ def test_color_cycler_names(name):
     assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
 
 
-@skip_9_0_X
+@skip_lesser_9_0_X
 def test_axes_actor_properties():
     axes = pyvista.Axes()
     axes_actor = axes.axes_actor
