@@ -3439,7 +3439,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> dargs = dict(n_colors=n_contours - 1, clim=rng)
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=False, color='k')
+        >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
         >>> _ = pl.add_mesh(surf, opacity=0.3, **dargs)
         >>> _ = pl.add_mesh(output, **dargs)
         >>> pl.show()
