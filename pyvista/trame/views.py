@@ -53,17 +53,17 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         Increasing this value will give higher resulotuion images
         when not interacting with the scene. Defaults to 1.
 
-    ref : str, optional
-        The identifier for this view component. A default value is
+    namespace : str, optional
+        The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, ref=None, **kwargs):
+    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
-        if ref is None:
-            ref = f'view_{plotter._id_name}'
+        if namespace is None:
+            namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
             interactive_ratio = pyvista.global_theme.trame.interactive_ratio
         if still_ratio is None:
@@ -74,7 +74,8 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
             interactive_ratio=interactive_ratio,
             still_ratio=still_ratio,
             __properties=[('still_ratio', 'stillRatio')],
-            ref=ref,
+            ref=f'view_{plotter._id_name}',
+            namespace=namespace,
             **kwargs,
         )
         # Sometimes there is a lag
@@ -94,17 +95,23 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     plotter : pyvista.BasePlotter
         The PyVista Plotter to represent in the output view.
 
-    ref : str, optional
-        The identifier for this view component. A default value is
+    namespace : str, optional
+        The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
     """
 
-    def __init__(self, plotter, ref=None, **kwargs):
+    def __init__(self, plotter, namespace=None, **kwargs):
         """Create a trame local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
-        if ref is None:
-            ref = f'view_{plotter._id_name}'
-        VtkLocalView.__init__(self, self._plotter().render_window, ref=ref, **kwargs)
+        if namespace is None:
+            namespace = f'{plotter._id_name}'
+        VtkLocalView.__init__(
+            self,
+            self._plotter().render_window,
+            ref=f'view_{plotter._id_name}',
+            namespace=namespace,
+            **kwargs,
+        )
         # CRITICAL to initialize the client render window
         self._server.controller.on_server_ready.add(self.update)
 
@@ -132,17 +139,17 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         when not interacting with the scene. Defaults to 1.
         This is only valid in the ``'remote'`` mode.
 
-    ref : str, optional
-        The identifier for this view component. A default value is
+    namespace : str, optional
+        The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, ref=None, **kwargs):
+    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
-        if ref is None:
-            ref = f'view_{plotter._id_name}'
+        if namespace is None:
+            namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
             interactive_ratio = pyvista.global_theme.trame.interactive_ratio
         if still_ratio is None:
@@ -153,7 +160,8 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
             interactive_ratio=interactive_ratio,
             still_ratio=still_ratio,
             __properties=[('still_ratio', 'stillRatio')],
-            ref=ref,
+            ref=f'view_{plotter._id_name}',
+            namespace=namespace,
             **kwargs,
         )
         # CRITICAL to initialize the client render window
