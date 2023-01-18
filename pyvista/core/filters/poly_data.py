@@ -3457,7 +3457,7 @@ class PolyDataFilters(DataSetFilters):
         if scalar_mode == 'value':
             alg.SetScalarModeToValue()
         elif scalar_mode == 'index':
-            alg.SetScalarModeToValue()
+            alg.SetScalarModeToIndex()
         else:
             raise ValueError(
                 f'Invalid scalar mode "{scalar_mode}". Should be either "value" or "index".'
