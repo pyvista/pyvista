@@ -454,7 +454,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
         self._tick_labels = _vtk.vtkStringArray()
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # SetPen and SetGridPen methods are not available for older VTK versions,
             # so fallback to using wrapper objects.
             self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())
@@ -1007,20 +1007,20 @@ class _ChartBackground(_CustomContextItem):
 
     def __init__(self, chart):
         super().__init__()
-        # Note: This SHOULD be a weakref, as otherwise the garbage collector will not clean up unused charts
+        # Note: This SHOULD be a weakref proxy, as otherwise the garbage collector will not clean up unused charts
         # (because of the cyclic references between charts and their background).
-        self._chart = weakref.ref(chart)  # Weak reference to the chart to draw the background for
+        self._chart = weakref.proxy(chart)  # Weakref proxy to the chart to draw the background for
         # Default background is translucent with black border line
         self.BorderPen = Pen(color=(0, 0, 0))
         self.BackgroundBrush = Brush(color=(0, 0, 0, 0))
 
     def paint(self, painter):
-        if self._chart().visible:
+        if self._chart.visible:
             painter.ApplyPen(self.BorderPen)
             painter.ApplyBrush(self.BackgroundBrush)
-            l, b, w, h = self._chart()._geometry
+            l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
-            if vtk_version_info < (9, 2, 0):
+            if vtk_version_info < (9, 2, 0):  # pragma: no cover
                 # Following 'patch' is necessary for earlier VTK versions. Otherwise Pie plots will use the same opacity
                 # as the chart's background when their legend is hidden. As the default background is transparent,
                 # this will cause Pie charts to completely disappear.
@@ -1173,7 +1173,7 @@ class _Chart(DocSubs):
         >>> chart.show()
 
         """
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             warnings.warn("Chart borders require VTK v9 or newer.")
             return None
         else:
@@ -1181,7 +1181,7 @@ class _Chart(DocSubs):
 
     @border_color.setter
     def border_color(self, val):
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError("Chart borders require VTK v9 or newer.")
@@ -1205,7 +1205,7 @@ class _Chart(DocSubs):
         >>> chart.show()
 
         """
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             warnings.warn("Chart borders require VTK v9 or newer.")
             return None
         else:
@@ -1213,7 +1213,7 @@ class _Chart(DocSubs):
 
     @border_width.setter
     def border_width(self, val):
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError("Chart borders require VTK v9 or newer.")
@@ -1237,7 +1237,7 @@ class _Chart(DocSubs):
         >>> chart.show()
 
         """
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             warnings.warn("Chart borders require VTK v9 or newer.")
             return None
         else:
@@ -1245,7 +1245,7 @@ class _Chart(DocSubs):
 
     @border_style.setter
     def border_style(self, val):
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError("Chart borders require VTK v9 or newer.")
@@ -1267,7 +1267,7 @@ class _Chart(DocSubs):
         >>> chart.show()
 
         """
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
             return self.GetBackgroundBrush().GetColor()
         else:
@@ -1275,7 +1275,7 @@ class _Chart(DocSubs):
 
     @background_color.setter
     def background_color(self, val):
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
             # Fallback to VTK's BackgroundBrush (misplaced background until 9.2.0)
             self.GetBackgroundBrush().SetColor(*Color(val).int_rgba)
@@ -1298,7 +1298,7 @@ class _Chart(DocSubs):
         >>> chart.show()
 
         """
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
             return pyvista.Texture(self.GetBackgroundBrush().GetTexture())
         else:
@@ -1306,7 +1306,7 @@ class _Chart(DocSubs):
 
     @background_texture.setter
     def background_texture(self, val):
-        if self._background is None:
+        if self._background is None:  # pragma: no cover
             warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
             # Fallback to VTK's BackgroundBrush (misplaced background until 9.2.0)
             self.GetBackgroundBrush().SetTexture(val)
@@ -3650,7 +3650,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # In older VTK versions, ChartBox fills the entire scene, so
             # no resizing is needed (nor possible).
             pass
@@ -3659,14 +3659,14 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     @property
     def _geometry(self):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
             return _Chart._geometry.fget(self)
 
     @_geometry.setter
     def _geometry(self, value):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
             _Chart._geometry.fset(self, value)
@@ -3717,14 +3717,14 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (1, 1)
         else:
             return _Chart.size.fget(self)
 
     @size.setter
     def size(self, val):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
                 "Upgrade to VTK v9.2 or newer."
@@ -3756,14 +3756,14 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0)
         else:
             return _Chart.loc.fget(self)
 
     @loc.setter
     def loc(self, val):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
                 "Upgrade to VTK v9.2 or newer."
@@ -3926,7 +3926,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             if loc is None:
                 loc = (0, 0)
         super().__init__(size, loc)
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # SetPlot method is not available for older VTK versions,
             # so fallback to using a wrapper object.
             self.AddPlot(0)
@@ -3937,7 +3937,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # In older VTK versions, ChartPie fills the entire scene, so
             # no resizing is needed (nor possible).
             pass
@@ -3946,14 +3946,14 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     @property
     def _geometry(self):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
             return _Chart._geometry.fget(self)
 
     @_geometry.setter
     def _geometry(self, value):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
             _Chart._geometry.fset(self, value)
@@ -4002,14 +4002,14 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (1, 1)
         else:
             return _Chart.size.fget(self)
 
     @size.setter
     def size(self, val):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
                 "Upgrade to VTK v9.2 or newer."
@@ -4041,14 +4041,14 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0)
         else:
             return _Chart.loc.fget(self)
 
     @loc.setter
     def loc(self, val):
-        if vtk_version_info < (9, 2, 0):
+        if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
                 "Upgrade to VTK v9.2 or newer."
@@ -4255,6 +4255,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     # @background_color.setter
     # def background_color(self, val):
     #     color = Color(val).int_rgba if val is not None else [1.0, 1.0, 1.0, 1.0]
+    #     opacity = color[3]
     #     self._bg_color = color
     #     self._fig.patch.set_color(color[:3])
     #     self._fig.patch.set_alpha(opacity)
