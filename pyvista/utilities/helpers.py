@@ -877,6 +877,11 @@ def wrap(dataset):
     * 3D :class:`trimesh.Trimesh` mesh.
     * 3D :class:`meshio.Mesh` mesh.
 
+    .. versionchanged:: 0.38.0
+        If the passed object is already a wrapped PyVista object, then
+        this is no-op and will return that object directly. In previous
+        versions of PyVista, this would perform a shallow copy.
+
     Parameters
     ----------
     dataset : :class:`numpy.ndarray`, :class:`trimesh.Trimesh`, or VTK object
@@ -948,6 +953,10 @@ def wrap(dataset):
     # Return if None
     if dataset is None:
         return
+
+    if isinstance(dataset, tuple(pyvista._wrappers.values())):
+        # Return object if it is already wrapped
+        return dataset
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to

@@ -32,7 +32,7 @@ repos:
     ]
 
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 6.2.2
+  rev: 6.2.3
   hooks:
   - id: pydocstyle
     additional_dependencies: [tomli==2.0.1]
