@@ -1,16 +1,6 @@
 API Reference
 *************
 
-In this section, you can learn more about how PyVista wraps different VTK mesh
-types and how you can leverage powerful 3D plotting and mesh analysis tools.
-Highlights of the API include:
-
-* Pythonic interface to VTK's Python bindings
-* Filtering/plotting tools built for interactivity (see :ref:`widgets`)
-* Direct access to common VTK filters (see :ref:`filters_ref`)
-* Intuitive plotting routines with `matplotlib`_ similar syntax (see
-  :ref:`plotting_ref`)
-
 .. toctree::
    :caption: API Reference
    :hidden:
@@ -21,53 +11,78 @@ Highlights of the API include:
    readers/index
    examples/index
 
-.. panels::
-    :column: col-12 p-3
+In this section, you can learn more about how PyVista wraps different VTK mesh
+types and how you can leverage powerful 3D plotting and mesh analysis tools.
+Highlights of the API include:
 
-    Core API
-    ^^^^^^^^
+* Pythonic interface to VTK's Python bindings
+* Filtering/plotting tools built for interactivity (see :ref:`widgets`)
+* Direct access to common VTK filters (see :ref:`filters_ref`)
+* Intuitive plotting routines with `matplotlib`_ similar syntax (see
+  :ref:`plotting_ref`)
 
-    Learn more anout PyVista's different mesh types and direct access to common VTK filters.
 
-    .. link-button:: core/index
-        :type: ref
-        :text: Core API
-        :classes: btn-outline-primary btn-block stretched-link
+.. card:: Core API
+   :link: core-api-index
+   :link-type: ref
+   :class-title: pyvista-card-title
 
-    ---
+   Learn more about PyVista's different mesh types and direct access to common
+   VTK filters.
 
-    Plotting API
-    ^^^^^^^^^^^^
+   .. jupyter-execute::
 
-    Explore PyVista's robust plotting interface for visualizing the core data structures.
+      >>> import pyvista as pv
+      >>> mesh = pv.Sphere()
+      >>> sliced = mesh.slice()
+      >>> sliced.length
 
-    .. link-button:: plotting/index
-        :type: ref
-        :text: Plotting API
-        :classes: btn-outline-primary btn-block stretched-link
 
-    ---
+.. card:: Plotting API
+   :link: plotting-api-index
+   :link-type: ref
+   :class-title: pyvista-card-title
 
-    File API
-    ^^^^^^^^
+   Explore PyVista's robust plotting interface for visualizing the core data
+   structures.
 
-    Use PyVista's Reader classes to read data files.
+   .. jupyter-execute::
+      
+      >>> import pyvista as pv
+      >>> mesh = pv.Cube()
+      >>> pl = pv.Plotter()
+      >>> actor = pl.add_mesh(mesh, scalars=mesh.points)
+      >>> actor.prop
 
-    .. link-button:: readers/index
-        :type: ref
-        :text: Readers
-        :classes: btn-outline-primary btn-block stretched-link
+.. card:: Readers
+   :link: reader_api
+   :link-type: ref
+   :class-title: pyvista-card-title
 
-    ---
+   Use PyVista's Reader classes to read data files using
+   :func:`pyvista.get_reader`.
 
-    Utilities
-    ^^^^^^^^^
+   .. jupyter-execute::
 
-    Utilize PyVista's helper modules, conversion tools, and geometric object creation routines.
+      >>> import pyvista as pv
+      >>> from pyvista import examples
+      >>> reader = pv.get_reader(examples.hexbeamfile)
+      >>> reader
+   
 
-    .. link-button:: utilities/index
-        :type: ref
-        :text: Utilities
-        :classes: btn-outline-primary btn-block stretched-link
+.. card:: Utilities
+   :link: utilities-api-index
+   :link-type: ref
+   :class-title: pyvista-card-title
+
+   Utilize PyVista's helper modules, conversion tools, and geometric object
+   creation routines.
+
+   .. jupyter-execute::
+
+      >>> import pyvista as pv
+      >>> mesh = pv.ParametricSuperEllipsoid(xradius=0.1)
+      >>> mesh
+
 
 .. _matplotlib: https://matplotlib.org/

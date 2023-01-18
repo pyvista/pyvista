@@ -12,6 +12,7 @@ For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
 install PyVista with Anaconda.
 
+
 Dependencies
 ~~~~~~~~~~~~
 
@@ -20,9 +21,11 @@ the following projects are required dependencies of PyVista:
 
 * `vtk <https://pypi.org/project/vtk/>`_ - PyVista directly inherits types from the VTK library.
 * `NumPy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
-* `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
-* `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+* `pillow <https://pypi.org/project/Pillow/>`_ - PIL fork used for saving screenshots.
+* `imageio <https://pypi.org/project/imageio/>`_ - This library is used for reading images and writing animations.
+* `pooch <https://pypi.org/project/pooch/>`_ - Data management for our example datasets so users can download tutorials on the fly.
 * `scooby <https://github.com/banesullivan/scooby>`_ - Reporting and debugging tools.
+* `typing-extensions <https://pypi.org/project/typing-extensions/>`_ - only required on Python 3.7.
 
 
 Optional Dependencies
@@ -53,6 +56,7 @@ To install all the additional packages that extend PyVista, install using
 
     pip install pyvista[all]
 
+.. asciinema:: 507562
 
 Anaconda
 ~~~~~~~~
@@ -63,6 +67,9 @@ Anaconda
 To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
+
+.. asciinema:: 507565
+
 
 Installing the Current Development Branch from GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,7 +87,7 @@ Alternatively, you can clone the repository with git and install it with pip.
 
    git clone https://github.com/pyvista/pyvista.git
    cd pyvista
-   pip install . -e
+   pip install -e .
 
 Note the development flag ``-e``.  This allows you to change pyvista
 in-place without having to reinstall it for each change.
@@ -95,8 +102,6 @@ The following are a list of optional dependencies and their purpose:
 | Package                           | Purpose                                 |
 +===================================+=========================================+
 | ``matplotlib``                    | Using Colormaps                         |
-+-----------------------------------+-----------------------------------------+
-| ``itkwidgets``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``ipyvtklink``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
@@ -163,7 +168,7 @@ See other examples and demos:
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#testing
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#user-content-testing
 
 
 Running on CI Services

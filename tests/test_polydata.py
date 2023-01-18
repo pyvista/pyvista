@@ -9,7 +9,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyvistaFutureWarning
+from pyvista.utilities.misc import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -221,6 +221,13 @@ def test_geodesic_fail(sphere, plane):
 def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
+
+    # Use scalar weights
+    if pyvista.vtk_version_info >= (9,):
+        distance_use_scalar_weights = sphere.geodesic_distance(
+            0, sphere.n_points - 1, use_scalar_weights=True
+        )
+        assert isinstance(distance_use_scalar_weights, float)
 
 
 def test_ray_trace(sphere):
@@ -727,7 +734,7 @@ def test_tube(spline):
     # Simple
     line = pyvista.Line()
     tube = line.tube(n_sides=2, progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
 
     # inplace
     line.tube(n_sides=2, inplace=True, progress_bar=True)
@@ -735,7 +742,11 @@ def test_tube(spline):
 
     # Complicated
     tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
+
+    # Complicated with absolute radius
+    tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
+    assert tube.n_points and tube.n_cells
 
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))
@@ -792,6 +803,25 @@ def test_lines():
     assert poly.n_cells == 1
 
 
+def test_strips():
+    # init with strips test
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    strips = np.array([4, 0, 1, 3, 2])
+    strips_init = pyvista.PolyData(vertices, strips=strips)
+    assert len(strips_init.strips) == len(strips)
+
+    # add strips using the setter
+    strips_setter = pyvista.PolyData(vertices)
+    strips_setter.strips = strips
+    assert len(strips_setter.strips) == len(strips)
+
+    # test n_strips function
+    strips = np.array([[4, 0, 1, 3, 2], [4, 1, 2, 3, 0]])
+    strips_stack = np.hstack(strips)
+    n_strips_test = pyvista.PolyData(vertices, strips=strips_stack)
+    assert n_strips_test.n_strips == len(strips)
+
+
 def test_ribbon_filter():
     line = examples.load_spline().compute_arc_length(progress_bar=True)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
@@ -822,6 +852,7 @@ def test_extrude():
     poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
+    assert np.any(poly.strips)
 
     n_points_old = arc.n_points
     arc.extrude([0, 0, 1], inplace=True, capping=True)
@@ -830,9 +861,9 @@ def test_extrude():
 
 def test_extrude_capping_warnings():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude([0, 0, 1])
-    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude_rotate()
 
 
@@ -857,3 +888,18 @@ def test_n_verts():
 def test_n_lines():
     mesh = pyvista.Line()
     assert mesh.n_lines == 1
+
+
+@pytest.mark.needs_vtk9
+def test_geodesic_disconnected(sphere, sphere_shifted):
+    # the sphere and sphere_shifted are disconnected - no path between them
+    combined = sphere + sphere_shifted
+    start_vertex = 0
+    end_vertex = combined.n_points - 1
+    match = f"There is no path between vertices {start_vertex} and {end_vertex}."
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic(start_vertex, end_vertex)
+
+    with pytest.raises(ValueError, match=match):
+        combined.geodesic_distance(start_vertex, end_vertex)

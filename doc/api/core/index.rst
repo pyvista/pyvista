@@ -1,3 +1,5 @@
+.. _core-api-index:
+
 Core API
 ========
 
@@ -48,5 +50,6 @@ PyVista has the following mesh types:
    filters
    camera
    lights
+   cells
    helpers
    misc

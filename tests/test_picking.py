@@ -1,59 +1,96 @@
 import pytest
+import vtk
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
-skip_no_vtk9 = pytest.mark.skipif(pyvista.vtk_version_info < (9,), reason="Requires VTK v9+")
 
 # skip all tests if unable to render
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
 
-@skip_no_vtk9
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_cell_picking():
-    with pytest.raises(AttributeError, match="mesh"):
-        plotter = pyvista.Plotter()
-        plotter.enable_cell_picking(mesh=None)
-
+@pytest.mark.needs_vtk9
+def test_single_cell_picking():
     sphere = pyvista.Sphere()
-    for through in (False, True):
-        plotter = pyvista.Plotter(
-            window_size=(100, 100),
-        )
+    width, height = 100, 100
 
-        def callback(*args, **kwargs):
-            pass
+    class PickCallback:
+        def __init__(self):
+            self.called = False
 
-        plotter.enable_cell_picking(
-            mesh=sphere,
-            start=True,
-            show=True,
-            callback=callback,
-            through=through,
-        )
-        plotter.add_mesh(sphere)
-        plotter.show(auto_close=False)  # must start renderer first
+        def __call__(self, *args, **kwargs):
+            self.called = True
 
-        # simulate the pick
-        renderer = plotter.renderer
-        picker = plotter.iren.get_picker()
-        picker.Pick(50, 50, 0, renderer)
+    plotter = pyvista.Plotter(
+        window_size=(width, height),
+    )
 
-        # pick nothing
-        picker.Pick(0, 0, 0, renderer)
+    callback = PickCallback()
+    plotter.enable_cell_picking(
+        start=False,
+        show=True,
+        callback=callback,
+        through=False,  # Single cell visible picking
+    )
+    plotter.add_mesh(sphere)
+    plotter.show(auto_close=False)  # must start renderer first
 
-        plotter.get_pick_position()
-        plotter.close()
+    width, height = plotter.window_size
+    plotter.iren._mouse_move(width // 2, height // 2)
+    plotter.iren._simulate_keypress('p')
 
-    # multiblock
-    plotter = pyvista.Plotter()
-    multi = pyvista.MultiBlock([sphere])
-    plotter.add_mesh(multi)
-    plotter.enable_cell_picking()
     plotter.close()
+
+    assert callback.called
+    assert isinstance(plotter.picked_cells, pyvista.UnstructuredGrid)
+    assert plotter.picked_cells.n_cells == 1
+
+
+@pytest.mark.needs_vtk9
+@pytest.mark.parametrize('through', [False, True])
+def test_multi_cell_picking(through):
+    cube = pyvista.Cube()
+
+    # Test with algorithm source to make sure connections work with picking
+    src = vtk.vtkSphereSource()
+    src.SetCenter((1, 0, 0))
+    mapper = vtk.vtkDataSetMapper()
+    mapper.SetInputConnection(src.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    actor.SetPickable(True)
+
+    plotter = pyvista.Plotter(window_size=(1024, 768))
+    plotter.add_mesh(cube, pickable=True)
+    plotter.add_actor(actor)
+    plotter.enable_cell_picking(
+        color='blue',
+        through=through,
+        start=True,
+        show=True,
+    )
+    plotter.show(auto_close=False)  # must start renderer first
+
+    # simulate the pick (169, 113, 875, 684)
+    plotter.iren._mouse_left_button_press(169, 113)
+    plotter.iren._mouse_move(875, 684)
+    plotter.iren._mouse_left_button_release()
+
+    plotter.close()
+
+    assert isinstance(plotter.picked_cells, pyvista.MultiBlock)
+    # Selection should return 2 submeshes
+    assert len(plotter.picked_cells) == 2
+
+    merged = plotter.picked_cells.combine()
+    n_sphere_cells = pyvista.wrap(src.GetOutput()).n_cells
+    if through:
+        # all cells should have been selected
+        assert merged.n_cells == cube.n_cells + n_sphere_cells
+    else:
+        assert merged.n_cells < cube.n_cells + n_sphere_cells
 
 
 @pytest.mark.parametrize('left_clicking', [False, True])
@@ -195,7 +232,7 @@ def test_enable_cell_picking_interactive_two_ren_win():
     assert n_cells[0]
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_point_picking(left_clicking):
     sphere = pyvista.Sphere()
@@ -203,12 +240,16 @@ def test_point_picking(left_clicking):
         plotter = pyvista.Plotter(
             window_size=(100, 100),
         )
+        if use_mesh:
+            callback = (lambda picked_point, picked_mesh: None,)
+        else:
+            callback = (lambda picked_point: None,)
         plotter.add_mesh(sphere)
         plotter.enable_point_picking(
             show_message=True,
             use_mesh=use_mesh,
             left_clicking=left_clicking,
-            callback=lambda: None,
+            callback=callback,
         )
         # must show to activate the interactive renderer (for left_clicking)
         plotter.show(auto_close=False)
@@ -226,7 +267,7 @@ def test_point_picking(left_clicking):
         plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_point_picking_window_not_pickable():
 
     plotter = pyvista.Plotter(
@@ -262,7 +303,7 @@ def test_point_picking_window_not_pickable():
     plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_path_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
@@ -271,7 +312,7 @@ def test_path_picking():
     plotter.add_mesh(sphere)
     plotter.enable_path_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
     )
     # simulate the pick
     renderer = plotter.renderer
@@ -285,7 +326,7 @@ def test_path_picking():
     plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_geodesic_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
@@ -294,7 +335,7 @@ def test_geodesic_picking():
     plotter.add_mesh(sphere)
     plotter.enable_geodesic_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
         show_path=True,
         keep_order=True,
     )
@@ -313,7 +354,7 @@ def test_geodesic_picking():
     plotter.close()
 
 
-@skip_no_vtk9
+@pytest.mark.needs_vtk9
 def test_horizon_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
@@ -322,7 +363,7 @@ def test_horizon_picking():
     plotter.add_mesh(sphere)
     plotter.enable_horizon_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
         show_horizon=True,
     )
     # simulate the pick
@@ -377,3 +418,33 @@ def test_enable_fly_to_right_click_multi_render(sphere):
     # ensure callback was called and camera position changes due to "fly"
     assert cpos_before != pl.camera_position
     assert point
+
+
+def test_block_picking(multiblock_poly):
+    """Test we can pick a block."""
+
+    pl = pyvista.Plotter()
+    width, height = pl.window_size
+    actor, mapper = pl.add_composite(multiblock_poly)
+
+    picked_blocks = []
+
+    def turn_blue(index, dataset):
+        mapper.block_attr[index].color = 'blue'
+        picked_blocks.append(index)
+
+    pl.enable_block_picking(callback=turn_blue)
+    pl.show(auto_close=False)
+
+    # click in the corner
+    assert not picked_blocks
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(0, 0)
+    assert not picked_blocks
+
+    # click directly in the middle
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width // 2, height // 2)
+    assert mapper.block_attr[2].color
+
+    assert pl.picked_block_index == picked_blocks[0]

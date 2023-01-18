@@ -1,4 +1,6 @@
 """Utilities routines."""
+from .algorithms import algorithm_to_mesh_handler, set_algorithm_input
+from .common import perlin_noise, sample_function
 from .errors import (
     GPUInfo,
     Observer,
@@ -31,6 +33,7 @@ from .reader import (
     EnSightReader,
     FacetReader,
     FluentReader,
+    GIFReader,
     GLTFReader,
     HDFReader,
     HDRReader,
@@ -38,10 +41,12 @@ from .reader import (
     MetaImageReader,
     MFIXReader,
     MultiBlockPlot3DReader,
+    NIFTIReader,
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
     POpenFOAMReader,
+    Plot3DFunctionEnum,
     Plot3DMetaReader,
     PLYReader,
     PNGReader,

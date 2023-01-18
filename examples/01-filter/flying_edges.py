@@ -38,7 +38,7 @@ def spider_cage(x, y, z):
 n = 100
 x_min, y_min, z_min = -5, -5, -3
 grid = pv.UniformGrid(
-    dims=(n, n, n),
+    dimensions=(n, n, n),
     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
     origin=(x_min, y_min, z_min),
 )
@@ -80,7 +80,7 @@ n = 100
 k = 2.0
 x_min, y_min, z_min = -k, -k, -k
 grid = pv.UniformGrid(
-    dims=(n, n, n),
+    dimensions=(n, n, n),
     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
     origin=(x_min, y_min, z_min),
 )

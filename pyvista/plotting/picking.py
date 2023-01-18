@@ -1,7 +1,7 @@
 """Module managing picking events."""
 
 from functools import partial
-import logging
+import warnings
 import weakref
 
 import numpy as np
@@ -9,6 +9,8 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import try_callback
+
+from .composite_mapper import CompositePolyDataMapper
 
 
 def _launch_pick_event(interactor, event):
@@ -36,6 +38,7 @@ class PickingHelper:
         self._picking_left_clicking_observer = None
         self._picking_text = None
         self._picker = None
+        self._picked_block_index = None
 
     def get_pick_position(self):
         """Get the pick position or area.
@@ -87,7 +90,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -132,10 +135,9 @@ class PickingHelper:
         def end_pick_call_back(picked, event):
             is_valid_selection = False
             self_ = weakref.ref(self)
-
             actor = picked.GetActor()
             if actor:
-                mesh = actor.GetMapper().GetInput()
+                mesh = actor.GetMapper().GetInputAsDataSet()
                 is_valid_selection = True
 
             if is_valid_selection:
@@ -152,7 +154,10 @@ class PickingHelper:
                     renderer = self.renderers[index]
                     for actor in renderer._actors.values():
                         mapper = actor.GetMapper()
-                        if isinstance(mapper, _vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                        if (
+                            isinstance(mapper, _vtk.vtkDataSetMapper)
+                            and mapper.GetInputAsDataSet() == mesh
+                        ):
                             loc = self_().renderers.index_to_loc(index)
                             self_().subplot(*loc)
                             break
@@ -170,7 +175,7 @@ class PickingHelper:
                         **kwargs,
                     )
                 except Exception as e:  # pragma: no cover
-                    logging.warning("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -207,7 +212,6 @@ class PickingHelper:
 
     def enable_cell_picking(
         self,
-        mesh=None,
         callback=None,
         through=True,
         show=True,
@@ -226,9 +230,14 @@ class PickingHelper:
         ``self.picked_cells``. Also press ``"p"`` to pick a single
         cell under the mouse location.
 
-        When using ``through=False``, and multiple cells are being
-        picked, the picked cells in ````self.picked_cells`` will be a
-        :class:`MultiBlock` dataset for each mesh's selection.
+        All meshes in the scene are available for picking by default.
+        If you would like to only pick a single mesh in the scene,
+        use the ``pickable=False`` argument when adding the other
+        meshes to the scene.
+
+        When multiple meshes are being picked, the picked cells
+        in ``self.picked_cells`` will be a :class:`MultiBlock`
+        dataset for each mesh's selection.
 
         Uses last input mesh for input by default.
 
@@ -237,17 +246,12 @@ class PickingHelper:
            the mesh is displayed with a ``'surface'`` representation
            style (the default).
 
+        .. warning::
+            Cell picking can only be enabled for a single renderer
+            or subplot at a time.
+
         Parameters
         ----------
-        mesh : pyvista.DataSet, optional
-            Mesh to select cells from. When ``through`` is ``True``,
-            uses last input mesh by default. When ``through`` is
-            ``False``, all meshes in the scene are available for
-            picking and this argument is ignored. If you would like to
-            only pick a single mesh in the scene, use the
-            ``pickable=False`` argument when adding the other meshes
-            to the scene.
-
         callback : function, optional
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this
@@ -255,8 +259,8 @@ class PickingHelper:
 
         through : bool, optional
             When ``True`` (default) the picker will select all cells
-            through the mesh. When ``False``, the picker will select
-            only visible cells on the mesh's surface.
+            through the mesh(es). When ``False``, the picker will select
+            only visible cells on the selected surface(s).
 
         show : bool, optional
             Show the selection interactively.
@@ -273,7 +277,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -299,12 +303,6 @@ class PickingHelper:
         >>> _ = pl.enable_cell_picking(left_clicking=True)
 
         """
-        if mesh is None:
-            if not hasattr(self, 'mesh') or self.mesh is None:
-                raise AttributeError(
-                    'Input a mesh into the Plotter class first or or set it in this function'
-                )
-            mesh = self.mesh
         self_ = weakref.ref(self)
 
         # make sure to consistently use renderer
@@ -328,7 +326,7 @@ class PickingHelper:
                     renderer = self.renderers[index]
                     for actor in renderer._actors.values():
                         mapper = actor.GetMapper()
-                        if isinstance(mapper, _vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                        if isinstance(mapper, _vtk.vtkDataSetMapper):
                             loc = self_().renderers.index_to_loc(index)
                             self_().subplot(*loc)
                             break
@@ -362,12 +360,21 @@ class PickingHelper:
             return
 
         def through_pick_call_back(picker, event_id):
-            extract = _vtk.vtkExtractGeometry()
-            mesh.cell_data['orig_extract_id'] = np.arange(mesh.n_cells)
-            extract.SetInputData(mesh)
-            extract.SetImplicitFunction(picker.GetFrustum())
-            extract.Update()
-            self_().picked_cells = pyvista.wrap(extract.GetOutput())
+            picked = pyvista.MultiBlock()
+            for actor in renderer_().actors.values():
+                if actor.GetMapper() and actor.GetPickable():
+                    input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
+                    extract = _vtk.vtkExtractGeometry()
+                    extract.SetInputData(input_mesh)
+                    extract.SetImplicitFunction(picker.GetFrustum())
+                    extract.Update()
+                    picked.append(pyvista.wrap(extract.GetOutput()))
+
+            if len(picked) == 1:
+                self_().picked_cells = picked[0]
+            else:
+                self_().picked_cells = picked
             return end_pick_helper(picker, event_id)
 
         def visible_pick_call_back(picker, event_id):
@@ -388,12 +395,18 @@ class PickingHelper:
                     cids = pyvista.convert_array(selection_node.GetSelectionList())
                     actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
 
+                    # TODO: this is too hacky - find better way to avoid non-dataset actors
+                    if not actor.GetMapper() or not hasattr(
+                        actor.GetProperty(), 'GetRepresentation'
+                    ):
+                        continue
+
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
-                        logging.warning(
+                        warnings.warn(
                             "Display representations other than `surface` will result in incorrect results."
                         )
-                    smesh = actor.GetMapper().GetInputAsDataSet()
+                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()
                     smesh["original_cell_ids"] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
@@ -467,6 +480,22 @@ class PickingHelper:
         """
         return self._picked_point
 
+    @property
+    def picked_block_index(self):
+        """Return the picked block index.
+
+        This returns the picked block index after selecting a point with
+        :func:`<enable_point_picking> pyvista.Plotter.enable_point_picking`.
+
+        Returns
+        -------
+        int or None
+            Picked block if available. If ``-1``, then a non-composite dataset
+            was selected.
+
+        """
+        return self._picked_block_index
+
     def enable_surface_picking(
         self,
         callback=None,
@@ -495,7 +524,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         show_point : bool, optional
@@ -618,7 +647,7 @@ class PickingHelper:
 
         Enable picking a point at the mouse location in the render
         view using the ``P`` key. This point is saved to the
-        ``.picked_point`` attrbute on the plotter. Pass a callback
+        ``.picked_point`` attribute on the plotter. Pass a callback
         function that takes that point as an argument. The picked
         point can either be a point on the first intersecting mesh, or
         a point in the 3D window.
@@ -639,7 +668,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -663,7 +692,7 @@ class PickingHelper:
             When ``True``, points in the 3D window are pickable. Default to ``False``.
 
         left_clicking : bool, optional
-            When ``True``, points can be picked by clicking the left mousebutton.
+            When ``True``, points can be picked by clicking the left mouse button.
             Default to ``False``. Note, if enabled, left-clicking will **not**
             display the bounding box around the picked mesh.
 
@@ -693,6 +722,8 @@ class PickingHelper:
 
             self._picked_point = np.array(picker.GetPickPosition())
             self._picked_mesh = picker.GetDataSet()
+            self._picked_block_index = picker.GetFlatBlockIndex()
+
             self.picked_point_id = picked_point_id
             if show_point:
                 self.add_mesh(
@@ -769,7 +800,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -877,7 +908,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -1018,7 +1049,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the horizon surface if shown.
 
         point_size : int, optional
@@ -1076,6 +1107,85 @@ class PickingHelper:
             show_path=show_path,
             **kwargs,
         )
+
+    def enable_block_picking(
+        self,
+        callback=None,
+        side='left',
+    ):
+        """Enable composite block picking.
+
+        Use this picker to return the index of a DataSet when using composite
+        dataset like :class:`pyvista.MultiBlock` and pass it to a callback.
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, this picker calls this function after a selection is
+            made. The composite index is passed to ``callback`` as the first
+            argument and the dataset as the second argument.
+
+        side : str, optional
+            The mouse button to track (either ``'left'`` or ``'right'``).
+            Default is ``'right'``. Also accepts ``'r'`` or ``'l'``.
+
+        Notes
+        -----
+        The picked block index can be accessed from :attr:`picked_block_index
+        <PickingHelper.picked_block_index>` attribute.
+
+        Examples
+        --------
+        Enable block picking with a multiblock dataset. Left clicking will turn
+        blocks blue while right picking will turn the block back to the default
+        color.
+
+        >>> import pyvista as pv
+        >>> multiblock = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> pl = pv.Plotter()
+        >>> actor, mapper = pl.add_composite(multiblock)
+        >>> def turn_blue(index, dataset):
+        ...     mapper.block_attr[index].color = 'blue'
+        >>> pl.enable_block_picking(callback=turn_blue, side='left')
+        >>> def clear_color(index, dataset):
+        ...     mapper.block_attr[index].color = None
+        >>> pl.enable_block_picking(callback=clear_color, side='right')
+        >>> pl.show()
+
+        """
+        # use a weak reference to enable garbage collection
+        renderer_ = weakref.ref(self.renderer)
+
+        sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
+        sel_prop = _vtk.vtkSelectionNode.PROP()
+
+        def get_picked_block(*args, **kwargs):
+            """Get the picked block and pass it to the user callback."""
+            x, y = self.mouse_position
+            selector = _vtk.vtkOpenGLHardwareSelector()
+            selector.SetRenderer(renderer_())
+            selector.SetArea(x, y, x, y)  # single pixel
+            selection = selector.Select()
+
+            for ii in range(selection.GetNumberOfNodes()):
+                node = selection.GetNode(ii)
+                if node is None:  # pragma: no cover
+                    continue
+                node_prop = node.GetProperties()
+                self._picked_block_index = node_prop.Get(sel_index)
+
+                # Safely return the dataset as it's possible a non pyvista
+                # mapper was added
+                mapper = node_prop.Get(sel_prop).GetMapper()
+                if isinstance(mapper, CompositePolyDataMapper):
+                    dataset = mapper.block_attr.get_block(self._picked_block_index)
+                else:  # pragma: no cover
+                    dataset = None
+
+                if callable(callback):
+                    try_callback(callback, self._picked_block_index, dataset)
+
+        self.track_click_position(callback=get_picked_block, viewport=True, side=side)
 
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot.
@@ -1167,5 +1277,5 @@ class PickingHelper:
 
         # remove any picking text
         if hasattr(self, 'renderers'):
-            self.remove_actor(self._picking_text)
+            self.remove_actor(self._picking_text, render=False)
         self._picking_text = None

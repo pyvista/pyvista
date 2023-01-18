@@ -33,13 +33,14 @@ pyvista.
 from enum import Enum
 import json
 import os
-from typing import List, Union
+from typing import Callable, List, Optional, Union
 import warnings
 
-from ._typing import color_like
-from .plotting.colors import Color, get_cmap_safe
+from ._typing import ColorLike
+from .plotting.colors import Color, get_cmap_safe, get_cycler
+from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
-from .utilities.misc import PyvistaDeprecationWarning
+from .utilities.misc import PyVistaDeprecationWarning
 
 
 class _rcParams(dict):  # pragma: no cover
@@ -126,9 +127,6 @@ def set_plot_theme(theme):
 
     if isinstance(theme, str):
         theme = theme.lower()
-        if theme == 'night':  # pragma: no cover
-            warnings.warn('use "dark" instead of "night" theme', PyvistaDeprecationWarning)
-            theme = 'dark'
         new_theme_type = _ALLOWED_THEMES[theme].value
         pyvista.global_theme.load_theme(new_theme_type())
     elif isinstance(theme, DefaultTheme):
@@ -326,7 +324,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
 
     @property
@@ -567,7 +565,7 @@ class _AxesConfig(_ThemeConfig):
         return self._x_color
 
     @x_color.setter
-    def x_color(self, color: color_like):
+    def x_color(self, color: ColorLike):
         self._x_color = Color(color)
 
     @property
@@ -582,7 +580,7 @@ class _AxesConfig(_ThemeConfig):
         return self._y_color
 
     @y_color.setter
-    def y_color(self, color: color_like):
+    def y_color(self, color: ColorLike):
         self._y_color = Color(color)
 
     @property
@@ -597,7 +595,7 @@ class _AxesConfig(_ThemeConfig):
         return self._z_color
 
     @z_color.setter
-    def z_color(self, color: color_like):
+    def z_color(self, color: ColorLike):
         self._z_color = Color(color)
 
     @property
@@ -787,7 +785,7 @@ class _Font(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
 
     @property
@@ -905,7 +903,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._tube_color
 
     @tube_color.setter
-    def tube_color(self, tube_color: color_like):
+    def tube_color(self, tube_color: ColorLike):
         self._tube_color = Color(tube_color)
 
     @property
@@ -937,7 +935,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_color
 
     @slider_color.setter
-    def slider_color(self, slider_color: color_like):
+    def slider_color(self, slider_color: ColorLike):
         self._slider_color = Color(slider_color)
 
     @property
@@ -1119,6 +1117,9 @@ class DefaultTheme(_ThemeConfig):
         '_auto_close',
         '_cmap',
         '_color',
+        '_color_cycler',
+        '_above_range_color',
+        '_below_range_color',
         '_nan_color',
         '_edge_color',
         '_outline_color',
@@ -1143,10 +1144,11 @@ class DefaultTheme(_ThemeConfig):
         '_slider_styles',
         '_return_cpos',
         '_hidden_line_removal',
-        '_antialiasing',
+        '_anti_aliasing',
         '_enable_camera_orientation_widget',
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
+        '_before_close_callback',
     ]
 
     def __init__(self):
@@ -1164,7 +1166,10 @@ class DefaultTheme(_ThemeConfig):
         self._font = _Font()
         self._cmap = 'viridis'
         self._color = Color('white')
+        self._color_cycler = None
         self._nan_color = Color('darkgray')
+        self._above_range_color = Color('grey')
+        self._below_range_color = Color('grey')
         self._edge_color = Color('black')
         self._outline_color = Color('white')
         self._floor_color = Color('gray')
@@ -1192,6 +1197,7 @@ class DefaultTheme(_ThemeConfig):
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
+        self._before_close_callback = None
 
         # Grab system flag for anti-aliasing
         try:
@@ -1212,7 +1218,7 @@ class DefaultTheme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._antialiasing = False
+        self._anti_aliasing = None
         self._enable_camera_orientation_widget = False
 
     @property
@@ -1243,6 +1249,46 @@ class DefaultTheme(_ThemeConfig):
         self._hidden_line_removal = value
 
     @property
+    def above_range_color(self) -> Color:
+        """Return or set the default above range color.
+
+        Examples
+        --------
+        Set the above range color to red.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.above_range_color = 'r'
+        >>> pyvista.global_theme.above_range_color
+        Color(name='red', hex='#ff0000ff', opacity=255)
+
+        """
+        return self._above_range_color
+
+    @above_range_color.setter
+    def above_range_color(self, value: ColorLike):
+        self._above_range_color = Color(value)
+
+    @property
+    def below_range_color(self) -> Color:
+        """Return or set the default below range color.
+
+        Examples
+        --------
+        Set the below range color to blue.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.below_range_color = 'b'
+        >>> pyvista.global_theme.below_range_color
+        Color(name='blue', hex='#0000ffff', opacity=255)
+
+        """
+        return self._below_range_color
+
+    @below_range_color.setter
+    def below_range_color(self, value: ColorLike):
+        self._below_range_color = Color(value)
+
+    @property
     def return_cpos(self) -> bool:
         """Return or set the default behavior of returning the camera position.
 
@@ -1253,6 +1299,7 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista
         >>> pyvista.global_theme.return_cpos = False
         """
+        return self._return_cpos
 
     @return_cpos.setter
     def return_cpos(self, value: bool):
@@ -1272,7 +1319,7 @@ class DefaultTheme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: color_like):
+    def background(self, new_background: ColorLike):
         self._background = Color(new_background)
 
     @property
@@ -1591,8 +1638,46 @@ class DefaultTheme(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
+
+    @property
+    def color_cycler(self):
+        """Return or set the default color cycler used to color meshes.
+
+        This color cycler is iterated over by each renderer to sequentially
+        color datasets when displaying them through ``add_mesh``.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        return self._color_cycler
+
+    @color_cycler.setter
+    def color_cycler(self, color_cycler):
+        self._color_cycler = get_cycler(color_cycler)
 
     @property
     def nan_color(self) -> Color:
@@ -1609,7 +1694,7 @@ class DefaultTheme(_ThemeConfig):
         return self._nan_color
 
     @nan_color.setter
-    def nan_color(self, nan_color: color_like):
+    def nan_color(self, nan_color: ColorLike):
         self._nan_color = Color(nan_color)
 
     @property
@@ -1627,7 +1712,7 @@ class DefaultTheme(_ThemeConfig):
         return self._edge_color
 
     @edge_color.setter
-    def edge_color(self, edge_color: color_like):
+    def edge_color(self, edge_color: ColorLike):
         self._edge_color = Color(edge_color)
 
     @property
@@ -1643,7 +1728,7 @@ class DefaultTheme(_ThemeConfig):
         return self._outline_color
 
     @outline_color.setter
-    def outline_color(self, outline_color: color_like):
+    def outline_color(self, outline_color: ColorLike):
         self._outline_color = Color(outline_color)
 
     @property
@@ -1659,7 +1744,7 @@ class DefaultTheme(_ThemeConfig):
         return self._floor_color
 
     @floor_color.setter
-    def floor_color(self, floor_color: color_like):
+    def floor_color(self, floor_color: ColorLike):
         self._floor_color = Color(floor_color)
 
     @property
@@ -1857,36 +1942,87 @@ class DefaultTheme(_ThemeConfig):
         self._title = title
 
     @property
-    def antialiasing(self) -> bool:
+    def anti_aliasing(self) -> Optional[str]:
         """Enable or disable anti-aliasing.
+
+        Should be either ``"ssaa"``, ``"msaa"``, ``"fxaa"``, or ``None``.
 
         Examples
         --------
-        Enable anti-aliasing in the global theme.
+        Use super-sampling anti-aliasing in the global theme.
 
         >>> import pyvista
-        >>> pyvista.global_theme.antialiasing = True
-        >>> pyvista.global_theme.antialiasing
-        True
+        >>> pyvista.global_theme.anti_aliasing = 'ssaa'
+        >>> pyvista.global_theme.anti_aliasing
+        'ssaa'
+
+        Disable anti-aliasing in the global theme.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.anti_aliasing = None
+
+        See :ref:`anti_aliasing_example` for more information regarding
+        anti-aliasing.
 
         """
-        return self._antialiasing
+        return self._anti_aliasing
+
+    @anti_aliasing.setter
+    def anti_aliasing(self, anti_aliasing: Union[str, None]):
+        if isinstance(anti_aliasing, bool):
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
+            warnings.warn(
+                '`anti_aliasing` is now a string or None and must be either "ssaa", '
+                '"msaa", "fxaa", or None',
+                PyVistaDeprecationWarning,
+            )
+            anti_aliasing = 'fxaa' if anti_aliasing else None
+
+        if isinstance(anti_aliasing, str):
+            if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
+                raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
+        elif anti_aliasing is not None:
+            raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
+
+        self._anti_aliasing = anti_aliasing
+
+    @property
+    def antialiasing(self):
+        """Enable or disable anti-aliasing.
+
+        .. deprecated:: 0.37.0
+           Deprecated in favor of :attr:`anti_aliasing <DefaultTheme.anti_aliasing>`.
+        """
+        # Recommended removing at pyvista==0.40.0
+        warnings.warn(
+            'antialising is deprecated.  Please use `anti_aliasing` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.anti_aliasing
 
     @antialiasing.setter
-    def antialiasing(self, antialiasing: bool):
-        self._antialiasing = antialiasing
+    def antialiasing(self, value):  # pragma: no cover
+        # Recommended removing at pyvista==0.40.0
+        warnings.warn(
+            'antialising is deprecated.  Please use `anti_aliasing` instead.',
+            PyVistaDeprecationWarning,
+        )
+        self.anti_aliasing = value
 
     @property
     def multi_samples(self) -> int:
         """Return or set the default ``multi_samples`` parameter.
 
-        Set the number of multisamples to used with hardware antialiasing.
+        Set the number of multisamples to used with hardware anti_aliasing. This
+        is only used when :attr:`anti_aliasing <DefaultTheme.anti_aliasing>` is
+        set to ``"msaa"``.
 
         Examples
         --------
-        Set the default number of multisamples to 2.
+        Set the default number of multisamples to 2 and enable ``"msaa"``
 
         >>> import pyvista
+        >>> pyvista.global_theme.anti_aliasing = 'msaa'
         >>> pyvista.global_theme.multi_samples = 2
 
         """
@@ -2050,6 +2186,15 @@ class DefaultTheme(_ThemeConfig):
             raise TypeError('Configuration type must be `_AxesConfig`.')
         self._axes = config
 
+    @property
+    def before_close_callback(self) -> Callable[[Plotter], None]:
+        """Return the default before_close_callback function for Plotter."""
+        return self._before_close_callback
+
+    @before_close_callback.setter
+    def before_close_callback(self, value: Callable[[Plotter], None]):
+        self._before_close_callback = value
+
     def restore_defaults(self):
         """Restore the theme defaults.
 
@@ -2076,6 +2221,7 @@ class DefaultTheme(_ThemeConfig):
             'Auto close': 'auto_close',
             'Colormap': 'cmap',
             'Color': 'color',
+            'Color Cycler': 'color_cycler',
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
             'Outline color': 'outline_color',
@@ -2100,9 +2246,10 @@ class DefaultTheme(_ThemeConfig):
             'Slider Styles': 'slider_styles',
             'Return Camera Position': 'return_cpos',
             'Hidden Line Removal': 'hidden_line_removal',
-            'Anti-Aliasing': '_antialiasing',
+            'Anti-Aliasing': '_anti_aliasing',
             'Split sharp edges': '_split_sharp_edges',
             'Sharp edges feat. angle': '_sharp_edges_feature_angle',
+            'Before close callback': '_before_close_callback',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2168,6 +2315,8 @@ class DefaultTheme(_ThemeConfig):
     def save(self, filename):
         """Serialize this theme to a json file.
 
+        ``before_close_callback`` is non-serializable and is omitted.
+
         Parameters
         ----------
         filename : str
@@ -2184,14 +2333,18 @@ class DefaultTheme(_ThemeConfig):
         >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
 
         """
+        data = self.to_dict()
+        # functions are not serializable
+        del data["before_close_callback"]
         with open(filename, 'w') as f:
-            json.dump(self.to_dict(), f)
+            json.dump(data, f)
 
     @property
     def use_ipyvtk(self):  # pragma: no cover
         """Set or return the usage of "ipyvtk" as a jupyter backend.
 
-        Deprecated in favor of ``jupyter_backend``.
+        .. deprecated:: 0.35.0
+           Deprecated in favor of ``jupyter_backend``.
         """
         warnings.warn(
             'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',

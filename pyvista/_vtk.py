@@ -17,8 +17,10 @@ try:
     from vtkmodules.vtkCommonCore import vtkVersion
 
     VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
+    VTK91 = VTK9 and vtkVersion().GetVTKMinorVersion() >= 1
 except ImportError:  # pragma: no cover
     VTK9 = False
+    VTK91 = False
 
 # for charts
 _has_vtkRenderingContextOpenGL2 = False
@@ -49,6 +51,7 @@ if VTK9:
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
     from vtkmodules.vtkChartsCore import (
         vtkAxis,
         vtkChart,
@@ -101,6 +104,7 @@ if VTK9:
         VTK_UNSIGNED_CHAR,
         buffer_shared,
         mutable,
+        reference,
         vtkAbstractArray,
         vtkBitArray,
         vtkCharArray,
@@ -111,6 +115,7 @@ if VTK9:
         vtkFloatArray,
         vtkIdList,
         vtkIdTypeArray,
+        vtkLogger,
         vtkLookupTable,
         vtkOutputWindow,
         vtkPoints,
@@ -124,10 +129,50 @@ if VTK9:
         vtkWeakReference,
     )
     from vtkmodules.vtkCommonDataModel import (
+        VTK_BIQUADRATIC_QUAD,
+        VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
+        VTK_BIQUADRATIC_QUADRATIC_WEDGE,
+        VTK_BIQUADRATIC_TRIANGLE,
+        VTK_CONVEX_POINT_SET,
+        VTK_CUBIC_LINE,
+        VTK_EMPTY_CELL,
+        VTK_HEXAGONAL_PRISM,
         VTK_HEXAHEDRON,
+        VTK_HIGHER_ORDER_EDGE,
+        VTK_HIGHER_ORDER_HEXAHEDRON,
+        VTK_HIGHER_ORDER_POLYGON,
+        VTK_HIGHER_ORDER_PYRAMID,
+        VTK_HIGHER_ORDER_QUAD,
+        VTK_HIGHER_ORDER_TETRAHEDRON,
+        VTK_HIGHER_ORDER_TRIANGLE,
+        VTK_HIGHER_ORDER_WEDGE,
+        VTK_LAGRANGE_CURVE,
+        VTK_LAGRANGE_HEXAHEDRON,
+        VTK_LAGRANGE_PYRAMID,
+        VTK_LAGRANGE_QUADRILATERAL,
+        VTK_LAGRANGE_TETRAHEDRON,
+        VTK_LAGRANGE_TRIANGLE,
+        VTK_LAGRANGE_WEDGE,
+        VTK_LINE,
+        VTK_PARAMETRIC_CURVE,
+        VTK_PARAMETRIC_HEX_REGION,
+        VTK_PARAMETRIC_QUAD_SURFACE,
+        VTK_PARAMETRIC_SURFACE,
+        VTK_PARAMETRIC_TETRA_REGION,
+        VTK_PARAMETRIC_TRI_SURFACE,
+        VTK_PENTAGONAL_PRISM,
+        VTK_PIXEL,
+        VTK_POLY_LINE,
+        VTK_POLY_VERTEX,
+        VTK_POLYGON,
+        VTK_POLYHEDRON,
         VTK_PYRAMID,
         VTK_QUAD,
+        VTK_QUADRATIC_EDGE,
         VTK_QUADRATIC_HEXAHEDRON,
+        VTK_QUADRATIC_LINEAR_QUAD,
+        VTK_QUADRATIC_LINEAR_WEDGE,
+        VTK_QUADRATIC_POLYGON,
         VTK_QUADRATIC_PYRAMID,
         VTK_QUADRATIC_QUAD,
         VTK_QUADRATIC_TETRA,
@@ -135,7 +180,12 @@ if VTK9:
         VTK_QUADRATIC_WEDGE,
         VTK_TETRA,
         VTK_TRIANGLE,
+        VTK_TRIANGLE_STRIP,
+        VTK_TRIQUADRATIC_HEXAHEDRON,
+        VTK_VERTEX,
+        VTK_VOXEL,
         VTK_WEDGE,
+        vtkCell,
         vtkCellArray,
         vtkCellLocator,
         vtkColor3ub,
@@ -171,7 +221,26 @@ if VTK9:
         vtkTable,
         vtkUnstructuredGrid,
     )
-    from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
+
+    try:  # Introduced prior to VTK 9.2
+        from vtkmodules.vtkCommonDataModel import (
+            VTK_BEZIER_CURVE,
+            VTK_BEZIER_HEXAHEDRON,
+            VTK_BEZIER_PYRAMID,
+            VTK_BEZIER_QUADRILATERAL,
+            VTK_BEZIER_TETRAHEDRON,
+            VTK_BEZIER_TRIANGLE,
+            VTK_BEZIER_WEDGE,
+            VTK_TRIQUADRATIC_PYRAMID,
+        )
+    except ImportError:  # pragma: no cover
+        pass
+
+    from vtkmodules.vtkCommonExecutionModel import (
+        vtkAlgorithm,
+        vtkAlgorithmOutput,
+        vtkImageToStructuredGrid,
+    )
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (
@@ -229,6 +298,7 @@ if VTK9:
         vtkIntersectionPolyDataFilter,
         vtkOBBTree,
         vtkRectilinearGridToPointSet,
+        vtkRectilinearGridToTetrahedra,
         vtkShrinkFilter,
         vtkTableBasedClipDataSet,
         vtkTableToPolyData,
@@ -246,6 +316,7 @@ if VTK9:
     from vtkmodules.vtkFiltersHybrid import vtkPolyDataSilhouette
     from vtkmodules.vtkFiltersModeling import (
         vtkAdaptiveSubdivisionFilter,
+        vtkBandedPolyDataContourFilter,
         vtkButterflySubdivisionFilter,
         vtkCollisionDetectionFilter,
         vtkDijkstraGraphGeodesicPath,
@@ -257,9 +328,16 @@ if VTK9:
         vtkRibbonFilter,
         vtkRotationalExtrusionFilter,
         vtkSelectEnclosedPoints,
+        vtkSubdivideTetra,
         vtkTrimmedExtrusionFilter,
     )
     from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
+
+    try:
+        from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
+    except ModuleNotFoundError:  # pragma: no cover
+        # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
+        pass
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
     from vtkmodules.vtkFiltersSources import (
         vtkArcSource,
@@ -306,6 +384,7 @@ if VTK9:
         vtkHDRReader,
         vtkJPEGReader,
         vtkMetaImageReader,
+        vtkNIFTIImageReader,
         vtkNrrdReader,
         vtkPNGReader,
         vtkPNMReader,
@@ -344,6 +423,8 @@ if VTK9:
         vtkXMLRectilinearGridWriter,
         vtkXMLStructuredGridReader,
         vtkXMLStructuredGridWriter,
+        vtkXMLTableReader,
+        vtkXMLTableWriter,
         vtkXMLUnstructuredGridReader,
         vtkXMLUnstructuredGridWriter,
         vtkXMLWriter,
@@ -408,11 +489,13 @@ if VTK9:
         vtkImageRFFT,
     )
     from vtkmodules.vtkRenderingCore import (
+        vtkAbstractMapper,
         vtkActor,
         vtkActor2D,
         vtkCamera,
         vtkCellPicker,
         vtkColorTransferFunction,
+        vtkCompositeDataDisplayAttributes,
         vtkCoordinate,
         vtkDataSetMapper,
         vtkImageActor,
@@ -420,9 +503,11 @@ if VTK9:
         vtkLightActor,
         vtkLightKit,
         vtkMapper,
+        vtkPointGaussianMapper,
         vtkPointPicker,
         vtkPolyDataMapper,
         vtkPolyDataMapper2D,
+        vtkProp3D,
         vtkPropAssembly,
         vtkProperty,
         vtkPropPicker,
@@ -443,7 +528,11 @@ if VTK9:
     from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCameraPass,
+        vtkCompositePolyDataMapper2,
+        vtkDepthOfFieldPass,
         vtkEDLShading,
+        vtkGaussianBlurPass,
+        vtkOpenGLFXAAPass,
         vtkOpenGLHardwareSelector,
         vtkOpenGLRenderer,
         vtkOpenGLTexture,
@@ -451,6 +540,8 @@ if VTK9:
         vtkRenderStepsPass,
         vtkSequencePass,
         vtkShadowMapPass,
+        vtkSSAAPass,
+        vtkSSAOPass,
     )
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingVolume import (
@@ -462,6 +553,10 @@ if VTK9:
         vtkSmartVolumeMapper,
     )
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
+
+    # 9.1+ imports
+    if VTK91:
+        from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
 
     # lazy import for some of the less used readers
     def lazy_vtkOBJExporter():
@@ -560,6 +655,7 @@ else:  # pragma: no cover
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
     # match the imports for VTK9
     def lazy_vtkOBJExporter():

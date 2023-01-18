@@ -27,8 +27,4 @@ body:
       label: Pseudocode or Screenshots
       description: Feel free to include pseudocode or screenshots of the requested outcome.
       placeholder: Provide some code for us to reproduce the bug!
-      value: "```python \n
-      Insert code here \n
-      ```\n
-      Or drag your screenshot here!
-      "
+      value: "```python\nInsert code here\n```\nOr drag your screenshot here!"

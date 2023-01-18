@@ -1,11 +1,11 @@
 """This module contains some convenience helper functions."""
 
+from typing import Tuple
+
 import numpy as np
 
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
-
-from .plotting import Plotter
 
 
 def plot(
@@ -34,6 +34,10 @@ def plot(
     hidden_line_removal=None,
     anti_aliasing=None,
     zoom=None,
+    border=None,
+    border_color='k',
+    border_width=2.0,
+    ssao=False,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
@@ -84,7 +88,7 @@ def plot(
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : color_like, optional
+    background : ColorLike, optional
         Color of the background.
 
     text : str, optional
@@ -144,12 +148,30 @@ def plot(
 
     anti_aliasing : bool, optional
         Enable or disable anti-aliasing.  Defaults to the theme
-        setting :attr:`pyvista.global_theme.antialiasing
-        <pyvista.themes.DefaultTheme.antialiasing>`.
+        setting :attr:`pyvista.global_theme.anti_aliasing
+        <pyvista.themes.DefaultTheme.anti_aliasing>`.
 
-    zoom : float, optional
-        Camera zoom.  A value greater than 1 is a zoom-in, a value
-        less than 1 is a zoom-out.  Must be greater than 0.
+    zoom : float, str, optional
+        Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
+        a zoom-in, a value less than 1 is a zoom-out.  Must be greater than 0.
+
+    border : bool, optional
+        Draw a border around each render window.  Default ``False``.
+
+    border_color : ColorLike, optional
+        Either a string, rgb list, or hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1.0, 1.0, 1.0]``
+            * ``color='#FFFFFF'``
+
+    border_width : float, optional
+        Width of the border in pixels when enabled.
+
+    ssao : bool, optional
+        Enable surface space ambient occlusion (SSAO). See
+        :func:`Plotter.enable_ssao` for more details.
 
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
@@ -188,7 +210,7 @@ def plot(
     UniformGrid. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(dims=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
     >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
     >>> grid.plot(volume=True)
@@ -200,12 +222,20 @@ def plot(
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
 
-    # pop from kwargs here to avoid including them in add_mesh or add_volumex
+    # pop from kwargs here to avoid including them in add_mesh or add_volume
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
-    pl = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
+    pl = pyvista.Plotter(
+        window_size=window_size,
+        off_screen=off_screen,
+        notebook=notebook,
+        theme=theme,
+        border=border,
+        border_color=border_color,
+        border_width=border_width,
+    )
 
     if show_axes is None:
         show_axes = pl.theme.axes.show
@@ -237,6 +267,8 @@ def plot(
     else:
         if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
             pl.add_volume(var_item, **kwargs)
+        elif isinstance(var_item, pyvista.MultiBlock):
+            pl.add_composite(var_item, **kwargs)
         else:
             pl.add_mesh(var_item, **kwargs)
 
@@ -255,17 +287,19 @@ def plot(
     else:
         pl.camera_position = cpos
 
-    if zoom is not None:
-        pl.camera.zoom(zoom)
-
     if eye_dome_lighting:
         pl.enable_eye_dome_lighting()
 
     if parallel_projection:
         pl.enable_parallel_projection()
 
+    if ssao:
+        pl.enable_ssao()
+
+    if zoom is not None:
+        pl.camera.zoom(zoom)
+
     return pl.show(
-        window_size=window_size,
         auto_close=auto_close,
         interactive=interactive,
         full_screen=full_screen,
@@ -380,51 +414,50 @@ def plot_compare_four(
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
-    """Plot a PyVista/VTK mesh or dataset.
-
-    Adds any PyVista/VTK mesh that itkwidgets can wrap to the
-    scene.
+def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """Given a plane to view, return vectors for setting up camera.
 
     Parameters
     ----------
-    mesh : pyvista.DataSet or pyvista.MultiBlock
-        Any PyVista or VTK mesh is supported. Also, any dataset that
-        :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
-        points.
+    view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
+        Plane to return vectors for.
 
-    color : color_like, optional, defaults to white
-        Use to make the entire mesh have a single solid color.  Either
-        a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-        ``color='#FFFFFF'``. Color will be overridden if scalars are
-        specified.
-
-    scalars : str or numpy.ndarray, optional
-        Scalars used to "color" the mesh.  Accepts a string name of an
-        array that is present on the mesh or an array equal to the
-        number of cells or the number of points in the mesh.  Array
-        should be sized as a single vector. If both ``color`` and
-        ``scalars`` are ``None``, then the active scalars are used.
-
-    opacity : float, optional
-        Opacity of the mesh. If a single float value is given, it will
-        be the global opacity of the mesh and uniformly applied
-        everywhere - should be between 0 and 1.  Default 1.0
-
-    smooth_shading : bool, optional
-        Smooth mesh surface mesh by taking into account surface
-        normals.  Surface will appear smoother while sharp edges will
-        still look sharp.  Default ``False``.
+    negative : bool
+        Whether to view from opposite direction.  Default ``False``.
 
     Returns
-    --------
-    itkwidgets.Viewer
-        ITKwidgets viewer.
+    -------
+    vec : numpy.ndarray
+        ``[x, y, z]`` vector that points in the viewing direction
+
+    viewup : numpy.ndarray
+        ``[x, y, z]`` vector that points to the viewup direction
+
     """
-    pl = pyvista.PlotterITK()
-    if isinstance(mesh, np.ndarray):
-        pl.add_points(mesh, color)
+    if view == 'xy':
+        vec = np.array([0, 0, 1])
+        viewup = np.array([0, 1, 0])
+    elif view == 'yx':
+        vec = np.array([0, 0, -1])
+        viewup = np.array([1, 0, 0])
+    elif view == 'xz':
+        vec = np.array([0, -1, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zx':
+        vec = np.array([0, 1, 0])
+        viewup = np.array([1, 0, 0])
+    elif view == 'yz':
+        vec = np.array([1, 0, 0])
+        viewup = np.array([0, 0, 1])
+    elif view == 'zy':
+        vec = np.array([-1, 0, 0])
+        viewup = np.array([0, 1, 0])
     else:
-        pl.add_mesh(mesh, color, scalars, opacity, smooth_shading)
-    return pl.show()
+        raise ValueError(
+            f"Unexpected value for direction {view}\n"
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
+        )
+
+    if negative:
+        vec *= -1
+    return vec, viewup

@@ -1,3 +1,5 @@
+import os
+import platform
 from string import ascii_letters, digits, whitespace
 import sys
 
@@ -9,6 +11,12 @@ from pytest import fixture, mark, raises
 
 import pyvista
 from pyvista.utilities import FieldAssociation
+
+skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+skip_apple_silicon = mark.skipif(
+    platform.system() == 'Darwin' and platform.processor() == 'arm',
+    reason='Test fails on Apple Silicon',
+)
 
 
 @fixture()
@@ -308,6 +316,11 @@ def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
+    if not ''.join(arr).isascii():
+        with raises(ValueError, match='non-ASCII'):
+            hexbeam_field_attributes['string_arr'] = arr
+        return
+
     hexbeam_field_attributes['string_arr'] = arr
     assert np.array_equiv(arr, hexbeam_field_attributes['string_arr'])
 
@@ -454,9 +467,21 @@ def test_active_scalars_setter(hexbeam_point_attributes):
     assert dsa.GetScalars().GetName() == 'sample_point_scalars'
 
 
+def test_active_scalars_setter_no_override(hexbeam):
+    # Test that adding new array does not override
+    assert hexbeam.active_scalars_name == 'sample_cell_scalars'
+    hexbeam.cell_data['test'] = np.arange(0, hexbeam.n_cells, dtype=int)
+    assert hexbeam.active_scalars_name == 'sample_cell_scalars'
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_preserve_field_data_after_extract_cells(hexbeam, arr):
+    if not ''.join(arr).isascii():
+        with raises(ValueError, match='non-ASCII'):
+            hexbeam.field_data["foo"] = arr
+        return
+
     # https://github.com/pyvista/pyvista/pull/934
     hexbeam.field_data["foo"] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
@@ -564,25 +589,33 @@ def test_active_t_coords_name(plane):
         plane.field_data.active_t_coords_name = 'arr'
 
 
-def test_complex(plane):
+@skip_windows  # windows doesn't support np.complex256
+@skip_apple_silicon  # same with Apple silicon (M1/M2)
+def test_complex_raises(plane):
+    with raises(ValueError, match='Only numpy.complex64'):
+        plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
+
+
+@mark.parametrize('dtype_str', ['complex64', 'complex128'])
+def test_complex(plane, dtype_str):
     """Test if complex data can be properly represented in datasetattributes."""
+    dtype = np.dtype(dtype_str)
     name = 'my_data'
-    with raises(ValueError, match='Only numpy.complex128'):
-        plane.point_data[name] = np.empty(plane.n_points, dtype=np.complex64)
 
     with raises(ValueError, match='Complex data must be single dimensional'):
-        plane.point_data[name] = np.empty((plane.n_points, 2), dtype=np.complex128)
+        plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
-    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
+    real_type = np.float32 if dtype == np.complex64 else np.float64
+    data = np.random.random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
     plane.point_data[name] = data
-    assert np.allclose(plane.point_data[name], data)
+    assert np.array_equal(plane.point_data[name], data)
 
-    assert 'complex128' in str(plane.point_data)
+    assert dtype_str in str(plane.point_data)
 
     # test setter
     plane.active_scalars_name = name
 
     # ensure that association is removed when changing datatype
-    assert plane.point_data[name].dtype == np.complex128
+    assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
-    assert np.issubdtype(plane.point_data[name].dtype, float)
+    assert np.issubdtype(plane.point_data[name].dtype, real_type)

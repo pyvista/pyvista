@@ -21,10 +21,11 @@ from pyvista.utilities import (
     check_valid_vector,
     errors,
     fileio,
+    get_ext,
     helpers,
     transformations,
 )
-from pyvista.utilities.misc import PyvistaDeprecationWarning, has_duplicates, raise_has_duplicates
+from pyvista.utilities.misc import PyVistaDeprecationWarning, has_duplicates, raise_has_duplicates
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"
@@ -69,6 +70,19 @@ def test_createvectorpolydata():
     assert np.any(vdata.point_data['vectors'])
 
 
+@pytest.mark.parametrize(
+    'path, target_ext',
+    [
+        ("/data/mesh.stl", ".stl"),
+        ("/data/image.nii.gz", '.nii.gz'),
+        ("/data/other.gz", ".gz"),
+    ],
+)
+def test_get_ext(path, target_ext):
+    ext = get_ext(path)
+    assert ext == target_ext
+
+
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_read(tmpdir, use_pathlib):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
@@ -88,7 +102,7 @@ def test_read(tmpdir, use_pathlib):
     # Now test the standard_reader_routine
     for i, filename in enumerate(fnames):
         # Pass attrs to for the standard_reader_routine to be used
-        with pytest.warns(PyvistaDeprecationWarning):
+        with pytest.warns(PyVistaDeprecationWarning):
             obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
@@ -138,12 +152,12 @@ def test_read_force_ext(tmpdir):
 @mock.patch('pyvista.BaseReader.reader')
 def test_read_attrs(mock_reader, mock_read):
     """Test passing attrs in read."""
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read(ex.antfile, attrs={'test': 'test_arg'})
     mock_reader.test.assert_called_once_with('test_arg')
 
     mock_reader.reset_mock()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
     mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
 
@@ -184,7 +198,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
 
 @mock.patch('pyvista.utilities.fileio.read')
 def test_read_legacy(read_mock):
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read_legacy(ex.globefile, progress_bar=False)
     read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
 
@@ -204,13 +218,13 @@ def test_pyvista_read_exodus(read_exodus_mock):
 @mock.patch('pyvista.utilities.reader.BaseReader.path')
 def test_read_plot3d(path_mock, read_mock, auto_detect):
     # with grid only
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
     read_mock.assert_called_once()
 
     # with grid and q
     read_mock.reset_mock()
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
     read_mock.assert_called_once()
 
@@ -294,23 +308,31 @@ def test_get_sg_image_scraper():
     assert callable(scraper)
 
 
-def test_voxelize():
-    mesh = pyvista.PolyData(ex.load_uniform().points)
-    vox = pyvista.voxelize(mesh, 0.5)
+def test_voxelize(uniform):
+    vox = pyvista.voxelize(uniform, 0.5)
     assert vox.n_cells
 
 
-def test_voxelize_non_uniform_desnity():
-    mesh = pyvista.PolyData(ex.load_uniform().points)
-    vox = pyvista.voxelize(mesh, [0.5, 0.3, 0.2])
+def test_voxelize_non_uniform_density(uniform):
+    vox = pyvista.voxelize(uniform, [0.5, 0.3, 0.2])
+    assert vox.n_cells
+    vox = pyvista.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
-def test_voxelize_throws_when_density_is_not_length_3():
-    with pytest.raises(ValueError) as e:
-        mesh = pyvista.PolyData(ex.load_uniform().points)
-        _ = pyvista.voxelize(mesh, [0.5, 0.3])
-    assert "not enough values to unpack" in str(e.value)
+def test_voxelize_invalid_density(rectilinear):
+    # test error when density is not length-3
+    with pytest.raises(ValueError, match='not enough values to unpack'):
+        pyvista.voxelize(rectilinear, [0.5, 0.3])
+    # test error when density is not an array-like
+    with pytest.raises(TypeError, match='expected number or array-like'):
+        pyvista.voxelize(rectilinear, {0.5, 0.3})
+
+
+def test_voxelize_throws_point_cloud(hexbeam):
+    with pytest.raises(ValueError, match='must have faces'):
+        mesh = pyvista.PolyData(hexbeam.points)
+        pyvista.voxelize(mesh)
 
 
 def test_report():
@@ -803,6 +825,11 @@ def test_color():
         c[4]  # Invalid integer index
 
 
+def test_color_opacity():
+    color = pyvista.Color(opacity=0.5)
+    assert color.opacity == 128
+
+
 def test_convert_array():
     arr = np.arange(4).astype('O')
     arr2 = pyvista.utilities.convert_array(arr, array_type=np.dtype('O'))
@@ -848,3 +875,14 @@ def test_copy_vtk_array():
     arr.SetValue(1, new_value)
     assert value_1 == arr_copy.GetValue(1)
     assert new_value == arr_copy_shallow.GetValue(1)
+
+
+def test_set_pickle_format():
+    pyvista.set_pickle_format('legacy')
+    assert pyvista.PICKLE_FORMAT == 'legacy'
+
+    pyvista.set_pickle_format('xml')
+    assert pyvista.PICKLE_FORMAT == 'xml'
+
+    with pytest.raises(ValueError):
+        pyvista.set_pickle_format('invalid_format')

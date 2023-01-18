@@ -1,20 +1,18 @@
 .. title:: PyVista
 
-.. jupyter-execute::
-   :hide-code:
-
-   from pyvista.demos import logo
-   logo.plot_logo(jupyter_backend='pythreejs', window_size=[600, 200], zoom=2.5,
-                  show_note=True)
-
 .. raw:: html
 
     <div class="banner">
-        <h2>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
+        <a href="./examples/index.html"><center><img src="_static/pyvista_logo.png" alt="pyvista" width="75%"/></a>
+        <h3>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
         <a href="./examples/index.html"><img src="_static/pyvista_banner_small.png" alt="pyvista" width="100%"/></a>
     </div>
 
+|
 
+
+Overview
+********
 PyVista is...
 
 * *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
@@ -23,7 +21,7 @@ PyVista is...
 
 .. _Visualization Toolkit: https://vtk.org
 
-PyVista is a helper module for the Visualization Toolkit (VTK) that
+PyVista is a helper library for the Visualization Toolkit (VTK) that
 takes a different approach on interfacing with VTK through NumPy and
 direct array access.  This package provides a Pythonic,
 well-documented interface exposing VTK's powerful visualization
@@ -66,14 +64,14 @@ might want to use PyVista:
 .. jupyter-execute::
    :hide-code:
 
-   # Configure for pythreejs
+   # Configure for panel
    import pyvista
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('panel')
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.anti_aliasing = 'fxaa'
 
 
 Maps and Geoscience
@@ -165,7 +163,7 @@ Subtract a sphere from a cube mesh.
 
     # Perform a boolean difference
     boolean = cube.boolean_difference(sphere)
-    boolean.plot(color='darkgrey', smooth_shading=False)
+    boolean.plot(color='darkgrey', smooth_shading=True, split_sharp_edges=True)
 
 
 Translating
@@ -238,10 +236,13 @@ Status
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
+.. |python| image:: https://img.shields.io/badge/python-3.7+-blue.svg
+   :target: https://www.python.org/downloads/
+
 +----------------------+----------------+-------------+
 | Deployment           | |pypi|         | |conda|     |
 +----------------------+----------------+-------------+
-| Build Status         | |GH-CI|                      |
+| Build Status         | |GH-CI|        |  |python|   |
 +----------------------+----------------+-------------+
 | Metrics              | |codacy|       | |codecov|   |
 +----------------------+----------------+-------------+
