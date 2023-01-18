@@ -240,7 +240,7 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize('theme', pyvista.themes._ALLOWED_THEMES)
+@pytest.mark.parametrize('theme', pyvista.themes._NATIVE_THEMES)
 def test_themes(theme):
     try:
         pyvista.set_plot_theme(theme.name)
