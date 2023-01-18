@@ -117,8 +117,8 @@ def test_axes_actor_sphere_rad():
 
 def test_axes_actor_cylinder_rad():
     axes = pyvista.Axes()
-    axes.axes_actor.cylinder_radius= 0.03
-    assert axes.axes_actor.cylinder_radius== 0.03
+    axes.axes_actor.cylinder_radius = 0.03
+    assert axes.axes_actor.cylinder_radius == 0.03
 
 
 def test_axes_actor_shaft_type():
