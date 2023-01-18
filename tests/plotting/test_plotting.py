@@ -3374,8 +3374,8 @@ def test_color_cycler_names(name):
     assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
 
 
+@skip_9_0_X
 def test_axes_actor_properties():
-
     axes = pyvista.Axes()
     axes_actor = axes.axes_actor
 
@@ -3405,6 +3405,6 @@ def test_axes_actor_properties():
 
     axes.axes_actor.SetShaftTypeToCylinder()
     pl = pyvista.Plotter()
-    pl.add_actor(axes.axes_actor)
+    pl.add_actor(axes_actor)
     pl.add_mesh(pyvista.Sphere())
     pl.show()
