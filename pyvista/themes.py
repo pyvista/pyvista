@@ -37,6 +37,7 @@ from typing import Callable, List, Optional, Union
 import warnings
 
 from ._typing import ColorLike
+from .plotting._property import InterpolationType
 from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
@@ -207,6 +208,140 @@ class _ThemeConfig:
         Implemented here for backwards compatibility.
         """
         setattr(self, key, value)
+
+
+class _LightingConfig(_ThemeConfig):
+    """PyVista lighting configuration.
+
+    This will control the lighting interpolation type, parameters,
+    and Physically Based Rendering (PBR) options
+
+    Examples
+    --------
+    Set global PBR parameters.
+
+    >>> import pyvista
+    >>> pyvista.global_theme.lighting.interpolation = 'pbr'
+    >>> pyvista.global_theme.pbr.metallic = 0.5
+    >>> pyvista.global_theme.pbr.roughness = 0.25
+
+    """
+
+    __slots__ = [
+        '_interpolation',
+        '_metallic',
+        '_roughness',
+        '_ambient',
+        '_diffuse',
+        '_specular',
+        '_specular_power',
+    ]
+
+    def __init__(self):
+        self._interpolation = InterpolationType.FLAT
+        self._metallic = 0.0
+        self._roughness = 0.5
+        self._ambient = 0.0
+        self._diffuse = 1.0
+        self._specular = 0.0
+        self._specular_power = 100.0
+
+    @property
+    def interpolation(self) -> bool:
+        """Return or set the default interpolation type.
+
+        Options are:
+        * 'Phong'
+        * 'Flat'
+        * 'Physically based rendering'
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.global_theme.pbr.enabled = True
+
+        """
+        return self._interpolation
+
+    @interpolation.setter
+    def interpolation(self, interpolation: Union[str, InterpolationType]):
+        if isinstance(interpolation, InterpolationType):
+            interpolation = interpolation.value
+        if interpolation.lower() == 'pbr':
+            interpolation = 'Physically based rendering'
+        try:
+            interpolation = InterpolationType(interpolation.capitalize())
+        except:
+            raise ValueError(f'Interpolation {interpolation} not supported.')
+        self._interpolation = interpolation
+
+    @property
+    def metallic(self) -> float:
+        """Return or set the metallic value.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.global_theme.prb.metallic = 0.5
+
+        """
+        return self._metallic
+
+    @metallic.setter
+    def metallic(self, metallic: float):
+        self._metallic = metallic
+
+    @property
+    def roughness(self) -> float:
+        """Return or set the roughness value.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.global_theme.prb.roughness = 0.25
+
+        """
+        return self._roughness
+
+    @roughness.setter
+    def roughness(self, roughness: float):
+        self._roughness = roughness
+
+    @property
+    def ambient(self) -> float:
+        """Return or set the ambient value."""
+        return self._ambient
+
+    @ambient.setter
+    def ambient(self, ambient: float):
+        self._ambient = ambient
+
+    @property
+    def diffuse(self) -> float:
+        """Return or set the diffuse value."""
+        return self._diffuse
+
+    @diffuse.setter
+    def diffuse(self, diffuse: float):
+        self._diffuse = diffuse
+
+    @property
+    def specular(self) -> float:
+        """Return or set the specular value."""
+        return self._specular
+
+    @specular.setter
+    def specular(self, specular: float):
+        self._specular = specular
+
+    @property
+    def specular_power(self) -> float:
+        """Return or set the specular power value."""
+        return self._specular_power
+
+    @specular_power.setter
+    def specular_power(self, specular_power: float):
+        self._specular_power = specular_power
 
 
 class _DepthPeelingConfig(_ThemeConfig):
@@ -1125,6 +1260,8 @@ class DefaultTheme(_ThemeConfig):
         '_below_range_color',
         '_nan_color',
         '_edge_color',
+        '_line_width',
+        '_point_size',
         '_outline_color',
         '_floor_color',
         '_colorbar_orientation',
@@ -1135,6 +1272,7 @@ class DefaultTheme(_ThemeConfig):
         '_lighting',
         '_interactive',
         '_render_points_as_spheres',
+        '_render_lines_as_tubes',
         '_transparent_background',
         '_title',
         '_axes',
@@ -1152,6 +1290,7 @@ class DefaultTheme(_ThemeConfig):
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
         '_before_close_callback',
+        '_lighting_params',
     ]
 
     def __init__(self):
@@ -1174,6 +1313,8 @@ class DefaultTheme(_ThemeConfig):
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
         self._edge_color = Color('black')
+        self._line_width = 1.0
+        self._point_size = 5.0
         self._outline_color = Color('white')
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
@@ -1195,6 +1336,7 @@ class DefaultTheme(_ThemeConfig):
         self._lighting = True
         self._interactive = False
         self._render_points_as_spheres = False
+        self._render_lines_as_tubes = False
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
@@ -1223,6 +1365,8 @@ class DefaultTheme(_ThemeConfig):
         self._hidden_line_removal = False
         self._anti_aliasing = None
         self._enable_camera_orientation_widget = False
+
+        self._lighting_params = _LightingConfig()
 
     @property
     def hidden_line_removal(self) -> bool:
@@ -1719,6 +1863,38 @@ class DefaultTheme(_ThemeConfig):
         self._edge_color = Color(edge_color)
 
     @property
+    def line_width(self) -> float:
+        """Return or set the default line width.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.global_theme.line_width = 2.0
+
+        """
+        return self._line_width
+
+    @line_width.setter
+    def line_width(self, line_width: float):
+        self._line_width = float(line_width)
+
+    @property
+    def point_size(self) -> float:
+        """Return or set the default point size.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.global_theme.line_width = 10.0
+
+        """
+        return self._point_size
+
+    @point_size.setter
+    def point_size(self, point_size: float):
+        self._point_size = float(point_size)
+
+    @property
     def outline_color(self) -> Color:
         """Return or set the default outline color.
 
@@ -1905,6 +2081,23 @@ class DefaultTheme(_ThemeConfig):
     @render_points_as_spheres.setter
     def render_points_as_spheres(self, render_points_as_spheres: bool):
         self._render_points_as_spheres = bool(render_points_as_spheres)
+
+    @property
+    def render_lines_as_tubes(self) -> bool:
+        """Return or set the default ``render_lines_as_tubes`` parameter.
+
+        Examples
+        --------
+        Render points as spheres by default globally.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.render_lines_as_tubes = True
+        """
+        return self._render_lines_as_tubes
+
+    @render_lines_as_tubes.setter
+    def render_lines_as_tubes(self, render_lines_as_tubes: bool):
+        self._render_lines_as_tubes = bool(render_lines_as_tubes)
 
     @property
     def transparent_background(self) -> bool:
@@ -2417,6 +2610,17 @@ class DefaultTheme(_ThemeConfig):
     @sharp_edges_feature_angle.setter
     def sharp_edges_feature_angle(self, value: float):
         self._sharp_edges_feature_angle = float(value)
+
+    @property
+    def lighting_params(self) -> _LightingConfig:
+        """Return or set the default lighting configuration."""
+        return self._lighting_params
+
+    @lighting_params.setter
+    def lighting_params(self, config: _LightingConfig):
+        if not isinstance(config, _LightingConfig):
+            raise TypeError('Configuration type must be `_LightingConfig`.')
+        self._lighting_params = config
 
 
 class DarkTheme(DefaultTheme):
