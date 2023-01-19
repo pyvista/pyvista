@@ -919,9 +919,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         recompute_normals : bool, optional
             When ``True``, if ply or stl format is chosen, the face normals
-            are computed in place to ensure the mesh is properly saved. 
-            Default ``True``. Set this to ``False`` to save instead the 
-            already existing normal array in the PolyData. 
+            are computed in place to ensure the mesh is properly saved.
+            Default ``True``. Set this to ``False`` to save instead the
+            already existing normal array in the PolyData.
 
         Notes
         -----
