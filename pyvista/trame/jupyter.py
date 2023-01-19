@@ -4,7 +4,7 @@ import warnings
 
 from IPython import display
 from trame.app import get_server
-from trame.widgets import vtk as vtk_widgets, vuetify as vuetify_widgets
+from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
 
 import pyvista
 from pyvista.trame.ui import initialize
@@ -70,6 +70,7 @@ def launch_server(server):
         server = get_server(server)
 
     # Must enable all used modules
+    html_widgets.initialize(server)
     vtk_widgets.initialize(server)
     vuetify_widgets.initialize(server)
 
@@ -115,10 +116,11 @@ def build_iframe(_server, ui=None, relative_url=None, relative_url_prefix=None, 
 
 def show_trame(
     plotter,
-    local_rendering=False,
+    server_rendering=True,
     name=None,
     relative_url=None,
     relative_url_prefix=None,
+    collapse_menu=False,
     **kwargs,
 ):
     """Run and display the trame application in jupyter's event loop.
@@ -126,8 +128,8 @@ def show_trame(
     plotter : pyvista.BasePlotter
         The PyVista plotter to show.
 
-    local_rendering : bool, default: False
-        Whether to use local (client-side) rendering.
+    server_rendering : bool, default: True
+        Whether to use server-side or client-side rendering.
 
     name : str
         The name of the trame server on which the UI is defined
@@ -139,6 +141,9 @@ def show_trame(
         URL prefix when using ``relative_url``. This can be set globally in
         the theme. To ignore, pass ``False``. For use with
         ``jupyter-server-proxy``, often set to ``proxy/``.
+
+    collapse_menu : bool, default: False
+        Collapse the UI menu (camera controls, etc.) on start.
 
     **kwargs
         any keyword arguments are pass to the Jupyter IFrame. Additionally
@@ -157,7 +162,9 @@ def show_trame(
         raise TrameServerDownError(name)
 
     # Initialize app
-    ui_name = initialize(server, plotter, local_rendering=local_rendering)
+    ui_name = initialize(
+        server, plotter, server_rendering=server_rendering, collapse_menu=collapse_menu
+    )
 
     # Show as cell result
     return build_iframe(

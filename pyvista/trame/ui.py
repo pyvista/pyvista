@@ -9,7 +9,7 @@ applications.
 import io
 
 from trame.ui.vuetify import VAppLayout
-from trame.widgets import vuetify
+from trame.widgets import html, vuetify
 
 import pyvista
 from pyvista.trame.views import PyVistaRemoteLocalView
@@ -41,6 +41,7 @@ class Viewer:
         self.plotter = plotter
 
         # State variable names
+        self.SHOW_UI = f'{plotter._id_name}_show_ui'
         self.GRID = f'{plotter._id_name}_grid_visibility'
         self.OUTLINE = f'{plotter._id_name}_outline_visibility'
         self.EDGES = f'{plotter._id_name}_edge_visibility'
@@ -135,8 +136,50 @@ class Viewer:
         return self._server.protocol.addAttachment(memoryview(buffer.read()))
 
 
-def ui_container(server, plotter, local_rendering=False):
-    """Generate VContainer for PyVista Plotter."""
+def button(click, icon, tooltip):
+    """Create a vuetify button."""
+    with vuetify.VTooltip(bottom=True):
+        with vuetify.Template(v_slot_activator='{ on, attrs }'):
+            with vuetify.VBtn(icon=True, v_bind='attrs', v_on='on', click=click):
+                vuetify.VIcon(icon)
+        html.Span(tooltip)
+
+
+def checkbox(model, icons, tooltip):
+    """Create a vuetify checkbox."""
+    with vuetify.VTooltip(bottom=True):
+        with vuetify.Template(v_slot_activator='{ on, attrs }'):
+            with html.Div(v_on='on', v_bind='attrs'):
+                vuetify.VCheckbox(
+                    v_model=model,
+                    on_icon=icons[0],
+                    off_icon=icons[1],
+                    dense=True,
+                    hide_details=True,
+                    classes='my-0 py-0 ml-1',
+                )
+        html.Span(tooltip)
+
+
+def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
+    """Generate VContainer for PyVista Plotter.
+
+    Parameters
+    ----------
+    server : Server
+        The trame server.
+
+    plotter : pyvista.BasePlotter
+        The PyVista plotter to connect with the UI.
+
+    server_rendering : bool, default: True
+        Use server-side rendering (True) or client-side rendering (False)
+        on start
+
+    collapse_menu : bool, default: False
+        Collapse the UI menu (camera controls, etc.) on start.
+
+    """
     ctrl = server.controller
 
     viewer = Viewer(plotter, server)
@@ -146,73 +189,83 @@ def ui_container(server, plotter, local_rendering=False):
         classes='pa-0 fill-height',
     ):
         with vuetify.VCard(
-            style='position: absolute; top: 20px; left: 20px; z-index: 1',
+            style='position: absolute; top: 20px; left: 20px; z-index: 1; height: 36px;',
+            classes=(f"{{ 'rounded-circle': !{viewer.SHOW_UI} }}",),
         ):
-            with vuetify.VCardTitle(classes='py-0'):
-                # Scene controls
-                with vuetify.VBtn(
-                    icon=True, click=f'{plotter._id_name}_show_ui=!{plotter._id_name}_show_ui'
-                ):
+            with vuetify.VRow(classes='pa-0 ma-0'):
+                with vuetify.VBtn(icon=True, click=f'{viewer.SHOW_UI}=!{viewer.SHOW_UI}'):
                     vuetify.VIcon('mdi-dots-vertical')
-                with vuetify.VRow(v_show=(f'{plotter._id_name}_show_ui', False)):
-                    with vuetify.VBtn(icon=True, click=viewer.view_isometric):
-                        vuetify.VIcon('mdi-axis-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.view_yz):
-                        vuetify.VIcon('mdi-axis-x-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.view_xz):
-                        vuetify.VIcon('mdi-axis-y-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.view_xy):
-                        vuetify.VIcon('mdi-axis-z-arrow')
-                    with vuetify.VBtn(icon=True, click=viewer.reset_camera):
-                        vuetify.VIcon('mdi-arrow-expand-all')
-                    vuetify.VCheckbox(
-                        v_model=(viewer.OUTLINE, False),
-                        dense=True,
-                        hide_details=True,
-                        on_icon='mdi-cube',
-                        off_icon='mdi-cube-off',
-                        classes='ma-2',
+                with vuetify.VRow(
+                    v_show=(f'{viewer.SHOW_UI}', not collapse_menu),
+                    classes='pa-0 ma-0 align-center',
+                ):
+                    vuetify.VDivider(vertical=True, classes='mr-1')
+                    button(
+                        click=viewer.reset_camera,
+                        icon='mdi-arrow-expand-all',
+                        tooltip='Reset Camera',
                     )
+                    vuetify.VDivider(vertical=True, classes='mx-1')
+                    button(
+                        click=viewer.view_isometric,
+                        icon='mdi-axis-arrow',
+                        tooltip='Perspective view',
+                    )
+                    button(
+                        click=viewer.view_yz,
+                        icon='mdi-axis-x-arrow',
+                        tooltip='Reset Camera X',
+                    )
+                    button(
+                        click=viewer.view_xz,
+                        icon='mdi-axis-y-arrow',
+                        tooltip='Reset Camera Y',
+                    )
+                    button(
+                        click=viewer.view_xy,
+                        icon='mdi-axis-z-arrow',
+                        tooltip='Reset Camera Z',
+                    )
+                    vuetify.VDivider(vertical=True, classes='mx-1')
+                    checkbox(
+                        model=(viewer.OUTLINE, False),
+                        icons=('mdi-cube', 'mdi-cube-off'),
+                        tooltip=f"Toggle bounding box ({{{{ {viewer.OUTLINE} ? 'on' : 'off' }}}})",
+                    )
+                    vuetify.VDivider(vertical=True, classes='mx-1')
                     # Server rendering options
-                    vuetify.VCheckbox(
-                        v_model=(viewer.SERVER_RENDERING, not local_rendering),
-                        dense=True,
-                        hide_details=True,
-                        on_icon='mdi-dns',
-                        off_icon='mdi-open-in-app',
-                        classes='ma-2',
+                    checkbox(
+                        model=(viewer.SERVER_RENDERING, server_rendering),
+                        icons=('mdi-dns', 'mdi-open-in-app'),
+                        tooltip=f"Toggle rendering mode ({{{{ {viewer.SERVER_RENDERING} ? 'remote' : 'local' }}}})",
                     )
-                    vuetify.VCheckbox(
-                        v_model=(viewer.GRID, False),
-                        v_show=(viewer.SERVER_RENDERING),
-                        dense=True,
-                        hide_details=True,
-                        on_icon='mdi-ruler-square',
-                        off_icon='mdi-ruler-square',
-                        classes='ma-2',
-                    )
-                    vuetify.VCheckbox(
-                        v_model=(viewer.AXIS, False),
-                        v_show=(viewer.SERVER_RENDERING),
-                        dense=True,
-                        hide_details=True,
-                        on_icon='mdi-axis-arrow-info',
-                        off_icon='mdi-axis-arrow-info',
-                        classes='ma-2',
-                    )
-                    with vuetify.VBtn(
-                        v_show=(viewer.SERVER_RENDERING),
-                        icon=True,
-                        # Must use single-quote string for JS here
-                        click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
+                    with vuetify.VRow(
+                        v_show=(viewer.SERVER_RENDERING,),
+                        classes='pa-0 ma-0 align-center',
                     ):
-                        vuetify.VIcon('mdi-file-png-box')
+                        checkbox(
+                            model=(viewer.GRID, False),
+                            icons=('mdi-ruler-square', 'mdi-ruler-square'),
+                            tooltip=f"Toggle ruler ({{{{ {viewer.GRID} ? 'on' : 'off' }}}})",
+                        )
+                        checkbox(
+                            model=(viewer.AXIS, False),
+                            icons=('mdi-axis-arrow-info', 'mdi-axis-arrow-info'),
+                            tooltip=f"Toggle axis ({{{{ {viewer.AXIS} ? 'on' : 'off' }}}})",
+                        )
+                        vuetify.VDivider(vertical=True, classes="mx-1")
+                        button(
+                            # Must use single-quote string for JS here
+                            click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
+                            icon='mdi-file-png-box',
+                            tooltip='Save screenshot',
+                        )
         view = PyVistaRemoteLocalView(
             plotter,
             mode=(
                 # Must use single-quote string for JS here
                 f"{viewer.SERVER_RENDERING} ? 'remote' : 'local'",
-                'local' if local_rendering else 'remote',
+                'remote' if server_rendering else 'local',
             ),
         )
         ctrl.view_update = view.update
@@ -222,13 +275,15 @@ def ui_container(server, plotter, local_rendering=False):
     return plotter._id_name
 
 
-def initialize(server, plotter, local_rendering=False):
+def initialize(server, plotter, server_rendering=True, collapse_menu=False):
     """Generate the UI for a given plotter."""
     state = server.state
     state.trame__title = UI_TITLE
 
     with VAppLayout(server, template_name=plotter._id_name):
-        ui_container(server, plotter, local_rendering=local_rendering)
+        ui_container(
+            server, plotter, server_rendering=server_rendering, collapse_menu=collapse_menu
+        )
 
     # Returns the UI identifier (used in `template_name`)
     return plotter._id_name
