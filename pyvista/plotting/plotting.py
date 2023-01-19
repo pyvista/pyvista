@@ -3350,6 +3350,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular=0.2,
         specular_power=10.0,
         render=True,
+        log_scale=False,
         **kwargs,
     ):
         """Add a volume, rendered using a smart mapper by default.
@@ -3529,6 +3530,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, optional
             Force a render when True.  Default ``True``.
+
+        log_scale : bool, optional
+            Use log scale when mapping data to colors. Scalars less
+            than zero are mapped to the smallest representable
+            positive float. Default ``False``.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -3768,6 +3774,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.lookup_table.apply_cmap(cmap, n_colors)
             self.mapper.lookup_table.apply_opacity(opacity)
             self.mapper.lookup_table.scalar_range = clim
+            self.mapper.lookup_table.log_scale = log_scale
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 
