@@ -112,8 +112,10 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
             namespace=namespace,
             **kwargs,
         )
-        # CRITICAL to initialize the client render window
-        self._server.controller.on_server_ready.add(self.update)
+        if self._server.running:
+            self.update()
+        else:
+            self._server.controller.on_server_ready.add(self.update)
 
 
 class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
@@ -164,5 +166,16 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
             namespace=namespace,
             **kwargs,
         )
-        # CRITICAL to initialize the client render window
-        self._server.controller.on_server_ready.add(self.update)
+        # Track namespace for our use since trame attributes are name mangled
+        self._namespace = namespace
+
+        if self._server.running:
+            self.update()
+        else:
+            self._server.controller.on_server_ready.add(self.update)
+
+    def push_camera(self, *args, **kwargs):
+        """Synchronize camera."""
+        if self._server.state[f'{self._namespace}Mode'] == 'local':
+            # Only use push_camera for local/client rendering
+            return VtkRemoteLocalView.push_camera(self, *args, **kwargs)

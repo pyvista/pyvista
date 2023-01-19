@@ -12,7 +12,7 @@ from trame.ui.vuetify import VAppLayout
 from trame.widgets import vuetify
 
 import pyvista
-from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteView
+from pyvista.trame.views import PyVistaRemoteLocalView
 
 UI_TITLE = 'PyVista'
 
@@ -46,6 +46,7 @@ class Viewer:
         self.EDGES = f'{plotter._id_name}_edge_visibility'
         self.AXIS = f'{plotter._id_name}_axis_visiblity'
         self.SCREENSHOT = f'{plotter._id_name}_download_screenshot'
+        self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
 
         # controller
         ctrl.get_render_window = lambda: self.plotter.ren_win
@@ -172,36 +173,51 @@ def ui_container(server, plotter, local_rendering=False):
                         off_icon='mdi-cube-off',
                         classes='ma-2',
                     )
-                    if not local_rendering:
-                        vuetify.VCheckbox(
-                            v_model=(viewer.GRID, False),
-                            dense=True,
-                            hide_details=True,
-                            on_icon='mdi-ruler-square',
-                            off_icon='mdi-ruler-square',
-                            classes='ma-2',
-                        )
-                        vuetify.VCheckbox(
-                            v_model=(viewer.AXIS, False),
-                            dense=True,
-                            hide_details=True,
-                            on_icon='mdi-axis-arrow-info',
-                            off_icon='mdi-axis-arrow-info',
-                            classes='ma-2',
-                        )
-                        with vuetify.VBtn(
-                            icon=True,
-                            click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
-                        ):
-                            vuetify.VIcon('mdi-file-png-box')
-        if local_rendering:
-            view = PyVistaLocalView(plotter)
-            ctrl.view_push_camera = view.push_camera
-        else:
-            view = PyVistaRemoteView(plotter)
-            ctrl.view_push_camera = lambda *args: None
+                    # Server rendering options
+                    vuetify.VCheckbox(
+                        v_model=(viewer.SERVER_RENDERING, not local_rendering),
+                        dense=True,
+                        hide_details=True,
+                        on_icon='mdi-dns',
+                        off_icon='mdi-open-in-app',
+                        classes='ma-2',
+                    )
+                    vuetify.VCheckbox(
+                        v_model=(viewer.GRID, False),
+                        v_show=(viewer.SERVER_RENDERING),
+                        dense=True,
+                        hide_details=True,
+                        on_icon='mdi-ruler-square',
+                        off_icon='mdi-ruler-square',
+                        classes='ma-2',
+                    )
+                    vuetify.VCheckbox(
+                        v_model=(viewer.AXIS, False),
+                        v_show=(viewer.SERVER_RENDERING),
+                        dense=True,
+                        hide_details=True,
+                        on_icon='mdi-axis-arrow-info',
+                        off_icon='mdi-axis-arrow-info',
+                        classes='ma-2',
+                    )
+                    with vuetify.VBtn(
+                        v_show=(viewer.SERVER_RENDERING),
+                        icon=True,
+                        # Must use single-quote string for JS here
+                        click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
+                    ):
+                        vuetify.VIcon('mdi-file-png-box')
+        view = PyVistaRemoteLocalView(
+            plotter,
+            mode=(
+                # Must use single-quote string for JS here
+                f"{viewer.SERVER_RENDERING} ? 'remote' : 'local'",
+                'local' if local_rendering else 'remote',
+            ),
+        )
         ctrl.view_update = view.update
         ctrl.view_reset_camera = view.reset_camera
+        ctrl.view_push_camera = view.push_camera
 
     return plotter._id_name
 
