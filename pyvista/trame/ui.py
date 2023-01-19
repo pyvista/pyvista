@@ -232,6 +232,11 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
                         icons=('mdi-cube', 'mdi-cube-off'),
                         tooltip=f"Toggle bounding box ({{{{ {viewer.OUTLINE} ? 'on' : 'off' }}}})",
                     )
+                    checkbox(
+                        model=(viewer.GRID, False),
+                        icons=('mdi-ruler-square', 'mdi-ruler-square'),
+                        tooltip=f"Toggle ruler ({{{{ {viewer.GRID} ? 'on' : 'off' }}}})",
+                    )
                     vuetify.VDivider(vertical=True, classes='mx-1')
                     # Server rendering options
                     checkbox(
@@ -244,16 +249,10 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
                         classes='pa-0 ma-0 align-center',
                     ):
                         checkbox(
-                            model=(viewer.GRID, False),
-                            icons=('mdi-ruler-square', 'mdi-ruler-square'),
-                            tooltip=f"Toggle ruler ({{{{ {viewer.GRID} ? 'on' : 'off' }}}})",
-                        )
-                        checkbox(
                             model=(viewer.AXIS, False),
                             icons=('mdi-axis-arrow-info', 'mdi-axis-arrow-info'),
                             tooltip=f"Toggle axis ({{{{ {viewer.AXIS} ? 'on' : 'off' }}}})",
                         )
-                        vuetify.VDivider(vertical=True, classes="mx-1")
                         button(
                             # Must use single-quote string for JS here
                             click=f"utils.download('screenshot.png', trigger('{viewer.SCREENSHOT}'), 'image/png')",
