@@ -63,10 +63,10 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
             from pyvista.jupyter.pv_ipygany import show_ipygany
 
             return show_ipygany(plotter, return_viewer, **kwargs)
-        if backend == 'client' or backend == 'server':
+        if backend in ['server', 'client', 'trame']:
             from pyvista.trame.jupyter import show_trame
 
-            return show_trame(plotter, server_rendering=(backend == 'server'), **kwargs)
+            return show_trame(plotter, server_rendering=(backend in ['server', 'trame']), **kwargs)
 
     except ImportError as e:
         warnings.warn(

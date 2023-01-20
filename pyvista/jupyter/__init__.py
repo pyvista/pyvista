@@ -16,6 +16,7 @@ ALLOWED_BACKENDS = [
     'pythreejs',
     'client',
     'server',
+    'trame',  # alias for 'server'
     'none',
 ]
 
@@ -79,12 +80,12 @@ def _validate_jupyter_backend(backend):
         # raises an import error when fail
         from pyvista.jupyter import pv_ipygany
 
-    if backend == 'client' or backend == 'server':
+    if backend in ['server', 'client', 'trame']:
         try:
             from pyvista.trame.jupyter import show_trame
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
-                'Please install `trame` and `jupyter-server-proxy` to use this feature.'
+                'Please install `trame` (and maybe `jupyter-server-proxy`) to use this feature.'
             )
 
     if backend == 'none':
@@ -134,13 +135,14 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
           framebuffer be set up when displaying on a headless server and
           requires ``trame`` and ``jupyter-server-proxy`` to be installed.
 
-        * ``'server'``: Render remotely and stream the
-          resulting VTK images back to the client using ``trame``. This
-          replaces the ``'ipyvtklink'`` backend with better performance.
-          Supports all VTK methods, but suffers from lag due to remote
-          rendering. Requires that a virtual framebuffer be set up when
-          displaying on a headless server. Must have ``trame`` and
-          ``jupyter-server-proxy`` installed.
+        * ``'server'``: Render remotely and stream the resulting VTK
+          images back to the client using ``trame``. This replaces the
+          ``'ipyvtklink'`` backend with better performance.
+          Supports the most VTK features, but suffers from minor lag due
+          to remote rendering. Requires that a virtual framebuffer be set
+          up when displaying on a headless server. Must have at least ``trame``
+          and ``jupyter-server-proxy`` installed for cloud/remote Jupyter
+          instances. This mode is also aliased by ``'trame'``.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
@@ -191,7 +193,7 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
 
     """
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
-    if backend in ['server', 'client']:
+    if backend in ['server', 'client', 'trame']:
         # Launch the trame server
         from pyvista.trame.jupyter import launch_server
 
