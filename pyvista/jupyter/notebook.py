@@ -66,7 +66,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
         if backend in ['server', 'client', 'trame']:
             from pyvista.trame.jupyter import show_trame
 
-            return show_trame(plotter, server_rendering=(backend in ['server', 'trame']), **kwargs)
+            return show_trame(plotter, mode=backend, **kwargs)
 
     except ImportError as e:
         warnings.warn(

@@ -12,7 +12,7 @@ from trame.ui.vuetify import VAppLayout
 from trame.widgets import html, vuetify
 
 import pyvista
-from pyvista.trame.views import PyVistaRemoteLocalView
+from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
 
 UI_TITLE = 'PyVista'
 
@@ -161,7 +161,7 @@ def checkbox(model, icons, tooltip):
         html.Span(tooltip)
 
 
-def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
+def ui_container(server, plotter, mode='trame', default_server_rendering=True, collapse_menu=False):
     """Generate VContainer for PyVista Plotter.
 
     Parameters
@@ -172,9 +172,17 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
     plotter : pyvista.BasePlotter
         The PyVista plotter to connect with the UI.
 
-    server_rendering : bool, default: True
-        Use server-side rendering (True) or client-side rendering (False)
-        on start
+    mode : str, default: 'trame'
+        The UI view mode. Options are:
+            * ``'trame'``: Uses a view that can switch between client and server
+              rendering modes.
+            * ``'server'``: Uses a view that is purely server rendering.
+            * ``'client'``: Uses a view that is purely client rendering (generally
+              safe without a virtual frame buffer)
+
+    default_server_rendering : bool, default: True
+        Whether to use server-side or client-side rendering on-start when
+        using the ``'trame'`` mode.
 
     collapse_menu : bool, default: False
         Collapse the UI menu (camera controls, etc.) on start.
@@ -183,6 +191,9 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
     ctrl = server.controller
 
     viewer = Viewer(plotter, server)
+
+    if mode != 'trame':
+        default_server_rendering = mode == 'server'
 
     with vuetify.VContainer(
         fluid=True,
@@ -240,15 +251,16 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
                         icons=('mdi-ruler-square', 'mdi-ruler-square'),
                         tooltip=f"Toggle ruler ({{{{ {viewer.GRID} ? 'on' : 'off' }}}})",
                     )
-                    vuetify.VDivider(vertical=True, classes='mx-1')
                     # Server rendering options
-                    checkbox(
-                        model=(viewer.SERVER_RENDERING, server_rendering),
-                        icons=('mdi-dns', 'mdi-open-in-app'),
-                        tooltip=f"Toggle rendering mode ({{{{ {viewer.SERVER_RENDERING} ? 'remote' : 'local' }}}})",
-                    )
+                    if mode == 'trame':
+                        vuetify.VDivider(vertical=True, classes='mx-1')
+                        checkbox(
+                            model=(viewer.SERVER_RENDERING, default_server_rendering),
+                            icons=('mdi-dns', 'mdi-open-in-app'),
+                            tooltip=f"Toggle rendering mode ({{{{ {viewer.SERVER_RENDERING} ? 'remote' : 'local' }}}})",
+                        )
                     with vuetify.VRow(
-                        v_show=(viewer.SERVER_RENDERING,),
+                        v_show=(viewer.SERVER_RENDERING, default_server_rendering),
                         classes='pa-0 ma-0 align-center',
                     ):
                         checkbox(
@@ -262,14 +274,19 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
                             icon='mdi-file-png-box',
                             tooltip='Save screenshot',
                         )
-        view = PyVistaRemoteLocalView(
-            plotter,
-            mode=(
-                # Must use single-quote string for JS here
-                f"{viewer.SERVER_RENDERING} ? 'remote' : 'local'",
-                'remote' if server_rendering else 'local',
-            ),
-        )
+        if mode == 'trame':
+            view = PyVistaRemoteLocalView(
+                plotter,
+                mode=(
+                    # Must use single-quote string for JS here
+                    f"{viewer.SERVER_RENDERING} ? 'remote' : 'local'",
+                    'remote' if default_server_rendering else 'local',
+                ),
+            )
+        elif mode == 'server':
+            view = PyVistaRemoteView(plotter)
+        elif mode == 'client':
+            view = PyVistaLocalView(plotter)
         ctrl.view_update = view.update
         ctrl.view_reset_camera = view.reset_camera
         ctrl.view_push_camera = view.push_camera
@@ -277,14 +294,18 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
     return plotter._id_name
 
 
-def initialize(server, plotter, server_rendering=True, collapse_menu=False):
+def initialize(server, plotter, mode='trame', default_server_rendering=True, collapse_menu=False):
     """Generate the UI for a given plotter."""
     state = server.state
     state.trame__title = UI_TITLE
 
     with VAppLayout(server, template_name=plotter._id_name):
         ui_container(
-            server, plotter, server_rendering=server_rendering, collapse_menu=collapse_menu
+            server,
+            plotter,
+            mode=mode,
+            default_server_rendering=default_server_rendering,
+            collapse_menu=collapse_menu,
         )
 
     # Returns the UI identifier (used in `template_name`)

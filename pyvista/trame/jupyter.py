@@ -116,11 +116,12 @@ def build_iframe(_server, ui=None, relative_url=None, relative_url_prefix=None, 
 
 def show_trame(
     plotter,
-    server_rendering=True,
+    mode='trame',
     name=None,
     relative_url=None,
     relative_url_prefix=None,
     collapse_menu=False,
+    default_server_rendering=True,
     **kwargs,
 ):
     """Run and display the trame application in jupyter's event loop.
@@ -128,8 +129,13 @@ def show_trame(
     plotter : pyvista.BasePlotter
         The PyVista plotter to show.
 
-    server_rendering : bool, default: True
-        Whether to use server-side or client-side rendering.
+    mode : str, default: 'trame'
+        The UI view mode. Options are:
+            * ``'trame'``: Uses a view that can switch between client and server
+              rendering modes.
+            * ``'server'``: Uses a view that is purely server rendering.
+            * ``'client'``: Uses a view that is purely client rendering (generally
+              safe without a virtual frame buffer)
 
     name : str
         The name of the trame server on which the UI is defined
@@ -144,6 +150,10 @@ def show_trame(
 
     collapse_menu : bool, default: False
         Collapse the UI menu (camera controls, etc.) on start.
+
+    default_server_rendering : bool, default: True
+        Whether to use server-side or client-side rendering on-start when
+        using the ``'trame'`` mode.
 
     **kwargs
         any keyword arguments are pass to the Jupyter IFrame. Additionally
@@ -163,7 +173,11 @@ def show_trame(
 
     # Initialize app
     ui_name = initialize(
-        server, plotter, server_rendering=server_rendering, collapse_menu=collapse_menu
+        server,
+        plotter,
+        mode=mode,
+        default_server_rendering=default_server_rendering,
+        collapse_menu=collapse_menu,
     )
 
     # Show as cell result

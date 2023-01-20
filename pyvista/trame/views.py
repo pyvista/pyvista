@@ -83,6 +83,10 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
         plotter.add_on_render_callback(lambda *args: self.update, render_event=True)
 
+    def push_camera(self, *args, **kwargs):
+        """No-op implementation to match local viewers."""
+        pass  # no-op
+
 
 class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     """PyVista wrapping of trame VtkLocalView for in-browser rendering.
@@ -174,8 +178,8 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         else:
             self._server.controller.on_server_ready.add(self.update)
 
-    def push_camera(self, *args, **kwargs):
+    def push_camera(self, *args, force=False, **kwargs):
         """Synchronize camera."""
-        if self._server.state[f'{self._namespace}Mode'] == 'local':
+        if force or self._server.state[f'{self._namespace}Mode'] == 'local':
             # Only use push_camera for local/client rendering
             return VtkRemoteLocalView.push_camera(self, *args, **kwargs)
