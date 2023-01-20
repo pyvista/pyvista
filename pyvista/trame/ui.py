@@ -31,7 +31,7 @@ def vuwrap(func):
 class Viewer:
     """Internal wrapper to sync trame view with Plotter."""
 
-    def __init__(self, plotter, server):
+    def __init__(self, plotter, server, suppress_rendering=False):
         """Initialize Viewer."""
         state, ctrl = server.state, server.controller
         self._server = server
@@ -39,6 +39,7 @@ class Viewer:
         self._state = state
 
         self.plotter = plotter
+        self.plotter.suppress_rendering = suppress_rendering
 
         # State variable names
         self.SHOW_UI = f'{plotter._id_name}_show_ui'
@@ -198,7 +199,7 @@ def ui_container(server, plotter, mode='trame', default_server_rendering=True, c
     """
     ctrl = server.controller
 
-    viewer = Viewer(plotter, server)
+    viewer = Viewer(plotter, server, suppress_rendering=mode == 'client')
 
     if mode != 'trame':
         default_server_rendering = mode == 'server'

@@ -299,6 +299,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.enable_hidden_line_removal()
 
         self._initialized = True
+        self._suppress_rendering = False
+
+    @property
+    def suppress_rendering(self):
+        """Get or set whether to suppress render calls."""
+        return self._suppress_rendering
+
+    @suppress_rendering.setter
+    def suppress_rendering(self, value):
+        self._suppress_rendering = bool(value)
 
     @property
     def render_window(self):
@@ -1629,6 +1639,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Does nothing until ``show`` has been called.
         """
+        if self._suppress_rendering:
+            return
         if self.render_window is not None and not self._first_time:
             log.debug('Rendering')
             self.renderers.on_plotter_render()
