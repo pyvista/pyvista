@@ -62,7 +62,7 @@ jupyter = [
 trame = [
     'trame>=2.2.5',
     'trame-server>=2.7.0',
-    'trame-vtk>=2.0.13',
+    'trame-vtk>=2.0.15',
     'jupyter-server-proxy',
 ]
 

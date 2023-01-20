@@ -11,4 +11,5 @@ panel
 pythreejs
 trame
 trame-server>=2.7.1
+trame-vtk>=2.0.15
 trimesh
