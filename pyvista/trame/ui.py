@@ -52,11 +52,13 @@ class Viewer:
         # controller
         ctrl.get_render_window = lambda: self.plotter.ren_win
 
-        # Listen to changes
+        # Listen to state changes
         self._state.change(self.EDGES)(self.on_edge_visiblity_change)
         self._state.change(self.GRID)(self.on_grid_visiblity_change)
         self._state.change(self.OUTLINE)(self.on_outline_visiblity_change)
         self._state.change(self.AXIS)(self.on_axis_visiblity_change)
+        self._state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
+        # Listen to events
         self._ctrl.trigger(self.SCREENSHOT)(self.screenshot)
 
     @vuwrap
@@ -120,6 +122,12 @@ class Viewer:
             self.plotter.show_axes()
         else:
             self.plotter.hide_axes()
+
+    @vuwrap
+    def on_rendering_mode_change(self, **kwargs):
+        """Handle any configurations when the render mode changes between client and server."""
+        if not self._state[self.SERVER_RENDERING]:
+            self._ctrl.view_push_camera(force=True)
 
     @property
     def actors(self):
