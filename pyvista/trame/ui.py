@@ -193,8 +193,11 @@ def ui_container(server, plotter, server_rendering=True, collapse_menu=False):
             classes=(f"{{ 'rounded-circle': !{viewer.SHOW_UI} }}",),
         ):
             with vuetify.VRow(classes='pa-0 ma-0'):
-                with vuetify.VBtn(icon=True, click=f'{viewer.SHOW_UI}=!{viewer.SHOW_UI}'):
-                    vuetify.VIcon('mdi-dots-vertical')
+                button(
+                    click=f'{viewer.SHOW_UI}=!{viewer.SHOW_UI}',
+                    icon='mdi-dots-vertical',
+                    tooltip=f"{{{{ {viewer.SHOW_UI} ? 'Hide' : 'Show' }}}} menu",
+                )
                 with vuetify.VRow(
                     v_show=(f'{viewer.SHOW_UI}', not collapse_menu),
                     classes='pa-0 ma-0 align-center',
