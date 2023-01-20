@@ -8,12 +8,15 @@ import logging
 import os
 import pathlib
 import platform
+import shutil
+import tempfile
 import textwrap
 from threading import Thread
 import time
 from typing import Dict
 import warnings
 import weakref
+import zipfile
 
 import numpy as np
 import scooby
@@ -38,6 +41,7 @@ from pyvista.utilities import (
 from pyvista.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
+    extract_geometry_algorithm,
     pointset_to_polydata_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
@@ -55,7 +59,6 @@ from ._property import Property
 from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
-from .export_vtkjs import export_plotter_vtkjs
 from .mapper import (
     DataSetMapper,
     FixedPointVolumeRayCastMapper,
@@ -2542,6 +2545,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         copy_mesh=False,
         backface_params=None,
         show_vertices=False,
+        extract_geometry=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2867,6 +2871,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
 
+        extract_geometry : bool, optional
+            Add a ``vtkExtractGeometry`` filter to the rendering pipeline
+            to extract the outer surface geometry before rendering. This
+            is actually always done under the hood by VTK with the
+            ``vtkDataSetSurfaceFilter`` via the ``vtkDataSetMapper``,
+            but the ``vtkExtractGeometry`` will often have better
+            performance when used with a ``vtkPolyDataMapper``.
+
+            .. warning::
+                PyVista uses the ``vtkDataSetMapper``, thus running a
+                redundant geometry extraction which could impact
+                performance. At a later date, we will implement
+                ``vtkPolyDataMapper``.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -2944,6 +2962,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper = DataSetMapper(theme=self.theme)
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
+
+        if extract_geometry is None:
+            extract_geometry = self.theme.rendering_extract_geometry
+        if extract_geometry:
+            # TODO: use PolyDataMapper over DataSetMapper
+            algo = extract_geometry_algorithm(algo or mesh)
+            mesh, algo = algorithm_to_mesh_handler(algo)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
@@ -5431,10 +5456,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             orbit()
 
-    def export_vtkjs(self, filename, compress_arrays=False):
+    def export_vtkjs(self, filename):
         """Export the current rendering scene as a VTKjs scene.
 
         It can be used for rendering in a web browser.
+
+        To be used with:
+          * https://kitware.github.io/vtk-js/examples/SceneExplorer.html
+          * https://kitware.github.io/vtk-js/examples/SceneExplorer/index.html
+
+        .. versionchanged:: 0.38.0
+            This was updated to use the exporting mechanisms directly
+            from VTK's ``vtkJSONSceneExporter``. Unfortunately, the
+            default ``vtkVtkJSSceneGraphSerializer`` only supports
+            ``vtkPolyData`` and volume rendered ``vtkImageData`` which
+            requires using the ``extract_geometry=True`` argument in
+            :func:`add_mesh() <pyvista.BasePlotter.add_mesh>`.
+
+        .. versionchanged:: 0.38.0
+            The ``compress_arrays`` keyword argument is no longer
+            available.
 
         Parameters
         ----------
@@ -5442,18 +5483,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Filename to export the scene to.  A filename extension of
             ``'.vtkjs'`` will be added.
 
-        compress_arrays : bool, optional
-            Enable array compression.
-
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(examples.load_hexbeam())
+
+        You may want to set ``rendering_extract_geometry`` in the theme to
+        ensure the serializer will handle all rendered data.
+
+        >>> pv.global_theme.rendering_extract_geometry = True  # doctest:+SKIP
+
+        Or you can pass ``extract_geometry`` to :func:`add_mesh() <pyvista.BasePlotter.add_mesh>`.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(examples.load_hexbeam(), extract_geometry=True)
         >>> pl.export_vtkjs("sample")  # doctest:+SKIP
 
         """
+        if not _vtk.VTK9:
+            raise RuntimeError('VTK.js export is only supported for VTK>=9.')
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -5461,7 +5509,49 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
 
-        export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+        # Make tmpdir
+        path = tempfile.mkdtemp()
+
+        # Export to directory
+        exporter = _vtk.vtkJSONSceneExporter()
+        exporter.SetFileName(str(path))
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.SetWriteTextures(True)
+        exporter.SetWritePolyLODs(True)
+        exporter.SetWriteTextureLODs(True)
+        exporter.Write()
+
+        # Zip to ".vtkjs" file and remove the directory
+        try:
+            import zlib  # noqa
+
+            compression = zipfile.ZIP_DEFLATED
+        except:  # noqa: E722
+            compression = zipfile.ZIP_STORED
+
+        if filename.endswith('.vtkjs'):
+            filename = filename[:-6]
+        filename += '.vtkjs'
+        zf = zipfile.ZipFile(filename, mode='w')
+
+        base = os.path.basename(filename)
+
+        try:
+            for dirName, _, fileList in os.walk(path):
+                for fname in fileList:
+                    fullPath = os.path.join(dirName, fname)
+                    relPath = f'{base}/{os.path.relpath(fullPath, path)}'
+                    zf.write(
+                        fullPath,
+                        arcname=relPath,
+                        compress_type=compression,
+                    )
+        finally:
+            zf.close()
+
+        shutil.rmtree(path)
+
+        return filename
 
     def export_obj(self, filename):
         """Export scene to OBJ format.

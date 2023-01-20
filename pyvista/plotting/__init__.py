@@ -11,7 +11,6 @@ from .colors import (
     PARAVIEW_BACKGROUND,
 )
 from .composite_mapper import CompositeAttributes, BlockAttributes, CompositePolyDataMapper
-from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
 from .helpers import plot, plot_arrows, plot_compare_four
 from .plotting import BasePlotter, Plotter, close_all
 from ._property import Property

@@ -33,7 +33,7 @@ def test_export_multi(tmpdir):
     # Create the scene
     plotter = pyvista.Plotter()
     plotter.add_mesh(multi)
-    plotter.export_vtkjs(filename, compress_arrays=True)
+    plotter.export_vtkjs(filename)
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')
 
@@ -72,10 +72,3 @@ def test_export_color(tmpdir):
     plotter.export_vtkjs(filename)
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')
-
-
-def test_vtkjs_url():
-    file_url = 'https://www.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
-    vtkjs_url = 'http://viewer.pyvista.org/?fileURL=https://dl.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
-    assert vtkjs_url in pyvista.get_vtkjs_url(file_url)
-    assert vtkjs_url in pyvista.get_vtkjs_url('dropbox', file_url)

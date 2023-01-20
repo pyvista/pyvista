@@ -267,6 +267,16 @@ def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlin
     return surf_filter
 
 
+def extract_geometry_algorithm(inp, extent=None):
+    """Add vtkGeometryFilter to pipeline."""
+    geom_filter = _vtk.vtkGeometryFilter()
+    if extent is not None:
+        geom_filter.SetExtent(extent)
+        geom_filter.SetExtentClipping(True)
+    set_algorithm_input(geom_filter, inp)
+    return geom_filter
+
+
 def active_scalars_algorithm(inp, name, preference='point'):
     """Add a filter that sets the active scalars."""
     alg = ActiveScalarsAlgorithm(

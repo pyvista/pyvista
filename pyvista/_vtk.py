@@ -363,6 +363,7 @@ if VTK9:
     from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
     from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
     from vtkmodules.vtkIOEnSight import vtkGenericEnSightReader
+    from vtkmodules.vtkIOExport import vtkJSONSceneExporter
     from vtkmodules.vtkIOGeometry import (
         vtkAVSucdReader,
         vtkBYUReader,

@@ -1149,6 +1149,7 @@ class DefaultTheme(_ThemeConfig):
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
         '_before_close_callback',
+        '_rendering_extract_geometry',
     ]
 
     def __init__(self):
@@ -1220,6 +1221,7 @@ class DefaultTheme(_ThemeConfig):
         self._hidden_line_removal = False
         self._anti_aliasing = None
         self._enable_camera_orientation_widget = False
+        self._rendering_extract_geometry = False
 
     @property
     def hidden_line_removal(self) -> bool:
@@ -2414,6 +2416,23 @@ class DefaultTheme(_ThemeConfig):
     @sharp_edges_feature_angle.setter
     def sharp_edges_feature_angle(self, value: float):
         self._sharp_edges_feature_angle = float(value)
+
+    @property
+    def rendering_extract_geometry(self) -> bool:
+        """Return or set whether to extract surface geometries before rendering.
+
+        This can improve performance of rendering.
+
+        See Also
+        --------
+        pyvista.BasePlotter.add_mesh
+
+        """
+        return self._rendering_extract_geometry
+
+    @rendering_extract_geometry.setter
+    def rendering_extract_geometry(self, value: bool):
+        self._rendering_extract_geometry = value
 
 
 class DarkTheme(DefaultTheme):
