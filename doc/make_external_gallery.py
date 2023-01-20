@@ -178,7 +178,7 @@ articles = dict(
         title="Coil Field Lines example in Magpylib",
         description="Pyvista streamlines of Coil Field Lines",
         link="https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html#pyvista-streamlines",
-        image="coil_field_lines.gif",
+        image="coil_field_lines.png",
     ),
     # entry=Example(title="",
     #     description="",
