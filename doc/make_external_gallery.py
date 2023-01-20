@@ -174,7 +174,7 @@ articles = dict(
         link="https://medium.com/towards-data-science/neighborhood-analysis-kd-trees-and-octrees-for-meshes-and-point-clouds-in-python-19fa96527b77",
         image="nikolov3.gif",
     ),
-    nikolov3=Example(
+    magpylib=Example(
         title="Coil Field Lines example in Magpylib",
         description="Pyvista streamlines of Coil Field Lines",
         link="https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html#pyvista-streamlines",
