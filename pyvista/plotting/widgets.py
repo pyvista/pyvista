@@ -793,7 +793,7 @@ class WidgetHelper:
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
-            :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`
+            :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`.
 
         Returns
         -------
