@@ -1,5 +1,5 @@
 matplotlib
 pyvista
 trame>=2.2.5
-trame-server>=2.7.0
+trame-server>=2.7.1
 trame-vtk>=2.0.13
