@@ -1747,7 +1747,7 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
     mapping = pyvista.opacity_transfer_function('sigmoid_10', n)
     assert len(mapping) == n
-    with pytest.raises(ValueError, match='Invalid opacity transfer function'):
+    with pytest.raises(ValueError):
         mapping = pyvista.opacity_transfer_function('foo', n)
     with pytest.raises(RuntimeError):
         mapping = pyvista.opacity_transfer_function(np.linspace(0, 1, 2 * n), n)

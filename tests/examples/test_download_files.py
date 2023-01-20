@@ -928,7 +928,7 @@ def test_cad_model_case():
 def test_coil_magnetic_field():
     filename = examples.download_coil_magnetic_field(load=False)
     assert os.path.isfile(filename)
-    assert filename.endswith('vtp')
+    assert filename.endswith('vti')
 
     dataset = examples.download_coil_magnetic_field(load=True)
     assert isinstance(dataset, pv.UniformGrid)

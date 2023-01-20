@@ -3387,13 +3387,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Opacity mapping for the scalars array.  You can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
             array, or you can pass a string to select a built in transfer
-            function. It a string, should be one of the following:
+            function. If a string, should be one of the following:
 
             * ``'linear'`` - Linear
             * ``'linear_r'`` - Linear except reversed
             * ``'geom'`` - Evenly spaced on the log scale
             * ``'geom_r'`` - Evenly spaced on the log scale except reversed
             * ``'sigmoid'`` - Linear map between -10.0 and 10.0
+            * ``'sigmoid_1'`` - Linear map between -1.0 and 1.0
+            * ``'sigmoid_2'`` - Linear map between -2.0 and 2.0
             * ``'sigmoid_3'`` - Linear map between -3.0 and 3.0
             * ``'sigmoid_4'`` - Linear map between -4.0 and 4.0
             * ``'sigmoid_5'`` - Linear map between -5.0 and 5.0

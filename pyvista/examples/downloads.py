@@ -4980,7 +4980,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     """Download the magnetic field of a coil.
 
     These examples were generated from the following `script
-    <https://github.com/pyvista/vtk-data/tree/master/Data/magpylib/`>_.
+    <https://github.com/pyvista/vtk-data/tree/master/Data/magpylib/>`_.
 
     Parameters
     ----------
@@ -4997,6 +4997,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     --------
     Download the magnetic field dataset and generate streamlines from the field.
 
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> grid = examples.download_coil_magnetic_field()
     >>> seed = pv.Disc(inner=1, outer=5.2, r_res=3, c_res=12)
@@ -5029,7 +5030,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> # plot the magnet field strength in the Z direction
     >>> scalars = np.abs(grid['B'][:, 2])
     >>> pl = pv.Plotter()
-    >>> pl.add_mesh(coils, render_lines_as_tubes=True, line_width=5, color='w')
+    >>> _ = pl.add_mesh(coils, render_lines_as_tubes=True, line_width=5, color='w')
     >>> vol = pl.add_volume(
     ...     grid,
     ...     scalars=scalars,
@@ -5039,7 +5040,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     ...     opacity='sigmoid_2',
     ... )
     >>> vol.prop.interpolation_type = 'linear'
-    >>> pl.add_volume_clip_plane(
+    >>> _ = pl.add_volume_clip_plane(
     ...     vol,
     ...     normal='-x',
     ...     normal_rotation=False,
