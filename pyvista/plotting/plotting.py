@@ -1637,17 +1637,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def render(self):
         """Render the main window.
 
-        Does nothing until ``show`` has been called.
+        Will not render until ``show`` has been called.
+
+        Any render callbacks added with
+        :func:`add_on_render_callback() <pyvista.BasePlotter.add_on_render_callback>`
+        and the ``render_event=False`` option set will still execute on any call.
         """
-        if self._suppress_rendering:
-            return
-        if self.render_window is not None and not self._first_time:
+        if self.render_window is not None and not self._first_time and not self._suppress_rendering:
             log.debug('Rendering')
             self.renderers.on_plotter_render()
             self.render_window.Render()
             self._rendered = True
-            for callback in self._on_render_callbacks:
-                callback(self)
+        for callback in self._on_render_callbacks:
+            callback(self)
 
     def add_on_render_callback(self, callback, render_event=False):
         """Add a method to be called post-render.

@@ -81,7 +81,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         # Sometimes there is a lag
         self._server.controller.on_server_ready.add(self.update)
 
-        plotter.add_on_render_callback(lambda *args: self.update, render_event=True)
+        plotter.add_on_render_callback(lambda *args: self.update(), render_event=True)
 
     def push_camera(self, *args, **kwargs):
         """No-op implementation to match local viewers."""
@@ -120,6 +120,9 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
             self.update()
         else:
             self._server.controller.on_server_ready.add(self.update)
+
+        # Callback to sync view on PyVista's render call when renders are suppressed
+        plotter.add_on_render_callback(lambda *args: self.update(), render_event=False)
 
 
 class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
@@ -177,6 +180,9 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
             self.update()
         else:
             self._server.controller.on_server_ready.add(self.update)
+
+        # Callback to sync view on PyVista's render call when using local view
+        plotter.add_on_render_callback(lambda *args: self.update(), render_event=False)
 
     def push_camera(self, *args, force=False, **kwargs):
         """Synchronize camera."""
