@@ -170,7 +170,9 @@ def checkbox(model, icons, tooltip):
         html.Span(tooltip)
 
 
-def ui_container(server, plotter, mode='trame', default_server_rendering=True, collapse_menu=False):
+def ui_container(
+    server, plotter, mode='trame', default_server_rendering=True, collapse_menu=False, **kwargs
+):
     """Generate VContainer for PyVista Plotter.
 
     Parameters
@@ -195,6 +197,9 @@ def ui_container(server, plotter, mode='trame', default_server_rendering=True, c
 
     collapse_menu : bool, default: False
         Collapse the UI menu (camera controls, etc.) on start.
+
+    **kwargs
+        Addition keyword arguments are passed to the view being created.
 
     """
     ctrl = server.controller
@@ -291,11 +296,13 @@ def ui_container(server, plotter, mode='trame', default_server_rendering=True, c
                     f"{viewer.SERVER_RENDERING} ? 'remote' : 'local'",
                     'remote' if default_server_rendering else 'local',
                 ),
+                **kwargs,
             )
+            ctrl.view_update_image = view.update_image
         elif mode == 'server':
-            view = PyVistaRemoteView(plotter)
+            view = PyVistaRemoteView(plotter, **kwargs)
         elif mode == 'client':
-            view = PyVistaLocalView(plotter)
+            view = PyVistaLocalView(plotter, **kwargs)
         ctrl.view_update = view.update
         ctrl.view_reset_camera = view.reset_camera
         ctrl.view_push_camera = view.push_camera
