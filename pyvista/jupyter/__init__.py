@@ -3,8 +3,6 @@ import asyncio
 from typing import Awaitable
 import warnings
 
-from turtle import back
-
 import pyvista
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
