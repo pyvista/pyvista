@@ -1036,8 +1036,10 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         color_tf = _vtk.vtkColorTransferFunction()
         mn, mx = self.scalar_range
+
         for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
             color_tf.AddRGBPoint(ii, *self.map_value(value, False))
+
         return color_tf
 
     def to_opacity_tf(self):
