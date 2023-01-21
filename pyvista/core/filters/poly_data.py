@@ -18,6 +18,7 @@ from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersi
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.errors import MissingDataError
+from pyvista.utilities import FieldAssociation, get_array
 from pyvista.utilities.misc import PyVistaFutureWarning
 
 
@@ -3445,19 +3446,25 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
-        # check active scalars
-        if scalars is not None:
-            self.point_data.active_scalars_name = scalars
-        else:
+        if scalars is None:
             pyvista.set_default_active_scalars(self)
             if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
+            scalars = self.active_scalars_name
+        arr = get_array(self, scalars, preference='point', err=False)
+        if arr is None:
+            raise ValueError('No arrays present to contour.')
+        field = get_array_association(self, scalars, preference='point')
+        if field != FieldAssociation.POINT:
+            raise ValueError('Only point data can be contoured.')
 
         if rng is None:
             rng = (self.active_scalars.min(), self.active_scalars.max())
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
-
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
         alg.GenerateValues(n_contours, rng[0], rng[1])
         alg.SetInputDataObject(self)
         alg.SetClipping(clipping)
