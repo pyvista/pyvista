@@ -134,7 +134,7 @@ class Viewer:
     def on_rendering_mode_change(self, **kwargs):
         """Handle any configurations when the render mode changes between client and server."""
         if not self._state[self.SERVER_RENDERING]:
-            self._ctrl.view_push_camera(force=True)
+            self._ctrl.view_push_camera()
 
     @property
     def actors(self):

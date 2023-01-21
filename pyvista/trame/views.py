@@ -179,9 +179,3 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
         # Callback to sync view on PyVista's render call when using local view
         plotter.add_on_render_callback(lambda *args: self.update(), render_event=False)
-
-    def push_camera(self, *args, force=False, **kwargs):
-        """Synchronize camera."""
-        if force or self._server.state[f'{self._namespace}Mode'] == 'local':
-            # Only use push_camera for local/client rendering
-            return VtkRemoteLocalView.push_camera(self, *args, **kwargs)
