@@ -57,7 +57,7 @@ class Viewer:
         self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
 
         # controller
-        ctrl.get_render_window = lambda: self.plotter.ren_win
+        ctrl.get_render_window = lambda: self.plotter.render_window
 
         # Listen to state changes
         self._state.change(self.EDGES)(self.on_edge_visiblity_change)

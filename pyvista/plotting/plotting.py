@@ -1924,8 +1924,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if self.render_window is not None:
-            self.ren_win.SetStereoTypeToAnaglyph()
-            self.ren_win.StereoRenderOn()
+            self.render_window.SetStereoTypeToAnaglyph()
+            self.render_window.StereoRenderOn()
 
     def disable_stereo_render(self):
         """Disable anaglyph stereo rendering.
