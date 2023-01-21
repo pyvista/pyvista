@@ -23,10 +23,10 @@ You can use the following snippet to launch the server:
 """
 JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
-Prior to plotting, please make sure to run `await set_jupyter_backend('server')` when using the `'server'` (or `'client'`) Jupyter backends.
+Prior to plotting, please make sure to run `await set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
-    await pv.set_jupyter_backend('server')
+    await pv.set_jupyter_backend('trame')
 
 It is critial that this `await` is used.
 

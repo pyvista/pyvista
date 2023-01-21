@@ -53,7 +53,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
             return show_pythreejs(plotter, return_viewer, **kwargs)
         if backend == 'ipyvtklink':
             warnings.warn(
-                '`ipyvtklink` backend is deprecated and has been replaced by the `server` backend.',
+                '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
                 PyVistaDeprecationWarning,
             )
             return show_ipyvtk(plotter, return_viewer)

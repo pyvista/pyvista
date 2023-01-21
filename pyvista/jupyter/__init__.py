@@ -59,7 +59,7 @@ def _validate_jupyter_backend(backend):
 
     if backend == 'ipyvtklink':
         warnings.warn(
-            '`ipyvtklink` backend is deprecated and has been replaced by the `server` backend.',
+            '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
             PyVistaDeprecationWarning,
         )
         try:
@@ -142,6 +142,9 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
           and ``jupyter-server-proxy`` installed for cloud/remote Jupyter
           instances. This mode is also aliased by ``'trame'``.
 
+        * ``'trame'``: The full Trame-based backend that combines both
+          ``'server'`` and ``'client'`` into one backend.
+
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
           will generate nothing on headless servers even with a
@@ -172,13 +175,9 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
 
     >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
-    Enable the trame client-side backend.
+    Enable the trame Trame backend.
 
-    >>> pv.set_jupyter_backend('client')  # doctest:+SKIP
-
-    Enable the trame server-side backend.
-
-    >>> pv.set_jupyter_backend('server')  # doctest:+SKIP
+    >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
 
     Just show static images.
 
