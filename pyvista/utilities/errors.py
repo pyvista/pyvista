@@ -342,6 +342,7 @@ class Report(scooby.Report):
             'pythreejs',
             'pytest_pyvista',
             'trame',
+            'trame_client',
             'trame_server',
             'trame_vtk',
             'jupyter_server_proxy',
