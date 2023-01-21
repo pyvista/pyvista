@@ -56,7 +56,9 @@ jupyter = [
     'ipyvtklink',
     'panel',
     'pythreejs',
-    'trame',
+    'trame>=2.2.6',
+    'trame-server>=2.8.0',
+    'trame-vtk>=2.0.15',
     'jupyter-server-proxy',
 ]
 trame = [
