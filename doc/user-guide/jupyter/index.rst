@@ -6,6 +6,10 @@ Plot with ``pyvista`` interactively within a `Jupyter
 <https://jupyter.org/>`_ notebook!
 
 
+.. note::
+   We recommend using the Trame-based backed. See :ref:`trame_jupyter`.
+
+
 Demo Using ``pythreejs``
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Create interactive physically based rendering using `pythreejs`_.

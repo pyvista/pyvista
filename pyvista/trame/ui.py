@@ -16,6 +16,12 @@ from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVist
 
 UI_TITLE = 'PyVista'
 
+VALID_UI_MODES = [
+    'trame',
+    'client',
+    'server',
+]
+
 
 def vuwrap(func):
     """Call view_update in trame to synchronize changes to a view."""
@@ -171,7 +177,7 @@ def checkbox(model, icons, tooltip):
 
 
 def ui_container(
-    server, plotter, mode='trame', default_server_rendering=True, collapse_menu=False, **kwargs
+    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
 ):
     """Generate VContainer for PyVista Plotter.
 
@@ -202,12 +208,15 @@ def ui_container(
         Addition keyword arguments are passed to the view being created.
 
     """
-    ctrl = server.controller
-
-    viewer = Viewer(plotter, server, suppress_rendering=mode == 'client')
-
+    if mode is None:
+        mode = pyvista.global_theme.trame.default_mode
+    if mode not in VALID_UI_MODES:
+        raise ValueError(f'`{mode}` is not a valid mode choice. Use one of: {VALID_UI_MODES}')
     if mode != 'trame':
         default_server_rendering = mode == 'server'
+
+    viewer = Viewer(plotter, server, suppress_rendering=mode == 'client')
+    ctrl = server.controller
 
     with vuetify.VContainer(
         fluid=True,
@@ -310,7 +319,7 @@ def ui_container(
     return plotter._id_name
 
 
-def initialize(server, plotter, mode='trame', default_server_rendering=True, collapse_menu=False):
+def initialize(server, plotter, mode=None, default_server_rendering=True, collapse_menu=False):
     """Generate the UI for a given plotter."""
     state = server.state
     state.trame__title = UI_TITLE

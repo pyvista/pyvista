@@ -4,11 +4,11 @@ Trame Jupyter backend for PyVista
 ---------------------------------
 
 PyVista has the ability to display fully featured plots within a
-Jupyter environment using `Trame <https://kitware.github.io/trame/index.html>`.
+Jupyter environment using `Trame <https://kitware.github.io/trame/index.html>`_.
 We provide mechanisms to pair PyVista and Trame so that PyVista plotters
 can be used in a web context with both server- and client-side rendering.
 
-The server-side rendering mode of the trame backend works by streaming the
+The server-side rendering mode of the Trame backend works by streaming the
 current render window to a canvas within Jupyter and then passing any user
 actions from the canvas back to the VTK render window (this is done under
 the hood by the ``vtkRemoteView`` in ``trame-vtk``.
@@ -32,7 +32,7 @@ within Jupyter:
 For convenience, you can enable ``trame`` by default with:
 
 .. note::
-    It is critical to ``await`` the call to :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>` when using trame in Jupyter.
+    It is critical to ``await`` the call to :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>` when using Trame in Jupyter.
 
 .. code:: python
 
@@ -50,7 +50,7 @@ as three separate backend choices):
 * ``'server'``: Uses a view that is purely server-rendering.
 * ``'client'``: Uses a view that is purely client-rendering (generally safe without a virtual frame buffer)
 
-With any of these trame-based backend choices, you must await the call to
+With any of these Trame-based backend choices, you must await the call to
 :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>`
 as mentioned above.
 
@@ -85,6 +85,65 @@ Using pip, you can set up your jupyter environment with:
     pip install 'jupyterlab>=3' ipywidgets 'pyvista[all,trame]'
 
 
+Jupyter-Server-Proxy
+++++++++++++++++++++
+
+When using PyVista in Jupyter that is hosted remotely (docker, cloud JupyterHub,
+or otherwise), you will need to pair the Trame backend with ``jupyter-server-proxy``.
+
+`Jupyter Server Proxy <https://jupyter-server-proxy.readthedocs.io/en/latest/>`_
+lets you access the Trame server hosting the views of the PyVista plotters
+alongside your notebook, and provide authenticated web access to them directly
+through Jupyter.
+
+.. note::
+    In a future version of `wslink <https://github.com/Kitware/wslink>`_
+    (the driving mechanism behind Trame's server), we plan to add support such that
+    the server can communicate via the
+    `Jupyter Comms <https://jupyter-notebook.readthedocs.io/en/stable/comms.html>`_
+    to avoid the need for a secondary web server and thus ``jupyter-server-proxy``.
+
+To configure PyVista and Trame to work with ``jupyter-server-proxy`` in a remote
+environment, you will need to set some options on the global PyVista theme:
+
+* :py:attr:`pyvista.themes.DefualtTheme.server_proxy_enabled`
+* :py:attr:`pyvista.themes.DefualtTheme.server_proxy_prefix`
+
+The default for ``server_proxy_prefix`` is ``'/proxy/'`` and this should be sufficient
+for most remote Jupyter environment and use within Docker.
+
+This can also be set with an environment variable:
+
+.. code::
+
+    export PYVISTA_TRAME_SERVER_PROXY_PREFIX='/proxy/'
+
+
+The prefix will need to be modified for JupyterHub deployments.
+
+On MyBinder, the ``JUPYTERHUB_SERVICE_PREFIX`` string often needs to prefix
+``'/proxy/'``. This makes it so the prefix includes the users ID in the URL.
+This can be done however you like but in bash looks like:
+
+.. code::
+
+    export PYVISTA_TRAME_SERVER_PROXY_PREFIX="$JUPYTERHUB_SERVICE_PREFIX/proxy/"
+
+
+Use within Docker
++++++++++++++++++
+
+To use PyVista's Trame-based Jupyter backend in Docker, you will need to set the
+following environment variables to properly configure the Trame server and
+``jupyter-server-proxy`` (the server proxy prefix may be different for some
+configurations, see above).
+
+.. code::
+
+    ENV PYVISTA_TRAME_SERVER_PROXY_PREFIX='/proxy/'
+    ENV TRAME_DEFAULT_HOST='127.0.0.1'
+
+
 Other Considerations
 ++++++++++++++++++++
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
@@ -96,7 +155,6 @@ framebuffer using ``Xvfb``.  You can either start it using bash with:
 
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_IPYVTK=true
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3

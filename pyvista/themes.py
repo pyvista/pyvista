@@ -1099,17 +1099,19 @@ class _TrameConfig(_ThemeConfig):
         '_interactive_ratio',
         '_still_ratio',
         '_jupyter_server_name',
-        '_relative_url_enabled',
-        '_relative_url_prefix',
+        '_server_proxy_enabled',
+        '_server_proxy_prefix',
+        '_default_mode',
     ]
 
     def __init__(self):
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
-        self._relative_url_enabled = 'PYVISTA_TRAME_RELATIVE_URL_PREFIX' in os.environ
+        self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
         # default for ``jupyter-server-proxy``
-        self._relative_url_prefix = os.environ.get('PYVISTA_TRAME_RELATIVE_URL_PREFIX', '/proxy/')
+        self._server_proxy_prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        self._default_mode = 'trame'
 
     @property
     def interactive_ratio(self) -> Number:
@@ -1162,22 +1164,39 @@ class _TrameConfig(_ThemeConfig):
         self._jupyter_server_name = name
 
     @property
-    def relative_url_enabled(self) -> bool:
+    def server_proxy_enabled(self) -> bool:
         """Return or set if use of relative URLs is enabled for the Jupyter interface."""
-        return self._relative_url_enabled
+        return self._server_proxy_enabled
 
-    @relative_url_enabled.setter
-    def relative_url_enabled(self, enabled: bool):
-        self._relative_url_enabled = bool(enabled)
+    @server_proxy_enabled.setter
+    def server_proxy_enabled(self, enabled: bool):
+        self._server_proxy_enabled = bool(enabled)
 
     @property
-    def relative_url_prefix(self):
+    def server_proxy_prefix(self):
         """Return or set URL prefix when using relative URLs with the Jupyter interface."""
-        return self._relative_url_prefix
+        return self._server_proxy_prefix
 
-    @relative_url_prefix.setter
-    def relative_url_prefix(self, prefix: str):
-        self._relative_url_prefix = prefix
+    @server_proxy_prefix.setter
+    def server_proxy_prefix(self, prefix: str):
+        self._server_proxy_prefix = prefix
+
+    @property
+    def default_mode(self):
+        """Return or set the default mode of the Trame backend.
+
+        * ``'trame'``: Uses a view that can switch between client and server
+          rendering modes.
+        * ``'server'``: Uses a view that is purely server rendering.
+        * ``'client'``: Uses a view that is purely client rendering (generally
+          safe without a virtual frame buffer)
+
+        """
+        return self._default_mode
+
+    @default_mode.setter
+    def default_mode(self, mode: str):
+        self._default_mode = mode
 
 
 class DefaultTheme(_ThemeConfig):

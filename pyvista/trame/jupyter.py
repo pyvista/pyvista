@@ -91,17 +91,17 @@ def launch_server(server):
     return server.ready
 
 
-def build_iframe(_server, ui=None, relative_url=None, relative_url_prefix=None, **kwargs):
+def build_iframe(_server, ui=None, server_proxy_enabled=None, server_proxy_prefix=None, **kwargs):
     """Build IPython display.IFrame object for the trame view."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
-    if relative_url is None:
-        relative_url = pyvista.global_theme.trame.relative_url_enabled
-    if relative_url:
-        if relative_url_prefix is None:
-            relative_url_prefix = pyvista.global_theme.trame.relative_url_prefix
-        # relative_url_prefix assumes trailing slash
+    if server_proxy_enabled is None:
+        server_proxy_enabled = pyvista.global_theme.trame.server_proxy_enabled
+    if server_proxy_enabled:
+        if server_proxy_prefix is None:
+            server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
+        # server_proxy_prefix assumes trailing slash
         src = (
-            f"{relative_url_prefix if relative_url_prefix else ''}{_server.port}/index.html{params}"
+            f"{server_proxy_prefix if server_proxy_prefix else ''}{_server.port}/index.html{params}"
         )
     else:
         src = f'{kwargs.get("protocol", "http")}://{kwargs.get("host", "localhost")}:{_server.port}/index.html{params}'
@@ -116,10 +116,10 @@ def build_iframe(_server, ui=None, relative_url=None, relative_url_prefix=None, 
 
 def show_trame(
     plotter,
-    mode='trame',
+    mode=None,
     name=None,
-    relative_url=None,
-    relative_url_prefix=None,
+    server_proxy_enabled=None,
+    server_proxy_prefix=None,
     collapse_menu=False,
     default_server_rendering=True,
     **kwargs,
@@ -130,7 +130,7 @@ def show_trame(
         The PyVista plotter to show.
 
     mode : str, default: 'trame'
-        The UI view mode. Options are:
+        The UI view mode. This can be set on the global theme. Options are:
             * ``'trame'``: Uses a view that can switch between client and server
               rendering modes.
             * ``'server'``: Uses a view that is purely server rendering.
@@ -140,11 +140,11 @@ def show_trame(
     name : str
         The name of the trame server on which the UI is defined
 
-    relative_url : bool, default: False
-        Build a relative URL. Often for use with ``jupyter-server-proxy``.
+    server_proxy_enabled : bool, default: False
+        Build a relative URL for use with ``jupyter-server-proxy``.
 
-    relative_url_prefix : str, optional
-        URL prefix when using ``relative_url``. This can be set globally in
+    server_proxy_prefix : str, optional
+        URL prefix when using ``server_proxy_enabled``. This can be set globally in
         the theme. To ignore, pass ``False``. For use with
         ``jupyter-server-proxy``, often set to ``proxy/``.
 
@@ -184,7 +184,7 @@ def show_trame(
     return build_iframe(
         server,
         ui=ui_name,
-        relative_url=relative_url,
-        relative_url_prefix=relative_url_prefix,
+        server_proxy_enabled=server_proxy_enabled,
+        server_proxy_prefix=server_proxy_prefix,
         **kwargs,
     )
