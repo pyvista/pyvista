@@ -3315,6 +3315,28 @@ def test_add_ids_algorithm():
     assert 'cell_ids' in result.cell_data
 
 
+@skip_windows_mesa
+def test_plot_volume_rgba(uniform):
+    with pytest.raises(ValueError, match='dimensions'):
+        uniform.plot(volume=True, scalars=np.empty((uniform.n_points, 1, 1)))
+
+    scalars = uniform.points - (uniform.origin)
+    scalars /= scalars.max()
+    scalars = np.hstack((scalars, scalars[::-1, -1].reshape(-1, 1) ** 2))
+    scalars *= 255
+
+    with pytest.raises(ValueError, match='datatype'):
+        uniform.plot(volume=True, scalars=scalars)
+
+    scalars = scalars.astype(np.uint8)
+    uniform.plot(volume=True, scalars=scalars)
+
+    pl = pyvista.Plotter()
+    with pytest.warns(UserWarning, match='Ignoring custom opacity'):
+        pl.add_volume(uniform, scalars=scalars, opacity='sigmoid_10')
+    pl.show()
+
+
 def test_color_cycler():
     pyvista.global_theme.color_cycler = 'default'
     pl = pyvista.Plotter()
