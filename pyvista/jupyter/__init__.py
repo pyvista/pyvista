@@ -16,7 +16,7 @@ ALLOWED_BACKENDS = [
     'pythreejs',
     'client',
     'server',
-    'trame',  # alias for 'server'
+    'trame',
     'none',
 ]
 
