@@ -30,4 +30,6 @@ dependencies:
   - pooch
   - pip:
       - pytest-memprof
-      - trame
+      - trame>=2.2.6
+      - trame-server>=2.8.0
+      - trame-vtk>=2.0.15

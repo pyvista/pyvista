@@ -24,7 +24,7 @@ pythreejs<2.5.0
 Sphinx<5.4.0
 sphinx-gallery<0.12.0
 tqdm<4.65.0
-trame>=2.2.5,<2.3
-trame-server>=2.7.0,<2.8
+trame>=2.2.6,<2.3
+trame-server>=2.8.0,<2.9
 trame-vtk>=2.0.15,<2.1
 trimesh<3.19.0
