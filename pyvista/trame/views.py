@@ -1,8 +1,4 @@
-"""Trame view interface for PyVista.
-
-This requires trame v2.3.0
-
-"""
+"""Trame view interface for PyVista."""
 import weakref
 
 from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
