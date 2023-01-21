@@ -79,14 +79,15 @@ details on how to use these plotting backends.
 .. toctree::
    :maxdepth: 1
 
+   trame
    pythreejs
    ipygany
    panel
    ipyvtk_plotting
 
 
-State of 3D Interactive Jupyterlab Plotting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+State of 3D Interactive Jupyter Plotting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
 
@@ -96,11 +97,11 @@ State of 3D Interactive Jupyterlab Plotting
    more and more users and developers shift to the cloud or cloud-based
    visualization.  Things here are likely to break and rapidly change
 
-   This was written in March 2021 and updated in August 2021, and may
+   This was written in March 2021 and updated in January 2023, and may
    already be out of date.  Be sure to check the developer websites
    for any changes.
 
-When plotting using Jupyterlab you have the option of using one of
+When plotting using Jupyter you have the option of using one of
 many modules, each of which has its advantages, disadvantages, and
 quirks.  While ``pyvista`` attempts to remove some of the differences
 in the API when using the ``Plotting`` class, the plots will still
@@ -111,26 +112,29 @@ your deployment environment.
 This table details various capabilities and technologies used by the
 jupyter notebook plotting modules:
 
-+---------------+--------------+--------------------+---------+----------------------+
-| Jupyter Notebook 3D Modules                                                        |
-+---------------+--------------+--------------------+---------+----------------------+
-|               | Jupyterlab 3 | Rendering Location | Backend | Requires Framebuffer |
-+---------------+--------------+--------------------+---------+----------------------+
-| panel         | Yes          | Client             | vtk.js  | Yes                  |
-+---------------+--------------+--------------------+---------+----------------------+
-| pythreejs     | Yes          | Client             | threejs | No                   |
-+---------------+--------------+--------------------+---------+----------------------+
-| ipygany       | Yes          | Client             | threejs | No                   |
-+---------------+--------------+--------------------+---------+----------------------+
-| ipyvtklink    | Yes          | Server             | vtk     | Yes                  |
-+---------------+--------------+--------------------+---------+----------------------+
++---------------+--------------+--------------------+---------------+----------------------+
+| Jupyter Notebook 3D Modules                                                              |
++---------------+--------------+--------------------+---------------+----------------------+
+|               | Jupyterlab 3 | Rendering Location | Backend       | Requires Framebuffer |
++---------------+--------------+--------------------+---------------+----------------------+
+| trame         | Yes          | Client & Server    | vtk.js & vtk  | Optional             |
++---------------+--------------+--------------------+---------------+----------------------+
+| panel         | Yes          | Client             | vtk.js        | Yes                  |
++---------------+--------------+--------------------+---------------+----------------------+
+| pythreejs     | Yes          | Client             | threejs       | No                   |
++---------------+--------------+--------------------+---------------+----------------------+
+| ipygany       | Yes          | Client             | threejs       | No                   |
++---------------+--------------+--------------------+---------------+----------------------+
+| ipyvtklink    | Yes          | Server             | vtk           | Yes                  |
++---------------+--------------+--------------------+---------------+----------------------+
 
-All the modules other than
-``ipygany`` and ``pythreejs`` require a framebuffer, which can be
-set up on a headless environment with :func:`pyvista.start_xvfb`.
+All the modules other than ``trame``, ``ipygany``, and ``pythreejs``
+require a framebuffer, which can be set up on a headless environment
+with :func:`pyvista.start_xvfb`.
 However, on Google Colab, where it's not possible to install system
-packages, you should stick with a module like ``threejs``, which does
-not require any server side rendering or framebuffer.
+packages, you should stick with a module like ``threejs`` or the
+``'client'`` variant of the trame-backend (see :ref:`trame_jupyter`),
+which do not require any server side rendering or framebuffer.
 
 See :ref:`install_ref` for more details installing on a headless
 environment for the backends requiring a framebuffer.  When installing
@@ -146,6 +150,15 @@ be done on a plot by plot basis by setting the ``jupyter_backend`` parameter in
 either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
 <pyvista.DataSet.plot>`.  You can also set it globally with the
 :func:`pyvista.set_jupyter_backend`.  For further details:
+
+.. note::
+   Some backends, notably the trame-based backends require :func:`pyvista.set_jupyter_backend`
+   to be awaited.
+
+   .. code:: python
+
+      import pyvista as pv
+      await pv.set_jupyter_backend('trame')
 
 .. autofunction:: pyvista.set_jupyter_backend
 

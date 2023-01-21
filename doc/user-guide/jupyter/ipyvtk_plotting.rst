@@ -6,7 +6,7 @@ Using ``ipyvtklink`` with PyVista
 .. warning::
 
     The ``ipyvtklink`` backend is deprecated in favor of the new
-    ``server`` backend powered by ``trame``. See :ref:trame_plotting
+    ``server`` backend powered by ``trame``. See :ref:`trame_jupyter`.
 
 ``pyvista`` has the ability to display fully featured plots within a
 JupyterLab environment using ``ipyvtklink``.  This feature works by
@@ -73,7 +73,7 @@ Using pip, you can set up your jupyterlab environment with:
 
 
 Other Considerations
-~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
 
 If you do not have GPU acceleration, be sure to start up a virtual
