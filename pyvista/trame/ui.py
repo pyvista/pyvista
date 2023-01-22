@@ -71,7 +71,7 @@ class Viewer:
     @vuwrap
     def on_edge_visiblity_change(self, **kwargs):
         """Toggle edge visibility for all actors."""
-        value = self._state[self.GRID]
+        value = self._state[self.EDGES]
         for _, actor in self.plotter.actors.items():
             if isinstance(actor, pyvista.Actor):
                 actor.prop.show_edges = value
