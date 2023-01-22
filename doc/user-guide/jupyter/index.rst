@@ -66,7 +66,7 @@ Supported Modules
 The PyVista module supports a variety of backends when plotting within
 a jupyter notebook:
 
-* Server- and client-side rendering with PyVista streaming to the notebook through
+* Server and client-side rendering with PyVista streaming to the notebook through
   `trame <https://github.com/Kitware/trame/>`_
 * Client-side rendering with `pythreejs`_ using ``threejs``.
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
@@ -116,21 +116,21 @@ your deployment environment.
 This table details various capabilities and technologies used by the
 jupyter notebook plotting modules:
 
-+---------------+--------------+--------------------+---------------+----------------------+
-| Jupyter Notebook 3D Modules                                                              |
-+---------------+--------------+--------------------+---------------+----------------------+
-|               | Jupyterlab 3 | Rendering Location | Backend       | Requires Framebuffer |
-+---------------+--------------+--------------------+---------------+----------------------+
-| trame         | Yes          | Client & Server    | vtk.js & vtk  | Optional             |
-+---------------+--------------+--------------------+---------------+----------------------+
-| panel         | Yes          | Client             | vtk.js        | Yes                  |
-+---------------+--------------+--------------------+---------------+----------------------+
-| pythreejs     | Yes          | Client             | threejs       | No                   |
-+---------------+--------------+--------------------+---------------+----------------------+
-| ipygany       | Yes          | Client             | threejs       | No                   |
-+---------------+--------------+--------------------+---------------+----------------------+
-| ipyvtklink    | Yes          | Server             | vtk           | Yes                  |
-+---------------+--------------+--------------------+---------------+----------------------+
++---------------+--------------------+---------------+----------------------+
+| Jupyter Notebook 3D Modules                                               |
++---------------+--------------------+---------------+----------------------+
+|               | Rendering Location | Backend       | Requires Framebuffer |
++---------------+--------------------+---------------+----------------------+
+| trame         | Client & Server    | vtk.js & vtk  | Optional             |
++---------------+--------------------+---------------+----------------------+
+| panel         | Client             | vtk.js        | Yes                  |
++---------------+--------------------+---------------+----------------------+
+| pythreejs     | Client             | threejs       | No                   |
++---------------+--------------------+---------------+----------------------+
+| ipygany       | Client             | threejs       | No                   |
++---------------+--------------------+---------------+----------------------+
+| ipyvtklink    | Server             | vtk           | Yes                  |
++---------------+--------------------+---------------+----------------------+
 
 All the modules other than ``trame``, ``ipygany``, and ``pythreejs``
 require a framebuffer, which can be set up on a headless environment

@@ -34,7 +34,7 @@ PyVista includes several optional dependencies for visualization and reading a v
 
 * `cmocean <https://pypi.org/project/cmocean/>`_ - Colormaps for Oceanography.
 * `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
-* `trame <https://github.com/Kitware/trame>`_ - Used for client- and server-side rendering in Jupyter.
+* `trame <https://github.com/Kitware/trame>`_ - Used for client and server-side rendering in Jupyter.
 * `matplotlib <https://pypi.org/project/matplotlib/>`_ - Used for colormaps and 2D plotting with :class:`pyvista.ChartMPL`.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
 * `pythreejs <https://pythreejs.readthedocs.io/en/stable/>`_ - Jupyter widgets based notebook extension that allows Jupyter to leverage the WebGL capabilities of modern browsers.
@@ -104,8 +104,6 @@ The following are a list of optional dependencies and their purpose:
 | ``matplotlib``                    | Using Colormaps                         |
 +-----------------------------------+-----------------------------------------+
 | ``trame``                         | Interactive notebook rendering          |
-+-----------------------------------+-----------------------------------------+
-| ``ipyvtklink``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+

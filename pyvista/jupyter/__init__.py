@@ -177,7 +177,7 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
 
     Enable the trame Trame backend.
 
-    >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
+    >>> await pv.set_jupyter_backend('trame')  # doctest:+SKIP
 
     Just show static images.
 

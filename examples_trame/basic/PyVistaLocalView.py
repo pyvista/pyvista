@@ -1,6 +1,6 @@
 """How to use PyVista's ``PyVistaLocalView`` trame view component.
 
-This is a full-fledged example on building your own user interfac
+This is a full-fledged example on building your own user interface
 with client-side rendering.
 """
 from trame.app import get_server

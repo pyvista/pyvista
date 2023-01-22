@@ -1,8 +1,7 @@
 """How to use PyVista UI template.
 
-This example demonstrates how to use ``ui_container`` to create
-add a PyVista ``Plotter`` to a UI with scene controls and standard
-UI features.
+This example demonstrates how to use ``ui_container`` to add a PyVista
+``Plotter`` to a UI with scene controls and standard UI features.
 """
 
 import matplotlib.pyplot as plt

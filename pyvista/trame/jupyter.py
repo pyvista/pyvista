@@ -129,7 +129,7 @@ def show_trame(
     plotter : pyvista.BasePlotter
         The PyVista plotter to show.
 
-    mode : str, default: 'trame'
+    mode : str, optional
         The UI view mode. This can be set on the global theme. Options are:
             * ``'trame'``: Uses a view that can switch between client and server
               rendering modes.
@@ -137,7 +137,7 @@ def show_trame(
             * ``'client'``: Uses a view that is purely client rendering (generally
               safe without a virtual frame buffer)
 
-    name : str
+    name : str, optional
         The name of the trame server on which the UI is defined
 
     server_proxy_enabled : bool, default: False
@@ -155,7 +155,7 @@ def show_trame(
         Whether to use server-side or client-side rendering on-start when
         using the ``'trame'`` mode.
 
-    **kwargs
+    **kwargs : dict, optional
         any keyword arguments are pass to the Jupyter IFrame. Additionally
         `protocol=` and `host=` can be use to override the iframe src url.
     """

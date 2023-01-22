@@ -6,7 +6,7 @@ Trame Jupyter backend for PyVista
 PyVista has the ability to display fully featured plots within a
 Jupyter environment using `Trame <https://kitware.github.io/trame/index.html>`_.
 We provide mechanisms to pair PyVista and Trame so that PyVista plotters
-can be used in a web context with both server- and client-side rendering.
+can be used in a web context with both server and client-side rendering.
 
 The server-side rendering mode of the Trame backend works by streaming the
 current render window to a canvas within Jupyter and then passing any user
@@ -31,13 +31,13 @@ within Jupyter:
 
 For convenience, you can enable ``trame`` by default with:
 
-.. note::
-    It is critical to ``await`` the call to :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>` when using Trame in Jupyter.
-
 .. code:: python
 
     import pyvista as pv
     await pv.set_jupyter_backend('trame')
+
+.. note::
+    It is critical to ``await`` the call to :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>` when using Trame in Jupyter.
 
 
 Trame Jupyter Modes
