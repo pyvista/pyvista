@@ -3358,6 +3358,24 @@ def test_color_cycler():
         pl.set_color_cycler(5)
 
 
+def test_plotter_render_callback():
+    n_ren = [0]
+
+    def callback(this_pl):
+        assert isinstance(this_pl, pyvista.Plotter)
+        n_ren[0] += 1
+
+    pl = pyvista.Plotter()
+    pl.add_on_render_callback(callback, render_event=True)
+    assert len(pl._on_render_callbacks) == 0
+    pl.add_on_render_callback(callback, render_event=False)
+    assert len(pl._on_render_callbacks) == 1
+    pl.show()
+    assert n_ren[0] == 1  # if two, render_event not respected
+    pl.clear_on_render_callbacks()
+    assert len(pl._on_render_callbacks) == 0
+
+
 @pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])
 def test_color_cycler_names(name):
     pl = pyvista.Plotter()

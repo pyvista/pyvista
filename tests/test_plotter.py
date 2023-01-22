@@ -18,6 +18,18 @@ def test_plotter_image():
         plotter.image
 
 
+def test_plotter_line_point_smoothing():
+    pl = pyvista.Plotter()
+    assert bool(pl.render_window.GetLineSmoothing()) is False
+    assert bool(pl.render_window.GetPointSmoothing()) is False
+    assert bool(pl.render_window.GetPolygonSmoothing()) is False
+
+    pl = pyvista.Plotter(line_smoothing=True, point_smoothing=True, polygon_smoothing=True)
+    assert bool(pl.render_window.GetLineSmoothing()) is True
+    assert bool(pl.render_window.GetPointSmoothing()) is True
+    assert bool(pl.render_window.GetPolygonSmoothing()) is True
+
+
 def test_enable_hidden_line_removal():
     plotter = pyvista.Plotter(shape=(1, 2))
     plotter.enable_hidden_line_removal(False)
@@ -267,6 +279,24 @@ def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
     cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
+
+
+def test_plotter_actors(sphere, cube):
+    pl = pyvista.Plotter()
+    actor_a = pl.add_mesh(sphere)
+    actor_b = pl.add_mesh(cube)
+    assert len(pl.actors) == 2
+    assert actor_a in pl.actors.values()
+    assert actor_b in pl.actors.values()
+
+
+def test_plotter_suppress_rendering():
+    pl = pyvista.Plotter()
+    assert isinstance(pl.suppress_rendering, bool)
+    pl.suppress_rendering = True
+    assert pl.suppress_rendering is True
+    pl.suppress_rendering = False
+    assert pl.suppress_rendering is False
 
 
 def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista.PolyData):
