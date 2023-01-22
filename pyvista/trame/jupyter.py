@@ -57,13 +57,6 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-def is_server_up(server):
-    """Check if server is running."""
-    if isinstance(server, str):
-        server = get_server(server)
-    return server._running_stage >= 2
-
-
 def launch_server(server):
     """Launch a trame server."""
     if isinstance(server, str):
@@ -166,9 +159,9 @@ def show_trame(
         server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
     else:
         server = get_server(name=name)
-    if name is None and not is_server_up(server):
+    if name is None and not server.running:
         raise TrameJupyterServerDownError()
-    elif not is_server_up(server):
+    elif not server.running:
         raise TrameServerDownError(name)
 
     # Initialize app
