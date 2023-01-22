@@ -129,8 +129,6 @@ jupyter notebook plotting modules:
 +---------------+--------------------+---------------+----------------------+
 | ipygany       | Client             | threejs       | No                   |
 +---------------+--------------------+---------------+----------------------+
-| ipyvtklink    | Server             | vtk           | Yes                  |
-+---------------+--------------------+---------------+----------------------+
 
 All the modules other than ``trame``, ``ipygany``, and ``pythreejs``
 require a framebuffer, which can be set up on a headless environment
