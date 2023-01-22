@@ -129,9 +129,8 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
           but does not require any additional modules to be installed.
 
         * ``'client'`` : Export/serialize the scene graph to be rendered
-          with VTK.js client-side through ``trame``. Requires that a virtual
-          framebuffer be set up when displaying on a headless server and
-          requires ``trame`` and ``jupyter-server-proxy`` to be installed.
+          with VTK.js client-side through ``trame``. Requires ``trame``
+          and ``jupyter-server-proxy`` to be installed.
 
         * ``'server'``: Render remotely and stream the resulting VTK
           images back to the client using ``trame``. This replaces the
@@ -143,7 +142,8 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
           instances. This mode is also aliased by ``'trame'``.
 
         * ``'trame'``: The full Trame-based backend that combines both
-          ``'server'`` and ``'client'`` into one backend.
+          ``'server'`` and ``'client'`` into one backend. This requires a
+          virtual frame buffer.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
