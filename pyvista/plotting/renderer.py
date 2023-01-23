@@ -765,13 +765,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.update_bounds_axes()
 
+        if isinstance(culling, str):
+            culling = culling.lower()
+
         if culling:
-            if culling.lower() in [True, 'back', 'backface', 'b']:
+            if culling in [True, 'back', 'backface', 'b']:
                 try:
                     actor.GetProperty().BackfaceCullingOn()
                 except AttributeError:  # pragma: no cover
                     pass
-            elif culling.lower() in ['front', 'frontface', 'f']:
+            elif culling in ['front', 'frontface', 'f']:
                 try:
                     actor.GetProperty().FrontfaceCullingOn()
                 except AttributeError:  # pragma: no cover
