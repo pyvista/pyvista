@@ -1,6 +1,8 @@
 """Filters module with a class to manage filters/algorithms for unstructured grid datasets."""
 from functools import wraps
 
+import numpy as np
+
 from pyvista import _vtk, abstract_class
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -24,7 +26,9 @@ class UnstructuredGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UnstructuredGrid
-            Cleaned unstructured grid.
+            Cleaned unstructured grid with additional ``'OriginalPointIds```
+            array added to the dataset indicating the relationship between the
+            cleaned points and the original points.
 
         Notes
         -----
@@ -58,6 +62,9 @@ class UnstructuredGridFilters(DataSetFilters):
             except ImportError:
                 raise ImportError('Install vtk>=9.0.3 for this feature') from None
 
+        point_id_name = 'OriginalPointIds'
+        self.point_data[point_id_name] = np.arange(self.n_points, dtype=np.int32)
+
         alg = vtkmCleanGrid()
         alg.SetInputDataObject(self)
         # Must set compact points to true. Otherwise, we risk a segfault since
@@ -65,7 +72,17 @@ class UnstructuredGridFilters(DataSetFilters):
         # number of points in the output grid.
         alg.SetCompactPoints(True)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning UnstructuredGrid')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        # Not all arrays are preserved. In particular, arrays with more than 3
+        # components seem to be removed
+        # ids = output.point_data[point_id_name]
+        # for key in self.point_data:
+        #     if key not in output.point_data:
+        #         output.point_data[key] = self.point_data[key][ids]
+
+        self.point_data[point_id_name]
+        return output
 
     @wraps(PolyDataFilters.delaunay_2d)
     def delaunay_2d(self, *args, **kwargs):
