@@ -1,6 +1,6 @@
 """How to use PyVista UI template.
 
-This example demonstrates how to use ``ui_container`` to add a PyVista
+This example demonstrates how to use ``plotter_ui`` to add a PyVista
 ``Plotter`` to a UI with scene controls and standard UI features.
 """
 
@@ -11,7 +11,7 @@ from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.trame.ui import ui_container
+from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
@@ -57,14 +57,10 @@ with SinglePageLayout(server) as layout:
 
     with layout.content:
         # Use PyVista UI template for Plotters
-        ui_container(server, plotter)
+        view = plotter_ui(plotter)
+        ctrl.view_update = view.update
 
     # hide footer
     layout.footer.hide()
 
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    server.start()
+server.start()

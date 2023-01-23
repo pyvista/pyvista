@@ -5,7 +5,7 @@ from vtkmodules.vtkFiltersCore import vtkContourFilter
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.trame.ui import ui_container
+from pyvista.trame.ui import plotter_ui
 
 # -----------------------------------------------------------------------------
 # Trame initialization
@@ -99,12 +99,8 @@ with SinglePageLayout(server) as layout:
             classes="pa-0 fill-height",
         ):
             # Use PyVista UI template for Plotters
-            ui_container(server, pl, namespace='demo')
+            view = plotter_ui(pl, namespace='demo')
+            ctrl.view_update = view.update
+            ctrl.view_update_image = view.update_image
 
-
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    server.start()
+server.start()

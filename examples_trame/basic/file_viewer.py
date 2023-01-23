@@ -5,7 +5,7 @@ from trame.ui.vuetify import SinglePageLayout
 from trame.widgets import vuetify
 
 import pyvista as pv
-from pyvista.trame.ui import ui_container
+from pyvista.trame.ui import plotter_ui
 
 # -----------------------------------------------------------------------------
 # Trame setup
@@ -76,7 +76,8 @@ with SinglePageLayout(server) as layout:
             fluid=True, classes="pa-0 fill-height", style="position: relative;"
         ):
             # Use PyVista UI template for Plotters
-            ui_container(server, pl)
+            view = plotter_ui(pl)
+            ctrl.view_update = view.update
 
 
 # -----------------------------------------------------------------------------

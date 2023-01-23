@@ -54,7 +54,6 @@ async def test_trame(sphere):
     view_obj = view_obj_now - view_obj_orig
     assert len(view_obj) == 1
     viewer = view_obj.pop()
-    assert viewer._server is server
 
     for cp in ['xy', 'xz', 'yz', 'isometric']:
         exec(f'viewer.view_{cp}()')
@@ -63,8 +62,8 @@ async def test_trame(sphere):
         assert cpos == pl.camera_position
 
     orig_value = actor.prop.show_edges
-    viewer._state[viewer.EDGES] = not orig_value
-    viewer.on_edge_visiblity_change()
+    server.state[viewer.EDGES] = not orig_value
+    viewer.on_edge_visiblity_change(**server.state.to_dict())
     assert actor.prop.show_edges != orig_value
 
     # pl.camera.zoom(2)
@@ -72,34 +71,34 @@ async def test_trame(sphere):
     viewer.reset_camera()
     # assert cpos != pl.camera_position
 
-    viewer._state[viewer.GRID] = True
+    server.state[viewer.GRID] = True
     assert len(pl.actors) == 1
-    viewer.on_grid_visiblity_change()
+    viewer.on_grid_visiblity_change(**server.state.to_dict())
     assert len(pl.actors) == 2
-    viewer._state[viewer.GRID] = False
-    viewer.on_grid_visiblity_change()
+    server.state[viewer.GRID] = False
+    viewer.on_grid_visiblity_change(**server.state.to_dict())
     assert len(pl.actors) == 1
 
-    viewer._state[viewer.OUTLINE] = True
+    server.state[viewer.OUTLINE] = True
     assert len(pl.actors) == 1
-    viewer.on_outline_visiblity_change()
+    viewer.on_outline_visiblity_change(**server.state.to_dict())
     assert len(pl.actors) == 2
-    viewer._state[viewer.OUTLINE] = False
-    viewer.on_outline_visiblity_change()
+    server.state[viewer.OUTLINE] = False
+    viewer.on_outline_visiblity_change(**server.state.to_dict())
     assert len(pl.actors) == 1
 
-    viewer._state[viewer.AXIS] = True
+    server.state[viewer.AXIS] = True
     assert not hasattr(pl.renderer, 'axes_actor')
-    viewer.on_axis_visiblity_change()
+    viewer.on_axis_visiblity_change(**server.state.to_dict())
     assert hasattr(pl.renderer, 'axes_actor')
-    viewer._state[viewer.AXIS] = False
-    viewer.on_axis_visiblity_change()
+    server.state[viewer.AXIS] = False
+    viewer.on_axis_visiblity_change(**server.state.to_dict())
     assert not pl.renderer.axes_widget.GetEnabled()
 
-    viewer._state[viewer.SERVER_RENDERING] = False
-    viewer.on_rendering_mode_change()
-    viewer._state[viewer.SERVER_RENDERING] = True
-    viewer.on_rendering_mode_change()
+    server.state[viewer.SERVER_RENDERING] = False
+    viewer.on_rendering_mode_change(**server.state.to_dict())
+    server.state[viewer.SERVER_RENDERING] = True
+    viewer.on_rendering_mode_change(**server.state.to_dict())
 
     assert viewer.actors == pl.actors
 
