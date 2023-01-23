@@ -187,6 +187,9 @@ jobs:
           publish_dir: doc/_build/html/
           cname: docs.pyvista.org
 
+      - name: Remove non-multi version folder
+        run: rm -rf doc
+
   publish-notebooks:
     name: Publish Notebooks for MyBinder
     runs-on: ubuntu-20.04
