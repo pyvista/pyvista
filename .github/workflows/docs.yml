@@ -112,6 +112,11 @@ jobs:
         if: always()
         run: tar -zcvf docs-build.tar.gz doc/_build/html/
 
+      - name: Tar build multiversion
+        if: always()
+        working-directory: ./doc/_build/html/
+        run: tar -zcvf docs-build-multi.tar.gz .
+
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v3
