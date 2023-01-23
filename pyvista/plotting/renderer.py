@@ -681,7 +681,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def add_actor(
         self,
-        uinput,
+        actor,
         reset_camera=False,
         name=None,
         culling=False,
@@ -695,8 +695,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        uinput : vtk.vtkMapper or vtk.vtkActor
-            Vtk mapper or vtk actor to be added.
+        actor : vtk.vtkMapper or vtk.vtkActor
+            vtkMapper or vtkActor to be added.
 
         reset_camera : bool, optional
             Resets the camera when ``True``.
@@ -732,20 +732,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Actor properties.
         """
         # Remove actor by that name if present
+        rv = None
         if name and remove_existing_actor:
             rv = self.remove_actor(name, reset_camera=False, render=False)
 
-        if isinstance(uinput, _vtk.vtkMapper):
-            actor = Actor(name=name)
-            actor.SetMapper(uinput)
-        else:
-            actor = uinput
+        if isinstance(actor, _vtk.vtkMapper):
+            actor = Actor(mapper=actor, name=name)
+
+        if isinstance(actor, Actor) and name:
+            # WARNING: this will override the name if already set on Actor
             actor.name = name
 
-        self.AddActor(actor)
-        actor.renderer = proxy(self)
+        if isinstance(actor, Actor):
+            actor.renderer = proxy(self)
 
-        self._actors[actor.name] = actor
+        if name is None:
+            if isinstance(actor, Actor):
+                name = actor.name
+            else:
+                # Fallback for non-wrapped actors
+                # e.g., vtkScalarBarActor
+                name = actor.GetAddressAsString("")
+
+        self._actors[name] = actor
 
         if reset_camera:
             self.reset_camera(render)
@@ -756,16 +765,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.update_bounds_axes()
 
-        if isinstance(culling, str):
-            culling = culling.lower()
-
         if culling:
-            if culling in [True, 'back', 'backface', 'b']:
+            if culling.lower() in [True, 'back', 'backface', 'b']:
                 try:
                     actor.GetProperty().BackfaceCullingOn()
                 except AttributeError:  # pragma: no cover
                     pass
-            elif culling in ['front', 'frontface', 'f']:
+            elif culling.lower() in ['front', 'frontface', 'f']:
                 try:
                     actor.GetProperty().FrontfaceCullingOn()
                 except AttributeError:  # pragma: no cover
@@ -774,6 +780,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
+        self.AddActor(actor)
         self.Modified()
 
         prop = None
