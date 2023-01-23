@@ -157,6 +157,11 @@ jobs:
         with:
           name: docs-build
           path: .
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: docs-build-multi
+          path: .
       - name: Untar build
         run: tar -xzvf docs-build.tar.gz
       - name: Copy meta data
