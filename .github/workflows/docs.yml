@@ -192,14 +192,14 @@ jobs:
 
       - name: Deploy on main multiversion
         if: github.event_name == 'push'
-        uses: pyansys/actions/doc-deploy-dev@v3
+        uses: pyansys/actions/doc-deploy-dev@main
         with:
             token: ${{ secrets.GITHUB_TOKEN }}
             decompress_artifact: true
      
       - name: Deploy on release multiversion
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-        uses: pyansys/actions/doc-deploy-stable@v3
+        uses: pyansys/actions/doc-deploy-stable@main
         with:
             token: ${{ secrets.GITHUB_TOKEN }}
             decompress_artifact: true
