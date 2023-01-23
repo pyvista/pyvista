@@ -11,6 +11,62 @@ from pyvista.core.filters.poly_data import PolyDataFilters
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
+    def clean(self, progress_bar=False):
+        """Remove redundant or unused cells or points.
+
+        This also removes all zero data arrays.
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Cleaned unstructured grid.
+
+        Notes
+        -----
+        Requires ``vtk>=9.0.3``.
+
+        Examples
+        --------
+        Merge two adjacent grids without merging their points.
+
+        >>> from pyvista import examples
+        >>> grid_a = examples.load_hexbeam()
+        >>> grid_b = grid_a.copy()
+        >>> grid_b.points[:, 0] += 1
+        >>> grid_c = grid_a.merge(grid_b, merge_points=False)
+        >>> grid_c  # doctest:+SKIP
+        >>> grid_c.n_points
+        198
+
+        Now, clean the grid and show the overlapping points have been merged.
+
+        >>> grid_merged = grid_c.clean()
+        >>> grid_merged.n_points
+        165
+
+        """
+        try:  # pragma: no cover
+            from vtkmodules.vtkAcceleratorsVTKm import vtkmCleanGrid
+        except ImportError:
+            try:
+                from vtkmodules.vtkAcceleratorsVTKmFilters import vtkmCleanGrid
+            except ImportError:
+                raise ImportError('Install vtk>=9.0.3 for this feature') from None
+
+        alg = vtkmCleanGrid()
+        alg.SetInputDataObject(self)
+        # Must set compact points to true. Otherwise, we risk a segfault since
+        # the number of points in each point_data array may not match the
+        # number of points in the output grid.
+        alg.SetCompactPoints(True)
+        _update_alg(alg, progress_bar=progress_bar, message='Cleaning UnstructuredGrid')
+        return _get_output(alg)
+
     @wraps(PolyDataFilters.delaunay_2d)
     def delaunay_2d(self, *args, **kwargs):
         """Wrap ``PolyDataFilters.delaunay_2d``."""

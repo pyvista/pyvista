@@ -28,7 +28,20 @@ from pyvista.utilities import wrap, ProgressMonitor
 
 
 def _update_alg(alg, progress_bar=False, message=''):
-    """Update an algorithm with or without a progress bar."""
+    """Update an algorithm with or without a progress bar.
+
+    Parameters
+    ----------
+    alg : vtkAlgorithm
+        VTK algorithm.
+
+    progress_bar : bool, default: False
+        Display a progress bar to indicate progress.
+
+    message : str, default: ''
+        Message to display when the progress bar is shown.
+
+    """
     if progress_bar:
         with ProgressMonitor(alg, message=message):
             alg.Update()
