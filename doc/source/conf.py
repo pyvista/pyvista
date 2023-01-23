@@ -472,6 +472,18 @@ html_copy_source = False
 html_show_sphinx = False
 
 
+
+def get_version_match(semver):
+    """Evaluate the version match for the multi-documentation."""
+    if semver.endswith("dev0"):
+        return "dev"
+    major, minor, _ = semver.split(".")
+    return ".".join([major, minor])
+
+
+cname = os.getenv("DOCUMENTATION_CNAME", "<DEFAULT_CNAME>")
+
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -504,6 +516,11 @@ html_theme_options = {
             "icon": "fa fa-file-text fa-fw",
         },
     ],
+    "switcher": {
+        "json_url": f"https://{cname}/release/versions.json",
+        "version_match": get_version_match(version),
+    },
+    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
 }
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
