@@ -736,18 +736,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
-            actor = Actor()
+            actor = Actor(name=name)
             actor.SetMapper(uinput)
         else:
             actor = uinput
+            actor.name = name
 
         self.AddActor(actor)
         actor.renderer = proxy(self)
 
-        if name is None:
-            name = actor.GetAddressAsString("")
-
-        self._actors[name] = actor
+        self._actors[actor.name] = actor
 
         if reset_camera:
             self.reset_camera(render)
