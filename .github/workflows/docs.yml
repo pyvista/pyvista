@@ -124,6 +124,13 @@ jobs:
           name: docs-build
           path: docs-build.tar.gz
 
+      - name: Upload HTML multiversion documentation 
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-build-multi
+          path: docs-build-multi.tar.gz
+
       - uses: actions/upload-artifact@v3
         with:
           name: examples
