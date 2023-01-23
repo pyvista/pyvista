@@ -130,20 +130,6 @@ This can be done however you like but in bash looks like:
     export PYVISTA_TRAME_SERVER_PROXY_PREFIX="$JUPYTERHUB_SERVICE_PREFIX/proxy/"
 
 
-Use within Docker
-+++++++++++++++++
-
-To use PyVista's Trame-based Jupyter backend in Docker, you will need to set the
-following environment variables to properly configure the Trame server and
-``jupyter-server-proxy`` (the server proxy prefix may be different for some
-configurations, see above).
-
-.. code::
-
-    ENV PYVISTA_TRAME_SERVER_PROXY_PREFIX='/proxy/'
-    ENV TRAME_DEFAULT_HOST='127.0.0.1'
-
-
 Other Considerations
 ++++++++++++++++++++
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.

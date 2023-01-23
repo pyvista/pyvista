@@ -1,5 +1,6 @@
 """Trame utilities for running in Jupyter."""
 import logging
+import os
 import warnings
 
 from IPython import display
@@ -74,6 +75,8 @@ def launch_server(server):
         server.controller.on_server_ready.add(on_ready)
         server.start(
             exec_mode='task',
+            # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
+            host=os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1'),
             port=0,
             open_browser=False,
             show_connection_info=False,
