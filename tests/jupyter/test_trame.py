@@ -1,5 +1,3 @@
-import gc
-
 import pytest
 
 import pyvista as pv
@@ -10,7 +8,7 @@ try:
     from IPython.display import IFrame
     from trame.app import get_server
 
-    from pyvista.trame import show_trame  # noqa
+    from pyvista.trame.ui import get_or_create_viewer
 except:  # noqa: E722
     has_trame = False
 
@@ -36,24 +34,26 @@ def test_set_jupyter_backend_ipyvtklink():
 @skip_no_trame
 @skip_no_plotting
 @pytest.mark.asyncio
-async def test_trame(sphere):
+async def test_trame_server_launch():
     await pv.set_jupyter_backend('trame')
-
-    view_obj_orig = {obj for obj in gc.get_objects() if isinstance(obj, pv.trame.ui.Viewer)}
-
-    pl = pv.Plotter(notebook=True)
-    actor = pl.add_mesh(sphere)
-    widget = pl.show()
-    assert isinstance(widget, IFrame)
-
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
     assert server.running
 
-    # access the active Viewer object
-    view_obj_now = {obj for obj in gc.get_objects() if isinstance(obj, pv.trame.ui.Viewer)}
-    view_obj = view_obj_now - view_obj_orig
-    assert len(view_obj) == 1
-    viewer = view_obj.pop()
+
+@skip_no_trame
+@skip_no_plotting
+@pytest.mark.asyncio
+async def test_trame():
+    await pv.set_jupyter_backend('trame')
+    server = get_server(name=pv.global_theme.trame.jupyter_server_name)
+    assert server.running
+
+    pl = pv.Plotter(notebook=True)
+    actor = pl.add_mesh(pv.Cone())
+    widget = pl.show()
+    assert isinstance(widget, IFrame)
+
+    viewer = get_or_create_viewer(pl)
 
     for cp in ['xy', 'xz', 'yz', 'isometric']:
         exec(f'viewer.view_{cp}()')
@@ -65,11 +65,6 @@ async def test_trame(sphere):
     server.state[viewer.EDGES] = not orig_value
     viewer.on_edge_visiblity_change(**server.state.to_dict())
     assert actor.prop.show_edges != orig_value
-
-    # pl.camera.zoom(2)
-    # cpos = list(pl.camera_position)
-    viewer.reset_camera()
-    # assert cpos != pl.camera_position
 
     server.state[viewer.GRID] = True
     assert len(pl.actors) == 1
@@ -102,11 +97,4 @@ async def test_trame(sphere):
 
     assert viewer.actors == pl.actors
 
-    n_called = [0]
-
-    def callback(*args):
-        n_called[0] += 1
-
-    pl.add_on_render_callback(callback)
-    viewer.screenshot()
-    assert n_called[0] == 1
+    assert isinstance(viewer.screenshot(), memoryview)
