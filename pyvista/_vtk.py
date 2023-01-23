@@ -17,8 +17,10 @@ try:
     from vtkmodules.vtkCommonCore import vtkVersion
 
     VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
+    VTK91 = VTK9 and vtkVersion().GetVTKMinorVersion() >= 1
 except ImportError:  # pragma: no cover
     VTK9 = False
+    VTK91 = False
 
 # for charts
 _has_vtkRenderingContextOpenGL2 = False
@@ -49,6 +51,7 @@ if VTK9:
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
     from vtkmodules.vtkChartsCore import (
         vtkAxis,
         vtkChart,
@@ -112,6 +115,7 @@ if VTK9:
         vtkFloatArray,
         vtkIdList,
         vtkIdTypeArray,
+        vtkLogger,
         vtkLookupTable,
         vtkOutputWindow,
         vtkPoints,
@@ -232,7 +236,11 @@ if VTK9:
     except ImportError:  # pragma: no cover
         pass
 
-    from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
+    from vtkmodules.vtkCommonExecutionModel import (
+        vtkAlgorithm,
+        vtkAlgorithmOutput,
+        vtkImageToStructuredGrid,
+    )
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (
@@ -446,7 +454,20 @@ if VTK9:
         vtkSplineWidget,
         vtkTexturedButtonRepresentation2D,
     )
-    from vtkmodules.vtkPythonContext2D import vtkPythonItem
+
+    try:
+        from vtkmodules.vtkPythonContext2D import vtkPythonItem
+    except ImportError:  # pragma: no cover
+        # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
+        class vtkPythonItem:  # type: ignore
+            """Empty placeholder."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
+
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
@@ -546,6 +567,10 @@ if VTK9:
     )
     from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
+    # 9.1+ imports
+    if VTK91:
+        from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
+
     # lazy import for some of the less used readers
     def lazy_vtkOBJExporter():
         """Lazy import of the vtkOBJExporter."""
@@ -643,6 +668,7 @@ else:  # pragma: no cover
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
     # match the imports for VTK9
     def lazy_vtkOBJExporter():
@@ -731,7 +757,7 @@ else:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Charts requires VTK v9 or newer')
+            raise VTKVersionError('Chart backgrounds require VTK v9 or newer')
 
     class vtkHDFReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""

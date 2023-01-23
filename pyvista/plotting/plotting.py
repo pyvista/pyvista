@@ -32,7 +32,13 @@ from pyvista.utilities import (
     is_pyvista_dataset,
     numpy_to_texture,
     raise_not_matching,
+    set_algorithm_input,
     wrap,
+)
+from pyvista.utilities.algorithms import (
+    active_scalars_algorithm,
+    algorithm_to_mesh_handler,
+    pointset_to_polydata_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
 
@@ -2554,10 +2560,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock or vtk.vtkAlgorithm
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy
-            arrays of XYZ points.
+            arrays of XYZ points. Plotting also supports VTK algorithm
+            objects (``vtk.vtkAlgorithm`` and ``vtk.vtkAlgorithmOutput``).
+            When passing an algorithm, the rendering pipeline will be
+            connected to the passed algorithm to dynamically update
+            the scene.
 
         color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
@@ -2839,7 +2849,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             would like to update the mesh after adding it to the plotter and
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget. This should only be set to ``True``
-            with caution. Defaults to ``False``.
+            with caution. Defaults to ``False``. This is ignored if the input
+            is a ``vtkAlgorithm`` subclass.
 
         backface_params : dict or pyvista.Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
@@ -2937,6 +2948,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.mapper = DataSetMapper(theme=self.theme)
 
+        mesh, algo = algorithm_to_mesh_handler(mesh)
+
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
@@ -2946,8 +2959,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
         if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
-            mesh = mesh.cast_to_polydata(deep=False)
+            if algo is not None:
+                algo = pointset_to_polydata_algorithm(algo)
+                mesh, algo = algorithm_to_mesh_handler(algo)
+            else:
+                mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):
+            if algo is not None:
+                raise TypeError(
+                    'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
+                )
             return self.add_composite(
                 mesh,
                 color=color,
@@ -2994,9 +3015,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 render=render,
                 **kwargs,
             )
-        elif copy_mesh:
+        elif copy_mesh and algo is None:
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
+            # We ignore `copy_mesh` if the input is an algorithm
             mesh = mesh.copy(deep=False)
 
         # Parse arguments
@@ -3045,9 +3067,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if silhouette:
             if isinstance(silhouette, dict):
-                self.add_silhouette(mesh, silhouette)
+                self.add_silhouette(algo or mesh, silhouette)
             else:
-                self.add_silhouette(mesh)
+                self.add_silhouette(algo or mesh)
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -3084,15 +3106,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # the input mesh, it may not be set as the active scalars within
             # the mapper. This should be refactored by 0.36.0
             field = get_array_association(mesh, original_scalar_name, preference=preference)
-            if field == FieldAssociation.POINT:
-                mesh.point_data.active_scalars_name = original_scalar_name
-                self.mapper.scalar_map_mode = 'point'
-            elif field == FieldAssociation.CELL:
-                mesh.cell_data.active_scalars_name = original_scalar_name
-                self.mapper.scalar_map_mode = 'cell'
+            self.mapper.scalar_map_mode = field.name
+
+            if algo is not None:
+                # Ensures that the right scalars are set as active on
+                # each pipeline request
+                algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
+                mesh, algo = algorithm_to_mesh_handler(algo)
+            else:
+                # Otherwise, make sure the mesh object's scalars are set
+                if field == FieldAssociation.POINT:
+                    mesh.point_data.active_scalars_name = original_scalar_name
+                elif field == FieldAssociation.CELL:
+                    mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
+            if algo is not None:
+                raise TypeError(
+                    'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
+                )
             mesh, scalars = prepare_smooth_shading(
                 mesh, scalars, texture, split_sharp_edges, feature_angle, preference
             )
@@ -3102,13 +3135,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
-        if mesh.n_points < 1:
+        if algo is None and not mesh.n_points:
+            # Algorithms may initialize with an empty mesh
             raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
         # set main values
         self.mesh = mesh
         self.mapper.dataset = self.mesh
         self.mapper.interpolate_before_map = interpolate_before_map
+        set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
 
@@ -3333,10 +3368,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
-            array that is present on the mesh or an array equal
+            array that is present on the mesh or an array with length equal
             to the number of cells or the number of points in the
-            mesh.  Array should be sized as a single vector. If ``scalars`` is
-            ``None``, then the active scalars are used.
+            mesh. If ``scalars`` is ``None``, then the active scalars are used.
+
+            Scalars may be 1 dimensional or 2 dimensional. If 1 dimensional,
+            the scalars will be mapped to the lookup table. If 2 dimensional
+            the scalars will be directly mapped to RGBA values, array should be
+            shaped ``(N, 4)`` where ``N`` is the number of points, and of
+            datatype ``np.uint8``.
 
         clim : 2 item list, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
@@ -3359,6 +3399,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
             shorter.
+
+            If RGBA scalars are provided, this parameter is set to ``'linear'``
+            to ensure the opacity transfer function has no effect on the input
+            opacity values.
 
         n_colors : int, optional
             Number of colors to use when displaying scalars. Defaults to 256.
@@ -3423,6 +3467,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``'smart'``.  If ``None`` the ``"volume_mapper"`` in the
             ``self._theme`` is used. If using ``'fixed_point'``,
             only ``UniformGrid`` types can be used.
+
+            .. note::
+                The ``'smart'`` mapper chooses one of the other listed
+                mappers based on rendering parameters and available
+                hardware. Most of the time the ``'smart'`` simply checks
+                if a GPU is available and if so, uses the ``'gpu'``
+                mapper, otherwise using the ``'fixed_point'`` mapper.
+
+            .. warning::
+                The ``'fixed_point'`` mapper is CPU-based and will have
+                lower performance than the ``'gpu'`` or ``'open_gl'``
+                mappers.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -3493,6 +3549,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> bolt_nut = examples.download_bolt_nut()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
+        >>> pl.show()
+
+        Create a volume from scratch and plot it using single vector of
+        scalars.
+
+        >>> import pyvista as pv
+        >>> grid = pv.UniformGrid(dimensions=(9, 9, 9))
+        >>> grid['scalars'] = -grid.x
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(grid, opacity='linear')
+        >>> pl.show()
+
+        Plot a volume from scratch using RGBA scalars
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> grid = pv.UniformGrid(dimensions=(5, 20, 20))
+        >>> scalars = grid.points - (grid.origin)
+        >>> scalars /= scalars.max()
+        >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
+        >>> opacity /= opacity.max()
+        >>> scalars = np.hstack((scalars, opacity**3))
+        >>> scalars *= 255
+        >>> pl = pv.Plotter()
+        >>> vol = pl.add_volume(grid, scalars=scalars.astype(np.uint8))
+        >>> vol.prop.interpolation_type = 'linear'
         >>> pl.show()
 
         """
@@ -3641,7 +3723,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
         if scalars.ndim != 1:
-            scalars = scalars.ravel()
+            if scalars.ndim != 2:
+                raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
+            if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
+                raise ValueError(
+                    f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape {scalars.shape} and datatype {scalars.dtype}'
+                )
+            if opacity != 'linear':
+                opacity = 'linear'
+                warnings.warn('Ignoring custom opacity due to RGBA scalars.')
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {
@@ -3734,6 +3824,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             opacity_unit_distance=opacity_unit_distance,
         )
 
+        if scalars.ndim == 2:
+            self.volume.prop.independent_components = False
+            show_scalar_bar = False
+
         actor, prop = self.add_actor(
             self.volume,
             reset_camera=reset_camera,
@@ -3759,8 +3853,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.PolyData
-            Mesh for generating silhouette to plot.
+        mesh : pyvista.PolyData or vtk.vtkAlgorithm
+            Mesh or mesh-producing algorithm for generating silhouette
+            to plot.
 
         params : dict, optional
 
@@ -3790,7 +3885,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.show()
 
         """
+        mesh, algo = algorithm_to_mesh_handler(mesh)
         silhouette_params = self._theme.silhouette.to_dict()
+        if algo is not None:
+            silhouette_params["decimate"] = False
         if params:
             silhouette_params.update(params)
 
@@ -3799,12 +3897,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(mesh, pyvista.PolyData):
             raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
 
-        if isinstance(silhouette_params["decimate"], float):
+        if silhouette_params["decimate"]:
+            if algo is not None:
+                raise TypeError('Cannot decimate when an algorithm is passed at this time.')
             silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
         else:
             silhouette_mesh = mesh
         alg = _vtk.vtkPolyDataSilhouette()
-        alg.SetInputData(silhouette_mesh)
+        set_algorithm_input(alg, algo or silhouette_mesh)
         alg.SetCamera(self.renderer.camera)
         if silhouette_params["feature_angle"] is not None:
             alg.SetEnableFeatureAngle(True)
@@ -4547,7 +4647,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        lines : np.ndarray or pyvista.PolyData
+        lines : np.ndarray
             Points representing line segments.  For example, two line
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
@@ -4646,8 +4746,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : sequence or pyvista.DataSet
-            An ``n x 3`` sequence points or pyvista dataset with points.
+        points : sequence or pyvista.DataSet or vtk.vtkAlgorithm
+            An ``n x 3`` sequence points or pyvista dataset with points or
+            mesh-producing algorithm.
 
         labels : list or str
             List of labels.  Must be the same length as points. If a
@@ -4768,36 +4869,50 @@ class BasePlotter(PickingHelper, WidgetHelper):
             points = np.array(points)
 
         if isinstance(points, np.ndarray):
-            vtkpoints = pyvista.PolyData(points)  # Cast to poly data
-        elif is_pyvista_dataset(points):
-            vtkpoints = pyvista.PolyData(points.points)
-            if isinstance(labels, str):
-                labels = points.point_data[labels]
-        else:
+            points = pyvista.PolyData(points)  # Cast to poly data
+        elif not is_pyvista_dataset(points) and not isinstance(points, _vtk.vtkAlgorithm):
             raise TypeError(f'Points type not usable: {type(points)}')
-
-        if len(vtkpoints.points) != len(labels):
-            raise ValueError('There must be one label for each point')
+        points, algo = algorithm_to_mesh_handler(points)
+        if algo is not None:
+            if not _vtk.VTK91:
+                raise RuntimeError(
+                    'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
+                )
+            # Extract points filter
+            pc_algo = _vtk.vtkConvertToPointCloud()
+            set_algorithm_input(pc_algo, algo)
+            algo = pc_algo
 
         if name is None:
-            name = f'{type(vtkpoints).__name__}({vtkpoints.memory_address})'
+            name = f'{type(points).__name__}({points.memory_address})'
 
-        vtklabels = _vtk.vtkStringArray()
-        vtklabels.SetName('labels')
-        for item in labels:
-            vtklabels.InsertNextValue(str(item))
-        vtkpoints.GetPointData().AddArray(vtklabels)
-
-        # Create hierarchy
         hier = _vtk.vtkPointSetToLabelHierarchy()
-        hier.SetLabelArrayName('labels')
+        if not isinstance(labels, str):
+            if algo is not None:
+                raise TypeError(
+                    'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
+                )
+            points = pyvista.PolyData(points.points)
+            if len(points.points) != len(labels):
+                raise ValueError('There must be one label for each point')
+            vtklabels = _vtk.vtkStringArray()
+            vtklabels.SetName('labels')
+            for item in labels:
+                vtklabels.InsertNextValue(str(item))
+            points.GetPointData().AddArray(vtklabels)
+            hier.SetLabelArrayName('labels')
+        else:
+            # Make sure PointData
+            if labels not in points.point_data:
+                raise ValueError(f'Array {labels!r} not found in point data.')
+            hier.SetLabelArrayName(labels)
 
         if always_visible:
-            hier.SetInputData(vtkpoints)
+            set_algorithm_input(hier, algo or points)
         else:
             # Only show visible points
             vis_points = _vtk.vtkSelectVisiblePoints()
-            vis_points.SetInputData(vtkpoints)
+            set_algorithm_input(vis_points, algo or points)
             vis_points.SetRenderer(self.renderer)
             vis_points.SetTolerance(tolerance)
 
@@ -4836,7 +4951,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add points
         if show_points:
             self.add_mesh(
-                vtkpoints,
+                algo or points,
                 color=point_color,
                 point_size=point_size,
                 name=f'{name}-points',
@@ -5447,7 +5562,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
                 # ignore any mappers whose inputs are not datasets
                 if hasattr(mapper, 'GetInputAsDataSet'):
-                    datasets.append(mapper.GetInputAsDataSet())
+                    datasets.append(wrap(mapper.GetInputAsDataSet()))
 
         return datasets
 
