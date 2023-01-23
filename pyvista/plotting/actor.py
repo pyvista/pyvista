@@ -76,8 +76,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _renderer = None
-    _name = None
+    _new_attr_exceptions = ['_renderer', '_name']
 
     def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
@@ -86,16 +85,20 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.mapper = mapper
         if prop is None:
             self.prop = Property()
+        self._name = name
+        self._renderer = None
 
     @property
     def name(self) -> str:
         """Get or set the unique name identifier used by PyVista."""
         if self._name is None:
-            self._name = self.GetAddressAsString("")
+            self._name = f'{type(self).__name__}({self.memory_address})'
         return self._name
 
     @name.setter
     def name(self, value: str):
+        if not value:
+            raise ValueError('Name must be truthy.')
         self._name = value
 
     @property
