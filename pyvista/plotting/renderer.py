@@ -695,8 +695,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkMapper or vtk.vtkActor
-            vtkMapper or vtkActor to be added.
+        actor : vtk.vtkActor or vtk.vtkMapper
+            The actor to be added. Can be either ``vtkActor`` or ``vtkMapper``.
 
         reset_camera : bool, optional
             Resets the camera when ``True``.

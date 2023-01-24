@@ -32,6 +32,9 @@ class Actor(Prop3D, _vtk.vtkActor):
     prop : pyvista.Property, optional
         Property of the actor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
     Examples
     --------
     Create an actor without using :class:`pyvista.Plotter`.
