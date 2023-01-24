@@ -34,10 +34,7 @@ class Axes(_vtk.vtkAxes):
     def __init__(self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False):
         """Initialize a new axes descriptor."""
         super().__init__()
-        self.mapper = None
-        self.actor = None
         self.SetSymmetric(symmetric)
-
         # Add the axes mapper
         self.mapper = _vtk.vtkPolyDataMapper()
         self.mapper.SetInputConnection(self.GetOutputPort())
