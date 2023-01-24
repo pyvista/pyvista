@@ -754,6 +754,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 # e.g., vtkScalarBarActor
                 name = actor.GetAddressAsString("")
 
+        actor.SetPickable(pickable)
+        self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
         if reset_camera:
@@ -782,8 +784,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             else:
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
-        actor.SetPickable(pickable)
-        self.AddActor(actor)
         self.Modified()
 
         prop = None
