@@ -58,7 +58,7 @@ pl.add_mesh(pv.Cylinder(center=(0, 1, 0)), name='Cylinder')
 
 
 def reset():
-    for a in pl.actors.values():
+    for a in pl.renderer.actors.values():
         if isinstance(a, pv.Actor):
             a.prop.color = 'tan'
             a.prop.show_edges = False
