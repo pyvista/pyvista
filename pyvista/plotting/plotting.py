@@ -3363,10 +3363,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
-            array that is present on the mesh or an array equal
+            array that is present on the mesh or an array with length equal
             to the number of cells or the number of points in the
-            mesh.  Array should be sized as a single vector. If ``scalars`` is
-            ``None``, then the active scalars are used.
+            mesh. If ``scalars`` is ``None``, then the active scalars are used.
+
+            Scalars may be 1 dimensional or 2 dimensional. If 1 dimensional,
+            the scalars will be mapped to the lookup table. If 2 dimensional
+            the scalars will be directly mapped to RGBA values, array should be
+            shaped ``(N, 4)`` where ``N`` is the number of points, and of
+            datatype ``np.uint8``.
 
         clim : 2 item list, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
@@ -3389,6 +3394,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
             shorter.
+
+            If RGBA scalars are provided, this parameter is set to ``'linear'``
+            to ensure the opacity transfer function has no effect on the input
+            opacity values.
 
         n_colors : int, optional
             Number of colors to use when displaying scalars. Defaults to 256.
@@ -3537,6 +3546,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
         >>> pl.show()
 
+        Create a volume from scratch and plot it using single vector of
+        scalars.
+
+        >>> import pyvista as pv
+        >>> grid = pv.UniformGrid(dimensions=(9, 9, 9))
+        >>> grid['scalars'] = -grid.x
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(grid, opacity='linear')
+        >>> pl.show()
+
+        Plot a volume from scratch using RGBA scalars
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> grid = pv.UniformGrid(dimensions=(5, 20, 20))
+        >>> scalars = grid.points - (grid.origin)
+        >>> scalars /= scalars.max()
+        >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
+        >>> opacity /= opacity.max()
+        >>> scalars = np.hstack((scalars, opacity**3))
+        >>> scalars *= 255
+        >>> pl = pv.Plotter()
+        >>> vol = pl.add_volume(grid, scalars=scalars.astype(np.uint8))
+        >>> vol.prop.interpolation_type = 'linear'
+        >>> pl.show()
+
         """
         # Handle default arguments
 
@@ -3683,7 +3718,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
         if scalars.ndim != 1:
-            scalars = scalars.ravel()
+            if scalars.ndim != 2:
+                raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
+            if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
+                raise ValueError(
+                    f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape {scalars.shape} and datatype {scalars.dtype}'
+                )
+            if opacity != 'linear':
+                opacity = 'linear'
+                warnings.warn('Ignoring custom opacity due to RGBA scalars.')
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {
@@ -3775,6 +3818,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             diffuse=diffuse,
             opacity_unit_distance=opacity_unit_distance,
         )
+
+        if scalars.ndim == 2:
+            self.volume.prop.independent_components = False
+            show_scalar_bar = False
 
         actor, prop = self.add_actor(
             self.volume,

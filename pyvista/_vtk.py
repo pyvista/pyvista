@@ -454,7 +454,20 @@ if VTK9:
         vtkSplineWidget,
         vtkTexturedButtonRepresentation2D,
     )
-    from vtkmodules.vtkPythonContext2D import vtkPythonItem
+
+    try:
+        from vtkmodules.vtkPythonContext2D import vtkPythonItem
+    except ImportError:  # pragma: no cover
+        # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
+        class vtkPythonItem:  # type: ignore
+            """Empty placeholder."""
+
+            def __init__(self):  # pragma: no cover
+                """Raise version error on init."""
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
+
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
@@ -744,7 +757,7 @@ else:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Charts requires VTK v9 or newer')
+            raise VTKVersionError('Chart backgrounds require VTK v9 or newer')
 
     class vtkHDFReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
