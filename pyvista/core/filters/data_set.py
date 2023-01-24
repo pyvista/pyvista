@@ -163,10 +163,10 @@ class DataSetFilters:
         )
         if inplace:
             if return_clipped:
-                self.copy_from(result[0])
+                self.copy_from(result[0], deep=False)
                 return self, result[1]
             else:
-                self.copy_from(result)
+                self.copy_from(result, deep=False)
                 return self
         return result
 
@@ -423,7 +423,7 @@ class DataSetFilters:
         result0 = _get_output(alg)
 
         if inplace:
-            self.copy_from(result0)
+            self.copy_from(result0, deep=False)
             result0 = self
 
         if both:
@@ -2277,7 +2277,7 @@ class DataSetFilters:
         """
         mesh = DataSetFilters.connectivity(self, largest=True, progress_bar=False)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
         return mesh
 
@@ -2410,7 +2410,7 @@ class DataSetFilters:
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
-            self.copy_from(output)
+            self.copy_from(output, deep=False)
             return self
         return output
 
@@ -2484,7 +2484,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Warping by Vector')
         warped_mesh = _get_output(alg)
         if inplace:
-            self.copy_from(warped_mesh)
+            self.copy_from(warped_mesh, deep=False)
             return self
         else:
             return warped_mesh
@@ -2703,7 +2703,7 @@ class DataSetFilters:
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
         return mesh
 
@@ -5208,7 +5208,7 @@ class DataSetFilters:
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
         if inplace:
-            self.copy_from(res)
+            self.copy_from(res, deep=False)
             return self
 
         # The output from the transform filter contains a shallow copy
