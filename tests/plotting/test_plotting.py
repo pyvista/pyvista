@@ -13,6 +13,7 @@ import time
 
 from PIL import Image
 import imageio
+import matplotlib
 import numpy as np
 import pytest
 import vtk
@@ -2491,8 +2492,12 @@ def test_add_text():
 
 
 @pytest.mark.skipif(
-    not vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported(),
-    reason='Math text is not supported.',
+    not vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+    or (
+        tuple(map(int, matplotlib.__version__.split('.')[:2])) >= (3, 6)
+        and pyvista.vtk_version_info <= (9, 2, 2)
+    ),
+    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
 )
 def test_add_text_latex():
     """Test LaTeX symbols.
