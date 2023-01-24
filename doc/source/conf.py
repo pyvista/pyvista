@@ -518,6 +518,7 @@ html_theme_options = {
             "icon": "fa fa-file-text fa-fw",
         },
     ],
+    "check_switcher": False,
     "switcher": {
         "json_url": f"https://{cname}/release/versions.json",
         "version_match": get_version_match(version),
