@@ -2001,7 +2001,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh, deep=True)
+            self.copy_meta_from(mesh, deep=deep)
 
     def overwrite(self, mesh: _vtk.vtkDataSet):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
