@@ -7,13 +7,15 @@ has_trame = True
 try:
     from IPython.display import IFrame
     from trame.app import get_server
-    from vtkmodules.web import *  # noqa  # effectively a VTK9.1 test
 
     from pyvista.trame.ui import get_or_create_viewer
     from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
 except:  # noqa: E722
     has_trame = False
 
+# skip all tests if VTK<9.1.0
+if pv.vtk_version_info < (9, 1):
+    pytestmark = pytest.mark.skip
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"
