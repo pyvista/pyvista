@@ -81,7 +81,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     def push_camera(self, *args, **kwargs):
         """No-op implementation to match local viewers."""
-        pass  # no-op
+        pass  # pragma: no cover
 
 
 class PyVistaLocalView(VtkLocalView, _BasePyVistaView):

@@ -10,6 +10,7 @@ try:
     from vtkmodules.web import *  # noqa  # effectively a VTK9.1 test
 
     from pyvista.trame.ui import get_or_create_viewer
+    from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
 except:  # noqa: E722
     has_trame = False
 
@@ -99,3 +100,51 @@ async def test_trame():
     assert viewer.actors == pl.actors
 
     assert isinstance(viewer.screenshot(), memoryview)
+
+
+@skip_no_trame
+@skip_no_plotting
+@pytest.mark.asyncio
+async def test_trame_jupyter_modes():
+    await pv.set_jupyter_backend('trame')
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+    widget = pl.show(jupyter_backend='client')
+    assert isinstance(widget, IFrame)
+    assert pl.suppress_rendering
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+    widget = pl.show(jupyter_backend='server')
+    assert isinstance(widget, IFrame)
+    assert not pl.suppress_rendering
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+    widget = pl.show(jupyter_backend='trame')
+    assert isinstance(widget, IFrame)
+    assert not pl.suppress_rendering
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_closed_plotter():
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+    pl.close()
+    with pytest.raises(RuntimeError, match='The render window for this plotter has been destroyed'):
+        PyVistaRemoteLocalView(pl)
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_views():
+    server = get_server('foo')
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+
+    assert PyVistaRemoteLocalView(pl, trame_server=server)
+    assert PyVistaRemoteView(pl, trame_server=server)
+    assert PyVistaLocalView(pl, trame_server=server)
