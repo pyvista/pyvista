@@ -1,23 +1,10 @@
 """Axes actor module."""
 from enum import Enum
+from typing import Union
 
 import pyvista as pv
 
 from .actor_properties import ActorProperties
-
-
-class ShaftType(Enum):
-    """Types of shaft shapes available."""
-
-    CYLINDER = 0
-    LINE = 1
-
-
-class TipType(Enum):
-    """Types of tip shapes available."""
-
-    CONE = 0
-    SPHERE = 1
 
 
 class AxesActor(pv._vtk.vtkAxesActor):
@@ -34,14 +21,28 @@ class AxesActor(pv._vtk.vtkAxesActor):
     Customize the axis shaft color and shape.
 
     >>> import pyvista as pv
+
     >>> axes = pv.Axes()
-    >>> axes.axes_actor.GetZAxisShaftProperty().SetColor(0, 1, 1)
-    >>> axes.axes_actor.SetShaftTypeToCylinder()
+    >>> axes.axes_actor.z_axis_shaft_properties.color = (0, 1, 1)
+    >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)
     >>> _ = pl.add_mesh(pv.Sphere())
+    >>> pl.show()  # doctest:+SKIP
 
     """
+
+    class ShaftType(Enum):
+        """Types of shaft shapes available."""
+
+        CYLINDER = 0
+        LINE = 1
+
+    class TipType(Enum):
+        """Types of tip shapes available."""
+
+        CONE = 0
+        SPHERE = 1
 
     def __init__(self):
         """Initialize actor."""
@@ -308,20 +309,20 @@ class AxesActor(pv._vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> from pyvista.plotting.axes_actor import ShaftType
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.shaft_type = ShaftType.LINE
+        >>> axes.axes_actor.shaft_type = axes.ShaftType.LINE
         >>> axes.axes_actor.shaft_type
         <ShaftType.LINE: 1>
 
         """
-        return ShaftType(self.GetShaftType())
+        return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: int):
-        if shaft_type == ShaftType.CYLINDER:
+    def shaft_type(self, shaft_type: Union[ShaftType, int]):
+        shaft_type = AxesActor.ShaftType(shaft_type)
+        if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
-        elif shaft_type == ShaftType.LINE:
+        elif shaft_type == AxesActor.ShaftType.LINE:
             self.SetShaftTypeToLine()
 
     @property
@@ -337,13 +338,14 @@ class AxesActor(pv._vtk.vtkAxesActor):
         >>> axes.axes_actor.tip_type
         <TipType.SPHERE: 1>
         """
-        return TipType(self.GetTipType())
+        return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: int):
-        if tip_type == TipType.CONE:
+    def tip_type(self, tip_type: Union[TipType, int]):
+        tip_type = AxesActor.TipType(tip_type)
+        if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
-        elif tip_type == TipType.SPHERE:
+        elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
 
     @property

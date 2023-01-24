@@ -1,7 +1,6 @@
 import numpy as np
 
 import pyvista
-from pyvista.plotting.axes_actor import ShaftType, TipType
 
 
 def test_actors():
@@ -123,18 +122,18 @@ def test_axes_actor_cylinder_rad():
 
 def test_axes_actor_shaft_type():
     axes = pyvista.Axes()
-    axes.axes_actor.shaft_type = ShaftType.CYLINDER
-    assert axes.axes_actor.shaft_type == ShaftType.CYLINDER
-    axes.axes_actor.shaft_type = ShaftType.LINE
-    assert axes.axes_actor.shaft_type == ShaftType.LINE
+    axes.axes_actor.shaft_type = pyvista.AxesActor.ShaftType.CYLINDER
+    assert axes.axes_actor.shaft_type == pyvista.AxesActor.ShaftType.CYLINDER
+    axes.axes_actor.shaft_type = pyvista.AxesActor.ShaftType.LINE
+    assert axes.axes_actor.shaft_type == pyvista.AxesActor.ShaftType.LINE
 
 
 def test_axes_actor_tip_type():
     axes = pyvista.Axes()
-    axes.axes_actor.tip_type = TipType.CONE
-    assert axes.axes_actor.tip_type == TipType.CONE
-    axes.axes_actor.tip_type = TipType.SPHERE
-    assert axes.axes_actor.tip_type == TipType.SPHERE
+    axes.axes_actor.tip_type = pyvista.AxesActor.TipType.CONE
+    assert axes.axes_actor.tip_type == pyvista.AxesActor.TipType.CONE
+    axes.axes_actor.tip_type = pyvista.AxesActor.TipType.SPHERE
+    assert axes.axes_actor.tip_type == pyvista.AxesActor.TipType.SPHERE
 
 
 def test_axes_actor_axis_labels():

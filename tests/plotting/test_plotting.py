@@ -3408,7 +3408,7 @@ def test_axes_actor_properties():
     axes_actor.x_axis_tip_properties.representation = ReprModel.POINTS
     assert axes_actor.x_axis_tip_properties.representation == ReprModel.POINTS
 
-    axes.axes_actor.SetShaftTypeToCylinder()
+    axes.axes_actor.shaft_type = pyvista.AxesActor.ShaftType.CYLINDER
     pl = pyvista.Plotter()
     pl.add_actor(axes_actor)
     pl.show()

@@ -34,15 +34,18 @@ class ActorProperties:
     Access the properties of the z axis shaft.
 
     >>> import pyvista as pv
+
     >>> axes = pv.Axes()
     >>> z_axes_prop = axes.axes_actor.z_axis_shaft_properties
     >>> z_axes_prop.color = (1, 1, 0)
     >>> z_axes_prop.opacity = 0.5
-    >>> axes.axes_actor.SetShaftTypeToCylinder()
+    >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
+
     >>> pl = pv.Plotter()
     >>> pl.add_actor(axes.axes_actor)   # doctest:+SKIP
     >>> pl.add_mesh(pv.Sphere())   # doctest:+SKIP
     >>> pl.show()   # doctest:+SKIP
+
     """
 
     def __init__(self, properties: pv._vtk.vtkProperty) -> None:
