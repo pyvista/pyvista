@@ -1960,13 +1960,22 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self, mesh: _vtk.vtkDataSet):
+    def copy_from(self, mesh: _vtk.vtkDataSet, deep=False):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
+
+        .. versionchanged:: 0.38.0
+            This would deep copy by default prior to version ``0.38.0`` and
+            has been modified to shallow copy by default moving forward
+            to fix issues where in-place filters were producing deep copy
+            outputs.
 
         Parameters
         ----------
         mesh : vtk.vtkDataSet
             The overwriting mesh.
+
+        deep : bool, default: False
+            Whether to perform a deep or shallow copy.
 
         Examples
         --------
@@ -1987,7 +1996,10 @@ class DataSet(DataSetFilters, DataObject):
                 f'The Input DataSet type {type(mesh)} must be '
                 f'compatible with the one being overwritten {type(self)}'
             )
-        self.deep_copy(mesh)
+        if deep:
+            self.deep_copy(mesh)
+        else:
+            self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=True)
 
