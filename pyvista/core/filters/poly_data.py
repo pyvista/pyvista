@@ -18,6 +18,7 @@ from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersi
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.errors import MissingDataError
+from pyvista.utilities import FieldAssociation, get_array
 from pyvista.utilities.misc import PyVistaFutureWarning
 
 
@@ -999,7 +1000,8 @@ class PolyDataFilters(DataSetFilters):
         scalars=None,
         capping=True,
         n_sides=20,
-        radius_factor=10,
+        radius_factor=10.0,
+        absolute=False,
         preference='point',
         inplace=False,
         progress_bar=False,
@@ -1018,25 +1020,27 @@ class PolyDataFilters(DataSetFilters):
         scalars : str, optional
             Scalars array by which the radius varies.
 
-        capping : bool, optional
-            Turn on/off whether to cap the ends with polygons. Default
-            ``True``.
+        capping : bool, default: True
+            Turn on/off whether to cap the ends with polygons.
 
-        n_sides : int, optional
+        n_sides : int, default: 20
             Set the number of sides for the tube. Minimum of 3.
 
-        radius_factor : float, optional
+        radius_factor : float, default: 10.0
             Maximum tube radius in terms of a multiple of the minimum
             radius.
 
-        preference : str, optional
+        absolute : bool, default: False
+            Vary the radius with values from scalars in absolute units.
+
+        preference : str, default: 'point'
             The field preference when searching for the scalars array by
             name.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1080,7 +1084,10 @@ class PolyDataFilters(DataSetFilters):
             field = poly_data.get_array_association(scalars, preference=preference)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-            tube.SetVaryRadiusToVaryRadiusByScalar()
+            if absolute:
+                tube.SetVaryRadiusToVaryRadiusByAbsoluteScalar()
+            else:
+                tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
         _update_alg(tube, progress_bar, 'Creating Tube')
 
@@ -1835,7 +1842,13 @@ class PolyDataFilters(DataSetFilters):
         return output
 
     def geodesic(
-        self, start_vertex, end_vertex, inplace=False, keep_order=True, progress_bar=False
+        self,
+        start_vertex,
+        end_vertex,
+        inplace=False,
+        keep_order=True,
+        use_scalar_weights=False,
+        progress_bar=False,
     ):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
@@ -1862,6 +1875,10 @@ class PolyDataFilters(DataSetFilters):
             to start with the start vertex (as opposed to the end vertex).
 
             .. versionadded:: 0.32.0
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1898,6 +1915,8 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetInputData(self)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
+        if _vtk.VTK9:
+            dijkstra.SetUseScalarWeights(use_scalar_weights)
         _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
@@ -1924,7 +1943,9 @@ class PolyDataFilters(DataSetFilters):
 
         return output
 
-    def geodesic_distance(self, start_vertex, end_vertex, progress_bar=False):
+    def geodesic_distance(
+        self, start_vertex, end_vertex, use_scalar_weights=False, progress_bar=False
+    ):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
 
         Parameters
@@ -1934,6 +1955,10 @@ class PolyDataFilters(DataSetFilters):
 
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
+
+        use_scalar_weights : bool, optional
+            If ``True``, use scalar values in the edge weight (only
+            supported with VTK>=9). This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1954,7 +1979,7 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`geodesic_example` for more examples using this filter.
 
         """
-        path = self.geodesic(start_vertex, end_vertex)
+        path = self.geodesic(start_vertex, end_vertex, use_scalar_weights=use_scalar_weights)
         sizes = path.compute_cell_sizes(
             length=True, area=False, volume=False, progress_bar=progress_bar
         )
@@ -2126,7 +2151,9 @@ class PolyDataFilters(DataSetFilters):
         )
         if retry:
             # gather intersecting rays in lists
-            loc_lst, ray_lst, tri_lst = [arr.tolist() for arr in [locations, index_ray, index_tri]]
+            loc_lst = locations.tolist()
+            ray_lst = index_ray.tolist()
+            tri_lst = index_tri.tolist()
 
             # find indices that trimesh failed on
             all_ray_indices = np.arange(len(origins))
@@ -2163,7 +2190,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        edge_color : color_like, optional
+        edge_color : ColorLike, optional
             The color of the edges when they are added to the plotter.
 
         line_width : int, optional
@@ -2174,7 +2201,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------
@@ -2226,13 +2253,13 @@ class PolyDataFilters(DataSetFilters):
         faces : bool, optional
             Plot face normals instead of the default point normals.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Color of the arrows.  Defaults to
             :attr:`pyvista.themes.DefaultTheme.edge_color`.
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`.
+            :func:`pyvista.Plotter.add_mesh`.
 
         Returns
         -------
@@ -3388,50 +3415,63 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Plot the random hills dataset and with 10 contour lines. Note how we use 9
+        Plot the random hills dataset and with 8 contour lines. Note how we use 7
         colors here (``n_contours - 1``).
 
         >>> import pyvista as pv
         >>> from pyvista import examples
+
         >>> mesh = examples.load_random_hills()
-        >>> _, edges = mesh.contour_banded(10)
+        >>> n_contours = 8
+        >>> _, edges = mesh.contour_banded(n_contours)
+
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
-        >>> _ = pl.add_mesh(mesh, n_colors=9)
+        >>> _ = pl.add_mesh(mesh, n_colors=n_contours - 1, cmap='Set3')
         >>> pl.show()
 
         Extract the surface from the uniform grid dataset and plot its contours
         alongside the output from the banded contour filter.
 
         >>> surf = examples.load_uniform().extract_surface()
-        >>> output, edges = surf.contour_banded(5, rng=[200, 500])
+        >>> n_contours = 5
+        >>> rng = [200, 500]
+        >>> output, edges = surf.contour_banded(n_contours, rng=rng)
+
+        >>> dargs = dict(n_colors=n_contours - 1, clim=rng)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
-        >>> _ = pl.add_mesh(surf, opacity=0.3, show_scalar_bar=False)
-        >>> _ = pl.add_mesh(output)
+        >>> _ = pl.add_mesh(surf, opacity=0.3, **dargs)
+        >>> _ = pl.add_mesh(output, **dargs)
         >>> pl.show()
 
         """
-        # check active scalars
-        if scalars is not None:
-            self.point_data.active_scalars_name = scalars
-        else:
+        if scalars is None:
             pyvista.set_default_active_scalars(self)
             if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
+            scalars = self.active_scalars_name
+        arr = get_array(self, scalars, preference='point', err=False)
+        if arr is None:
+            raise ValueError('No arrays present to contour.')
+        field = get_array_association(self, scalars, preference='point')
+        if field != FieldAssociation.POINT:
+            raise ValueError('Only point data can be contoured.')
 
         if rng is None:
             rng = (self.active_scalars.min(), self.active_scalars.max())
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
-
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
         alg.GenerateValues(n_contours, rng[0], rng[1])
         alg.SetInputDataObject(self)
         alg.SetClipping(clipping)
         if scalar_mode == 'value':
             alg.SetScalarModeToValue()
         elif scalar_mode == 'index':
-            alg.SetScalarModeToValue()
+            alg.SetScalarModeToIndex()
         else:
             raise ValueError(
                 f'Invalid scalar mode "{scalar_mode}". Should be either "value" or "index".'
@@ -3443,10 +3483,17 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
 
         # Must rename array as VTK sets the active scalars array name to a nullptr.
-        if mesh.point_data and mesh.point_data.GetAbstractArray(0).GetName() is None:
-            mesh.point_data.GetAbstractArray(0).SetName(self.point_data.active_scalars_name)
-        if mesh.cell_data and mesh.cell_data.GetAbstractArray(0).GetName() is None:
-            mesh.cell_data.GetAbstractArray(0).SetName(self.cell_data.active_scalars_name)
+        # Please note this was fixed upstream in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/9840
+        for i in range(mesh.GetPointData().GetNumberOfArrays()):
+            array = mesh.GetPointData().GetAbstractArray(i)
+            name = array.GetName()
+            if name is None:
+                array.SetName(self.point_data.active_scalars_name)
+        for i in range(mesh.GetCellData().GetNumberOfArrays()):
+            array = mesh.GetCellData().GetAbstractArray(i)
+            name = array.GetName()
+            if name is None:
+                array.SetName(self.cell_data.active_scalars_name)
 
         if generate_contour_edges:
             return mesh, pyvista.wrap(alg.GetContourEdgesOutput())

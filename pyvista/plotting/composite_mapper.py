@@ -701,21 +701,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         scalar_bar_args : dict
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         n_colors : int
             Number of colors to use when displaying scalars.
 
-        nan_color : color_like
+        nan_color : ColorLike
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : color_like
+        above_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
 
-        below_color : color_like
+        below_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.

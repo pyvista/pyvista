@@ -9,6 +9,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.plotting import charts, system_supports_plotting
+from pyvista.plotting.colors import COLOR_SCHEMES
 from pyvista.utilities.misc import can_create_mpl_figure
 
 skip_mac = pytest.mark.skipif(
@@ -23,8 +24,8 @@ skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
 
-# skip all tests if VTK<9.1.0
-if pyvista.vtk_version_info < (9, 1):
+# skip all tests if VTK<9.2.0
+if pyvista.vtk_version_info < (9, 2):
     pytestmark = pytest.mark.skip
 
 
@@ -39,6 +40,25 @@ def to_vtk_scientific(val):
     return (
         parts[0] + "e" + sign + exp if exp != "" else parts[0]
     )  # Remove exponent altogether if it is 0
+
+
+class PlotterChanged:
+    """Helper class to check whether the plotter's rendered content has changed
+    since the last call."""
+
+    def __init__(self, plotter):
+        self._plotter = plotter
+        self._prev = self._capture()
+
+    def _capture(self):
+        self._plotter.show(auto_close=False)
+        return self._plotter.screenshot()
+
+    def __call__(self):
+        cur = self._capture()
+        changed = pyvista.compare_images(self._prev, cur) > 0
+        self._prev = cur
+        return changed
 
 
 @pytest.fixture
@@ -252,9 +272,8 @@ def test_axis_scale(chart_2d, axis):
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
-    # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
-    #  This is a VTK issue that will be fixed once PR (!8618) is merged.
-
+    # Note: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
+    # Should be fixed on VTK side, but tricky without breaking stuff (see !8828 for reference).
     chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart_2d.show()
@@ -294,6 +313,8 @@ def test_axis_tick_count(axis):
 def test_axis_tick_locations(chart_2d, axis):
     tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
     tlabels = ["Foo", "Blub", "Spam"]
+    tlocs0 = axis.tick_locations
+    tlabels0 = axis.tick_labels
 
     axis.tick_locations = tlocs
     axis.tick_labels = tlabels
@@ -317,6 +338,13 @@ def test_axis_tick_locations(chart_2d, axis):
     )
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
+    axis.tick_locations = None
+    axis.tick_labels = None
+    chart_2d.show()
+    assert np.allclose(axis.tick_locations, tlocs0)
+    assert np.allclose(axis.GetTickPositions(), tlocs0)
+    assert tuple(axis.tick_labels) == tuple(tlabels0)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels0)
 
 
 def test_axis_tick_size(axis):
@@ -382,13 +410,10 @@ def test_chart_common(pl, chart_f, request):
         chart.size = (-1, 1)
     with pytest.raises((AssertionError, ValueError)):
         chart.loc = (-1, 1)
-    try:  # Try block for now as not all charts support a custom size and loc
-        chart.size = (0.5, 0.5)
-        chart.loc = (0.25, 0.25)
-        assert chart.size == (0.5, 0.5)
-        assert chart.loc == (0.25, 0.25)
-    except ValueError:
-        pass
+    chart.size = (0.5, 0.5)
+    chart.loc = (0.25, 0.25)
+    assert chart.size == (0.5, 0.5)
+    assert chart.loc == (0.25, 0.25)
 
     # Check geometry and resizing
     w, h = pl.window_size
@@ -503,7 +528,7 @@ def test_multicomp_plot_common(plot_f, request):
 
     plot.color_scheme = cs
     assert plot.color_scheme == cs
-    assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
+    assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]["id"]
     assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
         pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
@@ -875,29 +900,33 @@ def test_chart_2d(pl, chart_2d):
 
 @skip_no_plotting
 def test_chart_box(pl, chart_box, box_plot):
+    size = (0.5, 0.5)
+    loc = (0.25, 0.25)
     data = [[0, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 6]]
     stats = [np.quantile(d, [0.0, 0.25, 0.5, 0.75, 1.0]) for d in data]
     cs = "wild_flower"
     ls = ["Datalabel"]
 
     # Test constructor
-    chart = pyvista.ChartBox(data, cs, ls)
+    chart = pyvista.ChartBox(data, cs, ls, size, loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
+    assert chart.loc == loc
+    assert chart.size == size
 
     # Test geometry and resizing
     pl.add_chart(chart)
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
-    assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
+    assert np.allclose(chart._geometry, (loc[0] * r_w, loc[1] * r_h, size[0] * r_w, size[1] * r_h))
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show(auto_close=False)  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
+    assert np.allclose(
+        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+    )
 
     # Test remaining properties
-    assert chart_box.loc == (0, 0)
-    assert chart_box.size == (1, 1)
     assert chart_box.plot.__this__ == chart_box.GetPlot(0).__this__
 
     box_plot.update(data)
@@ -907,28 +936,32 @@ def test_chart_box(pl, chart_box, box_plot):
 
 @skip_no_plotting
 def test_chart_pie(pl, chart_pie, pie_plot):
+    size = (0.5, 0.5)
+    loc = (0.25, 0.25)
     data = [3, 4, 5]
     cs = "wild_flower"
     ls = ["Tic", "Tac", "Toe"]
 
     # Test constructor
-    chart = pyvista.ChartPie(data, cs, ls)
+    chart = pyvista.ChartPie(data, cs, ls, size, loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
+    assert chart.loc == loc
+    assert chart.size == size
 
     # Test geometry and resizing
     pl.add_chart(chart)
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
-    assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
+    assert np.allclose(chart._geometry, (loc[0] * r_w, loc[1] * r_h, size[0] * r_w, size[1] * r_h))
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show(auto_close=False)  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
+    assert np.allclose(
+        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+    )
 
     # Test remaining properties
-    assert chart_pie.loc == (0, 0)
-    assert chart_pie.size == (1, 1)
     assert chart_pie.plot.__this__ == chart_pie.GetPlot(0).__this__
 
     pie_plot.update(data)
@@ -967,6 +1000,36 @@ def test_chart_mpl(pl, chart_mpl):
     # test set position throw
     with pytest.raises(ValueError, match="must be length 2"):
         chart.position = (1, 2, 3)
+
+
+@skip_no_plotting
+@skip_no_mpl_figure
+def test_chart_mpl_update(pl):
+    import matplotlib.pyplot as plt
+
+    # Create simple chart
+    x0, y0, y1 = [0, 1, 2], [2, 1, 3], [-1, 0, 2]
+    f, ax = plt.subplots()
+    line = ax.plot(x0, y0)[0]
+    chart = pyvista.ChartMPL(f, redraw_on_render=False)
+    pl.add_chart(chart)
+    pl_changed = PlotterChanged(pl)
+
+    # Update matplotlib figure without redraw_on_update
+    line.set_ydata(y1)
+    # No changes when pl.render() is called (as redraw_on_render is False)
+    pl.render()
+    assert not pl_changed()
+    # Changes when figure is explicitly redrawn:
+    f.canvas.draw()
+    assert pl_changed()
+
+    # Update matplotlib figure with redraw_on_render
+    chart.redraw_on_render = True
+    line.set_ydata(y0)
+    # Changes when pl.render() is called (as redraw_on_render is True now)
+    pl.render()
+    assert pl_changed()
 
 
 @skip_no_plotting
@@ -1043,6 +1106,5 @@ def test_iren_context_style(pl):
 @skip_mac
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
-    chart_2d
     chart_2d.background_texture = t_puppy
     assert chart_2d.background_texture == t_puppy

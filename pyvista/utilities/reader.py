@@ -972,6 +972,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         ----------
         name : str
             Which patch array to report status.
+
         Returns
         -------
         bool
@@ -1890,13 +1891,13 @@ class PVDReader(BaseReader, TimeReader):
             datasets.append(
                 PVDDataSet(
                     float(element_attrib.get('timestep', 0)),
-                    int(element_attrib['part']),
+                    int(element_attrib.get('part', 0)),
                     element_attrib['file'],
                     element_attrib.get('group'),
                 )
             )
         self._datasets = sorted(datasets)
-        self._time_values = sorted(list(set([dataset.time for dataset in self.datasets])))
+        self._time_values = sorted({dataset.time for dataset in self.datasets})
 
         self.set_active_time_value(self.time_values[0])
 
