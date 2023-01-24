@@ -5218,7 +5218,7 @@ class DataSetFilters:
             output = pyvista.StructuredGrid()
         else:
             output = self.__class__()
-        output.copy_from(res)
+        output.copy_from(res, deep=True)
         return output
 
     def reflect(
