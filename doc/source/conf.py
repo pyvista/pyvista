@@ -342,6 +342,7 @@ linkcheck_ignore = [
     'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
     'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
     'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
+    f"https://{cname}/release/versions.json",
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
