@@ -7,6 +7,7 @@ has_trame = True
 try:
     from IPython.display import IFrame
     from trame.app import get_server
+    from vtkmodules.web import *  # noqa  # effectively a VTK9.1 test
 
     from pyvista.trame.ui import get_or_create_viewer
 except:  # noqa: E722
@@ -21,7 +22,7 @@ skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
 
 
 @skip_no_trame
-def test_set_jupyter_backend_ipyvtklink():
+def test_set_jupyter_backend_trame():
     pv.global_theme.jupyter_backend = 'trame'
     assert pv.global_theme.jupyter_backend == 'trame'
     pv.global_theme.jupyter_backend = 'client'
