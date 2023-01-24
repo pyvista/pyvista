@@ -654,7 +654,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(trifilter)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
         return mesh
 
@@ -746,7 +746,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
         return mesh
 
@@ -870,7 +870,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
         return mesh
 
@@ -989,7 +989,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
 
         return mesh
@@ -1093,7 +1093,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(tube)
         if inplace:
-            poly_data.copy_from(mesh)
+            poly_data.copy_from(mesh, deep=False)
             return poly_data
         return mesh
 
@@ -1192,7 +1192,7 @@ class PolyDataFilters(DataSetFilters):
 
         submesh = _get_output(sfilter)
         if inplace:
-            self.copy_from(submesh)
+            self.copy_from(submesh, deep=False)
             return self
 
         return submesh
@@ -1296,7 +1296,7 @@ class PolyDataFilters(DataSetFilters):
         submesh = _get_output(sfilter)
 
         if inplace:
-            self.copy_from(submesh)
+            self.copy_from(submesh, deep=False)
             return self
 
         return submesh
@@ -1435,7 +1435,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
 
         return mesh
@@ -1588,7 +1588,7 @@ class PolyDataFilters(DataSetFilters):
             mesh.GetCellData().SetActiveNormals('Normals')
 
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
 
         return mesh
@@ -1681,7 +1681,7 @@ class PolyDataFilters(DataSetFilters):
         result = _get_output(alg)
 
         if inplace:
-            self.copy_from(result)
+            self.copy_from(result, deep=False)
             return self
         else:
             return result
@@ -1736,7 +1736,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
         return mesh
 
@@ -1837,7 +1837,7 @@ class PolyDataFilters(DataSetFilters):
             raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
-            self.copy_from(output)
+            self.copy_from(output, deep=False)
             return self
         return output
 
@@ -1938,7 +1938,7 @@ class PolyDataFilters(DataSetFilters):
             output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
 
         if inplace:
-            self.copy_from(output)
+            self.copy_from(output, deep=False)
             return self
 
         return output
@@ -2396,7 +2396,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Return vtk surface and reverse indexing array
         if inplace:
-            self.copy_from(newmesh)
+            self.copy_from(newmesh, deep=False)
             return self, ridx
         return newmesh, ridx
 
@@ -2535,7 +2535,7 @@ class PolyDataFilters(DataSetFilters):
         # `.triangulate()` filter cleans those
         mesh = _get_output(alg).triangulate()
         if inplace:
-            self.copy_from(mesh)
+            self.copy_from(mesh, deep=False)
             return self
         return mesh
 
@@ -2825,7 +2825,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = _get_output(alg)
         if inplace:
-            self.copy_from(output)
+            self.copy_from(output, deep=False)
             return self
         return output
 
@@ -2979,7 +2979,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.copy_from(output)
+            self.copy_from(output, deep=False)
             return self
         return output
 
@@ -3088,7 +3088,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Extruding with trimming')
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
-            self.copy_from(output)
+            self.copy_from(output, deep=False)
             return self
         return output
 
