@@ -855,7 +855,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return self._marker_actor
 
-    def add_orientation_widget(self, actor, interactive=None, color=None, opacity=1.0):
+    def add_orientation_widget(
+        self, actor, interactive=None, color=None, opacity=1.0, viewport=None
+    ):
         """Use the given actor in an orientation marker widget.
 
         Color and opacity are only valid arguments if a mesh is passed.
@@ -877,6 +879,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         opacity : int or float, optional
             Opacity of the marker.
+
+        viewport : tuple, optional
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         Returns
         -------
@@ -917,6 +922,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         self.axes_widget.SetCurrentRenderer(self)
+        if viewport is not None:
+            self.axes_widget.SetViewport(viewport)
         self.Modified()
         return self.axes_widget
 
