@@ -18,6 +18,7 @@ from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersi
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.errors import MissingDataError
+from pyvista.utilities import FieldAssociation, get_array
 from pyvista.utilities.misc import PyVistaFutureWarning
 
 
@@ -3414,50 +3415,63 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Plot the random hills dataset and with 10 contour lines. Note how we use 9
+        Plot the random hills dataset and with 8 contour lines. Note how we use 7
         colors here (``n_contours - 1``).
 
         >>> import pyvista as pv
         >>> from pyvista import examples
+
         >>> mesh = examples.load_random_hills()
-        >>> _, edges = mesh.contour_banded(10)
+        >>> n_contours = 8
+        >>> _, edges = mesh.contour_banded(n_contours)
+
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
-        >>> _ = pl.add_mesh(mesh, n_colors=9)
+        >>> _ = pl.add_mesh(mesh, n_colors=n_contours - 1, cmap='Set3')
         >>> pl.show()
 
         Extract the surface from the uniform grid dataset and plot its contours
         alongside the output from the banded contour filter.
 
         >>> surf = examples.load_uniform().extract_surface()
-        >>> output, edges = surf.contour_banded(5, rng=[200, 500])
+        >>> n_contours = 5
+        >>> rng = [200, 500]
+        >>> output, edges = surf.contour_banded(n_contours, rng=rng)
+
+        >>> dargs = dict(n_colors=n_contours - 1, clim=rng)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
-        >>> _ = pl.add_mesh(surf, opacity=0.3, show_scalar_bar=False)
-        >>> _ = pl.add_mesh(output)
+        >>> _ = pl.add_mesh(surf, opacity=0.3, **dargs)
+        >>> _ = pl.add_mesh(output, **dargs)
         >>> pl.show()
 
         """
-        # check active scalars
-        if scalars is not None:
-            self.point_data.active_scalars_name = scalars
-        else:
+        if scalars is None:
             pyvista.set_default_active_scalars(self)
             if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
+            scalars = self.active_scalars_name
+        arr = get_array(self, scalars, preference='point', err=False)
+        if arr is None:
+            raise ValueError('No arrays present to contour.')
+        field = get_array_association(self, scalars, preference='point')
+        if field != FieldAssociation.POINT:
+            raise ValueError('Only point data can be contoured.')
 
         if rng is None:
             rng = (self.active_scalars.min(), self.active_scalars.max())
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
-
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
         alg.GenerateValues(n_contours, rng[0], rng[1])
         alg.SetInputDataObject(self)
         alg.SetClipping(clipping)
         if scalar_mode == 'value':
             alg.SetScalarModeToValue()
         elif scalar_mode == 'index':
-            alg.SetScalarModeToValue()
+            alg.SetScalarModeToIndex()
         else:
             raise ValueError(
                 f'Invalid scalar mode "{scalar_mode}". Should be either "value" or "index".'
@@ -3469,10 +3483,17 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
 
         # Must rename array as VTK sets the active scalars array name to a nullptr.
-        if mesh.point_data and mesh.point_data.GetAbstractArray(0).GetName() is None:
-            mesh.point_data.GetAbstractArray(0).SetName(self.point_data.active_scalars_name)
-        if mesh.cell_data and mesh.cell_data.GetAbstractArray(0).GetName() is None:
-            mesh.cell_data.GetAbstractArray(0).SetName(self.cell_data.active_scalars_name)
+        # Please note this was fixed upstream in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/9840
+        for i in range(mesh.GetPointData().GetNumberOfArrays()):
+            array = mesh.GetPointData().GetAbstractArray(i)
+            name = array.GetName()
+            if name is None:
+                array.SetName(self.point_data.active_scalars_name)
+        for i in range(mesh.GetCellData().GetNumberOfArrays()):
+            array = mesh.GetCellData().GetAbstractArray(i)
+            name = array.GetName()
+            if name is None:
+                array.SetName(self.cell_data.active_scalars_name)
 
         if generate_contour_edges:
             return mesh, pyvista.wrap(alg.GetContourEdgesOutput())
