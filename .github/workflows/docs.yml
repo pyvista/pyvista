@@ -22,7 +22,7 @@ concurrency:
 
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
-  DOCUMENTATION_CNAME: 'docs.pyvista.com'
+  DOCUMENTATION_CNAME: 'docs.pyvista.org'
 
 jobs:
   doc-check:
