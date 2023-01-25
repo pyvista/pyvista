@@ -57,8 +57,10 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-def launch_server(server):
+def launch_server(server=None):
     """Launch a trame server."""
+    if server is None:
+        server = pyvista.global_theme.trame.jupyter_server_name
     if isinstance(server, str):
         server = get_server(server)
 
@@ -205,7 +207,11 @@ def elegantly_launch(server):
         import nest_asyncio
     except ImportError:
         raise ImportError(
-            'Please install `nest_asyncio` to automagically launch the trame server without await.'
+            """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
+
+    from pyvista.trame.jupyter import launch_server
+    await launch_server()
+"""
         )
 
     async def launch_it():
