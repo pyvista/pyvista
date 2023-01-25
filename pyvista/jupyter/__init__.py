@@ -189,4 +189,4 @@ def set_jupyter_backend(backend):
         # Launch the trame server
         from pyvista.trame.jupyter import elegantly_launch
 
-        return elegantly_launch()
+        return elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)

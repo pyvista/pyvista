@@ -162,7 +162,9 @@ def show_trame(
     else:
         server = get_server(name=name)
     if name is None and not server.running:
-        raise TrameJupyterServerDownError()
+        elegantly_launch(server)
+        if not server.running:
+            raise TrameJupyterServerDownError()
     elif not server.running:
         raise TrameServerDownError(name)
 
@@ -185,7 +187,7 @@ def show_trame(
     )
 
 
-def elegantly_launch():
+def elegantly_launch(server):
     """Elegantly launch the Trame server without await.
 
     This provides a mechanism to launch the Trame Jupyter backend in
@@ -207,7 +209,7 @@ def elegantly_launch():
         )
 
     async def launch_it():
-        await launch_server(pyvista.global_theme.trame.jupyter_server_name)
+        await launch_server(server)
 
     # Basically monkey patches asyncio to support this
     nest_asyncio.apply()
