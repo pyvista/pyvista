@@ -222,6 +222,13 @@ def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
 
+    # Use scalar weights
+    if pyvista.vtk_version_info >= (9,):
+        distance_use_scalar_weights = sphere.geodesic_distance(
+            0, sphere.n_points - 1, use_scalar_weights=True
+        )
+        assert isinstance(distance_use_scalar_weights, float)
+
 
 def test_ray_trace(sphere):
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
@@ -541,6 +548,25 @@ def test_compute_normals(sphere):
     assert cell_normals.shape[0] == sphere.n_cells
 
 
+def test_compute_normals_inplace(sphere):
+    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere2 = sphere.copy(deep=False)
+
+    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+    sphere.compute_normals(inplace=True)
+
+    sphere[
+        'numbers'
+    ] *= -1  # sphere2 'numbers' are also modified after adding to Plotter.  (See  issue #2461)
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+
 def test_compute_normals_split_vertices(cube):
     # verify edge splitting occurs and point IDs are tracked
     cube_split_norm = cube.compute_normals(split_vertices=True)
@@ -727,7 +753,7 @@ def test_tube(spline):
     # Simple
     line = pyvista.Line()
     tube = line.tube(n_sides=2, progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
 
     # inplace
     line.tube(n_sides=2, inplace=True, progress_bar=True)
@@ -735,7 +761,11 @@ def test_tube(spline):
 
     # Complicated
     tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
-    assert tube.n_points, tube.n_cells
+    assert tube.n_points and tube.n_cells
+
+    # Complicated with absolute radius
+    tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
+    assert tube.n_points and tube.n_cells
 
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))

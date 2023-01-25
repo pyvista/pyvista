@@ -1,7 +1,6 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import collections.abc as collections
+import collections.abc
 from functools import wraps
-import logging
 import numbers
 import os
 import pathlib
@@ -13,7 +12,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import PyVistaDeprecationWarning, abstract_class
+from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import (
     CellArray,
     create_mixed_cells,
@@ -22,14 +21,13 @@ from pyvista.utilities.cells import (
     numpy_to_idarr,
 )
 
+from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
-from .cell import CellType
+from .celltype import CellType
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
     'be changing to `False` in future versions for point-based meshes (e.g., '
@@ -201,141 +199,12 @@ class _PointSet(DataSet):
         [2.0, 1.0, 2.0]
 
         """
-        if inplace is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            inplace = True
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore
             return self
         return super().translate(
             xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
-
-    def scale(
-        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=None
-    ):
-        """Scale the mesh.
-
-        Parameters
-        ----------
-        xyz : list or tuple or numpy.ndarray
-            Scale factor in x, y, and z directions. Length 3 list, tuple or
-            array.
-
-        transform_all_input_vectors : bool, optional
-            When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed. This is
-            only valid when not updating in place.
-
-        inplace : bool, optional
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.PointSet
-            Scaled pointset.
-
-        Notes
-        -----
-        ``transform_all_input_vectors`` is not handled when modifying inplace.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> pl.show_axes()
-        >>> _ = pl.show_grid()
-        >>> mesh1 = examples.download_teapot()
-        >>> _ = pl.add_mesh(mesh1)
-        >>> pl.subplot(0, 1)
-        >>> pl.show_axes()
-        >>> _ = pl.show_grid()
-        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
-        >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
-        """
-        if inplace is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            inplace = True
-        return super().scale(
-            xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
-        )
-
-    @wraps(DataSet.flip_x)
-    def flip_x(self, *args, **kwargs):
-        """Wrap ``DataSet.flip_x``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().flip_x(*args, **kwargs)
-
-    @wraps(DataSet.flip_y)
-    def flip_y(self, *args, **kwargs):
-        """Wrap ``DataSet.flip_y``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().flip_y(*args, **kwargs)
-
-    @wraps(DataSet.flip_z)
-    def flip_z(self, *args, **kwargs):
-        """Wrap ``DataSet.flip_z``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().flip_z(*args, **kwargs)
-
-    @wraps(DataSet.flip_normal)
-    def flip_normal(self, *args, **kwargs):
-        """Wrap ``DataSet.flip_normal``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().flip_normal(*args, **kwargs)
-
-    @wraps(DataSet.rotate_x)
-    def rotate_x(self, *args, **kwargs):
-        """Wrap ``DataSet.rotate_x``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().rotate_x(*args, **kwargs)
-
-    @wraps(DataSet.rotate_y)
-    def rotate_y(self, *args, **kwargs):
-        """Wrap ``DataSet.rotate_y``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().rotate_y(*args, **kwargs)
-
-    @wraps(DataSet.rotate_z)
-    def rotate_z(self, *args, **kwargs):
-        """Wrap ``DataSet.rotate_z``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().rotate_z(*args, **kwargs)
-
-    @wraps(DataSet.rotate_vector)
-    def rotate_vector(self, *args, **kwargs):
-        """Wrap ``DataSet.rotate_vector``."""
-        if kwargs.get('inplace') is None:
-            # Deprecated on v0.32.0, estimated removal on v0.35.0
-            warnings.warn(DEFAULT_INPLACE_WARNING, PyVistaDeprecationWarning)
-            kwargs['inplace'] = True
-        return super().rotate_vector(*args, **kwargs)
 
 
 class PointSet(_vtk.vtkPointSet, _PointSet):
@@ -1015,12 +884,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return the number of cells."""
         raise DeprecationError('``number_of_faces`` has been deprecated.  Please use ``n_faces``')
 
-    def save(self, filename, binary=True, texture=None):
+    def save(self, filename, binary=True, texture=None, recompute_normals=True):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file. If ply or stl format is chosen, the face normals are
-        computed in place to ensure the mesh is properly saved.
+        file.
 
         Parameters
         ----------
@@ -1048,6 +916,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
             .. note::
                This feature is only available when saving PLY files.
+
+        recompute_normals : bool, default: True
+            When ``True``, if ply or stl format is chosen, the face normals
+            are computed in place to ensure the mesh is properly saved.
+            Set this to ``False`` to save instead the already existing normal
+            array in the PolyData.
 
         Notes
         -----
@@ -1093,7 +967,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
-        if ftype in ['.stl', '.ply']:
+        if ftype in ['.stl', '.ply'] and recompute_normals:
             self.compute_normals(inplace=True)
 
         # validate texture
@@ -1425,9 +1299,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._check_for_consistency()
 
         elif len(args) == 3:  # and VTK9:
-            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.Sequence))
-            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.Sequence))
-            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.Sequence))
+            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
@@ -1436,10 +1310,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 raise TypeError('All input types must be sequences.')
 
         elif len(args) == 4:  # pragma: no cover
-            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.Sequence))
-            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.Sequence))
-            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.Sequence))
-            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.Sequence))
+            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
+            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
+            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
@@ -2176,7 +2050,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(key) != 3:
             raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
-            if isinstance(k, collections.Iterable):
+            if isinstance(k, collections.abc.Iterable):
                 raise RuntimeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k
@@ -2622,7 +2496,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return self._dimensions()
 
     @property
-    def visible_bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def visible_bounds(self) -> BoundsLike:
         """Return the bounding box of the visible cells.
 
         Different from `bounds`, which returns the bounding box of the
@@ -2791,7 +2665,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         def connectivity(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
-            cell_points = self.cell_points(ind)
+            cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 faces = [
                     [(-1, 0, 0), (0, 4, 7, 3), (1, 5, 6, 2)],
@@ -2805,7 +2679,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                     coords = np.sum([cell_coords, f[0]], axis=0)
                     ind = self.cell_id(coords)
                     if ind:
-                        points = self.cell_points(ind)
+                        points = self.get_cell(ind).points
                         if points.shape[0] == 8:
                             a1 = cell_points[f[1], :]
                             a2 = points[f[2], :]
@@ -2827,7 +2701,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         def geometric(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
-            cell_points = self.cell_points(ind)
+            cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 for k in [-1, 1]:
                     coords = np.sum([cell_coords, (0, 0, k)], axis=0)
@@ -2852,7 +2726,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                         coords[2] = k
                         ind = self.cell_id(coords)
                         if ind:
-                            points = self.cell_points(ind)
+                            points = self.get_cell(ind).points
                             if points.shape[0] == 8:
                                 z = points[f[2], 2]
                                 z = np.abs(z)

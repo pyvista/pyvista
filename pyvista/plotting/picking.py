@@ -1,7 +1,7 @@
 """Module managing picking events."""
 
 from functools import partial
-import logging
+import warnings
 import weakref
 
 import numpy as np
@@ -90,7 +90,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -175,7 +175,7 @@ class PickingHelper:
                         **kwargs,
                     )
                 except Exception as e:  # pragma: no cover
-                    logging.warning("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -236,7 +236,7 @@ class PickingHelper:
         meshes to the scene.
 
         When multiple meshes are being picked, the picked cells
-        in ````self.picked_cells`` will be a :class:`MultiBlock`
+        in ``self.picked_cells`` will be a :class:`MultiBlock`
         dataset for each mesh's selection.
 
         Uses last input mesh for input by default.
@@ -277,7 +277,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -403,7 +403,7 @@ class PickingHelper:
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
-                        logging.warning(
+                        warnings.warn(
                             "Display representations other than `surface` will result in incorrect results."
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
@@ -524,7 +524,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         show_point : bool, optional
@@ -668,7 +668,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -800,7 +800,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -908,7 +908,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -1049,7 +1049,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the horizon surface if shown.
 
         point_size : int, optional

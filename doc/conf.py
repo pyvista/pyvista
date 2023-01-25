@@ -1,4 +1,5 @@
 import datetime
+import faulthandler
 import locale
 import os
 import sys
@@ -6,10 +7,7 @@ import sys
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
-if sys.version_info >= (3, 0):
-    import faulthandler
-
-    faulthandler.enable()
+faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
 import make_external_gallery
@@ -50,7 +48,6 @@ warnings.filterwarnings(
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
-
 
 # -- General configuration ------------------------------------------------
 numfig = False
@@ -131,7 +128,7 @@ coverage_ignore_modules = [
 
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {"color_like": "pyvista.color_like"}
+autodoc_type_aliases = {"ColorLike": "pyvista.ColorLike"}
 
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
@@ -195,7 +192,6 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
-    r'\.PlotterITK$',
     r'\.MultiBlock\.copy_meta_from$',
     r'\.DataObject\.copy_meta_from$',
     # wraps
@@ -204,7 +200,7 @@ numpydoc_validation_exclude = {  # set of regex
     # called from inherited
     r'\.Table\.copy_meta_from$',
     # Type alias
-    r'\.color_like$',
+    r'\.ColorLike$',
     # Mixin methods from collections.abc
     r'\.MultiBlock\.clear$',
     r'\.MultiBlock\.count$',
@@ -212,6 +208,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.remove$',
     # Enumerations
     r'\.Plot3DFunctionEnum$',
+    # VTK methods
+    r'\.override$',
 }
 
 
@@ -258,6 +256,14 @@ else:
     theme.window_size = [400, 300]
     pyvista.PLOT_DIRECTIVE_THEME = theme
     templates_path.append("_templates_basic")
+
+# Autosummary configuration
+autosummary_context = {
+    # Methods that should be skipped when generating the docs
+    # __init__ should be documented in the class docstring
+    # override is a VTK method
+    "skipmethods": ["__init__", "override"]
+}
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
@@ -426,13 +432,14 @@ html_context = {
     "github_version": "main",
     "doc_path": "doc",
 }
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    "google_analytics_id": "UA-140243896-1",
+    "analytics": {"google_analytics_id": "UA-140243896-1"},
     "show_prev_next": False,
     "github_url": "https://github.com/pyvista/pyvista",
     "collapse_navigation": True,

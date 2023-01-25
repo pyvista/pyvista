@@ -5,7 +5,6 @@ to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections.abc
 from itertools import zip_longest
-import logging
 import pathlib
 from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overload
 
@@ -15,13 +14,10 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
+from .._typing import BoundsLike
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
-
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
@@ -137,7 +133,7 @@ class MultiBlock(
                 self.SetBlock(i, pyvista.wrap(block))
 
     @property
-    def bounds(self) -> List[float]:
+    def bounds(self) -> BoundsLike:
         """Find min/max for bounds across blocks.
 
         Returns
@@ -153,21 +149,24 @@ class MultiBlock(
         >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        [-0.5, 2.5, -0.5, 2.5, -0.5, 0.5]
+        (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
 
         """
         # apply reduction of min and max over each block
-        all_bounds = [block.bounds for block in self if block]
+        # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
+        all_bounds = [cast(list, block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
-            minima = np.array([0, 0, 0])
-            maxima = np.array([0, 0, 0])
+            minima = np.array([0.0, 0.0, 0.0])
+            maxima = np.array([0.0, 0.0, 0.0])
         else:
             minima = np.minimum.reduce(all_bounds)[::2]
             maxima = np.maximum.reduce(all_bounds)[1::2]
 
         # interleave minima and maxima for bounds
-        return np.stack([minima, maxima]).ravel('F').tolist()
+        the_bounds = np.stack([minima, maxima]).ravel('F')
+
+        return cast(BoundsLike, tuple(the_bounds))
 
     @property
     def center(self) -> Any:
@@ -182,7 +181,8 @@ class MultiBlock(
         array([1., 1., 0.])
 
         """
-        return np.reshape(self.bounds, (3, 2)).mean(axis=1)
+        # (typing.cast necessary to make mypy happy with np.reshape())
+        return np.reshape(cast(list, self.bounds), (3, 2)).mean(axis=1)
 
     @property
     def length(self) -> float:
@@ -1124,7 +1124,9 @@ class MultiBlock(
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
                     scalars = np.array(scalars.astype(float))
-                    getattr(block, data_attr)[f'{scalars_name}-real'] = scalars
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-real'] = scalars
+                    dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
     def _convert_to_single_component(
@@ -1139,7 +1141,9 @@ class MultiBlock(
                     scalars = getattr(block, data_attr).get(scalars_name, None)
                     if scalars is not None:
                         scalars = np.linalg.norm(scalars, axis=1)
-                        getattr(block, data_attr)[f'{scalars_name}-normed'] = scalars
+                        dattr = getattr(block, data_attr)
+                        dattr[f'{scalars_name}-normed'] = scalars
+                        dattr.active_scalars_name = f'{scalars_name}-normed'
             return f'{scalars_name}-normed'
 
         for block in self:
@@ -1148,7 +1152,9 @@ class MultiBlock(
             elif block is not None:
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
-                    getattr(block, data_attr)[f'{scalars_name}-{component}'] = scalars[:, component]
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-{component}'] = scalars[:, component]
+                    dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
     def _get_consistent_active_scalars(self):

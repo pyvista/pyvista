@@ -2,22 +2,16 @@
 
 from abc import abstractmethod
 import collections.abc
-import logging
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, Type, Union
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import FieldAssociation, abstract_class, fileio
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .datasetattributes import DataSetAttributes
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -187,7 +181,7 @@ class DataObject:
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html: bool = None):
+    def head(self, display=True, html=None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -234,14 +228,19 @@ class DataObject:
         # Otherwise return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        # get longest row header
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+
+        # now make a call on the object to get its attributes as a list of len
+        # 2 tuples
+        row = "  {:%ds}{}\n" % max_len
         for attr in self._get_attrs():
             try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+                fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
             except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
+                fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
-            fmt += row.format('N Arrays', self.n_arrays)
+            fmt += row.format('N Arrays:', self.n_arrays)
         return fmt
 
     def _repr_html_(self):  # pragma: no cover
@@ -252,8 +251,18 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, ido, deep):  # pragma: no cover
-        """Copy pyvista meta data onto this object from another object."""
+    def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
+        """Copy pyvista meta data onto this object from another object. Intended to be overridden by subclasses.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments.
+
+        **kwargs : dict, optional
+            Keyword arguments.
+
+        """
         pass  # called only by the inherited class
 
     def copy(self, deep=True):
@@ -324,18 +333,6 @@ class DataObject:
 
         return True
 
-    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):  # pragma: no cover
-        """Add field data.
-
-        .. deprecated:: 0.32.0
-           Use :func:`DataObject.add_field_data` instead.
-        """
-        warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.clear_point_data()
-
     def add_field_data(self, array: np.ndarray, name: str, deep=True):
         """Add field data.
 
@@ -368,7 +365,7 @@ class DataObject:
 
         Add field data to a UniformGrid dataset.
 
-        >>> mesh = pyvista.UniformGrid(dims=(2, 2, 1))
+        >>> mesh = pyvista.UniformGrid(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
@@ -384,21 +381,10 @@ class DataObject:
         pyvista_ndarray([1, 2, 3])
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.set_array(array, name, deep_copy=deep)
-
-    @property
-    def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkFieldData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataObject.field_data` to return field data.
-
-        """
-        warnings.warn(
-            "Use of `field_arrays` is deprecated. Use `field_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.field_data
 
     @property
     def field_data(self) -> DataSetAttributes:
@@ -424,19 +410,6 @@ class DataObject:
             self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
         )
 
-    def clear_field_arrays(self):  # pragma: no cover
-        """Remove all field data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataObject.clear_field_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.field_data
-
     def clear_field_data(self):
         """Remove all field data.
 
@@ -454,6 +427,9 @@ class DataObject:
         0
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.clear()
 
     @property
@@ -506,7 +482,7 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
+        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> target = pv.UniformGrid()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
@@ -525,9 +501,9 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
+        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid(dims=(10, 10, 5))
+        >>> target = pv.UniformGrid(dimensions=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 

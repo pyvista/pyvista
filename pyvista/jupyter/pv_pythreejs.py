@@ -450,6 +450,11 @@ def dataset_to_mesh(
 
     rep_type = prop.GetRepresentationAsString()
 
+    # PolyData vertices should always be rendered
+    has_verts = False
+    if isinstance(dataset, pv.PolyData):
+        has_verts = dataset.verts.any()
+
     meshes = []
     if rep_type == 'Surface' and has_faces:
         surf = extract_surface_mesh(dataset)
@@ -490,7 +495,15 @@ def dataset_to_mesh(
         meshes.append(
             to_tjs_points(dataset, prop, coloring, lookup_table, color=color, opacity=opacity)
         )
-    else:  # wireframe
+
+    if has_verts:
+        # extract just vertices
+        poly_points = dataset.extract_cells(dataset.verts[1::2])
+        meshes.append(
+            to_tjs_points(poly_points, prop, coloring, lookup_table, color=color, opacity=opacity)
+        )
+
+    if rep_type not in ['Surface', 'Points']:
         if has_faces:
             surf = extract_surface_mesh(dataset)
             mesh = to_edge_mesh(
@@ -574,7 +587,7 @@ def meshes_from_actors(actors, focal_point):
         elif not hasattr(mapper, 'GetInputAsDataSet'):
             continue
         else:
-            dataset = mapper.GetInputAsDataSet()
+            dataset = pv.wrap(mapper.GetInputAsDataSet())
             mesh = dataset_to_mesh(
                 dataset,
                 actor.GetProperty(),

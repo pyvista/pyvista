@@ -21,9 +21,11 @@ the following projects are required dependencies of PyVista:
 
 * `vtk <https://pypi.org/project/vtk/>`_ - PyVista directly inherits types from the VTK library.
 * `NumPy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
-* `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
-* `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+* `pillow <https://pypi.org/project/Pillow/>`_ - PIL fork used for saving screenshots.
+* `imageio <https://pypi.org/project/imageio/>`_ - This library is used for reading images and writing animations.
+* `pooch <https://pypi.org/project/pooch/>`_ - Data management for our example datasets so users can download tutorials on the fly.
 * `scooby <https://github.com/banesullivan/scooby>`_ - Reporting and debugging tools.
+* `typing-extensions <https://pypi.org/project/typing-extensions/>`_ - only required on Python 3.7.
 
 
 Optional Dependencies
@@ -100,8 +102,6 @@ The following are a list of optional dependencies and their purpose:
 | Package                           | Purpose                                 |
 +===================================+=========================================+
 | ``matplotlib``                    | Using Colormaps                         |
-+-----------------------------------+-----------------------------------------+
-| ``itkwidgets``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``ipyvtklink``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+

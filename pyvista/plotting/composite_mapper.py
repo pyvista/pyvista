@@ -1,8 +1,8 @@
 """Module containing composite data mapper."""
 from itertools import cycle
-import logging
 import sys
 from typing import Optional
+import warnings
 import weakref
 
 import numpy as np
@@ -63,7 +63,7 @@ class BlockAttributes:
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -296,7 +296,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -591,7 +591,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Composite Block Addr=... Attributes
         Visible:   None
         Opacity:   0.1
-        Color:     Color(name='blue', hex='#0000ffff')
+        Color:     Color(name='blue', hex='#0000ffff', opacity=255)
         Pickable   None
 
         """
@@ -636,9 +636,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.set_unique_colors()
         >>> mapper.block_attr[1].color
-        Color(name='tab:orange', hex='#ff7f0eff')
+        Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
-        Color(name='tab:green', hex='#2ca02cff')
+        Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
         if has_module('matplotlib'):
@@ -649,7 +649,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 attr.color = next(colors)['color']
 
         else:  # pragma: no cover
-            logging.warning('Please install matplotlib for color cycles.')
+            warnings.warn('Please install matplotlib for color cycles.')
 
     def set_scalars(
         self,
@@ -701,21 +701,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         scalar_bar_args : dict
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         n_colors : int
             Number of colors to use when displaying scalars.
 
-        nan_color : color_like
+        nan_color : ColorLike
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : color_like
+        above_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
 
-        below_color : color_like
+        below_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
@@ -802,7 +802,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 self.lookup_table.annotations = annotations
 
             # self.lookup_table.SetNumberOfTableValues(n_colors)
-            self.lookup_table.nan_color = nan_color
+            if nan_color:
+                self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
                 scalar_bar_args.setdefault('above_label', 'Above')

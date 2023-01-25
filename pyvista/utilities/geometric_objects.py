@@ -157,6 +157,12 @@ def CylinderStructured(
     pyvista.StructuredGrid
         Structured cylinder.
 
+    Notes
+    -----
+    .. versionchanged:: 0.38.0
+       Prior to version 0.38, this method had incorrect results, producing
+       inconsistent number of points on the circular face of the cylinder.
+
     Examples
     --------
     Default structured cylinder
@@ -176,7 +182,7 @@ def CylinderStructured(
     # Define grid in polar coordinates
     r = np.array([radius]).ravel()
     nr = len(r)
-    theta = np.linspace(0, 2 * np.pi, num=theta_resolution)
+    theta = np.linspace(0, 2 * np.pi, num=theta_resolution + 1)
     radius_matrix, theta_matrix = np.meshgrid(r, theta)
 
     # Transform to cartesian space
@@ -195,7 +201,7 @@ def CylinderStructured(
     # Create the grid
     grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
-    grid.dimensions = [nr, theta_resolution, z_resolution]
+    grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
     # Orient properly in user direction
     vx = np.array([0.0, 0.0, 1.0])
@@ -1282,15 +1288,22 @@ def Circle(radius=0.5, resolution=100):
     pyvista.PolyData
         Circle mesh.
 
+    Notes
+    -----
+    .. versionchanged:: 0.38.0
+       Prior to version 0.38, this method had incorrect results, producing
+       inconsistent edge lengths and a duplicated point which is now fixed.
+
     Examples
     --------
     >>> import pyvista
     >>> radius = 0.5
     >>> circle = pyvista.Circle(radius)
     >>> circle.plot(show_edges=True, line_width=5)
+
     """
     points = np.zeros((resolution, 3))
-    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution, endpoint=False)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
@@ -1316,6 +1329,12 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     pyvista.PolyData
         Ellipse mesh.
 
+    Notes
+    -----
+    .. versionchanged:: 0.38.0
+       Prior to version 0.38, this method had incorrect results, producing
+       inconsistent edge lengths and a duplicated point which is now fixed.
+
     Examples
     --------
     >>> import pyvista
@@ -1323,7 +1342,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     >>> ellipse.plot(show_edges=True, line_width=5)
     """
     points = np.zeros((resolution, 3))
-    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution, endpoint=False)
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])

@@ -139,7 +139,7 @@ ny = 15
 nz = 5
 
 origin = (-(nx - 1) * 0.1 / 2, -(ny - 1) * 0.1 / 2, -(nz - 1) * 0.1 / 2)
-mesh = pv.UniformGrid(dims=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
+mesh = pv.UniformGrid(dimensions=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
 x = mesh.points[:, 0]
 y = mesh.points[:, 1]
 z = mesh.points[:, 2]

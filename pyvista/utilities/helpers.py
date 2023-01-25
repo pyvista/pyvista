@@ -525,11 +525,26 @@ def vtk_points(points, deep=True, force_float=False):
             f'Shape is {points.shape} and should be (X, 3)'
         )
 
+    # use the underlying vtk data if present to avoid memory leaks
+    if not deep and isinstance(points, pyvista.pyvista_ndarray):
+        if points.VTKObject is not None:
+            vtk_object = points.VTKObject
+
+            # we can only use the underlying data if `points` is not a slice of
+            # the VTK data object
+            if vtk_object.GetSize() == points.size:
+                vtkpts = _vtk.vtkPoints()
+                vtkpts.SetData(points.VTKObject)
+                return vtkpts
+            else:
+                deep = True
+
     # points must be contiguous
     points = np.require(points, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
     vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
     vtkpts.SetData(vtk_arr)
+
     return vtkpts
 
 
@@ -559,7 +574,7 @@ def line_segments_from_points(points):
     >>> import pyvista
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> lines = pyvista.lines_from_points(points)
+    >>> lines = pyvista.line_segments_from_points(points)
     >>> lines.plot()
 
     """
@@ -862,6 +877,11 @@ def wrap(dataset):
     * 3D :class:`trimesh.Trimesh` mesh.
     * 3D :class:`meshio.Mesh` mesh.
 
+    .. versionchanged:: 0.38.0
+        If the passed object is already a wrapped PyVista object, then
+        this is no-op and will return that object directly. In previous
+        versions of PyVista, this would perform a shallow copy.
+
     Parameters
     ----------
     dataset : :class:`numpy.ndarray`, :class:`trimesh.Trimesh`, or VTK object
@@ -934,6 +954,10 @@ def wrap(dataset):
     if dataset is None:
         return
 
+    if isinstance(dataset, tuple(pyvista._wrappers.values())):
+        # Return object if it is already wrapped
+        return dataset
+
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
@@ -943,7 +967,7 @@ def wrap(dataset):
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.UniformGrid(dims=dataset.shape)
+            mesh = pyvista.UniformGrid(dimensions=dataset.shape)
             if isinstance(dataset, pyvista.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
                 dataset = np.array(dataset, copy=False)
@@ -963,7 +987,7 @@ def wrap(dataset):
         try:
             return pyvista._wrappers[key](dataset)
         except KeyError:
-            logging.warning(f'VTK data type ({key}) is not currently supported by pyvista.')
+            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
         return
 
     # wrap meshio
@@ -1198,7 +1222,7 @@ def try_callback(func, *args):
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
         ).rstrip('\n')
-        logging.warning(formatted_exception)
+        warnings.warn(formatted_exception)
 
 
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):

@@ -34,7 +34,12 @@ def test_tinypages(tmpdir):
         str(html_dir),
     ]
     proc = Popen(
-        cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True, env={**os.environ, "MPLBACKEND": ""}
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        env={**os.environ, "MPLBACKEND": ""},
+        encoding="utf8",
     )
     out, err = proc.communicate()
 

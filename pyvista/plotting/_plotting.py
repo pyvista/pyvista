@@ -211,6 +211,9 @@ def _common_arg_parser(
     cmap = kwargs.pop('colormap', cmap)
     culling = kwargs.pop("backface_culling", culling)
     rgb = kwargs.pop('rgba', rgb)
+    vertex_color = kwargs.pop('vertex_color', theme.edge_color)
+    vertex_style = kwargs.pop('vertex_style', 'points')
+    vertex_opacity = kwargs.pop('vertex_opacity', 1.0)
 
     # Support aliases for 'back', 'front', or 'none'. Consider deprecating
     if culling is False:
@@ -235,7 +238,7 @@ def _common_arg_parser(
     feature_angle = kwargs.pop('feature_angle', theme.sharp_edges_feature_angle)
     if render_points_as_spheres is None:
         if style == 'points_gaussian':
-            render_points_as_spheres = True
+            render_points_as_spheres = False
         else:
             render_points_as_spheres = theme.render_points_as_spheres
 
@@ -252,7 +255,7 @@ def _common_arg_parser(
         # check if this actor already exists
         remove_existing_actor = True
 
-    nan_color = Color(nan_color, default_opacity=nan_opacity, default_color=theme.nan_color)
+    nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)
 
     if color is True:
         color = theme.color
@@ -273,6 +276,7 @@ def _common_arg_parser(
 
     # account for legacy behavior
     if 'stitle' in kwargs:  # pragma: no cover
+        # Deprecated on v0.37.0, estimated removal on v0.40.0
         warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
         scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
@@ -299,4 +303,7 @@ def _common_arg_parser(
         rgb,
         interpolation,
         remove_existing_actor,
+        vertex_color,
+        vertex_style,
+        vertex_opacity,
     )

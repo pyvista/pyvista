@@ -77,6 +77,7 @@ def read_legacy(filename, progress_bar=False):
     >>> mesh = pyvista.read_legacy(examples.uniformfile)  # doctest:+SKIP
 
     """
+    # Deprecated on v0.35.0, estimated removal on v0.40.0
     warnings.warn(
         "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
     )
@@ -178,13 +179,13 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise IOError("This file was not able to be automatically read by pvista.")
+            raise OSError("This file was not able to be automatically read by pvista.")
         from meshio._exceptions import ReadError
 
         try:
             return read_meshio(filename)
         except ReadError:
-            raise IOError("This file was not able to be automatically read by pyvista.")
+            raise OSError("This file was not able to be automatically read by pyvista.")
     else:
         observer = pyvista.utilities.errors.Observer()
         observer.observe(reader.reader)
@@ -404,6 +405,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
         Data read from the file.
 
     """
+    # Deprecated on v0.35.0, estimated removal on v0.40.0
     warnings.warn(
         "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
         PyVistaDeprecationWarning,

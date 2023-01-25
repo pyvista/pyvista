@@ -4,17 +4,15 @@ from pyvista import MAX_N_COLOR_BARS
 from .charts import Chart2D, ChartMPL, ChartBox, ChartPie
 from .colors import (
     Color,
-    color_like,
+    ColorLike,
     color_char_to_word,
     get_cmap_safe,
-    hex_to_rgb,
     hexcolors,
-    string_to_rgb,
     PARAVIEW_BACKGROUND,
 )
 from .composite_mapper import CompositeAttributes, BlockAttributes, CompositePolyDataMapper
 from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
-from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
+from .helpers import plot, plot_arrows, plot_compare_four
 from .plotting import BasePlotter, Plotter, close_all
 from ._property import Property
 from .renderer import CameraPosition, Renderer, scale_point
@@ -24,7 +22,6 @@ from .tools import (
     opacity_transfer_function,
     FONTS,
     system_supports_plotting,
-    parse_color,
     parse_font_family,
 )
 from .widgets import WidgetHelper

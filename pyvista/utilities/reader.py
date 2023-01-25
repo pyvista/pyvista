@@ -309,7 +309,7 @@ class BaseReader:
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
-            raise RuntimeError("Failed to read file.")
+            raise RuntimeError("File reader failed to read and/or produced no output.")
         data._post_file_load_processing()
 
         # check for any pyvista metadata
@@ -972,6 +972,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         ----------
         name : str
             Which patch array to report status.
+
         Returns
         -------
         bool
@@ -1890,13 +1891,13 @@ class PVDReader(BaseReader, TimeReader):
             datasets.append(
                 PVDDataSet(
                     float(element_attrib.get('timestep', 0)),
-                    int(element_attrib['part']),
+                    int(element_attrib.get('part', 0)),
                     element_attrib['file'],
                     element_attrib.get('group'),
                 )
             )
         self._datasets = sorted(datasets)
-        self._time_values = sorted(list(set([dataset.time for dataset in self.datasets])))
+        self._time_values = sorted({dataset.time for dataset in self.datasets})
 
         self.set_active_time_value(self.time_values[0])
 
@@ -2285,7 +2286,7 @@ class _GIFReader:
         from PIL import Image, ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.UniformGrid(dims=(img.size[0], img.size[1], 1))
+        self._data_object = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames

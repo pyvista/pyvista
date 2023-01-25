@@ -88,7 +88,7 @@ def plot(
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : color_like, optional
+    background : ColorLike, optional
         Color of the background.
 
     text : str, optional
@@ -158,7 +158,7 @@ def plot(
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : color_like, optional
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -210,7 +210,7 @@ def plot(
     UniformGrid. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(dims=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
     >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
     >>> grid.plot(volume=True)
@@ -412,56 +412,6 @@ def plot_compare_four(
         pl.reset_camera()
 
     return pl.show(screenshot=screenshot, **show_kwargs)
-
-
-def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
-    """Plot a PyVista/VTK mesh or dataset.
-
-    Adds any PyVista/VTK mesh that itkwidgets can wrap to the
-    scene.
-
-    Parameters
-    ----------
-    mesh : pyvista.DataSet or pyvista.MultiBlock
-        Any PyVista or VTK mesh is supported. Also, any dataset that
-        :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
-        points.
-
-    color : color_like, optional, defaults to white
-        Use to make the entire mesh have a single solid color.  Either
-        a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-        ``color='#FFFFFF'``. Color will be overridden if scalars are
-        specified.
-
-    scalars : str or numpy.ndarray, optional
-        Scalars used to "color" the mesh.  Accepts a string name of an
-        array that is present on the mesh or an array equal to the
-        number of cells or the number of points in the mesh.  Array
-        should be sized as a single vector. If both ``color`` and
-        ``scalars`` are ``None``, then the active scalars are used.
-
-    opacity : float, optional
-        Opacity of the mesh. If a single float value is given, it will
-        be the global opacity of the mesh and uniformly applied
-        everywhere - should be between 0 and 1.  Default 1.0
-
-    smooth_shading : bool, optional
-        Smooth mesh surface mesh by taking into account surface
-        normals.  Surface will appear smoother while sharp edges will
-        still look sharp.  Default ``False``.
-
-    Returns
-    --------
-    itkwidgets.Viewer
-        ITKwidgets viewer.
-    """
-    pl = pyvista.PlotterITK()
-    if isinstance(mesh, np.ndarray):
-        pl.add_points(mesh, color)
-    else:
-        pl.add_mesh(mesh, color, scalars, opacity, smooth_shading)
-    return pl.show()
 
 
 def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndarray]:
