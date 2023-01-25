@@ -34,10 +34,7 @@ For convenience, you can enable ``trame`` by default with:
 .. code:: python
 
     import pyvista as pv
-    await pv.set_jupyter_backend('trame')
-
-.. note::
-    It is critical to ``await`` the call to :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>` when using Trame in Jupyter.
+    pv.set_jupyter_backend('trame')
 
 
 Trame Jupyter Modes
@@ -50,17 +47,13 @@ as three separate backend choices):
 * ``'server'``: Uses a view that is purely server-rendering.
 * ``'client'``: Uses a view that is purely client-rendering (generally safe without a virtual frame buffer)
 
-With any of these Trame-based backend choices, you must await the call to
-:func:`set_jupyter_backend() <pyvista.set_jupyter_backend>`
-as mentioned above.
-
 You can choose your backend either by using :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>`
 or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call.
 
 .. code:: python
 
     import pyvista as pv
-    await pv.set_jupyter_backend('client')
+    pv.set_jupyter_backend('client')
 
     pv.Cone().plot()
 
@@ -68,7 +61,7 @@ or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call
 .. code:: python
 
     import pyvista as pv
-    await pv.set_jupyter_backend('trame')
+    pv.set_jupyter_backend('trame')
 
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())

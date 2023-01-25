@@ -91,7 +91,7 @@ def _validate_jupyter_backend(backend):
     return backend
 
 
-def set_jupyter_backend(backend) -> Awaitable[bool]:
+def set_jupyter_backend(backend):
     """Set the plotting backend for a jupyter notebook.
 
     Parameters
@@ -150,11 +150,6 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
           will generate nothing on headless servers even with a
           virtual framebuffer.
 
-    Returns
-    -------
-    Awaitable[bool]
-        An awaitable future that will finalize when the backend is ready.
-
     Examples
     --------
     Enable the pythreejs backend.
@@ -177,7 +172,7 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
 
     Enable the trame Trame backend.
 
-    >>> await pv.set_jupyter_backend('trame')  # doctest:+SKIP
+    >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
 
     Just show static images.
 
@@ -192,12 +187,6 @@ def set_jupyter_backend(backend) -> Awaitable[bool]:
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
     if backend in ['server', 'client', 'trame']:
         # Launch the trame server
-        from pyvista.trame.jupyter import launch_server
+        from pyvista.trame.jupyter import elegantly_launch
 
-        # Returns a future that finalizes when server is ready - should be awaited
-        return launch_server(pyvista.global_theme.trame.jupyter_server_name)
-    # Return an awaitable future to prevent errors when accidentally awaiting
-    # other backends
-    future = asyncio.Future()  # type: ignore
-    future.set_result(True)
-    return future
+        return elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)

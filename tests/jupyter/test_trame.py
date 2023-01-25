@@ -37,18 +37,16 @@ def test_set_jupyter_backend_trame():
 
 @skip_no_trame
 @skip_no_plotting
-@pytest.mark.asyncio
-async def test_trame_server_launch():
-    await pv.set_jupyter_backend('trame')
+def test_trame_server_launch():
+    pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
     assert server.running
 
 
 @skip_no_trame
 @skip_no_plotting
-@pytest.mark.asyncio
-async def test_trame():
-    await pv.set_jupyter_backend('trame')
+def test_trame():
+    pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
     assert server.running
 
@@ -106,9 +104,8 @@ async def test_trame():
 
 @skip_no_trame
 @skip_no_plotting
-@pytest.mark.asyncio
-async def test_trame_jupyter_modes():
-    await pv.set_jupyter_backend('trame')
+def test_trame_jupyter_modes():
+    pv.set_jupyter_backend('trame')
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
