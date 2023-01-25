@@ -884,12 +884,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return the number of cells."""
         raise DeprecationError('``number_of_faces`` has been deprecated.  Please use ``n_faces``')
 
-    def save(self, filename, binary=True, texture=None):
+    def save(self, filename, binary=True, texture=None, recompute_normals=True):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file. If ply or stl format is chosen, the face normals are
-        computed in place to ensure the mesh is properly saved.
+        file.
 
         Parameters
         ----------
@@ -917,6 +916,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
             .. note::
                This feature is only available when saving PLY files.
+
+        recompute_normals : bool, default: True
+            When ``True``, if ply or stl format is chosen, the face normals
+            are computed in place to ensure the mesh is properly saved.
+            Set this to ``False`` to save instead the already existing normal
+            array in the PolyData.
 
         Notes
         -----
@@ -962,7 +967,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
-        if ftype in ['.stl', '.ply']:
+        if ftype in ['.stl', '.ply'] and recompute_normals:
             self.compute_normals(inplace=True)
 
         # validate texture
