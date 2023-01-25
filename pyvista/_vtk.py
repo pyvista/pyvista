@@ -291,7 +291,6 @@ if VTK9:
         vtkBooleanOperationPolyDataFilter,
         vtkBoxClipDataSet,
         vtkClipClosedSurface,
-        vtkClipVolume,
         vtkCursor3D,
         vtkCurvatures,
         vtkDataSetTriangleFilter,

@@ -1,4 +1,7 @@
 """Test examples that do not require downloading."""
+import numpy as np
+import pytest
+
 import pyvista as pv
 from pyvista import examples
 
@@ -60,3 +63,17 @@ def test_load_earth():
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_cells
     assert mesh.textures["surface"]
+
+
+def test_load_hydrogen_orbital():
+    with pytest.raises(ValueError, match='`l` must be'):
+        pv.examples.load_hydrogen_orbital(1, 1, 0)
+    with pytest.raises(ValueError, match='`m` must be'):
+        pv.examples.load_hydrogen_orbital(1, 0, 1)
+
+    orbital = pv.examples.load_hydrogen_orbital(3, 2, 1)
+    assert isinstance(orbital, pv.UniformGrid)
+    assert 'hwf' in orbital.point_data
+    assert orbital.point_data['hwf'].dtype == np.complex128
+    assert 'real_hwf' in orbital.point_data
+    assert orbital.point_data['real_hwf'].dtype == np.float64

@@ -236,7 +236,6 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         """Return or set independent components.
 
         If ``False``, then you must have either 2 or 4 component data.
-
         For 2 component data, the first is passed through the
         first color transfer function and the second component is passed
         through the first scalar opacity (and gradient opacity) transfer

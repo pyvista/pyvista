@@ -877,6 +877,18 @@ def test_copy_vtk_array():
     assert new_value == arr_copy_shallow.GetValue(1)
 
 
+def test_cart_to_sphe():
+    def polar2cart(r, theta, phi):
+        return np.vstack(
+            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
+        ).T
+
+    points = np.random.random((1000, 3))
+    x, y, z = points.T
+    r, theta, phi = pyvista.cart_to_sphe(x, y, z)
+    assert np.allclose(polar2cart(r, theta, phi), points)
+
+
 def test_set_pickle_format():
     pyvista.set_pickle_format('legacy')
     assert pyvista.PICKLE_FORMAT == 'legacy'

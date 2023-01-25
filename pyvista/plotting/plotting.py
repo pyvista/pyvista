@@ -3726,12 +3726,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
             if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
                 raise ValueError(
-                    f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape ({scalars.shape}) and ({scalars.dtype})'
+                    '`add_volume` only supports scalars with 2 dimensions that have 4 components of datatype np.uint8.\n\n'
+                    f'Scalars have shape ({scalars.shape}) and ({scalars.dtype})'
                 )
 
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
-
         if scalars.ndim != 1:
             if scalars.ndim != 2:
                 raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
