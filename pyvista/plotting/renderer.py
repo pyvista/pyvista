@@ -4,7 +4,6 @@ import collections.abc
 from functools import partial
 from typing import Sequence, cast
 import warnings
-from weakref import proxy
 
 import numpy as np
 
@@ -742,9 +741,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(actor, Actor) and name:
             # WARNING: this will override the name if already set on Actor
             actor.name = name
-
-        if isinstance(actor, Actor):
-            actor.renderer = proxy(self)
 
         if name is None:
             if isinstance(actor, Actor):

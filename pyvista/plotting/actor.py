@@ -1,7 +1,6 @@
 """Wrap vtkActor."""
 
 from typing import Optional, Union
-import weakref
 
 import numpy as np
 
@@ -79,7 +78,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _new_attr_exceptions = ['_renderer', '_name']
+    _new_attr_exceptions = ['_name']
 
     def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
@@ -89,7 +88,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         if prop is None:
             self.prop = Property()
         self._name = name
-        self._renderer = None
 
     @property
     def name(self) -> str:
@@ -195,17 +193,6 @@ class Actor(Prop3D, _vtk.vtkActor):
     @texture.setter
     def texture(self, obj):
         self.SetTexture(obj)
-
-    @property
-    def renderer(self):
-        """Return the renderer associated with this actor."""
-        return self._renderer
-
-    @renderer.setter
-    def renderer(self, obj):
-        if not isinstance(obj, weakref.ProxyType):
-            raise TypeError("Only a ProxyType can be assigned to `renderer`")
-        self._renderer = obj
 
     @property
     def memory_address(self):
