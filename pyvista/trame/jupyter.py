@@ -1,4 +1,5 @@
 """Trame utilities for running in Jupyter."""
+import asyncio
 import logging
 import os
 import warnings
@@ -24,12 +25,10 @@ You can use the following snippet to launch the server:
 """
 JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
-Prior to plotting, please make sure to run `await set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
+Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
-    await pv.set_jupyter_backend('trame')
-
-It is critial that this `await` is used.
+    pv.set_jupyter_backend('trame')
 
 If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
 
@@ -184,3 +183,33 @@ def show_trame(
         server_proxy_prefix=server_proxy_prefix,
         **kwargs,
     )
+
+
+def elegantly_launch():
+    """Elegantly launch the Trame server without await.
+
+    This provides a mechanism to launch the Trame Jupyter backend in
+    a way that does not require users to await the call.
+
+    .. warning::
+        This uses `nest_asyncio <https://github.com/erdewit/nest_asyncio>`_
+        which patches the standard lib `asyncio` package and may have
+        unintended consequences for some uses cases. We advise strongly to
+        make sure PyVista's Jupyter backend is not set to use Trame when not
+        in a Jupyter environment.
+
+    """
+    try:
+        import nest_asyncio
+    except ImportError:
+        raise ImportError(
+            'Please install `nest_asyncio` to automagically launch the trame server without await.'
+        )
+
+    async def launch_it():
+        await launch_server(pyvista.global_theme.trame.jupyter_server_name)
+
+    # Basically monkey patches asyncio to support this
+    nest_asyncio.apply()
+
+    return asyncio.run(launch_it())
