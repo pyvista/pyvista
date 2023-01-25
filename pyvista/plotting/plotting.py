@@ -2499,11 +2499,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         edge_color=None,
         point_size=None,
         line_width=None,
-        opacity=1.0,
+        opacity=None,
         flip_scalars=False,
         lighting=None,
         n_colors=256,
-        interpolate_before_map=True,
+        interpolate_before_map=None,
         cmap=None,
         label=None,
         reset_camera=None,
@@ -3137,7 +3137,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set main values
         self.mesh = mesh
         self.mapper.dataset = self.mesh
-        self.mapper.interpolate_before_map = interpolate_before_map
+        if interpolate_before_map is not None:
+            self.mapper.interpolate_before_map = interpolate_before_map
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)

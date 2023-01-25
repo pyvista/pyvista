@@ -218,8 +218,9 @@ class Property(_vtk.vtkProperty):
         if point_size is None:
             point_size = self._theme.point_size
         self.point_size = point_size
-        if opacity is not None:
-            self.opacity = opacity
+        if opacity is None:
+            opacity = self._theme.opacity
+        self.opacity = opacity
         if ambient is None:
             ambient = self._theme.lighting_params.ambient
         self.ambient = ambient

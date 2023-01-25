@@ -33,6 +33,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self._theme = theme
         self.lookup_table = LookupTable()
 
+        self.interpolate_before_map = kwargs.get(
+            'interpolate_before_map', self._theme.interpolate_before_map
+        )
+
     @property
     def bounds(self) -> BoundsLike:
         """Return the bounds of this mapper.

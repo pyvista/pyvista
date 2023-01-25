@@ -76,7 +76,7 @@ class _rcParams(dict):  # pragma: no cover
 def _check_between_zero_and_one(value: float, value_name: str = 'value'):
     """Check if a value is between zero and one."""
     if value < 0 or value > 1:
-        raise ValueError('{value_name} must be between 0 and 1.')
+        raise ValueError(f'{value_name} must be between 0 and 1.')
 
 
 def load_theme(filename):
@@ -1291,6 +1291,8 @@ class DefaultTheme(_ThemeConfig):
         '_sharp_edges_feature_angle',
         '_before_close_callback',
         '_lighting_params',
+        '_interpolate_before_map',
+        '_opacity',
     ]
 
     def __init__(self):
@@ -1367,6 +1369,8 @@ class DefaultTheme(_ThemeConfig):
         self._enable_camera_orientation_widget = False
 
         self._lighting_params = _LightingConfig()
+        self._interpolate_before_map = True
+        self._opacity = 1.0
 
     @property
     def hidden_line_removal(self) -> bool:
@@ -1394,6 +1398,72 @@ class DefaultTheme(_ThemeConfig):
     @hidden_line_removal.setter
     def hidden_line_removal(self, value: bool):
         self._hidden_line_removal = value
+
+    @property
+    def interpolate_before_map(self) -> bool:
+        """Return or set whether to interpolate colors before mapping.
+
+        If the ``interpolate_before_map`` is turned off, the color
+        mapping occurs at polygon points and colors are interpolated,
+        which is generally less accurate whereas if the
+        ``interpolate_before_map`` is on (the default), then the scalars
+        will be interpolated across the topology of the dataset which is
+        more accurate.
+
+        See Also
+        --------
+        :ref:`_interpolate_before_mapping_example`
+
+        Examples
+        --------
+        Enable hidden line removal.
+
+        >>> import pyvista as pv
+
+        Load a cylinder which has cells with a wide spread
+        >>> cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
+
+        Common display argument to make sure all else is constant
+        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
+
+        >>> p = pv.Plotter(shape=(1, 2))
+        >>> _ = p.add_mesh(
+        >>>     cyl,
+        >>>     interpolate_before_map=False,
+        >>>     scalar_bar_args={'title': 'Elevation - not interpolated'},
+        >>>     **dargs,
+        >>> )
+        >>> p.subplot(0, 1)
+        >>> _ = p.add_mesh(
+        >>>     cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs
+        >>> )
+        >>> p.link_views()
+        >>> p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
+        >>> p.show()  # doctest: +SKIP
+
+        """
+        return self._interpolate_before_map
+
+    @interpolate_before_map.setter
+    def interpolate_before_map(self, value: bool):
+        self._interpolate_before_map = value
+
+    @property
+    def opacity(self) -> float:
+        """Return or set the opacity.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.global_theme.opacity = 0.5
+
+        """
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float):
+        _check_between_zero_and_one(opacity, 'opacity')
+        self._opacity = float(opacity)
 
     @property
     def above_range_color(self) -> Color:
