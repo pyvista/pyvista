@@ -526,11 +526,11 @@ def test_user_theme():
             self.color = '#1f77b4'
 
             self.lighting_params.interpolation = 'Phong'
-            self.lighting_params.ambient = 0.1
-            self.lighting_params.diffuse = 2.0
-            self.lighting_params.specular = 100
-            self.lighting_params.roughness = 0.25
-            self.lighting_params.metallic = 0.5
+            self.lighting_params.ambient = 0.15
+            self.lighting_params.diffuse = 0.45
+            self.lighting_params.specular = 0.85
+            self.lighting_params.roughness = 0.25  # PBR
+            self.lighting_params.metallic = 0.35  # PBR
 
             self.smooth_shading = True
             self.render_lines_as_tubes = True
@@ -548,9 +548,10 @@ def test_user_theme():
         assert pl.background_color == theme.background
         sactor = pl.add_mesh(sphere)
         assert sactor.prop.color == theme.color
+        assert sactor.prop.interpolation == theme.lighting_params.interpolation
         assert sactor.prop.ambient == theme.lighting_params.ambient
-        # assert sactor.prop.diffuse == theme.lighting_params.diffuse
-        # assert sactor.prop.specular == theme.lighting_params.specular
+        assert sactor.prop.diffuse == theme.lighting_params.diffuse
+        assert sactor.prop.specular == theme.lighting_params.specular
 
         lactor = pl.add_mesh(lines)
         assert lactor.prop.render_lines_as_tubes == theme.render_lines_as_tubes
@@ -558,6 +559,11 @@ def test_user_theme():
 
         pactor = pl.add_mesh(points)
         assert pactor.prop.point_size == theme.point_size
+
+        pl = pyvista.Plotter()
+        sactor = pl.add_mesh(sphere, pbr=True)
+        assert sactor.prop.roughness == theme.lighting_params.roughness
+        assert sactor.prop.metallic == theme.lighting_params.metallic
 
     finally:
         # always return to testing theme

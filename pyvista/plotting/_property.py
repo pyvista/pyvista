@@ -207,12 +207,12 @@ class Property(_vtk.vtkProperty):
         if style is not None:
             self.style = style
 
-        if interpolation in ['Physically based rendering', 'pbr']:
+        if InterpolationType(interpolation) == InterpolationType.PBR:
             if metallic is None:
-                metallic = self._theme.pbr.metallic
+                metallic = self._theme.lighting_params.metallic
             self.metallic = metallic
             if roughness is None:
-                roughness = self._theme.pbr.roughness
+                roughness = self._theme.lighting_params.roughness
             self.roughness = roughness
 
         if point_size is None:

@@ -221,9 +221,9 @@ class _LightingConfig(_ThemeConfig):
     Set global PBR parameters.
 
     >>> import pyvista
-    >>> pyvista.global_theme.lighting.interpolation = 'pbr'
-    >>> pyvista.global_theme.pbr.metallic = 0.5
-    >>> pyvista.global_theme.pbr.roughness = 0.25
+    >>> pyvista.global_theme.lighting_params.interpolation = 'pbr'
+    >>> pyvista.global_theme.lighting_params.metallic = 0.5
+    >>> pyvista.global_theme.lighting_params.roughness = 0.25
 
     """
 
@@ -258,7 +258,7 @@ class _LightingConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.pbr.enabled = True
+        >>> pyvista.global_theme.lighting_params.interpolation = 'Phong'
 
         """
         return self._interpolation
