@@ -93,6 +93,24 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
 
 
+def test_smooth_shading_shallow_copy(sphere):
+    """See also ``test_compute_normals_inplace``."""
+    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere2 = sphere.copy(deep=False)
+
+    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=None, smooth_shading=True)
+    # Modify after adding and using compute_normals via smooth_shading
+    sphere['numbers'] *= -1
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    pl.close()
+
+
 def test_get_datasets(sphere, hexbeam):
     """Test pyvista.Plotter._datasets."""
     pl = pyvista.Plotter()

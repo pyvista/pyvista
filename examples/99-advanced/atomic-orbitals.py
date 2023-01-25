@@ -83,8 +83,8 @@ pl.show()
 
 
 ###############################################################################
-# Plot the Orbital Contours
-# ~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the Orbital Contours as an Isosurface
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Generate the contour plot for the orbital by determining when the orbital
 # equals 10% the maximum value of the orbital. This effectively captures the
 # majority of the "volume" the electron potentially exists in.
@@ -109,27 +109,34 @@ contours.plot(
 
 
 ###############################################################################
-# Plot all the
-
-hydro_orbital = examples.load_hydrogen_orbital(3, 0, 0)
+# Plot the Phase of the Orbitals
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Let's now combine some of the best parts of the two above plots. The
+# volumetric plot is great for showing the probability of the "electron cloud"
+# orbitals, but the colormap doesn't quite match reality as well as the
+# isosurface plot.
+#
+# For this example we're going to use an RGBA colormap to tightly control way
+# the orbitals are plotted. For this, the opacity will be mapped to the
+# probability of the electron being at a location in the grid, which we can do
+# by taking the absolute value of the orbital's "hydrogen wave function". We
+# can set the color of the orbital based on the phase, which we can get simply
+# by with ``orbital['real_hwf'] < 0``
 
 
 def plot_orbital(orbital):
-    # normalize opacity
-    # scalars = np.vstack((orbital['real_hwf'], np.abs(orbital['real_hwf']))).T
-    # scalars = np.abs(orbital['real_hwf'])
-
+    """Plot an electron orbital using an RGBA colormap."""
     neg_mask = orbital['real_hwf'] < 0
-    arr = np.zeros((orbital.n_points, 4), np.uint8)
-    arr[neg_mask, 0] = 255
-    arr[~neg_mask, 1] = 255
+    rgba = np.zeros((orbital.n_points, 4), np.uint8)
+    rgba[neg_mask, 0] = 255
+    rgba[~neg_mask, 1] = 255
 
     # normalize opacity
     opac = np.abs(orbital['real_hwf'])
     opac /= opac.max()
-    arr[:, -1] = opac * 255
+    rgba[:, -1] = opac * 255
 
-    orbital['plot_scalars'] = arr
+    orbital['plot_scalars'] = rgba
 
     pl = pv.Plotter()
     vol = pl.add_volume(
@@ -137,11 +144,14 @@ def plot_orbital(orbital):
         scalars='plot_scalars',
     )
     vol.prop.interpolation_type = 'linear'
-    pl.add_volume_clipper(vol, normal='-x')
+    pl.add_volume_clip_plane(
+        vol, normal='-x', normal_rotation=False, widget_color=pv.Color(opacity=0.0)
+    )
     pl.camera.zoom(1.5)
     pl.background_color = [0.2, 0.2, 0.2]
     pl.show_axes()
     pl.show()
 
 
+hydro_orbital = examples.load_hydrogen_orbital(3, 0, 0)
 plot_orbital(hydro_orbital)

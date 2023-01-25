@@ -2,39 +2,78 @@
 .. _clip_volume_widget_example:
 
 Clip Volume Widget
-~~~~~~~~~~~~~~~~~~
-If you have a :class:`pyvista.UniformGrid`, you can clip it using the
-:func:`pyvista.Plotter.add_volume_clipper` widget.
+------------------
+If you have a structured dataset like a :class:`pyvista.UniformGrid` or
+:class:`pyvista.RectilinearGrid`, you can clip it using the
+:func:`pyvista.Plotter.add_volume_clipper` widget to better see the internal
+structure of the dataset.
 
+.. image:: ../../images/gifs/volume-clip-plane-widget.gif
 
-.. image:: ../../images/gifs/box-clip.gif
 """
 
+###############################################################################
+# Create the Dataset
+# ~~~~~~~~~~~~~~~~~~
+# Create a dense :class:`pyvista.UniformGrid` with dimensions ``(200, 200,
+# 200)`` and set the active scalars to distance from the :attr:`center
+# <pyvista.UniformGrid.center>` of the grid.
+
+import numpy as np
 
 import pyvista as pv
-from pyvista import examples
 
-# Create the dataset (hydrogen 3d orbital with n=3, l=2, and m=0)
-grid = examples.load_hydrogen_orbital(3, 2, -2)
+grid = pv.UniformGrid(dimensions=(200, 200, 200))
+grid['scalars'] = np.linalg.norm(grid.center - grid.points, axis=1)
+grid
 
 
 ###############################################################################
-# Plot the Probability Density of the Orbital
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Generate the Opacity Array
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Create a banded opacity array such that our dataset shows "rings" at certain
+# values. Have this increase such that higher values (values farther away from
+# the center) are more opaque.
 
-pl = pv.Plotter(theme=pv.themes.DarkTheme())
-vol = pl.add_volume(grid, cmap='magma', opacity=[1, 0, 1])
-vol.prop.interpolation_type = 'linear'
-# pl.camera_position ='yz'
-pl.add_volume_clipper(vol, normal='-x', implicit=True)
-pl.show_axes()
+opacity = np.zeros(100)
+opacity[::10] = np.geomspace(0.01, 0.75, 10)
+
+
+###############################################################################
+# Plot a Single Clip Plane Dataset
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the volume with a single clip plane.
+#
+# Reverse the opacity array such that portions closer to the center are more
+# opaque.
+
+pl = pv.Plotter()
+pl.add_volume_clip_plane(grid, normal='-x', opacity=opacity[::-1], cmap='magma')
 pl.show()
 
 
 ###############################################################################
-# Plot the Orbital Contours
+# Plot Multiple Clip Planes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the dataset using the :func:`pyvista.Plotter.add_volume_clip_plane` with
+# the output from :func:`pyvista.Plotter.add_volume` Enable constant
+# interaction by setting the ``interaction_event`` to ``'always'``.
+#
+# Disable the arrows to make the plot a bit clearer and flip the opacity array.
 
-# contours = grid.contour([grid['norm_hwf'].max() * 0.1], method='marching_cubes')
-# contours = contours.interpolate(grid)
-# contours.plot(scalars=np.real(contours['hwf']), show_scalar_bar=False, smooth_shading=True)
+pl = pv.Plotter()
+vol = pl.add_volume(grid, opacity=opacity)
+vol.prop.interpolation_type = 'linear'
+pl.add_volume_clip_plane(
+    vol,
+    normal='-x',
+    interaction_event='always',
+    normal_rotation=False,
+)
+pl.add_volume_clip_plane(
+    vol,
+    normal='-y',
+    interaction_event='always',
+    normal_rotation=False,
+)
+pl.show()
