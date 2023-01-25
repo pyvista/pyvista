@@ -1326,7 +1326,7 @@ class DefaultTheme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'server')
+        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')
         self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
