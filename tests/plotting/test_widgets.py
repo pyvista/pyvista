@@ -231,7 +231,6 @@ def test_widget_spline(uniform):
 
 
 def test_widget_distance(uniform):
-
     class DistanceCallback:
         def __init__(self):
             self.called = False
@@ -259,7 +258,7 @@ def test_widget_distance(uniform):
     p.iren._mouse_left_button_click(width // 2 + 3, height // 2)
 
     assert distance_callback.called
-    
+
     p.close()
 
 
