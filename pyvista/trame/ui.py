@@ -260,7 +260,12 @@ class Viewer:
                 )
 
     def ui(
-        self, mode=None, default_server_rendering=True, collapse_menu=False, add_menu=True, **kwargs
+        self,
+        mode=None,
+        default_server_rendering=True,
+        collapse_menu=False,
+        add_menu=True,
+        **kwargs,
     ):
         """Generate VContainer for PyVista Plotter.
 
