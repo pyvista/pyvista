@@ -172,6 +172,49 @@ def get_reader(filename, force_ext=None):
 
 
 @abstract_class
+class BaseVTKReader:
+    """Simulate a VTK reader."""
+
+    def __init__(self):
+        self._data_object = None
+        self._observers: List[Union[int, Callable]] = []
+
+    def SetFileName(self, filename):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._filename = filename
+
+    def UpdateInformation(self):
+        """Needed for VTK-like compatibility with BaseReader."""
+        pass
+
+    def AddObserver(self, event_type, callback):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._observers.append([event_type, callback])
+
+    def RemoveObservers(self, *args):
+        """Needed for VTK-like compatibility with BaseReader."""
+        self._observers = []
+
+    def GetProgress(self):
+        """Needed for VTK-like compatibility with BaseReader."""
+        return 0.0
+
+    def UpdateObservers(self, event_type):
+        """Needed for VTK-like compatibility with BaseReader."""
+        for event_type_allowed, observer in self._observers:
+            if event_type_allowed == event_type:
+                observer(self, event_type)
+
+    def Update(self):
+        """Needed for VTK-like compatibility with BaseReader."""
+        raise NotImplementedError
+
+    def GetOutputDataObject(self, *args):
+        """Needed for VTK-like compatibility with BaseReader."""
+        return self._data_object
+
+
+@abstract_class
 class BaseReader:
     """The Base Reader class.
 
@@ -2249,37 +2292,16 @@ class SegYReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
 
-class _GIFReader:
+class _GIFReader(BaseVTKReader):
     """Simulate a VTK reader for GIF files."""
 
-    _data_object = None
-    _observers: List[Union[int, Callable]] = []
-    _n_frames = 0
-    _current_frame = 0
-
-    def SetFileName(self, filename):
-        """Needed for VTK-like compatibility with BaseReader."""
-        self._filename = filename
-
-    def UpdateInformation(self):
-        """Needed for VTK-like compatibility with BaseReader."""
-        pass
-
-    def AddObserver(self, event_type, callback):
-        """Needed for VTK-like compatibility with BaseReader."""
-        self._observers.append([event_type, callback])
-
-    def RemoveObservers(self, *args):
-        """Needed for VTK-like compatibility with BaseReader."""
-        self._observers = []
+    def __init__(self):
+        super().__init__()
+        self._n_frames = 0
+        self._current_frame = 0
 
     def GetProgress(self):
         return self._current_frame / self._n_frames
-
-    def UpdateObservers(self, event_type):
-        for event_type_allowed, observer in self._observers:
-            if event_type_allowed == event_type:
-                observer(self, event_type)
 
     def Update(self):
         """Read the GIF and store internally to `_data_object`."""
@@ -2298,10 +2320,6 @@ class _GIFReader:
 
         if 'frame0' in self._data_object.point_data:
             self._data_object.point_data.active_scalars_name = 'frame0'
-
-    def GetOutputDataObject(self, *args):
-        """Needed for VTK-like compatibility with BaseReader."""
-        return self._data_object
 
 
 class GIFReader(BaseReader):
