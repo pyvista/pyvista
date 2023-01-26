@@ -153,7 +153,7 @@ def plot_orbital(orbital, cpos='iso', clip_plane='x'):
     pl.camera_position = cpos
     pl.camera.zoom(1.5)
     pl.show_axes()
-    pl.show()
+    return pl.show()
 
 
 hydro_orbital = examples.load_hydrogen_orbital(3, 1, 0)
