@@ -36,8 +36,8 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
     Parameters
     ----------
     return_viewer : bool, optional
-        Return the jupyterlab viewer, scene, or display object
-        when plotting with jupyter notebook.
+        Return the IPython Widget, scene, or display object
+        when plotting in a Jupyter notebook.
 
     Returns
     -------
@@ -66,7 +66,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
         if backend in ['server', 'client', 'trame']:
             from pyvista.trame.jupyter import show_trame
 
-            return show_trame(plotter, mode=backend, **kwargs)
+            return show_trame(plotter, mode=backend, return_viewer=return_viewer, **kwargs)
 
     except ImportError as e:
         warnings.warn(

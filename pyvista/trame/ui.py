@@ -8,7 +8,6 @@ applications.
 """
 import io
 
-from trame.ui.vuetify import VAppLayout
 from trame.widgets import html, vuetify
 
 import pyvista
@@ -58,7 +57,7 @@ class Viewer:
         if plotter._id_name in _VIEWERS:
             raise RuntimeError('A viewer instance already exists for this Plotter.')
         _VIEWERS[plotter._id_name] = self
-        self._html_views = set()  # TODO: weakref
+        self._html_views = set()
 
         self.plotter = plotter
         self.plotter.suppress_rendering = suppress_rendering
@@ -70,6 +69,11 @@ class Viewer:
         self.EDGES = f'{plotter._id_name}_edge_visibility'
         self.AXIS = f'{plotter._id_name}_axis_visiblity'
         self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
+
+    @property
+    def views(self):
+        """Get a set of all associate trame views for this viewer."""
+        return self._html_views
 
     def update(self, **kwargs):
         """Update all associated views."""
@@ -366,24 +370,3 @@ def plotter_ui(plotter, mode=None, default_server_rendering=True, collapse_menu=
         collapse_menu=collapse_menu,
         **kwargs,
     )
-
-
-def initialize(
-    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
-):
-    """Generate the UI for a given plotter."""
-    state = server.state
-    state.trame__title = UI_TITLE
-
-    viewer = get_or_create_viewer(plotter, suppress_rendering=mode == 'client')
-
-    with VAppLayout(server, template_name=plotter._id_name):
-        viewer.ui(
-            mode=mode,
-            default_server_rendering=default_server_rendering,
-            collapse_menu=collapse_menu,
-            **kwargs,
-        )
-
-    # Returns the UI identifier (used in `template_name`)
-    return plotter._id_name

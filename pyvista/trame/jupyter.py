@@ -4,12 +4,14 @@ import logging
 import os
 import warnings
 
+from IPython import display
 from ipywidgets import widgets
 from trame.app import get_server
+from trame.ui.vuetify import VAppLayout
 from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
 
 import pyvista
-from pyvista.trame.ui import initialize
+from pyvista.trame.ui import UI_TITLE, get_or_create_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
@@ -57,8 +59,25 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
+class Widget(widgets.HTML):
+    """Custom HTML iframe widget for trame viewer."""
+
+    def __init__(self, viewer, src, **kwargs):
+        """Initialize."""
+        width = kwargs.pop('width', '99%')
+        height = kwargs.pop('height', '600px')
+        value = f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>"
+        super().__init__(value, **kwargs)
+        self._viewer = viewer
+
+    @property
+    def viewer(self):
+        """Get the associated viewer instance."""
+        return self._viewer
+
+
 def launch_server(server=None):
-    """Launch a trame server."""
+    """Launch a trame server for use with Jupyter."""
     if server is None:
         server = pyvista.global_theme.trame.jupyter_server_name
     if isinstance(server, str):
@@ -88,8 +107,8 @@ def launch_server(server=None):
     return server.ready
 
 
-def build_iframe(_server, ui=None, server_proxy_enabled=None, server_proxy_prefix=None, **kwargs):
-    """Build IPython display.IFrame object for the trame view."""
+def build_url(_server, ui=None, server_proxy_enabled=None, server_proxy_prefix=None, **kwargs):
+    """Build the URL for the iframe."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
         server_proxy_enabled = pyvista.global_theme.trame.server_proxy_enabled
@@ -103,9 +122,27 @@ def build_iframe(_server, ui=None, server_proxy_enabled=None, server_proxy_prefi
     else:
         src = f'{kwargs.get("protocol", "http")}://{kwargs.get("host", "localhost")}:{_server.port}/index.html{params}'
     logger.debug(src)
-    width = kwargs.get('width', '99%')
-    height = kwargs.get('height', '600px')
-    return widgets.HTML(f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>")
+    return src
+
+
+def initialize(
+    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
+):
+    """Generate the UI for a given plotter."""
+    state = server.state
+    state.trame__title = UI_TITLE
+
+    viewer = get_or_create_viewer(plotter, suppress_rendering=mode == 'client')
+
+    with VAppLayout(server, template_name=plotter._id_name):
+        viewer.ui(
+            mode=mode,
+            default_server_rendering=default_server_rendering,
+            collapse_menu=collapse_menu,
+            **kwargs,
+        )
+
+    return viewer
 
 
 def show_trame(
@@ -116,6 +153,7 @@ def show_trame(
     server_proxy_prefix=None,
     collapse_menu=False,
     default_server_rendering=True,
+    return_viewer=False,
     **kwargs,
 ):
     """Run and display the trame application in jupyter's event loop.
@@ -149,6 +187,9 @@ def show_trame(
         Whether to use server-side or client-side rendering on-start when
         using the ``'trame'`` mode.
 
+    return_viewer : bool, optional
+        Return the ipywidget.
+
     **kwargs : dict, optional
         Mostly ignored, though ``protocol`` and ``host`` can be use to
         override the iframe src url and ``hieght`` and ``width`` can be
@@ -170,7 +211,7 @@ def show_trame(
         raise TrameServerDownError(name)
 
     # Initialize app
-    ui_name = initialize(
+    viewer = initialize(
         server,
         plotter,
         mode=mode,
@@ -179,13 +220,18 @@ def show_trame(
     )
 
     # Show as cell result
-    return build_iframe(
+    src = build_url(
         server,
-        ui=ui_name,
+        ui=plotter._id_name,
         server_proxy_enabled=server_proxy_enabled,
         server_proxy_prefix=server_proxy_prefix,
         **kwargs,
     )
+
+    disp = Widget(viewer, src, **kwargs)
+    if return_viewer:
+        return disp
+    display.display_html(disp)
 
 
 def elegantly_launch(server):
