@@ -5,9 +5,9 @@ from pyvista.plotting import system_supports_plotting
 
 has_trame = True
 try:
-    from ipywidgets import widgets
     from trame.app import get_server
 
+    from pyvista.trame.jupyter import Widget
     from pyvista.trame.ui import get_or_create_viewer
     from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
 except:  # noqa: E722
@@ -52,8 +52,8 @@ def test_trame():
 
     pl = pv.Plotter(notebook=True)
     actor = pl.add_mesh(pv.Cone())
-    widget = pl.show()
-    assert isinstance(widget, widgets.HTML)
+    widget = pl.show(return_viewer=True)
+    assert isinstance(widget, Widget)
 
     viewer = get_or_create_viewer(pl)
 
@@ -109,20 +109,20 @@ def test_trame_jupyter_modes():
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend='client')
-    assert isinstance(widget, widgets.HTML)
+    widget = pl.show(jupyter_backend='client', return_viewer=True)
+    assert isinstance(widget, Widget)
     assert pl.suppress_rendering
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend='server')
-    assert isinstance(widget, widgets.HTML)
+    widget = pl.show(jupyter_backend='server', return_viewer=True)
+    assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend='trame')
-    assert isinstance(widget, widgets.HTML)
+    widget = pl.show(jupyter_backend='trame', return_viewer=True)
+    assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
 
 
