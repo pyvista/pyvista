@@ -60,7 +60,8 @@ def _validate_jupyter_backend(backend):
     if backend == 'ipyvtklink':
         warnings.warn(
             '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
-            PyVistaDeprecationWarning, stacklevel=3,
+            PyVistaDeprecationWarning,
+            stacklevel=3,
         )
         try:
             import ipyvtklink
