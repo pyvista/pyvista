@@ -19,6 +19,7 @@ Visualize the wave functions (orbitals) of the hydrogen atom.
 #    This example requires `sympy <https://www.sympy.org/>`_. Install it with:
 #
 #    .. code:: python
+#
 #       pip install sympy
 
 import numpy as np
@@ -77,7 +78,6 @@ pl = pv.Plotter()
 vol = pl.add_volume(grid, cmap='magma', opacity=[1, 0, 1])
 vol.prop.interpolation_type = 'linear'
 pl.camera.zoom(1.5)
-pl.background_color = [0.2, 0.2, 0.2]
 pl.show_axes()
 pl.show()
 
@@ -109,8 +109,8 @@ contours.plot(
 
 
 ###############################################################################
-# Plot the Phase of the Orbitals
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Volumetric Plot: Plot the Orbitals using RGBA
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Let's now combine some of the best parts of the two above plots. The
 # volumetric plot is great for showing the probability of the "electron cloud"
 # orbitals, but the colormap doesn't quite match reality as well as the
@@ -121,10 +121,12 @@ contours.plot(
 # probability of the electron being at a location in the grid, which we can do
 # by taking the absolute value of the orbital's "hydrogen wave function". We
 # can set the color of the orbital based on the phase, which we can get simply
-# by with ``orbital['real_hwf'] < 0``
+# by with ``orbital['real_hwf'] < 0``.
+#
+# Let's start with a simple one, the 3pz orbital.
 
 
-def plot_orbital(orbital):
+def plot_orbital(orbital, cpos='iso', clip_plane='x'):
     """Plot an electron orbital using an RGBA colormap."""
     neg_mask = orbital['real_hwf'] < 0
     rgba = np.zeros((orbital.n_points, 4), np.uint8)
@@ -132,7 +134,7 @@ def plot_orbital(orbital):
     rgba[~neg_mask, 1] = 255
 
     # normalize opacity
-    opac = np.abs(orbital['real_hwf'])
+    opac = np.abs(orbital['real_hwf']) ** 2
     opac /= opac.max()
     rgba[:, -1] = opac * 255
 
@@ -144,14 +146,79 @@ def plot_orbital(orbital):
         scalars='plot_scalars',
     )
     vol.prop.interpolation_type = 'linear'
-    pl.add_volume_clip_plane(
-        vol, normal='-x', normal_rotation=False, widget_color=pv.Color(opacity=0.0)
-    )
+    if clip_plane:
+        pl.add_volume_clip_plane(
+            vol, normal=clip_plane, normal_rotation=False, widget_color=pv.Color(opacity=0.0)
+        )
+    pl.camera_position = cpos
     pl.camera.zoom(1.5)
-    pl.background_color = [0.2, 0.2, 0.2]
     pl.show_axes()
     pl.show()
 
 
-hydro_orbital = examples.load_hydrogen_orbital(3, 0, 0)
-plot_orbital(hydro_orbital)
+hydro_orbital = examples.load_hydrogen_orbital(3, 1, 0)
+plot_orbital(hydro_orbital, clip_plane='-x')
+
+
+###############################################################################
+# Volumetric Plot: 4dz2 orbital
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
+plot_orbital(hydro_orbital, clip_plane='-y')
+
+
+###############################################################################
+# Volumetric Plot: 4dxz orbital
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
+plot_orbital(hydro_orbital, clip_plane='-y')
+
+
+###############################################################################
+# Plot an Orbital Using a Density Plot
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# We can also plot atomic orbitals using a 3D density plot. For this, we will
+# use :func:`numpy.random.choice` to sample all the points of our
+# :class:`pyvista.UniformGrid` based on the probability of the electron being
+# at that coordinate.
+#
+# Note how we square the probability to better visualize the distribution of
+# the atomic orbital.
+
+# Generate the orbital and sample based on the square of the probability of an
+# electron being within a particular volume of space.
+hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0, zoom_fac=0.5)
+prob = np.abs(hydro_orbital['real_hwf']) ** 2
+prob /= prob.sum()
+indices = np.random.choice(hydro_orbital.n_points, 10000, p=prob)
+
+# add a small amount of noise to these coordinates to remove the "grid like"
+# structure present in the underlying UniformGrid
+points = hydro_orbital.points[indices]
+points += np.random.random(points.shape) - 0.5
+
+# Create a point cloud and add the phase of as the active scalars
+point_cloud = pv.PolyData(points)
+point_cloud['phase'] = hydro_orbital['real_hwf'][indices] < 0
+
+# Turn the point cloud into individual spheres. We do this so we can improve
+# the plot by enabling surface space ambient occlusion (SSAO)
+dplot = point_cloud.glyph(
+    geom=pv.Sphere(theta_resolution=8, phi_resolution=8), scale=False, orient=False
+)
+
+# be sure to enable SSAO here. This makes the "points" that are deeper within
+# the density plot darker.
+pl = pv.Plotter()
+pl.add_mesh(
+    dplot,
+    smooth_shading=True,
+    show_scalar_bar=False,
+    cmap=['red', 'green'],
+    ambient=0.2,
+)
+pl.enable_ssao(radius=10)
+pl.enable_anti_aliasing()
+pl.camera.zoom(2)
+pl.background_color = 'w'
+pl.show()

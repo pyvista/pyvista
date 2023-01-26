@@ -414,7 +414,7 @@ def load_nut():
     return pyvista.read(os.path.join(dir_path, 'nut.ply'))
 
 
-def load_hydrogen_orbital(n=1, l=0, m=0):
+def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     """Load the hydrogen wave function for a :class:`pyvista.UniformGrid`.
 
     This is the Schrödinger equation evaluated in three dimensions.
@@ -437,6 +437,10 @@ def load_hydrogen_orbital(n=1, l=0, m=0):
         Magnetic quantum number. Must be an integer ranging from ``-l`` to
         ``l`` (inclusive). This is the orientation of the angular momentum in
         space.
+
+    zoom_fac : float, default: 1.0
+        Zoom factor for the electron cloud. Increase this value to focus on the
+        center of the electron cloud.
 
     Returns
     -------
@@ -479,13 +483,19 @@ def load_hydrogen_orbital(n=1, l=0, m=0):
     psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
 
     if n == 1:
-        l = 1.5 * n**2 + 1.0
+        org = 1.5 * n**2 + 1.0
     else:
-        l = 1.5 * n**2 + 10.0
+        org = 1.5 * n**2 + 10.0
+
+    org /= zoom_fac
 
     dim = 100
-    s = (l * 2) / (dim - 1)
-    grid = pyvista.UniformGrid(dimensions=(dim, dim, dim), spacing=(s, s, s), origin=(-l, -l, -l))
+    sp = (org * 2) / (dim - 1)
+    grid = pyvista.UniformGrid(
+        dimensions=(dim, dim, dim),
+        spacing=(sp, sp, sp),
+        origin=(-org, -org, -org),
+    )
 
     r, theta, phi = pyvista.cart_to_sphe(grid.x, grid.y, grid.z)
     wfc = psi(r, phi, theta).reshape(grid.dimensions)
