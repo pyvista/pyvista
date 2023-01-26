@@ -234,9 +234,6 @@ def show_trame(
         server_proxy_prefix=server_proxy_prefix,
         **kwargs,
     )
-    for ki, key in enumerate(('width', 'height')):
-        if key not in kwargs:
-            kwargs[key] = f'{plotter.window_size[ki]}px'
 
     disp = Widget(viewer, src, **kwargs)
     if return_viewer:
