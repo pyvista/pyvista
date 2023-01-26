@@ -50,7 +50,7 @@ class ActorProperties:
 
     def __init__(self, properties: pv._vtk.vtkProperty) -> None:
         super().__init__()
-        self.properties = properties()
+        self.properties = properties
 
     @property
     def color(self):

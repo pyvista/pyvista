@@ -334,7 +334,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.shaft_type = axes.ShaftType.LINE
+        >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.LINE
         >>> axes.axes_actor.shaft_type
         <ShaftType.LINE: 1>
 
@@ -356,9 +356,8 @@ class AxesActor(pv._vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> from pyvista.plotting.axes_actor import TipType
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.tip_type = TipType.SPHERE
+        >>> axes.axes_actor.tip_type = axes.axes_actor.TipType.SPHERE
         >>> axes.axes_actor.tip_type
         <TipType.SPHERE: 1>
         """
@@ -429,7 +428,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @property
     def x_axis_shaft_properties(self):
         """Return or set the properties of the X axis shaft."""
-        return ActorProperties(self.GetXAxisShaftProperty)
+        return ActorProperties(self.GetXAxisShaftProperty())
 
     @x_axis_shaft_properties.setter
     def x_axis_shaft_properties(self, properties: ActorProperties):
@@ -438,7 +437,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @property
     def y_axis_shaft_properties(self):
         """Return or set the properties of the Y axis shaft."""
-        return ActorProperties(self.GetYAxisShaftProperty)
+        return ActorProperties(self.GetYAxisShaftProperty())
 
     @y_axis_shaft_properties.setter
     def y_axis_shaft_properties(self, properties: ActorProperties):
@@ -447,7 +446,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @property
     def z_axis_shaft_properties(self):
         """Return or set the properties of the Z axis shaft."""
-        return ActorProperties(self.GetZAxisShaftProperty)
+        return ActorProperties(self.GetZAxisShaftProperty())
 
     @z_axis_shaft_properties.setter
     def z_axis_shaft_properties(self, properties: ActorProperties):
@@ -456,7 +455,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @property
     def x_axis_tip_properties(self):
         """Return or set the properties of the X axis tip."""
-        return ActorProperties(self.GetXAxisTipProperty)
+        return ActorProperties(self.GetXAxisTipProperty())
 
     @x_axis_tip_properties.setter
     def x_axis_tip_properties(self, properties: ActorProperties):
@@ -465,7 +464,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @property
     def y_axis_tip_properties(self):
         """Return or set the properties of the Y axis tip."""
-        return ActorProperties(self.GetYAxisTipProperty)
+        return ActorProperties(self.GetYAxisTipProperty())
 
     @y_axis_tip_properties.setter
     def y_axis_tip_properties(self, properties: ActorProperties):
@@ -474,7 +473,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     @property
     def z_axis_tip_properties(self):
         """Return or set the properties of the Z axis tip."""
-        return ActorProperties(self.GetZAxisTipProperty)
+        return ActorProperties(self.GetZAxisTipProperty())
 
     @z_axis_tip_properties.setter
     def z_axis_tip_properties(self, properties: ActorProperties):
