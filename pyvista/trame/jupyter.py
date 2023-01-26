@@ -4,7 +4,7 @@ import logging
 import os
 import warnings
 
-from IPython import display
+from ipywidgets import widgets
 from trame.app import get_server
 from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
 
@@ -102,13 +102,10 @@ def build_iframe(_server, ui=None, server_proxy_enabled=None, server_proxy_prefi
         )
     else:
         src = f'{kwargs.get("protocol", "http")}://{kwargs.get("host", "localhost")}:{_server.port}/index.html{params}'
-    iframe_kwargs = {
-        'width': '100%',
-        'height': 600,
-    }
-    iframe_kwargs.update(**kwargs)
     logger.debug(src)
-    return display.IFrame(src=src, **iframe_kwargs)
+    width = kwargs.get('width', '99%')
+    height = kwargs.get('height', '600px')
+    return widgets.HTML(f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>")
 
 
 def show_trame(
@@ -153,8 +150,10 @@ def show_trame(
         using the ``'trame'`` mode.
 
     **kwargs : dict, optional
-        any keyword arguments are pass to the Jupyter IFrame. Additionally
-        `protocol=` and `host=` can be use to override the iframe src url.
+        Mostly ignored, though ``protocol`` and ``host`` can be use to
+        override the iframe src url and ``hieght`` and ``width`` can be
+        used to overrid the iframe style.
+
     """
     if plotter.render_window is None:
         raise RuntimeError(CLOSED_PLOTTER_ERROR)

@@ -5,7 +5,7 @@ from pyvista.plotting import system_supports_plotting
 
 has_trame = True
 try:
-    from IPython.display import IFrame
+    from ipywidgets import widgets
     from trame.app import get_server
 
     from pyvista.trame.ui import get_or_create_viewer
@@ -53,7 +53,7 @@ def test_trame():
     pl = pv.Plotter(notebook=True)
     actor = pl.add_mesh(pv.Cone())
     widget = pl.show()
-    assert isinstance(widget, IFrame)
+    assert isinstance(widget, widgets.HTML)
 
     viewer = get_or_create_viewer(pl)
 
@@ -110,19 +110,19 @@ def test_trame_jupyter_modes():
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     widget = pl.show(jupyter_backend='client')
-    assert isinstance(widget, IFrame)
+    assert isinstance(widget, widgets.HTML)
     assert pl.suppress_rendering
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     widget = pl.show(jupyter_backend='server')
-    assert isinstance(widget, IFrame)
+    assert isinstance(widget, widgets.HTML)
     assert not pl.suppress_rendering
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     widget = pl.show(jupyter_backend='trame')
-    assert isinstance(widget, IFrame)
+    assert isinstance(widget, widgets.HTML)
     assert not pl.suppress_rendering
 
 
