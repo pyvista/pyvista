@@ -354,7 +354,7 @@ def get_or_create_viewer(plotter, suppress_rendering=False):
 
 def plotter_ui(plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs):
     """Create a UI view for the given Plotter."""
-    viewer = Viewer(plotter, suppress_rendering=mode == 'client')  # TODO: get or create
+    viewer = get_or_create_viewer(plotter, suppress_rendering=mode == 'client')
     return viewer.ui(
         mode=mode,
         default_server_rendering=default_server_rendering,
@@ -363,7 +363,9 @@ def plotter_ui(plotter, mode=None, default_server_rendering=True, collapse_menu=
     )
 
 
-def initialize(server, plotter, mode=None, default_server_rendering=True, collapse_menu=False):
+def initialize(
+    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
+):
     """Generate the UI for a given plotter."""
     state = server.state
     state.trame__title = UI_TITLE
@@ -375,6 +377,7 @@ def initialize(server, plotter, mode=None, default_server_rendering=True, collap
             mode=mode,
             default_server_rendering=default_server_rendering,
             collapse_menu=collapse_menu,
+            **kwargs,
         )
 
     # Returns the UI identifier (used in `template_name`)
