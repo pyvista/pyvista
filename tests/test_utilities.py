@@ -877,7 +877,7 @@ def test_copy_vtk_array():
     assert new_value == arr_copy_shallow.GetValue(1)
 
 
-def test_cart_to_sphe():
+def test_cartesian_to_spherical():
     def polar2cart(r, theta, phi):
         return np.vstack(
             (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
@@ -885,7 +885,7 @@ def test_cart_to_sphe():
 
     points = np.random.random((1000, 3))
     x, y, z = points.T
-    r, theta, phi = pyvista.cart_to_sphe(x, y, z)
+    r, theta, phi = pyvista.cartesian_to_spherical(x, y, z)
     assert np.allclose(polar2cart(r, theta, phi), points)
 
 

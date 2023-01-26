@@ -148,7 +148,9 @@ def plot_orbital(orbital, cpos='iso', clip_plane='x'):
     vol.prop.interpolation_type = 'linear'
     if clip_plane:
         pl.add_volume_clip_plane(
-            vol, normal=clip_plane, normal_rotation=False, widget_color=pv.Color(opacity=0.0)
+            vol,
+            normal=clip_plane,
+            normal_rotation=False,
         )
     pl.camera_position = cpos
     pl.camera.zoom(1.5)

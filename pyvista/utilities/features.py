@@ -172,7 +172,7 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
     return u_t, v_t, w_t
 
 
-def cart_to_sphe(x, y, z):
+def cartesian_to_spherical(x, y, z):
     """Convert 3D Cartesian coordinates to spherical coordinates.
 
     Parameters
@@ -197,7 +197,7 @@ def cart_to_sphe(x, y, z):
     >>> import pyvista as pv
     >>> grid = pv.UniformGrid(dimensions=(3, 3, 3))
     >>> x, y, z = grid.points.T
-    >>> r, theta, phi = pv.cart_to_sphe(x, y, z)
+    >>> r, theta, phi = pv.cartesian_to_spherical(x, y, z)
 
     """
     xy2 = x**2 + y**2
