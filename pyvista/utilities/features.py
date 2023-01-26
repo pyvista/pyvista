@@ -197,7 +197,7 @@ def cart_to_sphe(x, y, z):
     >>> import pyvista as pv
     >>> grid = pv.UniformGrid(dimensions=(3, 3, 3))
     >>> x, y, z = grid.points.T
-    >>> r, theta, phi = pv.cart_to_sphe(
+    >>> r, theta, phi = pv.cart_to_sphe(x, y, z)
 
     """
     xy2 = x**2 + y**2
