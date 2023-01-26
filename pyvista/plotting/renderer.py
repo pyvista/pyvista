@@ -4,7 +4,6 @@ import collections.abc
 from functools import partial
 from typing import Sequence, cast
 import warnings
-from weakref import proxy
 
 import numpy as np
 
@@ -681,7 +680,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def add_actor(
         self,
-        uinput,
+        actor,
         reset_camera=False,
         name=None,
         culling=False,
@@ -695,8 +694,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        uinput : vtk.vtkMapper or vtk.vtkActor
-            Vtk mapper or vtk actor to be added.
+        actor : vtk.vtkActor or vtk.vtkMapper
+            The actor to be added. Can be either ``vtkActor`` or ``vtkMapper``.
 
         reset_camera : bool, optional
             Resets the camera when ``True``.
@@ -732,21 +731,27 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Actor properties.
         """
         # Remove actor by that name if present
+        rv = None
         if name and remove_existing_actor:
             rv = self.remove_actor(name, reset_camera=False, render=False)
 
-        if isinstance(uinput, _vtk.vtkMapper):
-            actor = Actor()
-            actor.SetMapper(uinput)
-        else:
-            actor = uinput
+        if isinstance(actor, _vtk.vtkMapper):
+            actor = Actor(mapper=actor, name=name)
 
-        self.AddActor(actor)
-        actor.renderer = proxy(self)
+        if isinstance(actor, Actor) and name:
+            # WARNING: this will override the name if already set on Actor
+            actor.name = name
 
         if name is None:
-            name = actor.GetAddressAsString("")
+            if isinstance(actor, Actor):
+                name = actor.name
+            else:
+                # Fallback for non-wrapped actors
+                # e.g., vtkScalarBarActor
+                name = actor.GetAddressAsString("")
 
+        actor.SetPickable(pickable)
+        self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
         if reset_camera:
@@ -775,7 +780,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             else:
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
-        actor.SetPickable(pickable)
         self.Modified()
 
         prop = None
