@@ -199,7 +199,7 @@ def show_trame(
 
     **kwargs : dict, optional
         Mostly ignored, though ``protocol`` and ``host`` can be use to
-        override the iframe src url and ``hieght`` and ``width`` can be
+        override the iframe src url and ``height`` and ``width`` can be
         used to overrid the iframe style.
 
     """
