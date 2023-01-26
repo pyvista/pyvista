@@ -83,6 +83,13 @@ def launch_server(server=None):
     if isinstance(server, str):
         server = get_server(server)
 
+    # Disable serializer errors/warnings for a cleaner output in Jupyter
+    # Do this on server launch and not at top level so that it only happens
+    # in Jupyter
+    if os.environ.get('VTK_DISABLE_SERIALIZER_LOGGER', 'true').lower() == 'true':
+        vtk_logger = logging.getLogger("vtkmodules.web.render_window_serializer")
+        vtk_logger.disabled = True
+
     # Must enable all used modules
     html_widgets.initialize(server)
     vtk_widgets.initialize(server)
