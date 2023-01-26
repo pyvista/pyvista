@@ -220,10 +220,12 @@ class RenderWindowInteractor:
         last_pos = self._plotter.click_position or (0, 0)
 
         self._plotter.store_click_position()
-        self._click_time = t
         dp = (self._plotter.click_position[0] - last_pos[0]) ** 2
         dp += (self._plotter.click_position[1] - last_pos[1]) ** 2
         double = dp < self._MAX_CLICK_DELTA and dt < self._MAX_CLICK_DELAY
+        # Subtract MAX_CLICK_DELAY in case of a double click, otherwise a subsequent third click
+        # is considered to be a double click as well.
+        self._click_time = t - self._MAX_CLICK_DELAY if double else t
 
         for callback in self._click_event_callbacks[event][double, False]:
             callback(self._plotter.pick_click_position())
@@ -319,7 +321,7 @@ class RenderWindowInteractor:
 
         """
         # Loop over all renderers to see whether any charts need to be made interactive
-        interactive_scene, interactive_charts = None, []
+        interactive_scene = None
         for renderer in self._plotter.renderers:
             if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
                 # No interactive charts yet and mouse is within this renderer's viewport,
@@ -367,7 +369,7 @@ class RenderWindowInteractor:
                     "Interaction with charts is not possible when using multiple subplots."
                     "Upgrade to VTK 9.3 or newer to enable this feature."
                 )
-                scene = None
+                # scene = None
         self._context_style.SetScene(scene)
         if scene is None and self._style == "Context":
             # Switch back to previous interactor style

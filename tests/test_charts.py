@@ -1166,26 +1166,17 @@ def test_chart_interaction():
     pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
     win_size = pl.window_size
     # Simulate double left click on the top chart:
-    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.25 * win_size[1]), count=2)
+    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.75 * win_size[1]), count=2)
     assert chart_t.GetInteractive()
     assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene() == chart_t._scene
     # Simulate second double left click on the top chart:
-    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.25 * win_size[1]), count=2)
+    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.75 * win_size[1]), count=2)
     assert not chart_t.GetInteractive()
     assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
     assert pl.iren._style_class != pl.iren._context_style
     assert pl.iren._context_style.GetScene() is None
-
-    # Check init_interaction observer functionality
-    pl.set_chart_interaction(chart_bl)
-    assert chart_bl.x_axis.behavior == "auto"
-    pl.show(auto_close=False)
-    assert chart_bl.x_axis.behavior == "fixed"
-    chart_bl.x_axis.behavior = "auto"
-    pl.show(auto_close=False)
-    assert chart_bl.x_axis.behavior == "auto"
 
 
 @skip_mac

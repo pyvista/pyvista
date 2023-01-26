@@ -992,9 +992,8 @@ class _CustomContextItem(_vtk.vtkPythonItem):
 
     def __init__(self):
         super().__init__()
-        self.SetPythonObject(
-            _CustomContextItem.ItemWrapper()
-        )  # This will also call ItemWrapper.Initialize
+        # This will also call ItemWrapper.Initialize
+        self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
     def paint(self, painter):
         return True
@@ -1053,9 +1052,11 @@ class _Chart(DocSubs):
         """Get a reference to the vtkRenderer in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
-    def _render_event(self, *args, **kwargs):
+    def _render_event(self, *args, plotter_render=False, **kwargs):
         """Update the chart right before it will be rendered."""
-        self._resize()
+        # Only resize on real VTK render events (plotter.render calls will afterwards invoke a proper render event)
+        if not plotter_render:
+            self._resize()
 
     def _resize(self):
         """Resize this chart.
@@ -2031,7 +2032,6 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         """
         if len(x) > 1:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
-            self._chart.RecalculateBounds()
             self.visible = True
         else:
             # Turn off visibility for fewer than 2 points as otherwise an error message is shown
@@ -2179,7 +2179,6 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         """
         if len(x) > 0:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
-            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -2405,7 +2404,6 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                     "y2": np.array(y2, copy=False),
                 }
             )
-            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -2561,7 +2559,6 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
                 y = (y,)
             y_data = {f"y{i}": np.array(y[i], copy=False) for i in range(len(y))}
             self._table.update({"x": np.array(x, copy=False), **y_data})
-            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -2746,7 +2743,6 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
                 ys = (ys,)
             y_data = {f"y{i}": np.array(ys[i], copy=False) for i in range(len(ys))}
             self._table.update({"x": np.array(x, copy=False), **y_data})
-            self._chart.RecalculateBounds()
             self.visible = True
         else:
             self.visible = False
@@ -2845,6 +2841,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.y_label = y_label
         self.grid = grid
         self.legend_visible = True
+
+    def _render_event(self, *args, plotter_render=False, **kwargs):
+        if plotter_render:
+            # TODO: should probably be called internally by VTK when plot data or axis behavior/logscale is changed?
+            self.RecalculateBounds()
+            pass
+        super()._render_event(*args, plotter_render=plotter_render, **kwargs)
 
     def _add_plot(self, plot_type, *args, **kwargs):
         """Add a plot of the given type to this chart."""
@@ -4260,7 +4263,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         # already updated figure dimensions in that case) OR the
         # plotter's render method was called and redraw_on_render is
         # enabled.
-        if (self.redraw_on_render and plotter_render) or self._resize():
+        if (plotter_render and self.redraw_on_render) or (not plotter_render and self._resize()):
             self._redraw()
 
     @property
