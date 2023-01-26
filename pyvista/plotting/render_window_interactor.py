@@ -223,9 +223,9 @@ class RenderWindowInteractor:
         dp = (self._plotter.click_position[0] - last_pos[0]) ** 2
         dp += (self._plotter.click_position[1] - last_pos[1]) ** 2
         double = dp < self._MAX_CLICK_DELTA and dt < self._MAX_CLICK_DELAY
-        # Subtract MAX_CLICK_DELAY in case of a double click, otherwise a subsequent third click
+        # Reset click time in case of a double click, otherwise a subsequent third click
         # is considered to be a double click as well.
-        self._click_time = t - self._MAX_CLICK_DELAY if double else t
+        self._click_time = 0 if double else t
 
         for callback in self._click_event_callbacks[event][double, False]:
             callback(self._plotter.pick_click_position())
@@ -930,7 +930,7 @@ class RenderWindowInteractor:
         This will terminate the render window if it is not already closed.
         """
         self.remove_observers()
-        if self._style_class == self._context_style:
+        if self._style_class == self._context_style:  # pragma: no cover
             self._set_context_style(None)  # Disable context interactor style first
         if self._style_class is not None:
             self._style_class.remove_observers()

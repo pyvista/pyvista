@@ -2234,7 +2234,7 @@ def test_chart_plot():
     # Chart 2 (bottom right)
     chart_br = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.55, 0.05))
     chart_br.background_texture = examples.load_globe_texture()
-    chart_br.border_color = "r"
+    chart_br.active_border_color = "r"
     chart_br.border_width = 5
     chart_br.border_style = "-."
     chart_br.hide_axes()
@@ -2245,7 +2245,7 @@ def test_chart_plot():
 
     # Chart 3 (top left)
     chart_tl = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.05, 0.55))
-    chart_tl.background_color = (0.8, 0.8, 0.2)
+    chart_tl.active_background_color = (0.8, 0.8, 0.2)
     chart_tl.title = "Exponential growth"
     chart_tl.x_label = "X axis"
     chart_tl.y_label = "Y axis"
@@ -2274,6 +2274,7 @@ def test_chart_plot():
     pl.background_color = 'w'
     pl.add_chart(chart_bl, chart_br, chart_tl, chart_tr, hidden_chart, removed_chart)
     pl.remove_chart(removed_chart)
+    pl.set_chart_interaction([chart_br, chart_tl])
     pl.show()
 
 

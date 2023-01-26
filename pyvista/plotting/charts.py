@@ -1010,11 +1010,16 @@ class _ChartBackground(_CustomContextItem):
         # Default background is translucent with black border line
         self.BorderPen = Pen(color=(0, 0, 0))
         self.BackgroundBrush = Brush(color=(0, 0, 0, 0))
+        # Default active background is slightly more opaque with yellow border line
+        self.ActiveBorderPen = Pen(color=(0.8, 0.8, 0.2))
+        self.ActiveBackgroundBrush = Brush(color=(0.0, 0.0, 0.0, 0.2))
 
     def paint(self, painter):
         if self._chart.visible:
-            painter.ApplyPen(self.BorderPen)
-            painter.ApplyBrush(self.BackgroundBrush)
+            painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
+            painter.ApplyBrush(
+                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush
+            )
             l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
             if vtk_version_info < (9, 2, 0):  # pragma: no cover
@@ -1185,7 +1190,7 @@ class _Chart(DocSubs):
         >>> chart.border_color = 'r'
         >>> chart.border_width = 5
         >>> chart.border_style = '--'
-        >>> chart.show()
+        >>> chart.show(interactive=False)
 
         """
         if self._background is None:  # pragma: no cover
@@ -1217,7 +1222,7 @@ class _Chart(DocSubs):
         >>> chart.border_color = 'r'
         >>> chart.border_width = 5
         >>> chart.border_style = '--'
-        >>> chart.show()
+        >>> chart.show(interactive=False)
 
         """
         if self._background is None:  # pragma: no cover
@@ -1234,6 +1239,7 @@ class _Chart(DocSubs):
             raise VTKVersionError("Chart borders require VTK v9 or newer.")
         else:
             self._background.BorderPen.width = val
+            self._background.ActiveBorderPen.width = val
 
     @property  # type: ignore
     @doc_subs
@@ -1249,7 +1255,7 @@ class _Chart(DocSubs):
         >>> chart.border_color = 'r'
         >>> chart.border_width = 5
         >>> chart.border_style = '--'
-        >>> chart.show()
+        >>> chart.show(interactive=False)
 
         """
         if self._background is None:  # pragma: no cover
@@ -1266,6 +1272,44 @@ class _Chart(DocSubs):
             raise VTKVersionError("Chart borders require VTK v9 or newer.")
         else:
             self._background.BorderPen.style = val
+            self._background.ActiveBorderPen.style = val
+
+    @property  # type: ignore
+    @doc_subs
+    def active_border_color(self):
+        """Return or set the chart's border color in interactive mode.
+
+        Examples
+        --------
+        Create a {chart_name} with a thick, dashed red border.
+
+        >>> import pyvista
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
+        >>> chart.border_color = 'r'
+        >>> chart.border_width = 5
+        >>> chart.border_style = '--'
+        >>> chart.show(interactive=False)
+
+        Set the active border color to yellow and activate the chart.
+
+        >>> chart.active_border_color = 'y'
+        >>> chart.show(interactive=True)
+
+        """
+        if self._background is None:  # pragma: no cover
+            warnings.warn("Chart borders require VTK v9 or newer.")
+            return None
+        else:
+            return self._background.ActiveBorderPen.color
+
+    @active_border_color.setter
+    def active_border_color(self, val):
+        if self._background is None:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError("Chart borders require VTK v9 or newer.")
+        else:
+            self._background.ActiveBorderPen.color = val
 
     @property  # type: ignore
     @doc_subs
@@ -1279,7 +1323,7 @@ class _Chart(DocSubs):
         >>> import pyvista
         >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.background_color = (0.5, 0.9, 0.5)
-        >>> chart.show()
+        >>> chart.show(interactive=False)
 
         """
         if self._background is None:  # pragma: no cover
@@ -1310,7 +1354,7 @@ class _Chart(DocSubs):
         >>> from pyvista import examples
         >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.background_texture = examples.download_emoji_texture()
-        >>> chart.show()
+        >>> chart.show(interactive=False)
 
         """
         if self._background is None:  # pragma: no cover
@@ -1327,6 +1371,41 @@ class _Chart(DocSubs):
             self.GetBackgroundBrush().SetTexture(val)
         else:
             self._background.BackgroundBrush.texture = val
+            self._background.ActiveBackgroundBrush.texture = val
+
+    @property  # type: ignore
+    @doc_subs
+    def active_background_color(self):
+        """Return or set the chart's background color in interactive mode.
+
+        Examples
+        --------
+        Create a {chart_name} with a green background.
+
+        >>> import pyvista
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
+        >>> chart.background_color = (0.5, 0.9, 0.5)
+        >>> chart.show(interactive=False)
+
+        Set the active background color to blue and activate the chart.
+
+        >>> chart.active_background_color = 'b'
+        >>> chart.show(interactive=True)
+
+        """
+        if self._background is None:  # pragma: no cover
+            warnings.warn("Chart backgrounds require VTK v9 or newer.")
+        else:
+            return self._background.ActiveBackgroundBrush.color
+
+    @active_background_color.setter
+    def active_background_color(self, val):
+        if self._background is None:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError("Chart backgrounds require VTK v9 or newer.")
+        else:
+            self._background.ActiveBackgroundBrush.color = val
 
     @property  # type: ignore
     @doc_subs
@@ -1423,6 +1502,7 @@ class _Chart(DocSubs):
     @doc_subs
     def show(
         self,
+        interactive=True,
         off_screen=None,
         full_screen=None,
         screenshot=None,
@@ -1435,6 +1515,10 @@ class _Chart(DocSubs):
 
         Parameters
         ----------
+        interactive : bool, default: True
+            Enable interaction with the chart. Interaction is not enabled
+            when plotting off screen.
+
         off_screen : bool, optional
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up. Defaults to active theme setting.
@@ -1491,7 +1575,7 @@ class _Chart(DocSubs):
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
-        if not off_screen:
+        if not off_screen and interactive:  # pragma: no cover
             pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
@@ -2846,7 +2930,6 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         if plotter_render:
             # TODO: should probably be called internally by VTK when plot data or axis behavior/logscale is changed?
             self.RecalculateBounds()
-            pass
         super()._render_event(*args, plotter_render=plotter_render, **kwargs)
 
     def _add_plot(self, plot_type, *args, **kwargs):
