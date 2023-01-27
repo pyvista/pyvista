@@ -54,8 +54,20 @@ colormaps = [
 io = ['meshio>=5.2']
 jupyter = [
     'ipyvtklink',
+    'jupyter-server-proxy',
+    'nest_asyncio',
     'panel',
     'pythreejs',
+    'trame>=2.2.6',
+    'trame-client>=2.4.2',
+    'trame-server>=2.8.0',
+    'trame-vtk>=2.0.15',
+]
+trame = [
+    'trame>=2.2.6',
+    'trame-client>=2.4.2',
+    'trame-server>=2.8.0',
+    'trame-vtk>=2.0.15',
 ]
 
 [project.urls]
@@ -114,6 +126,8 @@ upload-dir = 'doc/_build/html'
 
 [tool.pydocstyle]
 match = '(?!coverage).*.py'
+convention = "numpy"
+add-ignore = ["D404"]
 
 [tool.codespell]
 skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
@@ -139,6 +153,7 @@ filterwarnings = [
     'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
     'ignore:.*Given trait value dtype "float64":UserWarning',
     'ignore:.*The NumPy module was reloaded*:UserWarning',
+    'error::pyvista.PyVistaDeprecationWarning'
 ]
 doctest_optionflags = 'NUMBER ELLIPSIS'
 testpaths = 'tests'
@@ -147,7 +162,7 @@ markers = [
     'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
     'needs_download: this test downloads data during execution',
 ]
-
+image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true

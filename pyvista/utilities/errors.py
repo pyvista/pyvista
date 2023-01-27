@@ -181,7 +181,7 @@ import pyvista; \
 plotter = pyvista.Plotter(notebook=False, off_screen=True); \
 plotter.add_mesh(pyvista.Sphere()); \
 plotter.show(auto_close=False); \
-gpu_info = plotter.ren_win.ReportCapabilities(); \
+gpu_info = plotter.render_window.ReportCapabilities(); \
 print(gpu_info); \
 plotter.close()\
 """
@@ -313,7 +313,6 @@ class Report(scooby.Report):
                cmocean : 2.0
             ipyvtklink : 0.2.3
                  scipy : 1.9.1
-            itkwidgets : 0.32.3
                   tqdm : 4.64.1
                 meshio : 5.3.4
             jupyterlab : 3.4.7
@@ -337,12 +336,16 @@ class Report(scooby.Report):
             'cmocean',
             'ipyvtklink',
             'scipy',
-            'itkwidgets',
             'tqdm',
             'meshio',
             'jupyterlab',
             'pythreejs',
             'pytest_pyvista',
+            'trame',
+            'trame_client',
+            'trame_server',
+            'trame_vtk',
+            'jupyter_server_proxy',
         ]
 
         # Information about the GPU - bare except in case there is a rendering

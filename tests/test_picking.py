@@ -127,6 +127,37 @@ def test_enable_mesh_picking(sphere, left_clicking):
     assert pl.picked_mesh is None
 
 
+def test_enable_mesh_picking_actor(sphere):
+    picked = []
+
+    def callback(picked_actor):
+        picked.append(picked_actor)
+
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(sphere)
+    pl.enable_mesh_picking(callback=callback, use_actor=True)
+    pl.show(auto_close=False)
+
+    width, height = pl.window_size
+
+    # clicking is to "activate" the renderer
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width, height)
+    pl.iren._mouse_move(width // 2, height // 2)
+    pl.iren._simulate_keypress('p')
+
+    assert actor in picked
+    assert pl.picked_mesh == sphere
+
+    # invalid selection
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(0, 0)
+    pl.iren._mouse_move(0, 0)
+    pl.iren._simulate_keypress('p')
+
+    assert pl.picked_mesh is None
+
+
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_enable_surface_picking(sphere, left_clicking):
     picked = []
@@ -240,12 +271,16 @@ def test_point_picking(left_clicking):
         plotter = pyvista.Plotter(
             window_size=(100, 100),
         )
+        if use_mesh:
+            callback = (lambda picked_point, picked_mesh: None,)
+        else:
+            callback = (lambda picked_point: None,)
         plotter.add_mesh(sphere)
         plotter.enable_point_picking(
             show_message=True,
             use_mesh=use_mesh,
             left_clicking=left_clicking,
-            callback=lambda: None,
+            callback=callback,
         )
         # must show to activate the interactive renderer (for left_clicking)
         plotter.show(auto_close=False)
@@ -308,7 +343,7 @@ def test_path_picking():
     plotter.add_mesh(sphere)
     plotter.enable_path_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
     )
     # simulate the pick
     renderer = plotter.renderer
@@ -331,7 +366,7 @@ def test_geodesic_picking():
     plotter.add_mesh(sphere)
     plotter.enable_geodesic_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
         show_path=True,
         keep_order=True,
     )
@@ -359,7 +394,7 @@ def test_horizon_picking():
     plotter.add_mesh(sphere)
     plotter.enable_horizon_picking(
         show_message=True,
-        callback=lambda: None,
+        callback=lambda path: None,
         show_horizon=True,
     )
     # simulate the pick

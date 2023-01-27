@@ -36,8 +36,8 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
-from ._typing import color_like
-from .plotting.colors import Color, get_cmap_safe
+from ._typing import ColorLike, Number
+from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
 from .utilities.misc import PyVistaDeprecationWarning
@@ -324,7 +324,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
 
     @property
@@ -565,7 +565,7 @@ class _AxesConfig(_ThemeConfig):
         return self._x_color
 
     @x_color.setter
-    def x_color(self, color: color_like):
+    def x_color(self, color: ColorLike):
         self._x_color = Color(color)
 
     @property
@@ -580,7 +580,7 @@ class _AxesConfig(_ThemeConfig):
         return self._y_color
 
     @y_color.setter
-    def y_color(self, color: color_like):
+    def y_color(self, color: ColorLike):
         self._y_color = Color(color)
 
     @property
@@ -595,7 +595,7 @@ class _AxesConfig(_ThemeConfig):
         return self._z_color
 
     @z_color.setter
-    def z_color(self, color: color_like):
+    def z_color(self, color: ColorLike):
         self._z_color = Color(color)
 
     @property
@@ -785,7 +785,7 @@ class _Font(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
 
     @property
@@ -903,7 +903,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._tube_color
 
     @tube_color.setter
-    def tube_color(self, tube_color: color_like):
+    def tube_color(self, tube_color: ColorLike):
         self._tube_color = Color(tube_color)
 
     @property
@@ -935,7 +935,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_color
 
     @slider_color.setter
-    def slider_color(self, slider_color: color_like):
+    def slider_color(self, slider_color: ColorLike):
         self._slider_color = Color(slider_color)
 
     @property
@@ -1082,6 +1082,123 @@ class _SliderConfig(_ThemeConfig):
             yield style.name
 
 
+class _TrameConfig(_ThemeConfig):
+    """PyVista Trame configuration.
+
+    Examples
+    --------
+    Set global trame view parameters.
+
+    >>> import pyvista as pv
+    >>> pv.global_theme.trame.interactive_ratio = 2
+    >>> pv.global_theme.trame.still_ratio = 2
+
+    """
+
+    __slots__ = [
+        '_interactive_ratio',
+        '_still_ratio',
+        '_jupyter_server_name',
+        '_server_proxy_enabled',
+        '_server_proxy_prefix',
+        '_default_mode',
+    ]
+
+    def __init__(self):
+        self._interactive_ratio = 1
+        self._still_ratio = 1
+        self._jupyter_server_name = 'pyvista-jupyter'
+        self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
+        # default for ``jupyter-server-proxy``
+        self._server_proxy_prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        self._default_mode = 'trame'
+
+    @property
+    def interactive_ratio(self) -> Number:
+        """Return or set the interactive ratio for PyVista Trame views.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.trame.interactive_ratio = 2
+
+        """
+        return self._interactive_ratio
+
+    @interactive_ratio.setter
+    def interactive_ratio(self, interactive_ratio: Number):
+        self._interactive_ratio = interactive_ratio
+
+    @property
+    def still_ratio(self) -> Number:
+        """Return or set the still ratio for PyVista Trame views.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.trame.still_ratio = 2
+
+        """
+        return self._still_ratio
+
+    @still_ratio.setter
+    def still_ratio(self, still_ratio: Number):
+        self._still_ratio = still_ratio
+
+    @property
+    def jupyter_server_name(self):
+        """Return or set the trame server name PyVista uses in Jupyter.
+
+        This defaults to ``'pyvista-jupyter'``.
+
+        This must be set before running :func:`pyvista.set_jupyter_backend`
+        to ensure a server of this name is launched.
+
+        Most users should not need to modify this.
+
+        """
+        return self._jupyter_server_name
+
+    @jupyter_server_name.setter
+    def jupyter_server_name(self, name: str):
+        self._jupyter_server_name = name
+
+    @property
+    def server_proxy_enabled(self) -> bool:
+        """Return or set if use of relative URLs is enabled for the Jupyter interface."""
+        return self._server_proxy_enabled
+
+    @server_proxy_enabled.setter
+    def server_proxy_enabled(self, enabled: bool):
+        self._server_proxy_enabled = bool(enabled)
+
+    @property
+    def server_proxy_prefix(self):
+        """Return or set URL prefix when using relative URLs with the Jupyter interface."""
+        return self._server_proxy_prefix
+
+    @server_proxy_prefix.setter
+    def server_proxy_prefix(self, prefix: str):
+        self._server_proxy_prefix = prefix
+
+    @property
+    def default_mode(self):
+        """Return or set the default mode of the Trame backend.
+
+        * ``'trame'``: Uses a view that can switch between client and server
+          rendering modes.
+        * ``'server'``: Uses a view that is purely server rendering.
+        * ``'client'``: Uses a view that is purely client rendering (generally
+          safe without a virtual frame buffer)
+
+        """
+        return self._default_mode
+
+    @default_mode.setter
+    def default_mode(self, mode: str):
+        self._default_mode = mode
+
+
 class DefaultTheme(_ThemeConfig):
     """PyVista default theme.
 
@@ -1109,6 +1226,7 @@ class DefaultTheme(_ThemeConfig):
         '_name',
         '_background',
         '_jupyter_backend',
+        '_trame',
         '_full_screen',
         '_window_size',
         '_camera',
@@ -1117,6 +1235,7 @@ class DefaultTheme(_ThemeConfig):
         '_auto_close',
         '_cmap',
         '_color',
+        '_color_cycler',
         '_above_range_color',
         '_below_range_color',
         '_nan_color',
@@ -1165,6 +1284,7 @@ class DefaultTheme(_ThemeConfig):
         self._font = _Font()
         self._cmap = 'viridis'
         self._color = Color('white')
+        self._color_cycler = None
         self._nan_color = Color('darkgray')
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
@@ -1206,7 +1326,8 @@ class DefaultTheme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'ipyvtklink')
+        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')
+        self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
@@ -1263,7 +1384,7 @@ class DefaultTheme(_ThemeConfig):
         return self._above_range_color
 
     @above_range_color.setter
-    def above_range_color(self, value: color_like):
+    def above_range_color(self, value: ColorLike):
         self._above_range_color = Color(value)
 
     @property
@@ -1283,7 +1404,7 @@ class DefaultTheme(_ThemeConfig):
         return self._below_range_color
 
     @below_range_color.setter
-    def below_range_color(self, value: color_like):
+    def below_range_color(self, value: ColorLike):
         self._below_range_color = Color(value)
 
     @property
@@ -1317,7 +1438,7 @@ class DefaultTheme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: color_like):
+    def background(self, new_background: ColorLike):
         self._background = Color(new_background)
 
     @property
@@ -1327,7 +1448,7 @@ class DefaultTheme(_ThemeConfig):
         Jupyter backend to use when plotting.  Must be one of the
         following:
 
-        * ``'ipyvtklink'`` : Render remotely and stream the
+        * ``'ipyvtklink'`` : DEPRECATED. Render remotely and stream the
           resulting VTK images back to the client.  Supports all VTK
           methods, but suffers from lag due to remote rendering.
           Requires that a virtual framebuffer be set up when displaying
@@ -1366,29 +1487,28 @@ class DefaultTheme(_ThemeConfig):
         Enable the pythreejs backend.
 
         >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('pythreejs')
+        >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
 
         Enable the ipygany backend.
 
-        >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('ipygany')
+        >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
 
         Enable the panel backend.
 
-        >>> pv.set_jupyter_backend('panel')
+        >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
 
-        Enable the ipyvtklink backend.
+        Enable the ipyvtklink backend (DEPRECATED).
 
-        >>> pv.set_jupyter_backend('ipyvtklink')
+        >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
         Just show static images.
 
-        >>> pv.set_jupyter_backend('static')
+        >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
 
-        >>> pv.set_jupyter_backend(None)  # or 'none'
+        >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
         """
         return self._jupyter_backend
@@ -1398,6 +1518,17 @@ class DefaultTheme(_ThemeConfig):
         from pyvista.jupyter import _validate_jupyter_backend
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
+
+    @property
+    def trame(self) -> _TrameConfig:
+        """Return or set the default trame parameters."""
+        return self._trame
+
+    @trame.setter
+    def trame(self, config: _TrameConfig):
+        if not isinstance(config, _TrameConfig):
+            raise TypeError('Configuration type must be `_TrameConfig`.')
+        self._trame = config
 
     @property
     def auto_close(self) -> bool:
@@ -1636,8 +1767,46 @@ class DefaultTheme(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: color_like):
+    def color(self, color: ColorLike):
         self._color = Color(color)
+
+    @property
+    def color_cycler(self):
+        """Return or set the default color cycler used to color meshes.
+
+        This color cycler is iterated over by each renderer to sequentially
+        color datasets when displaying them through ``add_mesh``.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        return self._color_cycler
+
+    @color_cycler.setter
+    def color_cycler(self, color_cycler):
+        self._color_cycler = get_cycler(color_cycler)
 
     @property
     def nan_color(self) -> Color:
@@ -1654,7 +1823,7 @@ class DefaultTheme(_ThemeConfig):
         return self._nan_color
 
     @nan_color.setter
-    def nan_color(self, nan_color: color_like):
+    def nan_color(self, nan_color: ColorLike):
         self._nan_color = Color(nan_color)
 
     @property
@@ -1672,7 +1841,7 @@ class DefaultTheme(_ThemeConfig):
         return self._edge_color
 
     @edge_color.setter
-    def edge_color(self, edge_color: color_like):
+    def edge_color(self, edge_color: ColorLike):
         self._edge_color = Color(edge_color)
 
     @property
@@ -1688,7 +1857,7 @@ class DefaultTheme(_ThemeConfig):
         return self._outline_color
 
     @outline_color.setter
-    def outline_color(self, outline_color: color_like):
+    def outline_color(self, outline_color: ColorLike):
         self._outline_color = Color(outline_color)
 
     @property
@@ -1704,7 +1873,7 @@ class DefaultTheme(_ThemeConfig):
         return self._floor_color
 
     @floor_color.setter
-    def floor_color(self, floor_color: color_like):
+    def floor_color(self, floor_color: ColorLike):
         self._floor_color = Color(floor_color)
 
     @property
@@ -2181,6 +2350,7 @@ class DefaultTheme(_ThemeConfig):
             'Auto close': 'auto_close',
             'Colormap': 'cmap',
             'Color': 'color',
+            'Color Cycler': 'color_cycler',
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
             'Outline color': 'outline_color',
@@ -2297,31 +2467,6 @@ class DefaultTheme(_ThemeConfig):
         del data["before_close_callback"]
         with open(filename, 'w') as f:
             json.dump(data, f)
-
-    @property
-    def use_ipyvtk(self):  # pragma: no cover
-        """Set or return the usage of "ipyvtk" as a jupyter backend.
-
-        .. deprecated:: 0.35.0
-           Deprecated in favor of ``jupyter_backend``.
-        """
-        warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
-            DeprecationWarning,
-        )
-        return self.jupyter_backend == 'ipyvtklink'
-
-    @use_ipyvtk.setter
-    def use_ipyvtk(self, value):  # pragma: no cover
-        warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
-            DeprecationWarning,
-        )
-
-        if value:
-            self.jupyter_backend = 'ipyvtklink'
-        else:
-            self.jupyter_backend = 'static'
 
     @property
     def split_sharp_edges(self) -> bool:
