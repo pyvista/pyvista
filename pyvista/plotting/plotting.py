@@ -5830,6 +5830,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         minor_tick_length=3,
         show_ticks=True,
         tick_label_offset=2,
+        label_color=None,
+        tick_color=None,
     ):
         """Add ruler.
 
@@ -5889,6 +5891,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         tick_label_offset : int
             Offset between tick and label in pixels.
 
+        label_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            label and title colors.
+
+        tick_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            tick line colors.
+
         Returns
         -------
         vtk.vtkActor
@@ -5924,6 +5934,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.show()
 
         """
+        text_color = Color(label_color, default_color=self._theme.font.color)
+        tick_color = Color(tick_color, default_color=self._theme.font.color)
+
         ruler = _vtk.vtkAxisActor2D()
 
         ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
@@ -5945,7 +5958,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)
-
+        ruler.GetProperty().SetColor(*tick_color.int_rgb)
+        ruler.GetLabelTextProperty().SetColor(*text_color.int_rgb)
+        ruler.GetTitleTextProperty().SetColor(*text_color.int_rgb)
         ruler.SetNumberOfMinorTicks(number_minor_ticks)
         ruler.SetTickVisibility(show_ticks)
         ruler.SetTickLength(tick_length)
