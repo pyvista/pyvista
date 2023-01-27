@@ -316,8 +316,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         If the plotter is closed, this will return None.
 
-        Note
-        ----
+        Notes
+        -----
         Subclass must set ``ren_win`` on initialization.
         """
         if not hasattr(self, 'ren_win'):
