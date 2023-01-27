@@ -3237,6 +3237,162 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Legend actor."""
         return self._legend
 
+    def add_ruler(
+        self,
+        pointa,
+        pointb,
+        flip_range=False,
+        number_labels=5,
+        show_labels=True,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        title="Distance",
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+        label_color=None,
+        tick_color=None,
+    ):
+        """Add ruler.
+
+        The ruler is a 2D object that is not occluded by 3D objects.
+        To avoid issues with perspective, it is recommended to use
+        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        and place the ruler orthogonal to the viewing direction.
+
+        The title and labels are placed to the right of ruler moving from
+        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
+        if needed.
+
+        Since the ruler is placed in an overlay on the viewing scene, the camera
+        does not automatically reset to include the ruler in the view.
+
+        Parameters
+        ----------
+        pointa : Sequence
+            Starting point for ruler.
+
+        pointb : Sequence
+            Ending point for ruler.
+
+        flip_range : bool
+            If ``True``, the distance range goes from ``pointb`` to ``pointa``.
+
+        number_labels : int
+            Number of labels to place on ruler.
+
+        show_labels : bool, optional
+            Whether to show labels.
+
+        font_size_factor : float
+            Factor to scale font size overall.
+
+        label_size_factor : float
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        title : str, optional
+            The title to display.
+
+        number_minor_ticks : int, optional
+            Number of minor ticks between major ticks.
+
+        tick_length : int
+            Length of ticks in pixels.
+
+        minor_tick_length : int
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, optional
+            Whether to show the ticks.
+
+        tick_label_offset : int
+            Offset between tick and label in pixels.
+
+        label_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            label and title colors.
+
+        tick_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            tick line colors.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the ruler.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> cone = pyvista.Cone(height=2.0, radius=0.5)
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(cone)
+
+        Measure x direction of cone and place ruler slightly below.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
+        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     title="X Distance"
+        ... )
+
+        Measure y direction of cone and place ruler slightly to left.
+        The title and labels are placed to the right of the ruler when
+        traveling from ``pointa`` to ``pointb``.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
+        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     flip_range=True,
+        ...     title="Y Distance"
+        ... )
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        """
+        text_color = Color(label_color, default_color=self._theme.font.color)
+        tick_color = Color(tick_color, default_color=self._theme.font.color)
+
+        ruler = _vtk.vtkAxisActor2D()
+
+        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
+        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+
+        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        if flip_range:
+            ruler.SetRange(distance, 0)
+        else:
+            ruler.SetRange(0, distance)
+
+        ruler.SetTitle(title)
+        ruler.SetFontFactor(font_size_factor)
+        ruler.SetLabelFactor(label_size_factor)
+        ruler.SetNumberOfLabels(number_labels)
+        ruler.SetLabelVisibility(show_labels)
+        if label_format:
+            ruler.SetLabelFormat(label_format)
+        ruler.GetProperty().SetColor(*tick_color.int_rgb)
+        ruler.GetLabelTextProperty().SetColor(*text_color.int_rgb)
+        ruler.GetTitleTextProperty().SetColor(*text_color.int_rgb)
+        ruler.SetNumberOfMinorTicks(number_minor_ticks)
+        ruler.SetTickVisibility(show_ticks)
+        ruler.SetTickLength(tick_length)
+        ruler.SetMinorTickLength(minor_tick_length)
+        ruler.SetTickOffset(tick_label_offset)
+
+        self.add_actor(ruler, reset_camera=True, pickable=False)
+        return ruler
+
     def add_legend_scale(
         self,
         corner_offset_factor=2.0,
