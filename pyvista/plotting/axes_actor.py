@@ -70,6 +70,24 @@ class AxesActor(pv._vtk.vtkAxesActor):
         """Initialize actor."""
         super().__init__()
 
+        self.x_axis_shaft_properties.color = pv.global_theme.axes.x_color.int_rgb
+        self.x_axis_tip_properties.color = pv.global_theme.axes.x_color.int_rgb
+        self.x_axis_shaft_properties.opacity = pv.global_theme.axes.x_color.int_rgba[3]
+        self.x_axis_tip_properties.opacity = pv.global_theme.axes.x_color.int_rgba[3]
+        self.x_axis_shaft_properties.lighting = pv.global_theme.lighting
+
+        self.y_axis_shaft_properties.color = pv.global_theme.axes.y_color.int_rgb
+        self.y_axis_tip_properties.color = pv.global_theme.axes.y_color.int_rgb
+        self.y_axis_shaft_properties.opacity = pv.global_theme.axes.y_color.int_rgba[3]
+        self.y_axis_tip_properties.opacity = pv.global_theme.axes.y_color.int_rgba[3]
+        self.y_axis_shaft_properties.lighting = pv.global_theme.lighting
+
+        self.z_axis_shaft_properties.color = pv.global_theme.axes.z_color.int_rgb
+        self.z_axis_tip_properties.color = pv.global_theme.axes.z_color.int_rgb
+        self.z_axis_shaft_properties.opacity = pv.global_theme.axes.z_color.int_rgba[3]
+        self.z_axis_tip_properties.opacity = pv.global_theme.axes.z_color.int_rgba[3]
+        self.z_axis_shaft_properties.lighting = pv.global_theme.lighting
+
     @property
     def visibility(self) -> bool:
         """Return or set AxesActor visibility.
