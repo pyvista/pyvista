@@ -38,11 +38,11 @@ def wrap_image_array(arr):
     return wrap_img
 
 
-def image_from_window(ren_win, as_vtk=False, ignore_alpha=False):
+def image_from_window(render_window, as_vtk=False, ignore_alpha=False):
     """Extract the image from the render window as an array."""
-    width, height = ren_win.GetSize()
+    width, height = render_window.GetSize()
     arr = _vtk.vtkUnsignedCharArray()
-    ren_win.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
+    render_window.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
     data = _vtk.vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
     if ignore_alpha:
         data = data[:, :, :-1]
@@ -116,11 +116,11 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
             if img._first_time:  # must be rendered first else segfault
                 img._on_first_render_request()
                 img.render()
-            if not hasattr(img, 'ren_win'):
+            if img.render_window is None:
                 raise RuntimeError(
                     'Unable to extract image from Plotter as it has already been closed.'
                 )
-            return image_from_window(img.ren_win, True, ignore_alpha=True)
+            return image_from_window(img.render_window, True, ignore_alpha=True)
         else:
             raise TypeError(
                 f'Unsupported data type {type(img)}.  Should be '

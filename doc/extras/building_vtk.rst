@@ -6,15 +6,18 @@ Kitware provides Python wheels for VTK at `PyPI VTK
 <https://pypi.org/project/vtk/>`_, but there are situations where you
 may need to build VTK from source (e.g. new release of Python, EGL
 rendering, additional features, etc).  As ``pyvista`` does not provide
-``vtk``, you will have to build it manually.
+``vtk``, you will have to either build it manually or install the default
+wheel from PyPI.
 
-Should you need a prebuilt wheel, a variety of prebuilt wheels can be found at
-`pyvista-wheels <https://github.com/pyvista/pyvista-wheels>`_, but you may be
-better off building your own.
+.. note::
+   Should you need a prebuilt wheel, a variety of prebuilt wheels can be found at
+   `pyvista-wheels <https://github.com/pyvista/pyvista-wheels>`_, but you may be
+   better off building your own. These are not "official" wheels and will soon
+   be removed in favor of more "official" wheel variants from VTK directly.
 
 Reference the official directions for `Building VTK
-<https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/dev/build.md>`_. The
-following directions assume you want to build a Python wheel non-standard
+<https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/dev/build.md>`_.
+The following directions assume you want to build a Python wheel non-standard
 situations like EGL.
 
 
@@ -27,6 +30,12 @@ version.  For some additional useful options, see the `conda-forge recipe
 <https://github.com/conda-forge/vtk-feedstock/blob/master/recipe/build.sh>`__.
 Most of the ones below are designed to reduce the build time and resulting
 wheel size.
+
+.. note::
+   We have also published some convienant CMake configurations files that you
+   can adopt from `banesullivan/vtk-cmake <https://github.com/banesullivan/vtk-cmake>`. These configurations cover the build variants described here
+   and make the process of reproducibly building VTK wheel variants more
+   straightforward.
 
 .. code-block:: bash
 
@@ -58,6 +67,9 @@ wheel size.
           -DVTK_BUILD_EXAMPLES=OFF \
           -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
           -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+          -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
+          -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
+          -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
           -DVTK_WHEEL_BUILD=ON \
           -DVTK_PYTHON_VERSION=3 \
           -DVTK_WRAP_PYTHON=ON \
@@ -74,7 +86,7 @@ wheel size.
 
 
 Off-Screen Plotting GPU Support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++++++++++++++
 VTK supports rendering with EGL, enabling rapid off-screen rendering
 using GPU hardware acceleration without installing a virtual
 framebuffer.  The default VTK wheels are not built with this feature,
@@ -101,6 +113,9 @@ modifying the above ``cmake`` command with:
      -DVTK_BUILD_DOCUMENTATION=OFF \
      -DVTK_BUILD_EXAMPLES=OFF \
      -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+     -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
+     -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
+     -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
      -DVTK_WHEEL_BUILD=ON \
      -DVTK_PYTHON_VERSION=3 \
      -DVTK_WRAP_PYTHON=ON \
@@ -119,14 +134,14 @@ modifying the above ``cmake`` command with:
 This disables any plotting using the X server, so be prepared to use
 this module only on a headless display where you either intend to save
 static images or stream the render window to another computer with a
-display (e.g using ``pyvista.set_jupyter_backend('ipyvtklink')`` and
+display (e.g using ``pyvista.set_jupyter_backend('server')`` and
 jupyterlab). In other words, this wheel will make VTK unusable outside
 of an off-screen environment, so only plan on installing it on a
 headless system without an X server.
 
 
 Building OSMesa
-~~~~~~~~~~~~~~~
++++++++++++++++
 OSMesa provides higher visualization performance on CPU based hosts. Use this
 instead of ``xvfb``:
 
@@ -148,6 +163,9 @@ instead of ``xvfb``:
          -DVTK_BUILD_EXAMPLES=OFF \
          -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
          -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+         -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
+         -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
+         -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
          -DVTK_WHEEL_BUILD=ON \
          -DVTK_PYTHON_VERSION=3 \
          -DVTK_WRAP_PYTHON=ON \
@@ -164,7 +182,7 @@ Wheels will be generated in the ``dist`` directory.
 
 
 Building ManyLinux Wheels
-~~~~~~~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++++++++
 The above directions are great for building a local build of VTK, but
 these wheels are difficult to share outside your local install given
 issues with ABI compatibility due to the version of Linux they were
@@ -212,6 +230,9 @@ To do this, create a ``build_wheels.sh`` with the following contents in the
           -DVTK_BUILD_EXAMPLES=OFF \
           -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
           -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+          -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
+          -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
+          -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
           -DVTK_WHEEL_BUILD=ON \
           -DVTK_PYTHON_VERSION=3 \
           -DVTK_WRAP_PYTHON=ON \
@@ -246,7 +267,7 @@ You should end up with a ``build/wheelhouse/vtk-*.whl``.
 
 
 Building Python VTK Wheel on Raspberry Pi (64-bit)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++++++++++++++++++++++++++++
 While it's possible to build on 32-bit Raspberry Pi (ARMv7), there are
 several issues that crop up when building wheels for the 32-bit
 version (see `manylinux issue 84
@@ -307,6 +328,9 @@ Where ``build_wheels.sh`` is:
           -DVTK_BUILD_EXAMPLES=OFF \
           -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
           -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+          -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
+          -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
+          -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
           -DVTK_WHEEL_BUILD=ON \
           -DVTK_PYTHON_VERSION=3 \
           -DVTK_WRAP_PYTHON=ON \

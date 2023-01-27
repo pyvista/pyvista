@@ -7,6 +7,8 @@ Includes:
 * ``panel``
 * ``pythreejs``
 * ``ipygany``
+* ``client``
+* ``server``
 
 """
 import os
@@ -23,6 +25,7 @@ except ImportError:  # pragma: no cover
     raise ImportError('Install IPython to display an image in a notebook')
 
 from pyvista import _vtk
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 PANEL_EXTENSION_SET = [False]
 
@@ -33,8 +36,8 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
     Parameters
     ----------
     return_viewer : bool, optional
-        Return the jupyterlab viewer, scene, or display object
-        when plotting with jupyter notebook.
+        Return the IPython Widget, scene, or display object
+        when plotting in a Jupyter notebook.
 
     Returns
     -------
@@ -49,6 +52,10 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
         if backend == 'pythreejs':
             return show_pythreejs(plotter, return_viewer, **kwargs)
         if backend == 'ipyvtklink':
+            warnings.warn(
+                '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
+                PyVistaDeprecationWarning,
+            )
             return show_ipyvtk(plotter, return_viewer)
         if backend == 'panel':
             return show_panel(plotter, return_viewer)
@@ -56,6 +63,11 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
             from pyvista.jupyter.pv_ipygany import show_ipygany
 
             return show_ipygany(plotter, return_viewer, **kwargs)
+        if backend in ['server', 'client', 'trame']:
+            from pyvista.trame.jupyter import show_trame
+
+            return show_trame(plotter, mode=backend, return_viewer=return_viewer, **kwargs)
+
     except ImportError as e:
         warnings.warn(
             f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
@@ -104,7 +116,7 @@ def show_ipyvtk(plotter, return_viewer):
 
     # Have to leave the Plotter open for the widget to use
     disp = ViewInteractiveWidget(
-        plotter.ren_win,
+        plotter.render_window,
         on_close=plotter.close,
         transparent_background=plotter.image_transparent_background,
     )
@@ -137,7 +149,7 @@ def show_panel(plotter, return_viewer):
 
     axes_enabled = plotter.renderer.axes_enabled
     pan = pn.panel(
-        plotter.ren_win,
+        plotter.render_window,
         sizing_mode='stretch_width',
         orientation_widget=axes_enabled,
         enable_keybindings=False,
