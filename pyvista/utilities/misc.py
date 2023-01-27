@@ -167,10 +167,12 @@ def set_pickle_format(format: str):
 
 def no_new_attr(cls):
     """Override __setattr__ to not permit new attributes."""
+    if not hasattr(cls, '_new_attr_exceptions'):
+        cls._new_attr_exceptions = []
 
     def __setattr__(self, name, value):
         """Do not allow setting attributes."""
-        if hasattr(self, name):
+        if hasattr(self, name) or name in cls._new_attr_exceptions:
             object.__setattr__(self, name, value)
         else:
             raise AttributeError(

@@ -61,6 +61,7 @@ class PickingHelper:
         color='pink',
         font_size=18,
         left_clicking=False,
+        use_actor=False,
         **kwargs,
     ):
         """Enable picking of a mesh.
@@ -104,6 +105,10 @@ class PickingHelper:
                If enabled, left-clicking will **not** display the bounding box
                around the picked point.
 
+        use_actor : bool, default: False
+            If True, the callback will be passed the picked actor instead of
+            the mesh object.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
@@ -144,7 +149,10 @@ class PickingHelper:
                 self_()._picked_mesh = mesh
 
             if callback and is_valid_selection:
-                try_callback(callback, mesh)
+                if use_actor:
+                    try_callback(callback, actor)
+                else:
+                    try_callback(callback, mesh)
 
             if show and is_valid_selection:
 

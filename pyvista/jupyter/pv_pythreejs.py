@@ -659,7 +659,7 @@ def convert_renderer(pv_renderer):
 
 def convert_plotter(pl):
     """Convert a pyvista plotter to a pythreejs widget."""
-    if not hasattr(pl, 'ren_win'):
+    if pl.render_window is None:
         raise AttributeError(
             'This plotter is closed and unable to export to html.\n'
             'Please run this before showing or closing the plotter.'

@@ -18,6 +18,18 @@ def test_plotter_image():
         plotter.image
 
 
+def test_plotter_line_point_smoothing():
+    pl = pyvista.Plotter()
+    assert bool(pl.render_window.GetLineSmoothing()) is False
+    assert bool(pl.render_window.GetPointSmoothing()) is False
+    assert bool(pl.render_window.GetPolygonSmoothing()) is False
+
+    pl = pyvista.Plotter(line_smoothing=True, point_smoothing=True, polygon_smoothing=True)
+    assert bool(pl.render_window.GetLineSmoothing()) is True
+    assert bool(pl.render_window.GetPointSmoothing()) is True
+    assert bool(pl.render_window.GetPolygonSmoothing()) is True
+
+
 def test_enable_hidden_line_removal():
     plotter = pyvista.Plotter(shape=(1, 2))
     plotter.enable_hidden_line_removal(False)
@@ -91,6 +103,24 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     )
 
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
+
+
+def test_smooth_shading_shallow_copy(sphere):
+    """See also ``test_compute_normals_inplace``."""
+    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere2 = sphere.copy(deep=False)
+
+    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=None, smooth_shading=True)
+    # Modify after adding and using compute_normals via smooth_shading
+    sphere['numbers'] *= -1
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    pl.close()
 
 
 def test_get_datasets(sphere, hexbeam):
@@ -267,6 +297,24 @@ def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
     cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
+
+
+def test_plotter_actors(sphere, cube):
+    pl = pyvista.Plotter()
+    actor_a = pl.add_mesh(sphere)
+    actor_b = pl.add_mesh(cube)
+    assert len(pl.actors) == 2
+    assert actor_a in pl.actors.values()
+    assert actor_b in pl.actors.values()
+
+
+def test_plotter_suppress_rendering():
+    pl = pyvista.Plotter()
+    assert isinstance(pl.suppress_rendering, bool)
+    pl.suppress_rendering = True
+    assert pl.suppress_rendering is True
+    pl.suppress_rendering = False
+    assert pl.suppress_rendering is False
 
 
 def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista.PolyData):
