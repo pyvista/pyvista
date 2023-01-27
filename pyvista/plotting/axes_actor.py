@@ -1,4 +1,5 @@
 """Axes actor module."""
+from collections.abc import Iterable
 from enum import Enum
 from typing import Union
 
@@ -14,7 +15,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
     options, refer to `vtkAxesActor Details
-    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`
+    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`.
 
     Examples
     --------
@@ -131,7 +132,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @total_length.setter
     def total_length(self, length):
-        if hasattr(length, '__iter__'):
+        if isinstance(length, Iterable):
             self.SetTotalLength(length[0], length[1], length[2])
         else:
             self.SetTotalLength(length, length, length)
@@ -158,7 +159,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @shaft_length.setter
     def shaft_length(self, length):
-        if hasattr(length, '__iter__'):
+        if isinstance(length, Iterable):
             self.SetNormalizedShaftLength(length[0], length[1], length[2])
         else:
             self.SetNormalizedShaftLength(length, length, length)
@@ -185,7 +186,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @tip_length.setter
     def tip_length(self, length):
-        if hasattr(length, '__iter__'):
+        if isinstance(length, Iterable):
             self.SetNormalizedTipLength(length[0], length[1], length[2])
         else:
             self.SetNormalizedTipLength(length, length, length)
@@ -212,7 +213,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @label_position.setter
     def label_position(self, length):
-        if hasattr(length, '__iter__'):
+        if isinstance(length, Iterable):
             self.SetNormalizedLabelPosition(length[0], length[1], length[2])
         else:
             self.SetNormalizedLabelPosition(length, length, length)
@@ -251,6 +252,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         >>> axes.axes_actor.sphere_resolution = 24
         >>> axes.axes_actor.sphere_resolution
         24
+
         """
         return self.GetSphereResolution()
 
@@ -376,6 +378,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         >>> axes.axes_actor.tip_type = axes.axes_actor.TipType.SPHERE
         >>> axes.axes_actor.tip_type
         <TipType.SPHERE: 1>
+
         """
         return AxesActor.TipType(self.GetTipType())
 
@@ -398,6 +401,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         >>> axes.axes_actor.x_axis_label = 'This axis'
         >>> axes.axes_actor.x_axis_label
         'This axis'
+
         """
         return self.GetXAxisLabelText()
 
@@ -416,6 +420,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         >>> axes.axes_actor.y_axis_label = 'This axis'
         >>> axes.axes_actor.y_axis_label
         'This axis'
+
         """
         return self.GetYAxisLabelText()
 
@@ -434,6 +439,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         >>> axes.axes_actor.z_axis_label = 'This axis'
         >>> axes.axes_actor.z_axis_label
         'This axis'
+
         """
         return self.GetZAxisLabelText()
 
@@ -446,27 +452,15 @@ class AxesActor(pv._vtk.vtkAxesActor):
         """Return or set the properties of the X axis shaft."""
         return ActorProperties(self.GetXAxisShaftProperty())
 
-    @x_axis_shaft_properties.setter
-    def x_axis_shaft_properties(self, properties: ActorProperties):
-        self.x_axis_shaft_properties = properties
-
     @property
     def y_axis_shaft_properties(self):
         """Return or set the properties of the Y axis shaft."""
         return ActorProperties(self.GetYAxisShaftProperty())
 
-    @y_axis_shaft_properties.setter
-    def y_axis_shaft_properties(self, properties: ActorProperties):
-        self.y_axis_shaft_properties = properties
-
     @property
     def z_axis_shaft_properties(self):
         """Return or set the properties of the Z axis shaft."""
         return ActorProperties(self.GetZAxisShaftProperty())
-
-    @z_axis_shaft_properties.setter
-    def z_axis_shaft_properties(self, properties: ActorProperties):
-        self.z_axis_shaft_properties = properties
 
     @property
     def x_axis_tip_properties(self):
