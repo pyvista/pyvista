@@ -13,6 +13,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
+from .._typing import Chart
 from ..utilities.misc import vtk_version_info
 from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
 
@@ -4587,7 +4588,7 @@ class Charts:
         """
         return [chart for chart in self._charts if chart.visible and chart._is_within(pos)]
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Chart:
         """Return a chart based on an index."""
         return self._charts[index]
 

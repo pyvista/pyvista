@@ -1107,7 +1107,7 @@ def test_iren_context_style(pl):
 
 @skip_no_plotting
 @pytest.mark.needs_vtk_version(
-    9, 1, 0, reason="Chart interaction when using multiple renderers is bugged on older versions."
+    9, 3, 0, reason="Chart interaction when using multiple renderers is bugged on older versions."
 )
 def test_chart_interaction():
     # Setup multi renderer plotter with one chart in the top renderer and two charts

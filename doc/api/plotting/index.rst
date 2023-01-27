@@ -52,7 +52,7 @@ Charts API
 ----------
 Charts API reference. These dedicated classes can be used to embed
 charts in plotting windows. Note that full charts functionality
-requires a VTK version of at least 9.2. Most components work fine
+requires a VTK version of at least 9.3. Most components work fine
 in older versions though.
 
 .. toctree::
