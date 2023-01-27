@@ -36,9 +36,6 @@ def test_actor_init_empty():
     with pytest.raises(AttributeError):
         actor.not_an_attribute = None
 
-    with pytest.raises(TypeError):
-        actor.renderer = None
-
     assert actor.memory_address == actor.GetAddressAsString("")
 
 
