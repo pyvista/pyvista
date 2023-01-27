@@ -3407,6 +3407,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_visibility=True,
         xy_label_mode=False,
         render=True,
+        color=None,
     ):
         """Annotate the render window with scale and distance information.
 
@@ -3429,6 +3430,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         present when parallel projection is enabled.
 
         """
+        color = Color(color, default_color=self._theme.font.color)
+
         legend_scale = _vtk.vtkLegendScaleActor()
         legend_scale.SetCornerOffsetFactor(corner_offset_factor)
         legend_scale.SetLegendVisibility(legend_visibility)
@@ -3445,7 +3448,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_scale.SetTopAxisVisibility(top_axis_vibility)
         legend_scale.SetTopBorderOffset(top_border_offset)
 
-        # TODO set colors (defaults to white)
+        legend_scale.GetLegendLabelProperty().SetColor(*color.int_rgb)
+        legend_scale.GetLegendTitleProperty().SetColor(*color.int_rgb)
+
+        legend_scale.GetBottomAxis().GetProperty().SetColor(*color.int_rgb)
+        legend_scale.GetBottomAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
+        legend_scale.GetLeftAxis().GetProperty().SetColor(*color.int_rgb)
+        legend_scale.GetLeftAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
+        legend_scale.GetRightAxis().GetProperty().SetColor(*color.int_rgb)
+        legend_scale.GetRightAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
+        legend_scale.GetTopAxis().GetProperty().SetColor(*color.int_rgb)
+        legend_scale.GetTopAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
 
         # TODO enable placement of the legend
 
