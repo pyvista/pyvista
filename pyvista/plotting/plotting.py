@@ -889,6 +889,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.add_ruler``."""
         return self.renderer.add_ruler(*args, **kwargs)
 
+    @wraps(Renderer.add_legend_scale)
+    def add_legend_scale(self, *args, **kwargs):
+        """Wrap ``Renderer.add_legend_scale``."""
+        return self.renderer.add_legend_scale(*args, **kwargs)
+
     @wraps(Renderer.add_legend)
     def add_legend(self, *args, **kwargs):
         """Wrap ``Renderer.add_legend``."""
