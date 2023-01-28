@@ -179,41 +179,40 @@ class BaseVTKReader(ABC):
         self._observers: List[Union[int, Callable]] = []
 
     def SetFileName(self, filename):
-        """Needed for VTK-like compatibility with BaseReader."""
+        """Set file name."""
         self._filename = filename
 
     def UpdateInformation(self):
-        """Needed for VTK-like compatibility with BaseReader."""
+        """Update Information from file."""
         pass
 
     def AddObserver(self, event_type, callback):
-        """Needed for VTK-like compatibility with BaseReader."""
+        """Add Observer that can be triggered during Update."""
         self._observers.append([event_type, callback])
 
     def RemoveObservers(self, *args):
-        """Needed for VTK-like compatibility with BaseReader."""
+        """Remove Observer."""
         self._observers = []
 
     def GetProgress(self):
-        """Needed for VTK-like compatibility with BaseReader."""
+        """GetProgress."""
         return 0.0
 
     def UpdateObservers(self, event_type):
-        """Needed for VTK-like compatibility with BaseReader."""
+        """Call matching observer."""
         for event_type_allowed, observer in self._observers:
             if event_type_allowed == event_type:
                 observer(self, event_type)
 
     @abstractmethod
     def Update(self):
-        """
-        Needed for VTK-like compatibility with BaseReader.
+        """Update Reader from file and store data internally.
 
         Set self._data_object.
         """
 
     def GetOutputDataObject(self, *args):
-        """Needed for VTK-like compatibility with BaseReader."""
+        """Return stored data."""
         return self._data_object
 
 
