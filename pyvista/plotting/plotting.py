@@ -38,6 +38,7 @@ from pyvista.utilities import (
 from pyvista.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
+    extract_surface_algorithm,
     pointset_to_polydata_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
@@ -3336,13 +3337,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add this immediately prior to adding the actor to ensure vertices
         # are rendered
         if show_vertices and style not in ['points', 'points_gaussian']:
-            if not isinstance(mesh, pyvista.PolyData):
-                surf = mesh.extract_surface()
-            else:
-                surf = mesh
-
             self.add_mesh(
-                surf,
+                extract_surface_algorithm(algo or mesh),
                 style=vertex_style,
                 point_size=point_size,
                 color=vertex_color,
