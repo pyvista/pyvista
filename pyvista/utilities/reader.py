@@ -1859,9 +1859,11 @@ class _PVDReader(BaseVTKReader):
         self._SetActiveTime(self._time_values[0])
 
     def Update(self):
+        """Read data and store it."""
         self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value):
+        """Set active time."""
         self._active_datasets = [
             dataset for dataset in self._datasets if dataset.time == time_value
         ]
