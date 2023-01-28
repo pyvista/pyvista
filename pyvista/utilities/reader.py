@@ -1820,6 +1820,57 @@ class PVDDataSet:
     group: str
 
 
+class _PVDReader(BaseVTKReader):
+    """Simulate a VTK reader for GIF files."""
+
+    def __init__(self):
+        super().__init__()
+        self._directory = None
+        self._datasets = None
+        self._active_datasets = None
+        self._time_values = None
+
+    def SetFileName(self, filename):
+        """Set filename and update reader."""
+        self._filename = filename
+        self._directory = os.path.join(os.path.dirname(filename))
+
+    def UpdateInformation(self):
+        """Parse PVD file."""
+        if self._filename is None:
+            raise ValueError("Filename must be set")
+        tree = ElementTree.parse(self._filename)
+        root = tree.getroot()
+        dataset_elements = root[0].findall("DataSet")
+        datasets = []
+        for element in dataset_elements:
+            element_attrib = element.attrib
+            datasets.append(
+                PVDDataSet(
+                    float(element_attrib.get('timestep', 0)),
+                    int(element_attrib.get('part', 0)),
+                    element_attrib['file'],
+                    element_attrib.get('group'),
+                )
+            )
+        self._datasets = sorted(datasets)
+        self._time_values = sorted({dataset.time for dataset in self._datasets})
+
+        self._SetActiveTime(self._time_values[0])
+
+    def Update(self):
+        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
+
+    def _SetActiveTime(self, time_value):
+        self._active_datasets = [
+            dataset for dataset in self._datasets if dataset.time == time_value
+        ]
+        self._active_readers = [
+            get_reader(os.path.join(self._directory, dataset.path))
+            for dataset in self._active_datasets
+        ]
+
+
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class PVDReader(BaseReader, TimeReader):
     """PVD Reader for .pvd files.
@@ -1842,26 +1893,7 @@ class PVDReader(BaseReader, TimeReader):
 
     """
 
-    def __init__(self, filename):
-        """Initialize PVD file reader."""
-        self._reader = None
-        self.__directory = None
-        self._datasets = []
-        self._active_datasets = []
-        self._active_readers = []
-        self._time_values = []
-
-        self._set_filename(filename)
-
-    @property
-    def reader(self):
-        """Return the PVDReader.
-
-        .. note::
-            This Reader does not have an underlying vtk Reader.
-
-        """
-        return self
+    _class_reader = _PVDReader
 
     @property
     def active_readers(self):
@@ -1872,7 +1904,7 @@ class PVDReader(BaseReader, TimeReader):
         list[pyvista.BaseReader]
 
         """
-        return self._active_readers
+        return self.reader._active_readers
 
     @property
     def datasets(self):
@@ -1883,7 +1915,7 @@ class PVDReader(BaseReader, TimeReader):
         list[pyvista.PVDDataSet]
 
         """
-        return self._datasets
+        return self.reader._datasets
 
     @property
     def active_datasets(self):
@@ -1894,78 +1926,26 @@ class PVDReader(BaseReader, TimeReader):
         list[pyvista.PVDDataSet]
 
         """
-        return self._active_datasets
-
-    def _set_filename(self, filename):
-        """Set filename and update reader."""
-        self._filename = filename
-        self.__directory = os.path.join(os.path.dirname(filename))
-        self._datasets = None
-        self._active_datasets = None
-        self._update_information()
-
-    def read(self):
-        """Read data from PVD timepoint.
-
-        Overrides :func:`pyvista.BaseReader.read`.
-
-        Returns
-        -------
-        pyvista.MultiBlock
-
-        """
-        return pyvista.MultiBlock([reader.read() for reader in self.active_readers])
-
-    def _update_information(self):
-        """If dataset information is unavailable, parse file."""
-        if self.datasets is None:
-            self._parse_file()
-
-    def _parse_file(self):
-        """Parse PVD file."""
-        if self.path is None:
-            raise ValueError("Filename must be set")
-        tree = ElementTree.parse(self.path)
-        root = tree.getroot()
-        dataset_elements = root[0].findall("DataSet")
-        datasets = []
-        for element in dataset_elements:
-            element_attrib = element.attrib
-            datasets.append(
-                PVDDataSet(
-                    float(element_attrib.get('timestep', 0)),
-                    int(element_attrib.get('part', 0)),
-                    element_attrib['file'],
-                    element_attrib.get('group'),
-                )
-            )
-        self._datasets = sorted(datasets)
-        self._time_values = sorted({dataset.time for dataset in self.datasets})
-
-        self.set_active_time_value(self.time_values[0])
+        return self.reader._active_datasets
 
     @property
     def time_values(self):  # noqa: D102
-        return self._time_values
+        return self.reader._time_values
 
     @property
     def number_time_points(self):  # noqa: D102
-        return len(self.time_values)
+        return len(self.reader._time_values)
 
     def time_point_value(self, time_point):  # noqa: D102
-        return self.time_values[time_point]
+        return self.reader._time_values[time_point]
 
     @property
     def active_time_value(self):  # noqa: D102
         # all active datasets have the same time
-        return self.active_datasets[0].time
+        return self.reader._active_datasets[0].time
 
     def set_active_time_value(self, time_value):  # noqa: D102
-        self._active_datasets = [dataset for dataset in self.datasets if dataset.time == time_value]
-        self._active_readers = [
-            get_reader(os.path.join(self.__directory, dataset.path))
-            for dataset in self.active_datasets
-        ]
+        self.reader._SetActiveTime(time_value)
 
     def set_active_time_point(self, time_point):  # noqa: D102
         self.set_active_time_value(self.time_values[time_point])
