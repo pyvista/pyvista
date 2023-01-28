@@ -6450,11 +6450,6 @@ class Plotter(BasePlotter):
             )
             if val is not None
         )
-        print('logic')
-        print((return_cpos, return_img or screenshot is True, return_viewer))
-        print(return_values)
-        print('last image')
-        print(type(self.last_image))
         if len(return_values) == 1:
             return return_values[0]
         return return_values or None
