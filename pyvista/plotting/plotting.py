@@ -1577,8 +1577,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
-        if self.render_window is None:
-            raise AttributeError('Render window is not present')
+        if self.render_window is None or not self.render_window.IsCurrent():
+            raise AttributeError('Render window is not available.')
 
     @property
     def image(self):
@@ -6416,7 +6416,11 @@ class Plotter(BasePlotter):
                     "you have destroyed the render window and we have to "
                     "close it out."
                 )
-                self.close()
+            self.close()
+            if screenshot:
+                warnings.warn(
+                    "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
+                )
         else:
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()

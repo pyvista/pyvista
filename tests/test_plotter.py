@@ -18,6 +18,13 @@ def test_plotter_image_before_show():
         plotter.image
 
 
+def test_screenshot_fail_suppressed_rendering():
+    plotter = pyvista.Plotter()
+    plotter.suppress_rendering = True
+    with pytest.warns(UserWarning, match='screenshot is unable to be taken'):
+        plotter.show(screenshot='tmp.png')
+
+
 def test_plotter_line_point_smoothing():
     pl = pyvista.Plotter()
     assert bool(pl.render_window.GetLineSmoothing()) is False
