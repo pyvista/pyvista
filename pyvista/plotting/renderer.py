@@ -3397,17 +3397,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self,
         corner_offset_factor=2.0,
         bottom_border_offset=30,
+        top_border_offset=30,
         left_border_offset=30,
         right_border_offset=30,
-        top_border_offset=30,
         bottom_axis_visibility=True,
-        left_axis_visibilty=True,
+        top_axis_visibility=True,
+        left_axis_visibility=True,
         right_axis_visibility=True,
-        top_axis_vibility=True,
         legend_visibility=True,
         xy_label_mode=False,
         render=True,
         color=None,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
     ):
         """Annotate the render window with scale and distance information.
 
@@ -3422,28 +3430,28 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             The corner offset value.
 
         bottom_border_offset : int, default: 30
-            Bottom border offset.
-
-        left_border_offset : int, default: 30
-            Left border offset.
-
-        right_border_offset : int, default: 30
-            Right border offset.
+            Bottom border offset. Recommended value ``50``
 
         top_border_offset : int, default: 30
-            Top border offset.
+            Top border offset. Recommended value ``50``
+
+        left_border_offset : int, default: 30
+            Left border offset. Recommended value ``100``
+
+        right_border_offset : int, default: 30
+            Right border offset. Recommended value ``100``
 
         bottom_axis_visibility : bool, default: True
             Whether the bottom axis is visible.
+
+        top_axis_visibility : bool, default: True
+            Whether the top axis is visible.
 
         left_axis_visibility : bool, default: True
             Whether the left axis is visible.
 
         right_axis_visibility : bool, default: True
             Whether the right axis is visible.
-
-        top_axis_visibility : bool, default: True
-            Whether the top axis is visible.
 
         legend_visibility : bool, default: True
             Whether the legend scale is visible.
@@ -3461,6 +3469,33 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         color : ColorLike, optional
             Either a string, rgb list, or hex color string for tick text
             and tick line colors.
+
+            .. warning::
+                The axis labels tend to be either white or black.
+
+        font_size_factor : float
+            Factor to scale font size overall.
+
+        label_size_factor : float
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        number_minor_ticks : int, optional
+            Number of minor ticks between major ticks.
+
+        tick_length : int
+            Length of ticks in pixels.
+
+        minor_tick_length : int
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, optional
+            Whether to show the ticks.
+
+        tick_label_offset : int
+            Offset between tick and label in pixels.
 
         Warnings
         --------
@@ -3491,23 +3526,37 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
         legend_scale.SetBottomBorderOffset(bottom_border_offset)
-        legend_scale.SetLeftAxisVisibility(left_axis_visibilty)
+        legend_scale.SetLeftAxisVisibility(left_axis_visibility)
         legend_scale.SetLeftBorderOffset(left_border_offset)
         legend_scale.SetRightAxisVisibility(right_axis_visibility)
         legend_scale.SetRightBorderOffset(right_border_offset)
-        legend_scale.SetTopAxisVisibility(top_axis_vibility)
+        legend_scale.SetTopAxisVisibility(top_axis_visibility)
         legend_scale.SetTopBorderOffset(top_border_offset)
 
-        legend_scale.GetLegendLabelProperty().SetColor(*color.int_rgb)
-        legend_scale.GetLegendTitleProperty().SetColor(*color.int_rgb)
-        legend_scale.GetBottomAxis().GetProperty().SetColor(*color.int_rgb)
-        legend_scale.GetBottomAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
-        legend_scale.GetLeftAxis().GetProperty().SetColor(*color.int_rgb)
-        legend_scale.GetLeftAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
-        legend_scale.GetRightAxis().GetProperty().SetColor(*color.int_rgb)
-        legend_scale.GetRightAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
-        legend_scale.GetTopAxis().GetProperty().SetColor(*color.int_rgb)
-        legend_scale.GetTopAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
+        for text in ['Label', 'Title']:
+            prop = getattr(legend_scale, f'GetLegend{text}Property')()
+            if color != Color('white'):
+                # This property turns black if set
+                prop.SetColor(*color.int_rgb)
+            prop.SetFontSize(
+                int(font_size_factor * 20)
+            )  # hack to avoid multiple font size arguments
+
+        for ax in ['Bottom', 'Left', 'Right', 'Top']:
+            axis = getattr(legend_scale, f'Get{ax}Axis')()
+            axis.GetProperty().SetColor(*color.int_rgb)
+            if color != Color('white'):
+                # This label property turns black if set
+                axis.GetLabelTextProperty().SetColor(*color.int_rgb)
+            axis.SetFontFactor(font_size_factor)
+            axis.SetLabelFactor(label_size_factor)
+            if label_format:
+                axis.SetLabelFormat(label_format)
+            axis.SetNumberOfMinorTicks(number_minor_ticks)
+            axis.SetTickLength(tick_length)
+            axis.SetMinorTickLength(minor_tick_length)
+            axis.SetTickVisibility(show_ticks)
+            axis.SetTickOffset(tick_label_offset)
 
         return self.add_actor(
             legend_scale,
