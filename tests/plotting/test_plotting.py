@@ -1533,8 +1533,6 @@ def test_image_properties():
     p.close()
     p = pyvista.Plotter()
     p.add_mesh(mesh)
-    p.store_image = True
-    assert p.store_image is True
     p.show()  # close plotter
     # Get RGB image
     _ = p.image
@@ -2174,13 +2172,7 @@ def test_plot_lighting_change_positional_false_true(sphere):
 
 def test_plotter_image():
     plotter = pyvista.Plotter()
-    plotter.show()
-    with pytest.raises(AttributeError, match='To retrieve an image after'):
-        plotter.image
-
-    plotter = pyvista.Plotter()
     wsz = tuple(plotter.window_size)
-    plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
 

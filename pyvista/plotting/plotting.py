@@ -235,7 +235,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
-        self._store_image = False
         self.mesh = None
         if title is None:
             title = self._theme.title
@@ -827,34 +826,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         return self.renderers.active_renderer
-
-    @property
-    def store_image(self):
-        """Store last rendered frame on close.
-
-        This is normally disabled to avoid caching the image, and is
-        enabled by default by setting:
-
-        ``pyvista.BUILDING_GALLERY = True``
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter(off_screen=True)
-        >>> pl.store_image = True
-        >>> _ = pl.add_mesh(pyvista.Cube())
-        >>> pl.show()
-        >>> image = pl.last_image
-        >>> type(image)  # doctest:+SKIP
-        <class 'numpy.ndarray'>
-
-        """
-        return self._store_image
-
-    @store_image.setter
-    def store_image(self, value):
-        """Store last rendered frame on close."""
-        self._store_image = bool(value)
 
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
@@ -1607,20 +1578,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
         if self.render_window is None:
-            raise AttributeError(
-                '\n\nTo retrieve an image after the render window '
-                'has been closed, set:\n\n'
-                ' ``plotter.store_image = True``\n\n'
-                'before closing the plotter.'
-            )
+            raise AttributeError('Render window is not present')
 
     @property
     def image(self):
-        """Return an image array of current render window.
-
-        To retrieve an image after the render window has been closed,
-        set: ``plotter.store_image = True`` before closing the plotter.
-        """
+        """Return an image array of current render window."""
         if self.render_window is None and self.last_image is not None:
             return self.last_image
 
@@ -4292,9 +4254,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.remove_all_lights()
 
         # Grab screenshots of last render
-        if self._store_image:
-            self.last_image = self.screenshot(None, return_img=True)
-            self.last_image_depth = self.get_image_depth()
+        # self.last_image = self.screenshot(None, return_img=True)
+        # self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
         self.scalar_bars.clear()
@@ -4660,7 +4621,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
-        >>> plotter.store_image = True
         >>> plotter.show()
         >>> zval = plotter.get_image_depth()
 
@@ -6457,7 +6417,7 @@ class Plotter(BasePlotter):
                     "close it out."
                 )
                 self.close()
-        elif self._store_image:
+        else:
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
@@ -6490,6 +6450,11 @@ class Plotter(BasePlotter):
             )
             if val is not None
         )
+        print('logic')
+        print((return_cpos, return_img or screenshot is True, return_viewer))
+        print(return_values)
+        print('last image')
+        print(type(self.last_image))
         if len(return_values) == 1:
             return return_values[0]
         return return_values or None
