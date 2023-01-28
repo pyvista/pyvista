@@ -311,8 +311,7 @@ class RenderWindowInteractor:
         self.interactor.SetInteractorStyle(self._style_class)
 
     def _toggle_chart_interaction(self, mouse_pos):
-        """
-        Toggle interaction with indicated charts.
+        """Toggle interaction with indicated charts.
 
         Parameters
         ----------
@@ -362,7 +361,7 @@ class RenderWindowInteractor:
 
         """
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
-        if vtk_version_info < (9, 3, 0):
+        if vtk_version_info < (9, 3, 0):  # pragma: no cover
             if scene is not None and len(self._plotter.renderers) > 1:
                 warnings.warn(
                     "Interaction with charts is not possible when using multiple subplots."
