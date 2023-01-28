@@ -6457,7 +6457,7 @@ class Plotter(BasePlotter):
                     "close it out."
                 )
                 self.close()
-        else:
+        elif self._store_image:
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed

@@ -12,7 +12,7 @@ from pyvista.errors import MissingDataError
 from pyvista.plotting import _plotting
 
 
-def test_plotter_image():
+def test_plotter_image_before_show():
     plotter = pyvista.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
         plotter.image

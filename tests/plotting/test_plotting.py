@@ -2471,11 +2471,16 @@ def test_plot_complex_value(plane, verify_image_cache):
     pl.show()
 
 
-def test_warn_screenshot_notebook():
+def test_screenshot_notebook(tmpdir):
+    tmp_dir = tmpdir.mkdir("tmpdir2")
+    filename = str(tmp_dir.join('tmp.png'))
+
     pl = pyvista.Plotter(notebook=True)
     pl.theme.jupyter_backend = 'static'
-    with pytest.warns(UserWarning, match='Set `jupyter_backend` backend to `"none"`'):
-        pl.show(screenshot='tmp.png')
+    pl.add_mesh(pyvista.Cone())
+    pl.show(screenshot=filename)
+
+    assert os.path.isfile(filename)
 
 
 def test_culling_frontface(sphere):
