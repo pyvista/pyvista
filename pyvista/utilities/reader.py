@@ -171,8 +171,7 @@ def get_reader(filename, force_ext=None):
     return Reader(filename)
 
 
-@abstract_class
-class BaseVTKReader:
+class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
     def __init__(self):
@@ -205,9 +204,13 @@ class BaseVTKReader:
             if event_type_allowed == event_type:
                 observer(self, event_type)
 
+    @abstractmethod
     def Update(self):
-        """Needed for VTK-like compatibility with BaseReader."""
-        raise NotImplementedError
+        """
+        Needed for VTK-like compatibility with BaseReader.
+
+        Set self._data_object.
+        """
 
     def GetOutputDataObject(self, *args):
         """Needed for VTK-like compatibility with BaseReader."""
