@@ -1013,7 +1013,7 @@ class _ChartBackground(_CustomContextItem):
         self.BackgroundBrush = Brush(color=(0, 0, 0, 0))
         # Default active background is slightly more opaque with yellow border line
         self.ActiveBorderPen = Pen(color=(0.8, 0.8, 0.2))
-        self.ActiveBackgroundBrush = Brush(color=(0.0, 0.0, 0.0, 0.2))
+        self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
     def paint(self, painter):
         if self._chart.visible:
@@ -1576,7 +1576,7 @@ class _Chart(DocSubs):
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
-        if not off_screen and interactive:  # pragma: no cover
+        if interactive and (not off_screen or pyvista.BUILDING_GALLERY):  # pragma: no cover
             pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
