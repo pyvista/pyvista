@@ -3318,6 +3318,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Either a string, rgb list, or hex color string for
             label and title colors.
 
+            .. warning::
+                This is either white or black.
+
         tick_color : ColorLike, optional
             Either a string, rgb list, or hex color string for
             tick line colors.
@@ -3357,7 +3360,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> plotter.show()
 
         """
-        text_color = Color(label_color, default_color=self._theme.font.color)
+        label_color = Color(label_color, default_color=self._theme.font.color)
         tick_color = Color(tick_color, default_color=self._theme.font.color)
 
         ruler = _vtk.vtkAxisActor2D()
@@ -3382,8 +3385,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if label_format:
             ruler.SetLabelFormat(label_format)
         ruler.GetProperty().SetColor(*tick_color.int_rgb)
-        ruler.GetLabelTextProperty().SetColor(*text_color.int_rgb)
-        ruler.GetTitleTextProperty().SetColor(*text_color.int_rgb)
+        if label_color != Color('white'):
+            # This property turns black if set
+            ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
+            ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
         ruler.SetNumberOfMinorTicks(number_minor_ticks)
         ruler.SetTickVisibility(show_ticks)
         ruler.SetTickLength(tick_length)
