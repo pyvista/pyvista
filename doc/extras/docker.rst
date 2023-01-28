@@ -102,7 +102,7 @@ Finally, check that your render window is using NVIDIA by running
 
   >>> import pyvista
   >>> pl = pyvista.Plotter()
-  >>> print(pl.ren_win.ReportCapabilities())
+  >>> print(pl.render_window.ReportCapabilities())
 
   OpenGL vendor string:  NVIDIA Corporation
   OpenGL renderer string:  Tesla K80/PCIe/SSE2

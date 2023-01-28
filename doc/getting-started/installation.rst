@@ -34,7 +34,7 @@ PyVista includes several optional dependencies for visualization and reading a v
 
 * `cmocean <https://pypi.org/project/cmocean/>`_ - Colormaps for Oceanography.
 * `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
-* `ipyvtklink <https://github.com/Kitware/ipyvtklink>`_ - Minimalist ipywidget to interface with any Python vtkRenderWindow.
+* `trame <https://github.com/Kitware/trame>`_ - Used for client and server-side rendering in Jupyter.
 * `matplotlib <https://pypi.org/project/matplotlib/>`_ - Used for colormaps and 2D plotting with :class:`pyvista.ChartMPL`.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
 * `pythreejs <https://pythreejs.readthedocs.io/en/stable/>`_ - Jupyter widgets based notebook extension that allows Jupyter to leverage the WebGL capabilities of modern browsers.
@@ -103,7 +103,7 @@ The following are a list of optional dependencies and their purpose:
 +===================================+=========================================+
 | ``matplotlib``                    | Using Colormaps                         |
 +-----------------------------------+-----------------------------------------+
-| ``ipyvtklink``                    | Interactive notebook rendering          |
+| ``trame``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+
@@ -212,7 +212,6 @@ time your Docker container is launched:
     set -x
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_IPYVTK=true
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
@@ -244,7 +243,7 @@ After logging into the remote server, install Miniconda and related packages:
     conda create --name vtk_env python=3.9
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista ipyvtklink
+    pip install jupyter pyvista trame
 
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599
@@ -258,7 +257,6 @@ Then, configure the headless display:
     sudo apt-get install xvfb
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_IPYVTK=true
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
 
@@ -289,7 +287,7 @@ related packages:
     conda create --name vtk_env python=3.9
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista ipyvtklink
+    pip install jupyter pyvista trame
 
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599
@@ -309,7 +307,6 @@ Configure the headless display:
     sudo apt-get install xvfb
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_IPYVTK=true
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
 
