@@ -3329,9 +3329,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> cone = pyvista.Cone(height=2.0, radius=0.5)
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> cone = pv.Cone(height=2.0, radius=0.5)
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(cone)
 
         Measure x direction of cone and place ruler slightly below.
@@ -3400,10 +3400,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         left_border_offset=30,
         right_border_offset=30,
         top_border_offset=30,
-        bottom_axis_visibility=False,
-        left_axis_visibilty=False,
-        right_axis_visibility=False,
-        top_axis_vibility=False,
+        bottom_axis_visibility=True,
+        left_axis_visibilty=True,
+        right_axis_visibility=True,
+        top_axis_vibility=True,
         legend_visibility=True,
         xy_label_mode=False,
         render=True,
@@ -3416,18 +3416,68 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         the scale of what the camera is viewing. An option also exists for
         displaying a scale legend.
 
-        The axes can be programmed either to display distance scales or x-y
-        coordinate values (see ``xy_label_mode``). By default, the scales display
-        a distance. However, if you know that the view is down the z-axis, the
-        scales can be programmed to display x-y coordinate values.
+        Parameters
+        ----------
+        corner_offset_factor : float, default: 2.0
+            The corner offset value.
 
-        Warning
-        -------
+        bottom_border_offset : int, default: 30
+            Bottom border offset.
+
+        left_border_offset : int, default: 30
+            Left border offset.
+
+        right_border_offset : int, default: 30
+            Right border offset.
+
+        top_border_offset : int, default: 30
+            Top border offset.
+
+        bottom_axis_visibility : bool, default: True
+            Whether the bottom axis is visible.
+
+        left_axis_visibility : bool, default: True
+            Whether the left axis is visible.
+
+        right_axis_visibility : bool, default: True
+            Whether the right axis is visible.
+
+        top_axis_visibility : bool, default: True
+            Whether the top axis is visible.
+
+        legend_visibility : bool, default: True
+            Whether the legend scale is visible.
+
+        xy_label_mode : bool, default: False
+            The axes can be programmed either to display distance scales
+            or x-y coordinate values (see ``xy_label_mode``). By default,
+            the scales display a distance. However, if you know that the
+            view is down the z-axis, the scales can be programmed to display
+            x-y coordinate values.
+
+        render : bool, default: True
+            Whether to to render when the actor is added.
+
+        color : ColorLike, optional
+            Either a string, rgb list, or hex color string for tick text
+            and tick line colors.
+
+        Warnings
+        --------
         Please be aware that the axes and scale values are subject to perspective
         effects. The distances are computed in the focal plane of the camera. When
         there are large view angles (i.e., perspective projection), the computed
         distances may provide users the wrong sense of scale. These effects are not
         present when parallel projection is enabled.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cone = pv.Cone(height=2.0, radius=0.5)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(cone)
+        >>> _ = pl.add_legend_scale()
+        >>> pl.show()
 
         """
         color = Color(color, default_color=self._theme.font.color)
@@ -3450,7 +3500,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         legend_scale.GetLegendLabelProperty().SetColor(*color.int_rgb)
         legend_scale.GetLegendTitleProperty().SetColor(*color.int_rgb)
-
         legend_scale.GetBottomAxis().GetProperty().SetColor(*color.int_rgb)
         legend_scale.GetBottomAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
         legend_scale.GetLeftAxis().GetProperty().SetColor(*color.int_rgb)
@@ -3459,8 +3508,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_scale.GetRightAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
         legend_scale.GetTopAxis().GetProperty().SetColor(*color.int_rgb)
         legend_scale.GetTopAxis().GetLabelTextProperty().SetColor(*color.int_rgb)
-
-        # TODO enable placement of the legend
 
         return self.add_actor(
             legend_scale,
