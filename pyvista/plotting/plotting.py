@@ -517,7 +517,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from ..jupyter.notebook import handle_plotter
 
-        pane = handle_plotter(self, backend='panel', return_viewer=True, title=self.title)
+        pane = handle_plotter(self, backend='panel', title=self.title)
         pane.save(filename)
 
     def to_pythreejs(self):
@@ -6284,14 +6284,12 @@ class Plotter(BasePlotter):
         cpos : list
             List of camera position, focal point, and view up.
             Returned only when ``return_cpos=True`` or set in the
-            default global or plot theme.  Not returned when in a
-            jupyter notebook and ``return_viewer=True``.
+            default global or plot theme.
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
-            or ``screenshot=True`` is set. Not returned when in a
-            jupyter notebook with ``return_viewer=True``. Optionally
-            contains alpha values. Sized:
+            or ``screenshot=True`` is set. Optionally contains alpha
+            values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
@@ -6391,23 +6389,15 @@ class Plotter(BasePlotter):
                 'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
             )
 
+        jupyter_disp = None
         if self.notebook:
             from ..jupyter.notebook import handle_plotter
 
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
-            if jupyter_backend != 'none':
-                if screenshot:
-                    warnings.warn(
-                        '\nSet `jupyter_backend` backend to `"none"` to take a screenshot'
-                        ' within a notebook environment.'
-                    )
-
-                disp = handle_plotter(
-                    self, backend=jupyter_backend, return_viewer=return_viewer, **jupyter_kwargs
-                )
-                return disp
+            if jupyter_backend.lower() != 'none':
+                jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
         self.render()
 
@@ -6423,9 +6413,8 @@ class Plotter(BasePlotter):
             self.title = title
 
         # Keep track of image for sphinx-gallery
-        if pyvista.BUILDING_GALLERY or screenshot:
+        if pyvista.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
-
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
@@ -6467,7 +6456,10 @@ class Plotter(BasePlotter):
                     "you have destroyed the render window and we have to "
                     "close it out."
                 )
-                auto_close = True
+                self.close()
+        else:
+            self.last_image = self.screenshot(screenshot, return_img=True)
+            self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user pressed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
@@ -6476,18 +6468,31 @@ class Plotter(BasePlotter):
         #       remainder of this function.
 
         # Close the render window if requested
-        if auto_close:
+        if jupyter_disp is None and auto_close:
+            # Plotters are never auto-closed in Jupyter
             self.close()
 
-        # If user asked for screenshot, return as numpy array after camera
-        # position
-        if return_img or screenshot is True:
-            if return_cpos:
-                return self.camera_position, self.last_image
-            return self.last_image
+        if jupyter_disp is not None and not return_viewer:
+            # Default behaviour is to display the Jupyter viewer
+            try:
+                from IPython import display
+            except ImportError:  # pragma: no cover
+                raise ImportError('Install IPython to display an image in a notebook')
+            display.display(jupyter_disp)
 
-        if return_cpos:
-            return self.camera_position
+        # Three possible return values: (cpos, image, widget)
+        return_values = tuple(
+            val
+            for val in (
+                self.camera_position if return_cpos else None,
+                self.last_image if return_img or screenshot is True else None,
+                jupyter_disp if return_viewer else None,
+            )
+            if val is not None
+        )
+        if len(return_values) == 1:
+            return return_values[0]
+        return return_values or None
 
     def add_title(self, title, font_size=18, color=None, font=None, shadow=False):
         """Add text to the top center of the plot.

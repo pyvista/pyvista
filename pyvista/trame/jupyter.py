@@ -4,7 +4,6 @@ import logging
 import os
 import warnings
 
-from IPython import display
 from ipywidgets import widgets
 from trame.app import get_server
 from trame.ui.vuetify import VAppLayout
@@ -160,7 +159,6 @@ def show_trame(
     server_proxy_prefix=None,
     collapse_menu=False,
     default_server_rendering=True,
-    return_viewer=False,
     **kwargs,
 ):
     """Run and display the trame application in jupyter's event loop.
@@ -193,9 +191,6 @@ def show_trame(
     default_server_rendering : bool, default: True
         Whether to use server-side or client-side rendering on-start when
         using the ``'trame'`` mode.
-
-    return_viewer : bool, optional
-        Return the ipywidget.
 
     **kwargs : dict, optional
         Mostly ignored, though ``protocol`` and ``host`` can be use to
@@ -235,10 +230,7 @@ def show_trame(
         **kwargs,
     )
 
-    disp = Widget(viewer, src, **kwargs)
-    if return_viewer:
-        return disp
-    display.display_html(disp)
+    return Widget(viewer, src, **kwargs)
 
 
 def elegantly_launch(server):
