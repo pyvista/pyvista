@@ -1086,6 +1086,29 @@ def test_screenshot_scaled():
     assert img.shape == (h * 5, w * 5, 4)
     assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
 
+    plotter.close()
+
+
+def test_screensot_altered_window_size(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+
+    plotter.window_size = (800, 800)
+    a = plotter.screenshot()
+    assert a.shape == (800, 800, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    plotter.window_size = (1000, 1000)
+    b = plotter.screenshot()
+    assert b.shape == (1000, 1000, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    d = plotter.screenshot(window_size=(600, 600))
+    assert d.shape == (600, 600, 3)
+    # plotter.show()  # for image regression test
+
+    plotter.close()
+
 
 def test_screenshot_bytes():
     # Test screenshot to bytes object
