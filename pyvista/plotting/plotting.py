@@ -2083,7 +2083,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
-        show_vertices=False,
+        show_vertices=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2339,7 +2339,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
 
-        show_vertices : bool, default: False
+        show_vertices : bool, optional
             When ``style`` is not ``'points'``, render the external surface
             vertices. The following optional keyword arguments may be used to
             control the style of the vertices:
@@ -2429,6 +2429,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             style,
             **kwargs,
         )
+        if show_vertices is None:
+            show_vertices = self._theme.show_vertices
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2541,6 +2543,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                show_vertices=False,
             )
 
         self.add_actor(
@@ -2607,7 +2610,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         emissive=False,
         copy_mesh=False,
         backface_params=None,
-        show_vertices=False,
+        show_vertices=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2924,7 +2927,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``backface_params=None``) default to the corresponding frontface
             properties.
 
-        show_vertices : bool, default: False
+        show_vertices : bool, optional
             When ``style`` is not ``'points'``, render the external surface
             vertices. The following optional keyword arguments may be used to
             control the style of the vertices:
@@ -3074,6 +3077,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
+                show_vertices=show_vertices,
                 **kwargs,
             )
         elif copy_mesh and algo is None:
@@ -3125,6 +3129,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             style,
             **kwargs,
         )
+
+        if show_vertices is None:
+            show_vertices = self._theme.show_vertices
 
         if silhouette:
             if isinstance(silhouette, dict):
@@ -3348,6 +3355,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                show_vertices=False,
             )
 
         self.add_actor(

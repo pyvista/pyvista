@@ -1387,6 +1387,7 @@ class DefaultTheme(_ThemeConfig):
         '_colorbar_vertical',
         '_show_scalar_bar',
         '_show_edges',
+        '_show_vertices',
         '_lighting',
         '_interactive',
         '_render_points_as_spheres',
@@ -1453,6 +1454,7 @@ class DefaultTheme(_ThemeConfig):
 
         self._show_scalar_bar = True
         self._show_edges = False
+        self._show_vertices = False
         self._lighting = True
         self._interactive = False
         self._render_points_as_spheres = False
@@ -2229,6 +2231,24 @@ class DefaultTheme(_ThemeConfig):
     @show_edges.setter
     def show_edges(self, show_edges: bool):
         self._show_edges = bool(show_edges)
+
+    @property
+    def show_vertices(self) -> bool:
+        """Return or set the default vertex visibility.
+
+        Examples
+        --------
+        Show vertices globally by default.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.show_vertices = True
+
+        """
+        return self._show_vertices
+
+    @show_vertices.setter
+    def show_vertices(self, show_vertices: bool):
+        self._show_vertices = bool(show_vertices)
 
     @property
     def lighting(self) -> bool:
