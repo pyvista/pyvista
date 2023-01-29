@@ -235,6 +235,7 @@ class _LightingConfig(_ThemeConfig):
         '_diffuse',
         '_specular',
         '_specular_power',
+        '_emissive',
     ]
 
     def __init__(self):
@@ -245,9 +246,10 @@ class _LightingConfig(_ThemeConfig):
         self._diffuse = 1.0
         self._specular = 0.0
         self._specular_power = 100.0
+        self._emissive = False
 
     @property
-    def interpolation(self) -> bool:
+    def interpolation(self) -> InterpolationType:
         """Return or set the default interpolation type.
 
         Options are:
@@ -342,6 +344,15 @@ class _LightingConfig(_ThemeConfig):
     @specular_power.setter
     def specular_power(self, specular_power: float):
         self._specular_power = specular_power
+
+    @property
+    def emissive(self) -> bool:
+        """Return or set if emissive is used with point gaussian style."""
+        return self._emissive
+
+    @emissive.setter
+    def emissive(self, emissive: bool):
+        self._emissive = bool(emissive)
 
 
 class _DepthPeelingConfig(_ThemeConfig):

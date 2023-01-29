@@ -27,10 +27,16 @@ from .tools import normalize
 class _BaseMapper(_vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
-    _theme = None
+    _new_attr_exceptions = ('_theme',)
 
     def __init__(self, theme=None, **kwargs):
-        self._theme = theme
+        self._theme = pv.themes.DefaultTheme()
+        if theme is None:
+            # copy global theme to ensure local property theme is fixed
+            # after creation.
+            self._theme.load_theme(pv.global_theme)
+        else:
+            self._theme.load_theme(theme)
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(
@@ -66,7 +72,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> mapper_copy = mapper.copy()
 
         """
-        new_mapper = type(self)()
+        new_mapper = type(self)(self._theme)
         # even though this uses ShallowCopy, the new mapper no longer retains
         # any connection with the original
         new_mapper.ShallowCopy(self)
@@ -804,6 +810,13 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 @no_new_attr
 class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     """Wrap vtkPointGaussianMapper."""
+
+    def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:
+        super().__init__(theme=theme)
+        if emissive is None:
+            emissive = self._theme.lighting_params.emissive
+        self.emissive = emissive
+        self.scale_factor = scale_factor
 
     @property
     def emissive(self) -> bool:

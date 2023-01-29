@@ -2607,7 +2607,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         roughness=None,
         render=True,
         component=None,
-        emissive=False,
+        emissive=None,
         copy_mesh=False,
         backface_params=None,
         show_vertices=None,
@@ -2901,7 +2901,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
-        emissive : bool, default: False
+        emissive : bool, optional
             Treat the points/splats as emissive light sources. Only valid for
             ``style='points_gaussian'`` representation.
 
@@ -3008,7 +3008,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if style == 'points_gaussian':
-            self.mapper = PointGaussianMapper(theme=self.theme)
+            self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
             self.mapper = DataSetMapper(theme=self.theme)
 
@@ -3300,21 +3300,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
 
-        if style == 'points_gaussian':
-            self.mapper.emissive = emissive
-            self.mapper.scale_factor = point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not emissive:
-                if opacity >= 1.0:
-                    opacity = 0.9999  # otherwise, weird triangles
-
         if isinstance(opacity, (float, int)):
             prop_kwargs['opacity'] = opacity
         prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
 
+        if style == 'points_gaussian':
+            self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
+            if not render_points_as_spheres and not self.mapper.emissive:
+                if prop.opacity >= 1.0:
+                    prop.opacity = 0.9999  # otherwise, weird triangles
+
         if render_points_as_spheres:
             if style == 'points_gaussian':
-                self.mapper.use_circular_splat(opacity)
+                self.mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
@@ -3809,7 +3808,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(
                 f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
             )
-        self.mapper = mappers_lookup[mapper](self._theme)
+        self.mapper = mappers_lookup[mapper](theme=self._theme)
 
         # Set scalars range
         min_, max_ = None, None
@@ -3976,7 +3975,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             alg.SetFeatureAngle(silhouette_params["feature_angle"])
         else:
             alg.SetEnableFeatureAngle(False)
-        mapper = DataSetMapper()
+        mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(silhouette_params["color"]).float_rgb)
@@ -6603,7 +6602,7 @@ class Plotter(BasePlotter):
         alg.SetModelBounds(bounds)
         alg.SetFocalPoint(focal_point)
         alg.AllOn()
-        mapper = DataSetMapper()
+        mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(color).float_rgb)
