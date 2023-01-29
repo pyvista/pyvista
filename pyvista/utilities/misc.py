@@ -19,7 +19,7 @@ def _set_plot_theme_from_env():
         try:
             theme = os.environ['PYVISTA_PLOT_THEME']
             set_plot_theme(theme.lower())
-        except KeyError:
+        except ValueError:
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
