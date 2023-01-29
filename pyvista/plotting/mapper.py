@@ -72,7 +72,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> mapper_copy = mapper.copy()
 
         """
-        new_mapper = type(self)(self._theme)
+        new_mapper = type(self)(theme=self._theme)
         # even though this uses ShallowCopy, the new mapper no longer retains
         # any connection with the original
         new_mapper.ShallowCopy(self)
