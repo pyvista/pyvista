@@ -3278,40 +3278,40 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         pointb : Sequence
             Ending point for ruler.
 
-        flip_range : bool
+        flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
-        number_labels : int
+        number_labels : int, default: 5
             Number of labels to place on ruler.
 
-        show_labels : bool, optional
+        show_labels : bool, default: True
             Whether to show labels.
 
-        font_size_factor : float
+        font_size_factor : float, default: 0.6
             Factor to scale font size overall.
 
-        label_size_factor : float
+        label_size_factor : float, default: 1.0
             Factor to scale label size relative to title size.
 
         label_format : str, optional
             A printf style format for labels, e.g. '%E'.
 
-        title : str, optional
+        title : str, default: "Distance"
             The title to display.
 
-        number_minor_ticks : int, optional
+        number_minor_ticks : int, default: 0
             Number of minor ticks between major ticks.
 
-        tick_length : int
+        tick_length : int, default: 5
             Length of ticks in pixels.
 
-        minor_tick_length : int
+        minor_tick_length : int, default: 3
             Length of minor ticks in pixels.
 
-        show_ticks : bool, optional
+        show_ticks : bool, default: True
             Whether to show the ticks.
 
-        tick_label_offset : int
+        tick_label_offset : int, default: 2
             Offset between tick and label in pixels.
 
         label_color : ColorLike, optional
@@ -3463,7 +3463,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         xy_label_mode : bool, default: False
             The axes can be programmed either to display distance scales
-            or x-y coordinate values (see ``xy_label_mode``). By default,
+            or x-y coordinate values. By default,
             the scales display a distance. However, if you know that the
             view is down the z-axis, the scales can be programmed to display
             x-y coordinate values.
@@ -3478,28 +3478,28 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             .. warning::
                 The axis labels tend to be either white or black.
 
-        font_size_factor : float
+        font_size_factor : float, default: 0.6
             Factor to scale font size overall.
 
-        label_size_factor : float
+        label_size_factor : float, default: 1.0
             Factor to scale label size relative to title size.
 
         label_format : str, optional
             A printf style format for labels, e.g. '%E'.
 
-        number_minor_ticks : int, optional
+        number_minor_ticks : int, default: 0
             Number of minor ticks between major ticks.
 
-        tick_length : int
+        tick_length : int, default: 5
             Length of ticks in pixels.
 
-        minor_tick_length : int
+        minor_tick_length : int, default: 3
             Length of minor ticks in pixels.
 
-        show_ticks : bool, optional
+        show_ticks : bool, default: True
             Whether to show the ticks.
 
-        tick_label_offset : int
+        tick_label_offset : int, default: 2
             Offset between tick and label in pixels.
 
         Warnings
