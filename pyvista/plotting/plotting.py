@@ -1649,10 +1649,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Get or set the scale factor when saving a screenshot.
 
         This will scale up the screenshots taken of the render
-        window so save a higher resolution image than what is rendered
+        window to save a higher resolution image than what is rendered
         on screen.
 
-        Image sizes will be the :py:attr:`window_size <pyvista.BasePlotter.window_size`
+        Image sizes will be the :py:attr:`window_size <pyvista.BasePlotter.window_size>`
         multiplied by this scale factor.
 
         """
