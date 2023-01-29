@@ -313,3 +313,20 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
     alg.SetPassPointData(pass_point_data)
     set_algorithm_input(alg, inp)
     return alg
+
+
+def linear_subdivision_algorithm(inp, n):
+    """Subdivide and smooth the data fields on mesh."""
+    sfilter = _vtk.vtkLinearSubdivisionFilter()
+    sfilter.SetNumberOfSubdivisions(n)
+    set_algorithm_input(sfilter, inp)
+    return sfilter
+
+
+def triangulate_algorithm(inp):
+    """Triangulate input."""
+    trifilter = _vtk.vtkTriangleFilter()
+    trifilter.PassVertsOff()
+    trifilter.PassLinesOff()
+    set_algorithm_input(trifilter, inp)
+    return trifilter

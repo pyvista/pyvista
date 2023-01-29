@@ -621,10 +621,11 @@ def test_plot_show_bounds_params(grid, location):
     plotter.show()
 
 
-def test_plot_silhouette_fail(hexbeam):
+def test_plot_silhouette_non_poly(hexbeam):
     plotter = pyvista.Plotter()
-    with pytest.raises(TypeError, match="Expected type is `PolyData`"):
-        plotter.add_mesh(hexbeam, silhouette=True)
+    plotter.add_mesh(hexbeam, show_scalar_bar=False)
+    plotter.add_silhouette(hexbeam, line_width=10)
+    plotter.show()
 
 
 def test_plot_no_silhouette(tri_cylinder):

@@ -39,7 +39,9 @@ from pyvista.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
     extract_surface_algorithm,
+    linear_subdivision_algorithm,
     pointset_to_polydata_algorithm,
+    triangulate_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
 
@@ -3901,7 +3903,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return actor
 
     def add_silhouette(
-        self, mesh, color=None, line_width=None, opacity=None, feature_angle=None, decimate=None
+        self,
+        mesh,
+        color=None,
+        line_width=None,
+        opacity=None,
+        feature_angle=None,
+        decimate=None,
+        subdivide=True,
     ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
@@ -3911,7 +3920,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.PolyData or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             Mesh or mesh-producing algorithm for generating silhouette
             to plot.
 
@@ -3930,6 +3939,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         decimate : float, optional
             Level of decimation between 0 and 1.
 
+        subdivide : bool or int, default: True
+            Subdivide the input mesh to have smoother silhouette lines.
+            Defaults to 1 if true but can also be an integer of the number
+            of subdivisions to perform.
+
         Returns
         -------
         vtk.vtkActor
@@ -3937,18 +3951,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> bunny = examples.download_bunny()
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(bunny, color='tan')
         >>> _ = plotter.add_silhouette(bunny,
-        ...     color='red', line_width=8.0})
+        ...     color='red', line_width=8.0)
         >>> plotter.view_xy()
         >>> plotter.show()
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
+        if not isinstance(mesh, pyvista.PolyData):
+            algo = extract_surface_algorithm(algo or mesh)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
+        if subdivide:
+            if subdivide is True:
+                subdivide = 1
+            algo = linear_subdivision_algorithm(triangulate_algorithm(algo or mesh), subdivide)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
         silhouette_params = self._theme.silhouette.to_dict()
         if algo is not None:
             silhouette_params["decimate"] = False
@@ -3965,8 +3989,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
-        if not isinstance(mesh, pyvista.PolyData):
-            raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
 
         if silhouette_params["decimate"]:
             if algo is not None:
