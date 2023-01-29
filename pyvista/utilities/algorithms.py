@@ -330,3 +330,11 @@ def triangulate_algorithm(inp):
     trifilter.PassLinesOff()
     set_algorithm_input(trifilter, inp)
     return trifilter
+
+
+def decimation_algorithm(inp, target_reduction):
+    """Decimate input to target reduction."""
+    alg = _vtk.vtkQuadricDecimation()
+    alg.SetTargetReduction(target_reduction)
+    set_algorithm_input(alg, inp)
+    return alg

@@ -38,6 +38,7 @@ from pyvista.utilities import (
 from pyvista.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
+    decimation_algorithm,
     extract_surface_algorithm,
     linear_subdivision_algorithm,
     pointset_to_polydata_algorithm,
@@ -3910,7 +3911,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=None,
         feature_angle=None,
         decimate=None,
-        subdivide=True,
+        subdivide=False,
     ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
@@ -3939,10 +3940,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         decimate : float, optional
             Level of decimation between 0 and 1.
 
-        subdivide : bool or int, default: True
+        subdivide : bool or int, default: False
             Subdivide the input mesh to have smoother silhouette lines.
             Defaults to 1 if true but can also be an integer of the number
-            of subdivisions to perform.
+            of subdivisions to perform. This is useful for lower resolution
+            meshes.
+
+            .. warning::
+                This can affect rendering performance for large meshes.
 
         Returns
         -------
@@ -3961,55 +3966,63 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.view_xy()
         >>> plotter.show()
 
+        Demonstration of subdivision helping coarse meshes:
+
+        >>> mesh = pv.Sphere()
+
+        >>> p = pv.Plotter(shape=(1, 2))
+        >>> p.background_color = 'silver'
+        >>> p.link_views()  # Critical to link views/cameras before adding silhouettes
+        >>> p.add_mesh(mesh, color='gold')
+        >>> p.add_silhouette(mesh, line_width=5)
+        >>> p.subplot(0, 1)
+        >>> p.add_mesh(mesh, color='gold')
+        >>> p.add_silhouette(mesh, line_width=5, subdivide=True)
+        >>> p.show()
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         if not isinstance(mesh, pyvista.PolyData):
             algo = extract_surface_algorithm(algo or mesh)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
+        # Always triangulate as subdivision and decimation filters both need it
+        algo = triangulate_algorithm(algo or mesh)
+        # At this point we are dealing with a pipeline, so no `algo or mesh`
+
         if subdivide:
             if subdivide is True:
                 subdivide = 1
-            algo = linear_subdivision_algorithm(triangulate_algorithm(algo or mesh), subdivide)
-            mesh, algo = algorithm_to_mesh_handler(algo)
+            algo = linear_subdivision_algorithm(algo, subdivide)
 
         silhouette_params = self._theme.silhouette.to_dict()
-        if algo is not None:
-            silhouette_params["decimate"] = False
-        if color is not None:
-            silhouette_params["color"] = color
-        if line_width is not None:
-            silhouette_params["line_width"] = line_width
-        if opacity is not None:
-            silhouette_params["opacity"] = opacity
-        if feature_angle is not None:
-            silhouette_params["feature_angle"] = feature_angle
-        if decimate is not None:
-            silhouette_params["decimate"] = decimate
+        if color is None:
+            color = silhouette_params["color"]
+        if line_width is None:
+            line_width = silhouette_params["line_width"]
+        if opacity is None:
+            opacity = silhouette_params["opacity"]
+        if feature_angle is None:
+            feature_angle = silhouette_params["feature_angle"]
+        if decimate is None:
+            decimate = silhouette_params["decimate"]
 
-        if not is_pyvista_dataset(mesh):
-            mesh = wrap(mesh)
-
-        if silhouette_params["decimate"]:
-            if algo is not None:
-                raise TypeError('Cannot decimate when an algorithm is passed at this time.')
-            silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
-        else:
-            silhouette_mesh = mesh
+        if decimate:
+            algo = decimation_algorithm(algo, decimate)
         alg = _vtk.vtkPolyDataSilhouette()
-        set_algorithm_input(alg, algo or silhouette_mesh)
+        set_algorithm_input(alg, algo)
         alg.SetCamera(self.renderer.camera)
-        if silhouette_params["feature_angle"] is not None:
+        if feature_angle is not None:
             alg.SetEnableFeatureAngle(True)
-            alg.SetFeatureAngle(silhouette_params["feature_angle"])
+            alg.SetFeatureAngle(feature_angle)
         else:
             alg.SetEnableFeatureAngle(False)
         mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(Color(silhouette_params["color"]).float_rgb)
-        prop.SetOpacity(silhouette_params["opacity"])
-        prop.SetLineWidth(silhouette_params["line_width"])
+        prop.SetColor(Color(color).float_rgb)
+        prop.SetOpacity(opacity)
+        prop.SetLineWidth(line_width)
 
         return actor
 

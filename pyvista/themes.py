@@ -309,7 +309,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
-        self._decimate = 0.9
+        self._decimate = None
 
     @property
     def color(self) -> Color:
