@@ -196,7 +196,7 @@ class BaseVTKReader(ABC):
 
     def GetProgress(self):
         """GetProgress."""
-        return 0.0
+        return 0.0 if self._data_object is None else 1.0
 
     def UpdateObservers(self, event_type):
         """Call matching observer."""
