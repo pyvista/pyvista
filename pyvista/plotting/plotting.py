@@ -1599,11 +1599,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @contextmanager
     def window_size_context(self, window_size=None):
         """Set the render window size in an isolated context."""
+        # No op if not set
+        if window_size is None:
+            yield
+            return
+        # If render window is not current
+        if self.render_window is None:
+            warnings.warn('Attempting to set window_size on an unavailable render widow.')
+            yield
+            return
         size_before = self.window_size
         if window_size is not None:
             self.window_size = window_size
         yield self
-        self.window_size = size_before
+        # Sometimes the render window is destroyed within the context
+        # and re-setting will fail
+        if self.render_window is not None:
+            self.window_size = size_before
 
     @property
     def image_depth(self):
