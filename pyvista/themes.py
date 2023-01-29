@@ -302,7 +302,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate']
+    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_subdivide']
 
     def __init__(self):
         self._color = Color('black')
@@ -310,6 +310,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._opacity = 1.0
         self._feature_angle = None
         self._decimate = None
+        self._subdivide = 0
 
     @property
     def color(self) -> Color:
@@ -394,6 +395,15 @@ class _SilhouetteConfig(_ThemeConfig):
     def decimate(self, decimate: float):
         _check_between_zero_and_one(decimate, 'decimate')
         self._decimate = float(decimate)
+
+    @property
+    def subdivide(self) -> int:
+        """Return or set whether to subdivide with silhouettes."""
+        return self._subdivide
+
+    @subdivide.setter
+    def subdivide(self, subdivide: int):
+        self._subdivide = int(subdivide)
 
     def __repr__(self):
         txt = ['']

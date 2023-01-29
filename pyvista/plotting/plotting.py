@@ -3986,15 +3986,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             algo = extract_surface_algorithm(algo or mesh)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
-        # Always triangulate as subdivision and decimation filters both need it
-        algo = triangulate_algorithm(algo or mesh)
-        # At this point we are dealing with a pipeline, so no `algo or mesh`
-
-        if subdivide:
-            if subdivide is True:
-                subdivide = 1
-            algo = linear_subdivision_algorithm(algo, subdivide)
-
         silhouette_params = self._theme.silhouette.to_dict()
         if color is None:
             color = silhouette_params["color"]
@@ -4006,6 +3997,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             feature_angle = silhouette_params["feature_angle"]
         if decimate is None:
             decimate = silhouette_params["decimate"]
+        if subdivide is None:
+            subdivide = silhouette_params["subdivide"]
+
+        # Always triangulate as subdivision and decimation filters both need it
+        algo = triangulate_algorithm(algo or mesh)
+        # At this point we are dealing with a pipeline, so no `algo or mesh`
+
+        if subdivide:
+            if subdivide is True:
+                subdivide = 1
+            algo = linear_subdivision_algorithm(algo, subdivide)
 
         if decimate:
             algo = decimation_algorithm(algo, decimate)
