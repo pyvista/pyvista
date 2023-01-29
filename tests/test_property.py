@@ -92,7 +92,7 @@ def test_property_roughness(prop):
 def test_property_interpolation(prop):
     value = 'Gouraud'
     prop.interpolation = value
-    assert prop.interpolation == value
+    assert prop.interpolation.value == value
 
     with pytest.raises(TypeError, match='`interpolation`'):
         prop.interpolation = 1

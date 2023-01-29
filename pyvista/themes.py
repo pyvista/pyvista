@@ -239,7 +239,7 @@ class _LightingConfig(_ThemeConfig):
     ]
 
     def __init__(self):
-        self._interpolation = InterpolationType.FLAT
+        self._interpolation = InterpolationType.FLAT.value
         self._metallic = 0.0
         self._roughness = 0.5
         self._ambient = 0.0
@@ -249,13 +249,16 @@ class _LightingConfig(_ThemeConfig):
         self._emissive = False
 
     @property
-    def interpolation(self) -> InterpolationType:
+    def interpolation(self) -> str:
         """Return or set the default interpolation type.
 
         Options are:
         * 'Phong'
         * 'Flat'
         * 'Physically based rendering'
+
+        This is stored as a string value of the ``InterpolationType``
+        so that the theme can be JSON-serializable.
 
         Examples
         --------
@@ -275,7 +278,7 @@ class _LightingConfig(_ThemeConfig):
             interpolation = InterpolationType(interpolation.capitalize())
         except:
             raise ValueError(f'Interpolation {interpolation} not supported.')
-        self._interpolation = interpolation
+        self._interpolation = interpolation.value
 
     @property
     def metallic(self) -> float:

@@ -252,7 +252,7 @@ def test_themes(theme):
 
 
 def test_invalid_theme():
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         pyvista.set_plot_theme('this is not a valid theme')
 
 
@@ -548,7 +548,7 @@ def test_user_theme():
         assert pl.background_color == theme.background
         sactor = pl.add_mesh(sphere)
         assert sactor.prop.color == theme.color
-        assert sactor.prop.interpolation == theme.lighting_params.interpolation
+        assert sactor.prop.interpolation.value == theme.lighting_params.interpolation
         assert sactor.prop.ambient == theme.lighting_params.ambient
         assert sactor.prop.diffuse == theme.lighting_params.diffuse
         assert sactor.prop.specular == theme.lighting_params.specular
