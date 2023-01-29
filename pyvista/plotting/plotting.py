@@ -2235,12 +2235,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
         above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
@@ -2808,12 +2808,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
         above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
