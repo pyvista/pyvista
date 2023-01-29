@@ -207,7 +207,7 @@ class Property(_vtk.vtkProperty):
         if style is not None:
             self.style = style
 
-        if InterpolationType(interpolation) == InterpolationType.PBR:
+        if self.interpolation == InterpolationType.PBR:
             if metallic is None:
                 metallic = self._theme.lighting_params.metallic
             self.metallic = metallic
