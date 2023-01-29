@@ -3050,7 +3050,7 @@ def test_plot_above_below_color(uniform):
     lut.scalar_range = clim
 
     pl = pyvista.Plotter()
-    pl.add_mesh(uniform, cmap=lut)
+    pl.add_mesh(uniform, cmap=lut, scalar_bar_args={'above_label': '', 'below_label': ''})
     pl.enable_depth_peeling()
     pl.show()
 
