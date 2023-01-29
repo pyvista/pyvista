@@ -56,11 +56,15 @@ def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
     imfilter = _vtk.vtkWindowToImageFilter()
     imfilter.SetInput(render_window)
     imfilter.SetScale(scale)
-    imfilter.SetInputBufferTypeToRGBA()
+    imfilter.FixBoundaryOn()
+    imfilter.ReadFrontBufferOff()
+    imfilter.ShouldRerenderOff()
+    if ignore_alpha:
+        imfilter.SetInputBufferTypeToRGB()
+    else:
+        imfilter.SetInputBufferTypeToRGBA()
     imfilter.ReadFrontBufferOn()
     data = run_image_filter(imfilter)
-    if ignore_alpha:
-        data = data[:, :, :-1]
     if as_vtk:
         return wrap_image_array(data)
     return data
