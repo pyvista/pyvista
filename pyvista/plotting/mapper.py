@@ -907,6 +907,15 @@ class _BaseVolumeMapper(_BaseMapper):
         self._scalar_range = (0.0, 256.0)
 
     @property
+    def interpolate_before_map(self):
+        """Interpolate before map is not supported with volume mappers."""
+        return None
+
+    @interpolate_before_map.setter
+    def interpolate_before_map(self, *args):
+        pass
+
+    @property
     def dataset(self):
         """Return or set the dataset assigned to this mapper."""
         # GetInputAsDataSet unavailable on volume mappers
