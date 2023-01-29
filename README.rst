@@ -121,15 +121,15 @@ Overview of Features
 --------------------
 
 * Extensive gallery of examples (see `Quick Examples`_)
-* Interactive plotting in Jupyter Notebooks using server-side rendering
-  with `ipyvtklink`_ or client-side rendering with ``panel`` or ``ipygany``.
+* Interactive plotting in Jupyter Notebooks with server-side and client-side
+  rendering with `trame`_.
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 * Import meshes from many common formats (use ``pyvista.read()``). Support for all formats handled by `meshio`_ is built-in!
 * Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
-.. _ipyvtklink: https://github.com/Kitware/ipyvtklink
+.. _trame: https://github.com/Kitware/trame
 .. _Widgets: https://docs.pyvista.org/api/plotting/index.html#widget-api
 .. _Filters: https://docs.pyvista.org/api/core/filters.html
 .. _Plotting: https://docs.pyvista.org/api/plotting/index.html

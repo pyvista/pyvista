@@ -51,7 +51,7 @@ def using_mesa():
     """Determine if using mesa."""
     pl = pyvista.Plotter(notebook=False, off_screen=True)
     pl.show(auto_close=False)
-    gpu_info = pl.ren_win.ReportCapabilities()
+    gpu_info = pl.render_window.ReportCapabilities()
     pl.close()
 
     regex = re.compile("OpenGL version string:(.+)\n")
@@ -3050,7 +3050,7 @@ def test_plot_above_below_color(uniform):
     lut.scalar_range = clim
 
     pl = pyvista.Plotter()
-    pl.add_mesh(uniform, cmap=lut)
+    pl.add_mesh(uniform, cmap=lut, scalar_bar_args={'above_label': '', 'below_label': ''})
     pl.enable_depth_peeling()
     pl.show()
 
@@ -3383,6 +3383,24 @@ def test_color_cycler():
         pl.set_color_cycler('foo')
     with pytest.raises(TypeError):
         pl.set_color_cycler(5)
+
+
+def test_plotter_render_callback():
+    n_ren = [0]
+
+    def callback(this_pl):
+        assert isinstance(this_pl, pyvista.Plotter)
+        n_ren[0] += 1
+
+    pl = pyvista.Plotter()
+    pl.add_on_render_callback(callback, render_event=True)
+    assert len(pl._on_render_callbacks) == 0
+    pl.add_on_render_callback(callback, render_event=False)
+    assert len(pl._on_render_callbacks) == 1
+    pl.show()
+    assert n_ren[0] == 1  # if two, render_event not respected
+    pl.clear_on_render_callbacks()
+    assert len(pl._on_render_callbacks) == 0
 
 
 @pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])

@@ -491,13 +491,13 @@ def test_anti_aliasing_ssaa(default_theme):
 def test_anti_aliasing_msaa(default_theme):
     if default_theme.anti_aliasing != 'msaa':
         pl = pyvista.Plotter(theme=default_theme)
-        assert pl.ren_win.GetMultiSamples() == 0
+        assert pl.render_window.GetMultiSamples() == 0
 
     default_theme.anti_aliasing = 'msaa'
     default_theme.multi_samples = 4
     assert default_theme.anti_aliasing == 'msaa'
     pl = pyvista.Plotter(theme=default_theme)
-    assert pl.ren_win.GetMultiSamples() == default_theme.multi_samples
+    assert pl.render_window.GetMultiSamples() == default_theme.multi_samples
 
 
 def test_antialiasing_deprecation(default_theme):

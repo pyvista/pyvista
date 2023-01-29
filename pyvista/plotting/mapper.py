@@ -535,12 +535,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         above_color : color_like, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
         below_color : color_like, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
         cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
@@ -716,10 +716,10 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
-                scalar_bar_args.setdefault('above_label', 'Above')
+                scalar_bar_args.setdefault('above_label', 'above')
             if below_color:
                 self.lookup_table.below_range_color = below_color
-                scalar_bar_args.setdefault('below_label', 'Below')
+                scalar_bar_args.setdefault('below_label', 'below')
             if isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
             self.lookup_table.log_scale = log_scale
