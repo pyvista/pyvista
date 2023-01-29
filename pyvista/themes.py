@@ -444,14 +444,15 @@ class _SilhouetteConfig(_ThemeConfig):
     --------
     Set global silhouette parameters.
 
-    >>> import pyvista
-    >>> pyvista.global_theme.silhouette.color = 'grey'
-    >>> pyvista.global_theme.silhouette.line_width = 2
-    >>> pyvista.global_theme.silhouette.feature_angle = 20
+    >>> import pyvista as pv
+    >>> pv.global_theme.silhouette.enabled = True
+    >>> pv.global_theme.silhouette.color = 'grey'
+    >>> pv.global_theme.silhouette.line_width = 2
+    >>> pv.global_theme.silhouette.feature_angle = 20
 
     """
 
-    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate']
+    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
 
     def __init__(self):
         self._color = Color('black')
@@ -459,6 +460,16 @@ class _SilhouetteConfig(_ThemeConfig):
         self._opacity = 1.0
         self._feature_angle = None
         self._decimate = 0.9
+        self._enabled = False
+
+    @property
+    def enabled(self) -> bool:
+        """Return or set whether silhouette is on or off."""
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, enabled: bool):
+        self._enabled = bool(enabled)
 
     @property
     def color(self) -> Color:

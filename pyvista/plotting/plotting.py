@@ -2594,7 +2594,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling=None,
         rgb=None,
         categories=False,
-        silhouette=False,
+        silhouette=None,
         use_transparency=False,
         below_color=None,
         above_color=None,
@@ -3133,6 +3133,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
 
+        if silhouette is None:
+            silhouette = self._theme.silhouette.enabled
         if silhouette:
             if isinstance(silhouette, dict):
                 self.add_silhouette(algo or mesh, silhouette)
