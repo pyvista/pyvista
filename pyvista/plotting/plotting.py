@@ -3930,13 +3930,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Silhouette line width.
 
         opacity : float, optional
-            Line transparency between 0 and 1.
+            Line transparency between ``0`` and ``1``.
 
         feature_angle : float, optional
             If set, display sharp edges exceeding that angle in degrees.
 
         decimate : float, optional
-            Level of decimation between 0 and 1.
+            Level of decimation between ``0`` and ``1``. Decimating will
+            improve rendering performance. A good rule of thumb is to
+            try ``0.9``  first and decrease until the desired rendering
+            performance is achieved.
 
         Returns
         -------
