@@ -195,7 +195,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
-    image_scale : int, default: 1
+    image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
 
@@ -217,7 +217,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         col_weights=None,
         lighting='light kit',
         theme=None,
-        image_scale=1,
+        image_scale=None,
         **kwargs,
     ):
         """Initialize base plotter."""
@@ -6084,7 +6084,7 @@ class Plotter(BasePlotter):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
-    image_scale : int, default: 1
+    image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
 
@@ -6124,7 +6124,7 @@ class Plotter(BasePlotter):
         title=None,
         lighting='light kit',
         theme=None,
-        image_scale=1,
+        image_scale=None,
     ):
         """Initialize a vtk plotting object."""
         super().__init__(

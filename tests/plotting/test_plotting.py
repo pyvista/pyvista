@@ -1086,10 +1086,13 @@ def test_screenshot_scaled():
     assert img.shape == (h * 5, w * 5, 4)
     assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
 
+    with pytest.raises(ValueError):
+        plotter.image_scale = 0.5
+
     plotter.close()
 
 
-def test_screensot_altered_window_size(sphere):
+def test_screenshot_altered_window_size(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
 
