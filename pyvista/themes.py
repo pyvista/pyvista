@@ -392,8 +392,11 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @decimate.setter
     def decimate(self, decimate: float):
-        _check_between_zero_and_one(decimate, 'decimate')
-        self._decimate = float(decimate)
+        if decimate is None:
+            self._decimate = None
+        else:
+            _check_between_zero_and_one(decimate, 'decimate')
+            self._decimate = float(decimate)
 
     def __repr__(self):
         txt = ['']
