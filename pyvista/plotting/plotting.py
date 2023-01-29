@@ -1652,7 +1652,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         window so save a higher resolution image than what is rendered
         on screen.
 
-        Image sizes will be the :pyattr:`window_size <pyvista.BasePlotter.window_size`
+        Image sizes will be the :py:attr:`window_size <pyvista.BasePlotter.window_size`
         multiplied by this scale factor.
 
         """
