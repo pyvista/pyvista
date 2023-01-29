@@ -1060,6 +1060,33 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+def test_screenshot_scaled():
+    # FYI: no regression tests because show() is not called
+    factor = 2
+    plotter = pyvista.Plotter(image_scale=factor)
+    width, height = plotter.window_size
+    plotter.add_mesh(pyvista.Sphere())
+    img = plotter.screenshot(transparent_background=False)
+    assert np.any(img)
+    assert img.shape == (width * factor, height * factor, 3)
+    img_again = plotter.screenshot(scale=3)
+    assert np.any(img_again)
+    assert img_again.shape == (width * 3, height * 3, 3)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+    img = plotter.image
+    assert img.shape == (width * factor, height * factor, 3)
+
+    w, h = 20, 10
+    factor = 4
+    plotter.image_scale = factor
+    img = plotter.screenshot(transparent_background=False, window_size=(w, h))
+    assert img.shape == (h * factor, w * factor, 3)
+
+    img = plotter.screenshot(transparent_background=True, window_size=(w, h), scale=5)
+    assert img.shape == (h * 5, w * 5, 4)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+
+
 def test_screenshot_bytes():
     # Test screenshot to bytes object
     buffer = io.BytesIO()

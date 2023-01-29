@@ -38,12 +38,27 @@ def wrap_image_array(arr):
     return wrap_img
 
 
-def image_from_window(render_window, as_vtk=False, ignore_alpha=False):
+def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
+    """Run a ``vtkWindowToImageFilter`` and get output as array."""
+    # Update filter and grab pixels
+    imfilter.Modified()
+    imfilter.Update()
+    image = pyvista.wrap(imfilter.GetOutput())
+    img_size = image.dimensions
+    img_array = pyvista.utilities.point_array(image, 'ImageScalars')
+    # Reshape and write
+    tgt_size = (img_size[1], img_size[0], -1)
+    return img_array.reshape(tgt_size)[::-1]
+
+
+def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
     """Extract the image from the render window as an array."""
-    width, height = render_window.GetSize()
-    arr = _vtk.vtkUnsignedCharArray()
-    render_window.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
-    data = _vtk.vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
+    imfilter = _vtk.vtkWindowToImageFilter()
+    imfilter.SetInput(render_window)
+    imfilter.SetScale(scale)
+    imfilter.SetInputBufferTypeToRGBA()
+    imfilter.ReadFrontBufferOn()
+    data = run_image_filter(imfilter)
     if ignore_alpha:
         data = data[:, :, :-1]
     if as_vtk:
