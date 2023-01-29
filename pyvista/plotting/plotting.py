@@ -3128,7 +3128,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if silhouette:
             if isinstance(silhouette, dict):
-                self.add_silhouette(algo or mesh, silhouette)
+                self.add_silhouette(algo or mesh, **silhouette)
             else:
                 self.add_silhouette(algo or mesh)
 
@@ -3900,7 +3900,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
         return actor
 
-    def add_silhouette(self, mesh, params=None):
+    def add_silhouette(
+        self, mesh, color=None, line_width=None, opacity=None, feature_angle=None, decimate=None
+    ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
         A silhouette can also be generated directly in
@@ -3913,15 +3915,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Mesh or mesh-producing algorithm for generating silhouette
             to plot.
 
-        params : dict, optional
+        color : ColorLike, optional
+            Color of the silhouette lines.
 
-            * If not supplied, the default theme values will be used.
-            * ``color``: ``ColorLike``, color of the silhouette
-            * ``line_width``: ``float``, edge width
-            * ``opacity``: ``float`` between 0 and 1, edge transparency
-            * ``feature_angle``: If a ``float``, display sharp edges
-              exceeding that angle in degrees.
-            * ``decimate``: ``float`` between 0 and 1, level of decimation
+        line_width : float, optional
+            Silhouette line width.
+
+        opacity : float, optional
+            Line transparency between 0 and 1.
+
+        feature_angle : float, optional
+            If set, display sharp edges exceeding that angle in degrees.
+
+        decimate : float, optional
+            Level of decimation between 0 and 1.
 
         Returns
         -------
@@ -3936,7 +3943,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(bunny, color='tan')
         >>> _ = plotter.add_silhouette(bunny,
-        ...     params={'color': 'red', 'line_width': 8.0})
+        ...     color='red', line_width=8.0})
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -3945,8 +3952,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         silhouette_params = self._theme.silhouette.to_dict()
         if algo is not None:
             silhouette_params["decimate"] = False
-        if params:
-            silhouette_params.update(params)
+        if color is not None:
+            silhouette_params["color"] = color
+        if line_width is not None:
+            silhouette_params["line_width"] = line_width
+        if opacity is not None:
+            silhouette_params["opacity"] = opacity
+        if feature_angle is not None:
+            silhouette_params["feature_angle"] = feature_angle
+        if decimate is not None:
+            silhouette_params["decimate"] = decimate
 
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
