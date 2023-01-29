@@ -40,7 +40,6 @@ from pyvista.utilities.algorithms import (
     algorithm_to_mesh_handler,
     decimation_algorithm,
     extract_surface_algorithm,
-    linear_subdivision_algorithm,
     pointset_to_polydata_algorithm,
     triangulate_algorithm,
 )
@@ -3911,7 +3910,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=None,
         feature_angle=None,
         decimate=None,
-        subdivide=False,
     ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
@@ -3940,15 +3938,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         decimate : float, optional
             Level of decimation between 0 and 1.
 
-        subdivide : bool or int, default: False
-            Subdivide the input mesh to have smoother silhouette lines.
-            Defaults to 1 if true but can also be an integer of the number
-            of subdivisions to perform. This is useful for lower resolution
-            meshes.
-
-            .. warning::
-                This can affect rendering performance for large meshes.
-
         Returns
         -------
         vtk.vtkActor
@@ -3965,20 +3954,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     color='red', line_width=8.0)
         >>> plotter.view_xy()
         >>> plotter.show()
-
-        Demonstration of subdivision helping coarse meshes:
-
-        >>> mesh = pv.Sphere()
-
-        >>> p = pv.Plotter(shape=(1, 2))
-        >>> p.background_color = 'silver'
-        >>> p.link_views()  # Critical to link views/cameras before adding silhouettes
-        >>> p.add_mesh(mesh, color='gold')
-        >>> p.add_silhouette(mesh, line_width=5)
-        >>> p.subplot(0, 1)
-        >>> p.add_mesh(mesh, color='gold')
-        >>> p.add_silhouette(mesh, line_width=5, subdivide=True)
-        >>> p.show()
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
@@ -3997,22 +3972,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             feature_angle = silhouette_params["feature_angle"]
         if decimate is None:
             decimate = silhouette_params["decimate"]
-        if subdivide is None:
-            subdivide = silhouette_params["subdivide"]
 
-        # Always triangulate as subdivision and decimation filters both need it
-        algo = triangulate_algorithm(algo or mesh)
         # At this point we are dealing with a pipeline, so no `algo or mesh`
-
-        if subdivide:
-            if subdivide is True:
-                subdivide = 1
-            algo = linear_subdivision_algorithm(algo, subdivide)
-
         if decimate:
+            # Always triangulate as decimation filters needs it
+            # and source mesh could have been any type
+            algo = triangulate_algorithm(algo or mesh)
             algo = decimation_algorithm(algo, decimate)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
         alg = _vtk.vtkPolyDataSilhouette()
-        set_algorithm_input(alg, algo)
+        set_algorithm_input(alg, algo or mesh)
         alg.SetCamera(self.renderer.camera)
         if feature_angle is not None:
             alg.SetEnableFeatureAngle(True)
