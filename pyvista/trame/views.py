@@ -3,9 +3,15 @@ import weakref
 
 from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
 
-import pyvista
-
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
+
+
+def _get_still_ratio(plotter, still_ratio):
+    if still_ratio is None:
+        still_ratio = plotter._theme.trame.still_ratio
+        if still_ratio is None:
+            still_ratio = plotter.image_scale
+    return still_ratio
 
 
 class _BasePyVistaView:
@@ -61,9 +67,8 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         if namespace is None:
             namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
-            interactive_ratio = pyvista.global_theme.trame.interactive_ratio
-        if still_ratio is None:
-            still_ratio = pyvista.global_theme.trame.still_ratio
+            interactive_ratio = plotter._theme.trame.interactive_ratio
+        still_ratio = _get_still_ratio(plotter, still_ratio)
         VtkRemoteView.__init__(
             self,
             self._plotter().render_window,
@@ -156,9 +161,8 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         if namespace is None:
             namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
-            interactive_ratio = pyvista.global_theme.trame.interactive_ratio
-        if still_ratio is None:
-            still_ratio = pyvista.global_theme.trame.still_ratio
+            interactive_ratio = plotter._theme.trame.interactive_ratio
+        still_ratio = _get_still_ratio(plotter, still_ratio)
         VtkRemoteLocalView.__init__(
             self,
             self._plotter().render_window,

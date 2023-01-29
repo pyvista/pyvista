@@ -1106,7 +1106,7 @@ class _TrameConfig(_ThemeConfig):
 
     def __init__(self):
         self._interactive_ratio = 1
-        self._still_ratio = 1
+        self._still_ratio = None
         self._jupyter_server_name = 'pyvista-jupyter'
         self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
         # default for ``jupyter-server-proxy``
@@ -1132,6 +1132,13 @@ class _TrameConfig(_ThemeConfig):
     @property
     def still_ratio(self) -> Number:
         """Return or set the still ratio for PyVista Trame views.
+
+        This defaults to ``None`` and will use the value of the
+        :py:attr:`image_scale <pyvista.BasePlotter.image_scale`
+        property of the plotter in use if unset.
+
+        In a scenario where this is set to a non-None value, this
+        value will always win over the ``image_scale`` property.
 
         Examples
         --------
