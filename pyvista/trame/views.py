@@ -10,7 +10,12 @@ def _get_still_ratio(plotter, still_ratio):
     if still_ratio is None:
         still_ratio = plotter._theme.trame.still_ratio
         if still_ratio is None:
+            # Not set on theme, plotter's scale factor
             still_ratio = plotter.image_scale
+        else:
+            # Set on theme, set plotter to match so that the
+            # screenshot button matches what is displayed
+            plotter.image_scale = still_ratio
     return still_ratio
 
 
