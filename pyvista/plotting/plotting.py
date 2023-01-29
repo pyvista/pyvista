@@ -1594,6 +1594,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def window_size(self, window_size):
         """Set the render window size."""
         self.render_window.SetSize(window_size[0], window_size[1])
+        self.render()
+
+    @contextmanager
+    def window_size_context(self, window_size=None):
+        """Set the render window size in an isolated context."""
+        size_before = self.window_size
+        if window_size is not None:
+            self.window_size = window_size
+        yield self
+        self.window_size = size_before
 
     @property
     def image_depth(self):
@@ -5369,42 +5379,40 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
 
         """
-        if window_size is not None:
-            self.window_size = window_size
+        with self.window_size_context(window_size):
+            # configure image filter
+            if transparent_background is None:
+                transparent_background = self._theme.transparent_background
+            self.image_transparent_background = transparent_background
 
-        # configure image filter
-        if transparent_background is None:
-            transparent_background = self._theme.transparent_background
-        self.image_transparent_background = transparent_background
+            # This if statement allows you to save screenshots of closed plotters
+            # This is needed for the sphinx-gallery to work
+            if self.render_window is None:
+                # If plotter has been closed...
+                # check if last_image exists
+                if self.last_image is not None:
+                    # Save last image
+                    if scale is not None:
+                        warnings.warn(
+                            'This plotter is closed and cannot be scaled. Using the last saved image. Try using the `image_scale` property directly.'
+                        )
+                    return self._save_image(self.last_image, filename, return_img)
+                # Plotter hasn't been rendered or was improperly closed
+                raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
-        # This if statement allows you to save screenshots of closed plotters
-        # This is needed for the sphinx-gallery to work
-        if self.render_window is None:
-            # If plotter has been closed...
-            # check if last_image exists
-            if self.last_image is not None:
-                # Save last image
-                if scale is not None:
-                    warnings.warn(
-                        'This plotter is closed and cannot be scaled. Using the last saved image. Try using the `image_scale` property directly.'
-                    )
-                return self._save_image(self.last_image, filename, return_img)
-            # Plotter hasn't been rendered or was improperly closed
-            raise RuntimeError('This plotter is closed and unable to save a screenshot.')
+            if self._first_time and not self.off_screen:
+                raise RuntimeError(
+                    "Nothing to screenshot - call .show first or use the off_screen argument"
+                )
 
-        if self._first_time and not self.off_screen:
-            raise RuntimeError(
-                "Nothing to screenshot - call .show first or use the off_screen argument"
-            )
+            # if off screen, show has not been called and we must render
+            # before extracting an image
+            if self._first_time:
+                self._on_first_render_request()
+                self.render()
 
-        # if off screen, show has not been called and we must render
-        # before extracting an image
-        if self._first_time:
-            self._on_first_render_request()
-            self.render()
-
-        with self.image_scale_context(scale):
-            return self._save_image(self.image, filename, return_img)
+            with self.image_scale_context(scale):
+                return self._save_image(self.image, filename, return_img)
 
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs):
