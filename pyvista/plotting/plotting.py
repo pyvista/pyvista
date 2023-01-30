@@ -1712,7 +1712,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @contextmanager
     def image_scale_context(self, scale: Optional[int] = None):
-        """Set the image scale in an isolated context."""
+        """Set the image scale in an isolated context.
+
+        Parameters
+        ----------
+        scale : int, optional
+            Integer scale factor.  Defaults to :attr:`pyvista.Plotter.image_scale`.
+
+        """
         scale_before = self.image_scale
         if scale is not None:
             self.image_scale = scale
