@@ -1601,12 +1601,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Set the render window size in an isolated context."""
         # No op if not set
         if window_size is None:
-            yield
+            yield self
             return
         # If render window is not current
         if self.render_window is None:
             warnings.warn('Attempting to set window_size on an unavailable render widow.')
-            yield
+            yield self
             return
         size_before = self.window_size
         if window_size is not None:
