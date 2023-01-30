@@ -3435,16 +3435,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             The corner offset value.
 
         bottom_border_offset : int, default: 30
-            Bottom border offset. Recommended value ``50``
+            Bottom border offset. Recommended value ``50``.
 
         top_border_offset : int, default: 30
-            Top border offset. Recommended value ``50``
+            Top border offset. Recommended value ``50``.
 
         left_border_offset : int, default: 30
-            Left border offset. Recommended value ``100``
+            Left border offset. Recommended value ``100``.
 
         right_border_offset : int, default: 30
-            Right border offset. Recommended value ``100``
+            Right border offset. Recommended value ``100``.
 
         bottom_axis_visibility : bool, default: True
             Whether the bottom axis is visible.
@@ -3501,6 +3501,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         tick_label_offset : int, default: 2
             Offset between tick and label in pixels.
+
+        Returns
+        -------
+        vtk.vtkActor
+            The actor for the added ``vtkLegendScaleActor``
 
         Warnings
         --------
