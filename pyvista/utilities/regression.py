@@ -53,6 +53,9 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
 
 def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
     """Extract the image from the render window as an array."""
+    off = not render_window.GetInteractor().GetEnableRender()
+    if off:
+        render_window.GetInteractor().EnableRenderOn()
     imfilter = _vtk.vtkWindowToImageFilter()
     imfilter.SetInput(render_window)
     imfilter.SetScale(scale)
@@ -65,6 +68,9 @@ def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
         imfilter.SetInputBufferTypeToRGBA()
     imfilter.ReadFrontBufferOn()
     data = run_image_filter(imfilter)
+    if off:
+        # Critical for Trame and other offscreen tools
+        render_window.GetInteractor().EnableRenderOff()
     if as_vtk:
         return wrap_image_array(data)
     return data
