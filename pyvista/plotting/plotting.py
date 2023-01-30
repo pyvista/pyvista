@@ -1598,7 +1598,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @contextmanager
     def window_size_context(self, window_size=None):
-        """Set the render window size in an isolated context."""
+        """Set the render window size in an isolated context.
+
+        Parameters
+        ----------
+        window_size : Sequence, optional
+            Window size in pixels.  Defaults to :attr:`pyvista.Plotter.window_size`.
+
+        Examples
+        --------
+        Take two different screenshots with two different window sizes.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(off_screen=True)
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> with pl.window_size_context((400, 400)):
+        ...     pl.screenshot('/tmp/small_screenshot.png')  # doctest:+SKIP
+        >>> with pl.window_size_context((1000, 1000)):
+        ...     pl.screenshot('/tmp/big_screenshot.png')  # doctest:+SKIP
+
+        """
         # No op if not set
         if window_size is None:
             yield self
