@@ -39,6 +39,7 @@ from pyvista.utilities import (
 from pyvista.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
+    extract_surface_algorithm,
     pointset_to_polydata_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
@@ -242,7 +243,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
-        self._store_image = False
         self.mesh = None
         if title is None:
             title = self._theme.title
@@ -527,7 +527,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from ..jupyter.notebook import handle_plotter
 
-        pane = handle_plotter(self, backend='panel', return_viewer=True, title=self.title)
+        pane = handle_plotter(self, backend='panel', title=self.title)
         pane.save(filename)
 
     def to_pythreejs(self):
@@ -842,29 +842,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def store_image(self):
         """Store last rendered frame on close.
 
-        This is normally disabled to avoid caching the image, and is
-        enabled by default by setting:
-
-        ``pyvista.BUILDING_GALLERY = True``
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter(off_screen=True)
-        >>> pl.store_image = True
-        >>> _ = pl.add_mesh(pyvista.Cube())
-        >>> pl.show()
-        >>> image = pl.last_image
-        >>> type(image)  # doctest:+SKIP
-        <class 'numpy.ndarray'>
+        .. deprecated:: 0.38.0
+           ``store_image`` is no longer used. Images are automatically cached
+           as needed.
 
         """
-        return self._store_image
+        from pyvista.core.errors import DeprecationError
+
+        raise DeprecationError(
+            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
+            ' Images are automatically cached as needed.'
+        )
 
     @store_image.setter
     def store_image(self, value):
-        """Store last rendered frame on close."""
-        self._store_image = bool(value)
+        from pyvista.core.errors import DeprecationError
+
+        raise DeprecationError(
+            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
+            ' Images are automatically cached as needed.'
+        )
 
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
@@ -1657,21 +1654,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
-        if self.render_window is None:
-            raise AttributeError(
-                '\n\nTo retrieve an image after the render window '
-                'has been closed, set:\n\n'
-                ' ``plotter.store_image = True``\n\n'
-                'before closing the plotter.'
-            )
+        if self.render_window is None or not self.render_window.IsCurrent():
+            raise AttributeError('Render window is not available.')
 
     @property
     def image(self):
-        """Return an image array of current render window.
-
-        To retrieve an image after the render window has been closed,
-        set: ``plotter.store_image = True`` before closing the plotter.
-        """
+        """Return an image array of current render window."""
         if self.render_window is None and self.last_image is not None:
             return self.last_image
 
@@ -3433,13 +3421,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add this immediately prior to adding the actor to ensure vertices
         # are rendered
         if show_vertices and style not in ['points', 'points_gaussian']:
-            if not isinstance(mesh, pyvista.PolyData):
-                surf = mesh.extract_surface()
-            else:
-                surf = mesh
-
             self.add_mesh(
-                surf,
+                extract_surface_algorithm(algo or mesh),
                 style=vertex_style,
                 point_size=point_size,
                 color=vertex_color,
@@ -4389,9 +4372,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.remove_all_lights()
 
         # Grab screenshots of last render
-        if self._store_image:
-            self.last_image = self.screenshot(None, return_img=True)
-            self.last_image_depth = self.get_image_depth()
+        # self.last_image = self.screenshot(None, return_img=True)
+        # self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
         self.scalar_bars.clear()
@@ -4745,7 +4727,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
-        >>> plotter.store_image = True
         >>> plotter.show()
         >>> zval = plotter.get_image_depth()
 
@@ -6363,9 +6344,11 @@ class Plotter(BasePlotter):
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
 
-        return_viewer : bool, optional
-            Return the jupyterlab viewer, scene, or display object
-            when plotting with jupyter notebook.
+        return_viewer : bool, default: False
+            Return the jupyterlab viewer, scene, or display object when
+            plotting with Jupyter notebook. When ``False`` and within a Jupyter
+            environment, the scene will be immediately shown within the
+            notebook. Set this to ``True`` to return the scene instead.
 
         return_cpos : bool, optional
             Return the last camera position from the render window
@@ -6389,14 +6372,12 @@ class Plotter(BasePlotter):
         cpos : list
             List of camera position, focal point, and view up.
             Returned only when ``return_cpos=True`` or set in the
-            default global or plot theme.  Not returned when in a
-            jupyter notebook and ``return_viewer=True``.
+            default global or plot theme.
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
-            or ``screenshot=True`` is set. Not returned when in a
-            jupyter notebook with ``return_viewer=True``. Optionally
-            contains alpha values. Sized:
+            or ``screenshot=True`` is set. Optionally contains alpha
+            values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
@@ -6496,23 +6477,15 @@ class Plotter(BasePlotter):
                 'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
             )
 
+        jupyter_disp = None
         if self.notebook:
             from ..jupyter.notebook import handle_plotter
 
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
-            if jupyter_backend != 'none':
-                if screenshot:
-                    warnings.warn(
-                        '\nSet `jupyter_backend` backend to `"none"` to take a screenshot'
-                        ' within a notebook environment.'
-                    )
-
-                disp = handle_plotter(
-                    self, backend=jupyter_backend, return_viewer=return_viewer, **jupyter_kwargs
-                )
-                return disp
+            if jupyter_backend.lower() != 'none':
+                jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
         self.render()
 
@@ -6528,9 +6501,8 @@ class Plotter(BasePlotter):
             self.title = title
 
         # Keep track of image for sphinx-gallery
-        if pyvista.BUILDING_GALLERY or screenshot:
+        if pyvista.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
-
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
@@ -6572,7 +6544,14 @@ class Plotter(BasePlotter):
                     "you have destroyed the render window and we have to "
                     "close it out."
                 )
-                auto_close = True
+            self.close()
+            if screenshot:
+                warnings.warn(
+                    "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
+                )
+        else:
+            self.last_image = self.screenshot(screenshot, return_img=True)
+            self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user pressed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
@@ -6581,18 +6560,31 @@ class Plotter(BasePlotter):
         #       remainder of this function.
 
         # Close the render window if requested
-        if auto_close:
+        if jupyter_disp is None and auto_close:
+            # Plotters are never auto-closed in Jupyter
             self.close()
 
-        # If user asked for screenshot, return as numpy array after camera
-        # position
-        if return_img or screenshot is True:
-            if return_cpos:
-                return self.camera_position, self.last_image
-            return self.last_image
+        if jupyter_disp is not None and not return_viewer:
+            # Default behaviour is to display the Jupyter viewer
+            try:
+                from IPython import display
+            except ImportError:  # pragma: no cover
+                raise ImportError('Install IPython to display an image in a notebook')
+            display.display(jupyter_disp)
 
-        if return_cpos:
-            return self.camera_position
+        # Three possible return values: (cpos, image, widget)
+        return_values = tuple(
+            val
+            for val in (
+                self.camera_position if return_cpos else None,
+                self.last_image if return_img or screenshot is True else None,
+                jupyter_disp if return_viewer else None,
+            )
+            if val is not None
+        )
+        if len(return_values) == 1:
+            return return_values[0]
+        return return_values or None
 
     def add_title(self, title, font_size=18, color=None, font=None, shadow=False):
         """Add text to the top center of the plot.
