@@ -1678,13 +1678,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
-        Double the resolution of a screenshot
+        Double the resolution of a screenshot.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.add_sphere(pv.Sphere())
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.image_scale = 2
-        >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
+        >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
+
+        Set the image scale from ``Plotter``.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(image_scale=2)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
 
         """
         return self._image_scale
