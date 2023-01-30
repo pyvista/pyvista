@@ -827,6 +827,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.renderers.active_renderer
 
+    @property
+    def store_image(self):
+        """Store last rendered frame on close.
+
+        .. deprecated:: 0.38.0
+           ``store_image`` is no longer used. Images are automatically cached
+           as needed.
+
+        """
+        from pyvista.core.errors import DeprecationError
+
+        raise DeprecationError(
+            '`store_image` has been depreciated as of 0.38.0 and is no longer used.'
+            ' Images are automatically cached as needed.'
+        )
+
+    @store_image.setter
+    def store_image(self, value):
+        from pyvista.core.errors import DeprecationError
+
+        raise DeprecationError(
+            '`store_image` has been depreciated as of 0.38.0 and is no longer used.'
+            ' Images are automatically cached as needed.'
+        )
+
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
 
@@ -6218,9 +6243,11 @@ class Plotter(BasePlotter):
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
 
-        return_viewer : bool, optional
-            Return the jupyterlab viewer, scene, or display object
-            when plotting with jupyter notebook.
+        return_viewer : bool, default: False
+            Return the jupyterlab viewer, scene, or display object when
+            plotting with Jupiter notebook. When ``False`` and within a Jupiter
+            environment, the scene will be immediately shown within the
+            notebook. Set this to ``True`` to return the scene instead.
 
         return_cpos : bool, optional
             Return the last camera position from the render window
