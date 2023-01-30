@@ -7,6 +7,7 @@ from pyvista import examples
 has_ipygany = True
 try:
     from ipygany.ipygany import Scene
+    from ipywidgets import AppLayout
 
     from pyvista.jupyter.pv_ipygany import check_colormap
 except:  # noqa: E722
@@ -37,7 +38,7 @@ def test_ipygany_from_plotter(dataset):
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(dataset)
     viewer = pl.show(jupyter_backend='ipygany', return_viewer=True)
-    assert isinstance(viewer, Scene)
+    assert isinstance(viewer, (AppLayout, Scene))
 
 
 @skip_no_ipygany

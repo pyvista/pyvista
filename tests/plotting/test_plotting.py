@@ -1533,8 +1533,6 @@ def test_image_properties():
     p.close()
     p = pyvista.Plotter()
     p.add_mesh(mesh)
-    p.store_image = True
-    assert p.store_image is True
     p.show()  # close plotter
     # Get RGB image
     _ = p.image
@@ -2174,13 +2172,7 @@ def test_plot_lighting_change_positional_false_true(sphere):
 
 def test_plotter_image():
     plotter = pyvista.Plotter()
-    plotter.show()
-    with pytest.raises(AttributeError, match='To retrieve an image after'):
-        plotter.image
-
-    plotter = pyvista.Plotter()
     wsz = tuple(plotter.window_size)
-    plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
 
@@ -2471,11 +2463,16 @@ def test_plot_complex_value(plane, verify_image_cache):
     pl.show()
 
 
-def test_warn_screenshot_notebook():
+def test_screenshot_notebook(tmpdir):
+    tmp_dir = tmpdir.mkdir("tmpdir2")
+    filename = str(tmp_dir.join('tmp.png'))
+
     pl = pyvista.Plotter(notebook=True)
     pl.theme.jupyter_backend = 'static'
-    with pytest.warns(UserWarning, match='Set `jupyter_backend` backend to `"none"`'):
-        pl.show(screenshot='tmp.png')
+    pl.add_mesh(pyvista.Cone())
+    pl.show(screenshot=filename)
+
+    assert os.path.isfile(filename)
 
 
 def test_culling_frontface(sphere):

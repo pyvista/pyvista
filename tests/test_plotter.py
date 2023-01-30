@@ -8,14 +8,22 @@ import numpy as np
 import pytest
 
 import pyvista
+from pyvista.core.errors import DeprecationError
 from pyvista.errors import MissingDataError
 from pyvista.plotting import _plotting
 
 
-def test_plotter_image():
+def test_plotter_image_before_show():
     plotter = pyvista.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
         plotter.image
+
+
+def test_screenshot_fail_suppressed_rendering():
+    plotter = pyvista.Plotter()
+    plotter.suppress_rendering = True
+    with pytest.warns(UserWarning, match='screenshot is unable to be taken'):
+        plotter.show(screenshot='tmp.png')
 
 
 def test_plotter_line_point_smoothing():
@@ -326,6 +334,16 @@ def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista
 
     with pytest.raises(TypeError, match='not supported for volume rendering'):
         pl.add_volume(sphere)
+
+
+def test_deprecated_store_image():
+    """Test to make sure store_image is deprecated."""
+    pl = pyvista.Plotter()
+    with pytest.raises(DeprecationError):
+        assert isinstance(pl.store_image, bool)
+
+    with pytest.raises(DeprecationError):
+        pl.store_image = True
 
 
 def test_plotter_add_volume_clim(uniform: pyvista.UniformGrid):
