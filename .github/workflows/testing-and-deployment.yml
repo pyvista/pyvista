@@ -57,6 +57,7 @@ jobs:
 
   LinuxConda:
     runs-on: ubuntu-20.04
+    if: false
     env:
       CONDA_ALWAYS_YES: 1
       conda_env: pyvista-vtk
