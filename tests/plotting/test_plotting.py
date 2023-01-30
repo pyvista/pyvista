@@ -1060,6 +1060,59 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+def test_screenshot_scaled():
+    # FYI: no regression tests because show() is not called
+    factor = 2
+    plotter = pyvista.Plotter(image_scale=factor)
+    width, height = plotter.window_size
+    plotter.add_mesh(pyvista.Sphere())
+    img = plotter.screenshot(transparent_background=False)
+    assert np.any(img)
+    assert img.shape == (width * factor, height * factor, 3)
+    img_again = plotter.screenshot(scale=3)
+    assert np.any(img_again)
+    assert img_again.shape == (width * 3, height * 3, 3)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+    img = plotter.image
+    assert img.shape == (width * factor, height * factor, 3)
+
+    w, h = 20, 10
+    factor = 4
+    plotter.image_scale = factor
+    img = plotter.screenshot(transparent_background=False, window_size=(w, h))
+    assert img.shape == (h * factor, w * factor, 3)
+
+    img = plotter.screenshot(transparent_background=True, window_size=(w, h), scale=5)
+    assert img.shape == (h * 5, w * 5, 4)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+
+    with pytest.raises(ValueError):
+        plotter.image_scale = 0.5
+
+    plotter.close()
+
+
+def test_screenshot_altered_window_size(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+
+    plotter.window_size = (800, 800)
+    a = plotter.screenshot()
+    assert a.shape == (800, 800, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    plotter.window_size = (1000, 1000)
+    b = plotter.screenshot()
+    assert b.shape == (1000, 1000, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    d = plotter.screenshot(window_size=(600, 600))
+    assert d.shape == (600, 600, 3)
+    # plotter.show()  # for image regression test
+
+    plotter.close()
+
+
 def test_screenshot_bytes():
     # Test screenshot to bytes object
     buffer = io.BytesIO()
@@ -3337,6 +3390,18 @@ def test_plot_volume_rgba(uniform):
     with pytest.warns(UserWarning, match='Ignoring custom opacity'):
         pl.add_volume(uniform, scalars=scalars, opacity='sigmoid_10')
     pl.show()
+
+
+def test_plot_window_size_context(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    with pl.window_size_context((200, 200)):
+        pl.show()
+
+    pl.close()
+    with pytest.warns(UserWarning, match='Attempting to set window_size'):
+        with pl.window_size_context((200, 200)):
+            pass
 
 
 def test_color_cycler():

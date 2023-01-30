@@ -175,7 +175,7 @@ class Viewer:
     def ui_controls(self, mode=None, default_server_rendering=True, v_show=None):
         """Create a VRow for the UI controls."""
         if mode is None:
-            mode = pyvista.global_theme.trame.default_mode
+            mode = self.plotter._theme.trame.default_mode
         if mode not in VALID_UI_MODES:
             raise ValueError(f'`{mode}` is not a valid mode choice. Use one of: {VALID_UI_MODES}')
         if mode != 'trame':
@@ -298,7 +298,7 @@ class Viewer:
 
         """
         if mode is None:
-            mode = pyvista.global_theme.trame.default_mode
+            mode = self.plotter._theme.trame.default_mode
         if mode not in VALID_UI_MODES:
             raise ValueError(f'`{mode}` is not a valid mode choice. Use one of: {VALID_UI_MODES}')
         if mode != 'trame':

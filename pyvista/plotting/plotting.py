@@ -1,5 +1,6 @@
 """PyVista plotting module."""
 import collections.abc
+from contextlib import contextmanager
 from copy import deepcopy
 import ctypes
 from functools import wraps
@@ -11,7 +12,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict
+from typing import Dict, Optional
 import warnings
 import weakref
 
@@ -42,6 +43,7 @@ from pyvista.utilities.algorithms import (
     pointset_to_polydata_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
+from pyvista.utilities.regression import run_image_filter
 
 from .._typing import BoundsLike
 from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
@@ -194,6 +196,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
+    image_scale : int, optional
+        Scale factor when saving screenshots. Image sizes will be
+        the ``window_size`` multiplied by this scale factor.
+
     """
 
     mouse_position = None
@@ -212,6 +218,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         col_weights=None,
         lighting='light kit',
         theme=None,
+        image_scale=None,
         **kwargs,
     ):
         """Initialize base plotter."""
@@ -293,6 +300,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
         self._has_background_layer = False
+        if image_scale is None:
+            image_scale = self._theme.image_scale
+        self._image_scale = image_scale
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -1581,6 +1591,47 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def window_size(self, window_size):
         """Set the render window size."""
         self.render_window.SetSize(window_size[0], window_size[1])
+        self.render()
+
+    @contextmanager
+    def window_size_context(self, window_size=None):
+        """Set the render window size in an isolated context.
+
+        Parameters
+        ----------
+        window_size : Sequence, optional
+            Window size in pixels.  Defaults to :attr:`pyvista.Plotter.window_size`.
+
+        Examples
+        --------
+        Take two different screenshots with two different window sizes.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(off_screen=True)
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> with pl.window_size_context((400, 400)):
+        ...     pl.screenshot('/tmp/small_screenshot.png')  # doctest:+SKIP
+        >>> with pl.window_size_context((1000, 1000)):
+        ...     pl.screenshot('/tmp/big_screenshot.png')  # doctest:+SKIP
+
+        """
+        # No op if not set
+        if window_size is None:
+            yield self
+            return
+        # If render window is not current
+        if self.render_window is None:
+            warnings.warn('Attempting to set window_size on an unavailable render widow.')
+            yield self
+            return
+        size_before = self.window_size
+        if window_size is not None:
+            self.window_size = window_size
+        yield self
+        # Sometimes the render window is destroyed within the context
+        # and re-setting will fail
+        if self.render_window is not None:
+            self.window_size = size_before
 
     @property
     def image_depth(self):
@@ -1615,12 +1666,65 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._check_rendered()
         self._check_has_ren_win()
 
-        data = image_from_window(self.render_window)
+        data = image_from_window(self.render_window, scale=self.image_scale)
         if self.image_transparent_background:
             return data
 
         # ignore alpha channel
         return data[:, :, :-1]
+
+    @property
+    def image_scale(self) -> int:
+        """Get or set the scale factor when saving a screenshot.
+
+        This will scale up the screenshots taken of the render window to save a
+        higher resolution image than what is rendered on screen.
+
+        Image sizes will be the :py:attr:`window_size
+        <pyvista.BasePlotter.window_size>` multiplied by this scale factor.
+
+        Examples
+        --------
+        Double the resolution of a screenshot.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.image_scale = 2
+        >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
+
+        Set the image scale from ``Plotter``.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(image_scale=2)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
+
+        """
+        return self._image_scale
+
+    @image_scale.setter
+    def image_scale(self, value: int):
+        value = int(value)
+        if value < 1:
+            raise ValueError('Scale factor must be a positive integer.')
+        self._image_scale = value
+
+    @contextmanager
+    def image_scale_context(self, scale: Optional[int] = None):
+        """Set the image scale in an isolated context.
+
+        Parameters
+        ----------
+        scale : int, optional
+            Integer scale factor.  Defaults to :attr:`pyvista.Plotter.image_scale`.
+
+        """
+        scale_before = self.image_scale
+        if scale is not None:
+            self.image_scale = scale
+        yield self
+        self.image_scale = scale_before
 
     def render(self):
         """Render the main window.
@@ -4602,18 +4706,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.update()
         self.mwriter.append_data(self.image)
 
-    def _run_image_filter(self, ifilter):
-        # Update filter and grab pixels
-        ifilter.Modified()
-        ifilter.Update()
-        image = pyvista.wrap(ifilter.GetOutput())
-        img_size = image.dimensions
-        img_array = pyvista.utilities.point_array(image, 'ImageScalars')
-
-        # Reshape and write
-        tgt_size = (img_size[1], img_size[0], -1)
-        return img_array.reshape(tgt_size)[::-1]
-
     def get_image_depth(self, fill_value=np.nan, reset_camera_clipping_range=True):
         """Return a depth image representing current render window.
 
@@ -4663,9 +4755,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Get the z-buffer image
         ifilter = _vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.render_window)
+        ifilter.SetScale(self.image_scale)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()
-        zbuff = self._run_image_filter(ifilter)[:, :, 0]
+        zbuff = run_image_filter(ifilter)[:, :, 0]
 
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
@@ -5271,7 +5364,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         writer.Update()
 
     def screenshot(
-        self, filename=None, transparent_background=None, return_img=True, window_size=None
+        self,
+        filename=None,
+        transparent_background=None,
+        return_img=True,
+        window_size=None,
+        scale=None,
     ):
         """Take screenshot at current camera position.
 
@@ -5292,6 +5390,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Set the plotter's size to this ``(width, height)`` before
             taking the screenshot.
 
+        scale : int, optional
+            Set the factor to scale the window size to make a higher
+            resolution image. If ``None`` this will use the ``image_scale``
+            property on this plotter which defaults to one.
+
         Returns
         -------
         numpy.ndarray
@@ -5311,37 +5414,40 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
 
         """
-        if window_size is not None:
-            self.window_size = window_size
+        with self.window_size_context(window_size):
+            # configure image filter
+            if transparent_background is None:
+                transparent_background = self._theme.transparent_background
+            self.image_transparent_background = transparent_background
 
-        # configure image filter
-        if transparent_background is None:
-            transparent_background = self._theme.transparent_background
-        self.image_transparent_background = transparent_background
+            # This if statement allows you to save screenshots of closed plotters
+            # This is needed for the sphinx-gallery to work
+            if self.render_window is None:
+                # If plotter has been closed...
+                # check if last_image exists
+                if self.last_image is not None:
+                    # Save last image
+                    if scale is not None:
+                        warnings.warn(
+                            'This plotter is closed and cannot be scaled. Using the last saved image. Try using the `image_scale` property directly.'
+                        )
+                    return self._save_image(self.last_image, filename, return_img)
+                # Plotter hasn't been rendered or was improperly closed
+                raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
-        # This if statement allows you to save screenshots of closed plotters
-        # This is needed for the sphinx-gallery to work
-        if self.render_window is None:
-            # If plotter has been closed...
-            # check if last_image exists
-            if self.last_image is not None:
-                # Save last image
-                return self._save_image(self.last_image, filename, return_img)
-            # Plotter hasn't been rendered or was improperly closed
-            raise RuntimeError('This plotter is closed and unable to save a screenshot.')
+            if self._first_time and not self.off_screen:
+                raise RuntimeError(
+                    "Nothing to screenshot - call .show first or use the off_screen argument"
+                )
 
-        if self._first_time and not self.off_screen:
-            raise RuntimeError(
-                "Nothing to screenshot - call .show first or use the off_screen argument"
-            )
+            # if off screen, show has not been called and we must render
+            # before extracting an image
+            if self._first_time:
+                self._on_first_render_request()
+                self.render()
 
-        # if off screen, show has not been called and we must render
-        # before extracting an image
-        if self._first_time:
-            self._on_first_render_request()
-            self.render()
-
-        return self._save_image(self.image, filename, return_img)
+            with self.image_scale_context(scale):
+                return self._save_image(self.image, filename, return_img)
 
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs):
@@ -6001,6 +6107,10 @@ class Plotter(BasePlotter):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
+    image_scale : int, optional
+        Scale factor when saving screenshots. Image sizes will be
+        the ``window_size`` multiplied by this scale factor.
+
     Examples
     --------
     >>> import pyvista
@@ -6037,6 +6147,7 @@ class Plotter(BasePlotter):
         title=None,
         lighting='light kit',
         theme=None,
+        image_scale=None,
     ):
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -6051,6 +6162,7 @@ class Plotter(BasePlotter):
             title=title,
             lighting=lighting,
             theme=theme,
+            image_scale=image_scale,
         )
         # reset partial initialization flag
         self._initialized = False
