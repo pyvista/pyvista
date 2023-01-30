@@ -3505,7 +3505,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Returns
         -------
         vtk.vtkActor
-            The actor for the added ``vtkLegendScaleActor``
+            The actor for the added ``vtkLegendScaleActor``.
 
         Warnings
         --------
