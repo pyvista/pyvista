@@ -839,7 +839,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from pyvista.core.errors import DeprecationError
 
         raise DeprecationError(
-            '`store_image` has been depreciated as of 0.38.0 and is no longer used.'
+            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
             ' Images are automatically cached as needed.'
         )
 
@@ -848,7 +848,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from pyvista.core.errors import DeprecationError
 
         raise DeprecationError(
-            '`store_image` has been depreciated as of 0.38.0 and is no longer used.'
+            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
             ' Images are automatically cached as needed.'
         )
 
@@ -6245,7 +6245,7 @@ class Plotter(BasePlotter):
 
         return_viewer : bool, default: False
             Return the jupyterlab viewer, scene, or display object when
-            plotting with Jupiter notebook. When ``False`` and within a Jupiter
+            plotting with Jupyter notebook. When ``False`` and within a Jupyter
             environment, the scene will be immediately shown within the
             notebook. Set this to ``True`` to return the scene instead.
 
