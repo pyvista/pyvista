@@ -3910,6 +3910,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=None,
         feature_angle=None,
         decimate=None,
+        params=None,
     ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
@@ -3941,10 +3942,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try ``0.9``  first and decrease until the desired rendering
             performance is achieved.
 
+        params : dict, optional
+            .. deprecated:: 0.38.0
+               This keyword argument is no longer used. Instead, input the
+               parameters to this function directly.
+
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the silhouette.
+        pyvista.Actor
+            Actor of the silhouette.
 
         Examples
         --------
@@ -3953,8 +3959,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> bunny = examples.download_bunny()
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(bunny, color='tan')
-        >>> _ = plotter.add_silhouette(bunny,
-        ...     color='red', line_width=8.0)
+        >>> _ = plotter.add_silhouette(bunny, color='red', line_width=8.0)
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -3965,6 +3970,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh, algo = algorithm_to_mesh_handler(algo)
 
         silhouette_params = self._theme.silhouette.to_dict()
+
+        if params is not None:
+            # Deprecated on 0.38.0, estimated removal on v0.40.0
+            warnings.warn(
+                '`params` is depreciated. Set the arguments directly.', PyVistaDeprecationWarning
+            )
+            silhouette_params.update(params)
+
         if color is None:
             color = silhouette_params["color"]
         if line_width is None:

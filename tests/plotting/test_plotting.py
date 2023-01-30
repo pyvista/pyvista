@@ -26,7 +26,7 @@ from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities import algorithms
-from pyvista.utilities.misc import can_create_mpl_figure
+from pyvista.utilities.misc import PyVistaDeprecationWarning, can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -654,19 +654,23 @@ def test_plot_silhouette_method(tri_cylinder):
     plotter = pyvista.Plotter()
 
     plotter.add_mesh(tri_cylinder)
-    actors = list(plotter.renderer.GetActors())
-    assert len(actors) == 1  # cylinder
+    assert len(plotter.renderer.actors) == 1  # cylinder
 
-    plotter.add_silhouette(tri_cylinder)
-    actors = list(plotter.renderer.GetActors())
-    assert len(actors) == 2  # cylinder + silhouette
+    actor = plotter.add_silhouette(tri_cylinder)
+    assert isinstance(actor, pyvista.Actor)
+    assert len(plotter.renderer.actors) == 2  # cylinder + silhouette
 
-    actor = actors[1]  # get silhouette actor
-    props = actor.GetProperty()
-    assert props.GetColor() == pyvista.global_theme.silhouette.color
-    assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
-    assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
+    props = actor.prop
+    assert props.color == pyvista.global_theme.silhouette.color
+    assert props.opacity == pyvista.global_theme.silhouette.opacity
+    assert props.line_width == pyvista.global_theme.silhouette.line_width
     plotter.show()
+
+    params = {'line_width': 5, 'opacity': 0.5}
+    with pytest.warns(PyVistaDeprecationWarning, match='`params` is depreciated'):
+        actor = plotter.add_silhouette(tri_cylinder, params=params)
+    assert actor.prop.line_width == params['line_width']
+    assert actor.prop.opacity == params['opacity']
 
 
 def test_plot_silhouette_options(tri_cylinder):
