@@ -3974,7 +3974,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if params is not None:
             # Deprecated on 0.38.0, estimated removal on v0.40.0
             warnings.warn(
-                '`params` is deprecated. Set the arguments directly.', PyVistaDeprecationWarning
+                '`params` is deprecated. Set the arguments directly.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
             )
             silhouette_params.update(params)
 

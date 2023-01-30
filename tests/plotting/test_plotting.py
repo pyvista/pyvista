@@ -667,7 +667,7 @@ def test_plot_silhouette_method(tri_cylinder):
     plotter.show()
 
     params = {'line_width': 5, 'opacity': 0.5}
-    with pytest.warns(PyVistaDeprecationWarning, match='`params` is depreciated'):
+    with pytest.warns(PyVistaDeprecationWarning, match='`params` is deprecated'):
         actor = plotter.add_silhouette(tri_cylinder, params=params)
     assert actor.prop.line_width == params['line_width']
     assert actor.prop.opacity == params['opacity']
@@ -676,7 +676,7 @@ def test_plot_silhouette_method(tri_cylinder):
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
-    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=20))
+    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=0.5, feature_angle=20))
     plotter.show()
 
 
