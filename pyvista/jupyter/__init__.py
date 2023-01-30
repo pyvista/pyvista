@@ -92,11 +92,12 @@ def _validate_jupyter_backend(backend):
         # raises an import error when fail
         from pyvista.jupyter import pv_ipygany
 
-        warnings.warn(
-            '`ipygany` backend is deprecated and is planned for future removal.',
-            PyVistaDeprecationWarning,
-            stacklevel=3,
-        )
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`ipygany` backend is deprecated and is planned for future removal.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
 
     if backend in ['server', 'client', 'trame']:
         try:

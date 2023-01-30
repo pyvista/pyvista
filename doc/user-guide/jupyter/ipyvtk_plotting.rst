@@ -3,10 +3,10 @@
 Using ``ipyvtklink`` with PyVista
 ---------------------------------
 
-.. warning::
-
-    The ``ipyvtklink`` backend is deprecated in favor of the new
-    ``server`` backend powered by ``trame``. See :ref:`trame_jupyter`.
+.. deprecated:: 0.38.0
+   This backend has been deprecated in favor of :ref:`trame_jupyter` - a new
+   framework for building dynamic web applications with Python with great
+   support for VTK.
 
 ``pyvista`` has the ability to display fully featured plots within a
 JupyterLab environment using ``ipyvtklink``.  This feature works by
