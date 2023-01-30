@@ -83,9 +83,7 @@ def _validate_jupyter_backend(backend):
         try:
             from pyvista.trame.jupyter import show_trame
         except ImportError:  # pragma: no cover
-            raise ImportError(
-                'Please install `trame` (and maybe `jupyter-server-proxy`) to use this feature.'
-            )
+            raise ImportError('Please install `trame` and `ipywidgets` to use this feature.')
 
     if backend == 'none':
         backend = None

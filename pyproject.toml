@@ -54,6 +54,7 @@ colormaps = [
 io = ['meshio>=5.2']
 jupyter = [
     'ipyvtklink',
+    'ipywidgets',
     'jupyter-server-proxy',
     'nest_asyncio',
     'panel',
