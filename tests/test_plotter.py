@@ -81,6 +81,16 @@ def test_pickable_actors():
         plotter.pickable_actors = [0, 10]
 
 
+def test_plotter_image_scale():
+    pl = pyvista.Plotter()
+    assert isinstance(pl.image_scale, int)
+    with pytest.raises(ValueError, match='must be a positive integer'):
+        pl.image_scale = 0
+
+    pl.image_scale = 2
+    assert pl.image_scale == 2
+
+
 def test_prepare_smooth_shading_texture(globe):
     """Test edge cases for smooth shading"""
     mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
