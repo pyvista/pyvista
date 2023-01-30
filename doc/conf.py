@@ -48,11 +48,6 @@ warnings.filterwarnings(
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
-warnings.filterwarnings(
-    "ignore",
-    category=Warning,
-    message=r".*backend is deprecated and is planned for future removal.",
-)
 
 # -- General configuration ------------------------------------------------
 numfig = False
