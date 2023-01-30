@@ -3395,6 +3395,18 @@ def test_plot_volume_rgba(uniform):
     pl.show()
 
 
+def test_plot_window_size_context(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    with pl.window_size_context((200, 200)):
+        pl.show()
+
+    pl.close()
+    with pytest.warns(UserWarning, match='Attempting to set window_size'):
+        with pl.window_size_context((200, 200)):
+            pass
+
+
 def test_color_cycler():
     pyvista.global_theme.color_cycler = 'default'
     pl = pyvista.Plotter()
