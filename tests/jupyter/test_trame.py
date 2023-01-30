@@ -26,13 +26,15 @@ skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
 
 @skip_no_trame
 def test_set_jupyter_backend_trame():
-    pv.global_theme.jupyter_backend = 'trame'
-    assert pv.global_theme.jupyter_backend == 'trame'
-    pv.global_theme.jupyter_backend = 'client'
-    assert pv.global_theme.jupyter_backend == 'client'
-    pv.global_theme.jupyter_backend = 'server'
-    assert pv.global_theme.jupyter_backend == 'server'
-    pv.global_theme.jupyter_backend = None
+    try:
+        pv.global_theme.jupyter_backend = 'trame'
+        assert pv.global_theme.jupyter_backend == 'trame'
+        pv.global_theme.jupyter_backend = 'client'
+        assert pv.global_theme.jupyter_backend == 'client'
+        pv.global_theme.jupyter_backend = 'server'
+        assert pv.global_theme.jupyter_backend == 'server'
+    finally:
+        pv.global_theme.jupyter_backend = None
 
 
 @skip_no_trame
