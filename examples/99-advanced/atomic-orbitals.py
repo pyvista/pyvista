@@ -117,7 +117,7 @@ contours.plot(
 # way the orbitals are plotted. For this, the opacity will be mapped to the
 # probability of the electron being at a location in the grid, which we can do
 # by taking the absolute value squared of the orbital's wave function. We can
-# set the color of the orbital based on the phase, which we can get simply by
+# set the color of the orbital based on the phase, which we can get simply
 # with ``orbital['real_wf'] < 0``.
 #
 # Let's start with a simple one, the :math:`3p_z` orbital.
@@ -160,14 +160,14 @@ plot_orbital(hydro_orbital, clip_plane='-x')
 
 
 ###############################################################################
-# Volumetric Plot: 4dz2 orbital
+# Volumetric Plot: :math:`4d_{z^2}` orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
 plot_orbital(hydro_orbital, clip_plane='-y')
 
 
 ###############################################################################
-# Volumetric Plot: 4dxz orbital
+# Volumetric Plot: :math:`4d_{xz}` orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
 plot_orbital(hydro_orbital, clip_plane='-y')
@@ -226,7 +226,7 @@ pl.show()
 ###############################################################################
 # Density Plot - Gaussian Points Representation
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Finally, let's plot the same data using the "gaussian points" representation.
+# Finally, let's plot the same data using the "Gaussian points" representation.
 
 point_cloud.plot(
     style='points_gaussian',
