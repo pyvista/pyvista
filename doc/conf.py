@@ -249,13 +249,6 @@ linkcheck_timeout = 500
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
 templates_path = ["_templates"]
-if os.environ.get('FULL_DOC_BUILD', '').upper() == 'TRUE':
-    templates_path.append("_templates_full")
-else:
-    theme = pyvista.themes.DocumentTheme()
-    theme.window_size = [400, 300]
-    pyvista.PLOT_DIRECTIVE_THEME = theme
-    templates_path.append("_templates_basic")
 
 # Autosummary configuration
 autosummary_context = {
