@@ -1,3 +1,4 @@
+from IPython.display import IFrame
 import pytest
 
 import pyvista as pv
@@ -147,3 +148,39 @@ def test_trame_views():
     assert PyVistaRemoteLocalView(pl, trame_server=server)
     assert PyVistaRemoteView(pl, trame_server=server)
     assert PyVistaLocalView(pl, trame_server=server)
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_jupyter_custom_size():
+    w, h = 200, 150
+    plotter = pv.Plotter(notebook=True, window_size=(w, h))
+    _ = plotter.add_mesh(pv.Cone())
+    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+    html = widget.value
+    assert f"width: {w}px" in html
+    assert f"height: {h}px" in html
+
+    plotter = pv.Plotter(notebook=True)
+    plotter.window_size = (w, h)
+    _ = plotter.add_mesh(pv.Cone())
+    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+    html = widget.value
+    assert f"width: {w}px" in html
+    assert f"height: {h}px" in html
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_jupyter_custom_handler():
+    def handler(viewer, src, **kwargs):
+        return IFrame(src, '75%', '500px')
+
+    plotter = pv.Plotter(notebook=True)
+    _ = plotter.add_mesh(pv.Cone())
+    iframe = plotter.show(
+        jupyter_backend='trame',
+        jupyter_kwargs=dict(handler=handler),
+        return_viewer=True,
+    )
+    assert isinstance(iframe, IFrame)

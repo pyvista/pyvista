@@ -1591,6 +1591,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def window_size(self, window_size):
         """Set the render window size."""
         self.render_window.SetSize(window_size[0], window_size[1])
+        self._window_size_unset = False
         self.render()
 
     @contextmanager
@@ -6196,12 +6197,6 @@ class Plotter(BasePlotter):
             off_screen = True
         self.off_screen = off_screen
 
-        self._window_size_unset = False
-        if window_size is None:
-            self._window_size_unset = True
-            window_size = self._theme.window_size
-        self.__prior_window_size = window_size
-
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
         self.render_window.SetMultiSamples(0)
@@ -6253,7 +6248,12 @@ class Plotter(BasePlotter):
         self.set_background(self._theme.background)
 
         # Set window size
-        self.window_size = window_size
+        self._window_size_unset = False
+        if window_size is None:
+            self.window_size = self._theme.window_size
+            self._window_size_unset = True
+        else:
+            self.window_size = window_size
 
         # add timer event callback to break out of blocking interactive update call (only needed for VTK<9)
         if not self.iren.can_process_events:
@@ -6350,6 +6350,9 @@ class Plotter(BasePlotter):
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
+
+            A dictionary ``jupyter_kwargs`` can also be passed to further
+            configure how the backend displays.
 
         return_viewer : bool, default: False
             Return the jupyterlab viewer, scene, or display object when

@@ -61,18 +61,22 @@ class TrameJupyterServerDownError(RuntimeError):
 class Widget(widgets.HTML):
     """Custom HTML iframe widget for trame viewer."""
 
-    def __init__(self, viewer, src, **kwargs):
+    def __init__(self, viewer, src, width, height, **kwargs):
         """Initialize."""
-        width = kwargs.pop('width', '99%')
-        height = kwargs.pop('height', '600px')
         value = f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>"
         super().__init__(value, **kwargs)
         self._viewer = viewer
+        self._src = src
 
     @property
     def viewer(self):
         """Get the associated viewer instance."""
         return self._viewer
+
+    @property
+    def src(self):
+        """Get the src URL."""
+        return self._src
 
 
 def launch_server(server=None):
@@ -113,7 +117,14 @@ def launch_server(server=None):
     return server.ready
 
 
-def build_url(_server, ui=None, server_proxy_enabled=None, server_proxy_prefix=None, **kwargs):
+def build_url(
+    _server,
+    ui=None,
+    server_proxy_enabled=None,
+    server_proxy_prefix=None,
+    host='localhost',
+    protocol='http',
+):
     """Build the URL for the iframe."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
@@ -126,7 +137,7 @@ def build_url(_server, ui=None, server_proxy_enabled=None, server_proxy_prefix=N
             f"{server_proxy_prefix if server_proxy_prefix else ''}{_server.port}/index.html{params}"
         )
     else:
-        src = f'{kwargs.get("protocol", "http")}://{kwargs.get("host", "localhost")}:{_server.port}/index.html{params}'
+        src = f'{protocol}://{host}:{_server.port}/index.html{params}'
     logger.debug(src)
     return src
 
@@ -159,6 +170,7 @@ def show_trame(
     server_proxy_prefix=None,
     collapse_menu=False,
     default_server_rendering=True,
+    handler=None,
     **kwargs,
 ):
     """Run and display the trame application in jupyter's event loop.
@@ -192,10 +204,39 @@ def show_trame(
         Whether to use server-side or client-side rendering on-start when
         using the ``'trame'`` mode.
 
+    handler : callable, optional
+        Pass a callable that accptes the viewer instance, the string URL,
+        and ``**kwargs`` to create custom HTML representations of the output.
+
+        .. code::
+
+            import pyvista as pv
+            from IPython.display import IFrame
+
+            mesh = pv.Wavelet()
+
+            def handler(viewer, src, **kwargs):
+                return IFrame(src, '75%', '500px')
+
+            p = pv.Plotter(notebook=True)
+            _ = p.add_mesh(mesh)
+            iframe = p.show(
+                jupyter_backend='trame',
+                jupyter_kwargs=dict(handler=handler),
+                return_viewer=True,
+            )
+            iframe
+
     **kwargs : dict, optional
         Mostly ignored, though ``protocol`` and ``host`` can be use to
         override the iframe src url and ``height`` and ``width`` can be
-        used to overrid the iframe style.
+        used to override the iframe style. Remaining kwargs are passed to
+        ``ipywidgets.widgets.HTML``.
+
+    Returns
+    -------
+    ipywidgets.widgets.HTML or handler result
+        Returns a HTML IFrame widget or the result of the passed handler.
 
     """
     if plotter.render_window is None:
@@ -227,9 +268,21 @@ def show_trame(
         ui=plotter._id_name,
         server_proxy_enabled=server_proxy_enabled,
         server_proxy_prefix=server_proxy_prefix,
-        **kwargs,
+        host=kwargs.get('host', 'localhost'),
+        protocol=kwargs.get('protocol', 'http'),
     )
 
+    if plotter._window_size_unset:
+        dw, dh = '99%', '600px'
+    else:
+        dw, dh = plotter.window_size
+        dw = f'{dw}px'
+        dh = f'{dh}px'
+    kwargs.setdefault('width', dw)
+    kwargs.setdefault('height', dh)
+
+    if callable(handler):
+        return handler(viewer, src, **kwargs)
     return Widget(viewer, src, **kwargs)
 
 
