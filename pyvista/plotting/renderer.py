@@ -1163,6 +1163,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         fmt=None,
         minor_ticks=False,
         padding=0.0,
+        use_3d_text=True,
         render=None,
     ):
         """Add bounds axes.
@@ -1283,6 +1284,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             An optional percent padding along each axial direction to
             cushion the datasets in the scene from the axes
             annotations. Defaults to 0 (no padding).
+
+        use_3d_text : bool, default: True
+            Use ``vtkTextActor3D`` for titles and labels.
 
         render : bool, optional
             If the render window is being shown, trigger a render
@@ -1473,6 +1477,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set font
         font_family = parse_font_family(font_family)
+
+        if use_3d_text and not np.allclose(self.scale, use_3d_text):  # pragma: no cover
+            warnings.warn(
+                'Using 2D actors for text due to scaling != (1, 1, 1)\n\n'
+                'Either disable scaling or set use_3d_text=False'
+            )
+
+        if use_3d_text:
+            cube_axes_actor.SetUseTextActor3D(True)
+
         props = [
             cube_axes_actor.GetTitleTextProperty(0),
             cube_axes_actor.GetTitleTextProperty(1),
@@ -1486,6 +1500,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             prop.SetColor(color.float_rgb)
             prop.SetFontFamily(font_family)
             prop.SetBold(bold)
+
+            # this merely makes the font sharper
+            if use_3d_text:
+                prop.SetFontSize(50)
 
         # Note: font_size does nothing as a property, use SetScreenSize instead
         # Here, we normalize relative to 12 to give the user an illusion of
