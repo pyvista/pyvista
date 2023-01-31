@@ -504,6 +504,6 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     r, theta, phi = pyvista.cartesian_to_spherical(grid.x, grid.y, grid.z)
     wfc = psi(r, phi, theta).reshape(grid.dimensions)
 
-    grid['real_hwf'] = np.real(wfc.ravel())
-    grid['hwf'] = wfc.ravel()
+    grid['real_wf'] = np.real(wfc.ravel())
+    grid['wf'] = wfc.ravel()
     return grid

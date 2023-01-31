@@ -75,7 +75,7 @@ def test_load_hydrogen_orbital():
 
     orbital = pv.examples.load_hydrogen_orbital(3, 2, 1)
     assert isinstance(orbital, pv.UniformGrid)
-    assert 'hwf' in orbital.point_data
-    assert orbital.point_data['hwf'].dtype == np.complex128
-    assert 'real_hwf' in orbital.point_data
-    assert orbital.point_data['real_hwf'].dtype == np.float64
+    assert 'wf' in orbital.point_data
+    assert orbital.point_data['wf'].dtype == np.complex128
+    assert 'real_wf' in orbital.point_data
+    assert orbital.point_data['real_wf'].dtype == np.float64
