@@ -3237,6 +3237,346 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Legend actor."""
         return self._legend
 
+    def add_ruler(
+        self,
+        pointa,
+        pointb,
+        flip_range=False,
+        number_labels=5,
+        show_labels=True,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        title="Distance",
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+        label_color=None,
+        tick_color=None,
+    ):
+        """Add ruler.
+
+        The ruler is a 2D object that is not occluded by 3D objects.
+        To avoid issues with perspective, it is recommended to use
+        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        and place the ruler orthogonal to the viewing direction.
+
+        The title and labels are placed to the right of ruler moving from
+        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
+        if needed.
+
+        Since the ruler is placed in an overlay on the viewing scene, the camera
+        does not automatically reset to include the ruler in the view.
+
+        Parameters
+        ----------
+        pointa : Sequence
+            Starting point for ruler.
+
+        pointb : Sequence
+            Ending point for ruler.
+
+        flip_range : bool, default: False
+            If ``True``, the distance range goes from ``pointb`` to ``pointa``.
+
+        number_labels : int, default: 5
+            Number of labels to place on ruler.
+
+        show_labels : bool, default: True
+            Whether to show labels.
+
+        font_size_factor : float, default: 0.6
+            Factor to scale font size overall.
+
+        label_size_factor : float, default: 1.0
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        title : str, default: "Distance"
+            The title to display.
+
+        number_minor_ticks : int, default: 0
+            Number of minor ticks between major ticks.
+
+        tick_length : int, default: 5
+            Length of ticks in pixels.
+
+        minor_tick_length : int, default: 3
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, default: True
+            Whether to show the ticks.
+
+        tick_label_offset : int, default: 2
+            Offset between tick and label in pixels.
+
+        label_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            label and title colors.
+
+            .. warning::
+                This is either white or black.
+
+        tick_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            tick line colors.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the ruler.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cone = pv.Cone(height=2.0, radius=0.5)
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(cone)
+
+        Measure x direction of cone and place ruler slightly below.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
+        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     title="X Distance"
+        ... )
+
+        Measure y direction of cone and place ruler slightly to left.
+        The title and labels are placed to the right of the ruler when
+        traveling from ``pointa`` to ``pointb``.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
+        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     flip_range=True,
+        ...     title="Y Distance"
+        ... )
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        """
+        label_color = Color(label_color, default_color=self._theme.font.color)
+        tick_color = Color(tick_color, default_color=self._theme.font.color)
+
+        ruler = _vtk.vtkAxisActor2D()
+
+        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
+        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+
+        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        if flip_range:
+            ruler.SetRange(distance, 0)
+        else:
+            ruler.SetRange(0, distance)
+
+        ruler.SetTitle(title)
+        ruler.SetFontFactor(font_size_factor)
+        ruler.SetLabelFactor(label_size_factor)
+        ruler.SetNumberOfLabels(number_labels)
+        ruler.SetLabelVisibility(show_labels)
+        if label_format:
+            ruler.SetLabelFormat(label_format)
+        ruler.GetProperty().SetColor(*tick_color.int_rgb)
+        if label_color != Color('white'):
+            # This property turns black if set
+            ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
+            ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
+        ruler.SetNumberOfMinorTicks(number_minor_ticks)
+        ruler.SetTickVisibility(show_ticks)
+        ruler.SetTickLength(tick_length)
+        ruler.SetMinorTickLength(minor_tick_length)
+        ruler.SetTickOffset(tick_label_offset)
+
+        self.add_actor(ruler, reset_camera=True, pickable=False)
+        return ruler
+
+    def add_legend_scale(
+        self,
+        corner_offset_factor=2.0,
+        bottom_border_offset=30,
+        top_border_offset=30,
+        left_border_offset=30,
+        right_border_offset=30,
+        bottom_axis_visibility=True,
+        top_axis_visibility=True,
+        left_axis_visibility=True,
+        right_axis_visibility=True,
+        legend_visibility=True,
+        xy_label_mode=False,
+        render=True,
+        color=None,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+    ):
+        """Annotate the render window with scale and distance information.
+
+        Its basic goal is to provide an indication of the scale of the scene.
+        Four axes surrounding the render window indicate (in a variety of ways)
+        the scale of what the camera is viewing. An option also exists for
+        displaying a scale legend.
+
+        Parameters
+        ----------
+        corner_offset_factor : float, default: 2.0
+            The corner offset value.
+
+        bottom_border_offset : int, default: 30
+            Bottom border offset. Recommended value ``50``.
+
+        top_border_offset : int, default: 30
+            Top border offset. Recommended value ``50``.
+
+        left_border_offset : int, default: 30
+            Left border offset. Recommended value ``100``.
+
+        right_border_offset : int, default: 30
+            Right border offset. Recommended value ``100``.
+
+        bottom_axis_visibility : bool, default: True
+            Whether the bottom axis is visible.
+
+        top_axis_visibility : bool, default: True
+            Whether the top axis is visible.
+
+        left_axis_visibility : bool, default: True
+            Whether the left axis is visible.
+
+        right_axis_visibility : bool, default: True
+            Whether the right axis is visible.
+
+        legend_visibility : bool, default: True
+            Whether the legend scale is visible.
+
+        xy_label_mode : bool, default: False
+            The axes can be programmed either to display distance scales
+            or x-y coordinate values. By default,
+            the scales display a distance. However, if you know that the
+            view is down the z-axis, the scales can be programmed to display
+            x-y coordinate values.
+
+        render : bool, default: True
+            Whether to to render when the actor is added.
+
+        color : ColorLike, optional
+            Either a string, rgb list, or hex color string for tick text
+            and tick line colors.
+
+            .. warning::
+                The axis labels tend to be either white or black.
+
+        font_size_factor : float, default: 0.6
+            Factor to scale font size overall.
+
+        label_size_factor : float, default: 1.0
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        number_minor_ticks : int, default: 0
+            Number of minor ticks between major ticks.
+
+        tick_length : int, default: 5
+            Length of ticks in pixels.
+
+        minor_tick_length : int, default: 3
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, default: True
+            Whether to show the ticks.
+
+        tick_label_offset : int, default: 2
+            Offset between tick and label in pixels.
+
+        Returns
+        -------
+        vtk.vtkActor
+            The actor for the added ``vtkLegendScaleActor``.
+
+        Warnings
+        --------
+        Please be aware that the axes and scale values are subject to perspective
+        effects. The distances are computed in the focal plane of the camera. When
+        there are large view angles (i.e., perspective projection), the computed
+        distances may provide users the wrong sense of scale. These effects are not
+        present when parallel projection is enabled.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cone = pv.Cone(height=2.0, radius=0.5)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(cone)
+        >>> _ = pl.add_legend_scale()
+        >>> pl.show()
+
+        """
+        color = Color(color, default_color=self._theme.font.color)
+
+        legend_scale = _vtk.vtkLegendScaleActor()
+        legend_scale.SetCornerOffsetFactor(corner_offset_factor)
+        legend_scale.SetLegendVisibility(legend_visibility)
+        if xy_label_mode:
+            legend_scale.SetLabelModeToXYCoordinates()
+        else:
+            legend_scale.SetLabelModeToDistance()
+        legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
+        legend_scale.SetBottomBorderOffset(bottom_border_offset)
+        legend_scale.SetLeftAxisVisibility(left_axis_visibility)
+        legend_scale.SetLeftBorderOffset(left_border_offset)
+        legend_scale.SetRightAxisVisibility(right_axis_visibility)
+        legend_scale.SetRightBorderOffset(right_border_offset)
+        legend_scale.SetTopAxisVisibility(top_axis_visibility)
+        legend_scale.SetTopBorderOffset(top_border_offset)
+
+        for text in ['Label', 'Title']:
+            prop = getattr(legend_scale, f'GetLegend{text}Property')()
+            if color != Color('white'):
+                # This property turns black if set
+                prop.SetColor(*color.int_rgb)
+            prop.SetFontSize(
+                int(font_size_factor * 20)
+            )  # hack to avoid multiple font size arguments
+
+        for ax in ['Bottom', 'Left', 'Right', 'Top']:
+            axis = getattr(legend_scale, f'Get{ax}Axis')()
+            axis.GetProperty().SetColor(*color.int_rgb)
+            if color != Color('white'):
+                # This label property turns black if set
+                axis.GetLabelTextProperty().SetColor(*color.int_rgb)
+            axis.SetFontFactor(font_size_factor)
+            axis.SetLabelFactor(label_size_factor)
+            if label_format:
+                axis.SetLabelFormat(label_format)
+            axis.SetNumberOfMinorTicks(number_minor_ticks)
+            axis.SetTickLength(tick_length)
+            axis.SetMinorTickLength(minor_tick_length)
+            axis.SetTickVisibility(show_ticks)
+            axis.SetTickOffset(tick_label_offset)
+
+        return self.add_actor(
+            legend_scale,
+            reset_camera=False,
+            name='_vtkLegendScaleActor',
+            culling=False,
+            pickable=False,
+            render=render,
+        )
+
 
 def _line_for_legend():
     """Create a simple line-like rectangle for the legend."""

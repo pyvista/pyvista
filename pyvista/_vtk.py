@@ -475,6 +475,7 @@ if VTK9:
         vtkCornerAnnotation,
         vtkCubeAxesActor,
         vtkLegendBoxActor,
+        vtkLegendScaleActor,
         vtkScalarBarActor,
     )
     from vtkmodules.vtkRenderingContext2D import (

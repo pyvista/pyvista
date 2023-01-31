@@ -26,7 +26,7 @@ from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities import algorithms
-from pyvista.utilities.misc import can_create_mpl_figure
+from pyvista.utilities.misc import PyVistaDeprecationWarning, can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -621,10 +621,11 @@ def test_plot_show_bounds_params(grid, location):
     plotter.show()
 
 
-def test_plot_silhouette_fail(hexbeam):
+def test_plot_silhouette_non_poly(hexbeam):
     plotter = pyvista.Plotter()
-    with pytest.raises(TypeError, match="Expected type is `PolyData`"):
-        plotter.add_mesh(hexbeam, silhouette=True)
+    plotter.add_mesh(hexbeam, show_scalar_bar=False)
+    plotter.add_silhouette(hexbeam, line_width=10)
+    plotter.show()
 
 
 def test_plot_no_silhouette(tri_cylinder):
@@ -653,25 +654,29 @@ def test_plot_silhouette_method(tri_cylinder):
     plotter = pyvista.Plotter()
 
     plotter.add_mesh(tri_cylinder)
-    actors = list(plotter.renderer.GetActors())
-    assert len(actors) == 1  # cylinder
+    assert len(plotter.renderer.actors) == 1  # cylinder
 
-    plotter.add_silhouette(tri_cylinder)
-    actors = list(plotter.renderer.GetActors())
-    assert len(actors) == 2  # cylinder + silhouette
+    actor = plotter.add_silhouette(tri_cylinder)
+    assert isinstance(actor, pyvista.Actor)
+    assert len(plotter.renderer.actors) == 2  # cylinder + silhouette
 
-    actor = actors[1]  # get silhouette actor
-    props = actor.GetProperty()
-    assert props.GetColor() == pyvista.global_theme.silhouette.color
-    assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
-    assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
+    props = actor.prop
+    assert props.color == pyvista.global_theme.silhouette.color
+    assert props.opacity == pyvista.global_theme.silhouette.opacity
+    assert props.line_width == pyvista.global_theme.silhouette.line_width
     plotter.show()
+
+    params = {'line_width': 5, 'opacity': 0.5}
+    with pytest.warns(PyVistaDeprecationWarning, match='`params` is deprecated'):
+        actor = plotter.add_silhouette(tri_cylinder, params=params)
+    assert actor.prop.line_width == params['line_width']
+    assert actor.prop.opacity == params['opacity']
 
 
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
-    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=20))
+    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=0.5, feature_angle=20))
     plotter.show()
 
 
@@ -1058,6 +1063,59 @@ def test_screenshot(tmpdir):
     plotter.add_mesh(pyvista.Sphere())
     with pytest.raises(RuntimeError):
         plotter.screenshot()
+
+
+def test_screenshot_scaled():
+    # FYI: no regression tests because show() is not called
+    factor = 2
+    plotter = pyvista.Plotter(image_scale=factor)
+    width, height = plotter.window_size
+    plotter.add_mesh(pyvista.Sphere())
+    img = plotter.screenshot(transparent_background=False)
+    assert np.any(img)
+    assert img.shape == (width * factor, height * factor, 3)
+    img_again = plotter.screenshot(scale=3)
+    assert np.any(img_again)
+    assert img_again.shape == (width * 3, height * 3, 3)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+    img = plotter.image
+    assert img.shape == (width * factor, height * factor, 3)
+
+    w, h = 20, 10
+    factor = 4
+    plotter.image_scale = factor
+    img = plotter.screenshot(transparent_background=False, window_size=(w, h))
+    assert img.shape == (h * factor, w * factor, 3)
+
+    img = plotter.screenshot(transparent_background=True, window_size=(w, h), scale=5)
+    assert img.shape == (h * 5, w * 5, 4)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+
+    with pytest.raises(ValueError):
+        plotter.image_scale = 0.5
+
+    plotter.close()
+
+
+def test_screenshot_altered_window_size(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+
+    plotter.window_size = (800, 800)
+    a = plotter.screenshot()
+    assert a.shape == (800, 800, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    plotter.window_size = (1000, 1000)
+    b = plotter.screenshot()
+    assert b.shape == (1000, 1000, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    d = plotter.screenshot(window_size=(600, 600))
+    assert d.shape == (600, 600, 3)
+    # plotter.show()  # for image regression test
+
+    plotter.close()
 
 
 def test_screenshot_bytes():
@@ -1533,8 +1591,6 @@ def test_image_properties():
     p.close()
     p = pyvista.Plotter()
     p.add_mesh(mesh)
-    p.store_image = True
-    assert p.store_image is True
     p.show()  # close plotter
     # Get RGB image
     _ = p.image
@@ -2174,13 +2230,7 @@ def test_plot_lighting_change_positional_false_true(sphere):
 
 def test_plotter_image():
     plotter = pyvista.Plotter()
-    plotter.show()
-    with pytest.raises(AttributeError, match='To retrieve an image after'):
-        plotter.image
-
-    plotter = pyvista.Plotter()
     wsz = tuple(plotter.window_size)
-    plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
 
@@ -2448,11 +2498,35 @@ def test_write_gif(sphere, tmpdir):
     assert os.path.getsize(path)
 
 
-def test_ruler(sphere):
-    sphere = pyvista.Sphere()
+def test_ruler():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.view_xy()
+    plotter.show()
+
+
+def test_legend_scale(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.add_legend_scale(color='red')
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_legend_scale(color='red', xy_label_mode=True)
+    plotter.view_xy()
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_legend_scale(
+        xy_label_mode=True,
+        bottom_axis_visibility=False,
+        left_axis_visibility=False,
+        right_axis_visibility=False,
+        top_axis_visibility=False,
+    )
     plotter.view_xy()
     plotter.show()
 
@@ -2471,11 +2545,16 @@ def test_plot_complex_value(plane, verify_image_cache):
     pl.show()
 
 
-def test_warn_screenshot_notebook():
+def test_screenshot_notebook(tmpdir):
+    tmp_dir = tmpdir.mkdir("tmpdir2")
+    filename = str(tmp_dir.join('tmp.png'))
+
     pl = pyvista.Plotter(notebook=True)
     pl.theme.jupyter_backend = 'static'
-    with pytest.warns(UserWarning, match='Set `jupyter_backend` backend to `"none"`'):
-        pl.show(screenshot='tmp.png')
+    pl.add_mesh(pyvista.Cone())
+    pl.show(screenshot=filename)
+
+    assert os.path.isfile(filename)
 
 
 def test_culling_frontface(sphere):
@@ -3050,7 +3129,7 @@ def test_plot_above_below_color(uniform):
     lut.scalar_range = clim
 
     pl = pyvista.Plotter()
-    pl.add_mesh(uniform, cmap=lut)
+    pl.add_mesh(uniform, cmap=lut, scalar_bar_args={'above_label': '', 'below_label': ''})
     pl.enable_depth_peeling()
     pl.show()
 
@@ -3340,6 +3419,18 @@ def test_plot_volume_rgba(uniform):
     with pytest.warns(UserWarning, match='Ignoring custom opacity'):
         pl.add_volume(uniform, scalars=scalars, opacity='sigmoid_10')
     pl.show()
+
+
+def test_plot_window_size_context(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    with pl.window_size_context((200, 200)):
+        pl.show()
+
+    pl.close()
+    with pytest.warns(UserWarning, match='Attempting to set window_size'):
+        with pl.window_size_context((200, 200)):
+            pass
 
 
 def test_color_cycler():
