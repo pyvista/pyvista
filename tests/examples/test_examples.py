@@ -66,6 +66,8 @@ def test_load_earth():
 
 
 def test_load_hydrogen_orbital():
+    with pytest.raises(ValueError, match='`n` must be'):
+        pv.examples.load_hydrogen_orbital(-1, 1, 0)
     with pytest.raises(ValueError, match='`l` must be'):
         pv.examples.load_hydrogen_orbital(1, 1, 0)
     with pytest.raises(ValueError, match='`m` must be'):

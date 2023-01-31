@@ -48,8 +48,8 @@ from pyvista import examples
 # See `Hydrogen atom <https://en.wikipedia.org/wiki/Hydrogen_atom>`_ for more
 # details.
 #
-# This dataset evaluates this function for the hydrogen orbital :math:`$3d_{xy}$`, with the
-# following quantum numbers:
+# This dataset evaluates this function for the hydrogen orbital
+# :math:`$3d_{xy}$`, with the following quantum numbers:
 #
 # * Principal quantum number: ``n=3``
 # * Azimuthal quantum number: ``l=2``
@@ -59,120 +59,118 @@ grid = examples.load_hydrogen_orbital(3, 2, -2)
 grid
 
 
-###############################################################################
-# Plot the Orbital
-# ~~~~~~~~~~~~~~~~
-# Plot the orbital using :func:`add_volume() <pyvista.Plotter.add_volume>` and
-# using the default scalars contained in ``grid``, ``real_hwf``. This way we
-# can plot more than just the probability of the electron, but also the phase
-# of the electron wave function.
-#
-# .. note::
-#    Since the real value of evaluated wave function for this orbital varies
-#    between ``[-<value>, <value>]``, we cannot use the default opacity
-#    ``opacity='linear'``. Instead, we use ``[1, 0, 1]`` since we would like
-#    the opacity to be proportional to the absolute value of the scalars.
+# ###############################################################################
+# # Plot the Orbital
+# # ~~~~~~~~~~~~~~~~
+# # Plot the orbital using :func:`add_volume() <pyvista.Plotter.add_volume>` and
+# # using the default scalars contained in ``grid``, ``real_hwf``. This way we
+# # can plot more than just the probability of the electron, but also the phase
+# # of the electron wave function.
+# #
+# # .. note::
+# #    Since the real value of evaluated wave function for this orbital varies
+# #    between ``[-<value>, <value>]``, we cannot use the default opacity
+# #    ``opacity='linear'``. Instead, we use ``[1, 0, 1]`` since we would like
+# #    the opacity to be proportional to the absolute value of the scalars.
 
-pl = pv.Plotter()
-vol = pl.add_volume(grid, cmap='magma', opacity=[1, 0, 1])
-vol.prop.interpolation_type = 'linear'
-pl.camera.zoom(1.5)
-pl.show_axes()
-pl.show()
-
-
-###############################################################################
-# Plot the Orbital Contours as an Isosurface
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Generate the contour plot for the orbital by determining when the orbital
-# equals 10% the maximum value of the orbital. This effectively captures the
-# majority of the "volume" the electron potentially exists in.
-#
-# Note how we use the absolute value of the scalars when evaluating
-# :func:`contour() <pyvista.PolyDataFilters.contour>`. Otherwise, we would only
-# capture the location of the spin-up electron.
-
-eval_at = grid['real_hwf'].max() * 0.1
-contours = grid.contour(
-    [eval_at],
-    scalars=np.abs(grid['real_hwf']),
-    method='marching_cubes',
-)
-contours = contours.interpolate(grid)
-contours.plot(
-    categories=2,
-    smooth_shading=True,
-    annotations={-eval_at: 'down-spin', eval_at: 'up-spin'},
-    scalar_bar_args={'n_labels': 0, 'title': ''},
-)
+# pl = pv.Plotter()
+# vol = pl.add_volume(grid, cmap='magma', opacity=[1, 0, 1])
+# vol.prop.interpolation_type = 'linear'
+# pl.camera.zoom(1.5)
+# pl.show_axes()
+# pl.show()
 
 
-###############################################################################
-# Volumetric Plot: Plot the Orbitals using RGBA
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Let's now combine some of the best parts of the two above plots. The
-# volumetric plot is great for showing the probability of the "electron cloud"
-# orbitals, but the colormap doesn't quite match reality as well as the
-# isosurface plot.
-#
-# For this example we're going to use an RGBA colormap to tightly control the
-# way the orbitals are plotted. For this, the opacity will be mapped to the
-# probability of the electron being at a location in the grid, which we can do
-# by taking the absolute value of the orbital's "hydrogen wave function". We
-# can set the color of the orbital based on the phase, which we can get simply
-# by with ``orbital['real_hwf'] < 0``.
-#
-# Let's start with a simple one, the 3pz orbital.
+# ###############################################################################
+# # Plot the Orbital Contours as an Isosurface
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# # Generate the contour plot for the orbital by determining when the orbital
+# # equals 10% the maximum value of the orbital. This effectively captures the
+# # most likely locations of the electron for this orbital.
+# #
+# # Note how we use the absolute value of the scalars when evaluating
+# # :func:`contour() <pyvista.PolyDataFilters.contour>` to capture where the
+# # positive and negative phases cross ``eval_at``.
+
+# eval_at = grid['real_hwf'].max() * 0.1
+# contours = grid.contour(
+#     [eval_at],
+#     scalars=np.abs(grid['real_hwf']),
+#     method='marching_cubes',
+# )
+# contours = contours.interpolate(grid)
+# contours.plot(
+#     smooth_shading=True,
+#     show_scalar_bar=False,
+# )
 
 
-def plot_orbital(orbital, cpos='iso', clip_plane='x'):
-    """Plot an electron orbital using an RGBA colormap."""
-    neg_mask = orbital['real_hwf'] < 0
-    rgba = np.zeros((orbital.n_points, 4), np.uint8)
-    rgba[neg_mask, 0] = 255
-    rgba[~neg_mask, 1] = 255
-
-    # normalize opacity
-    opac = np.abs(orbital['real_hwf']) ** 2
-    opac /= opac.max()
-    rgba[:, -1] = opac * 255
-
-    orbital['plot_scalars'] = rgba
-
-    pl = pv.Plotter()
-    vol = pl.add_volume(
-        orbital,
-        scalars='plot_scalars',
-    )
-    vol.prop.interpolation_type = 'linear'
-    if clip_plane:
-        pl.add_volume_clip_plane(
-            vol,
-            normal=clip_plane,
-            normal_rotation=False,
-        )
-    pl.camera_position = cpos
-    pl.camera.zoom(1.5)
-    pl.show_axes()
-    return pl.show()
+# ###############################################################################
+# # Volumetric Plot: Plot the Orbitals using RGBA
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# # Let's now combine some of the best parts of the two above plots. The
+# # volumetric plot is great for showing the probability of the "electron cloud"
+# # orbitals, but the colormap doesn't quite match reality as well as the
+# # isosurface plot.
+# #
+# # For this example we're going to use an RGBA colormap to tightly control the
+# # way the orbitals are plotted. For this, the opacity will be mapped to the
+# # probability of the electron being at a location in the grid, which we can do
+# # by taking the absolute value of the orbital's "hydrogen wave function". We
+# # can set the color of the orbital based on the phase, which we can get simply
+# # by with ``orbital['real_hwf'] < 0``.
+# #
+# # Let's start with a simple one, the :math:`$3p_z$` orbital.
 
 
-hydro_orbital = examples.load_hydrogen_orbital(3, 1, 0)
-plot_orbital(hydro_orbital, clip_plane='-x')
+# def plot_orbital(orbital, cpos='iso', clip_plane='x'):
+#     """Plot an electron orbital using an RGBA colormap."""
+#     neg_mask = orbital['real_hwf'] < 0
+#     rgba = np.zeros((orbital.n_points, 4), np.uint8)
+#     rgba[neg_mask, 0] = 255
+#     rgba[~neg_mask, 1] = 255
+
+#     # normalize opacity
+#     opac = np.abs(orbital['real_hwf']) ** 2
+#     opac /= opac.max()
+#     rgba[:, -1] = opac * 255
+
+#     orbital['plot_scalars'] = rgba
+
+#     pl = pv.Plotter()
+#     vol = pl.add_volume(
+#         orbital,
+#         scalars='plot_scalars',
+#     )
+#     vol.prop.interpolation_type = 'linear'
+#     if clip_plane:
+#         pl.add_volume_clip_plane(
+#             vol,
+#             normal=clip_plane,
+#             normal_rotation=False,
+#         )
+#     pl.camera_position = cpos
+#     pl.camera.zoom(1.5)
+#     pl.show_axes()
+#     return pl.show()
 
 
-###############################################################################
-# Volumetric Plot: 4dz2 orbital
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
-plot_orbital(hydro_orbital, clip_plane='-y')
+# hydro_orbital = examples.load_hydrogen_orbital(3, 1, 0)
+# plot_orbital(hydro_orbital, clip_plane='-x')
 
 
-###############################################################################
-# Volumetric Plot: 4dxz orbital
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
-plot_orbital(hydro_orbital, clip_plane='-y')
+# ###############################################################################
+# # Volumetric Plot: 4dz2 orbital
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
+# plot_orbital(hydro_orbital, clip_plane='-y')
+
+
+# ###############################################################################
+# # Volumetric Plot: 4dxz orbital
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
+# plot_orbital(hydro_orbital, clip_plane='-y')
 
 
 ###############################################################################
@@ -223,3 +221,20 @@ pl.enable_anti_aliasing()
 pl.camera.zoom(2)
 pl.background_color = 'w'
 pl.show()
+
+
+###############################################################################
+# Density Plot - Gaussian Points Representation
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Finally, let's plot the same data using the "gaussian points" representation.
+
+point_cloud.plot(
+    style='points_gaussian',
+    render_points_as_spheres=False,
+    point_size=3,
+    emissive=True,
+    background='k',
+    show_scalar_bar=False,
+    cpos='xz',
+    zoom=2,
+)

@@ -477,6 +477,8 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
             '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
         ) from None
 
+    if n < 1:
+        raise ValueError('`n` must be at least 1')
     if l not in range(n):
         raise ValueError(f'`l` must be one of: {list(range(n))}')
     if m not in range(-l, l + 1):
