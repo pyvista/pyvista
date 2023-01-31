@@ -180,9 +180,6 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 # use :func:`numpy.random.choice` to sample all the points of our
 # :class:`pyvista.UniformGrid` based on the probability of the electron being
 # at that coordinate.
-#
-# Note how we square the probability to better visualize the distribution of
-# the atomic orbital.
 
 # Generate the orbital and sample based on the square of the probability of an
 # electron being within a particular volume of space.
