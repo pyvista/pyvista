@@ -4044,6 +4044,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             performance is achieved.
 
         params : dict, optional
+            Optional silhouette parameters.
+
             .. deprecated:: 0.38.0
                This keyword argument is no longer used. Instead, input the
                parameters to this function directly.
