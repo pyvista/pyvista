@@ -28,7 +28,7 @@
    .. autosummary::
       :toctree:
    {% for item in attributes %}
-      {% if item not in inherited_attributes %}
+      {% if item not in inherited_members %}
         {% if item.0 != item.upper().0 %}
           {{ name }}.{{ item }}
         {% endif %}
