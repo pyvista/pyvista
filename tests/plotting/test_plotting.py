@@ -2498,11 +2498,35 @@ def test_write_gif(sphere, tmpdir):
     assert os.path.getsize(path)
 
 
-def test_ruler(sphere):
-    sphere = pyvista.Sphere()
+def test_ruler():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.view_xy()
+    plotter.show()
+
+
+def test_legend_scale(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.add_legend_scale(color='red')
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_legend_scale(color='red', xy_label_mode=True)
+    plotter.view_xy()
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_legend_scale(
+        xy_label_mode=True,
+        bottom_axis_visibility=False,
+        left_axis_visibility=False,
+        right_axis_visibility=False,
+        top_axis_visibility=False,
+    )
     plotter.view_xy()
     plotter.show()
 
