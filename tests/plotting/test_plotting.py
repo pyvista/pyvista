@@ -24,6 +24,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
+from pyvista.plotting.opts import RepresentationOpts, ShaderOpts
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities import algorithms
 from pyvista.utilities.misc import PyVistaDeprecationWarning, can_create_mpl_figure
@@ -66,6 +67,9 @@ skip_windows_mesa = pytest.mark.skipif(
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
+skip_lesser_9_0_X = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
+)
 skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
@@ -3507,3 +3511,40 @@ def test_color_cycler_names(name):
     assert a1.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a2.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+
+
+@skip_lesser_9_0_X
+def test_axes_actor_properties():
+    axes = pyvista.Axes()
+    axes_actor = axes.axes_actor
+
+    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
+    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
+    axes_actor.y_axis_shaft_properties.metallic = 0.2
+    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
+    axes_actor.z_axis_shaft_properties.roughness = 0.3
+    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
+
+    axes_actor.x_axis_tip_properties.anisotropy = 0.4
+    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
+    axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
+    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
+    axes_actor.y_axis_tip_properties.lighting = False
+    assert not axes_actor.y_axis_tip_properties.lighting
+    axes_actor.z_axis_tip_properties.interpolation_model = ShaderOpts.PHONG
+    assert axes_actor.z_axis_tip_properties.interpolation_model == ShaderOpts.PHONG
+
+    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
+    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
+    axes_actor.y_axis_shaft_properties.opacity = 0.6
+    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
+    axes_actor.z_axis_shaft_properties.shading = False
+    assert not axes_actor.z_axis_shaft_properties.shading
+
+    axes_actor.x_axis_tip_properties.representation = RepresentationOpts.POINTS
+    assert axes_actor.x_axis_tip_properties.representation == RepresentationOpts.POINTS
+
+    axes.axes_actor.shaft_type = pyvista.AxesActor.ShaftType.CYLINDER
+    pl = pyvista.Plotter()
+    pl.add_actor(axes_actor)
+    pl.show()
