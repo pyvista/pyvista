@@ -1478,7 +1478,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # set font
         font_family = parse_font_family(font_family)
 
-        if use_3d_text and not np.allclose(self.scale, use_3d_text):
+        if use_3d_text and not np.allclose(self.scale, use_3d_text):  # pragma: no cover
             warnings.warn(
                 'Using 2D actors for text due to scaling != (1, 1, 1)\n\n'
                 'Either disable scaling or set use_3d_text=False'
