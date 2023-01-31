@@ -379,6 +379,8 @@ import re
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString
 
+numpydoc_show_inherited_class_members = False
+
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
