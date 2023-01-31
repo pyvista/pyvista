@@ -379,6 +379,7 @@ import re
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString
 
+# Hide inherited methods to reduce duplicate example execution
 numpydoc_show_inherited_class_members = False
 
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
