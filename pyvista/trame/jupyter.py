@@ -169,6 +169,7 @@ def show_trame(
     server_proxy_enabled=None,
     server_proxy_prefix=None,
     collapse_menu=False,
+    add_menu=True,
     default_server_rendering=True,
     handler=None,
     **kwargs,
@@ -199,6 +200,9 @@ def show_trame(
 
     collapse_menu : bool, default: False
         Collapse the UI menu (camera controls, etc.) on start.
+
+    add_menu : bool, default: True
+            Add a UI controls VCard to the VContainer
 
     default_server_rendering : bool, default: True
         Whether to use server-side or client-side rendering on-start when
@@ -260,6 +264,7 @@ def show_trame(
         mode=mode,
         default_server_rendering=default_server_rendering,
         collapse_menu=collapse_menu,
+        add_menu=add_menu,
     )
 
     # Show as cell result

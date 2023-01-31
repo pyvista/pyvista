@@ -309,6 +309,12 @@ class Viewer:
             classes='pa-0 fill-height',
         ) as container:
             server = container.server
+            # Initialize state variables
+            server.state[self.EDGES] = False
+            server.state[self.GRID] = False
+            server.state[self.OUTLINE] = False
+            server.state[self.AXIS] = False
+            server.state[self.SERVER_RENDERING] = default_server_rendering
             if add_menu:
                 server.state[self.SHOW_UI] = not collapse_menu
                 with vuetify.VCard(
