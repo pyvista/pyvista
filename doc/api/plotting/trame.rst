@@ -15,8 +15,11 @@ For the full user guide, see :ref:`trame_jupyter`.
 .. autosummary::
    :toctree: _autosummary
 
-   jupyter.launch_server
-   jupyter.show_trame
-   jupyter.elegantly_launch
-   ui.get_or_create_viewer
-   ui.plotter_ui
+   launch_server
+   show_trame
+   elegantly_launch
+   get_or_create_viewer
+   plotter_ui
+   PyVistaLocalView
+   PyVistaRemoteLocalView
+   PyVistaRemoteView
