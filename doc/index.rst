@@ -168,7 +168,7 @@ Subtract a sphere from a cube mesh.
 
 Plot Volumetric Data
 ~~~~~~~~~~~~~~~~~~~~
-Plot the 3dxy orbital of a hydrogen atom.
+Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
 
 .. note::
    This example requires `sympy <https://www.sympy.org/>`_.
