@@ -3891,7 +3891,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
                 raise ValueError(
                     '`add_volume` only supports scalars with 2 dimensions that have 4 components of datatype np.uint8.\n\n'
-                    f'Scalars have shape {scalars.shape} and dtype {scalars.dtype.__name__!r}.'
+                    f'Scalars have shape {scalars.shape} and dtype {scalars.dtype.name!r}.'
                 )
 
         if not np.issubdtype(scalars.dtype, np.number):

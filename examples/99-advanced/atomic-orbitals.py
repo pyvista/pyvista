@@ -161,14 +161,14 @@ plot_orbital(hydro_orbital, clip_plane='-x')
 
 ###############################################################################
 # Volumetric Plot: :math:`4d_{z^2}` orbital
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
 plot_orbital(hydro_orbital, clip_plane='-y')
 
 
 ###############################################################################
 # Volumetric Plot: :math:`4d_{xz}` orbital
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
 plot_orbital(hydro_orbital, clip_plane='-y')
 
