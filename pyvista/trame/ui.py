@@ -477,7 +477,9 @@ def get_or_create_viewer(plotter, suppress_rendering=False):
     return Viewer(plotter, suppress_rendering=suppress_rendering)
 
 
-def plotter_ui(plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs):
+def plotter_ui(
+    plotter, mode=None, default_server_rendering=True, collapse_menu=False, add_menu=True, **kwargs
+):
     """Create a UI view for the given Plotter.
 
     Parameters
@@ -501,6 +503,9 @@ def plotter_ui(plotter, mode=None, default_server_rendering=True, collapse_menu=
     collapse_menu : bool, default: False
         Collapse the UI menu (camera controls, etc.) on start.
 
+    add_menu : bool, default: True
+        Add a UI controls VCard to the VContainer
+
     **kwargs : dict, optional
         Additional keyword arguments are passed to the viewer being created.
 
@@ -515,5 +520,6 @@ def plotter_ui(plotter, mode=None, default_server_rendering=True, collapse_menu=
         mode=mode,
         default_server_rendering=default_server_rendering,
         collapse_menu=collapse_menu,
+        add_menu=add_menu,
         **kwargs,
     )
