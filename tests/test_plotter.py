@@ -8,14 +8,34 @@ import numpy as np
 import pytest
 
 import pyvista
+from pyvista.core.errors import DeprecationError
 from pyvista.errors import MissingDataError
 from pyvista.plotting import _plotting
 
 
-def test_plotter_image():
+def test_plotter_image_before_show():
     plotter = pyvista.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
         plotter.image
+
+
+def test_screenshot_fail_suppressed_rendering():
+    plotter = pyvista.Plotter()
+    plotter.suppress_rendering = True
+    with pytest.warns(UserWarning, match='screenshot is unable to be taken'):
+        plotter.show(screenshot='tmp.png')
+
+
+def test_plotter_line_point_smoothing():
+    pl = pyvista.Plotter()
+    assert bool(pl.render_window.GetLineSmoothing()) is False
+    assert bool(pl.render_window.GetPointSmoothing()) is False
+    assert bool(pl.render_window.GetPolygonSmoothing()) is False
+
+    pl = pyvista.Plotter(line_smoothing=True, point_smoothing=True, polygon_smoothing=True)
+    assert bool(pl.render_window.GetLineSmoothing()) is True
+    assert bool(pl.render_window.GetPointSmoothing()) is True
+    assert bool(pl.render_window.GetPolygonSmoothing()) is True
 
 
 def test_enable_hidden_line_removal():
@@ -67,6 +87,16 @@ def test_pickable_actors():
 
     with pytest.raises(TypeError, match="Expected a vtkActor instance or "):
         plotter.pickable_actors = [0, 10]
+
+
+def test_plotter_image_scale():
+    pl = pyvista.Plotter()
+    assert isinstance(pl.image_scale, int)
+    with pytest.raises(ValueError, match='must be a positive integer'):
+        pl.image_scale = 0
+
+    pl.image_scale = 2
+    assert pl.image_scale == 2
 
 
 def test_prepare_smooth_shading_texture(globe):
@@ -287,6 +317,24 @@ def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
     assert isinstance(img, np.ndarray)
 
 
+def test_plotter_actors(sphere, cube):
+    pl = pyvista.Plotter()
+    actor_a = pl.add_mesh(sphere)
+    actor_b = pl.add_mesh(cube)
+    assert len(pl.actors) == 2
+    assert actor_a in pl.actors.values()
+    assert actor_b in pl.actors.values()
+
+
+def test_plotter_suppress_rendering():
+    pl = pyvista.Plotter()
+    assert isinstance(pl.suppress_rendering, bool)
+    pl.suppress_rendering = True
+    assert pl.suppress_rendering is True
+    pl.suppress_rendering = False
+    assert pl.suppress_rendering is False
+
+
 def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista.PolyData):
     """Test edge case where add_volume has no scalars."""
     uniform.clear_data()
@@ -296,6 +344,16 @@ def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista
 
     with pytest.raises(TypeError, match='not supported for volume rendering'):
         pl.add_volume(sphere)
+
+
+def test_deprecated_store_image():
+    """Test to make sure store_image is deprecated."""
+    pl = pyvista.Plotter()
+    with pytest.raises(DeprecationError):
+        assert isinstance(pl.store_image, bool)
+
+    with pytest.raises(DeprecationError):
+        pl.store_image = True
 
 
 def test_plotter_add_volume_clim(uniform: pyvista.UniformGrid):

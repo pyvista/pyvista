@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -49,3 +50,29 @@ def test_static_from_show(sphere, return_viewer):
     if return_viewer:
         assert isinstance(image, Image)
         assert window_size == image.size
+
+
+@skip_no_ipython
+@skip_no_plotting
+def test_show_return_values(sphere: pv.PolyData):
+    # Three possible return values: (cpos, image, widget)
+    img, viewer = sphere.plot(
+        notebook=True,
+        return_viewer=True,
+        return_cpos=False,
+        return_img=True,
+        jupyter_backend='static',
+    )
+    assert isinstance(img, np.ndarray)
+    assert isinstance(viewer, Image)
+
+    cpos, img, viewer = sphere.plot(
+        notebook=True,
+        return_viewer=True,
+        return_cpos=True,
+        return_img=True,
+        jupyter_backend='static',
+    )
+    assert isinstance(cpos, pv.CameraPosition)
+    assert isinstance(img, np.ndarray)
+    assert isinstance(viewer, Image)

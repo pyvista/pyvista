@@ -36,7 +36,7 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
-from ._typing import ColorLike
+from ._typing import ColorLike, Number
 from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
@@ -309,7 +309,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
-        self._decimate = 0.9
+        self._decimate = None
 
     @property
     def color(self) -> Color:
@@ -392,8 +392,11 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @decimate.setter
     def decimate(self, decimate: float):
-        _check_between_zero_and_one(decimate, 'decimate')
-        self._decimate = float(decimate)
+        if decimate is None:
+            self._decimate = None
+        else:
+            _check_between_zero_and_one(decimate, 'decimate')
+            self._decimate = float(decimate)
 
     def __repr__(self):
         txt = ['']
@@ -1082,6 +1085,123 @@ class _SliderConfig(_ThemeConfig):
             yield style.name
 
 
+class _TrameConfig(_ThemeConfig):
+    """PyVista Trame configuration.
+
+    Examples
+    --------
+    Set global trame view parameters.
+
+    >>> import pyvista as pv
+    >>> pv.global_theme.trame.interactive_ratio = 2
+    >>> pv.global_theme.trame.still_ratio = 2
+
+    """
+
+    __slots__ = [
+        '_interactive_ratio',
+        '_still_ratio',
+        '_jupyter_server_name',
+        '_server_proxy_enabled',
+        '_server_proxy_prefix',
+        '_default_mode',
+    ]
+
+    def __init__(self):
+        self._interactive_ratio = 1
+        self._still_ratio = 1
+        self._jupyter_server_name = 'pyvista-jupyter'
+        self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
+        # default for ``jupyter-server-proxy``
+        self._server_proxy_prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        self._default_mode = 'trame'
+
+    @property
+    def interactive_ratio(self) -> Number:
+        """Return or set the interactive ratio for PyVista Trame views.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.trame.interactive_ratio = 2
+
+        """
+        return self._interactive_ratio
+
+    @interactive_ratio.setter
+    def interactive_ratio(self, interactive_ratio: Number):
+        self._interactive_ratio = interactive_ratio
+
+    @property
+    def still_ratio(self) -> Number:
+        """Return or set the still ratio for PyVista Trame views.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.trame.still_ratio = 2
+
+        """
+        return self._still_ratio
+
+    @still_ratio.setter
+    def still_ratio(self, still_ratio: Number):
+        self._still_ratio = still_ratio
+
+    @property
+    def jupyter_server_name(self):
+        """Return or set the trame server name PyVista uses in Jupyter.
+
+        This defaults to ``'pyvista-jupyter'``.
+
+        This must be set before running :func:`pyvista.set_jupyter_backend`
+        to ensure a server of this name is launched.
+
+        Most users should not need to modify this.
+
+        """
+        return self._jupyter_server_name
+
+    @jupyter_server_name.setter
+    def jupyter_server_name(self, name: str):
+        self._jupyter_server_name = name
+
+    @property
+    def server_proxy_enabled(self) -> bool:
+        """Return or set if use of relative URLs is enabled for the Jupyter interface."""
+        return self._server_proxy_enabled
+
+    @server_proxy_enabled.setter
+    def server_proxy_enabled(self, enabled: bool):
+        self._server_proxy_enabled = bool(enabled)
+
+    @property
+    def server_proxy_prefix(self):
+        """Return or set URL prefix when using relative URLs with the Jupyter interface."""
+        return self._server_proxy_prefix
+
+    @server_proxy_prefix.setter
+    def server_proxy_prefix(self, prefix: str):
+        self._server_proxy_prefix = prefix
+
+    @property
+    def default_mode(self):
+        """Return or set the default mode of the Trame backend.
+
+        * ``'trame'``: Uses a view that can switch between client and server
+          rendering modes.
+        * ``'server'``: Uses a view that is purely server rendering.
+        * ``'client'``: Uses a view that is purely client rendering (generally
+          safe without a virtual frame buffer)
+
+        """
+        return self._default_mode
+
+    @default_mode.setter
+    def default_mode(self, mode: str):
+        self._default_mode = mode
+
+
 class DefaultTheme(_ThemeConfig):
     """PyVista default theme.
 
@@ -1109,8 +1229,10 @@ class DefaultTheme(_ThemeConfig):
         '_name',
         '_background',
         '_jupyter_backend',
+        '_trame',
         '_full_screen',
         '_window_size',
+        '_image_scale',
         '_camera',
         '_notebook',
         '_font',
@@ -1163,6 +1285,7 @@ class DefaultTheme(_ThemeConfig):
 
         self._notebook = None
         self._window_size = [1024, 768]
+        self._image_scale = 1
         self._font = _Font()
         self._cmap = 'viridis'
         self._color = Color('white')
@@ -1208,7 +1331,8 @@ class DefaultTheme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'ipyvtklink')
+        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')
+        self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
@@ -1329,7 +1453,7 @@ class DefaultTheme(_ThemeConfig):
         Jupyter backend to use when plotting.  Must be one of the
         following:
 
-        * ``'ipyvtklink'`` : Render remotely and stream the
+        * ``'ipyvtklink'`` : DEPRECATED. Render remotely and stream the
           resulting VTK images back to the client.  Supports all VTK
           methods, but suffers from lag due to remote rendering.
           Requires that a virtual framebuffer be set up when displaying
@@ -1368,29 +1492,28 @@ class DefaultTheme(_ThemeConfig):
         Enable the pythreejs backend.
 
         >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('pythreejs')
+        >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
 
         Enable the ipygany backend.
 
-        >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('ipygany')
+        >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
 
         Enable the panel backend.
 
-        >>> pv.set_jupyter_backend('panel')
+        >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
 
-        Enable the ipyvtklink backend.
+        Enable the ipyvtklink backend (DEPRECATED).
 
-        >>> pv.set_jupyter_backend('ipyvtklink')
+        >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
         Just show static images.
 
-        >>> pv.set_jupyter_backend('static')
+        >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
 
-        >>> pv.set_jupyter_backend(None)  # or 'none'
+        >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
         """
         return self._jupyter_backend
@@ -1400,6 +1523,17 @@ class DefaultTheme(_ThemeConfig):
         from pyvista.jupyter import _validate_jupyter_backend
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
+
+    @property
+    def trame(self) -> _TrameConfig:
+        """Return or set the default trame parameters."""
+        return self._trame
+
+    @trame.setter
+    def trame(self, config: _TrameConfig):
+        if not isinstance(config, _TrameConfig):
+            raise TypeError('Configuration type must be `_TrameConfig`.')
+        self._trame = config
 
     @property
     def auto_close(self) -> bool:
@@ -1536,6 +1670,18 @@ class DefaultTheme(_ThemeConfig):
             raise ValueError('Window size must be a positive value.')
 
         self._window_size = window_size
+
+    @property
+    def image_scale(self) -> int:
+        """Return or set the default image scale factor."""
+        return self._image_scale
+
+    @image_scale.setter
+    def image_scale(self, value: int):
+        value = int(value)
+        if value < 1:
+            raise ValueError('Scale factor must be a positive integer.')
+        self._image_scale = int(value)
 
     @property
     def font(self) -> _Font:
@@ -2338,31 +2484,6 @@ class DefaultTheme(_ThemeConfig):
         del data["before_close_callback"]
         with open(filename, 'w') as f:
             json.dump(data, f)
-
-    @property
-    def use_ipyvtk(self):  # pragma: no cover
-        """Set or return the usage of "ipyvtk" as a jupyter backend.
-
-        .. deprecated:: 0.35.0
-           Deprecated in favor of ``jupyter_backend``.
-        """
-        warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
-            DeprecationWarning,
-        )
-        return self.jupyter_backend == 'ipyvtklink'
-
-    @use_ipyvtk.setter
-    def use_ipyvtk(self, value):  # pragma: no cover
-        warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
-            DeprecationWarning,
-        )
-
-        if value:
-            self.jupyter_backend = 'ipyvtklink'
-        else:
-            self.jupyter_backend = 'static'
 
     @property
     def split_sharp_edges(self) -> bool:

@@ -5,7 +5,7 @@ repos:
   - id: black
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.11.4
+  rev: 5.12.0
   hooks:
   - id: isort
 
@@ -24,7 +24,7 @@ repos:
   hooks:
   - id: codespell
     args: [
-      "doc examples examples_flask pyvista tests",
+      "doc examples examples_flask examples_trame pyvista tests",
       "*.py *.rst *.md",
     ]
     additional_dependencies: [
@@ -67,6 +67,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.20.0
+  rev: 0.21.0
   hooks:
     - id: check-github-workflows

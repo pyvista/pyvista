@@ -4,8 +4,13 @@ imageio
 imageio-ffmpeg
 ipygany
 ipyvtklink
+jupyter-server-proxy
 matplotlib
 meshio
 panel
 pythreejs
+trame
+trame-client>=2.4.2
+trame-server>=2.7.1
+trame-vtk>=2.0.15
 trimesh
