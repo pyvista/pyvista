@@ -14,6 +14,7 @@ For the full user guide, see :ref:`trame_jupyter`.
 
 .. autosummary::
    :toctree: _autosummary
+   :no-inherited-members:
 
    launch_server
    show_trame
