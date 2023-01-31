@@ -170,6 +170,9 @@ Plot Volumetric Data
 ~~~~~~~~~~~~~~~~~~~~
 Plot the 3dxy orbital of a hydrogen atom.
 
+.. note::
+   This example requires `sympy <https://www.sympy.org/>`_.
+
 .. jupyter-execute::
 
     from pyvista import examples

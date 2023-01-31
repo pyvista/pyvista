@@ -186,10 +186,12 @@ def cartesian_to_spherical(x, y, z):
         Radial distance.
 
     theta : numpy.ndarray
-        Angle (radians) with respect to the polar axis.
+        Angle (radians) with respect to the polar axis. Also known
+        as polar angle.
 
     phi : numpy.ndarray
         Angle (radians) of rotation from the initial meridian plane.
+        Also known as azimuthal angle.
 
     Examples
     --------

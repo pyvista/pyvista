@@ -417,7 +417,8 @@ def load_nut():
 def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     """Load the hydrogen wave function for a :class:`pyvista.UniformGrid`.
 
-    This is the Schrödinger equation evaluated in three dimensions.
+    This is the solution to the Schrödinger equation for hydrogen
+    evaluated in three-dimensional Cartesian space.
 
     Inspired by `Hydrogen Wave Function
     <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_.
@@ -426,7 +427,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     ----------
     n : int, default: 1
         Principal quantum number. Must be a positive integer. This is often
-        referred to the "energy level" or "shell".
+        referred to as the "energy level" or "shell".
 
     l : int, default: 0
         Azimuthal quantum number. Must be a non-negative integer strictly
@@ -447,8 +448,8 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     pyvista.UniformGrid
         UniformGrid containing two ``point_data`` arrays:
 
-        * ``'real_hwf'`` - Real component of the quantum hydrogen wave function.
-        * ``'hwf'`` - Complex quantum hydrogen wave function.
+        * ``'real_wf'`` - Real part of the wave function.
+        * ``'wf'`` - Complex wave function.
 
     Notes
     -----

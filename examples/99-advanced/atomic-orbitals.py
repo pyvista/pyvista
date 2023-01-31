@@ -1,4 +1,4 @@
-r"""
+"""
 .. _plot_atomic_orbitals_example:
 
 Plot Atomic Orbitals
@@ -14,7 +14,7 @@ Visualize the wave functions (orbitals) of the hydrogen atom.
 #
 # .. note::
 #    This example is modeled off of `Matplotlib: Hydrogen Wave Function
-#    <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_
+#    <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_.
 #
 #    This example requires `sympy <https://www.sympy.org/>`_. Install it with:
 #
@@ -35,21 +35,20 @@ from pyvista import examples
 #
 # .. math::
 #    \begin{equation}
-#        \label{eq:hydro_wfc}
-#        \psi_{nlm}(r,\theta,\phi)
+#        \psi_{n\ell m}(r,\theta,\phi)
 #        =
 #        \sqrt{
-#            \left(\frac{2}{na_0}\right)^3\, \frac{(n-l-1)!}{2n[(n+l)!]}
+#            \left(\frac{2}{na_0}\right)^3\, \frac{(n-\ell-1)!}{2n[(n+\ell)!]}
 #        }
 #        e^{-r / na_0}
-#        \left(\frac{2r}{na_0}\right)^l
-#        L_{n-l-1}^{2l+1} \cdot Y_l^m(\theta, \phi)
+#        \left(\frac{2r}{na_0}\right)^\ell
+#        L_{n-\ell-1}^{2\ell+1} \cdot Y_\ell^m(\theta, \phi)
 #    \end{equation}
 #
 # See `Hydrogen atom <https://en.wikipedia.org/wiki/Hydrogen_atom>`_ for more
 # details.
 #
-# This dataset evaluates this function for the hydrogen orbital 3dxy, with the
+# This dataset evaluates this function for the hydrogen orbital :math:`$3d_{xy}$`, with the
 # following quantum numbers:
 #
 # * Principal quantum number: ``n=3``
@@ -65,8 +64,8 @@ grid
 # ~~~~~~~~~~~~~~~~
 # Plot the orbital using :func:`add_volume() <pyvista.Plotter.add_volume>` and
 # using the default scalars contained in ``grid``, ``real_hwf``. This way we
-# can plot more than just the probability of the election, but also the phase
-# of the electron.
+# can plot more than just the probability of the electron, but also the phase
+# of the electron wave function.
 #
 # .. note::
 #    Since the real value of evaluated wave function for this orbital varies
@@ -116,8 +115,8 @@ contours.plot(
 # orbitals, but the colormap doesn't quite match reality as well as the
 # isosurface plot.
 #
-# For this example we're going to use an RGBA colormap to tightly control way
-# the orbitals are plotted. For this, the opacity will be mapped to the
+# For this example we're going to use an RGBA colormap to tightly control the
+# way the orbitals are plotted. For this, the opacity will be mapped to the
 # probability of the electron being at a location in the grid, which we can do
 # by taking the absolute value of the orbital's "hydrogen wave function". We
 # can set the color of the orbital based on the phase, which we can get simply
@@ -199,7 +198,7 @@ indices = np.random.choice(hydro_orbital.n_points, 10000, p=prob)
 points = hydro_orbital.points[indices]
 points += np.random.random(points.shape) - 0.5
 
-# Create a point cloud and add the phase of as the active scalars
+# Create a point cloud and add the phase as the active scalars
 point_cloud = pv.PolyData(points)
 point_cloud['phase'] = hydro_orbital['real_hwf'][indices] < 0
 
