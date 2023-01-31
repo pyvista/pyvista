@@ -6251,7 +6251,8 @@ class Plotter(BasePlotter):
         self._window_size_unset = False
         if window_size is None:
             self.window_size = self._theme.window_size
-            self._window_size_unset = True
+            if self.window_size == pyvista.themes.DefaultTheme().window_size:
+                self._window_size_unset = True
         else:
             self.window_size = window_size
 

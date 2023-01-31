@@ -159,16 +159,29 @@ def test_trame_jupyter_custom_size():
     _ = plotter.add_mesh(pv.Cone())
     widget = plotter.show(jupyter_backend='trame', return_viewer=True)
     html = widget.value
-    assert f"width: {w}px" in html
-    assert f"height: {h}px" in html
+    assert f'width: {w}px' in html
+    assert f'height: {h}px' in html
 
     plotter = pv.Plotter(notebook=True)
     plotter.window_size = (w, h)
     _ = plotter.add_mesh(pv.Cone())
     widget = plotter.show(jupyter_backend='trame', return_viewer=True)
     html = widget.value
-    assert f"width: {w}px" in html
-    assert f"height: {h}px" in html
+    assert f'width: {w}px' in html
+    assert f'height: {h}px' in html
+
+    # Make sure that if size is default theme, it uses 99%/600px
+    previous_size = pv.global_theme.window_size
+    pv.global_theme.window_size = pv.themes.DefaultTheme().window_size
+    try:
+        plotter = pv.Plotter(notebook=True)
+        _ = plotter.add_mesh(pv.Cone())
+        widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+        html = widget.value
+        assert 'width: 99%' in html
+        assert 'height: 600px' in html
+    finally:
+        pv.global_theme.window_size = previous_size
 
 
 @skip_no_trame
