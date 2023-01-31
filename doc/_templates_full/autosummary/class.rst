@@ -13,7 +13,9 @@
       :toctree:
    {% for item in methods %}
       {% if not item in skipmethods %}
-      {{ name }}.{{ item }}
+        {% if item not in inherited_members %}
+          {{ name }}.{{ item }}
+        {% endif %}
       {% endif %}
    {%- endfor %}
    {% endif %}
@@ -26,8 +28,10 @@
    .. autosummary::
       :toctree:
    {% for item in attributes %}
-      {% if item.0 != item.upper().0 %}
-      {{ name }}.{{ item }}
+      {% if item not in inherited_attributes %}
+        {% if item.0 != item.upper().0 %}
+          {{ name }}.{{ item }}
+        {% endif %}
       {% endif %}
    {%- endfor %}
    {% endif %}
