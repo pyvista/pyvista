@@ -32,7 +32,7 @@ Most of the ones below are designed to reduce the build time and resulting
 wheel size.
 
 .. note::
-   We have also published some convienant CMake configurations files that you
+   We have also published some convenient CMake configurations files that you
    can adopt from `banesullivan/vtk-cmake <https://github.com/banesullivan/vtk-cmake>`. These configurations cover the build variants described here
    and make the process of reproducibly building VTK wheel variants more
    straightforward.
