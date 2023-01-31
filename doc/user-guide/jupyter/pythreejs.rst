@@ -2,6 +2,12 @@
 
 Using ``pythreejs`` with PyVista
 --------------------------------
+
+.. deprecated:: 0.38.0
+   This backend has been deprecated in favor of :ref:`trame_jupyter` - a new
+   framework for building dynamic web applications with Python with great
+   support for VTK.
+
 The `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_
 jupyterlab plotting backend is a powerful library that enables
 web-based visualization leveraging `threejs <https://threejs.org/>`_.

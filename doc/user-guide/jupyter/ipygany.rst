@@ -2,10 +2,10 @@
 
 Using ``ipygany`` with PyVista
 ------------------------------
-.. warning::
-   Currently, this backend has inferior support and features than the
-   ``pythreejs``.  If you would like accurate recreations of VTK
-   scenes in three.js, please see :ref:`pythreejs_ref`.
+.. deprecated:: 0.38.0
+   This backend has been deprecated in favor of :ref:`trame_jupyter` - a new
+   framework for building dynamic web applications with Python with great
+   support for VTK.
 
 The `ipygany <https://github.com/QuantStack/ipygany>`_ jupyterlab
 plotting backend is a powerful module that enables pure plotting that
