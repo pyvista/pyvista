@@ -210,6 +210,10 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.Plot3DFunctionEnum$',
     # VTK methods
     r'\.override$',
+    # trame
+    r'\.PyVistaRemoteView(\.|$)',
+    r'\.PyVistaLocalView(\.|$)',
+    r'\.PyVistaRemoteLocalView(\.|$)',
 }
 
 

@@ -80,7 +80,27 @@ class Widget(widgets.HTML):
 
 
 def launch_server(server=None):
-    """Launch a trame server for use with Jupyter."""
+    """Launch a trame server for use with Jupyter.
+
+    Parameters
+    ----------
+    server : str, optional
+        By default this uses :attr:`pyvista.global_theme.trame.jupyter_server_name
+        <pyvista.themes._TrameConfig.jupyter_server_name>`, which by default is
+        set to ``'pyvista-jupyter'``.
+
+        If a server name is given and such server is not available yet, it will
+        be created otherwise the previously created instance will be returned.
+
+        Server will run on to ``127.0.0.1`` unless user sets the environment
+        variable ``TRAME_DEFAULT_HOST``.
+
+    Returns
+    -------
+    trame_server.core.Server
+        Trame server.
+
+    """
     if server is None:
         server = pyvista.global_theme.trame.jupyter_server_name
     if isinstance(server, str):
@@ -176,33 +196,36 @@ def show_trame(
 ):
     """Run and display the trame application in jupyter's event loop.
 
+    Parameters
+    ----------
     plotter : pyvista.BasePlotter
         The PyVista plotter to show.
 
     mode : str, optional
         The UI view mode. This can be set on the global theme. Options are:
-            * ``'trame'``: Uses a view that can switch between client and server
-              rendering modes.
-            * ``'server'``: Uses a view that is purely server rendering.
-            * ``'client'``: Uses a view that is purely client rendering (generally
-              safe without a virtual frame buffer)
+
+        * ``'trame'``: Uses a view that can switch between client and server
+          rendering modes.
+        * ``'server'``: Uses a view that is purely server rendering.
+        * ``'client'``: Uses a view that is purely client rendering (generally
+          safe without a virtual frame buffer)
 
     name : str, optional
-        The name of the trame server on which the UI is defined
+        The name of the trame server on which the UI is defined.
 
     server_proxy_enabled : bool, default: False
         Build a relative URL for use with ``jupyter-server-proxy``.
 
     server_proxy_prefix : str, optional
-        URL prefix when using ``server_proxy_enabled``. This can be set globally in
-        the theme. To ignore, pass ``False``. For use with
+        URL prefix when using ``server_proxy_enabled``. This can be set
+        globally in the theme. To ignore, pass ``False``. For use with
         ``jupyter-server-proxy``, often set to ``proxy/``.
 
     collapse_menu : bool, default: False
         Collapse the UI menu (camera controls, etc.) on start.
 
     add_menu : bool, default: True
-            Add a UI controls VCard to the VContainer
+        Add a UI controls VCard to the VContainer.
 
     default_server_rendering : bool, default: True
         Whether to use server-side or client-side rendering on-start when
@@ -212,7 +235,7 @@ def show_trame(
         Pass a callable that accptes the viewer instance, the string URL,
         and ``**kwargs`` to create custom HTML representations of the output.
 
-        .. code::
+        .. code:: python
 
             import pyvista as pv
             from IPython.display import IFrame
@@ -297,12 +320,30 @@ def elegantly_launch(server):
     This provides a mechanism to launch the Trame Jupyter backend in
     a way that does not require users to await the call.
 
-    .. warning::
-        This uses `nest_asyncio <https://github.com/erdewit/nest_asyncio>`_
-        which patches the standard lib `asyncio` package and may have
-        unintended consequences for some uses cases. We advise strongly to
-        make sure PyVista's Jupyter backend is not set to use Trame when not
-        in a Jupyter environment.
+    Parameters
+    ----------
+    server : str, optional
+        By default this uses :attr:`pyvista.global_theme.trame.jupyter_server_name
+        <pyvista.themes._TrameConfig.jupyter_server_name>`, which by default is
+        set to ``'pyvista-jupyter'``.
+
+        If a server name is given and such server is not available yet, it will
+        be created. Otherwise, the previously created instance will be returned.
+
+        Server will run on to ``127.0.0.1`` unless you set the environment
+        variable ``TRAME_DEFAULT_HOST``.
+
+    Returns
+    -------
+    trame_server.core.Server
+        Trame server.
+
+    Warnings
+    --------
+    This uses `nest_asyncio <https://github.com/erdewit/nest_asyncio>`_ which
+    patches the standard lib `asyncio` package and may have unintended
+    consequences for some uses cases. We advise strongly to make sure PyVista's
+    Jupyter backend is not set to use Trame when not in a Jupyter environment.
 
     """
     try:

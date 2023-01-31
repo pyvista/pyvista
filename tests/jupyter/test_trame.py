@@ -55,6 +55,7 @@ def test_trame():
     actor = pl.add_mesh(pv.Cone())
     widget = pl.show(return_viewer=True)
     assert isinstance(widget, Widget)
+    assert 'http://' in widget.src
 
     viewer = get_or_create_viewer(pl)
 
