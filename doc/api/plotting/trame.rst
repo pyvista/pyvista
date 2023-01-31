@@ -14,13 +14,9 @@ For the full user guide, see :ref:`trame_jupyter`.
 
 .. autosummary::
    :toctree: _autosummary
-   :no-inherited-members:
 
    launch_server
    show_trame
    elegantly_launch
    get_or_create_viewer
    plotter_ui
-   PyVistaLocalView
-   PyVistaRemoteLocalView
-   PyVistaRemoteView
