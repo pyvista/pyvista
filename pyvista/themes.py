@@ -464,7 +464,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
-        self._decimate = 0.9
+        self._decimate = None
         self._enabled = False
 
     @property
@@ -557,8 +557,11 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @decimate.setter
     def decimate(self, decimate: float):
-        _check_between_zero_and_one(decimate, 'decimate')
-        self._decimate = float(decimate)
+        if decimate is None:
+            self._decimate = None
+        else:
+            _check_between_zero_and_one(decimate, 'decimate')
+            self._decimate = float(decimate)
 
     def __repr__(self):
         txt = ['']
@@ -1395,6 +1398,7 @@ class DefaultTheme(_ThemeConfig):
         '_trame',
         '_full_screen',
         '_window_size',
+        '_image_scale',
         '_camera',
         '_notebook',
         '_font',
@@ -1454,6 +1458,7 @@ class DefaultTheme(_ThemeConfig):
 
         self._notebook = None
         self._window_size = [1024, 768]
+        self._image_scale = 1
         self._font = _Font()
         self._cmap = 'viridis'
         self._color = Color('white')
@@ -1915,6 +1920,18 @@ class DefaultTheme(_ThemeConfig):
             raise ValueError('Window size must be a positive value.')
 
         self._window_size = window_size
+
+    @property
+    def image_scale(self) -> int:
+        """Return or set the default image scale factor."""
+        return self._image_scale
+
+    @image_scale.setter
+    def image_scale(self, value: int):
+        value = int(value)
+        if value < 1:
+            raise ValueError('Scale factor must be a positive integer.')
+        self._image_scale = int(value)
 
     @property
     def font(self) -> _Font:
