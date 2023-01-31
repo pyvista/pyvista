@@ -382,7 +382,7 @@ class Viewer:
             Collapse the UI menu (camera controls, etc.) on start.
 
         add_menu : bool, default: True
-            Add a UI controls VCard to the VContainer
+            Add a UI controls VCard to the VContainer.
 
         **kwargs : dict, optional
             Additional keyword arguments are passed to the view being created.
@@ -504,7 +504,7 @@ def plotter_ui(
         Collapse the UI menu (camera controls, etc.) on start.
 
     add_menu : bool, default: True
-        Add a UI controls VCard to the VContainer
+        Add a UI controls VCard to the VContainer.
 
     **kwargs : dict, optional
         Additional keyword arguments are passed to the viewer being created.
