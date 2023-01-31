@@ -309,7 +309,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
-        self._decimate = 0.9
+        self._decimate = None
 
     @property
     def color(self) -> Color:
@@ -392,8 +392,11 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @decimate.setter
     def decimate(self, decimate: float):
-        _check_between_zero_and_one(decimate, 'decimate')
-        self._decimate = float(decimate)
+        if decimate is None:
+            self._decimate = None
+        else:
+            _check_between_zero_and_one(decimate, 'decimate')
+            self._decimate = float(decimate)
 
     def __repr__(self):
         txt = ['']

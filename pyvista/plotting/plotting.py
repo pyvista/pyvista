@@ -39,8 +39,10 @@ from pyvista.utilities import (
 from pyvista.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
+    decimation_algorithm,
     extract_surface_algorithm,
     pointset_to_polydata_algorithm,
+    triangulate_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
 from pyvista.utilities.regression import run_image_filter
@@ -3219,7 +3221,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if silhouette:
             if isinstance(silhouette, dict):
-                self.add_silhouette(algo or mesh, silhouette)
+                self.add_silhouette(algo or mesh, **silhouette)
             else:
                 self.add_silhouette(algo or mesh)
 
@@ -3991,7 +3993,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
         return actor
 
-    def add_silhouette(self, mesh, params=None):
+    def add_silhouette(
+        self,
+        mesh,
+        color=None,
+        line_width=None,
+        opacity=None,
+        feature_angle=None,
+        decimate=None,
+        params=None,
+    ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
         A silhouette can also be generated directly in
@@ -4000,70 +4011,99 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.PolyData or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             Mesh or mesh-producing algorithm for generating silhouette
             to plot.
 
-        params : dict, optional
+        color : ColorLike, optional
+            Color of the silhouette lines.
 
-            * If not supplied, the default theme values will be used.
-            * ``color``: ``ColorLike``, color of the silhouette
-            * ``line_width``: ``float``, edge width
-            * ``opacity``: ``float`` between 0 and 1, edge transparency
-            * ``feature_angle``: If a ``float``, display sharp edges
-              exceeding that angle in degrees.
-            * ``decimate``: ``float`` between 0 and 1, level of decimation
+        line_width : float, optional
+            Silhouette line width.
+
+        opacity : float, optional
+            Line transparency between ``0`` and ``1``.
+
+        feature_angle : float, optional
+            If set, display sharp edges exceeding that angle in degrees.
+
+        decimate : float, optional
+            Level of decimation between ``0`` and ``1``. Decimating will
+            improve rendering performance. A good rule of thumb is to
+            try ``0.9``  first and decrease until the desired rendering
+            performance is achieved.
+
+        params : dict, optional
+            .. deprecated:: 0.38.0
+               This keyword argument is no longer used. Instead, input the
+               parameters to this function directly.
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the silhouette.
+        pyvista.Actor
+            Actor of the silhouette.
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> bunny = examples.download_bunny()
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(bunny, color='tan')
-        >>> _ = plotter.add_silhouette(bunny,
-        ...     params={'color': 'red', 'line_width': 8.0})
+        >>> _ = plotter.add_silhouette(bunny, color='red', line_width=8.0)
         >>> plotter.view_xy()
         >>> plotter.show()
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
+        if not isinstance(mesh, pyvista.PolyData):
+            algo = extract_surface_algorithm(algo or mesh)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
         silhouette_params = self._theme.silhouette.to_dict()
-        if algo is not None:
-            silhouette_params["decimate"] = False
-        if params:
+
+        if params is not None:
+            # Deprecated on 0.38.0, estimated removal on v0.40.0
+            warnings.warn(
+                '`params` is deprecated. Set the arguments directly.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
             silhouette_params.update(params)
 
-        if not is_pyvista_dataset(mesh):
-            mesh = wrap(mesh)
-        if not isinstance(mesh, pyvista.PolyData):
-            raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
+        if color is None:
+            color = silhouette_params["color"]
+        if line_width is None:
+            line_width = silhouette_params["line_width"]
+        if opacity is None:
+            opacity = silhouette_params["opacity"]
+        if feature_angle is None:
+            feature_angle = silhouette_params["feature_angle"]
+        if decimate is None:
+            decimate = silhouette_params["decimate"]
 
-        if silhouette_params["decimate"]:
-            if algo is not None:
-                raise TypeError('Cannot decimate when an algorithm is passed at this time.')
-            silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
-        else:
-            silhouette_mesh = mesh
+        # At this point we are dealing with a pipeline, so no `algo or mesh`
+        if decimate:
+            # Always triangulate as decimation filters needs it
+            # and source mesh could have been any type
+            algo = triangulate_algorithm(algo or mesh)
+            algo = decimation_algorithm(algo, decimate)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
         alg = _vtk.vtkPolyDataSilhouette()
-        set_algorithm_input(alg, algo or silhouette_mesh)
+        set_algorithm_input(alg, algo or mesh)
         alg.SetCamera(self.renderer.camera)
-        if silhouette_params["feature_angle"] is not None:
+        if feature_angle is not None:
             alg.SetEnableFeatureAngle(True)
-            alg.SetFeatureAngle(silhouette_params["feature_angle"])
+            alg.SetFeatureAngle(feature_angle)
         else:
             alg.SetEnableFeatureAngle(False)
         mapper = DataSetMapper()
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(Color(silhouette_params["color"]).float_rgb)
-        prop.SetOpacity(silhouette_params["opacity"])
-        prop.SetLineWidth(silhouette_params["line_width"])
+        prop.SetColor(Color(color).float_rgb)
+        prop.SetOpacity(opacity)
+        prop.SetLineWidth(line_width)
 
         return actor
 
