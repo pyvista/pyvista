@@ -19,16 +19,10 @@ class _BasePyVistaView:
 
 
 class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
-    """PyVista wrapping of trame VtkRemoteView for server rendering.
+    """PyVista wrapping of trame ``VtkRemoteView`` for server rendering.
 
     This will connect to a PyVista plotter and stream the server-side
     renderings.
-
-    Notes
-    -----
-    * For optimal rendering results, you may want to have the same
-    value for ``interactive_ratio`` and ``still_ratio`` so that
-    the entire rendering is not re-scaled between interaction events.
 
     Parameters
     ----------
@@ -50,6 +44,16 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
     namespace : str, optional
         The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
+
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to
+        ``trame.widgets.vtk.VtkRemoteView``.
+
+    Notes
+    -----
+    For optimal rendering results, you may want to have the same
+    value for ``interactive_ratio`` and ``still_ratio`` so that
+    the entire rendering is not re-scaled between interaction events.
 
     """
 
@@ -96,6 +100,11 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     namespace : str, optional
         The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
+
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to
+        ``trame.widgets.vtk.VtkLocalView``.
+
     """
 
     def __init__(self, plotter, namespace=None, **kwargs):
@@ -120,7 +129,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
 
 
 class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
-    """PyVista wrapping of trame VtkRemoteLocalView.
+    """PyVista wrapping of trame ``VtkRemoteLocalView``.
 
     Dynamically switch between client and server rendering.
 
@@ -145,6 +154,10 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     namespace : str, optional
         The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
+
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to
+        ``trame.widgets.vtk.VtkRemoteLocalView``.
 
     """
 

@@ -12,6 +12,7 @@ Plotting
    plotting
    qt_plotting
    theme
+   trame
 
 .. _matplotlib: https://matplotlib.org/
 
