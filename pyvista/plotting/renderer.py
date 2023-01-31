@@ -3487,7 +3487,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             x-y coordinate values.
 
         render : bool, default: True
-            Whether to to render when the actor is added.
+            Whether to render when the actor is added.
 
         color : ColorLike, optional
             Either a string, rgb list, or hex color string for tick text
