@@ -27,6 +27,7 @@ all plotting functionality in PyVista.
 .. autosummary::
    :toctree: _autosummary
 
+   BasePlotter
    Plotter
    Renderer
    Property
