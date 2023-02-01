@@ -128,7 +128,7 @@ coverage_ignore_modules = [
 
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {"ColorLike": "pyvista.ColorLike"}
+autodoc_type_aliases = {"Chart": "pyvista.Chart", "ColorLike": "pyvista.ColorLike"}
 
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
@@ -201,6 +201,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.Table\.copy_meta_from$',
     # Type alias
     r'\.ColorLike$',
+    r'\.Chart$',
     # Mixin methods from collections.abc
     r'\.MultiBlock\.clear$',
     r'\.MultiBlock\.count$',

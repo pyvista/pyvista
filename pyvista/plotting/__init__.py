@@ -1,7 +1,7 @@
 """Plotting routines."""
 
 from pyvista import MAX_N_COLOR_BARS
-from .charts import Chart2D, ChartMPL, ChartBox, ChartPie
+from .charts import Chart, Chart2D, ChartMPL, ChartBox, ChartPie
 from .colors import (
     Color,
     ColorLike,

@@ -1198,6 +1198,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.remove_chart``."""
         return self.renderer.remove_chart(*args, **kwargs)
 
+    @wraps(Renderers.set_chart_interaction)
+    def set_chart_interaction(self, *args, **kwargs):
+        """Wrap ``Renderers.set_chart_interaction``."""
+        return self.renderers.set_chart_interaction(*args, **kwargs)
+
     @wraps(Renderer.add_actor)
     def add_actor(self, *args, **kwargs):
         """Wrap ``Renderer.add_actor``."""
