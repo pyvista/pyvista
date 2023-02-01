@@ -8,8 +8,7 @@ import weakref
 
 from pyvista import _vtk
 from pyvista.utilities import try_callback
-
-from ..utilities.misc import vtk_version_info
+from pyvista.utilities.misc import vtk_version_info
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

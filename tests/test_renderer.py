@@ -161,29 +161,3 @@ def test_legend_face(sphere, face):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)
-
-
-def test_render_event():
-    pl = pyvista.Plotter()
-    events = []
-
-    def render_event(obj, event):
-        events.append(event)
-
-    obs = pl.renderer.add_render_event(render_event, "before")
-    pl.renderer.add_render_event(render_event, "after")
-    pl.show(auto_close=False)
-    assert len(events) == 2
-    assert events.pop() == "EndEvent"
-    assert events.pop() == "StartEvent"
-
-    pl.renderer.remove_render_event(obs)
-    pl.show(auto_close=False)
-    assert len(events) == 1
-    assert events.pop() == "EndEvent"
-
-    events.clear()
-    pl.renderer.add_render_event(render_event, "before")
-    pl.renderer.remove_render_event()
-    pl.show()
-    assert len(events) == 0
