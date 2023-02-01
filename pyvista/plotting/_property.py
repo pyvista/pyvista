@@ -738,7 +738,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.interpolation = 'pbr'
         >>> prop.interpolation
-        'Physically based rendering'
+        <InterpolationType.PBR: 3>
 
         Visualize default flat shading.
 
