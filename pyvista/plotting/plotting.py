@@ -3530,17 +3530,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
     ):
         """Add a volume, rendered using a smart mapper by default.
 
-        Requires a 3D :class:`numpy.ndarray`, :class:`pyvista.UniformGrid`,
-        :class:`pyvista.RectilinearGrid` or :class:`pyvista.UnstructuredGrid`.
+        Requires a 3D data type like :class:`numpy.ndarray`,
+        :class:`pyvista.UniformGrid`, :class:`pyvista.RectilinearGrid`,
+         or :class:`pyvista.UnstructuredGrid`.
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.UniformGrid or pyvista.RectilinearGrid or pyvista.UnstructuredGrid
+        volume : 3D numpy.ndarray or pyvista.DataSet
             The input volume to visualize. 3D numpy arrays are accepted.
 
             .. warning::
-                If the input is :class:`pyvista.UnstructuredGrid`,
-                volume will often have poor performance.
+                If the input is not :class:`numpy.ndarray`,
+                :class:`pyvista.UniformGrid`, or :class:`pyvista.RectilinearGrid`,
+                volume rendering will often have poor performance.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
@@ -3887,16 +3889,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 actors.append(a)
             return actors
 
-        # Override mapper choice for UnstructuredGrid
-        if isinstance(volume, pyvista.UnstructuredGrid):
-            mapper = 'ugrid'
+        # Make sure structured grids are not less than 3D
+        # ImageData and RectilinearGrid should be olay as <3D
+        if isinstance(volume, pyvista.StructuredGrid):
+            if any(d < 2 for d in volume.dimensions):
+                raise ValueError('StructuredGrids must be 3D dimensional.')
 
-        if not isinstance(
+        if isinstance(volume, pyvista.PolyData):
+            raise TypeError(
+                f'Type {type(volume)} not supported for volume rendering as it is not 3D.'
+            )
+        elif not isinstance(
             volume, (pyvista.UniformGrid, pyvista.RectilinearGrid, pyvista.UnstructuredGrid)
         ):
-            raise TypeError(
-                f'Type {type(volume)} not supported for volume rendering at this time. Use `pyvista.UniformGrid` or `pyvista.RectilinearGrid`.'
-            )
+            volume = volume.cast_to_unstructured_grid()
+
+        # Override mapper choice for UnstructuredGrid
+        if isinstance(volume, pyvista.UnstructuredGrid):
+            volume = volume.triangulate()  # forcibly triangulate, should be inexpensive
+            mapper = 'ugrid'
+
         if mapper == 'fixed_point' and not isinstance(volume, pyvista.UniformGrid):
             raise TypeError(
                 f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.UniformGrid`.'
