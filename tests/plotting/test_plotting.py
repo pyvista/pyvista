@@ -329,6 +329,19 @@ def test_plot_helper_two_volumes(uniform, verify_image_cache):
     )
 
 
+def test_plot_volume_ugrid(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+
+    grid = examples.load_hexbeam().tessellate()
+
+    pl = pyvista.Plotter()
+    with pytest.raises(TypeError, match='not supported'):
+        pl.add_volume(grid, mapper='smart')
+
+    pl.add_volume(grid, scalars='sample_point_scalars')
+    pl.show()
+
+
 def test_plot_return_cpos(sphere):
     cpos = sphere.plot(return_cpos=True)
     assert isinstance(cpos, pyvista.CameraPosition)

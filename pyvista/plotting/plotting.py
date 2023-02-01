@@ -68,6 +68,7 @@ from .mapper import (
     OpenGLGPUVolumeRayCastMapper,
     PointGaussianMapper,
     SmartVolumeMapper,
+    UnstructuredGridVolumeRayCastMapper,
 )
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
@@ -3533,7 +3534,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.UniformGrid or pyvista.RectilinearGrid
+        volume : 3D numpy.ndarray or pyvista.UniformGrid or pyvista.RectilinearGrid, or pyvista.UnstructuredGrid
             The input volume to visualize. 3D numpy arrays are accepted.
 
         scalars : str or numpy.ndarray, optional
@@ -3643,6 +3644,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``'smart'``.  If ``None`` the ``"volume_mapper"`` in the
             ``self._theme`` is used. If using ``'fixed_point'``,
             only ``UniformGrid`` types can be used.
+
+            .. note::
+                If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
+                filter (``vtkUnstructuredGridVolumeRayCastMapper``) will be
+                used.
 
             .. note::
                 The ``'smart'`` mapper chooses one of the other listed
@@ -3785,7 +3791,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling = 'backface'
 
         if mapper is None:
-            mapper = self._theme.volume_mapper
+            if isinstance(volume, pyvista.UnstructuredGrid):
+                mapper = 'ugrid'
+            else:
+                mapper = self._theme.volume_mapper
 
         # only render when the plotter has already been shown
         if render is None:
@@ -3867,7 +3876,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 actors.append(a)
             return actors
 
-        if not isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if not isinstance(
+            volume, (pyvista.UniformGrid, pyvista.RectilinearGrid, pyvista.UnstructuredGrid)
+        ):
             raise TypeError(
                 f'Type {type(volume)} not supported for volume rendering at this time. Use `pyvista.UniformGrid` or `pyvista.RectilinearGrid`.'
             )
@@ -3875,8 +3886,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(
                 f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.UniformGrid`.'
             )
+        elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':
+            raise TypeError(
+                f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
+            )
 
-        if opacity_unit_distance is None:
+        if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
         if scalars is None:
@@ -3924,6 +3939,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'gpu': GPUVolumeRayCastMapper,
             'open_gl': OpenGLGPUVolumeRayCastMapper,
             'smart': SmartVolumeMapper,
+            'ugrid': UnstructuredGridVolumeRayCastMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
             raise TypeError(

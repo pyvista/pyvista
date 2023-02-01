@@ -1030,3 +1030,11 @@ class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
     pass
+
+
+class UnstructuredGridVolumeRayCastMapper(
+    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper
+):
+    """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
+
+    pass
