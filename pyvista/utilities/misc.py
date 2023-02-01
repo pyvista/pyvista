@@ -13,14 +13,14 @@ from pyvista import _vtk
 
 def _set_plot_theme_from_env():
     """Set plot theme from an environment variable."""
-    from pyvista.themes import _ALLOWED_THEMES, set_plot_theme
+    from pyvista.themes import _NATIVE_THEMES, set_plot_theme
 
     if 'PYVISTA_PLOT_THEME' in os.environ:
         try:
             theme = os.environ['PYVISTA_PLOT_THEME']
             set_plot_theme(theme.lower())
-        except KeyError:
-            allowed = ', '.join([item.name for item in _ALLOWED_THEMES])
+        except ValueError:
+            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'

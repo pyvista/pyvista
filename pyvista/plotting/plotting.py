@@ -2147,7 +2147,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         clim=None,
         show_edges=None,
         edge_color=None,
-        point_size=5.0,
+        point_size=None,
         line_width=None,
         opacity=1.0,
         flip_scalars=False,
@@ -2162,13 +2162,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         multi_colors=False,
         name=None,
         render_points_as_spheres=None,
-        render_lines_as_tubes=False,
+        render_lines_as_tubes=None,
         smooth_shading=None,
         split_sharp_edges=None,
-        ambient=0.0,
-        diffuse=1.0,
-        specular=0.0,
-        specular_power=100.0,
+        ambient=None,
+        diffuse=None,
+        specular=None,
+        specular_power=None,
         nan_color=None,
         nan_opacity=1.0,
         culling=None,
@@ -2180,14 +2180,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable=True,
         preference="point",
         log_scale=False,
-        pbr=False,
-        metallic=0.0,
-        roughness=0.5,
+        pbr=None,
+        metallic=None,
+        roughness=None,
         render=True,
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
-        show_vertices=False,
+        show_vertices=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2443,7 +2443,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
 
-        show_vertices : bool, default: False
+        show_vertices : bool, optional
             When ``style`` is not ``'points'``, render the external surface
             vertices. The following optional keyword arguments may be used to
             control the style of the vertices:
@@ -2533,6 +2533,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             style,
             **kwargs,
         )
+        if show_vertices is None:
+            show_vertices = self._theme.show_vertices
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2645,6 +2647,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                show_vertices=False,
             )
 
         self.add_actor(
@@ -2667,13 +2670,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         clim=None,
         show_edges=None,
         edge_color=None,
-        point_size=5.0,
+        point_size=None,
         line_width=None,
-        opacity=1.0,
+        opacity=None,
         flip_scalars=False,
         lighting=None,
         n_colors=256,
-        interpolate_before_map=True,
+        interpolate_before_map=None,
         cmap=None,
         label=None,
         reset_camera=None,
@@ -2683,19 +2686,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         name=None,
         texture=None,
         render_points_as_spheres=None,
-        render_lines_as_tubes=False,
+        render_lines_as_tubes=None,
         smooth_shading=None,
         split_sharp_edges=None,
-        ambient=0.0,
-        diffuse=1.0,
-        specular=0.0,
-        specular_power=100.0,
+        ambient=None,
+        diffuse=None,
+        specular=None,
+        specular_power=None,
         nan_color=None,
         nan_opacity=1.0,
         culling=None,
         rgb=None,
         categories=False,
-        silhouette=False,
+        silhouette=None,
         use_transparency=False,
         below_color=None,
         above_color=None,
@@ -2703,15 +2706,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable=True,
         preference="point",
         log_scale=False,
-        pbr=False,
-        metallic=0.0,
-        roughness=0.5,
+        pbr=None,
+        metallic=None,
+        roughness=None,
         render=True,
         component=None,
-        emissive=False,
+        emissive=None,
         copy_mesh=False,
         backface_params=None,
-        show_vertices=False,
+        show_vertices=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3002,7 +3005,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
-        emissive : bool, default: False
+        emissive : bool, optional
             Treat the points/splats as emissive light sources. Only valid for
             ``style='points_gaussian'`` representation.
 
@@ -3028,7 +3031,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``backface_params=None``) default to the corresponding frontface
             properties.
 
-        show_vertices : bool, default: False
+        show_vertices : bool, optional
             When ``style`` is not ``'points'``, render the external surface
             vertices. The following optional keyword arguments may be used to
             control the style of the vertices:
@@ -3109,7 +3112,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if style == 'points_gaussian':
-            self.mapper = PointGaussianMapper(theme=self.theme)
+            self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
             self.mapper = DataSetMapper(theme=self.theme)
 
@@ -3178,6 +3181,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
+                show_vertices=show_vertices,
                 **kwargs,
             )
         elif copy_mesh and algo is None:
@@ -3230,6 +3234,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             **kwargs,
         )
 
+        if show_vertices is None:
+            show_vertices = self._theme.show_vertices
+
+        if silhouette is None:
+            silhouette = self._theme.silhouette.enabled
         if silhouette:
             if isinstance(silhouette, dict):
                 self.add_silhouette(algo or mesh, **silhouette)
@@ -3307,7 +3316,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set main values
         self.mesh = mesh
         self.mapper.dataset = self.mesh
-        self.mapper.interpolate_before_map = interpolate_before_map
+        if interpolate_before_map is not None:
+            self.mapper.interpolate_before_map = interpolate_before_map
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
@@ -3396,21 +3406,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
 
-        if style == 'points_gaussian':
-            self.mapper.emissive = emissive
-            self.mapper.scale_factor = point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not emissive:
-                if opacity >= 1.0:
-                    opacity = 0.9999  # otherwise, weird triangles
-
         if isinstance(opacity, (float, int)):
             prop_kwargs['opacity'] = opacity
         prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
 
+        if style == 'points_gaussian':
+            self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
+            if not render_points_as_spheres and not self.mapper.emissive:
+                if prop.opacity >= 1.0:
+                    prop.opacity = 0.9999  # otherwise, weird triangles
+
         if render_points_as_spheres:
             if style == 'points_gaussian':
-                self.mapper.use_circular_splat(opacity)
+                self.mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
@@ -3451,6 +3460,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                show_vertices=False,
             )
 
         self.add_actor(
@@ -3498,7 +3508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         flip_scalars=False,
         reset_camera=None,
         name=None,
-        ambient=0.0,
+        ambient=None,
         categories=False,
         culling=False,
         multi_colors=False,
@@ -3511,9 +3521,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         preference="point",
         opacity_unit_distance=None,
         shade=False,
-        diffuse=0.7,
-        specular=0.2,
-        specular_power=10.0,
+        diffuse=0.7,  # TODO: different default for volumes
+        specular=0.2,  # TODO: different default for volumes
+        specular_power=10.0,  # TODO: different default for volumes
         render=True,
         **kwargs,
     ):
@@ -3919,7 +3929,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(
                 f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
             )
-        self.mapper = mappers_lookup[mapper](self._theme)
+        self.mapper = mappers_lookup[mapper](theme=self._theme)
 
         # Set scalars range
         min_, max_ = None, None
@@ -4126,7 +4136,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             alg.SetFeatureAngle(feature_angle)
         else:
             alg.SetEnableFeatureAngle(False)
-        mapper = DataSetMapper()
+        mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(color).float_rgb)
@@ -4931,7 +4941,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         shadow=False,
         show_points=True,
         point_color=None,
-        point_size=5,
+        point_size=None,
         name=None,
         shape_color='grey',
         shape='rounded_rect',
@@ -6632,7 +6642,7 @@ class Plotter(BasePlotter):
         alg.SetModelBounds(bounds)
         alg.SetFocalPoint(focal_point)
         alg.AllOn()
-        mapper = DataSetMapper()
+        mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(color).float_rgb)
