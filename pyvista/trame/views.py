@@ -14,8 +14,10 @@ class _BasePyVistaView:
     def pyvista_initialize(self):
         if self._plotter().render_window is None:
             raise RuntimeError(CLOSED_PLOTTER_ERROR)
-        if not self._plotter().camera_set:
-            self._plotter().view_isometric()
+        for renderer in self._plotter().renderers:
+            if not renderer.camera.is_set:
+                renderer.camera_position = renderer.get_default_cam_pos()
+                renderer.ResetCamera()
 
 
 class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):

@@ -1427,10 +1427,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera(self):
         """Return the active camera of the active renderer."""
-        if not self.camera_set:
+        if not self.renderer.camera.is_set:
             self.camera_position = self.get_default_cam_pos()
             self.reset_camera()
-            self.camera_set = True
+            self.renderer.camera.is_set = True
         return self.renderer.camera
 
     @camera.setter
@@ -1441,12 +1441,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera_set(self):
         """Return if the camera of the active renderer has been set."""
-        return self.renderer.camera_set
+        return self.renderer.camera.is_set
 
     @camera_set.setter
     def camera_set(self, is_set):
         """Set if the camera has been set on the active renderer."""
-        self.renderer.camera_set = is_set
+        self.renderer.camera.is_set = is_set
 
     @property
     def bounds(self) -> BoundsLike:
@@ -4256,18 +4256,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if isinstance(views, (int, np.integer)):
             camera = self.renderers[views].camera
-            camera_status = self.renderers[views].camera_set
+            camera_status = self.renderers[views].camera.is_set
             for renderer in self.renderers:
                 renderer.camera = camera
-                renderer.camera_set = camera_status
+                renderer.camera.is_set = camera_status
             return
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
             camera = self.renderers[views[0]].camera
-            camera_status = self.renderers[views[0]].camera_set
+            camera_status = self.renderers[views[0]].camera.is_set
             for view_index in views:
                 self.renderers[view_index].camera = camera
-                self.renderers[view_index].camera_set = camera_status
+                self.renderers[view_index].camera.is_set = camera_status
         else:
             raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
@@ -4286,11 +4286,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 renderer.camera = Camera()
                 renderer.reset_camera()
-                renderer.camera_set = False
+                renderer.camera.is_set = False
         elif isinstance(views, int):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
-            self.renderers[views].camera_set = False
+            self.renderers[views].camera.is_set = False
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
@@ -5851,19 +5851,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # will not be rendered
         self.renderer.layer = 0
 
-    def _on_first_render_request(self, cpos=None):
+    def _on_first_render_request(self):
         """Once an image or render is officially requested, run this routine.
 
         For example on the show call or any screenshot producing code.
         """
         # reset unless camera for the first render unless camera is set
-        if self._first_time:  # and not self.camera_set:
+        if self._first_time:
             for renderer in self.renderers:
-                if not renderer.camera_set and cpos is None:
+                if not renderer.camera.is_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
                     renderer.ResetCamera()
-                elif cpos is not None:
-                    renderer.camera_position = cpos
             self._first_time = False
 
     def reset_camera_clipping_range(self):
@@ -6406,7 +6404,8 @@ class Plotter(BasePlotter):
             self.render_window.SetSize(window_size[0], window_size[1])
 
         # reset unless camera for the first render unless camera is set
-        self._on_first_render_request(cpos)
+        self.camera_position = cpos
+        self._on_first_render_request()
 
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
