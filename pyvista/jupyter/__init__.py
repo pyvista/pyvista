@@ -56,13 +56,20 @@ def _validate_jupyter_backend(backend):
             import pythreejs
         except ImportError:  # pragma: no cover
             raise ImportError('Please install `pythreejs` to use this feature.')
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`pythreejs` backend is deprecated and is planned for future removal.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
 
     if backend == 'ipyvtklink':
-        warnings.warn(
-            '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
-            PyVistaDeprecationWarning,
-            stacklevel=3,
-        )
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
         try:
             import ipyvtklink
         except ImportError:  # pragma: no cover
@@ -74,18 +81,29 @@ def _validate_jupyter_backend(backend):
         except ImportError:  # pragma: no cover
             raise ImportError('Please install `panel` to use this feature.')
         panel.extension('vtk')
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`panel` backend is deprecated and is planned for future removal.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
 
     if backend == 'ipygany':
         # raises an import error when fail
         from pyvista.jupyter import pv_ipygany
 
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`ipygany` backend is deprecated and is planned for future removal.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
+
     if backend in ['server', 'client', 'trame']:
         try:
             from pyvista.trame.jupyter import show_trame
         except ImportError:  # pragma: no cover
-            raise ImportError(
-                'Please install `trame` (and maybe `jupyter-server-proxy`) to use this feature.'
-            )
+            raise ImportError('Please install `trame` and `ipywidgets` to use this feature.')
 
     if backend == 'none':
         backend = None

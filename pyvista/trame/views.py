@@ -3,8 +3,6 @@ import weakref
 
 from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
 
-import pyvista
-
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
 
@@ -16,21 +14,17 @@ class _BasePyVistaView:
     def pyvista_initialize(self):
         if self._plotter().render_window is None:
             raise RuntimeError(CLOSED_PLOTTER_ERROR)
-        if not self._plotter().camera_set:
-            self._plotter().view_isometric()
+        for renderer in self._plotter().renderers:
+            if not renderer.camera.is_set:
+                renderer.camera_position = renderer.get_default_cam_pos()
+                renderer.ResetCamera()
 
 
 class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
-    """PyVista wrapping of trame VtkRemoteView for server rendering.
+    """PyVista wrapping of trame ``VtkRemoteView`` for server rendering.
 
     This will connect to a PyVista plotter and stream the server-side
     renderings.
-
-    Notes
-    -----
-    * For optimal rendering results, you may want to have the same
-    value for ``interactive_ratio`` and ``still_ratio`` so that
-    the entire rendering is not re-scaled between interaction events.
 
     Parameters
     ----------
@@ -53,6 +47,16 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
 
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to
+        ``trame.widgets.vtk.VtkRemoteView``.
+
+    Notes
+    -----
+    For optimal rendering results, you may want to have the same
+    value for ``interactive_ratio`` and ``still_ratio`` so that
+    the entire rendering is not re-scaled between interaction events.
+
     """
 
     def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
@@ -61,9 +65,9 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         if namespace is None:
             namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
-            interactive_ratio = pyvista.global_theme.trame.interactive_ratio
+            interactive_ratio = plotter._theme.trame.interactive_ratio
         if still_ratio is None:
-            still_ratio = pyvista.global_theme.trame.still_ratio
+            still_ratio = plotter._theme.trame.still_ratio
         VtkRemoteView.__init__(
             self,
             self._plotter().render_window,
@@ -98,6 +102,11 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     namespace : str, optional
         The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
+
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to
+        ``trame.widgets.vtk.VtkLocalView``.
+
     """
 
     def __init__(self, plotter, namespace=None, **kwargs):
@@ -122,7 +131,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
 
 
 class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
-    """PyVista wrapping of trame VtkRemoteLocalView.
+    """PyVista wrapping of trame ``VtkRemoteLocalView``.
 
     Dynamically switch between client and server rendering.
 
@@ -148,6 +157,10 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         The namespace for this view component. A default value is
         chosen based on the ``_id_name`` of the plotter.
 
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to
+        ``trame.widgets.vtk.VtkRemoteLocalView``.
+
     """
 
     def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
@@ -156,9 +169,9 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         if namespace is None:
             namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
-            interactive_ratio = pyvista.global_theme.trame.interactive_ratio
+            interactive_ratio = plotter._theme.trame.interactive_ratio
         if still_ratio is None:
-            still_ratio = pyvista.global_theme.trame.still_ratio
+            still_ratio = plotter._theme.trame.still_ratio
         VtkRemoteLocalView.__init__(
             self,
             self._plotter().render_window,

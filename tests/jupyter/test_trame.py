@@ -1,3 +1,5 @@
+from IPython.display import IFrame
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -26,13 +28,15 @@ skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
 
 @skip_no_trame
 def test_set_jupyter_backend_trame():
-    pv.global_theme.jupyter_backend = 'trame'
-    assert pv.global_theme.jupyter_backend == 'trame'
-    pv.global_theme.jupyter_backend = 'client'
-    assert pv.global_theme.jupyter_backend == 'client'
-    pv.global_theme.jupyter_backend = 'server'
-    assert pv.global_theme.jupyter_backend == 'server'
-    pv.global_theme.jupyter_backend = None
+    try:
+        pv.global_theme.jupyter_backend = 'trame'
+        assert pv.global_theme.jupyter_backend == 'trame'
+        pv.global_theme.jupyter_backend = 'client'
+        assert pv.global_theme.jupyter_backend == 'client'
+        pv.global_theme.jupyter_backend = 'server'
+        assert pv.global_theme.jupyter_backend == 'server'
+    finally:
+        pv.global_theme.jupyter_backend = None
 
 
 @skip_no_trame
@@ -54,6 +58,7 @@ def test_trame():
     actor = pl.add_mesh(pv.Cone())
     widget = pl.show(return_viewer=True)
     assert isinstance(widget, Widget)
+    assert 'http://' in widget.src
 
     viewer = get_or_create_viewer(pl)
 
@@ -147,3 +152,68 @@ def test_trame_views():
     assert PyVistaRemoteLocalView(pl, trame_server=server)
     assert PyVistaRemoteView(pl, trame_server=server)
     assert PyVistaLocalView(pl, trame_server=server)
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_jupyter_custom_size():
+    w, h = 200, 150
+    plotter = pv.Plotter(notebook=True, window_size=(w, h))
+    _ = plotter.add_mesh(pv.Cone())
+    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+    html = widget.value
+    assert f'width: {w}px' in html
+    assert f'height: {h}px' in html
+
+    plotter = pv.Plotter(notebook=True)
+    plotter.window_size = (w, h)
+    _ = plotter.add_mesh(pv.Cone())
+    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+    html = widget.value
+    assert f'width: {w}px' in html
+    assert f'height: {h}px' in html
+
+    # Make sure that if size is default theme, it uses 99%/600px
+    previous_size = pv.global_theme.window_size
+    pv.global_theme.window_size = pv.themes.DefaultTheme().window_size
+    try:
+        plotter = pv.Plotter(notebook=True)
+        _ = plotter.add_mesh(pv.Cone())
+        widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+        html = widget.value
+        assert 'width: 99%' in html
+        assert 'height: 600px' in html
+    finally:
+        pv.global_theme.window_size = previous_size
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_jupyter_custom_handler():
+    def handler(viewer, src, **kwargs):
+        return IFrame(src, '75%', '500px')
+
+    plotter = pv.Plotter(notebook=True)
+    _ = plotter.add_mesh(pv.Cone())
+    iframe = plotter.show(
+        jupyter_backend='trame',
+        jupyter_kwargs=dict(handler=handler),
+        return_viewer=True,
+    )
+    assert isinstance(iframe, IFrame)
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_int64():
+    mesh = pv.Sphere()
+    mesh['int64'] = np.arange(mesh.n_cells, dtype=np.int64)
+
+    plotter = pv.Plotter(notebook=True)
+    _ = plotter.add_mesh(mesh, scalars='int64')
+    widget = plotter.show(
+        jupyter_backend='trame',
+        return_viewer=True,
+    )
+    # Basically just assert that it didn't error out
+    assert isinstance(widget, Widget)

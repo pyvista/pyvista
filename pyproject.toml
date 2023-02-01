@@ -54,6 +54,7 @@ colormaps = [
 io = ['meshio>=5.2']
 jupyter = [
     'ipyvtklink',
+    'ipywidgets',
     'jupyter-server-proxy',
     'nest_asyncio',
     'panel',
@@ -61,13 +62,13 @@ jupyter = [
     'trame>=2.2.6',
     'trame-client>=2.4.2',
     'trame-server>=2.8.0',
-    'trame-vtk>=2.0.15',
+    'trame-vtk>=2.0.17',
 ]
 trame = [
     'trame>=2.2.6',
     'trame-client>=2.4.2',
     'trame-server>=2.8.0',
-    'trame-vtk>=2.0.15',
+    'trame-vtk>=2.0.17',
 ]
 
 [project.urls]

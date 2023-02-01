@@ -166,6 +166,20 @@ Subtract a sphere from a cube mesh.
     boolean.plot(color='darkgrey', smooth_shading=True, split_sharp_edges=True)
 
 
+Plot Volumetric Data
+~~~~~~~~~~~~~~~~~~~~
+Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
+
+.. note::
+   This example requires `sympy <https://www.sympy.org/>`_.
+
+.. jupyter-execute::
+
+    from pyvista import examples
+    grid = examples.load_hydrogen_orbital(3, 2, -2)
+    grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
+
+
 Translating
 ***********
 The recommended way for new contributors to translate PyVista's

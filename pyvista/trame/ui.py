@@ -76,22 +76,50 @@ class Viewer:
         return self._html_views
 
     def update(self, **kwargs):
-        """Update all associated views."""
+        """Update all associated views.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         for view in self._html_views:
             view.update()
 
     def push_camera(self, **kwargs):
-        """Push camera to all associated views."""
+        """Push camera to all associated views.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         for view in self._html_views:
             view.push_camera()
 
     def reset_camera(self, **kwargs):
-        """Reset camera for all associated views."""
+        """Reset camera for all associated views.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         for view in self._html_views:
             view.reset_camera()
 
     def update_image(self, **kwargs):
-        """Update image for all associated views."""
+        """Update image for all associated views.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         for view in self._html_views:
             if hasattr(view, 'update_image'):
                 view.update_image()
@@ -121,7 +149,14 @@ class Viewer:
         self.update()
 
     def on_edge_visiblity_change(self, **kwargs):
-        """Toggle edge visibility for all actors."""
+        """Toggle edge visibility for all actors.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         value = kwargs[self.EDGES]
         for _, actor in self.plotter.actors.items():
             if isinstance(actor, pyvista.Actor):
@@ -129,7 +164,14 @@ class Viewer:
         self.update()
 
     def on_grid_visiblity_change(self, **kwargs):
-        """Handle axes grid visibility."""
+        """Handle axes grid visibility.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         if kwargs[self.GRID]:
             self.plotter.show_grid()
         else:
@@ -137,7 +179,14 @@ class Viewer:
         self.update()
 
     def on_outline_visiblity_change(self, **kwargs):
-        """Handle outline visibility."""
+        """Handle outline visibility.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         if kwargs[self.OUTLINE]:
             self.plotter.add_bounding_box(reset_camera=False)
         else:
@@ -145,7 +194,14 @@ class Viewer:
         self.update()
 
     def on_axis_visiblity_change(self, **kwargs):
-        """Handle outline visibility."""
+        """Handle outline visibility.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         if kwargs[self.AXIS]:
             self.plotter.show_axes()
         else:
@@ -153,7 +209,14 @@ class Viewer:
         self.update()
 
     def on_rendering_mode_change(self, **kwargs):
-        """Handle any configurations when the render mode changes between client and server."""
+        """Handle any configurations when the render mode changes between client and server.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
         if not kwargs[self.SERVER_RENDERING]:
             self.push_camera()
             self.update()
@@ -164,7 +227,14 @@ class Viewer:
         return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
 
     def screenshot(self):
-        """Take screenshot and add attachament."""
+        """Take screenshot and add attachament.
+
+        Returns
+        -------
+        memoryview
+            Screenshot as a ``memoryview``.
+
+        """
         self.plotter.render()
         self.update()  # makes sure the plotter and views are in sync
         buffer = io.BytesIO()
@@ -173,9 +243,29 @@ class Viewer:
         return memoryview(buffer.read())
 
     def ui_controls(self, mode=None, default_server_rendering=True, v_show=None):
-        """Create a VRow for the UI controls."""
+        """Create a VRow for the UI controls.
+
+        Parameters
+        ----------
+        mode : str, default: 'trame'
+            The UI view mode. Options are:
+
+            * ``'trame'``: Uses a view that can switch between client and server
+              rendering modes.
+            * ``'server'``: Uses a view that is purely server rendering.
+            * ``'client'``: Uses a view that is purely client rendering (generally
+              safe without a virtual frame buffer)
+
+        default_server_rendering : bool, default: True
+            Whether to use server-side or client-side rendering on-start when
+            using the ``'trame'`` mode.
+
+        v_show : bool, optional
+            Conditionally show the viewer controls.
+
+        """
         if mode is None:
-            mode = pyvista.global_theme.trame.default_mode
+            mode = self.plotter._theme.trame.default_mode
         if mode not in VALID_UI_MODES:
             raise ValueError(f'`{mode}` is not a valid mode choice. Use one of: {VALID_UI_MODES}')
         if mode != 'trame':
@@ -277,11 +367,12 @@ class Viewer:
         ----------
         mode : str, default: 'trame'
             The UI view mode. Options are:
-                * ``'trame'``: Uses a view that can switch between client and server
-                rendering modes.
-                * ``'server'``: Uses a view that is purely server rendering.
-                * ``'client'``: Uses a view that is purely client rendering (generally
-                safe without a virtual frame buffer)
+
+            * ``'trame'``: Uses a view that can switch between client and server
+              rendering modes.
+            * ``'server'``: Uses a view that is purely server rendering.
+            * ``'client'``: Uses a view that is purely client rendering (generally
+              safe without a virtual frame buffer)
 
         default_server_rendering : bool, default: True
             Whether to use server-side or client-side rendering on-start when
@@ -291,14 +382,19 @@ class Viewer:
             Collapse the UI menu (camera controls, etc.) on start.
 
         add_menu : bool, default: True
-            Add a UI controls VCard to the VContainer
+            Add a UI controls VCard to the VContainer.
 
-        **kwargs
-            Addition keyword arguments are passed to the view being created.
+        **kwargs : dict, optional
+            Additional keyword arguments are passed to the view being created.
+
+        Returns
+        -------
+        PyVistaRemoteLocalView, PyVistaRemoteView, or PyVistaLocalView
+            Trame view interface for pyvista.
 
         """
         if mode is None:
-            mode = pyvista.global_theme.trame.default_mode
+            mode = self.plotter._theme.trame.default_mode
         if mode not in VALID_UI_MODES:
             raise ValueError(f'`{mode}` is not a valid mode choice. Use one of: {VALID_UI_MODES}')
         if mode != 'trame':
@@ -309,6 +405,12 @@ class Viewer:
             classes='pa-0 fill-height',
         ) as container:
             server = container.server
+            # Initialize state variables
+            server.state[self.EDGES] = False
+            server.state[self.GRID] = False
+            server.state[self.OUTLINE] = False
+            server.state[self.AXIS] = False
+            server.state[self.SERVER_RENDERING] = default_server_rendering
             if add_menu:
                 server.state[self.SHOW_UI] = not collapse_menu
                 with vuetify.VCard(
@@ -351,6 +453,20 @@ def get_or_create_viewer(plotter, suppress_rendering=False):
 
     There should be only one Viewer instance per plotter. A Viewer
     can have multiple UI views though.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter to return or create the viewer instance for.
+
+    suppress_rendering : bool, default: False
+        Suppress rendering on the plotter.
+
+    Returns
+    -------
+    pyvista.trame.ui.Viewer
+        Trame viewer.
+
     """
     if plotter._id_name in _VIEWERS:
         viewer = _VIEWERS[plotter._id_name]
@@ -361,12 +477,49 @@ def get_or_create_viewer(plotter, suppress_rendering=False):
     return Viewer(plotter, suppress_rendering=suppress_rendering)
 
 
-def plotter_ui(plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs):
-    """Create a UI view for the given Plotter."""
+def plotter_ui(
+    plotter, mode=None, default_server_rendering=True, collapse_menu=False, add_menu=True, **kwargs
+):
+    """Create a UI view for the given Plotter.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter to create the UI for.
+
+    mode : str, default: 'trame'
+        The UI view mode. Options are:
+
+        * ``'trame'``: Uses a view that can switch between client and server
+          rendering modes.
+        * ``'server'``: Uses a view that is purely server rendering.
+        * ``'client'``: Uses a view that is purely client rendering (generally
+          safe without a virtual frame buffer)
+
+    default_server_rendering : bool, default: True
+        Whether to use server-side or client-side rendering on-start when
+        using the ``'trame'`` mode.
+
+    collapse_menu : bool, default: False
+        Collapse the UI menu (camera controls, etc.) on start.
+
+    add_menu : bool, default: True
+        Add a UI controls VCard to the VContainer.
+
+    **kwargs : dict, optional
+        Additional keyword arguments are passed to the viewer being created.
+
+    Returns
+    -------
+    PyVistaRemoteLocalView, PyVistaRemoteView, or PyVistaLocalView
+        Trame view interface for pyvista.
+
+    """
     viewer = get_or_create_viewer(plotter, suppress_rendering=mode == 'client')
     return viewer.ui(
         mode=mode,
         default_server_rendering=default_server_rendering,
         collapse_menu=collapse_menu,
+        add_menu=add_menu,
         **kwargs,
     )

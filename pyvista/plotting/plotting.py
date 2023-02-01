@@ -1,5 +1,6 @@
 """PyVista plotting module."""
 import collections.abc
+from contextlib import contextmanager
 from copy import deepcopy
 import ctypes
 from functools import wraps
@@ -11,7 +12,7 @@ import platform
 import textwrap
 from threading import Thread
 import time
-from typing import Dict
+from typing import Dict, Optional
 import warnings
 import weakref
 
@@ -38,9 +39,13 @@ from pyvista.utilities import (
 from pyvista.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
+    decimation_algorithm,
+    extract_surface_algorithm,
     pointset_to_polydata_algorithm,
+    triangulate_algorithm,
 )
 from pyvista.utilities.arrays import _coerce_pointslike_arg
+from pyvista.utilities.regression import run_image_filter
 
 from .._typing import BoundsLike
 from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
@@ -193,6 +198,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
+    image_scale : int, optional
+        Scale factor when saving screenshots. Image sizes will be
+        the ``window_size`` multiplied by this scale factor.
+
     """
 
     mouse_position = None
@@ -211,6 +220,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         col_weights=None,
         lighting='light kit',
         theme=None,
+        image_scale=None,
         **kwargs,
     ):
         """Initialize base plotter."""
@@ -235,7 +245,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
-        self._store_image = False
         self.mesh = None
         if title is None:
             title = self._theme.title
@@ -293,6 +302,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
         self._has_background_layer = False
+        if image_scale is None:
+            image_scale = self._theme.image_scale
+        self._image_scale = image_scale
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -517,7 +529,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from ..jupyter.notebook import handle_plotter
 
-        pane = handle_plotter(self, backend='panel', return_viewer=True, title=self.title)
+        pane = handle_plotter(self, backend='panel', title=self.title)
         pane.save(filename)
 
     def to_pythreejs(self):
@@ -832,29 +844,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def store_image(self):
         """Store last rendered frame on close.
 
-        This is normally disabled to avoid caching the image, and is
-        enabled by default by setting:
-
-        ``pyvista.BUILDING_GALLERY = True``
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter(off_screen=True)
-        >>> pl.store_image = True
-        >>> _ = pl.add_mesh(pyvista.Cube())
-        >>> pl.show()
-        >>> image = pl.last_image
-        >>> type(image)  # doctest:+SKIP
-        <class 'numpy.ndarray'>
+        .. deprecated:: 0.38.0
+           ``store_image`` is no longer used. Images are automatically cached
+           as needed.
 
         """
-        return self._store_image
+        from pyvista.core.errors import DeprecationError
+
+        raise DeprecationError(
+            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
+            ' Images are automatically cached as needed.'
+        )
 
     @store_image.setter
     def store_image(self, value):
-        """Store last rendered frame on close."""
-        self._store_image = bool(value)
+        from pyvista.core.errors import DeprecationError
+
+        raise DeprecationError(
+            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
+            ' Images are automatically cached as needed.'
+        )
 
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
@@ -883,6 +892,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         self.renderers.set_active_renderer(index_row, index_column)
+
+    @wraps(Renderer.add_ruler)
+    def add_ruler(self, *args, **kwargs):
+        """Wrap ``Renderer.add_ruler``."""
+        return self.renderer.add_ruler(*args, **kwargs)
+
+    @wraps(Renderer.add_legend_scale)
+    def add_legend_scale(self, *args, **kwargs):
+        """Wrap ``Renderer.add_legend_scale``."""
+        return self.renderer.add_legend_scale(*args, **kwargs)
 
     @wraps(Renderer.add_legend)
     def add_legend(self, *args, **kwargs):
@@ -1413,10 +1432,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera(self):
         """Return the active camera of the active renderer."""
-        if not self.camera_set:
+        if not self.renderer.camera.is_set:
             self.camera_position = self.get_default_cam_pos()
             self.reset_camera()
-            self.camera_set = True
+            self.renderer.camera.is_set = True
         return self.renderer.camera
 
     @camera.setter
@@ -1427,12 +1446,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera_set(self):
         """Return if the camera of the active renderer has been set."""
-        return self.renderer.camera_set
+        return self.renderer.camera.is_set
 
     @camera_set.setter
     def camera_set(self, is_set):
         """Set if the camera has been set on the active renderer."""
-        self.renderer.camera_set = is_set
+        self.renderer.camera.is_set = is_set
 
     @property
     def bounds(self) -> BoundsLike:
@@ -1589,6 +1608,48 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def window_size(self, window_size):
         """Set the render window size."""
         self.render_window.SetSize(window_size[0], window_size[1])
+        self._window_size_unset = False
+        self.render()
+
+    @contextmanager
+    def window_size_context(self, window_size=None):
+        """Set the render window size in an isolated context.
+
+        Parameters
+        ----------
+        window_size : Sequence, optional
+            Window size in pixels.  Defaults to :attr:`pyvista.Plotter.window_size`.
+
+        Examples
+        --------
+        Take two different screenshots with two different window sizes.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(off_screen=True)
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> with pl.window_size_context((400, 400)):
+        ...     pl.screenshot('/tmp/small_screenshot.png')  # doctest:+SKIP
+        >>> with pl.window_size_context((1000, 1000)):
+        ...     pl.screenshot('/tmp/big_screenshot.png')  # doctest:+SKIP
+
+        """
+        # No op if not set
+        if window_size is None:
+            yield self
+            return
+        # If render window is not current
+        if self.render_window is None:
+            warnings.warn('Attempting to set window_size on an unavailable render widow.')
+            yield self
+            return
+        size_before = self.window_size
+        if window_size is not None:
+            self.window_size = window_size
+        yield self
+        # Sometimes the render window is destroyed within the context
+        # and re-setting will fail
+        if self.render_window is not None:
+            self.window_size = size_before
 
     @property
     def image_depth(self):
@@ -1611,33 +1672,77 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
-        if self.render_window is None:
-            raise AttributeError(
-                '\n\nTo retrieve an image after the render window '
-                'has been closed, set:\n\n'
-                ' ``plotter.store_image = True``\n\n'
-                'before closing the plotter.'
-            )
+        if self.render_window is None or not self.render_window.IsCurrent():
+            raise AttributeError('Render window is not available.')
 
     @property
     def image(self):
-        """Return an image array of current render window.
-
-        To retrieve an image after the render window has been closed,
-        set: ``plotter.store_image = True`` before closing the plotter.
-        """
+        """Return an image array of current render window."""
         if self.render_window is None and self.last_image is not None:
             return self.last_image
 
         self._check_rendered()
         self._check_has_ren_win()
 
-        data = image_from_window(self.render_window)
+        data = image_from_window(self.render_window, scale=self.image_scale)
         if self.image_transparent_background:
             return data
 
         # ignore alpha channel
         return data[:, :, :-1]
+
+    @property
+    def image_scale(self) -> int:
+        """Get or set the scale factor when saving a screenshot.
+
+        This will scale up the screenshots taken of the render window to save a
+        higher resolution image than what is rendered on screen.
+
+        Image sizes will be the :py:attr:`window_size
+        <pyvista.BasePlotter.window_size>` multiplied by this scale factor.
+
+        Examples
+        --------
+        Double the resolution of a screenshot.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.image_scale = 2
+        >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
+
+        Set the image scale from ``Plotter``.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(image_scale=2)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
+
+        """
+        return self._image_scale
+
+    @image_scale.setter
+    def image_scale(self, value: int):
+        value = int(value)
+        if value < 1:
+            raise ValueError('Scale factor must be a positive integer.')
+        self._image_scale = value
+
+    @contextmanager
+    def image_scale_context(self, scale: Optional[int] = None):
+        """Set the image scale in an isolated context.
+
+        Parameters
+        ----------
+        scale : int, optional
+            Integer scale factor.  Defaults to :attr:`pyvista.Plotter.image_scale`.
+
+        """
+        scale_before = self.image_scale
+        if scale is not None:
+            self.image_scale = scale
+        yield self
+        self.image_scale = scale_before
 
     def render(self):
         """Render the main window.
@@ -2047,7 +2152,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         clim=None,
         show_edges=None,
         edge_color=None,
-        point_size=5.0,
+        point_size=None,
         line_width=None,
         opacity=1.0,
         flip_scalars=False,
@@ -2062,13 +2167,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         multi_colors=False,
         name=None,
         render_points_as_spheres=None,
-        render_lines_as_tubes=False,
+        render_lines_as_tubes=None,
         smooth_shading=None,
         split_sharp_edges=None,
-        ambient=0.0,
-        diffuse=1.0,
-        specular=0.0,
-        specular_power=100.0,
+        ambient=None,
+        diffuse=None,
+        specular=None,
+        specular_power=None,
         nan_color=None,
         nan_opacity=1.0,
         culling=None,
@@ -2080,14 +2185,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable=True,
         preference="point",
         log_scale=False,
-        pbr=False,
-        metallic=0.0,
-        roughness=0.5,
+        pbr=None,
+        metallic=None,
+        roughness=None,
         render=True,
         component=None,
         color_missing_with_nan=False,
         copy_mesh=False,
-        show_vertices=False,
+        show_vertices=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2278,12 +2383,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
         above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
@@ -2343,7 +2448,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget.  Defaults to ``False``.
 
-        show_vertices : bool, default: False
+        show_vertices : bool, optional
             When ``style`` is not ``'points'``, render the external surface
             vertices. The following optional keyword arguments may be used to
             control the style of the vertices:
@@ -2433,6 +2538,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             style,
             **kwargs,
         )
+        if show_vertices is None:
+            show_vertices = self._theme.show_vertices
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2545,6 +2652,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                show_vertices=False,
             )
 
         self.add_actor(
@@ -2567,13 +2675,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         clim=None,
         show_edges=None,
         edge_color=None,
-        point_size=5.0,
+        point_size=None,
         line_width=None,
-        opacity=1.0,
+        opacity=None,
         flip_scalars=False,
         lighting=None,
         n_colors=256,
-        interpolate_before_map=True,
+        interpolate_before_map=None,
         cmap=None,
         label=None,
         reset_camera=None,
@@ -2583,19 +2691,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         name=None,
         texture=None,
         render_points_as_spheres=None,
-        render_lines_as_tubes=False,
+        render_lines_as_tubes=None,
         smooth_shading=None,
         split_sharp_edges=None,
-        ambient=0.0,
-        diffuse=1.0,
-        specular=0.0,
-        specular_power=100.0,
+        ambient=None,
+        diffuse=None,
+        specular=None,
+        specular_power=None,
         nan_color=None,
         nan_opacity=1.0,
         culling=None,
         rgb=None,
         categories=False,
-        silhouette=False,
+        silhouette=None,
         use_transparency=False,
         below_color=None,
         above_color=None,
@@ -2603,15 +2711,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable=True,
         preference="point",
         log_scale=False,
-        pbr=False,
-        metallic=0.0,
-        roughness=0.5,
+        pbr=None,
+        metallic=None,
+        roughness=None,
         render=True,
         component=None,
-        emissive=False,
+        emissive=None,
         copy_mesh=False,
         backface_params=None,
-        show_vertices=False,
+        show_vertices=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -2851,12 +2959,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
         above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
@@ -2902,7 +3010,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
-        emissive : bool, default: False
+        emissive : bool, optional
             Treat the points/splats as emissive light sources. Only valid for
             ``style='points_gaussian'`` representation.
 
@@ -2928,7 +3036,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``backface_params=None``) default to the corresponding frontface
             properties.
 
-        show_vertices : bool, default: False
+        show_vertices : bool, optional
             When ``style`` is not ``'points'``, render the external surface
             vertices. The following optional keyword arguments may be used to
             control the style of the vertices:
@@ -3009,7 +3117,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if style == 'points_gaussian':
-            self.mapper = PointGaussianMapper(theme=self.theme)
+            self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
             self.mapper = DataSetMapper(theme=self.theme)
 
@@ -3078,6 +3186,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
+                show_vertices=show_vertices,
                 **kwargs,
             )
         elif copy_mesh and algo is None:
@@ -3130,9 +3239,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             **kwargs,
         )
 
+        if show_vertices is None:
+            show_vertices = self._theme.show_vertices
+
+        if silhouette is None:
+            silhouette = self._theme.silhouette.enabled
         if silhouette:
             if isinstance(silhouette, dict):
-                self.add_silhouette(algo or mesh, silhouette)
+                self.add_silhouette(algo or mesh, **silhouette)
             else:
                 self.add_silhouette(algo or mesh)
 
@@ -3207,7 +3321,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # set main values
         self.mesh = mesh
         self.mapper.dataset = self.mesh
-        self.mapper.interpolate_before_map = interpolate_before_map
+        if interpolate_before_map is not None:
+            self.mapper.interpolate_before_map = interpolate_before_map
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
@@ -3296,21 +3411,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling=culling,
         )
 
-        if style == 'points_gaussian':
-            self.mapper.emissive = emissive
-            self.mapper.scale_factor = point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not emissive:
-                if opacity >= 1.0:
-                    opacity = 0.9999  # otherwise, weird triangles
-
         if isinstance(opacity, (float, int)):
             prop_kwargs['opacity'] = opacity
         prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
 
+        if style == 'points_gaussian':
+            self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
+            if not render_points_as_spheres and not self.mapper.emissive:
+                if prop.opacity >= 1.0:
+                    prop.opacity = 0.9999  # otherwise, weird triangles
+
         if render_points_as_spheres:
             if style == 'points_gaussian':
-                self.mapper.use_circular_splat(opacity)
+                self.mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
@@ -3341,13 +3455,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add this immediately prior to adding the actor to ensure vertices
         # are rendered
         if show_vertices and style not in ['points', 'points_gaussian']:
-            if not isinstance(mesh, pyvista.PolyData):
-                surf = mesh.extract_surface()
-            else:
-                surf = mesh
-
             self.add_mesh(
-                surf,
+                extract_surface_algorithm(algo or mesh),
                 style=vertex_style,
                 point_size=point_size,
                 color=vertex_color,
@@ -3356,6 +3465,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                show_vertices=False,
             )
 
         self.add_actor(
@@ -3403,7 +3513,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         flip_scalars=False,
         reset_camera=None,
         name=None,
-        ambient=0.0,
+        ambient=None,
         categories=False,
         culling=False,
         multi_colors=False,
@@ -3416,9 +3526,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         preference="point",
         opacity_unit_distance=None,
         shade=False,
-        diffuse=0.7,
-        specular=0.2,
-        specular_power=10.0,
+        diffuse=0.7,  # TODO: different default for volumes
+        specular=0.2,  # TODO: different default for volumes
+        specular_power=10.0,  # TODO: different default for volumes
         render=True,
         **kwargs,
     ):
@@ -3436,6 +3546,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             array that is present on the mesh or an array with length equal
             to the number of cells or the number of points in the
             mesh. If ``scalars`` is ``None``, then the active scalars are used.
+
+            Scalars may be 1 dimensional or 2 dimensional. If 1 dimensional,
+            the scalars will be mapped to the lookup table. If 2 dimensional
+            the scalars will be directly mapped to RGBA values, array should be
+            shaped ``(N, 4)`` where ``N`` is the number of points, and of
+            datatype ``np.uint8``.
 
             Scalars may be 1 dimensional or 2 dimensional. If 1 dimensional,
             the scalars will be mapped to the lookup table. If 2 dimensional
@@ -3785,6 +3901,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
+        if scalars.ndim != 1:
+            if scalars.ndim != 2:
+                raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
+            if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
+                raise ValueError(
+                    '`add_volume` only supports scalars with 2 dimensions that have 4 components of datatype np.uint8.\n\n'
+                    f'Scalars have shape {scalars.shape} and dtype {scalars.dtype.name!r}.'
+                )
+
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
         if scalars.ndim != 1:
@@ -3809,7 +3934,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(
                 f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
             )
-        self.mapper = mappers_lookup[mapper](self._theme)
+        self.mapper = mappers_lookup[mapper](theme=self._theme)
 
         # Set scalars range
         min_, max_ = None, None
@@ -3909,7 +4034,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
         return actor
 
-    def add_silhouette(self, mesh, params=None):
+    def add_silhouette(
+        self,
+        mesh,
+        color=None,
+        line_width=None,
+        opacity=None,
+        feature_angle=None,
+        decimate=None,
+        params=None,
+    ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
         A silhouette can also be generated directly in
@@ -3918,70 +4052,101 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.PolyData or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             Mesh or mesh-producing algorithm for generating silhouette
             to plot.
 
-        params : dict, optional
+        color : ColorLike, optional
+            Color of the silhouette lines.
 
-            * If not supplied, the default theme values will be used.
-            * ``color``: ``ColorLike``, color of the silhouette
-            * ``line_width``: ``float``, edge width
-            * ``opacity``: ``float`` between 0 and 1, edge transparency
-            * ``feature_angle``: If a ``float``, display sharp edges
-              exceeding that angle in degrees.
-            * ``decimate``: ``float`` between 0 and 1, level of decimation
+        line_width : float, optional
+            Silhouette line width.
+
+        opacity : float, optional
+            Line transparency between ``0`` and ``1``.
+
+        feature_angle : float, optional
+            If set, display sharp edges exceeding that angle in degrees.
+
+        decimate : float, optional
+            Level of decimation between ``0`` and ``1``. Decimating will
+            improve rendering performance. A good rule of thumb is to
+            try ``0.9``  first and decrease until the desired rendering
+            performance is achieved.
+
+        params : dict, optional
+            Optional silhouette parameters.
+
+            .. deprecated:: 0.38.0
+               This keyword argument is no longer used. Instead, input the
+               parameters to this function directly.
 
         Returns
         -------
-        vtk.vtkActor
-            VTK actor of the silhouette.
+        pyvista.Actor
+            Actor of the silhouette.
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> bunny = examples.download_bunny()
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(bunny, color='tan')
-        >>> _ = plotter.add_silhouette(bunny,
-        ...     params={'color': 'red', 'line_width': 8.0})
+        >>> _ = plotter.add_silhouette(bunny, color='red', line_width=8.0)
         >>> plotter.view_xy()
         >>> plotter.show()
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
+        if not isinstance(mesh, pyvista.PolyData):
+            algo = extract_surface_algorithm(algo or mesh)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
         silhouette_params = self._theme.silhouette.to_dict()
-        if algo is not None:
-            silhouette_params["decimate"] = False
-        if params:
+
+        if params is not None:
+            # Deprecated on 0.38.0, estimated removal on v0.40.0
+            warnings.warn(
+                '`params` is deprecated. Set the arguments directly.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
             silhouette_params.update(params)
 
-        if not is_pyvista_dataset(mesh):
-            mesh = wrap(mesh)
-        if not isinstance(mesh, pyvista.PolyData):
-            raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
+        if color is None:
+            color = silhouette_params["color"]
+        if line_width is None:
+            line_width = silhouette_params["line_width"]
+        if opacity is None:
+            opacity = silhouette_params["opacity"]
+        if feature_angle is None:
+            feature_angle = silhouette_params["feature_angle"]
+        if decimate is None:
+            decimate = silhouette_params["decimate"]
 
-        if silhouette_params["decimate"]:
-            if algo is not None:
-                raise TypeError('Cannot decimate when an algorithm is passed at this time.')
-            silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
-        else:
-            silhouette_mesh = mesh
+        # At this point we are dealing with a pipeline, so no `algo or mesh`
+        if decimate:
+            # Always triangulate as decimation filters needs it
+            # and source mesh could have been any type
+            algo = triangulate_algorithm(algo or mesh)
+            algo = decimation_algorithm(algo, decimate)
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
         alg = _vtk.vtkPolyDataSilhouette()
-        set_algorithm_input(alg, algo or silhouette_mesh)
+        set_algorithm_input(alg, algo or mesh)
         alg.SetCamera(self.renderer.camera)
-        if silhouette_params["feature_angle"] is not None:
+        if feature_angle is not None:
             alg.SetEnableFeatureAngle(True)
-            alg.SetFeatureAngle(silhouette_params["feature_angle"])
+            alg.SetFeatureAngle(feature_angle)
         else:
             alg.SetEnableFeatureAngle(False)
-        mapper = DataSetMapper()
+        mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(Color(silhouette_params["color"]).float_rgb)
-        prop.SetOpacity(silhouette_params["opacity"])
-        prop.SetLineWidth(silhouette_params["line_width"])
+        prop.SetColor(Color(color).float_rgb)
+        prop.SetOpacity(opacity)
+        prop.SetLineWidth(line_width)
 
         return actor
 
@@ -4106,18 +4271,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if isinstance(views, (int, np.integer)):
             camera = self.renderers[views].camera
-            camera_status = self.renderers[views].camera_set
+            camera_status = self.renderers[views].camera.is_set
             for renderer in self.renderers:
                 renderer.camera = camera
-                renderer.camera_set = camera_status
+                renderer.camera.is_set = camera_status
             return
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
             camera = self.renderers[views[0]].camera
-            camera_status = self.renderers[views[0]].camera_set
+            camera_status = self.renderers[views[0]].camera.is_set
             for view_index in views:
                 self.renderers[view_index].camera = camera
-                self.renderers[view_index].camera_set = camera_status
+                self.renderers[view_index].camera.is_set = camera_status
         else:
             raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
@@ -4136,11 +4301,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 renderer.camera = Camera()
                 renderer.reset_camera()
-                renderer.camera_set = False
+                renderer.camera.is_set = False
         elif isinstance(views, int):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
-            self.renderers[views].camera_set = False
+            self.renderers[views].camera.is_set = False
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
@@ -4297,9 +4462,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.remove_all_lights()
 
         # Grab screenshots of last render
-        if self._store_image:
-            self.last_image = self.screenshot(None, return_img=True)
-            self.last_image_depth = self.get_image_depth()
+        # self.last_image = self.screenshot(None, return_img=True)
+        # self.last_image_depth = self.get_image_depth()
 
         # reset scalar bars
         self.scalar_bars.clear()
@@ -4625,18 +4789,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.update()
         self.mwriter.append_data(self.image)
 
-    def _run_image_filter(self, ifilter):
-        # Update filter and grab pixels
-        ifilter.Modified()
-        ifilter.Update()
-        image = pyvista.wrap(ifilter.GetOutput())
-        img_size = image.dimensions
-        img_array = pyvista.utilities.point_array(image, 'ImageScalars')
-
-        # Reshape and write
-        tgt_size = (img_size[1], img_size[0], -1)
-        return img_array.reshape(tgt_size)[::-1]
-
     def get_image_depth(self, fill_value=np.nan, reset_camera_clipping_range=True):
         """Return a depth image representing current render window.
 
@@ -4665,7 +4817,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
-        >>> plotter.store_image = True
         >>> plotter.show()
         >>> zval = plotter.get_image_depth()
 
@@ -4687,9 +4838,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Get the z-buffer image
         ifilter = _vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.render_window)
+        ifilter.SetScale(self.image_scale)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()
-        zbuff = self._run_image_filter(ifilter)[:, :, 0]
+        zbuff = run_image_filter(ifilter)[:, :, 0]
 
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
@@ -4794,7 +4946,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         shadow=False,
         show_points=True,
         point_color=None,
-        point_size=5,
+        point_size=None,
         name=None,
         shape_color='grey',
         shape='rounded_rect',
@@ -5295,7 +5447,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         writer.Update()
 
     def screenshot(
-        self, filename=None, transparent_background=None, return_img=True, window_size=None
+        self,
+        filename=None,
+        transparent_background=None,
+        return_img=True,
+        window_size=None,
+        scale=None,
     ):
         """Take screenshot at current camera position.
 
@@ -5316,6 +5473,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Set the plotter's size to this ``(width, height)`` before
             taking the screenshot.
 
+        scale : int, optional
+            Set the factor to scale the window size to make a higher
+            resolution image. If ``None`` this will use the ``image_scale``
+            property on this plotter which defaults to one.
+
         Returns
         -------
         numpy.ndarray
@@ -5335,37 +5497,40 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
 
         """
-        if window_size is not None:
-            self.window_size = window_size
+        with self.window_size_context(window_size):
+            # configure image filter
+            if transparent_background is None:
+                transparent_background = self._theme.transparent_background
+            self.image_transparent_background = transparent_background
 
-        # configure image filter
-        if transparent_background is None:
-            transparent_background = self._theme.transparent_background
-        self.image_transparent_background = transparent_background
+            # This if statement allows you to save screenshots of closed plotters
+            # This is needed for the sphinx-gallery to work
+            if self.render_window is None:
+                # If plotter has been closed...
+                # check if last_image exists
+                if self.last_image is not None:
+                    # Save last image
+                    if scale is not None:
+                        warnings.warn(
+                            'This plotter is closed and cannot be scaled. Using the last saved image. Try using the `image_scale` property directly.'
+                        )
+                    return self._save_image(self.last_image, filename, return_img)
+                # Plotter hasn't been rendered or was improperly closed
+                raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
-        # This if statement allows you to save screenshots of closed plotters
-        # This is needed for the sphinx-gallery to work
-        if self.render_window is None:
-            # If plotter has been closed...
-            # check if last_image exists
-            if self.last_image is not None:
-                # Save last image
-                return self._save_image(self.last_image, filename, return_img)
-            # Plotter hasn't been rendered or was improperly closed
-            raise RuntimeError('This plotter is closed and unable to save a screenshot.')
+            if self._first_time and not self.off_screen:
+                raise RuntimeError(
+                    "Nothing to screenshot - call .show first or use the off_screen argument"
+                )
 
-        if self._first_time and not self.off_screen:
-            raise RuntimeError(
-                "Nothing to screenshot - call .show first or use the off_screen argument"
-            )
+            # if off screen, show has not been called and we must render
+            # before extracting an image
+            if self._first_time:
+                self._on_first_render_request()
+                self.render()
 
-        # if off screen, show has not been called and we must render
-        # before extracting an image
-        if self._first_time:
-            self._on_first_render_request()
-            self.render()
-
-        return self._save_image(self.image, filename, return_img)
+            with self.image_scale_context(scale):
+                return self._save_image(self.image, filename, return_img)
 
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs):
@@ -5701,19 +5866,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # will not be rendered
         self.renderer.layer = 0
 
-    def _on_first_render_request(self, cpos=None):
+    def _on_first_render_request(self):
         """Once an image or render is officially requested, run this routine.
 
         For example on the show call or any screenshot producing code.
         """
         # reset unless camera for the first render unless camera is set
-        if self._first_time:  # and not self.camera_set:
+        if self._first_time:
             for renderer in self.renderers:
-                if not renderer.camera_set and cpos is None:
+                if not renderer.camera.is_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
                     renderer.ResetCamera()
-                elif cpos is not None:
-                    renderer.camera_position = cpos
             self._first_time = False
 
     def reset_camera_clipping_range(self):
@@ -5819,147 +5982,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 places.append(tuple(self.renderers.index_to_loc(index)))
         return places
 
-    def add_ruler(
-        self,
-        pointa,
-        pointb,
-        flip_range=False,
-        number_labels=5,
-        show_labels=True,
-        font_size_factor=0.6,
-        label_size_factor=1.0,
-        label_format=None,
-        title="Distance",
-        number_minor_ticks=0,
-        tick_length=5,
-        minor_tick_length=3,
-        show_ticks=True,
-        tick_label_offset=2,
-    ):
-        """Add ruler.
-
-        The ruler is a 2D object that is not occluded by 3D objects.
-        To avoid issues with perspective, it is recommended to use
-        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
-        and place the ruler orthogonal to the viewing direction.
-
-        The title and labels are placed to the right of ruler moving from
-        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
-        if needed.
-
-        Since the ruler is placed in an overlay on the viewing scene, the camera
-        does not automatically reset to include the ruler in the view.
-
-        Parameters
-        ----------
-        pointa : Sequence
-            Starting point for ruler.
-
-        pointb : Sequence
-            Ending point for ruler.
-
-        flip_range : bool
-            If ``True``, the distance range goes from ``pointb`` to ``pointa``.
-
-        number_labels : int
-            Number of labels to place on ruler.
-
-        show_labels : bool, optional
-            Whether to show labels.
-
-        font_size_factor : float
-            Factor to scale font size overall.
-
-        label_size_factor : float
-            Factor to scale label size relative to title size.
-
-        label_format : str, optional
-            A printf style format for labels, e.g. '%E'.
-
-        title : str, optional
-            The title to display.
-
-        number_minor_ticks : int, optional
-            Number of minor ticks between major ticks.
-
-        tick_length : int
-            Length of ticks in pixels.
-
-        minor_tick_length : int
-            Length of minor ticks in pixels.
-
-        show_ticks : bool, optional
-            Whether to show the ticks.
-
-        tick_label_offset : int
-            Offset between tick and label in pixels.
-
-        Returns
-        -------
-        vtk.vtkActor
-            VTK actor of the ruler.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> cone = pyvista.Cone(height=2.0, radius=0.5)
-        >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(cone)
-
-        Measure x direction of cone and place ruler slightly below.
-
-        >>> _ = plotter.add_ruler(
-        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
-        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
-        ...     title="X Distance"
-        ... )
-
-        Measure y direction of cone and place ruler slightly to left.
-        The title and labels are placed to the right of the ruler when
-        traveling from ``pointa`` to ``pointb``.
-
-        >>> _ = plotter.add_ruler(
-        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
-        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
-        ...     flip_range=True,
-        ...     title="Y Distance"
-        ... )
-        >>> plotter.enable_parallel_projection()
-        >>> plotter.view_xy()
-        >>> plotter.show()
-
-        """
-        ruler = _vtk.vtkAxisActor2D()
-
-        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
-        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
-        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
-        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
-        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
-
-        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
-        if flip_range:
-            ruler.SetRange(distance, 0)
-        else:
-            ruler.SetRange(0, distance)
-
-        ruler.SetTitle(title)
-        ruler.SetFontFactor(font_size_factor)
-        ruler.SetLabelFactor(label_size_factor)
-        ruler.SetNumberOfLabels(number_labels)
-        ruler.SetLabelVisibility(show_labels)
-        if label_format:
-            ruler.SetLabelFormat(label_format)
-
-        ruler.SetNumberOfMinorTicks(number_minor_ticks)
-        ruler.SetTickVisibility(show_ticks)
-        ruler.SetTickLength(tick_length)
-        ruler.SetMinorTickLength(minor_tick_length)
-        ruler.SetTickOffset(tick_label_offset)
-
-        self.add_actor(ruler, reset_camera=True, pickable=False)
-        return ruler
-
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -6025,6 +6047,10 @@ class Plotter(BasePlotter):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
+    image_scale : int, optional
+        Scale factor when saving screenshots. Image sizes will be
+        the ``window_size`` multiplied by this scale factor.
+
     Examples
     --------
     >>> import pyvista
@@ -6061,6 +6087,7 @@ class Plotter(BasePlotter):
         title=None,
         lighting='light kit',
         theme=None,
+        image_scale=None,
     ):
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -6075,6 +6102,7 @@ class Plotter(BasePlotter):
             title=title,
             lighting=lighting,
             theme=theme,
+            image_scale=image_scale,
         )
         # reset partial initialization flag
         self._initialized = False
@@ -6107,12 +6135,6 @@ class Plotter(BasePlotter):
         if self.notebook:
             off_screen = True
         self.off_screen = off_screen
-
-        self._window_size_unset = False
-        if window_size is None:
-            self._window_size_unset = True
-            window_size = self._theme.window_size
-        self.__prior_window_size = window_size
 
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
@@ -6165,7 +6187,13 @@ class Plotter(BasePlotter):
         self.set_background(self._theme.background)
 
         # Set window size
-        self.window_size = window_size
+        self._window_size_unset = False
+        if window_size is None:
+            self.window_size = self._theme.window_size
+            if self.window_size == pyvista.themes.DefaultTheme().window_size:
+                self._window_size_unset = True
+        else:
+            self.window_size = window_size
 
         # add timer event callback to break out of blocking interactive update call (only needed for VTK<9)
         if not self.iren.can_process_events:
@@ -6263,9 +6291,14 @@ class Plotter(BasePlotter):
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
 
-        return_viewer : bool, optional
-            Return the jupyterlab viewer, scene, or display object
-            when plotting with jupyter notebook.
+            A dictionary ``jupyter_kwargs`` can also be passed to further
+            configure how the backend displays.
+
+        return_viewer : bool, default: False
+            Return the jupyterlab viewer, scene, or display object when
+            plotting with Jupyter notebook. When ``False`` and within a Jupyter
+            environment, the scene will be immediately shown within the
+            notebook. Set this to ``True`` to return the scene instead.
 
         return_cpos : bool, optional
             Return the last camera position from the render window
@@ -6289,14 +6322,12 @@ class Plotter(BasePlotter):
         cpos : list
             List of camera position, focal point, and view up.
             Returned only when ``return_cpos=True`` or set in the
-            default global or plot theme.  Not returned when in a
-            jupyter notebook and ``return_viewer=True``.
+            default global or plot theme.
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
-            or ``screenshot=True`` is set. Not returned when in a
-            jupyter notebook with ``return_viewer=True``. Optionally
-            contains alpha values. Sized:
+            or ``screenshot=True`` is set. Optionally contains alpha
+            values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
@@ -6388,7 +6419,8 @@ class Plotter(BasePlotter):
             self.render_window.SetSize(window_size[0], window_size[1])
 
         # reset unless camera for the first render unless camera is set
-        self._on_first_render_request(cpos)
+        self.camera_position = cpos
+        self._on_first_render_request()
 
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
@@ -6396,23 +6428,15 @@ class Plotter(BasePlotter):
                 'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
             )
 
+        jupyter_disp = None
         if self.notebook:
             from ..jupyter.notebook import handle_plotter
 
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
-            if jupyter_backend != 'none':
-                if screenshot:
-                    warnings.warn(
-                        '\nSet `jupyter_backend` backend to `"none"` to take a screenshot'
-                        ' within a notebook environment.'
-                    )
-
-                disp = handle_plotter(
-                    self, backend=jupyter_backend, return_viewer=return_viewer, **jupyter_kwargs
-                )
-                return disp
+            if jupyter_backend.lower() != 'none':
+                jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
         self.render()
 
@@ -6428,9 +6452,8 @@ class Plotter(BasePlotter):
             self.title = title
 
         # Keep track of image for sphinx-gallery
-        if pyvista.BUILDING_GALLERY or screenshot:
+        if pyvista.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
-
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
@@ -6472,7 +6495,14 @@ class Plotter(BasePlotter):
                     "you have destroyed the render window and we have to "
                     "close it out."
                 )
-                auto_close = True
+            self.close()
+            if screenshot:
+                warnings.warn(
+                    "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
+                )
+        else:
+            self.last_image = self.screenshot(screenshot, return_img=True)
+            self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user pressed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
@@ -6481,18 +6511,31 @@ class Plotter(BasePlotter):
         #       remainder of this function.
 
         # Close the render window if requested
-        if auto_close:
+        if jupyter_disp is None and auto_close:
+            # Plotters are never auto-closed in Jupyter
             self.close()
 
-        # If user asked for screenshot, return as numpy array after camera
-        # position
-        if return_img or screenshot is True:
-            if return_cpos:
-                return self.camera_position, self.last_image
-            return self.last_image
+        if jupyter_disp is not None and not return_viewer:
+            # Default behaviour is to display the Jupyter viewer
+            try:
+                from IPython import display
+            except ImportError:  # pragma: no cover
+                raise ImportError('Install IPython to display an image in a notebook')
+            display.display(jupyter_disp)
 
-        if return_cpos:
-            return self.camera_position
+        # Three possible return values: (cpos, image, widget)
+        return_values = tuple(
+            val
+            for val in (
+                self.camera_position if return_cpos else None,
+                self.last_image if return_img or screenshot is True else None,
+                jupyter_disp if return_viewer else None,
+            )
+            if val is not None
+        )
+        if len(return_values) == 1:
+            return return_values[0]
+        return return_values or None
 
     def add_title(self, title, font_size=18, color=None, font=None, shadow=False):
         """Add text to the top center of the plot.
@@ -6603,7 +6646,7 @@ class Plotter(BasePlotter):
         alg.SetModelBounds(bounds)
         alg.SetFocalPoint(focal_point)
         alg.AllOn()
-        mapper = DataSetMapper()
+        mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
         prop.SetColor(Color(color).float_rgb)
