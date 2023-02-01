@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
+  USE_CACHE: ${{ ( (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') ) && !startsWith(github.ref, 'refs/heads/release/') }}
 
 jobs:
   doc:
