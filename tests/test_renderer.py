@@ -74,6 +74,15 @@ def test_reset_camera():
     plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
 
 
+def test_camera_is_set():
+    plotter = pyvista.Plotter()
+    assert not plotter.camera_set
+    assert not plotter.renderer.camera_set
+
+    renderer = pyvista.Renderer(plotter)
+    assert not renderer.camera_set
+
+
 def test_layer():
     plotter = pyvista.Plotter()
     plotter.renderer.layer = 1
