@@ -1544,6 +1544,15 @@ def test_link_views_camera_set(sphere, verify_image_cache):
         assert not renderer.camera_set
     p.show()
 
+    wavelet = pyvista.Wavelet().clip('x')
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(wavelet, color='red')
+    p.subplot(0, 1)
+    p.add_mesh(wavelet, color='red')
+    p.link_views()
+    p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+    p.show()
+
 
 def test_orthographic_slicer(uniform):
     uniform.set_active_scalars('Spatial Cell Data')

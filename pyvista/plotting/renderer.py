@@ -208,7 +208,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._actors = {}
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
-        self.camera_set = False
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
@@ -236,6 +235,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.add_border(border_color, border_width)
 
         self.set_color_cycler(self._theme.color_cycler)
+
+    @property
+    def camera_set(self) -> bool:
+        """Get or set whether this camera has been configured."""
+        return self.camera.is_set
+
+    @camera_set.setter
+    def camera_set(self, is_set: bool):
+        self.camera.is_set = is_set
 
     def set_color_cycler(self, color_cycler):
         """Set or reset this renderer's color cycler.
