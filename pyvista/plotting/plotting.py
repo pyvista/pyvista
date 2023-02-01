@@ -182,7 +182,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Width of the border in pixels when enabled.
 
     title : str, optional
-        Window title of the scalar bar.
+        Window title.
 
     splitting_position : float, optional
         The splitting position of the renderers.
