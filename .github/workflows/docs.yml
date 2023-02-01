@@ -137,6 +137,7 @@ jobs:
           personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: doc/_build/html/
           cname: dev.pyvista.org
+          force_orphan: true
 
       - name: Deploy on release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -146,6 +147,7 @@ jobs:
           personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: doc/_build/html/
           cname: docs.pyvista.org
+          force_orphan: true
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
@@ -181,6 +183,7 @@ jobs:
           publish_dir: pyvista-examples
           publish_branch: develop
           exclude_assets: ''
+          force_orphan: true
 
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -191,3 +194,4 @@ jobs:
           publish_dir: pyvista-examples
           publish_branch: master
           exclude_assets: ''
+          force_orphan: true
