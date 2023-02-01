@@ -257,9 +257,9 @@ class PolyDataFilters(DataSetFilters):
         if bool_inter.n_points == 0:
             inter, s1, s2 = self.intersection(other_mesh)
             if inter.n_points == 0 and s1.n_points == 0 and s2.n_points == 0:
-                raise RuntimeError(
+                warnings.warn(
                     'Unable to compute boolean intersection when one PolyData is '
-                    'contained within another and no faces intersect.'
+                    'contained within another and no faces intersect.',
                 )
         return bool_inter
 
