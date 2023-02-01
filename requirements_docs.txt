@@ -30,6 +30,7 @@ sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.4.0
 sphinxcontrib-asciinema==0.3.5
 sphinxcontrib-websupport==1.2.4
+sympy==1.11.1
 trame==2.2.6
 trame-client==2.5.1
 trame-server==2.8.1

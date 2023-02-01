@@ -469,6 +469,7 @@ class WidgetHelper:
             plane_widget.GetNormalProperty().SetColor(color.float_rgb)
             plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
             plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
+            plane_widget.GetOutlineProperty().SetOpacity(color.opacity)
             plane_widget.SetTubing(tubing)
             plane_widget.SetOutlineTranslation(outline_translation)
             plane_widget.SetOriginTranslation(origin_translation)
