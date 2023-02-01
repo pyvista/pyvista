@@ -560,10 +560,11 @@ def test_user_theme():
         pactor = pl.add_mesh(points)
         assert pactor.prop.point_size == theme.point_size
 
-        pl = pyvista.Plotter()
-        sactor = pl.add_mesh(sphere, pbr=True)
-        assert sactor.prop.roughness == theme.lighting_params.roughness
-        assert sactor.prop.metallic == theme.lighting_params.metallic
+        if pyvista._vtk.VTK9:
+            pl = pyvista.Plotter()
+            sactor = pl.add_mesh(sphere, pbr=True)
+            assert sactor.prop.roughness == theme.lighting_params.roughness
+            assert sactor.prop.metallic == theme.lighting_params.metallic
 
     finally:
         # always return to testing theme
