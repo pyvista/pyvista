@@ -329,6 +329,38 @@ def test_plot_helper_two_volumes(uniform, verify_image_cache):
     )
 
 
+def test_plot_volume_ugrid(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+
+    # Handle UnsutructuredGrid directly
+    grid = examples.load_hexbeam()
+    pl = pyvista.Plotter()
+    pl.add_volume(grid, scalars='sample_point_scalars')
+    pl.show()
+
+    # Handle 3D structured grid
+    grid = examples.load_uniform().cast_to_structured_grid()
+    pl = pyvista.Plotter()
+    pl.add_volume(grid, scalars='Spatial Point Data')
+    pl.show()
+
+    # Make sure PolyData fails
+    mesh = pyvista.Sphere()
+    mesh['scalars'] = mesh.points[:, 1]
+    pl = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        pl.add_volume(mesh, scalars='scalars')
+    pl.close()
+
+    # Make sure 2D StructuredGrid fails
+    mesh = examples.load_structured()  # wavy surface
+    mesh['scalars'] = mesh.points[:, 1]
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError):
+        pl.add_volume(mesh, scalars='scalars')
+    pl.close()
+
+
 def test_plot_return_cpos(sphere):
     cpos = sphere.plot(return_cpos=True)
     assert isinstance(cpos, pyvista.CameraPosition)

@@ -561,6 +561,7 @@ if VTK9:
     from vtkmodules.vtkRenderingVolume import (
         vtkFixedPointVolumeRayCastMapper,
         vtkGPUVolumeRayCastMapper,
+        vtkUnstructuredGridVolumeRayCastMapper,
     )
     from vtkmodules.vtkRenderingVolumeOpenGL2 import (
         vtkOpenGLGPUVolumeRayCastMapper,
