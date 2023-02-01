@@ -3768,9 +3768,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot an UnstructuredGrid.
 
+        >>> from pyvista import examples
+        >>> import pyvista as pv
         >>> mesh = examples.download_letter_a()
         >>> mesh['scalars'] = mesh.points[:, 1]
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> pl.add_volume(mesh, opacity_unit_distance=0.1)
         >>> pl.show()
 
