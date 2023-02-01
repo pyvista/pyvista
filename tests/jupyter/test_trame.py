@@ -1,4 +1,5 @@
 from IPython.display import IFrame
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -200,3 +201,19 @@ def test_trame_jupyter_custom_handler():
         return_viewer=True,
     )
     assert isinstance(iframe, IFrame)
+
+
+@skip_no_trame
+@skip_no_plotting
+def test_trame_int64():
+    mesh = pv.Sphere()
+    mesh['int64'] = np.arange(mesh.n_cells, dtype=np.int64)
+
+    plotter = pv.Plotter(notebook=True)
+    _ = plotter.add_mesh(mesh, scalars='int64')
+    widget = plotter.show(
+        jupyter_backend='trame',
+        return_viewer=True,
+    )
+    # Basically just assert that it didn't error out
+    assert isinstance(widget, Widget)
