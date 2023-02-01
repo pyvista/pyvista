@@ -239,6 +239,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @property
     def camera_set(self) -> bool:
         """Get or set whether this camera has been configured."""
+        if self.camera is None:
+            return False
         return self.camera.is_set
 
     @camera_set.setter
