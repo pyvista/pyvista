@@ -2934,12 +2934,12 @@ def test_bool_scalars(sphere):
 
 @skip_windows  # because of pbr
 @skip_9_1_0  # pbr required
-def test_property(verify_image_cache):
+def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
     prop = pyvista.Property(interpolation='pbr', metallic=1.0)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pyvista.vtk_version_info > (9, 2)
+    verify_image_cache.skip = pyvista.vtk_version_info < (9, 2)
     prop.plot()
 
 
