@@ -1566,7 +1566,7 @@ class DefaultTheme(_ThemeConfig):
 
         See Also
         --------
-        :ref:`_interpolate_before_mapping_example`
+        :ref:`interpolate_before_mapping_example`
 
         Examples
         --------
