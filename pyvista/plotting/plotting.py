@@ -3908,7 +3908,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Override mapper choice for UnstructuredGrid
         if isinstance(volume, pyvista.UnstructuredGrid):
-            volume = volume.triangulate()  # forcibly triangulate, should be inexpensive
+            # Unstructured grid must be all tetrahedrals
+            if not (volume.celltypes == pv.celltype.CellType.TETRA).all():
+                return volume.triangulate()
             mapper = 'ugrid'
 
         if mapper == 'fixed_point' and not isinstance(volume, pyvista.UniformGrid):
