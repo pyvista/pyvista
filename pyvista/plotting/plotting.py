@@ -3773,7 +3773,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> mesh = examples.download_letter_a()
         >>> mesh['scalars'] = mesh.points[:, 1]
         >>> pl = pv.Plotter()
-        >>> pl.add_volume(mesh, opacity_unit_distance=0.1)
+        >>> _ = pl.add_volume(mesh, opacity_unit_distance=0.1)
         >>> pl.show()
 
         """
