@@ -155,7 +155,10 @@ def _warn_xserver():  # pragma: no cover
 
 @abstract_class
 class BasePlotter(PickingHelper, WidgetHelper):
-    """To be used by the Plotter and pyvistaqt.QtInteractor classes.
+    """Base plotting class.
+
+    To be used by the :class:`pyvista.Plotter` and
+    :class:`pyvistaqt.QtInteractor` classes.
 
     Parameters
     ----------
@@ -163,38 +166,46 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one renderer.
-        Can also accept a string descriptor as shape. E.g.:
+        Can also accept a string descriptor as shape. For example:
 
-            * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
-            * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
+        * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
+        * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : ColorLike, optional
+    border_color : ColorLike, default: 'k'
         Either a string, rgb list, or hex color string.  For example:
 
-            * ``color='white'``
-            * ``color='w'``
-            * ``color=[1.0, 1.0, 1.0]``
-            * ``color='#FFFFFF'``
+        * ``color='white'``
+        * ``color='w'``
+        * ``color=[1.0, 1.0, 1.0]``
+        * ``color='#FFFFFF'``
 
-    border_width : float, optional
+    border_width : float, default: 2.0
         Width of the border in pixels when enabled.
 
     title : str, optional
-        Window title of the scalar bar
+        Window title.
 
-    lighting : str, optional
-        What lighting to set up for the plotter.
-        Accepted options:
+    splitting_position : float, optional
+        The splitting position of the renderers.
 
-            * ``'light_kit'``: a vtk Light Kit composed of 5 lights.
-            * ``'three lights'``: illumination using 3 lights.
-            * ``'none'``: no light sources at instantiation.
+    groups : tuple, optional
+        Grouping for renderers.
 
-        The default is a Light Kit (to be precise, 5 separate lights
-        that act like a Light Kit).
+    row_weights : tuple
+        Row weights for renderers.
+
+    col_weights : tuple, optional
+        Column weights for renderers.
+
+    lighting : str, default: 'light kit'
+        What lighting to set up for the plotter.  Accepted options:
+
+        * ``'light_kit'``: a vtk Light Kit composed of 5 lights.
+        * ``'three lights'``: illumination using 3 lights.
+        * ``'none'``: no light sources at instantiation.
 
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
@@ -202,6 +213,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
+
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
+    Examples
+    --------
+    Simple plotter example showing a blurred cube with a gradient background.
+
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Cube())
+    >>> pl.set_background('black', top='white')
+    >>> pl.add_blurring()
+    >>> pl.show()
 
     """
 

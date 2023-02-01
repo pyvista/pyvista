@@ -151,6 +151,7 @@ numpydoc_validation_checks = {
     "YD01",  # Yields: No plan to enforce
 }
 numpydoc_validation_exclude = {  # set of regex
+    r'\.BasePlotter$',  # Issue with class parameter documentation
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.WidgetHelper$',
     r'\.from_dict$',
