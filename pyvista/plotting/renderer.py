@@ -302,7 +302,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if self.__charts is None:
             self.__charts = Charts(self)
             self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
-            self.add_render_event(self._before_render_event, "before")
         return self.__charts
 
     @property
