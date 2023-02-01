@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkProperty."""
 import pyvista as pv
-from pyvista.plotting.opts import RepresentationOpts, ShaderOpts
+from pyvista.plotting.opts import InterpolationType, RepresentationType
 
 
 class ActorProperties:
@@ -90,11 +90,11 @@ class ActorProperties:
 
     @property
     def interpolation_model(self):
-        """Return or set the interpolation model. Can be any of the options in :class:`pyvista.plotting.opts.ShaderOpts` enum."""
-        return ShaderOpts(self.properties.GetInterpolation())
+        """Return or set the interpolation model. Can be any of the options in :class:`pyvista.plotting.opts.InterpolationType` enum."""
+        return InterpolationType.from_any(self.properties.GetInterpolation())
 
     @interpolation_model.setter
-    def interpolation_model(self, model: ShaderOpts):
+    def interpolation_model(self, model: InterpolationType):
         self.properties.SetInterpolation(model.value)
 
     @property
@@ -125,10 +125,10 @@ class ActorProperties:
         self.properties.SetShading(is_active)
 
     @property
-    def representation(self):
-        """Return or set the representation of the actor. Can be any of the options in :class:`pyvista.plotting.opts.RepresentationOpts` enum."""
-        return RepresentationOpts(self.properties.GetRepresentation())
+    def representation(self) -> RepresentationType:
+        """Return or set the representation of the actor. Can be any of the options in :class:`pyvista.plotting.opts.RepresentationType` enum."""
+        return RepresentationType.from_any(self.properties.GetRepresentation())
 
     @representation.setter
-    def representation(self, repr: RepresentationOpts):
-        self.properties.SetRepresentation(repr.value)
+    def representation(self, value: RepresentationType):
+        self.properties.SetRepresentation(RepresentationType.from_any(value).value)

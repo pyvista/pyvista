@@ -38,8 +38,8 @@ from typing import Callable, List, Optional, Union
 import warnings
 
 from ._typing import ColorLike, Number
-from .plotting._property import InterpolationType
 from .plotting.colors import Color, get_cmap_safe, get_cycler
+from .plotting.opts import InterpolationType
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
 from .utilities.misc import PyVistaDeprecationWarning
@@ -251,15 +251,17 @@ class _LightingConfig(_ThemeConfig):
         self._emissive = False
 
     @property
-    def interpolation(self) -> str:
+    def interpolation(self) -> InterpolationType:
         """Return or set the default interpolation type.
+
+        See :class:`pyvista.plotting.opts.InterpolationType`
 
         Options are:
         * 'Phong'
         * 'Flat'
         * 'Physically based rendering'
 
-        This is stored as a string value of the ``InterpolationType``
+        This is stored as a integer value of the ``InterpolationType``
         so that the theme can be JSON-serializable.
 
         Examples
@@ -268,19 +270,11 @@ class _LightingConfig(_ThemeConfig):
         >>> pv.global_theme.lighting_params.interpolation = 'Phong'
 
         """
-        return self._interpolation
+        return InterpolationType.from_any(self._interpolation)
 
     @interpolation.setter
-    def interpolation(self, interpolation: Union[str, InterpolationType]):
-        if isinstance(interpolation, InterpolationType):
-            interpolation = interpolation.value
-        if interpolation.lower() == 'pbr':
-            interpolation = 'Physically based rendering'
-        try:
-            interpolation = InterpolationType(interpolation.capitalize())
-        except:
-            raise ValueError(f'Interpolation {interpolation} not supported.')
-        self._interpolation = interpolation.value
+    def interpolation(self, interpolation: Union[str, int, InterpolationType]):
+        self._interpolation = InterpolationType.from_any(interpolation).value
 
     @property
     def metallic(self) -> float:

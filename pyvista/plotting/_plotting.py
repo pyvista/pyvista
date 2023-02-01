@@ -7,8 +7,8 @@ import pyvista
 from pyvista.utilities import assert_empty_kwargs, get_array
 
 from ..utilities.misc import PyVistaDeprecationWarning
-from ._property import InterpolationType
 from .colors import Color
+from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
 USE_SCALAR_BAR_ARGS = """

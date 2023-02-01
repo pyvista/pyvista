@@ -24,7 +24,7 @@ from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
-from pyvista.plotting.opts import RepresentationOpts, ShaderOpts
+from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities import algorithms
 from pyvista.utilities.misc import PyVistaDeprecationWarning, can_create_mpl_figure
@@ -3531,8 +3531,8 @@ def test_axes_actor_properties():
     assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
     axes_actor.y_axis_tip_properties.lighting = False
     assert not axes_actor.y_axis_tip_properties.lighting
-    axes_actor.z_axis_tip_properties.interpolation_model = ShaderOpts.PHONG
-    assert axes_actor.z_axis_tip_properties.interpolation_model == ShaderOpts.PHONG
+    axes_actor.z_axis_tip_properties.interpolation_model = InterpolationType.PHONG
+    assert axes_actor.z_axis_tip_properties.interpolation_model == InterpolationType.PHONG
 
     axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
     assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
@@ -3541,8 +3541,8 @@ def test_axes_actor_properties():
     axes_actor.z_axis_shaft_properties.shading = False
     assert not axes_actor.z_axis_shaft_properties.shading
 
-    axes_actor.x_axis_tip_properties.representation = RepresentationOpts.POINTS
-    assert axes_actor.x_axis_tip_properties.representation == RepresentationOpts.POINTS
+    axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
+    assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
 
     axes.axes_actor.shaft_type = pyvista.AxesActor.ShaftType.CYLINDER
     pl = pyvista.Plotter()

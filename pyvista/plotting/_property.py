@@ -1,10 +1,10 @@
 """This module contains the Property class."""
-from enum import Enum
 from functools import lru_cache
 from typing import Union
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.plotting.opts import InterpolationType
 from pyvista.utilities.misc import no_new_attr
 
 from .colors import Color
@@ -17,15 +17,6 @@ def _check_supports_pbr():
         from pyvista.core.errors import VTKVersionError
 
         raise VTKVersionError('Physically based rendering requires VTK 9 or newer.')
-
-
-class InterpolationType(Enum):
-    """Lighting interpolation types."""
-
-    PHONG = 'Phong'
-    FLAT = 'Flat'
-    PBR = 'Physically based rendering'
-    GOURAUD = 'Gouraud'
 
 
 @no_new_attr
@@ -770,39 +761,16 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        return InterpolationType(self.GetInterpolationAsString())
+        return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation.setter
-    def interpolation(self, value: Union[str, InterpolationType]):
-        if isinstance(value, InterpolationType):
-            value = value.value
-
-        if not isinstance(value, str):
-            raise TypeError(f'`interpolation` must be a string, not {type(value)}')
-
-        # normalize to spaces and lowercase
-        value = value.lower().replace('-', ' ')
-
-        if value in ['physically based rendering', 'pbr']:
+    def interpolation(self, value: Union[str, int, InterpolationType]):
+        value = InterpolationType.from_any(value).value
+        if value == InterpolationType.PBR:
             _check_supports_pbr()
             self.SetInterpolationToPBR()
-        elif value == 'phong':
-            self.SetInterpolationToPhong()
-        elif value == 'gouraud':
-            self.SetInterpolationToGouraud()
-        elif value == 'flat':
-            self.SetInterpolationToFlat()
         else:
-            raise ValueError(
-                f'Invalid interpolation "{value}". Should be one of the '
-                'following:\n'
-                '    - "Physically based rendering"\n'
-                '    - "pbr"\n'
-                '    - "Phong"\n'
-                '    - "Gouraud"\n'
-                '    - "Flat"\n'
-                '    - None'
-            )
+            self.SetInterpolation(value)
 
     @property
     def render_points_as_spheres(self) -> bool:
