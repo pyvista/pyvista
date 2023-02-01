@@ -3759,6 +3759,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> vol.prop.interpolation_type = 'linear'
         >>> pl.show()
 
+        Plot an UnstructuredGrid.
+
+        >>> mesh = examples.download_letter_a()
+        >>> mesh['scalars'] = mesh.points[:, 1]
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_volume(mesh, opacity_unit_distance=0.1)
+        >>> pl.show()
+
         """
         # Handle default arguments
 
