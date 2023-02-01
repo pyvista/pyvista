@@ -3027,9 +3027,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.remove_bounding_box(render=render)
         if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
             self.disable_shadows()
-        if hasattr(self, '__charts') and self.__charts is not None:
-            self.__charts.deep_clean()
-            self.__charts = None
+        try:
+            if self.__charts is not None:
+                self.__charts.deep_clean()
+                self.__charts = None
+        except AttributeError:  # pragma: no cover
+            pass
 
         self._render_passes.deep_clean()
         self.remove_floors(render=render)
