@@ -182,7 +182,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Width of the border in pixels when enabled.
 
     title : str, optional
-        Window title of the scalar bar
+        Window title of the scalar bar.
+
+    splitting_position : float, optional
+        The splitting position of the renderers.
+
+    groups : tuple, optional
+        Grouping for renderers.
+
+    row_weights : tuple
+        Row weights for renderers.
+
+    col_weights : tuple, optional
+        Column weights for renderers.
 
     lighting : str, optional
         What lighting to set up for the plotter.
@@ -201,6 +213,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
+
+    *args : tuple
+        Additional positional arguments.
+
+    **kwargs : dict
+        Additional keyword arguments.
 
     """
 
