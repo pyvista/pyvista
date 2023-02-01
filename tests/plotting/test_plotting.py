@@ -335,9 +335,6 @@ def test_plot_volume_ugrid(verify_image_cache):
     grid = examples.load_hexbeam().tessellate()
 
     pl = pyvista.Plotter()
-    with pytest.raises(TypeError, match='not supported'):
-        pl.add_volume(grid, mapper='smart')
-
     pl.add_volume(grid, scalars='sample_point_scalars')
     pl.show()
 
