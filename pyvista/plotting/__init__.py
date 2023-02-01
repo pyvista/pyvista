@@ -28,7 +28,9 @@ from .widgets import WidgetHelper
 from .lights import Light
 from .camera import Camera
 from .axes import Axes
+from .axes_actor import AxesActor
 from .actor import Actor
+from .actor_properties import ActorProperties
 from .mapper import DataSetMapper
 from .lookup_table import LookupTable
 
