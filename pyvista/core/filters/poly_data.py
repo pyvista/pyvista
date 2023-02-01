@@ -251,7 +251,17 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_example` for more examples using this filter.
 
         """
-        return self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
+        bool_inter = self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
+
+        # check if a polydata is completely contained within another
+        if bool_inter.n_points == 0:
+            inter, s1, s2 = self.intersection(other_mesh)
+            if inter.n_points == 0 and s1.n_points == 0 and s2.n_points == 0:
+                warnings.warn(
+                    'Unable to compute boolean intersection when one PolyData is '
+                    'contained within another and no faces intersect.',
+                )
+        return bool_inter
 
     def boolean_difference(self, other_mesh, tolerance=1e-5, progress_bar=False):
         """Perform a boolean difference operation between two meshes.
