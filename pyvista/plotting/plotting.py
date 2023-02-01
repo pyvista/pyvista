@@ -3530,12 +3530,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
     ):
         """Add a volume, rendered using a smart mapper by default.
 
-        Requires a 3D :class:`numpy.ndarray` or :class:`pyvista.UniformGrid`.
+        Requires a 3D :class:`numpy.ndarray`, :class:`pyvista.UniformGrid`,
+        :class:`pyvista.RectilinearGrid` or :class:`pyvista.UnstructuredGrid`.
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.UniformGrid or pyvista.RectilinearGrid, or pyvista.UnstructuredGrid
+        volume : 3D numpy.ndarray or pyvista.UniformGrid or pyvista.RectilinearGrid or pyvista.UnstructuredGrid
             The input volume to visualize. 3D numpy arrays are accepted.
+
+            .. warning::
+                If the input is :class:`pyvista.UnstructuredGrid`,
+                volume will often have poor performance.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
@@ -3647,8 +3652,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             .. note::
                 If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
-                filter (``vtkUnstructuredGridVolumeRayCastMapper``) will be
-                used.
+                mapper (``vtkUnstructuredGridVolumeRayCastMapper``) will be
+                used regargless.
 
             .. note::
                 The ``'smart'`` mapper chooses one of the other listed
@@ -3799,10 +3804,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling = 'backface'
 
         if mapper is None:
-            if isinstance(volume, pyvista.UnstructuredGrid):
-                mapper = 'ugrid'
-            else:
-                mapper = self._theme.volume_mapper
+            # Default mapper choice. Overridden later if UnstructuredGrid
+            mapper = self._theme.volume_mapper
 
         # only render when the plotter has already been shown
         if render is None:
@@ -3883,6 +3886,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
                 actors.append(a)
             return actors
+
+        # Override mapper choice for UnstructuredGrid
+        if isinstance(volume, pyvista.UnstructuredGrid):
+            mapper = 'ugrid'
 
         if not isinstance(
             volume, (pyvista.UniformGrid, pyvista.RectilinearGrid, pyvista.UnstructuredGrid)
