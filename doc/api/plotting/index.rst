@@ -12,6 +12,7 @@ Plotting
    plotting
    qt_plotting
    theme
+   trame
 
 .. _matplotlib: https://matplotlib.org/
 
@@ -26,6 +27,7 @@ all plotting functionality in PyVista.
 .. autosummary::
    :toctree: _autosummary
 
+   BasePlotter
    Plotter
    Renderer
    Property
@@ -51,8 +53,9 @@ These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 Charts API
 ----------
 Charts API reference. These dedicated classes can be used to embed
-charts in plotting windows. Note that using charts requires a VTK version
-of at least 9.0 and in a future release will require `vtk>=9.2`.
+charts in plotting windows. Note that full charts functionality
+requires a VTK version of at least 9.3. Most components work fine
+in older versions though.
 
 .. toctree::
    :maxdepth: 2

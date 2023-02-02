@@ -456,13 +456,15 @@ def test_binarymarchingcubesreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+    read_mesh = pyvista.read(filename)
+    assert mesh == read_mesh
 
 
 def test_pvdreader():
     filename = examples.download_wavy(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.PVDReader)
-    assert reader.reader == reader  # PVDReader refers to itself
+    assert isinstance(reader.reader, pyvista.utilities.reader._PVDReader)
     assert reader.path == filename
 
     assert reader.number_time_points == 15

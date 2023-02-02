@@ -3,10 +3,12 @@ import collections.abc
 from functools import partial
 import logging
 import time
+import warnings
 import weakref
 
 from pyvista import _vtk
 from pyvista.utilities import try_callback
+from pyvista.utilities.misc import vtk_version_info
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -53,7 +55,7 @@ class RenderWindowInteractor:
         # enable interaction with visible charts)
         self._context_style = _vtk.vtkContextInteractorStyle()
         self.track_click_position(
-            self._toggle_context_style, side="left", double=True, viewport=True
+            self._toggle_chart_interaction, side="left", double=True, viewport=True
         )
 
     @property
@@ -217,10 +219,12 @@ class RenderWindowInteractor:
         last_pos = self._plotter.click_position or (0, 0)
 
         self._plotter.store_click_position()
-        self._click_time = t
         dp = (self._plotter.click_position[0] - last_pos[0]) ** 2
         dp += (self._plotter.click_position[1] - last_pos[1]) ** 2
         double = dp < self._MAX_CLICK_DELTA and dt < self._MAX_CLICK_DELAY
+        # Reset click time in case of a double click, otherwise a subsequent third click
+        # is considered to be a double click as well.
+        self._click_time = 0 if double else t
 
         for callback in self._click_event_callbacks[event][double, False]:
             callback(self._plotter.pick_click_position())
@@ -305,26 +309,64 @@ class RenderWindowInteractor:
             self._style_class = _style_factory(self._style)(self)
         self.interactor.SetInteractorStyle(self._style_class)
 
-    def _toggle_context_style(self, mouse_pos):
-        """Toggle the context style for chart interaction.
+    def _toggle_chart_interaction(self, mouse_pos):
+        """Toggle interaction with indicated charts.
 
         Parameters
         ----------
-        mouse_pos : tuple or None
-            Either a valid mouse position (to toggle interaction
-            with the chart pointed at) or ``None`` (to disable
-            interaction with all charts).
+        mouse_pos : tuple of float
+            Tuple containing the mouse position.
 
         """
-        scene = None
+        # Loop over all renderers to see whether any charts need to be made interactive
+        interactive_scene = None
         for renderer in self._plotter.renderers:
-            if scene is None and mouse_pos is not None and renderer.IsInViewport(*mouse_pos):
-                scene = renderer._charts.toggle_interaction(mouse_pos)
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+                # No interactive charts yet and mouse is within this renderer's viewport,
+                # so collect all charts indicated by the mouse (typically only one, except
+                # when there are overlapping charts).
+                origin = renderer.GetOrigin()  # Correct for viewport origin (see #3278)
+                charts = renderer._get_charts_by_pos(
+                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1])
+                )
+                if charts:
+                    # Toggle interaction for indicated charts and determine whether
+                    # there are any remaining interactive charts.
+                    interactive_charts = renderer.set_chart_interaction(charts, toggle=True)
+                    if interactive_charts:
+                        # Save a reference to this renderer's scene if there are
+                        # remaining interactive charts.
+                        interactive_scene = renderer._charts._scene
+                else:
+                    # No indicated charts, so disable interaction with all charts
+                    # for this renderer.
+                    renderer.set_chart_interaction(False)
             else:
-                # Not in viewport or already an active chart found (in case they overlap), so disable interaction
-                renderer._charts.toggle_interaction(False)
+                # Not in viewport or interactive charts were already found in another
+                # renderer, so disable interaction with all charts for this renderer.
+                renderer.set_chart_interaction(False)
+        # Manually set context_style based on found interactive scene (or stop interaction
+        # with any scene if there are no interactive charts).
+        self._set_context_style(interactive_scene)
 
+    def _set_context_style(self, scene):
+        """
+        Set the context style interactor or switch back to previous interactor style.
+
+        Parameters
+        ----------
+        scene : vtkContextScene, optional
+            The scene to interact with or ``None`` to stop interaction with any scene.
+
+        """
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        if vtk_version_info < (9, 3, 0):  # pragma: no cover
+            if scene is not None and len(self._plotter.renderers) > 1:
+                warnings.warn(
+                    "Interaction with charts is not possible when using multiple subplots."
+                    "Upgrade to VTK 9.3 or newer to enable this feature."
+                )
+                scene = None
         self._context_style.SetScene(scene)
         if scene is None and self._style == "Context":
             # Switch back to previous interactor style
@@ -825,9 +867,9 @@ class RenderWindowInteractor:
         """Initialize the interactor."""
         self.interactor.Initialize()
 
-    def set_render_window(self, ren_win):
+    def set_render_window(self, render_window):
         """Set the render window."""
-        self.interactor.SetRenderWindow(ren_win)
+        self.interactor.SetRenderWindow(render_window)
 
     @property
     def can_process_events(self):
@@ -885,8 +927,8 @@ class RenderWindowInteractor:
         This will terminate the render window if it is not already closed.
         """
         self.remove_observers()
-        if self._style_class == self._context_style:
-            self._toggle_context_style(None)  # Disable context interactor style first
+        if self._style_class == self._context_style:  # pragma: no cover
+            self._set_context_style(None)  # Disable context interactor style first
         if self._style_class is not None:
             self._style_class.remove_observers()
             self._style_class = None

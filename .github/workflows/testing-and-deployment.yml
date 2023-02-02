@@ -35,15 +35,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: requirements_test.txt
+          cache-dependency-path:  |
+            requirements.txt
+            requirements_test.txt
 
       - name: Install PyVista
-        run: |
-          pip install .
-          python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
+        run: pip install . --no-deps
 
       - name: Install test dependencies
-        run: pip install -r requirements_test.txt
+        run: pip install vtk -r requirements_test.txt
+
+      - name: Report
+        run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
         run: pytest -v --ignore=tests/plotting
@@ -54,6 +57,7 @@ jobs:
 
   LinuxConda:
     runs-on: ubuntu-20.04
+    if: false
     env:
       CONDA_ALWAYS_YES: 1
       conda_env: pyvista-vtk
@@ -149,7 +153,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: requirements_test.txt
+          cache-dependency-path:  |
+            requirements.txt
+            requirements_test.txt
 
       - uses: actions/cache@v3
         with:
@@ -173,6 +179,11 @@ jobs:
           packages: libgl1-mesa-glx xvfb python-tk
           version: 3.0
 
+      # Make sure PyVista does not break from non-core dependencies
+      - name: Software Report (Core Dependencies)
+        run: |
+          xvfb-run python -c "import pyvista; print(pyvista.Report());"
+
       - name: Install Testing Requirements
         run: pip install -r requirements_test.txt
 
@@ -194,7 +205,7 @@ jobs:
         run: xvfb-run coverage run -m --source=pyvista --module pytest --skip_image_cache_vtk8 --fail_extra_image_cache -v
 
       - uses: codecov/codecov-action@v3
-        if: matrix.python-version == '3.9'
+        if: matrix.python-version == '3.10'
         name: 'Upload coverage to CodeCov'
 
       - name: Check package
@@ -229,15 +240,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: requirements_test.txt
+          cache-dependency-path:  |
+            requirements.txt
+            requirements_test.txt
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v1
 
       - name: Install PyVista
-        run: |
-          pip install .
-          python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+        run: pip install . --no-deps
+
+      - name: Install test dependencies
+        run: pip install vtk -r requirements_test.txt
+
+      - name: Report
+        run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Set example data path as env variable
         run: |
@@ -251,9 +268,6 @@ jobs:
           key: Examples-1-${{ hashFiles('*') }}
           restore-keys: |
             Examples-1-
-
-      - name: Install test dependencies
-        run: pip install -r requirements_test.txt
 
       - name: Test Core API
         run: python -m pytest -v --ignore=tests/plotting

@@ -2,6 +2,7 @@
 from pyvista import _vtk
 
 from .actor import Actor
+from .axes_actor import AxesActor
 
 
 class Axes(_vtk.vtkAxes):
@@ -33,15 +34,13 @@ class Axes(_vtk.vtkAxes):
     def __init__(self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False):
         """Initialize a new axes descriptor."""
         super().__init__()
-        self.mapper = None
-        self.actor = None
         self.SetSymmetric(symmetric)
-
         # Add the axes mapper
         self.mapper = _vtk.vtkPolyDataMapper()
         self.mapper.SetInputConnection(self.GetOutputPort())
         # Add the axes actor
-        self.actor = Actor(mapper=self.actor)
+        self.actor = Actor(mapper=self.mapper)
+        self.axes_actor = AxesActor()
         self.actor.visibility = show_actor
         self.actor.scale = actor_scale
         self.actor.prop.line_width = line_width
@@ -114,3 +113,9 @@ class Axes(_vtk.vtkAxes):
         >>> axes.hide_symmetric()
         """
         self.SymmetricOff()
+
+    def __del__(self):
+        """Clean the attributes of the class."""
+        self.axes_actor = None
+        self.actor = None
+        self.mapper = None

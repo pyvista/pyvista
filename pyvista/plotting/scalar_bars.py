@@ -438,13 +438,13 @@ class ScalarBars:
         if nan_annotation:
             scalar_bar.DrawNanAnnotationOn()
 
-        if above_label:
+        if above_label is not None:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
         elif lut.above_range_color:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation('above')
-        if below_label:
+        if below_label is not None:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
         elif lut.below_range_color:

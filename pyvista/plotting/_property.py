@@ -1,8 +1,10 @@
 """This module contains the Property class."""
 from functools import lru_cache
+from typing import Union
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.plotting.opts import InterpolationType
 from pyvista.utilities.misc import no_new_attr
 
 from .colors import Color
@@ -187,32 +189,41 @@ class Property(_vtk.vtkProperty):
         else:
             self._theme.load_theme(theme)
 
-        if interpolation is not None:
-            self.interpolation = interpolation
+        if interpolation is None:
+            interpolation = self._theme.lighting_params.interpolation
+        self.interpolation = interpolation
 
         self.color = color
 
         if style is not None:
             self.style = style
 
-        if interpolation in ['Physically based rendering', 'pbr']:
-            if metallic is not None:
-                self.metallic = metallic
-            if roughness is not None:
-                self.roughness = roughness
+        if self.interpolation == InterpolationType.PBR:
+            if metallic is None:
+                metallic = self._theme.lighting_params.metallic
+            self.metallic = metallic
+            if roughness is None:
+                roughness = self._theme.lighting_params.roughness
+            self.roughness = roughness
 
-        if point_size is not None:
-            self.point_size = point_size
-        if opacity is not None:
-            self.opacity = opacity
-        if ambient is not None:
-            self.ambient = ambient
-        if diffuse is not None:
-            self.diffuse = diffuse
-        if specular is not None:
-            self.specular = specular
-        if specular_power is not None:
-            self.specular_power = specular_power
+        if point_size is None:
+            point_size = self._theme.point_size
+        self.point_size = point_size
+        if opacity is None:
+            opacity = self._theme.opacity
+        self.opacity = opacity
+        if ambient is None:
+            ambient = self._theme.lighting_params.ambient
+        self.ambient = ambient
+        if diffuse is None:
+            diffuse = self._theme.lighting_params.diffuse
+        self.diffuse = diffuse
+        if specular is None:
+            specular = self._theme.lighting_params.specular
+        self.specular = specular
+        if specular_power is None:
+            specular_power = self._theme.lighting_params.specular_power
+        self.specular_power = specular_power
 
         if show_edges is None:
             self.show_edges = self._theme.show_edges
@@ -220,13 +231,16 @@ class Property(_vtk.vtkProperty):
             self.show_edges = show_edges
 
         self.edge_color = edge_color
-        if render_points_as_spheres is not None:
-            self.render_points_as_spheres = render_points_as_spheres
-        if render_lines_as_tubes is not None:
-            self.render_lines_as_tubes = render_lines_as_tubes
+        if render_points_as_spheres is None:
+            render_points_as_spheres = self._theme.render_points_as_spheres
+        self.render_points_as_spheres = render_points_as_spheres
+        if render_lines_as_tubes is None:
+            render_lines_as_tubes = self._theme.render_lines_as_tubes
+        self.render_lines_as_tubes = render_lines_as_tubes
         self.lighting = lighting
-        if line_width is not None:
-            self.line_width = line_width
+        if line_width is None:
+            line_width = self._theme.line_width
+        self.line_width = line_width
         if culling is not None:
             self.culling = culling
 
@@ -703,7 +717,7 @@ class Property(_vtk.vtkProperty):
         self.SetRoughness(value)
 
     @property
-    def interpolation(self) -> str:
+    def interpolation(self) -> InterpolationType:
         """Return or set the method of shading.
 
         One of the following options.
@@ -724,7 +738,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.interpolation = 'pbr'
         >>> prop.interpolation
-        'Physically based rendering'
+        <InterpolationType.PBR: 3>
 
         Visualize default flat shading.
 
@@ -747,36 +761,16 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        return self.GetInterpolationAsString()
+        return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation.setter
-    def interpolation(self, value: str):
-        if not isinstance(value, str):
-            raise TypeError(f'`interpolation` must be a string, not {type(value)}')
-
-        # normalize to spaces and lowercase
-        value = value.lower().replace('-', ' ')
-
-        if value in ['physically based rendering', 'pbr']:
+    def interpolation(self, value: Union[str, int, InterpolationType]):
+        value = InterpolationType.from_any(value).value
+        if value == InterpolationType.PBR:
             _check_supports_pbr()
             self.SetInterpolationToPBR()
-        elif value == 'phong':
-            self.SetInterpolationToPhong()
-        elif value == 'gouraud':
-            self.SetInterpolationToGouraud()
-        elif value == 'flat':
-            self.SetInterpolationToFlat()
         else:
-            raise ValueError(
-                f'Invalid interpolation "{value}". Should be one of the '
-                'following:\n'
-                '    - "Physically based rendering"\n'
-                '    - "pbr"\n'
-                '    - "Phong"\n'
-                '    - "Gouraud"\n'
-                '    - "Flat"\n'
-                '    - None'
-            )
+            self.SetInterpolation(value)
 
     @property
     def render_points_as_spheres(self) -> bool:
