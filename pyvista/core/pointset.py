@@ -21,8 +21,9 @@ from pyvista.utilities.cells import (
     numpy_to_idarr,
 )
 
+from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
-from .cell import CellType
+from .celltype import CellType
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
@@ -883,12 +884,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return the number of cells."""
         raise DeprecationError('``number_of_faces`` has been deprecated.  Please use ``n_faces``')
 
-    def save(self, filename, binary=True, texture=None):
+    def save(self, filename, binary=True, texture=None, recompute_normals=True):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file. If ply or stl format is chosen, the face normals are
-        computed in place to ensure the mesh is properly saved.
+        file.
 
         Parameters
         ----------
@@ -916,6 +916,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
             .. note::
                This feature is only available when saving PLY files.
+
+        recompute_normals : bool, default: True
+            When ``True``, if ply or stl format is chosen, the face normals
+            are computed in place to ensure the mesh is properly saved.
+            Set this to ``False`` to save instead the already existing normal
+            array in the PolyData.
 
         Notes
         -----
@@ -961,7 +967,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
-        if ftype in ['.stl', '.ply']:
+        if ftype in ['.stl', '.ply'] and recompute_normals:
             self.compute_normals(inplace=True)
 
         # validate texture
@@ -2490,7 +2496,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return self._dimensions()
 
     @property
-    def visible_bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def visible_bounds(self) -> BoundsLike:
         """Return the bounding box of the visible cells.
 
         Different from `bounds`, which returns the bounding box of the
@@ -2659,7 +2665,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         def connectivity(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
-            cell_points = self.cell_points(ind)
+            cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 faces = [
                     [(-1, 0, 0), (0, 4, 7, 3), (1, 5, 6, 2)],
@@ -2673,7 +2679,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                     coords = np.sum([cell_coords, f[0]], axis=0)
                     ind = self.cell_id(coords)
                     if ind:
-                        points = self.cell_points(ind)
+                        points = self.get_cell(ind).points
                         if points.shape[0] == 8:
                             a1 = cell_points[f[1], :]
                             a2 = points[f[2], :]
@@ -2695,7 +2701,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         def geometric(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
-            cell_points = self.cell_points(ind)
+            cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 for k in [-1, 1]:
                     coords = np.sum([cell_coords, (0, 0, k)], axis=0)
@@ -2720,7 +2726,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                         coords[2] = k
                         ind = self.cell_id(coords)
                         if ind:
-                            points = self.cell_points(ind)
+                            points = self.get_cell(ind).points
                             if points.shape[0] == 8:
                                 z = points[f[2], 2]
                                 z = np.abs(z)

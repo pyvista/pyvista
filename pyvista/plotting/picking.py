@@ -61,6 +61,7 @@ class PickingHelper:
         color='pink',
         font_size=18,
         left_clicking=False,
+        use_actor=False,
         **kwargs,
     ):
         """Enable picking of a mesh.
@@ -90,7 +91,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -103,6 +104,10 @@ class PickingHelper:
             .. note::
                If enabled, left-clicking will **not** display the bounding box
                around the picked point.
+
+        use_actor : bool, default: False
+            If True, the callback will be passed the picked actor instead of
+            the mesh object.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
@@ -144,7 +149,10 @@ class PickingHelper:
                 self_()._picked_mesh = mesh
 
             if callback and is_valid_selection:
-                try_callback(callback, mesh)
+                if use_actor:
+                    try_callback(callback, actor)
+                else:
+                    try_callback(callback, mesh)
 
             if show and is_valid_selection:
 
@@ -277,7 +285,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         font_size : int, optional
@@ -524,7 +532,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         show_point : bool, optional
@@ -668,7 +676,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -800,7 +808,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -908,7 +916,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the selected mesh when shown.
 
         point_size : int, optional
@@ -1049,7 +1057,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : color_like, optional
+        color : ColorLike, optional
             The color of the horizon surface if shown.
 
         point_size : int, optional

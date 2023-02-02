@@ -25,7 +25,6 @@ def plot(
     eye_dome_lighting=False,
     volume=False,
     parallel_projection=False,
-    use_ipyvtk=None,
     jupyter_backend=None,
     return_viewer=False,
     return_cpos=False,
@@ -88,7 +87,7 @@ def plot(
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : color_like, optional
+    background : ColorLike, optional
         Color of the background.
 
     text : str, optional
@@ -106,11 +105,6 @@ def plot(
 
     parallel_projection : bool, optional
         Enable parallel projection.
-
-    use_ipyvtk : bool, optional
-        Deprecated.  Instead, set the backend either globally with
-        ``pyvista.set_jupyter_backend('ipyvtklink')`` or with
-        ``backend='ipyvtklink'``.
 
     jupyter_backend : str, optional
         Jupyter notebook plotting backend to use.  One of the
@@ -158,7 +152,7 @@ def plot(
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : color_like, optional
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -305,7 +299,6 @@ def plot(
         full_screen=full_screen,
         screenshot=screenshot,
         return_img=return_img,
-        use_ipyvtk=use_ipyvtk,
         jupyter_backend=jupyter_backend,
         before_close_callback=before_close_callback,
         jupyter_kwargs=jupyter_kwargs,

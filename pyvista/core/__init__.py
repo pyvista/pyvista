@@ -21,11 +21,13 @@ from .pointset import (
     ExplicitStructuredGrid,
 )
 from .pyvista_ndarray import pyvista_ndarray
-from .cell import CellType
+from .cell import Cell
+from .celltype import CellType
 
 
 # __all__ only left for mypy --strict to work when pyvista is a dependency
 __all__ = [
+    'Cell',
     'CellType',
     'CompositeFilters',
     'DataObject',

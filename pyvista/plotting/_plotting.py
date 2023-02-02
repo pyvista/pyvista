@@ -8,6 +8,7 @@ from pyvista.utilities import assert_empty_kwargs, get_array
 
 from ..utilities.misc import PyVistaDeprecationWarning
 from .colors import Color
+from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
 USE_SCALAR_BAR_ARGS = """
@@ -211,6 +212,9 @@ def _common_arg_parser(
     cmap = kwargs.pop('colormap', cmap)
     culling = kwargs.pop("backface_culling", culling)
     rgb = kwargs.pop('rgba', rgb)
+    vertex_color = kwargs.pop('vertex_color', theme.edge_color)
+    vertex_style = kwargs.pop('vertex_style', 'points')
+    vertex_opacity = kwargs.pop('vertex_opacity', 1.0)
 
     # Support aliases for 'back', 'front', or 'none'. Consider deprecating
     if culling is False:
@@ -263,13 +267,12 @@ def _common_arg_parser(
     # allow directly specifying interpolation (potential future feature)
     if 'interpolation' in kwargs:
         interpolation = kwargs.pop('interpolation')  # pragma: no cover:
+    elif pbr:
+        interpolation = InterpolationType.PBR
+    elif smooth_shading:
+        interpolation = InterpolationType.PHONG
     else:
-        if pbr:
-            interpolation = 'Physically based rendering'
-        elif smooth_shading:
-            interpolation = 'Phong'
-        else:
-            interpolation = 'Flat'
+        interpolation = theme.lighting_params.interpolation
 
     # account for legacy behavior
     if 'stitle' in kwargs:  # pragma: no cover
@@ -300,4 +303,7 @@ def _common_arg_parser(
         rgb,
         interpolation,
         remove_existing_actor,
+        vertex_color,
+        vertex_style,
+        vertex_opacity,
     )

@@ -1,10 +1,10 @@
 """Plotting routines."""
 
 from pyvista import MAX_N_COLOR_BARS
-from .charts import Chart2D, ChartMPL, ChartBox, ChartPie
+from .charts import Chart, Chart2D, ChartMPL, ChartBox, ChartPie
 from .colors import (
     Color,
-    color_like,
+    ColorLike,
     color_char_to_word,
     get_cmap_safe,
     hexcolors,
@@ -28,7 +28,9 @@ from .widgets import WidgetHelper
 from .lights import Light
 from .camera import Camera
 from .axes import Axes
+from .axes_actor import AxesActor
 from .actor import Actor
+from .actor_properties import ActorProperties
 from .mapper import DataSetMapper
 from .lookup_table import LookupTable
 
@@ -98,7 +100,7 @@ __all__ = [
     'charts',
     'close_all',
     'color_char_to_word',
-    'color_like',
+    'ColorLike',
     'colors',
     'composite_mapper',
     'create_axes_marker',

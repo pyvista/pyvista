@@ -6,12 +6,12 @@ from typing import Optional
 import warnings
 import os
 
-# Load default theme.  Must be loaded first.
 from pyvista._version import __version__
 
 from pyvista.plotting import (
     Actor,
     Axes,
+    AxesActor,
     BackgroundPlotter,
     BasePlotter,
     BlockAttributes,
@@ -42,7 +42,7 @@ from pyvista.plotting import (
     charts,
     close_all,
     color_char_to_word,
-    color_like,
+    ColorLike,
     colors,
     # composite_mapper,
     create_axes_marker,
@@ -56,6 +56,7 @@ from pyvista.plotting import (
     # lookup_table,
     # mapper,
     opacity_transfer_function,
+    opts,
     parse_font_family,
     # picking,
     plot,
@@ -195,6 +196,7 @@ from pyvista.utilities import (
     # arrays,
     assert_empty_kwargs,
     axis_rotation,
+    cartesian_to_spherical,
     cell_array,
     cells,
     check_depth_peeling,
@@ -278,6 +280,7 @@ from pyvista.utilities import (
 )
 
 from pyvista.core import (
+    Cell,
     CellType,
     CompositeFilters,
     DataObject,
@@ -394,6 +397,7 @@ __all__ = [
     'AmbiguousDataError',
     'Arrow',
     'Axes',
+    'AxesActor',
     'BMPReader',
     'BYUReader',
     'BackgroundPlotter',
@@ -405,6 +409,7 @@ __all__ = [
     'CGNSReader',
     'Camera',
     'CameraPosition',
+    'Cell',
     'CellType',
     'Chart2D',
     'ChartBox',
@@ -414,6 +419,7 @@ __all__ = [
     'CircularArc',
     'CircularArcFromNormal',
     'Color',
+    'ColorLike',
     'CompositeAttributes',
     'CompositeFilters',
     'CompositePolyDataMapper',
@@ -565,6 +571,7 @@ __all__ = [
     'axis_rotation',
     # 'background_renderer',  # plotting.background_renderer
     # 'camera',  # plotting.camera
+    'cartesian_to_spherical',
     # 'cell',  # core.cell
     'cells',
     'cell_array',
@@ -573,7 +580,6 @@ __all__ = [
     'check_valid_vector',
     'close_all',
     'color_char_to_word',
-    'color_like',
     'colors',
     # 'common',  # utilities.common
     'compare_images',
@@ -632,6 +638,7 @@ __all__ = [
     'numpy_to_texture',
     # 'objects',  # core.objects
     'opacity_transfer_function',
+    'opts',
     'parametric_keywords',
     # 'parametric_objects',  # utilities.parametric_objects
     'parse_field_choice',

@@ -2,6 +2,13 @@
 
 Using ``Panel`` with PyVista
 ----------------------------
+
+.. deprecated:: 0.38.0
+   This backend has been deprecated in favor of :ref:`trame_jupyter` - a new
+   framework for building dynamic web applications with Python with great
+   support for VTK.
+
+
 PyVista supports the usage of the `panel
 <https://github.com/holoviz/panel>`_ module as a ``vtk.js`` jupyterlab
 plotting backend that can be utialized as either a standalone VTK
@@ -88,7 +95,6 @@ either start it using bash with:
 
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_IPYVTK=true
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3

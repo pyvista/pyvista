@@ -135,7 +135,7 @@ def test_multi_block_set_get_ers():
     for i in [0, 2, 3, 4, 5]:
         assert multi[i] is None
     # Check the bounds
-    assert multi.bounds == list(data.bounds)
+    assert multi.bounds == data.bounds
     multi[5] = ex.load_uniform()
     multi.set_block_name(5, 'uni')
     multi.set_block_name(5, None)  # Make sure it doesn't get overwritten

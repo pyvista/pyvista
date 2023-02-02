@@ -1,4 +1,5 @@
 """Utilities routines."""
+from .algorithms import algorithm_to_mesh_handler, set_algorithm_input
 from .common import perlin_noise, sample_function
 from .errors import (
     GPUInfo,
@@ -12,6 +13,7 @@ from .errors import (
     VtkErrorCatcher,
 )
 from .features import (
+    cartesian_to_spherical,
     create_grid,
     grid_from_sph_coords,
     merge,
@@ -287,6 +289,7 @@ __all__ = [
     'abstract_class',
     'array_from_vtkmatrix',
     'axis_rotation',
+    'cartesian_to_spherical',
     'cell_array',
     'check_depth_peeling',
     'conditional_decorator',

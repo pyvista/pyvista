@@ -13,14 +13,14 @@ from pyvista import _vtk
 
 def _set_plot_theme_from_env():
     """Set plot theme from an environment variable."""
-    from pyvista.themes import _ALLOWED_THEMES, set_plot_theme
+    from pyvista.themes import _NATIVE_THEMES, set_plot_theme
 
     if 'PYVISTA_PLOT_THEME' in os.environ:
         try:
             theme = os.environ['PYVISTA_PLOT_THEME']
             set_plot_theme(theme.lower())
-        except KeyError:
-            allowed = ', '.join([item.name for item in _ALLOWED_THEMES])
+        except ValueError:
+            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
@@ -167,10 +167,12 @@ def set_pickle_format(format: str):
 
 def no_new_attr(cls):
     """Override __setattr__ to not permit new attributes."""
+    if not hasattr(cls, '_new_attr_exceptions'):
+        cls._new_attr_exceptions = []
 
     def __setattr__(self, name, value):
         """Do not allow setting attributes."""
-        if hasattr(self, name):
+        if hasattr(self, name) or name in cls._new_attr_exceptions:
             object.__setattr__(self, name, value)
         else:
             raise AttributeError(

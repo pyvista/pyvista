@@ -49,7 +49,6 @@ warnings.filterwarnings(
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
 )
 
-
 # -- General configuration ------------------------------------------------
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
@@ -129,7 +128,7 @@ coverage_ignore_modules = [
 
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {"color_like": "pyvista.color_like"}
+autodoc_type_aliases = {"Chart": "pyvista.Chart", "ColorLike": "pyvista.ColorLike"}
 
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
@@ -152,6 +151,7 @@ numpydoc_validation_checks = {
     "YD01",  # Yields: No plan to enforce
 }
 numpydoc_validation_exclude = {  # set of regex
+    r'\.BasePlotter$',  # Issue with class parameter documentation
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.WidgetHelper$',
     r'\.from_dict$',
@@ -201,7 +201,8 @@ numpydoc_validation_exclude = {  # set of regex
     # called from inherited
     r'\.Table\.copy_meta_from$',
     # Type alias
-    r'\.color_like$',
+    r'\.ColorLike$',
+    r'\.Chart$',
     # Mixin methods from collections.abc
     r'\.MultiBlock\.clear$',
     r'\.MultiBlock\.count$',
@@ -209,6 +210,12 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.MultiBlock\.remove$',
     # Enumerations
     r'\.Plot3DFunctionEnum$',
+    # VTK methods
+    r'\.override$',
+    # trame
+    r'\.PyVistaRemoteView(\.|$)',
+    r'\.PyVistaLocalView(\.|$)',
+    r'\.PyVistaRemoteLocalView(\.|$)',
 }
 
 
@@ -248,13 +255,14 @@ linkcheck_timeout = 500
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
 templates_path = ["_templates"]
-if os.environ.get('FULL_DOC_BUILD', '').upper() == 'TRUE':
-    templates_path.append("_templates_full")
-else:
-    theme = pyvista.themes.DocumentTheme()
-    theme.window_size = [400, 300]
-    pyvista.PLOT_DIRECTIVE_THEME = theme
-    templates_path.append("_templates_basic")
+
+# Autosummary configuration
+autosummary_context = {
+    # Methods that should be skipped when generating the docs
+    # __init__ should be documented in the class docstring
+    # override is a VTK method
+    "skipmethods": ["__init__", "override"]
+}
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"

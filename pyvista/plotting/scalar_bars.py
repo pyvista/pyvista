@@ -202,7 +202,7 @@ class ScalarBars:
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
             in one of the following formats:
@@ -277,7 +277,7 @@ class ScalarBars:
         above_label : str, optional
             String annotation for values above the scalars range.
 
-        background_color : color_like, optional
+        background_color : ColorLike, optional
             The color used for the background in RGB format.
 
         n_colors : int, optional
@@ -438,13 +438,13 @@ class ScalarBars:
         if nan_annotation:
             scalar_bar.DrawNanAnnotationOn()
 
-        if above_label:
+        if above_label is not None:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
         elif lut.above_range_color:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation('above')
-        if below_label:
+        if below_label is not None:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
         elif lut.below_range_color:

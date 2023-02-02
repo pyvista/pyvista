@@ -447,7 +447,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     output_dir = os.path.join(root_output_directory, timeStamp)
     mkdir_p(output_dir)
 
-    renderers = plotter.ren_win.GetRenderers()
+    renderers = plotter.render_window.GetRenderers()
 
     scDirs = []
     sceneComponents = []
@@ -475,7 +475,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                         gf.Update()
                         dataset = gf.GetOutput()
                 else:
-                    dataset = mapper.GetInput()
+                    dataset = mapper.GetInputAsDataSet()
 
                 if dataset and not isinstance(dataset, (_vtk.vtkPolyData, _vtk.vtkImageData)):
                     # All data must be PolyData surfaces
@@ -697,7 +697,8 @@ def get_vtkjs_url(*args):
 
     - Dropbox
 
-    Args:
+    Args
+    ----
         host (str): the name of the file hosting service.
         inURL (str): the web URL to the ``.vtkjs`` file.
 

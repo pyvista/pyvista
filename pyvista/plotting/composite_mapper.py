@@ -706,19 +706,19 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         n_colors : int
             Number of colors to use when displaying scalars.
 
-        nan_color : color_like
+        nan_color : ColorLike
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : color_like
+        above_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
-        below_color : color_like
+        below_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
         clim : 2 item list
             Color bar range for scalars.  Defaults to minimum and
@@ -806,10 +806,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
-                scalar_bar_args.setdefault('above_label', 'Above')
+                scalar_bar_args.setdefault('above_label', 'above')
             if below_color:
                 self.lookup_table.below_range_color = below_color
-                scalar_bar_args.setdefault('below_label', 'Below')
+                scalar_bar_args.setdefault('below_label', 'below')
 
             if cmap is None:  # Set default map if matplotlib is available
                 if has_module('matplotlib'):

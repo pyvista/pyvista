@@ -25,7 +25,7 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
     assert not pv.compare_images(arr1, pl2, use_vtk=True)
 
     with pytest.raises(TypeError):
-        pv.compare_images(im1, pl1.ren_win)
+        pv.compare_images(im1, pl1.render_window)
 
     # test that this fails when the plotter is closed
     pl1.close()
@@ -61,4 +61,4 @@ def test_compare_images_two_plotter_different(sphere, airplane, tmpdir):
     assert pv.compare_images(arr1, pl2, use_vtk=True) > 10000
 
     with pytest.raises(TypeError):
-        pv.compare_images(im1, pl1.ren_win)
+        pv.compare_images(im1, pl1.render_window)

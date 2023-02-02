@@ -13,6 +13,7 @@ import time
 
 from PIL import Image
 import imageio
+import matplotlib
 import numpy as np
 import pytest
 import vtk
@@ -22,8 +23,11 @@ from pyvista import examples
 from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.colors import matplotlib_default_colors
+from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.utilities.misc import can_create_mpl_figure
+from pyvista.utilities import algorithms
+from pyvista.utilities.misc import PyVistaDeprecationWarning, can_create_mpl_figure
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -48,7 +52,7 @@ def using_mesa():
     """Determine if using mesa."""
     pl = pyvista.Plotter(notebook=False, off_screen=True)
     pl.show(auto_close=False)
-    gpu_info = pl.ren_win.ReportCapabilities()
+    gpu_info = pl.render_window.ReportCapabilities()
     pl.close()
 
     regex = re.compile("OpenGL version string:(.+)\n")
@@ -63,6 +67,9 @@ skip_windows_mesa = pytest.mark.skipif(
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
+skip_lesser_9_0_X = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
+)
 skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
@@ -320,6 +327,38 @@ def test_plot_helper_two_volumes(uniform, verify_image_cache):
         volume=True,
         show_scalar_bar=False,
     )
+
+
+def test_plot_volume_ugrid(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+
+    # Handle UnsutructuredGrid directly
+    grid = examples.load_hexbeam()
+    pl = pyvista.Plotter()
+    pl.add_volume(grid, scalars='sample_point_scalars')
+    pl.show()
+
+    # Handle 3D structured grid
+    grid = examples.load_uniform().cast_to_structured_grid()
+    pl = pyvista.Plotter()
+    pl.add_volume(grid, scalars='Spatial Point Data')
+    pl.show()
+
+    # Make sure PolyData fails
+    mesh = pyvista.Sphere()
+    mesh['scalars'] = mesh.points[:, 1]
+    pl = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        pl.add_volume(mesh, scalars='scalars')
+    pl.close()
+
+    # Make sure 2D StructuredGrid fails
+    mesh = examples.load_structured()  # wavy surface
+    mesh['scalars'] = mesh.points[:, 1]
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError):
+        pl.add_volume(mesh, scalars='scalars')
+    pl.close()
 
 
 def test_plot_return_cpos(sphere):
@@ -618,10 +657,11 @@ def test_plot_show_bounds_params(grid, location):
     plotter.show()
 
 
-def test_plot_silhouette_fail(hexbeam):
+def test_plot_silhouette_non_poly(hexbeam):
     plotter = pyvista.Plotter()
-    with pytest.raises(TypeError, match="Expected type is `PolyData`"):
-        plotter.add_mesh(hexbeam, silhouette=True)
+    plotter.add_mesh(hexbeam, show_scalar_bar=False)
+    plotter.add_silhouette(hexbeam, line_width=10)
+    plotter.show()
 
 
 def test_plot_no_silhouette(tri_cylinder):
@@ -650,25 +690,29 @@ def test_plot_silhouette_method(tri_cylinder):
     plotter = pyvista.Plotter()
 
     plotter.add_mesh(tri_cylinder)
-    actors = list(plotter.renderer.GetActors())
-    assert len(actors) == 1  # cylinder
+    assert len(plotter.renderer.actors) == 1  # cylinder
 
-    plotter.add_silhouette(tri_cylinder)
-    actors = list(plotter.renderer.GetActors())
-    assert len(actors) == 2  # cylinder + silhouette
+    actor = plotter.add_silhouette(tri_cylinder)
+    assert isinstance(actor, pyvista.Actor)
+    assert len(plotter.renderer.actors) == 2  # cylinder + silhouette
 
-    actor = actors[1]  # get silhouette actor
-    props = actor.GetProperty()
-    assert props.GetColor() == pyvista.global_theme.silhouette.color
-    assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
-    assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
+    props = actor.prop
+    assert props.color == pyvista.global_theme.silhouette.color
+    assert props.opacity == pyvista.global_theme.silhouette.opacity
+    assert props.line_width == pyvista.global_theme.silhouette.line_width
     plotter.show()
+
+    params = {'line_width': 5, 'opacity': 0.5}
+    with pytest.warns(PyVistaDeprecationWarning, match='`params` is deprecated'):
+        actor = plotter.add_silhouette(tri_cylinder, params=params)
+    assert actor.prop.line_width == params['line_width']
+    assert actor.prop.opacity == params['opacity']
 
 
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
-    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=20))
+    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=0.5, feature_angle=20))
     plotter.show()
 
 
@@ -1057,6 +1101,59 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+def test_screenshot_scaled():
+    # FYI: no regression tests because show() is not called
+    factor = 2
+    plotter = pyvista.Plotter(image_scale=factor)
+    width, height = plotter.window_size
+    plotter.add_mesh(pyvista.Sphere())
+    img = plotter.screenshot(transparent_background=False)
+    assert np.any(img)
+    assert img.shape == (width * factor, height * factor, 3)
+    img_again = plotter.screenshot(scale=3)
+    assert np.any(img_again)
+    assert img_again.shape == (width * 3, height * 3, 3)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+    img = plotter.image
+    assert img.shape == (width * factor, height * factor, 3)
+
+    w, h = 20, 10
+    factor = 4
+    plotter.image_scale = factor
+    img = plotter.screenshot(transparent_background=False, window_size=(w, h))
+    assert img.shape == (h * factor, w * factor, 3)
+
+    img = plotter.screenshot(transparent_background=True, window_size=(w, h), scale=5)
+    assert img.shape == (h * 5, w * 5, 4)
+    assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
+
+    with pytest.raises(ValueError):
+        plotter.image_scale = 0.5
+
+    plotter.close()
+
+
+def test_screenshot_altered_window_size(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+
+    plotter.window_size = (800, 800)
+    a = plotter.screenshot()
+    assert a.shape == (800, 800, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    plotter.window_size = (1000, 1000)
+    b = plotter.screenshot()
+    assert b.shape == (1000, 1000, 3)
+    # plotter.show(auto_close=False)  # for image regression test
+
+    d = plotter.screenshot(window_size=(600, 600))
+    assert d.shape == (600, 600, 3)
+    # plotter.show()  # for image regression test
+
+    plotter.close()
+
+
 def test_screenshot_bytes():
     # Test screenshot to bytes object
     buffer = io.BytesIO()
@@ -1176,11 +1273,15 @@ def test_vector_array_with_points(multicomp_poly):
     # test no component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_points')
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
     # test component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=0)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
 
@@ -1188,11 +1289,15 @@ def test_vector_array_with_cells(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_cells')
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
     # test component argument
     pl = pyvista.Plotter()
     pl.add_mesh(multicomp_poly, scalars='vector_values_cells', component=0)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.show()
 
 
@@ -1201,6 +1306,8 @@ def test_vector_array(multicomp_poly):
     pl = pyvista.Plotter(shape=(2, 2))
     pl.subplot(0, 0)
     pl.add_mesh(multicomp_poly, scalars="vector_values_points", show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.camera.tight()
     pl.subplot(0, 1)
     pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=0)
     pl.subplot(1, 0)
@@ -1208,7 +1315,6 @@ def test_vector_array(multicomp_poly):
     pl.subplot(1, 1)
     pl.add_mesh(multicomp_poly.copy(), scalars="vector_values_points", component=2)
     pl.link_views()
-    pl.reset_camera()
     pl.show()
 
 
@@ -1447,6 +1553,39 @@ def test_link_views(sphere):
     plotter.show()
 
 
+@skip_windows
+def test_link_views_camera_set(sphere, verify_image_cache):
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(pyvista.Cone())
+    assert not p.renderer.camera_set
+    p.subplot(0, 1)
+    p.add_mesh(pyvista.Cube())
+    assert not p.renderer.camera_set
+    p.link_views()  # make sure the default isometric view is used
+    for renderer in p.renderers:
+        assert not renderer.camera_set
+    p.show()
+
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(pyvista.Cone())
+    p.subplot(0, 1)
+    p.add_mesh(pyvista.Cube())
+    p.link_views()
+    p.unlink_views()
+    for renderer in p.renderers:
+        assert not renderer.camera_set
+    p.show()
+
+    wavelet = pyvista.Wavelet().clip('x')
+    p = pyvista.Plotter(shape=(1, 2))
+    p.add_mesh(wavelet, color='red')
+    p.subplot(0, 1)
+    p.add_mesh(wavelet, color='red')
+    p.link_views()
+    p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+    p.show()
+
+
 def test_orthographic_slicer(uniform):
     uniform.set_active_scalars('Spatial Cell Data')
     slices = uniform.slice_orthogonal()
@@ -1497,8 +1636,6 @@ def test_image_properties():
     p.close()
     p = pyvista.Plotter()
     p.add_mesh(mesh)
-    p.store_image = True
-    assert p.store_image is True
     p.show()  # close plotter
     # Get RGB image
     _ = p.image
@@ -1528,10 +1665,30 @@ def test_volume_rendering_from_helper(uniform, verify_image_cache):
     uniform.plot(volume=True, opacity='linear')
 
 
+@skip_windows_mesa  # due to opacity
 def test_volume_rendering_from_plotter(uniform):
     plotter = pyvista.Plotter()
     plotter.add_volume(uniform, opacity='sigmoid', cmap='jet', n_colors=15)
     plotter.show()
+
+
+@skip_windows_mesa  # due to opacity
+@skip_9_0_X
+def test_volume_rendering_rectilinear(uniform):
+    grid = uniform.cast_to_rectilinear_grid()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid, opacity='sigmoid', cmap='jet', n_colors=15)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_volume(grid)
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.add_volume(grid, mapper='fixed_point')
+    plotter.close()
 
 
 @skip_windows
@@ -2118,13 +2275,7 @@ def test_plot_lighting_change_positional_false_true(sphere):
 
 def test_plotter_image():
     plotter = pyvista.Plotter()
-    plotter.show()
-    with pytest.raises(AttributeError, match='To retrieve an image after'):
-        plotter.image
-
-    plotter = pyvista.Plotter()
     wsz = tuple(plotter.window_size)
-    plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
 
@@ -2179,7 +2330,7 @@ def test_chart_plot():
     # Chart 2 (bottom right)
     chart_br = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.55, 0.05))
     chart_br.background_texture = examples.load_globe_texture()
-    chart_br.border_color = "r"
+    chart_br.active_border_color = "r"
     chart_br.border_width = 5
     chart_br.border_style = "-."
     chart_br.hide_axes()
@@ -2190,7 +2341,7 @@ def test_chart_plot():
 
     # Chart 3 (top left)
     chart_tl = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.05, 0.55))
-    chart_tl.background_color = (0.8, 0.8, 0.2)
+    chart_tl.active_background_color = (0.8, 0.8, 0.2)
     chart_tl.title = "Exponential growth"
     chart_tl.x_label = "X axis"
     chart_tl.y_label = "Y axis"
@@ -2219,13 +2370,17 @@ def test_chart_plot():
     pl.background_color = 'w'
     pl.add_chart(chart_bl, chart_br, chart_tl, chart_tr, hidden_chart, removed_chart)
     pl.remove_chart(removed_chart)
+    pl.set_chart_interaction([chart_br, chart_tl])
     pl.show()
 
 
 @skip_9_1_0
 @skip_no_mpl_figure
-def test_chart_matplotlib_plot():
+def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
+    # Seeing CI failures for Conda job that need to be addressed
+    verify_image_cache.high_variance_test = True
+
     import matplotlib.pyplot as plt
 
     rng = np.random.default_rng(1)
@@ -2389,11 +2544,35 @@ def test_write_gif(sphere, tmpdir):
     assert os.path.getsize(path)
 
 
-def test_ruler(sphere):
-    sphere = pyvista.Sphere()
+def test_ruler():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.view_xy()
+    plotter.show()
+
+
+def test_legend_scale(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.add_legend_scale(color='red')
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_legend_scale(color='red', xy_label_mode=True)
+    plotter.view_xy()
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_legend_scale(
+        xy_label_mode=True,
+        bottom_axis_visibility=False,
+        left_axis_visibility=False,
+        right_axis_visibility=False,
+        top_axis_visibility=False,
+    )
     plotter.view_xy()
     plotter.show()
 
@@ -2412,11 +2591,16 @@ def test_plot_complex_value(plane, verify_image_cache):
     pl.show()
 
 
-def test_warn_screenshot_notebook():
+def test_screenshot_notebook(tmpdir):
+    tmp_dir = tmpdir.mkdir("tmpdir2")
+    filename = str(tmp_dir.join('tmp.png'))
+
     pl = pyvista.Plotter(notebook=True)
     pl.theme.jupyter_backend = 'static'
-    with pytest.warns(UserWarning, match='Set `jupyter_backend` backend to `"none"`'):
-        pl.show(screenshot='tmp.png')
+    pl.add_mesh(pyvista.Cone())
+    pl.show(screenshot=filename)
+
+    assert os.path.isfile(filename)
 
 
 def test_culling_frontface(sphere):
@@ -2429,6 +2613,24 @@ def test_add_text():
     plotter = pyvista.Plotter()
     plotter.add_text("Upper Left", position='upper_left', font_size=25, color='blue')
     plotter.add_text("Center", position=(0.5, 0.5), viewport=True, orientation=-90)
+    plotter.show()
+
+
+@pytest.mark.skipif(
+    not vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+    or (
+        tuple(map(int, matplotlib.__version__.split('.')[:2])) >= (3, 6)
+        and pyvista.vtk_version_info <= (9, 2, 2)
+    ),
+    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
+)
+def test_add_text_latex():
+    """Test LaTeX symbols.
+
+    For VTK<=9.2.2, this requires matplotlib<3.6
+    """
+    plotter = pyvista.Plotter()
+    plotter.add_text(r'$\rho$', position='upper_left', font_size=150, color='blue')
     plotter.show()
 
 
@@ -2483,7 +2685,12 @@ def test_ssao_pass():
         return
 
     pl.enable_ssao()
-    pl.show()
+    pl.show(auto_close=False)
+
+    # ensure this fails when ssao disabled
+    pl.disable_ssao()
+    with pytest.raises(RuntimeError):
+        pl.show()
 
 
 @skip_mesa
@@ -2769,12 +2976,12 @@ def test_bool_scalars(sphere):
 
 @skip_windows  # because of pbr
 @skip_9_1_0  # pbr required
-def test_property(verify_image_cache):
+def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
     prop = pyvista.Property(interpolation='pbr', metallic=1.0)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pyvista.vtk_version_info > (9, 2)
+    verify_image_cache.skip = pyvista.vtk_version_info < (9, 2)
     prop.plot()
 
 
@@ -2968,12 +3175,15 @@ def test_plot_above_below_color(uniform):
     lut.scalar_range = clim
 
     pl = pyvista.Plotter()
-    pl.add_mesh(uniform, cmap=lut)
+    pl.add_mesh(uniform, cmap=lut, scalar_bar_args={'above_label': '', 'below_label': ''})
     pl.enable_depth_peeling()
     pl.show()
 
 
-def test_plotter_lookup_table(sphere):
+def test_plotter_lookup_table(sphere, verify_image_cache):
+    # Image regression test fails within OSMesa on Windows
+    verify_image_cache.windows_skip_image_cache = True
+
     lut = pyvista.LookupTable('Reds')
     lut.n_values = 3
     lut.scalar_range = (sphere.points[:, 2].min(), sphere.points[:, 2].max())
@@ -2986,6 +3196,14 @@ def test_plotter_volume_lookup_table(uniform):
     lut.alpha_range = (0, 1)
     pl = pyvista.Plotter()
     pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_add_scalars(uniform):
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+    pl.add_volume(uniform, scalars=uniform.z, show_scalar_bar=False)
     pl.show()
 
 
@@ -3045,6 +3263,69 @@ def test_plot_points_gaussian_as_spheres(sphere):
     )
 
 
+@skip_windows_mesa  # due to opacity
+def test_plot_show_vertices(sphere, hexbeam, multiblock_all):
+    sphere.plot(
+        color='w',
+        show_vertices=True,
+        point_size=20,
+        lighting=False,
+        render_points_as_spheres=True,
+        vertex_style='points',
+        vertex_opacity=0.1,
+        vertex_color='b',
+    )
+
+    hexbeam.plot(
+        color='w',
+        opacity=0.5,
+        show_vertices=True,
+        point_size=20,
+        lighting=True,
+        render_points_as_spheres=True,
+        vertex_style='points',
+        vertex_color='r',
+    )
+
+    multiblock_all.plot(
+        color='w',
+        show_vertices=True,
+        point_size=3,
+        render_points_as_spheres=True,
+    )
+
+
+def test_remove_vertices_actor(sphere):
+    # Test remove by name
+    pl = pyvista.Plotter()
+    pl.add_mesh(
+        sphere,
+        color='w',
+        show_vertices=True,
+        point_size=20,
+        lighting=False,
+        vertex_style='points',
+        vertex_color='b',
+        name='sphere',
+    )
+    pl.remove_actor('sphere')
+    pl.show()
+    # Test remove by Actor
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        color='w',
+        show_vertices=True,
+        point_size=20,
+        lighting=False,
+        vertex_style='points',
+        vertex_color='b',
+        name='sphere',
+    )
+    pl.remove_actor(actor)
+    pl.show()
+
+
 @skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
@@ -3053,6 +3334,10 @@ def test_add_point_scalar_labels_fmt():
     p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=36, fmt='%.3f')
     p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
     p.show()
+
+
+def test_plot_individual_cell(hexbeam):
+    hexbeam.cell[0].plot(color='b')
 
 
 def test_add_point_scalar_labels_list():
@@ -3068,3 +3353,240 @@ def test_add_point_scalar_labels_list():
 
     plotter.add_point_scalar_labels(points, labels)
     plotter.show()
+
+
+def test_plot_algorithm_cone():
+    algo = vtk.vtkConeSource()
+    algo.SetResolution(10)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(algo, color='red')
+    pl.show(auto_close=False)
+    # Use low resolution so it appears in image regression tests easily
+    algo.SetResolution(3)
+    pl.show()
+
+    # Bump resolution and plot with silhouette
+    algo.SetResolution(8)
+    pl = pyvista.Plotter()
+    pl.add_mesh(algo, color='red', silhouette=True)
+    pl.show()
+
+
+@skip_windows_mesa
+def test_plot_algorithm_scalars():
+    name, name2 = 'foo', 'bar'
+    mesh = pyvista.Wavelet()
+    mesh.point_data[name] = np.arange(mesh.n_points)
+    mesh.cell_data[name2] = np.arange(mesh.n_cells)
+    assert mesh.active_scalars_name != name
+    assert mesh.active_scalars_name != name2
+
+    alg = vtk.vtkGeometryFilter()
+    alg.SetInputDataObject(mesh)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars=name)
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars=name2)
+    pl.show()
+
+
+def test_algorithm_add_points():
+    algo = vtk.vtkRTAnalyticSource()
+
+    pl = pyvista.Plotter()
+    pl.add_points(algo)
+    pl.show()
+
+
+@skip_9_1_0
+def test_algorithm_add_point_labels():
+    algo = vtk.vtkConeSource()
+    elev = vtk.vtkElevationFilter()
+    elev.SetInputConnection(algo.GetOutputPort())
+    elev.SetLowPoint(0, 0, -1)
+    elev.SetHighPoint(0, 0, 1)
+
+    pl = pyvista.Plotter()
+    pl.add_point_labels(elev, 'Elevation', always_visible=False)
+    pl.show()
+
+
+@skip_9_1_0
+def test_pointset_to_polydata_algorithm(pointset):
+    alg = vtk.vtkElevationFilter()
+    alg.SetInputDataObject(pointset)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='Elevation')
+    pl.show()
+
+    assert isinstance(alg.GetOutputDataObject(0), vtk.vtkPointSet)
+
+
+def test_add_ids_algorithm():
+    algo = vtk.vtkCubeSource()
+
+    alg = algorithms.add_ids_algorithm(algo)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='point_ids')
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(alg, scalars='cell_ids')
+    pl.show()
+
+    result = pyvista.wrap(alg.GetOutputDataObject(0))
+    assert 'point_ids' in result.point_data
+    assert 'cell_ids' in result.cell_data
+
+
+@skip_windows_mesa
+def test_plot_volume_rgba(uniform):
+    with pytest.raises(ValueError, match='dimensions'):
+        uniform.plot(volume=True, scalars=np.empty((uniform.n_points, 1, 1)))
+
+    scalars = uniform.points - (uniform.origin)
+    scalars /= scalars.max()
+    scalars = np.hstack((scalars, scalars[::-1, -1].reshape(-1, 1) ** 2))
+    scalars *= 255
+
+    with pytest.raises(ValueError, match='datatype'):
+        uniform.plot(volume=True, scalars=scalars)
+
+    scalars = scalars.astype(np.uint8)
+    uniform.plot(volume=True, scalars=scalars)
+
+    pl = pyvista.Plotter()
+    with pytest.warns(UserWarning, match='Ignoring custom opacity'):
+        pl.add_volume(uniform, scalars=scalars, opacity='sigmoid_10')
+    pl.show()
+
+
+def test_plot_window_size_context(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    with pl.window_size_context((200, 200)):
+        pl.show()
+
+    pl.close()
+    with pytest.warns(UserWarning, match='Attempting to set window_size'):
+        with pl.window_size_context((200, 200)):
+            pass
+
+
+def test_color_cycler():
+    pyvista.global_theme.color_cycler = 'default'
+    pl = pyvista.Plotter()
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    a2 = pl.add_mesh(pyvista.Sphere(center=(1, 1, 0)))
+    a3 = pl.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))
+    pl.show()
+    assert a0.prop.color.hex_rgb == matplotlib_default_colors[0]
+    assert a1.prop.color.hex_rgb == matplotlib_default_colors[1]
+    assert a2.prop.color.hex_rgb == matplotlib_default_colors[2]
+    assert a3.prop.color.hex_rgb == matplotlib_default_colors[3]
+
+    pyvista.global_theme.color_cycler = ['red', 'green', 'blue']
+    pl = pyvista.Plotter()
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))  # red
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))  # green
+    a2 = pl.add_mesh(pyvista.Sphere(center=(1, 1, 0)))  # blue
+    a3 = pl.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))  # red again
+    pl.show()
+
+    assert a0.prop.color.name == 'red'
+    assert a1.prop.color.name == 'green'
+    assert a2.prop.color.name == 'blue'
+    assert a3.prop.color.name == 'red'
+
+    # Make sure all solid color matching theme default again
+    pyvista.global_theme.color_cycler = None
+    pl = pyvista.Plotter()
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    pl.show()
+
+    assert a0.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
+    assert a1.prop.color.hex_rgb == pyvista.global_theme.color.hex_rgb
+
+    pl = pyvista.Plotter()
+    with pytest.raises(ValueError):
+        pl.set_color_cycler('foo')
+    with pytest.raises(TypeError):
+        pl.set_color_cycler(5)
+
+
+def test_plotter_render_callback():
+    n_ren = [0]
+
+    def callback(this_pl):
+        assert isinstance(this_pl, pyvista.Plotter)
+        n_ren[0] += 1
+
+    pl = pyvista.Plotter()
+    pl.add_on_render_callback(callback, render_event=True)
+    assert len(pl._on_render_callbacks) == 0
+    pl.add_on_render_callback(callback, render_event=False)
+    assert len(pl._on_render_callbacks) == 1
+    pl.show()
+    assert n_ren[0] == 1  # if two, render_event not respected
+    pl.clear_on_render_callbacks()
+    assert len(pl._on_render_callbacks) == 0
+
+
+@pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])
+def test_color_cycler_names(name):
+    pl = pyvista.Plotter()
+    pl.set_color_cycler(name)
+    a0 = pl.add_mesh(pyvista.Cone(center=(0, 0, 0)))
+    a1 = pl.add_mesh(pyvista.Cube(center=(1, 0, 0)))
+    a2 = pl.add_mesh(pyvista.Sphere(center=(1, 1, 0)))
+    a3 = pl.add_mesh(pyvista.Cylinder(center=(0, 1, 0)))
+    pl.show()
+    assert a0.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a1.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a2.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+    assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+
+
+@skip_lesser_9_0_X
+def test_axes_actor_properties():
+    axes = pyvista.Axes()
+    axes_actor = axes.axes_actor
+
+    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
+    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
+    axes_actor.y_axis_shaft_properties.metallic = 0.2
+    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
+    axes_actor.z_axis_shaft_properties.roughness = 0.3
+    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
+
+    axes_actor.x_axis_tip_properties.anisotropy = 0.4
+    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
+    axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
+    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
+    axes_actor.y_axis_tip_properties.lighting = False
+    assert not axes_actor.y_axis_tip_properties.lighting
+    axes_actor.z_axis_tip_properties.interpolation_model = InterpolationType.PHONG
+    assert axes_actor.z_axis_tip_properties.interpolation_model == InterpolationType.PHONG
+
+    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
+    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
+    axes_actor.y_axis_shaft_properties.opacity = 0.6
+    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
+    axes_actor.z_axis_shaft_properties.shading = False
+    assert not axes_actor.z_axis_shaft_properties.shading
+
+    axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
+    assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
+
+    axes.axes_actor.shaft_type = pyvista.AxesActor.ShaftType.CYLINDER
+    pl = pyvista.Plotter()
+    pl.add_actor(axes_actor)
+    pl.show()
