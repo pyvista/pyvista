@@ -4,10 +4,15 @@ import logging
 import os
 import warnings
 
-from ipywidgets import widgets
 from trame.app import get_server
 from trame.ui.vuetify import VAppLayout
 from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
+
+try:
+    from ipywidgets.widgets import HTML
+except ImportError:
+    HTML = object
+
 
 import pyvista
 from pyvista.trame.ui import UI_TITLE, get_or_create_viewer
@@ -58,11 +63,13 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-class Widget(widgets.HTML):
+class Widget(HTML):
     """Custom HTML iframe widget for trame viewer."""
 
     def __init__(self, viewer, src, width, height, **kwargs):
         """Initialize."""
+        if HTML is object:
+            raise ImportError('Please install `ipywidgets`.')
         value = f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>"
         super().__init__(value, **kwargs)
         self._viewer = viewer
