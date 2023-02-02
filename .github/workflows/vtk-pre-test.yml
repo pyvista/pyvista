@@ -4,7 +4,7 @@ on:
   push:
     branches:
       # To resolve issues on VTK master and test, use this branch name pattern
-      - '*vtk-master*'
+      - 'maint/vtk-master*'
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
