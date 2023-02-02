@@ -60,7 +60,7 @@ jobs:
           python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
-          pip show vtk
+          pip show vtk_osmesa
 
       - name: Unit Testing
         run: pytest -v . --fail_extra_image_cache
