@@ -33,6 +33,11 @@ dependencies = [
     'scooby>=0.5.1',
     "typing-extensions; python_version < '3.8'",
     'vtk',
+    'ipywidgets',
+    'trame>=2.2.6',
+    'trame-client>=2.4.2',
+    'trame-server>=2.8.0',
+    'trame-vtk>=2.0.17',
 ]
 dynamic = ['version']
 
@@ -54,7 +59,6 @@ colormaps = [
 io = ['meshio>=5.2']
 jupyter = [
     'ipyvtklink',
-    'ipywidgets',
     'jupyter-server-proxy',
     'nest_asyncio',
     'panel',
