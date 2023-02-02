@@ -299,7 +299,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # track if render window has ever been rendered
         self._rendered = False
 
-        self._on_render_callbacks = set()
+        self._render_callbacks = {hook: set() for hook in ("before", "after")}
+        self.add_render_callback(self._before_render, False, hook="before")
 
         # this helps managing closed plotters
         self._closed = False
@@ -1781,38 +1782,50 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if self.render_window is not None and not self._first_time and not self._suppress_rendering:
             log.debug('Rendering')
+            for callback in self._render_callbacks["before"]:
+                callback(self)
             self.renderers.on_plotter_render()
             self.render_window.Render()
             self._rendered = True
-        for callback in self._on_render_callbacks:
-            callback(self)
+            for callback in self._render_callbacks["after"]:
+                callback(self)
 
-    def add_on_render_callback(self, callback, render_event=False):
-        """Add a method to be called post-render.
+    def add_render_callback(self, callback, vtk_event=False, hook="after"):
+        """Add a method to be called when rendering.
 
         Parameters
         ----------
         callback : callable
-            The callback method to run post-render. This takes a single
-            argument which is the plotter object.
+            The callback method to run. This takes a single argument
+            which is the plotter object.
 
-        render_event : bool
+        vtk_event : bool
             If True, associate with all VTK RenderEvents. Otherwise, the
             callback is only handled on a successful ``render()`` from
             the PyVista plotter directly.
 
-        """
-        if render_event:
-            for renderer in self.renderers:
-                renderer.AddObserver(_vtk.vtkCommand.RenderEvent, lambda *args: callback(self))
-        else:
-            self._on_render_callbacks.add(callback)
+        hook : {"before", "after"}
+            Indicates whether the callback should be executed before
+            rendering starts or after it completes.
 
-    def clear_on_render_callbacks(self):
+        """
+        if vtk_event:
+            for renderer in self.renderers:
+                renderer.add_render_callback(lambda *args: callback(self), hook)
+        else:
+            self._render_callbacks[hook].add(callback)
+
+    def clear_render_callbacks(self):
         """Clear all callback methods previously registered with ``render()``."""
         for renderer in self.renderers:
-            renderer.RemoveObservers(_vtk.vtkCommand.RenderEvent)
-        self._on_render_callbacks = set()
+            renderer.remove_render_callback()
+        self._render_callbacks["before"] = set()
+        self._render_callbacks["after"] = set()
+
+    def _before_render(self, *args):
+        """Notify all renderers of explicit plotter render call."""
+        for renderer in self.renderers:
+            renderer.on_plotter_render()
 
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs):
@@ -4529,6 +4542,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # must close out widgets first
         super().close()
+        # Clear render callbacks
+        self.clear_render_callbacks()
         # Renderer has an axes widget, so close it
         self.renderers.close()
         self.renderers.remove_all_lights()

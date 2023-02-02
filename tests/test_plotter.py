@@ -372,3 +372,41 @@ def test_plotter_add_volume_clim(uniform: pyvista.UniformGrid):
     pl = pyvista.Plotter()
     vol = pl.add_volume(uniform, clim=clim_val)
     assert vol.mapper.scalar_range == (-clim_val, clim_val)
+
+
+def test_plotter_render_callback():
+    events = []
+
+    def callback_before(this_pl):
+        assert isinstance(this_pl, pyvista.Plotter)
+        events.append("before")
+
+    def callback_after(this_pl):
+        assert isinstance(this_pl, pyvista.Plotter)
+        events.append("after")
+
+    pl = pyvista.Plotter()
+    pl.show(auto_close=False)  # Show before, as it invokes two VTK render events
+    # Test different vtk_event:
+    pl.add_render_callback(callback_after, vtk_event=True, hook="after")
+    assert len(pl._render_callbacks["after"]) == 0
+    pl.add_render_callback(callback_after, vtk_event=False, hook="after")
+    assert len(pl._render_callbacks["after"]) == 1
+    # Explicit plotter.render call + VTK render event
+    pl.render()
+    assert len(events) == 2
+    events.clear()
+    # Only VTK render event
+    pl.renderer.Render()
+    assert len(events) == 1
+    events.clear()
+    pl.clear_render_callbacks()
+    assert len(pl._render_callbacks["after"]) == 0
+
+    # Test different hook:
+    pl.add_render_callback(callback_before, vtk_event=False, hook="before")
+    pl.add_render_callback(callback_after, vtk_event=False, hook="after")
+    pl.render()
+    assert len(events) == 2
+    assert events.pop() == "after"
+    assert events.pop() == "before"

@@ -223,6 +223,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
+        self._render_events = []
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -303,8 +304,51 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:
             self.__charts = Charts(self)
-            self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
+            self.add_render_callback(self._before_render_event, "before")
         return self.__charts
+
+    def add_render_callback(self, callback, hook="after"):
+        """Add a render event callback.
+
+        Parameters
+        ----------
+        callback : callable
+            The callback function which is called when the event
+            is invoked.
+
+        hook : {"before", "after"}
+            The type of render event to observe: either before
+            rendering starts or after it finishes.
+
+        Returns
+        -------
+        int
+            The identifier of the added observer.
+
+        """
+        event = {"before": "StartEvent", "after": "EndEvent"}[hook]
+        obs = self.AddObserver(event, partial(try_callback, callback))
+        self._render_events.append(obs)
+        return obs
+
+    def remove_render_callback(self, obs=None):
+        """Remove a render event observer.
+
+        Parameters
+        ----------
+        obs : int, optional
+            The identifier of the observer to remove.
+            When omitted, all render event observers are removed.
+
+        """
+        if obs is None:
+            obs = [*self._render_events]
+        elif isinstance(obs, int):
+            obs = [obs]
+        for o in obs:
+            if o in self._render_events:
+                self.RemoveObserver(o)
+                self._render_events.remove(o)
 
     @property
     def camera_position(self):
@@ -2993,6 +3037,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
+        self._render_events.clear()
         if hasattr(self, 'axes_widget'):
             self.hide_axes()  # Necessary to avoid segfault
             self.axes_actor = None
@@ -3004,7 +3049,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def on_plotter_render(self):
         """Notify renderer components of explicit plotter render call."""
-        if self.__charts is not None:
+        if self.has_charts:
             for chart in self.__charts:
                 # Notify Charts that plotter.render() is called
                 chart._render_event(plotter_render=True)
