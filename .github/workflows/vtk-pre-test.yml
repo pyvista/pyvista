@@ -44,11 +44,8 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Build wheel and install pyvista
-        run: |
-          pip install build
-          python -m build --wheel
-          pip install dist/pyvista*.whl --no-deps
+      - name: Install pyvista
+        run: pip install . --no-deps
 
       - name: Install Testing Requirements
         run: pip install -r requirements_test.txt
