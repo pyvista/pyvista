@@ -1,10 +1,10 @@
 name: VTK Master Testing
 
 on:
-  # TODO: remove
   push:
     branches:
-      - maint/vtk-master-testing
+      # To resolve issues on VTK master and test, use this branch name pattern
+      - '*vtk-master*'
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
@@ -18,7 +18,7 @@ env:
   SHELLOPTS: 'errexit:pipefail'
 
 jobs:
-  Linux:
+  VTK-master:
     name: Linux VTK Master Testing
     runs-on: ubuntu-latest
     strategy:
