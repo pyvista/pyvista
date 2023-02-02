@@ -65,4 +65,4 @@ jobs:
           pip show vtk
 
       - name: Unit Testing
-        run: pytest -v --image_cache_dir ./image_cache
+        run: pytest -v . --fail_extra_image_cache
