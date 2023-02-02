@@ -11,7 +11,7 @@ from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as v
 try:
     from ipywidgets.widgets import HTML
 except ImportError:
-    HTML = None
+    HTML = object
 
 
 import pyvista
@@ -68,7 +68,7 @@ class Widget(HTML):
 
     def __init__(self, viewer, src, width, height, **kwargs):
         """Initialize."""
-        if HTML is None:
+        if HTML is object:
             raise ImportError('Please install `ipywidgets`.')
         value = f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>"
         super().__init__(value, **kwargs)
