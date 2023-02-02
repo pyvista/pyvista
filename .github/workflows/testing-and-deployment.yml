@@ -25,7 +25,7 @@ jobs:
     name: Mac OS Unit Testing
     strategy:
       matrix:
-        python-version: ['3.7', '3.10']
+        python-version: ['3.9', '3.11']
 
     steps:
       - uses: actions/checkout@v3
@@ -142,6 +142,8 @@ jobs:
           - python-version: '3.9'
             vtk-version: '9.1'
           - python-version: '3.10'
+            vtk-version: '9.2.2'
+          - python-version: '3.11'  # Added with VTK 9.2.5
             vtk-version: 'latest'
     steps:
       - uses: actions/checkout@v3
@@ -176,7 +178,7 @@ jobs:
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
         with:
-          packages: libgl1-mesa-glx xvfb python-tk
+          packages: libgl1-mesa-glx xvfb
           version: 3.0
 
       # Make sure PyVista does not break from non-core dependencies
@@ -192,7 +194,7 @@ jobs:
         run: pip install 'numpy<1.24'
 
       - name: Limit Matplotlib for VTK<=9.2.2
-        if: ${{ matrix.vtk-version != 'latest' }}
+        if: ${{ matrix.vtk-version != 'latest' && matrix.vtk-version != '9.2.2' }}
         run: pip install 'matplotlib<3.6'
 
       - name: Software Report
@@ -231,7 +233,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
     steps:
       - uses: actions/checkout@v3
 
