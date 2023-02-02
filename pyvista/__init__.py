@@ -6,7 +6,6 @@ from typing import Optional
 import warnings
 import os
 
-from pyvista import trame
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *

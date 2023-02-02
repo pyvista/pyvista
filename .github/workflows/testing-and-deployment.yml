@@ -179,6 +179,11 @@ jobs:
           packages: libgl1-mesa-glx xvfb python-tk
           version: 3.0
 
+      # Make sure PyVista does not break from non-core dependencies
+      - name: Software Report (Core Dependencies)
+        run: |
+          xvfb-run python -c "import pyvista; print(pyvista.Report());"
+
       - name: Install Testing Requirements
         run: pip install -r requirements_test.txt
 
