@@ -50,12 +50,13 @@ jobs:
           python -m build --wheel
           pip install dist/pyvista*.whl --no-deps
 
-      - name: Set up VTK with OSMesa
-        run: |
-          pip install vtk_osmesa --pre --no-cache --extra-index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
-
       - name: Install Testing Requirements
         run: pip install -r requirements_test.txt
+
+      - name: Set up VTK with OSMesa
+        run: |
+          pip uninstall vtk -y
+          pip install vtk_osmesa --pre --no-cache --extra-index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
 
       - name: Software Report
         run: |
