@@ -3562,7 +3562,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Requires a 3D data type like :class:`numpy.ndarray`,
         :class:`pyvista.UniformGrid`, :class:`pyvista.RectilinearGrid`,
-         or :class:`pyvista.UnstructuredGrid`.
+        or :class:`pyvista.UnstructuredGrid`.
 
         Parameters
         ----------

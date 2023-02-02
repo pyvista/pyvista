@@ -239,6 +239,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @property
     def camera_set(self) -> bool:
         """Get or set whether this camera has been configured."""
+        if self.camera is None:  # pragma: no cover
+            return False
         return self.camera.is_set
 
     @camera_set.setter
@@ -3023,11 +3025,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
-        if self._shadow_pass is not None:
+        if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
             self.disable_shadows()
-        if self.__charts is not None:
-            self.__charts.deep_clean()
-            self.__charts = None
+        try:
+            if self.__charts is not None:
+                self.__charts.deep_clean()
+                self.__charts = None
+        except AttributeError:  # pragma: no cover
+            pass
 
         self._render_passes.deep_clean()
         self.remove_floors(render=render)
