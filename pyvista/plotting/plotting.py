@@ -1784,7 +1784,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             log.debug('Rendering')
             for callback in self._render_callbacks["before"]:
                 callback(self)
-            self.renderers.on_plotter_render()
             self.render_window.Render()
             self._rendered = True
             for callback in self._render_callbacks["after"]:
