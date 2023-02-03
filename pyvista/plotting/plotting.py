@@ -6054,6 +6054,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 places.append(tuple(self.renderers.index_to_loc(index)))
         return places
 
+    def add(self, to_add, *args, **kwargs):
+        if isinstance(to_add, _vtk.vtkActor):
+            return self.add_actor(to_add, *args, **kwargs)
+        if isinstance(to_add, _vtk.vtkMultiBlockDataSet):
+            return self.add_composite(to_add, *args, **kwargs)
+        if isinstance(to_add, _vtk.vtkDataSet):
+            return self.add_mesh(to_add, *args, **kwargs)
+        if isinstance(to_add, str):
+            return self.add_text(to_add)
+        # TODO: iterables
+        raise TypeError(f'Unable to determine how to add type ({type(to_add)}).')
+
+    def __iadd__(self, to_add):
+        """Add an item to the plotter with the ``+=`` operator."""
+        self.add(to_add)
+        return self
+
+    def __isub__(self, actor):
+        """Add an actor from the plotter with the ``-=`` operator."""
+        self.remove_actor(actor)
+        return self
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.

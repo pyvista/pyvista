@@ -372,3 +372,16 @@ def test_plotter_add_volume_clim(uniform: pyvista.UniformGrid):
     pl = pyvista.Plotter()
     vol = pl.add_volume(uniform, clim=clim_val)
     assert vol.mapper.scalar_range == (-clim_val, clim_val)
+
+
+def test_iadd():
+    pl = pyvista.Plotter()
+    pl += pyvista.Sphere()
+    pl.show()
+
+
+def test_isub():
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(pyvista.Sphere())
+    pl += actor
+    pl.show()
