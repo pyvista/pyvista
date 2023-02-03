@@ -204,6 +204,7 @@ from .reader import (
 # __all__ only left for mypy --strict to work when pyvista is a dependency
 __all__ = [
     # submodules:
+    # 'algorithms',
     # 'arrays',
     # 'cells',
     # 'common',
@@ -220,6 +221,9 @@ __all__ = [
     'transformations',
     # 'wrappers',
     # 'xvfb',
+    # algorithms:
+    'algorithm_to_mesh_handler',
+    'set_algorithm_input',
     # common:
     'perlin_noise',
     'sample_function',

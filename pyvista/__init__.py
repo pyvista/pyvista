@@ -10,6 +10,7 @@ from pyvista._version import __version__
 
 from pyvista.plotting import (
     Actor,
+    ActorProperties,
     Axes,
     AxesActor,
     BackgroundPlotter,
@@ -192,6 +193,7 @@ from pyvista.utilities import (
     _get_vtk_id_type,
     _set_plot_theme_from_env,
     abstract_class,
+    algorithm_to_mesh_handler,
     array_from_vtkmatrix,
     # arrays,
     assert_empty_kwargs,
@@ -253,6 +255,7 @@ from pyvista.utilities import (
     sample_function,
     save_meshio,
     send_errors_to_logging,
+    set_algorithm_input,
     set_default_active_scalars,
     set_default_active_vectors,
     set_error_output_file,
@@ -394,6 +397,7 @@ __all__ = [
     # classes:
     'AVSucdReader',
     'Actor',
+    'ActorProperties',
     'AmbiguousDataError',
     'Arrow',
     'Axes',
@@ -564,6 +568,7 @@ __all__ = [
     # helpers and modules:
     'abstract_class',
     # 'actor',  # plotting.actor
+    'algorithm_to_mesh_handler',
     'array_from_vtkmatrix',
     # 'arrays',  # utilities.arrays
     'assert_empty_kwargs',
@@ -673,6 +678,7 @@ __all__ = [
     # 'scalar_bars',  # plotting.scalar_bars
     'scale_point',
     'send_errors_to_logging',
+    'set_algorithm_input',
     'set_default_active_scalars',
     'set_default_active_vectors',
     'set_error_output_file',

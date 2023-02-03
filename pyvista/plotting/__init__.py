@@ -31,8 +31,10 @@ from .axes import Axes
 from .axes_actor import AxesActor
 from .actor import Actor
 from .actor_properties import ActorProperties
-from .mapper import DataSetMapper
+from .mapper import DataSetMapper, UnstructuredGridVolumeRayCastMapper
 from .lookup_table import LookupTable
+from .volume import Volume
+from .volume_property import VolumeProperty
 
 
 class QtDeprecationError(Exception):
@@ -92,6 +94,9 @@ __all__ = [
     'QtDeprecationError',
     'QtInteractor',
     'Renderer',
+    'UnstructuredGridVolumeRayCastMapper',
+    'Volume',
+    'VolumeProperty',
     'WidgetHelper',
     'actor',
     'axes',
