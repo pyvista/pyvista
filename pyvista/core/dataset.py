@@ -2586,8 +2586,6 @@ class DataSet(DataSetFilters, DataObject):
                [0.5, 1. , 5. ]])
 
         Get the point ids of the edges of the last cell.
-        Note that the `edges` attributes returns a generator of
-        `pyvista.Cell` objects.
 
         >>> for e in mesh.cell[-1].edges:
         ...     print(e.point_ids)
@@ -2751,6 +2749,7 @@ class DataSet(DataSetFilters, DataObject):
             Describe how the neighbor cell(s) must be connected to the current
             cell to be considered as a neighbor.
             Can be either ``'points'``, ``'edges'`` or ``'faces'``.
+            Defaults to ``'points'``.
 
         Returns
         -------
@@ -2761,6 +2760,10 @@ class DataSet(DataSetFilters, DataObject):
         --------
         For an ExplicitStructuredGrid, use the :func:`pyvista.ExplicitStructuredGrid.neighbors`
         method.
+
+        See Also
+        --------
+        pyvista.DataSet.cell_neighbors_levels
 
         Examples
         --------
@@ -2914,6 +2917,87 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors_levels(
         self, ind: int, connections: str = "points", n_levels: int = 1
     ) -> Generator[List[int], None, None]:
+        """Get consecutive levels of cell neighbors.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        connections : str, optional
+            Describe how the neighbor cell(s) must be connected to the current
+            cell to be considered as a neighbor.
+            Can be either ``'points'``, ``'edges'`` or ``'faces'``.
+            Defaults to ``'points'``.
+
+        n_levels : int
+            Number of levels to search for cell neighbors.
+
+        Returns
+        -------
+        List[int]
+            A generator of list of cell IDs for each level.
+
+        Warnings
+        --------
+        For an ExplicitStructuredGrid, use the :func:`pyvista.ExplicitStructuredGrid.neighbors`
+        method.
+
+        See Also
+        --------
+        pyvista.DataSet.cell_neighbors
+
+        Examples
+        --------
+        Get the cell neighbors IDs starting from the 0-th cell
+        up until the third level
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>>
+        >>> for ids in mesh.cell_neighbors_levels(0,connections="edges",n_levels=3):
+        ...     print(ids)
+        [1, 21, 9]
+        [2, 8, 74, 75, 20, 507]
+        [128, 129, 3, 453, 7, 77, 23, 506]
+
+        Visualize these cells IDs
+
+        >>> from functools import partial
+        >>> pv.global_theme.color_cycler = ['red', 'green', 'blue', 'purple']
+        >>> pl = pv.Plotter()
+        >>>
+        >>> # Define partial function to add point labels
+        >>> add_point_labels = partial(
+        ...     pl.add_point_labels,
+        ...     text_color="white",
+        ...     font_size=20,
+        ...     shape=None,
+        ...     show_points=False,
+        ... )
+        >>>
+        >>> # Add the 0-th cell to the plotter
+        >>> cell = mesh.extract_cells(0)
+        >>> _ = pl.add_mesh(cell, show_edges=True)
+        >>> _ = add_point_labels(cell.cell_centers().points, labels=["0"])
+        >>> other_ids = [0]
+        >>>
+        >>> # Add the neighbors to the plot
+        >>> neighbors = mesh.cell_neighbors_levels(0, connections="edges", n_levels=3)
+        >>> for i, ids in enumerate(neighbors, start=1):
+        ...     cells = mesh.extract_cells(ids)
+        ...     _ = pl.add_mesh(cells, show_edges=True)
+        ...     _ = add_point_labels(cells.cell_centers().points, labels=[f"{i}"] * len(ids))
+        ...     other_ids.extend(ids)
+        >>>
+        >>> # Add the cell IDs that are not neighbors (ie. the rest of the sphere)
+        >>> cells = mesh.extract_cells(other_ids, invert=True)
+        >>> _ = pl.add_mesh(cells, color="white", show_edges=True)
+        >>>
+        >>> pl.view_yx()
+        >>> pl.camera.zoom(6.0)
+        >>> pl.show()
+        """
         method = partial(self.cell_neighbors, connections=connections)
         return self._get_levels_neihgbors(ind, n_levels, method)
 

@@ -294,7 +294,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(self.GetEdge(index), deep=True)
 
     @property
-    def edges(self) -> list[Cell]:
+    def edges(self) -> List[Cell]:
         """Return a list of edges composing the cell.
 
         >>> from pyvista.examples.cells import Hexahedron
@@ -308,7 +308,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return [self.get_edge(i) for i in range(self.n_edges)]
 
     @property
-    def faces(self) -> list[Cell]:
+    def faces(self) -> List[Cell]:
         """Return a list of faces composing the cell.
 
         >>> from pyvista.examples.cells import Tetrahedron
