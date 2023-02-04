@@ -1,12 +1,12 @@
+-r requirements.txt
 cmocean==2.0
 colorcet==3.0.1
 enum-tools==0.9.0.post1
-imageio>=2.5.0
 imageio-ffmpeg==0.4.8
 ipygany==0.5.0
 ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
-jupyterlab==3.5.2
+jupyterlab==3.6.0
 lxml==4.9.2
 matplotlib==3.6.3
 meshio==5.3.4
@@ -27,8 +27,13 @@ sphinx-copybutton==0.5.1
 sphinx-design==0.3.0
 sphinx-gallery==0.11.1
 sphinx-notfound-page==0.8.3
-sphinx-toolbox==3.3.0
-sphinxcontrib-asciinema==0.3.5
+sphinx-toolbox==3.4.0
+sphinxcontrib-asciinema==0.3.6
 sphinxcontrib-websupport==1.2.4
-trimesh==3.18.0
+sympy==1.11.1
+trame==2.2.6
+trame-client==2.5.1
+trame-server==2.8.1
+trame-vtk==2.0.17
+trimesh==3.18.3
 typed-ast==1.5.4

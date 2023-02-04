@@ -10,11 +10,13 @@ except:  # noqa: E722
 
 import pyvista
 from pyvista.jupyter import pv_pythreejs
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
-def test_set_jupyter_backend_ipygany():
+def test_set_jupyter_backend_threejs():
     try:
-        pyvista.global_theme.jupyter_backend = 'pythreejs'
+        with pytest.warns(PyVistaDeprecationWarning):
+            pyvista.global_theme.jupyter_backend = 'pythreejs'
         assert pyvista.global_theme.jupyter_backend == 'pythreejs'
     finally:
         pyvista.global_theme.jupyter_backend = None

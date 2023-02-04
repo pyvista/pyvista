@@ -2,6 +2,7 @@
 
 import itertools
 import platform
+import weakref
 
 import numpy as np
 import pytest
@@ -24,8 +25,8 @@ skip_no_mpl_figure = pytest.mark.skipif(
     not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
 
-# skip all tests if VTK<9.1.0
-if pyvista.vtk_version_info < (9, 1):
+# skip all tests if VTK<9.2.0
+if pyvista.vtk_version_info < (9, 2):
     pytestmark = pytest.mark.skip
 
 
@@ -272,9 +273,8 @@ def test_axis_scale(chart_2d, axis):
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
-    # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
-    #  This is a VTK issue that will be fixed once PR (!8618) is merged.
-
+    # Note: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
+    # Should be fixed on VTK side, but tricky without breaking stuff (see !8828 for reference).
     chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart_2d.show()
@@ -314,6 +314,8 @@ def test_axis_tick_count(axis):
 def test_axis_tick_locations(chart_2d, axis):
     tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
     tlabels = ["Foo", "Blub", "Spam"]
+    tlocs0 = axis.tick_locations
+    tlabels0 = axis.tick_labels
 
     axis.tick_locations = tlocs
     axis.tick_labels = tlabels
@@ -337,6 +339,13 @@ def test_axis_tick_locations(chart_2d, axis):
     )
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
+    axis.tick_locations = None
+    axis.tick_labels = None
+    chart_2d.show()
+    assert np.allclose(axis.tick_locations, tlocs0)
+    assert np.allclose(axis.GetTickPositions(), tlocs0)
+    assert tuple(axis.tick_labels) == tuple(tlabels0)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels0)
 
 
 def test_axis_tick_size(axis):
@@ -402,13 +411,10 @@ def test_chart_common(pl, chart_f, request):
         chart.size = (-1, 1)
     with pytest.raises((AssertionError, ValueError)):
         chart.loc = (-1, 1)
-    try:  # Try block for now as not all charts support a custom size and loc
-        chart.size = (0.5, 0.5)
-        chart.loc = (0.25, 0.25)
-        assert chart.size == (0.5, 0.5)
-        assert chart.loc == (0.25, 0.25)
-    except ValueError:
-        pass
+    chart.size = (0.5, 0.5)
+    chart.loc = (0.25, 0.25)
+    assert chart.size == (0.5, 0.5)
+    assert chart.loc == (0.25, 0.25)
 
     # Check geometry and resizing
     w, h = pl.window_size
@@ -567,7 +573,7 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.label == ""
 
 
-def test_lineplot2d(line_plot_2d):
+def test_lineplot2d(chart_2d, line_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
     c = (1.0, 0.0, 1.0, 1.0)
@@ -576,7 +582,8 @@ def test_lineplot2d(line_plot_2d):
     l = "Line"
 
     # Test constructor
-    plot = charts.LinePlot2D(x, y, c, w, s, l)
+    plot = charts.LinePlot2D(chart_2d, x, y, c, w, s, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
     assert plot.color == c
@@ -590,7 +597,7 @@ def test_lineplot2d(line_plot_2d):
     assert np.allclose(line_plot_2d.y, y)
 
 
-def test_scatterplot2d(scatter_plot_2d):
+def test_scatterplot2d(chart_2d, scatter_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
     c = (1.0, 0.0, 1.0, 1.0)
@@ -602,7 +609,8 @@ def test_scatterplot2d(scatter_plot_2d):
     ), "New marker styles added? Change this test."
 
     # Test constructor
-    plot = charts.ScatterPlot2D(x, y, c, sz, st, l)
+    plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
     assert plot.color == c
@@ -628,7 +636,7 @@ def test_scatterplot2d(scatter_plot_2d):
         scatter_plot_2d.marker_style = st_inv
 
 
-def test_areaplot(area_plot):
+def test_areaplot(chart_2d, area_plot):
     x = [-2, -1, 0, 1, 2]
     y1 = [4, 1, 0, -1, -4]
     y2 = [-4, -2, 0, 2, 4]
@@ -636,7 +644,8 @@ def test_areaplot(area_plot):
     l = "Line"
 
     # Test constructor
-    plot = charts.AreaPlot(x, y1, y2, c, l)
+    plot = charts.AreaPlot(chart_2d, x, y1, y2, c, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y1, y1)
     assert np.allclose(plot.y2, y2)
@@ -650,7 +659,7 @@ def test_areaplot(area_plot):
     assert np.allclose(area_plot.y2, y2)
 
 
-def test_barplot(bar_plot):
+def test_barplot(chart_2d, bar_plot):
     x = [0, 1, 2]
     y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
@@ -659,7 +668,8 @@ def test_barplot(bar_plot):
     assert ori_inv not in charts.BarPlot.ORIENTATIONS, "New orientations added? Change this test."
 
     # Test multi comp constructor
-    plot = charts.BarPlot(x, y, c, ori, l)
+    plot = charts.BarPlot(chart_2d, x, y, c, ori, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
     assert all(pc == ci for pc, ci in zip(plot.colors, c))
@@ -667,7 +677,8 @@ def test_barplot(bar_plot):
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.BarPlot(x, y[0], c[0], ori, l[0])
+    plot = charts.BarPlot(chart_2d, x, y[0], c[0], ori, l[0])
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y[0])
     assert plot.color == c[0]
@@ -676,12 +687,12 @@ def test_barplot(bar_plot):
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y, c[0], ori, l)
-    # charts.BarPlot(x, y, c, off, ori, l[0])  # This one is valid
+        charts.BarPlot(chart_2d, x, y, c[0], ori, l)
+    # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y[0], c, ori, l[0])
+        charts.BarPlot(chart_2d, x, y[0], c, ori, l[0])
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y[0], c[0], ori, l)
+        charts.BarPlot(chart_2d, x, y[0], c[0], ori, l)
 
     # Test remaining properties
     bar_plot.update(x, y)
@@ -695,21 +706,23 @@ def test_barplot(bar_plot):
         bar_plot.orientation = ori_inv
 
 
-def test_stackplot(stack_plot):
+def test_stackplot(chart_2d, stack_plot):
     x = [0, 1, 2]
     ys = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
     l = ["Foo", "Spam", "Bla"]
 
     # Test multi comp constructor
-    plot = charts.StackPlot(x, ys, c, l)
+    plot = charts.StackPlot(chart_2d, x, ys, c, l)
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
     assert all(pc == ci for pc, ci in zip(plot.colors, c))
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.StackPlot(x, ys[0], c[0], l[0])
+    plot = charts.StackPlot(chart_2d, x, ys[0], c[0], l[0])
+    assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys[0])
     assert plot.color == c[0]
@@ -717,12 +730,12 @@ def test_stackplot(stack_plot):
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):
-        charts.StackPlot(x, ys, c[0], l)
-    # charts.StackPlot(x, ys, c, l[0])  # This one is valid
+        charts.StackPlot(chart_2d, x, ys, c[0], l)
+    # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):
-        charts.StackPlot(x, ys[0], c, l[0])
+        charts.StackPlot(chart_2d, x, ys[0], c, l[0])
     with pytest.raises(ValueError):
-        charts.StackPlot(x, ys[0], c[0], l)
+        charts.StackPlot(chart_2d, x, ys[0], c[0], l)
 
     # Test remaining properties
     stack_plot.update(x, ys)
@@ -895,29 +908,33 @@ def test_chart_2d(pl, chart_2d):
 
 @skip_no_plotting
 def test_chart_box(pl, chart_box, box_plot):
+    size = (0.5, 0.5)
+    loc = (0.25, 0.25)
     data = [[0, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 6]]
     stats = [np.quantile(d, [0.0, 0.25, 0.5, 0.75, 1.0]) for d in data]
     cs = "wild_flower"
     ls = ["Datalabel"]
 
     # Test constructor
-    chart = pyvista.ChartBox(data, cs, ls)
+    chart = pyvista.ChartBox(data, cs, ls, size, loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
+    assert chart.loc == loc
+    assert chart.size == size
 
     # Test geometry and resizing
     pl.add_chart(chart)
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
-    assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
+    assert np.allclose(chart._geometry, (loc[0] * r_w, loc[1] * r_h, size[0] * r_w, size[1] * r_h))
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show(auto_close=False)  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
+    assert np.allclose(
+        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+    )
 
     # Test remaining properties
-    assert chart_box.loc == (0, 0)
-    assert chart_box.size == (1, 1)
     assert chart_box.plot.__this__ == chart_box.GetPlot(0).__this__
 
     box_plot.update(data)
@@ -927,28 +944,32 @@ def test_chart_box(pl, chart_box, box_plot):
 
 @skip_no_plotting
 def test_chart_pie(pl, chart_pie, pie_plot):
+    size = (0.5, 0.5)
+    loc = (0.25, 0.25)
     data = [3, 4, 5]
     cs = "wild_flower"
     ls = ["Tic", "Tac", "Toe"]
 
     # Test constructor
-    chart = pyvista.ChartPie(data, cs, ls)
+    chart = pyvista.ChartPie(data, cs, ls, size, loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
+    assert chart.loc == loc
+    assert chart.size == size
 
     # Test geometry and resizing
     pl.add_chart(chart)
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
-    assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
+    assert np.allclose(chart._geometry, (loc[0] * r_w, loc[1] * r_h, size[0] * r_w, size[1] * r_h))
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show(auto_close=False)  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
+    assert np.allclose(
+        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+    )
 
     # Test remaining properties
-    assert chart_pie.loc == (0, 0)
-    assert chart_pie.size == (1, 1)
     assert chart_pie.plot.__this__ == chart_pie.GetPlot(0).__this__
 
     pie_plot.update(data)
@@ -1032,19 +1053,13 @@ def test_charts(pl):
     pl.add_chart(bottom_right)
     assert len(pl.renderer._charts) == 2
 
-    # Test toggle_interaction
+    # Test get_charts_by_pos
     pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
-    assert not top_left.GetInteractive()
-    assert not bottom_right.GetInteractive()
-    assert (
-        pl.renderer._charts.toggle_interaction((0.75 * win_size[0], 0.25 * win_size[1]))
-        is bottom_right._scene
-    )
-    assert not top_left.GetInteractive()
-    assert bottom_right.GetInteractive()
-    assert pl.renderer._charts.toggle_interaction((0, 0)) is None
-    assert not top_left.GetInteractive()
-    assert not bottom_right.GetInteractive()
+    cs = pl.renderer._get_charts_by_pos((0.75 * win_size[0], 0.25 * win_size[1]))
+    assert len(cs) == 1
+    assert bottom_right in cs
+    cs = pl.renderer._get_charts_by_pos((0, 0))
+    assert not cs
 
     # Test remove_chart
     pl.remove_chart(1)
@@ -1082,7 +1097,7 @@ def test_iren_context_style(pl):
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene().__this__ == chart._scene.__this__
 
-    # Simulate right click outside the chart:
+    # Simulate double left click outside the chart:
     pl.iren._mouse_left_button_click(0, 0, count=2)
     assert not chart.GetInteractive()
     assert pl.iren._style == style
@@ -1090,9 +1105,85 @@ def test_iren_context_style(pl):
     assert pl.iren._context_style.GetScene() is None
 
 
+@skip_no_plotting
+@pytest.mark.needs_vtk_version(
+    9, 3, 0, reason="Chart interaction when using multiple renderers is bugged on older versions."
+)
+def test_chart_interaction():
+    # Setup multi renderer plotter with one chart in the top renderer and two charts
+    # in the bottom renderer.
+    pl = pyvista.Plotter(shape=(2, 1))
+    pl.subplot(0, 0)
+    chart_t = pyvista.ChartPie([1, 2, 3])
+    # Ensure set_chart_interaction does not create the __charts object:
+    assert not pl.set_chart_interaction(True)
+    assert not pl.renderer.has_charts
+    pl.add_chart(chart_t)
+    assert pl.renderer.has_charts
+    pl.subplot(1, 0)
+    chart_bl = pyvista.ChartPie([1, 1, 1], size=(0.5, 1), loc=(0, 0))
+    chart_br = pyvista.ChartPie([3, 2, 1], size=(0.5, 1), loc=(0.5, 0))
+    pl.add_chart(chart_bl, chart_br)
+
+    # Check set_chart_interaction bool
+    ics = pl.set_chart_interaction(True)
+    assert chart_bl in ics and chart_br in ics
+    assert chart_bl.GetInteractive() and chart_br.GetInteractive()
+    assert pl.iren._style_class == pl.iren._context_style
+    assert pl.iren._context_style.GetScene() == chart_bl._scene
+    ics = pl.set_chart_interaction(False)
+    assert not ics
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._style_class != pl.iren._context_style
+    assert pl.iren._context_style.GetScene() is None
+
+    # Check set_chart_interaction Chart/id
+    ics = pl.set_chart_interaction(chart_bl)
+    assert chart_bl in ics and chart_br not in ics
+    assert chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    ics = pl.set_chart_interaction(1)
+    assert chart_bl not in ics and chart_br in ics
+    assert not chart_bl.GetInteractive() and chart_br.GetInteractive()
+    ics = pl.set_chart_interaction([0, 1])
+    assert chart_bl in ics and chart_br in ics
+    assert chart_bl.GetInteractive() and chart_br.GetInteractive()
+
+    # Check set_chart_interaction toggle
+    ics = pl.set_chart_interaction(chart_bl, toggle=True)
+    assert chart_bl not in ics and chart_br in ics
+    assert not chart_bl.GetInteractive() and chart_br.GetInteractive()
+
+    # Check wrong charts
+    ics = pl.set_chart_interaction(chart_t)
+    assert not ics
+    assert not chart_t.GetInteractive()
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._context_style.GetScene() is None
+    ics = pl.set_chart_interaction([chart_t, chart_bl])
+    assert chart_t not in ics and chart_bl in ics
+    assert not chart_t.GetInteractive()
+    assert chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._context_style.GetScene() == chart_bl._scene
+
+    # Check double click interaction toggle in multi renderer case
+    pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
+    win_size = pl.window_size
+    # Simulate double left click on the top chart:
+    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.75 * win_size[1]), count=2)
+    assert chart_t.GetInteractive()
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._style_class == pl.iren._context_style
+    assert pl.iren._context_style.GetScene() == chart_t._scene
+    # Simulate second double left click on the top chart:
+    pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.75 * win_size[1]), count=2)
+    assert not chart_t.GetInteractive()
+    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert pl.iren._style_class != pl.iren._context_style
+    assert pl.iren._context_style.GetScene() is None
+
+
 @skip_mac
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
-    chart_2d
     chart_2d.background_texture = t_puppy
     assert chart_2d.background_texture == t_puppy

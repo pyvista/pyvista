@@ -7,6 +7,8 @@ Includes:
 * ``panel``
 * ``pythreejs``
 * ``ipygany``
+* ``client``
+* ``server``
 
 """
 import os
@@ -14,32 +16,19 @@ import warnings
 
 import numpy as np
 
-# This module should not be imported at the __init__ level, only as a
-# lazy import when trying to plot using jupyter notebooks
-try:
-    import IPython  # noqa
-    from IPython import display
-except ImportError:  # pragma: no cover
-    raise ImportError('Install IPython to display an image in a notebook')
-
 from pyvista import _vtk
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 PANEL_EXTENSION_SET = [False]
 
 
-def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, **kwargs):
+def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
     """Show the ``pyvista`` plot in a jupyter environment.
-
-    Parameters
-    ----------
-    return_viewer : bool, optional
-        Return the jupyterlab viewer, scene, or display object
-        when plotting with jupyter notebook.
 
     Returns
     -------
     IPython Widget
-        IPython widget when ``return_viewer==True``.  Otherwise, ``None``.
+        IPython widget or image.
 
     """
     if screenshot is False:
@@ -47,24 +36,33 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
 
     try:
         if backend == 'pythreejs':
-            return show_pythreejs(plotter, return_viewer, **kwargs)
+            return show_pythreejs(plotter, **kwargs)
         if backend == 'ipyvtklink':
-            return show_ipyvtk(plotter, return_viewer)
+            warnings.warn(
+                '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
+                PyVistaDeprecationWarning,
+            )
+            return show_ipyvtk(plotter)
         if backend == 'panel':
-            return show_panel(plotter, return_viewer)
+            return show_panel(plotter)
         if backend == 'ipygany':
             from pyvista.jupyter.pv_ipygany import show_ipygany
 
-            return show_ipygany(plotter, return_viewer, **kwargs)
+            return show_ipygany(plotter, **kwargs)
+        if backend in ['server', 'client', 'trame']:
+            from pyvista.trame.jupyter import show_trame
+
+            return show_trame(plotter, mode=backend, **kwargs)
+
     except ImportError as e:
         warnings.warn(
             f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
         )
 
-    return show_static_image(plotter, screenshot, return_viewer)
+    return show_static_image(plotter, screenshot)
 
 
-def show_static_image(plotter, screenshot, return_viewer):
+def show_static_image(plotter, screenshot):
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image
 
@@ -74,17 +72,11 @@ def show_static_image(plotter, screenshot, return_viewer):
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
     image = PIL.Image.fromarray(plotter.last_image)
 
-    # close plotter as this will be a static image and there is no
-    # point to keeping the plotter around.
-    plotter.close()
-
     # Simply display the result: either ipyvtklink object or image display
-    if return_viewer:
-        return image
-    display.display(image)
+    return image
 
 
-def show_ipyvtk(plotter, return_viewer):
+def show_ipyvtk(plotter):
     """Display an interactive viewer widget using ``ipyvtklink``."""
     if any('SPYDER' in name for name in os.environ):
         warnings.warn(
@@ -104,7 +96,7 @@ def show_ipyvtk(plotter, return_viewer):
 
     # Have to leave the Plotter open for the widget to use
     disp = ViewInteractiveWidget(
-        plotter.ren_win,
+        plotter.render_window,
         on_close=plotter.close,
         transparent_background=plotter.image_transparent_background,
     )
@@ -112,12 +104,10 @@ def show_ipyvtk(plotter, return_viewer):
     for renderer in plotter.renderers:
         renderer.AddObserver(_vtk.vtkCommand.ModifiedEvent, lambda *args: disp.update_canvas())
 
-    if return_viewer:
-        return disp
-    display.display_html(disp)
+    return disp
 
 
-def show_panel(plotter, return_viewer):
+def show_panel(plotter):
     """Take the active renderer(s) from a plotter and show them using ``panel``."""
     try:
         import panel as pn
@@ -137,7 +127,7 @@ def show_panel(plotter, return_viewer):
 
     axes_enabled = plotter.renderer.axes_enabled
     pan = pn.panel(
-        plotter.ren_win,
+        plotter.render_window,
         sizing_mode='stretch_width',
         orientation_widget=axes_enabled,
         enable_keybindings=False,
@@ -150,9 +140,7 @@ def show_panel(plotter, return_viewer):
     if hasattr(plotter.renderer, 'cube_axes_actor'):
         pan.axes = build_panel_bounds(plotter.renderer.cube_axes_actor)
 
-    if return_viewer:
-        return pan
-    display.display_html(pan)
+    return pan
 
 
 def build_panel_bounds(actor):
@@ -181,11 +169,9 @@ def build_panel_bounds(actor):
     return bounds
 
 
-def show_pythreejs(plotter, return_viewer, **kwargs):
+def show_pythreejs(plotter, **kwargs):
     """Show a pyvista plotting scene using pythreejs."""
     from .pv_pythreejs import convert_plotter
 
     renderer = convert_plotter(plotter)
-    if return_viewer:
-        return renderer
-    display.display_html(renderer)
+    return renderer

@@ -589,25 +589,6 @@ want to clear everything except the gallery examples, run:
 
 This will clear out the cache without forcing you to rebuild all the examples.
 
-Full documentation build
-^^^^^^^^^^^^^^^^^^^^^^^^
-By default, the documentation build places class documentation on single pages
-rather than generating a table and placing class methods and attributes on
-individual pages. Figures are also sized to ``(400, 300)`` rather than the
-default ``(1024, 768)``. This is to minimize the time it takes to build
-documentation locally. If you wish to generate the full documentation, enable
-it with:
-
-.. code:: bash
-
-   export FULL_DOC_BUILD=TRUE
-   make -C doc html
-
-This will generate the same documentation as rendered online, but as each
-individual class method and attribute will have its own documentation page, the
-documentation will take much longer to build. Additionally, inherited methods
-will have their docstrings rendered, whereas the non-full documentation build
-only generates methods belonging directly to that class.
 
 Parallel Documentation Build
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -618,7 +599,7 @@ You can improve your documentation build time on Linux and Mac OS with:
    make -C doc phtml
 
 This effectively invokes ``SPHINXOPTS=-j`` and can be especially useful for
-multi-core computers when ``FULL_DOC_BUILD=TRUE``
+multi-core computers.
 
 
 

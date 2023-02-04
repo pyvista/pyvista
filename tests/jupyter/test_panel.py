@@ -3,6 +3,7 @@ import os
 import pytest
 
 import pyvista as pv
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 has_panel = True
 try:
@@ -15,9 +16,12 @@ skip_no_panel = pytest.mark.skipif(not has_panel, reason='Requires panel')
 
 @skip_no_panel
 def test_set_jupyter_backend_panel():
-    pv.set_jupyter_backend('panel')
-    assert pv.global_theme.jupyter_backend == 'panel'
-    pv.set_jupyter_backend(None)
+    try:
+        with pytest.warns(PyVistaDeprecationWarning):
+            pv.set_jupyter_backend('panel')
+        assert pv.global_theme.jupyter_backend == 'panel'
+    finally:
+        pv.set_jupyter_backend(None)
 
 
 @skip_no_panel

@@ -313,3 +313,20 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
     alg.SetPassPointData(pass_point_data)
     set_algorithm_input(alg, inp)
     return alg
+
+
+def triangulate_algorithm(inp):
+    """Triangulate input."""
+    trifilter = _vtk.vtkTriangleFilter()
+    trifilter.PassVertsOff()
+    trifilter.PassLinesOff()
+    set_algorithm_input(trifilter, inp)
+    return trifilter
+
+
+def decimation_algorithm(inp, target_reduction):
+    """Decimate input to target reduction."""
+    alg = _vtk.vtkQuadricDecimation()
+    alg.SetTargetReduction(target_reduction)
+    set_algorithm_input(alg, inp)
+    return alg

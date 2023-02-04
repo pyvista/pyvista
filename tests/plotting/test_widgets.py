@@ -133,16 +133,16 @@ def test_widget_slider(uniform):
     p.close()
 
     p = pyvista.Plotter()
-    for event_type in ['start', 'end', 'always']:
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type=event_type)
+    for interaction_event in ['start', 'end', 'always']:
+        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=interaction_event)
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
     with pytest.raises(AttributeError):
         p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
-    with pytest.raises(TypeError, match='type for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type=0)
-    with pytest.raises(ValueError, match='value for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10], event_type='foo')
+    with pytest.raises(TypeError, match='Expected type for `interaction_event`'):
+        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=0)
+    with pytest.raises(ValueError, match='Expected value for `interaction_event`'):
+        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event='foo')
     p.close()
 
     p = pyvista.Plotter()
@@ -294,6 +294,24 @@ def test_plot_algorithm_widgets():
 
     pl = pyvista.Plotter()
     pl.add_mesh_slice_spline(algo)
+    pl.close()
+
+
+def test_add_volume_clip_plane(uniform):
+    pl = pyvista.Plotter()
+    with pytest.raises(TypeError, match='The `volume` parameter type must'):
+        pl.add_volume_clip_plane(pyvista.Sphere())
+
+    widget = pl.add_volume_clip_plane(uniform)
+    assert isinstance(widget, vtk.vtkImplicitPlaneWidget)
+    assert pl.volume.mapper.GetClippingPlanes().GetNumberOfItems() == 1
+    pl.close()
+
+    pl = pyvista.Plotter()
+    vol = pl.add_volume(uniform)
+    assert vol.mapper.GetClippingPlanes() is None
+    pl.add_volume_clip_plane(vol)
+    assert vol.mapper.GetClippingPlanes().GetNumberOfItems() == 1
     pl.close()
 
 
