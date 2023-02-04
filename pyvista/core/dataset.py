@@ -2875,6 +2875,10 @@ class DataSet(DataSetFilters, DataObject):
         List[int]
             List of neighbor points IDs for the ind-th point.
 
+        See Also
+        --------
+        pyvista.DataSet.point_neighbors_levels
+
         Examples
         --------
         Get the point neighbors of the 0-th point
@@ -2884,17 +2888,17 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.point_neighbors(0)
         [2, 226, 198, 170, 142, 114, 86, 254, 58, 30]
 
-        Plot them:
+        Plot them
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh,show_edges=True)
         >>>
         >>> # Label the 0-th point
-        >>> _ = pl.add_point_labels(mesh.points[0],["0"],text_color="blue", font_size=20)
+        >>> _ = pl.add_point_labels(mesh.points[0],["0"],text_color="blue", font_size=40)
         >>>
         >>> # Get the point neighbors and plot them
         >>> neighbors = mesh.point_neighbors(0)
-        >>> _ = pl.add_point_labels(mesh.points[neighbors], labels=[f"{i}" for i in neighbors], text_color="red", font_size=20)
+        >>> _ = pl.add_point_labels(mesh.points[neighbors], labels=[f"{i}" for i in neighbors], text_color="red", font_size=40)
         >>> pl.camera_position = "yx"
         >>> pl.camera.zoom(7.)
         >>> pl.show()
@@ -2911,6 +2915,65 @@ class DataSet(DataSetFilters, DataObject):
     def point_neighbors_levels(
         self, ind: int, n_levels: int = 1
     ) -> Generator[List[int], None, None]:
+        """Get consecutive levels of point neighbors.
+
+        Parameters
+        ----------
+        ind : int
+            Point ID.
+
+        n_levels : int
+            Number of levels to search for point neighbors.
+            When equals to 1, it is equivalent to pyvista.DataSet.point_neighbors.
+
+        Returns
+        -------
+        List[int]
+            A generator of list of neighbor points IDs for the ind-th point.
+
+        See Also
+        --------
+        pyvista.DataSet.point_neighbors
+
+        Examples
+        --------
+        Get the point neighbors IDs starting from the 0-th point
+        up until the third level
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>> for neighbors in mesh.point_neighbors_levels(0,3):
+        ...     print(neighbors)
+        [2, 226, 198, 170, 142, 114, 86, 30, 58, 254]
+        [3, 227, 255, 199, 171, 143, 115, 87, 59, 31]
+        [256, 32, 4, 228, 200, 172, 144, 116, 88, 60]
+
+        Visualize these points IDs
+
+        >>> from functools import partial
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh,show_edges=True)
+        >>>
+        >>> # Define partial function to add point labels
+        >>> add_point_labels = partial(
+        ...     pl.add_point_labels,
+        ...     text_color="white",
+        ...     font_size=40,
+        ...     point_size=10,
+        ... )
+        >>>
+        >>> # Add the first point label
+        >>> _ = add_point_labels(mesh.points[0],labels=["0"], text_color="blue")
+        >>>
+        >>> # Add the neighbors to the plot
+        >>> neighbors = mesh.point_neighbors_levels(0, n_levels=3)
+        >>> for i, ids in enumerate(neighbors, start=1):
+        ...     _ = add_point_labels(mesh.points[ids], labels=[f"{i}"] * len(ids), text_color="red")
+        >>>
+        >>> pl.view_yx()
+        >>> pl.camera.zoom(4.0)
+        >>> pl.show()
+        """
         method = self.point_neighbors
         return self._get_levels_neihgbors(ind, n_levels, method)
 
@@ -2932,6 +2995,7 @@ class DataSet(DataSetFilters, DataObject):
 
         n_levels : int
             Number of levels to search for cell neighbors.
+            When equals to 1, it is equivalent to pyvista.DataSet.cell_neighbors.
 
         Returns
         -------
@@ -2971,7 +3035,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> add_point_labels = partial(
         ...     pl.add_point_labels,
         ...     text_color="white",
-        ...     font_size=20,
+        ...     font_size=40,
         ...     shape=None,
         ...     show_points=False,
         ... )
@@ -3004,21 +3068,24 @@ class DataSet(DataSetFilters, DataObject):
     def _get_levels_neihgbors(
         self, ind: int, n_levels: int, method: Callable
     ) -> Generator[List[int], None, None]:
-
+        """Provide helper method that yields neighbors ids."""
         neighbors = set(method(ind))
         yield list(neighbors)
 
+        # Keep track of visited points or cells
         all_visited = neighbors.copy()
         all_visited.add(ind)
 
         for _ in range(n_levels - 1):
-            new_visited = set()
 
+            # Get the neighbors for the next level.
+            new_visited = set()
             for n in neighbors:
                 new_neighbors = method(n)
                 new_visited.update(new_neighbors)
             neighbors = new_visited
 
+            # Only return the ones that have not been visited yet
             yield list(neighbors.difference(all_visited))
             all_visited.update(neighbors)
 
