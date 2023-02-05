@@ -155,7 +155,6 @@ class PickingHelper:
                     try_callback(callback, mesh)
 
             if show and is_valid_selection:
-
                 # Select the renderer where the mesh is added.
                 active_renderer_index = self_().renderers._active_index
                 for index in range(len(self.renderers)):
@@ -589,7 +588,6 @@ class PickingHelper:
         """
 
         def _end_pick_event(picker, event):
-
             picked_point_id = picker.GetPointId()
             if not pickable_window and picked_point_id < 0:
                 self._picked_point = None
@@ -723,7 +721,6 @@ class PickingHelper:
         """
 
         def _end_pick_event(picker, event):
-
             picked_point_id = picker.GetPointId()
             if (not pickable_window) and (picked_point_id < 0):
                 return None

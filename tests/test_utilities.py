@@ -509,7 +509,6 @@ def test_check_valid_vector():
 
 
 def test_cells_dict_utils():
-
     # No pyvista object
     with pytest.raises(ValueError):
         cells.get_mixed_cells(None)

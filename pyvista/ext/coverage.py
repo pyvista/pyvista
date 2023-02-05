@@ -78,14 +78,14 @@ class CoverageBuilder(Builder):
             self.c_sourcefiles.extend(glob.glob(pattern))
 
         self.c_regexes: List[Tuple[str, Pattern]] = []
-        for (name, exp) in self.config.coverage_c_regexes.items():
+        for name, exp in self.config.coverage_c_regexes.items():
             try:
                 self.c_regexes.append((name, re.compile(exp)))
             except Exception:
                 logger.warning(__('invalid regex %r in coverage_c_regexes'), exp)
 
         self.c_ignorexps: Dict[str, List[Pattern]] = {}
-        for (name, exps) in self.config.coverage_ignore_c_items.items():
+        for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
             'coverage_ignore_modules', self.config.coverage_ignore_modules

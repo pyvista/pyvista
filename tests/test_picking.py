@@ -194,7 +194,6 @@ def test_enable_surface_picking(sphere, left_clicking):
 
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_disable_picking(sphere, left_clicking):
-
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
     pl.enable_surface_picking(left_clicking=left_clicking)
@@ -218,7 +217,6 @@ def test_disable_picking(sphere, left_clicking):
 
 
 def test_enable_cell_picking_interactive():
-
     n_cells = []
 
     def callback(picked_cells):
@@ -240,7 +238,6 @@ def test_enable_cell_picking_interactive():
 
 
 def test_enable_cell_picking_interactive_two_ren_win():
-
     n_cells = []
 
     def callback(picked_cells):
@@ -300,7 +297,6 @@ def test_point_picking(left_clicking):
 
 @pytest.mark.needs_vtk9
 def test_point_picking_window_not_pickable():
-
     plotter = pyvista.Plotter(
         window_size=(100, 100),
     )
@@ -413,7 +409,6 @@ def test_horizon_picking():
 
 
 def test_enable_fly_to_right_click(sphere):
-
     point = []
 
     def callback(click_point):

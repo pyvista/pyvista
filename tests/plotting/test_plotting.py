@@ -1420,7 +1420,6 @@ def test_multi_renderers():
 
 
 def test_multi_renderers_subplot_ind_2x1():
-
     # Test subplot indices (2 rows by 1 column)
     plotter = pyvista.Plotter(shape=(2, 1))
     # First row
