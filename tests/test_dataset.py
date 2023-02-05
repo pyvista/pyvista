@@ -1627,7 +1627,6 @@ def test_raises_cell_neighbors_connections(grid):
 @pytest.mark.parametrize("grid", grids, ids=ids)
 @pytest.mark.parametrize("i0", i0s)
 def test_point_cell_ids(grid: DataSet, i0):
-
     cell_ids = grid.point_cell_ids(i0)
 
     assert isinstance(cell_ids, list)
@@ -1648,7 +1647,6 @@ def test_point_cell_ids(grid: DataSet, i0):
 @pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
 @pytest.mark.parametrize("i0", i0s)
 def test_cell_point_neighbors_ids(grid: DataSet, i0):
-
     cell_ids = grid.cell_neighbors(i0, "points")
     cell = grid.get_cell(i0)
 
@@ -1674,7 +1672,6 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
 @pytest.mark.parametrize("i0", i0s)
 def test_cell_edge_neighbors_ids(grid: DataSet, i0):
-
     cell_ids = grid.cell_neighbors(i0, "edges")
     cell = grid.get_cell(i0)
 
@@ -1716,7 +1713,6 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize("grid", grids_cells[2:], ids=ids_cells[2:])
 @pytest.mark.parametrize("i0", i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
-
     cell_ids = grid.cell_neighbors(i0, "faces")
     cell = grid.get_cell(i0)
 
@@ -1761,7 +1757,6 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
     "connections", ["points", "edges", "faces"], ids=lambda x: f"connections={x}"
 )
 def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
-
     cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)
 
     if connections == "faces" and grid.get_cell(i0).dimension != 3:
@@ -1789,7 +1784,6 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
 @pytest.mark.parametrize("i0", i0s)
 @pytest.mark.parametrize("n_levels", [1, 3])
 def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
-
     point_ids = grid.point_neighbors_levels(i0, n_levels=n_levels)
 
     if n_levels == 1:

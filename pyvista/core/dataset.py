@@ -3077,7 +3077,6 @@ class DataSet(DataSetFilters, DataObject):
         all_visited.add(ind)
 
         for _ in range(n_levels - 1):
-
             # Get the neighbors for the next level.
             new_visited = set()
             for n in neighbors:

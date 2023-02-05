@@ -448,7 +448,6 @@ def test_linear_copy_surf_elem():
 
 @pytest.mark.parametrize("invert", [True, False])
 def test_extract_cells(hexbeam, invert):
-
     ind = [1, 2, 3]
     n_ind = [i for i in range(hexbeam.n_cells) if i not in ind] if invert else ind
 
