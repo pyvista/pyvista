@@ -3357,7 +3357,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             texture = mesh._activate_texture(texture)
 
         if texture:
-
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
@@ -6535,7 +6534,6 @@ class Plotter(BasePlotter):
                 log.debug('Starting iren')
                 self.iren.update_style()
                 if not interactive_update:
-
                     # Resolves #1260
                     if os.name == 'nt':
                         if _vtk.VTK9:

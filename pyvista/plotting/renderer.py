@@ -3233,7 +3233,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-
                 if face is None:
                     # dummy vtk object
                     vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])

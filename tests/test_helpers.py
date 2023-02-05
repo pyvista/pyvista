@@ -339,7 +339,6 @@ def test_set_default_active_scalarrs():
 
 
 def test_vtk_points_deep_shallow():
-
     points = np.array([[0.0, 0.0, 0.0]])
     vtk_points = pyvista.vtk_points(points, deep=False)
 
