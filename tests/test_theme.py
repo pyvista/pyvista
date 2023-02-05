@@ -476,7 +476,6 @@ def test_anti_aliasing_fxaa(default_theme):
 
 
 def test_anti_aliasing_ssaa(default_theme):
-
     # default should is not enabled
     if default_theme.anti_aliasing != 'ssaa':
         pl = pyvista.Plotter(theme=default_theme)

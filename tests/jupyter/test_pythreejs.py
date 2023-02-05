@@ -122,7 +122,6 @@ def test_output_face_scalars(sphere):
     [np.iinfo(np.uint16).max - 1, np.iinfo(np.uint32).max - 1, np.iinfo(np.uint32).max + 1],
 )
 def test_cast_to_min_size(max_index):
-
     if max_index < np.iinfo(np.uint16).max:
         buf_attr = pv_pythreejs.cast_to_min_size(np.arange(1000), max_index)
         assert buf_attr.array.dtype == np.uint16

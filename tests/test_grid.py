@@ -260,7 +260,6 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
 
 def test_init_polyhedron():
-
     polyhedron_nodes = [
         [0.02, 0.0, 0.02],  # 17
         [0.02, 0.01, 0.02],  # 18

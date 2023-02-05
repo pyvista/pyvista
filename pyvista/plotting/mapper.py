@@ -596,7 +596,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             scalars_name = '__custom_rgba'
 
         if not np.issubdtype(scalars.dtype, np.number) and not isinstance(cmap, pv.LookupTable):
-
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
                 cats = np.array([b'False', b'True'], dtype='|S5')

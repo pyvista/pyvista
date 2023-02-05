@@ -60,6 +60,7 @@ class _vtkWrapper(metaclass=_vtkWrapperMeta):
 
 # endregion
 
+
 # region Documentation substitution
 class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
