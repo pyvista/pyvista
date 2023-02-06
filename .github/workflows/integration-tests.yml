@@ -79,7 +79,7 @@ jobs:
       - name: Run pyvistaqt tests
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: pytest --cov=pyvista --cov-report=xml pyvistaqt/tests
+          run: pytest --cov=pyvista --cov-report=xml tests
           working-directory: pyvistaqt
       - run: cp -a pyvistaqt/*.xml .
       - uses: codecov/codecov-action@v3
