@@ -651,7 +651,6 @@ if VTK9:
         return reader
 
 else:  # pragma: no cover
-
     # maintain VTK 8.2 compatibility
     try:
         from vtk.vtkCommonKitPython import buffer_shared, vtkAbstractArray, vtkWeakReference

@@ -149,7 +149,6 @@ class Camera(_vtk.vtkCamera):
                     values = [typ(e.attrib["value"]) for e in element]
                     setattr(camera, name, values)
                 elif nelems == 1:
-
                     # Special case for bool since bool("0") returns True.
                     # So first convert to int from `to_find` and then apply bool
                     if "name" in element[-1].attrib and element[-1].attrib["name"] == "bool":
