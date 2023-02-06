@@ -68,7 +68,7 @@ jobs:
       - name: Install PyVista
         run: pip install -ve .
       - name: Install Qt and testing dependencies
-        run: pip install PyQt6 pytest pytest-qt pytest-cov
+        run: pip install PyQt6 pytest pytest-qt pytest-cov ipython
       - name: Clone PyVistaQt
         run: git clone --depth=1 https://github.com/pyvista/pyvistaqt.git --branch main --single-branch
       - name: Setup Xvfb and Qt dependencies
