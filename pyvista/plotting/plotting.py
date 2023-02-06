@@ -1769,10 +1769,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scale_before = self.image_scale
         if scale is not None:
             self.image_scale = scale
-        # try:
-        yield self
-        # finally:
-        self.image_scale = scale_before
+        try:
+            yield self
+        finally:
+            self.image_scale = scale_before
 
     def render(self):
         """Render the main window.
