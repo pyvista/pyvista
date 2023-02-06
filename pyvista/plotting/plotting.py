@@ -1671,11 +1671,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         size_before = self.window_size
         if window_size is not None:
             self.window_size = window_size
-        yield self
-        # Sometimes the render window is destroyed within the context
-        # and re-setting will fail
-        if self.render_window is not None:
-            self.window_size = size_before
+        try:
+            yield self
+        finally:
+            # Sometimes the render window is destroyed within the context
+            # and re-setting will fail
+            if self.render_window is not None:
+                self.window_size = size_before
 
     @property
     def image_depth(self):
@@ -1767,7 +1769,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scale_before = self.image_scale
         if scale is not None:
             self.image_scale = scale
+        # try:
         yield self
+        # finally:
         self.image_scale = scale_before
 
     def render(self):
