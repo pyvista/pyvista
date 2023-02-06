@@ -121,7 +121,6 @@ pts = curvsurf.points.copy()
 # Update Z and write a frame for each updated position
 nframe = 15
 for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
-
     # create an image using numpy,
     z = np.sin(r + phase)
     pts[:, -1] = z.ravel()

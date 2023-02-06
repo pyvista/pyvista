@@ -61,7 +61,6 @@ def test_disable_hidden_line_removal():
 
 
 def test_pickable_actors():
-
     plotter = pyvista.Plotter()
     sphere = plotter.add_mesh(pyvista.Sphere(), pickable=True)
     cube = plotter.add_mesh(pyvista.Cube(), pickable=False)
