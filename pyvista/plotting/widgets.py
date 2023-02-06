@@ -270,7 +270,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -644,7 +644,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -740,7 +740,7 @@ class WidgetHelper:
         volume : pyvista.plotting.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.UniformGrid` or
             :class:`pyvista.RectilinearGrid`, or the return value from
-            :class:`pyvista.plotting.Volume` from :func:`BasePlotter.add_volume`.
+            :class:`pyvista.plotting.Volume` from :func:`Plotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -791,7 +791,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_volume` to control how the volume is
+            :func:`Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
             :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`.
 
@@ -915,7 +915,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1010,7 +1010,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1699,7 +1699,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1969,7 +1969,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns

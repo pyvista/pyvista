@@ -1725,7 +1725,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         higher resolution image than what is rendered on screen.
 
         Image sizes will be the :py:attr:`window_size
-        <pyvista.BasePlotter.window_size>` multiplied by this scale factor.
+        <pyvista.Plotter.window_size>` multiplied by this scale factor.
 
         Examples
         --------
@@ -1776,7 +1776,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Will not render until ``show`` has been called.
 
         Any render callbacks added with
-        :func:`add_on_render_callback() <pyvista.BasePlotter.add_on_render_callback>`
+        :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
         and the ``render_event=False`` option set will still execute on any call.
         """
         if self.render_window is not None and not self._first_time and not self._suppress_rendering:

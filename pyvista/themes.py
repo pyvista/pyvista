@@ -1529,7 +1529,7 @@ class DefaultTheme(_ThemeConfig):
 
         See Also
         --------
-        pyvista.BasePlotter.enable_hidden_line_removal
+        pyvista.Plotter.enable_hidden_line_removal
 
         Examples
         --------

@@ -205,7 +205,7 @@ def show_trame(
 
     Parameters
     ----------
-    plotter : pyvista.BasePlotter
+    plotter : pyvista.Plotter
         The PyVista plotter to show.
 
     mode : str, optional

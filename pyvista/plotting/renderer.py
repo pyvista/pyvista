@@ -3129,9 +3129,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels : list, optional
             When set to ``None``, uses existing labels as specified by
 
-            - :func:`add_mesh <BasePlotter.add_mesh>`
-            - :func:`add_lines <BasePlotter.add_lines>`
-            - :func:`add_points <BasePlotter.add_points>`
+            - :func:`add_mesh <Plotter.add_mesh>`
+            - :func:`add_lines <Plotter.add_lines>`
+            - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
             legend.  Each entry must contain two strings, [label,
