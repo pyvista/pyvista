@@ -3,10 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.7+. Previous versions of Python are
-no longer supported as outlined in `this issue`_.
-
-.. _this issue: https://github.com/pyvista/pyvista/issues/164
+PyVista is supported on Python versions 3.8+.
 
 For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
@@ -25,7 +22,6 @@ the following projects are required dependencies of PyVista:
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for reading images and writing animations.
 * `pooch <https://pypi.org/project/pooch/>`_ - Data management for our example datasets so users can download tutorials on the fly.
 * `scooby <https://github.com/banesullivan/scooby>`_ - Reporting and debugging tools.
-* `typing-extensions <https://pypi.org/project/typing-extensions/>`_ - only required on Python 3.7.
 
 
 Optional Dependencies

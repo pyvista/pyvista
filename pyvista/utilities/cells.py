@@ -2,7 +2,6 @@
 
 from collections import deque
 from itertools import count, islice
-import sys
 
 import numpy as np
 
@@ -10,24 +9,8 @@ import pyvista
 from pyvista import _vtk
 
 
-def ncells_from_cells_py36(cells):  # pragma: no cover
-    """Get the number of cells from a VTK cell connectivity array.
-
-    Works on all Python>=3.5
-    """
-    c = 0
-    n_cells = 0
-    while c < cells.size:
-        c += cells[c] + 1
-        n_cells += 1
-    return n_cells
-
-
 def ncells_from_cells(cells):
-    """Get the number of cells from a VTK cell connectivity array.
-
-    Works on Python>=3.7
-    """
+    """Get the number of cells from a VTK cell connectivity array."""
     consumer = deque(maxlen=0)
     it = cells.flat
     for n_cells in count():  # noqa: B007
@@ -93,11 +76,7 @@ class CellArray(_vtk.vtkCellArray):
         # candidate for Cython or JIT compilation
         if n_cells is None:
             if cells.ndim == 1:
-                if sys.version_info.minor > 6:
-                    n_cells = ncells_from_cells(cells)
-                else:  # pragma: no cover
-                    # About 20% slower
-                    n_cells = ncells_from_cells_py36(cells)
+                n_cells = ncells_from_cells(cells)
             else:
                 n_cells = cells.shape[0]
 

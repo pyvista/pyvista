@@ -2,14 +2,8 @@
 
 import collections.abc
 from copy import deepcopy
-import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union, cast
 import warnings
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:  # pragma: no cover
-    from typing_extensions import Literal
 
 import numpy as np
 
