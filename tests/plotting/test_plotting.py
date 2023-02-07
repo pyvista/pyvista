@@ -542,7 +542,7 @@ def test_plot_show_grid(sphere):
     with pytest.raises(TypeError, match='ticks must be a string'):
         plotter.show_grid(ticks=10)
 
-    plotter.show_grid()
+    plotter.show_grid()  # Add mesh after to make sure bounds update
     plotter.add_mesh(sphere)
     plotter.show()
 

@@ -1518,7 +1518,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 bounds[1::2] += cushion
         else:
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
-        cube_axes_actor.SetBounds(bounds)
 
         # set axes ranges if input
         if axes_ranges is not None:
@@ -1575,36 +1574,40 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 labels.InsertNextValue(label)
             return labels
 
-        # show lines
-        if show_xaxis:
-            cube_axes_actor.SetXTitle(xtitle)
-            if not show_xlabels:
+        def update_bounds(bounds):
+            cube_axes_actor.SetBounds(bounds)
+
+            if show_xaxis:
+                cube_axes_actor.SetXTitle(xtitle)
+                if not show_xlabels:
+                    cube_axes_actor.SetAxisLabels(0, self._empty_str)
+                else:
+                    cube_axes_actor.SetAxisLabels(0, axis_labels(*bounds[0:2], n_xlabels))
+            else:
+                cube_axes_actor.SetXTitle('')
                 cube_axes_actor.SetAxisLabels(0, self._empty_str)
-            else:
-                cube_axes_actor.SetAxisLabels(0, axis_labels(*bounds[0:2], n_xlabels))
-        else:
-            cube_axes_actor.SetXTitle('')
-            cube_axes_actor.SetAxisLabels(0, self._empty_str)
 
-        if show_yaxis:
-            cube_axes_actor.SetYTitle(ytitle)
-            if not show_ylabels:
+            if show_yaxis:
+                cube_axes_actor.SetYTitle(ytitle)
+                if not show_ylabels:
+                    cube_axes_actor.SetAxisLabels(1, self._empty_str)
+                else:
+                    cube_axes_actor.SetAxisLabels(1, axis_labels(*bounds[2:4], n_ylabels))
+            else:
+                cube_axes_actor.SetYTitle('')
                 cube_axes_actor.SetAxisLabels(1, self._empty_str)
-            else:
-                cube_axes_actor.SetAxisLabels(1, axis_labels(*bounds[2:4], n_ylabels))
-        else:
-            cube_axes_actor.SetYTitle('')
-            cube_axes_actor.SetAxisLabels(1, self._empty_str)
 
-        if show_zaxis:
-            cube_axes_actor.SetZTitle(ztitle)
-            if not show_zlabels:
-                cube_axes_actor.SetAxisLabels(2, self._empty_str)
+            if show_zaxis:
+                cube_axes_actor.SetZTitle(ztitle)
+                if not show_zlabels:
+                    cube_axes_actor.SetAxisLabels(2, self._empty_str)
+                else:
+                    cube_axes_actor.SetAxisLabels(2, axis_labels(*bounds[4:6], n_zlabels))
             else:
-                cube_axes_actor.SetAxisLabels(2, axis_labels(*bounds[4:6], n_zlabels))
-        else:
-            cube_axes_actor.SetZTitle('')
-            cube_axes_actor.SetAxisLabels(2, self._empty_str)
+                cube_axes_actor.SetZTitle('')
+                cube_axes_actor.SetAxisLabels(2, self._empty_str)
+
+        update_bounds(bounds)
 
         # set font
         font_family = parse_font_family(font_family)
@@ -1644,6 +1647,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
+        # Monkey patch bounds update method to auto update labels
+        self.cube_axes_actor.update_bounds = update_bounds
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
@@ -2494,7 +2499,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     floor_kwargs['store_floor_kwargs'] = False
                     self.add_floor(**floor_kwargs)
         if hasattr(self, 'cube_axes_actor'):
-            self.cube_axes_actor.SetBounds(self.bounds)
+            self.cube_axes_actor.update_bounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
                 self.cube_axes_actor.SetUse2DMode(True)
             else:
@@ -3117,6 +3122,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if hasattr(self, 'cube_axes_actor'):
+            del self.cube_axes_actor.update_bounds
             del self.cube_axes_actor
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
