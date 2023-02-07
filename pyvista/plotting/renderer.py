@@ -9,7 +9,7 @@ import numpy as np
 
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
-from pyvista.utilities import check_depth_peeling, try_callback, wrap
+from pyvista.utilities import assert_empty_kwargs, check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
 from .._typing import BoundsLike
@@ -1187,9 +1187,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         font_size=None,
         font_family=None,
         color=None,
-        xlabel='X Axis',
-        ylabel='Y Axis',
-        zlabel='Z Axis',
+        xtitle='X Axis',
+        ytitle='Y Axis',
+        ztitle='Z Axis',
+        n_xlabels=5,
+        n_ylabels=5,
+        n_zlabels=5,
         use_2d=False,
         grid=None,
         location='closest',
@@ -1201,6 +1204,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         padding=0.0,
         use_3d_text=True,
         render=None,
+        **kwargs,
     ):
         """Add bounds axes.
 
@@ -1225,22 +1229,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
-            Makes x axis visible.  Default ``True``.
+            Makes X axis visible.  Default ``True``.
 
         show_yaxis : bool, optional
-            Makes y axis visible.  Default ``True``.
+            Makes Y axis visible.  Default ``True``.
 
         show_zaxis : bool, optional
-            Makes z axis visible.  Default ``True``.
+            Makes Z axis visible.  Default ``True``.
 
         show_xlabels : bool, optional
-            Shows x labels.  Default ``True``.
+            Shows X labels.  Default ``True``.
 
         show_ylabels : bool, optional
-            Shows y labels.  Default ``True``.
+            Shows Y labels.  Default ``True``.
 
         show_zlabels : bool, optional
-            Shows z labels.  Default ``True``.
+            Shows Z labels.  Default ``True``.
 
         bold : bool, optional
             Bolds axis labels and numbers.  Default ``True``.
@@ -1268,14 +1272,23 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        xlabel : str, optional
-            Title of the x axis.  Default ``"X Axis"``.
+        xtitle : str, optional
+            Title of the X axis.  Default ``"X Axis"``.
 
-        ylabel : str, optional
-            Title of the y axis.  Default ``"Y Axis"``.
+        ytitle : str, optional
+            Title of the Y axis.  Default ``"Y Axis"``.
 
-        zlabel : str, optional
-            Title of the z axis.  Default ``"Z Axis"``.
+        ztitle : str, optional
+            Title of the Z axis.  Default ``"Z Axis"``.
+
+        n_xlabels : int, default: 5
+            Number of labels for the X axis.
+
+        n_ylabels : int, default: 5
+            Number of labels for the Y axis.
+
+        n_zlabels : int, default: 5
+            Number of labels for the Z axis.
 
         use_2d : bool, optional
             This can be enabled for smoother plotting.
@@ -1328,6 +1341,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the render window is being shown, trigger a render
             after showing bounds.
 
+        **kwargs : dict, optional
+            Deprecated keyword arguments
+
         Returns
         -------
         vtk.vtkCubeAxesActor
@@ -1335,14 +1351,52 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+
+        >>> mesh = pv.Sphere()
+        >>> plotter = pv.Plotter()
         >>> actor = plotter.add_mesh(mesh)
         >>> actor = plotter.show_bounds(
         ...     grid='front',
         ...     location='outer',
         ...     all_edges=True,
+        ... )
+        >>> plotter.show()
+
+        Control how many labels are displayed.
+
+        >>> mesh = examples.load_random_hills()
+
+        >>> plotter = pv.Plotter()
+        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = plotter.show_bounds(
+        ...     grid='back',
+        ...     location='outer',
+        ...     ticks='both',
+        ...     n_xlabels=2,
+        ...     n_ylabels=2,
+        ...     n_zlabels=2,
+        ...     xtitle='Easting',
+        ...     ytitle='Northing',
+        ...     ztitle='Elevation',
+        ... )
+        >>> plotter.show()
+
+        Hide labels, but still show axis titles
+
+        >>> plotter = pv.Plotter()
+        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = plotter.show_bounds(
+        ...     grid='back',
+        ...     location='outer',
+        ...     ticks='both',
+        ...     show_xlabels=False,
+        ...     show_ylabels=False,
+        ...     show_zlabels=False,
+        ...     xtitle='Easting',
+        ...     ytitle='Northing',
+        ...     ztitle='Elevation',
         ... )
         >>> plotter.show()
 
@@ -1355,6 +1409,28 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             font_size = self._theme.font.size
         if fmt is None:
             fmt = self._theme.font.fmt
+        if fmt is None:
+            fmt = '%.1f'  # fallback
+
+        if 'xlabel' in kwargs:
+            xtitle = kwargs.pop('xlabel')
+            warnings.warn(
+                "`xlabel` is deprecated. Use `xtitle` instead.",
+                PyVistaDeprecationWarning,
+            )
+        if 'ylabel' in kwargs:
+            ytitle = kwargs.pop('ylabel')
+            warnings.warn(
+                "`ylabel` is deprecated. Use `ytitle` instead.",
+                PyVistaDeprecationWarning,
+            )
+        if 'zlabel' in kwargs:
+            ztitle = kwargs.pop('zlabel')
+            warnings.warn(
+                "`zlabel` is deprecated. Use `ztitle` instead.",
+                PyVistaDeprecationWarning,
+            )
+        assert_empty_kwargs(**kwargs)
 
         color = Color(color, default_color=self._theme.font.color)
 
@@ -1486,27 +1562,46 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._empty_str = _vtk.vtkStringArray()
         self._empty_str.InsertNextValue('')
 
+        def axis_labels(vmin, vmax, n):
+            labels = _vtk.vtkStringArray()
+            for v in np.linspace(vmin, vmax, n):
+                if fmt:
+                    if fmt.startswith('%'):
+                        label = fmt % v
+                    else:
+                        label = fmt.format(v)
+                else:
+                    label = f'{v}'
+                labels.InsertNextValue(label)
+            return labels
+
         # show lines
         if show_xaxis:
-            cube_axes_actor.SetXTitle(xlabel)
+            cube_axes_actor.SetXTitle(xtitle)
             if not show_xlabels:
                 cube_axes_actor.SetAxisLabels(0, self._empty_str)
+            else:
+                cube_axes_actor.SetAxisLabels(0, axis_labels(*bounds[0:2], n_xlabels))
         else:
             cube_axes_actor.SetXTitle('')
             cube_axes_actor.SetAxisLabels(0, self._empty_str)
 
         if show_yaxis:
-            cube_axes_actor.SetYTitle(ylabel)
+            cube_axes_actor.SetYTitle(ytitle)
             if not show_ylabels:
                 cube_axes_actor.SetAxisLabels(1, self._empty_str)
+            else:
+                cube_axes_actor.SetAxisLabels(1, axis_labels(*bounds[2:4], n_ylabels))
         else:
             cube_axes_actor.SetYTitle('')
             cube_axes_actor.SetAxisLabels(1, self._empty_str)
 
         if show_zaxis:
-            cube_axes_actor.SetZTitle(zlabel)
+            cube_axes_actor.SetZTitle(ztitle)
             if not show_zlabels:
                 cube_axes_actor.SetAxisLabels(2, self._empty_str)
+            else:
+                cube_axes_actor.SetAxisLabels(2, axis_labels(*bounds[4:6], n_zlabels))
         else:
             cube_axes_actor.SetZTitle('')
             cube_axes_actor.SetAxisLabels(2, self._empty_str)
@@ -1562,12 +1657,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return cube_axes_actor
 
     def show_grid(self, **kwargs):
-        """Show gridlines and axes labels.
+        """Show gridlines and bounds axes labels.
 
-        A wrapped implementation of ``show_bounds`` to change default
-        behaviour to use gridlines and showing the axes labels on the
-        outer edges. This is intended to be similar to
-        ``matplotlib``'s ``grid`` function.
+        A wrapped implementation of :func:`show_bounds() <pyvista.Renderer.show_bounds>`
+        to change default behaviour to use gridlines and showing
+        the axes labels on the outer edges.
+
+        This is intended to be similar to ``matplotlib``'s ``grid``
+        function.
 
         Parameters
         ----------
@@ -1582,10 +1679,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(examples.download_guitar())
+        >>> import pyvista as pv
+        >>> mesh = pv.Cone()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.show_grid()
         >>> pl.show()
 

@@ -642,7 +642,7 @@ def test_plot_show_bounds(sphere):
 def test_plot_label_fmt(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
+    plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
     plotter.show()
 
 
@@ -3589,3 +3589,37 @@ def test_axes_actor_properties():
     pl = pyvista.Plotter()
     pl.add_actor(axes_actor)
     pl.show()
+
+
+def test_show_bounds_no_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        show_xlabels=False,
+        show_ylabels=False,
+        show_zlabels=False,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.show()
+
+
+def test_show_bounds_n_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        n_xlabels=2,
+        n_ylabels=2,
+        n_zlabels=2,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.show()
