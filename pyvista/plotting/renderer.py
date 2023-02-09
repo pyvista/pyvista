@@ -1413,19 +1413,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if fmt is None:
             fmt = '%.1f'  # fallback
 
-        if 'xlabel' in kwargs:
+        if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
             warnings.warn(
                 "`xlabel` is deprecated. Use `xtitle` instead.",
                 PyVistaDeprecationWarning,
             )
-        if 'ylabel' in kwargs:
+        if 'ylabel' in kwargs:  # pragma: no cover
             ytitle = kwargs.pop('ylabel')
             warnings.warn(
                 "`ylabel` is deprecated. Use `ytitle` instead.",
                 PyVistaDeprecationWarning,
             )
-        if 'zlabel' in kwargs:
+        if 'zlabel' in kwargs:  # pragma: no cover
             ztitle = kwargs.pop('zlabel')
             warnings.warn(
                 "`zlabel` is deprecated. Use `ztitle` instead.",
