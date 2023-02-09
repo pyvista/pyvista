@@ -780,6 +780,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 name = actor.GetAddressAsString("")
 
         actor.SetPickable(pickable)
+        # Apply this renderer's scale to the actor (which can be further scaled)
+        actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
@@ -1514,13 +1516,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # set font
         font_family = parse_font_family(font_family)
 
-        if use_3d_text and not np.allclose(self.scale, use_3d_text):  # pragma: no cover
-            warnings.warn(
-                'Using 2D actors for text due to scaling != (1, 1, 1)\n\n'
-                'Either disable scaling or set use_3d_text=False'
-            )
-
-        if use_3d_text:
+        if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            cube_axes_actor.SetUseTextActor3D(False)
+        else:
             cube_axes_actor.SetUseTextActor3D(True)
 
         props = [
@@ -2300,10 +2298,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return True
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
-        """Scale all the datasets in the scene.
+        """Scale all the actors in the scene.
 
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
+
+        .. warning::
+            Setting the scale on the renderer is a convienance method to
+            individually scale each of the actors in the scene. If a scale
+            was set on an actor previously, it will be reset to the scale
+            of this Renderer.
 
         Parameters
         ----------
@@ -2324,12 +2328,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        Set the scale in the z direction to be 5 times that of
+        Set the scale in the z direction to be 2 times that of
         nominal.  Leave the other axes unscaled.
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.set_scale(zscale=5)
+        >>> pl.set_scale(zscale=2)
         >>> _ = pl.add_mesh(pyvista.Sphere())  # perfect sphere
         >>> pl.show()
 
@@ -2342,9 +2346,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
 
-        # Update the camera's coordinate system
-        transform = np.diag([xscale, yscale, zscale, 1.0])
-        self.camera.model_transform_matrix = transform
+        # Reset all actors to match this scale
+        for actor in self.actors.values():
+            actor.SetScale(self.scale)
+
         self.parent.render()
         if reset_camera:
             self.update_bounds_axes()
