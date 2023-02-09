@@ -781,7 +781,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
-        actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
+        if hasattr(actor, 'SetScale'):
+            actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
@@ -2348,7 +2349,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # Reset all actors to match this scale
         for actor in self.actors.values():
-            actor.SetScale(self.scale)
+            if hasattr(actor, 'SetScale'):
+                actor.SetScale(self.scale)
 
         self.parent.render()
         if reset_camera:
