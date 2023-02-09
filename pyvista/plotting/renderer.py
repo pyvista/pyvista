@@ -1343,7 +1343,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             after showing bounds.
 
         **kwargs : dict, optional
-            Deprecated keyword arguments
+            Deprecated keyword arguments.
 
         Returns
         -------
