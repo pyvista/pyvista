@@ -2306,7 +2306,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::
-            Setting the scale on the renderer is a convienance method to
+            Setting the scale on the renderer is a convenience method to
             individually scale each of the actors in the scene. If a scale
             was set on an actor previously, it will be reset to the scale
             of this Renderer.
