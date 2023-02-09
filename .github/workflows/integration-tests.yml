@@ -54,8 +54,33 @@ jobs:
         working-directory: mne-python
       - run: pytest --cov=pyvista --cov-report=xml mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends
         working-directory: mne-python
-      # In theory this should be fine, too (codecov should combine all reports)
-      # if we copied the cov report up one directory
-      #- uses: codecov/codecov-action@v3
-      #  name: 'Upload coverage to CodeCov'
-      #  directory: ./mne-python/
+      - run: cp -a mne-python/*.xml .
+      - uses: codecov/codecov-action@v3
+        name: 'Upload coverage to CodeCov'
+  pyvistaqt:
+    name: PyVistaQt
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install PyVista
+        run: pip install -ve .
+      - name: Install Qt and testing dependencies
+        run: pip install PyQt6 pytest pytest-qt pytest-cov ipython
+      - name: Clone PyVistaQt
+        run: git clone --depth=1 https://github.com/pyvista/pyvistaqt.git --branch main --single-branch
+      - name: Setup Xvfb and Qt dependencies
+        run: ./pyvistaqt/.ci/setup_headless_display.sh
+      - name: Install PyVistaQt
+        run: pip install -ve .
+        working-directory: pyvistaqt
+      - name: Run pyvistaqt tests
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: pytest --cov=pyvista --cov-report=xml tests
+          working-directory: pyvistaqt
+      - run: cp -a pyvistaqt/*.xml .
+      - uses: codecov/codecov-action@v3
+        name: 'Upload coverage to CodeCov'
