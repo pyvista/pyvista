@@ -1518,6 +1518,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         font_family = parse_font_family(font_family)
 
         if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            use_3d_text = False
             cube_axes_actor.SetUseTextActor3D(False)
         else:
             cube_axes_actor.SetUseTextActor3D(True)
