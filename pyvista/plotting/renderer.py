@@ -223,6 +223,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
+        self.cube_axes_actor = None
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -1561,7 +1562,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._empty_str = _vtk.vtkStringArray()
         self._empty_str.InsertNextValue('')
 
-        def axis_labels(vmin, vmax, n):
+        def make_axis_labels(vmin, vmax, n):
+            """Create a axis labels as a vtkStringArray."""
             labels = _vtk.vtkStringArray()
             for v in np.linspace(vmin, vmax, n):
                 if fmt:
@@ -1582,7 +1584,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if not show_xlabels:
                     cube_axes_actor.SetAxisLabels(0, self._empty_str)
                 else:
-                    cube_axes_actor.SetAxisLabels(0, axis_labels(*bounds[0:2], n_xlabels))
+                    cube_axes_actor.SetAxisLabels(0, make_axis_labels(*bounds[0:2], n_xlabels))
             else:
                 cube_axes_actor.SetXTitle('')
                 cube_axes_actor.SetAxisLabels(0, self._empty_str)
@@ -1592,7 +1594,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if not show_ylabels:
                     cube_axes_actor.SetAxisLabels(1, self._empty_str)
                 else:
-                    cube_axes_actor.SetAxisLabels(1, axis_labels(*bounds[2:4], n_ylabels))
+                    cube_axes_actor.SetAxisLabels(1, make_axis_labels(*bounds[2:4], n_ylabels))
             else:
                 cube_axes_actor.SetYTitle('')
                 cube_axes_actor.SetAxisLabels(1, self._empty_str)
@@ -1602,7 +1604,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if not show_zlabels:
                     cube_axes_actor.SetAxisLabels(2, self._empty_str)
                 else:
-                    cube_axes_actor.SetAxisLabels(2, axis_labels(*bounds[4:6], n_zlabels))
+                    cube_axes_actor.SetAxisLabels(2, make_axis_labels(*bounds[4:6], n_zlabels))
             else:
                 cube_axes_actor.SetZTitle('')
                 cube_axes_actor.SetAxisLabels(2, self._empty_str)
@@ -2053,8 +2055,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if hasattr(self, 'cube_axes_actor'):
+        if self.cube_axes_actor is not None:
             self.remove_actor(self.cube_axes_actor)
+            del self.cube_axes_actor.update_bounds
+            self.cube_axes_actor = None
             self.Modified()
 
     def add_light(self, light):
@@ -2498,7 +2502,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 for floor_kwargs in self._floor_kwargs:
                     floor_kwargs['store_floor_kwargs'] = False
                     self.add_floor(**floor_kwargs)
-        if hasattr(self, 'cube_axes_actor'):
+        if self.cube_axes_actor is not None:
             self.cube_axes_actor.update_bounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
                 self.cube_axes_actor.SetUse2DMode(True)
@@ -3121,9 +3125,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             (if applicable).
 
         """
-        if hasattr(self, 'cube_axes_actor'):
+        if self.cube_axes_actor is not None:
             del self.cube_axes_actor.update_bounds
-            del self.cube_axes_actor
+            self.cube_axes_actor = None
+
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
         if hasattr(self, '_box_object'):
