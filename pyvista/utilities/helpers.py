@@ -1001,7 +1001,11 @@ def wrap(dataset):
         faces = np.empty((n_face, 4), dataset.faces.dtype)
         faces[:, 1:] = dataset.faces
         faces[:, 0] = 3
-        return pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        polydata = pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        # If the Trimesh object has uv, pass them to the PolyData
+        if hasattr(dataset.visual, 'uv'):
+            polydata.active_t_coords = np.asarray(dataset.visual.uv)
+        return polydata
 
     # otherwise, flag tell the user we can't wrap this object
     raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
