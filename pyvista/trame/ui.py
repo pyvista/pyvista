@@ -414,9 +414,12 @@ class Viewer:
             server = container.server
             # Initialize state variables
             server.state[self.EDGES] = False
-            server.state[self.GRID] = False
-            server.state[self.OUTLINE] = False
-            server.state[self.AXIS] = False
+            server.state[self.GRID] = hasattr(self.plotter.renderer, 'cube_axes_actor')
+            server.state[self.OUTLINE] = hasattr(self.plotter.renderer, '_box_object')
+            server.state[self.AXIS] = (
+                hasattr(self.plotter.renderer, 'axes_widget')
+                and self.plotter.renderer.axes_widget.GetEnabled()
+            )
             server.state[self.SERVER_RENDERING] = default_server_rendering
             if add_menu:
                 server.state[self.SHOW_UI] = not collapse_menu
