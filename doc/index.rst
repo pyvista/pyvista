@@ -48,7 +48,6 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
 
    .. grid-item-card:: PyVista is a NumFOCUS affiliated project
       :link: https://numfocus.org/sponsored-projects/affiliated-projects
-      :link-type: ref
       :class-title: pyvista-card-title
 
       .. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
