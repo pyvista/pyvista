@@ -331,29 +331,19 @@ def show_trame(
     return Widget(viewer, src, **kwargs)
 
 
-def elegantly_launch(server):
+def elegantly_launch(*args, **kwargs):
     """Elegantly launch the Trame server without await.
 
     This provides a mechanism to launch the Trame Jupyter backend in
     a way that does not require users to await the call.
 
-    Parameters
-    ----------
-    server : str, optional
-        By default this uses :attr:`pyvista.global_theme.trame.jupyter_server_name
-        <pyvista.themes._TrameConfig.jupyter_server_name>`, which by default is
-        set to ``'pyvista-jupyter'``.
-
-        If a server name is given and such server is not available yet, it will
-        be created. Otherwise, the previously created instance will be returned.
-
-        Server will run on to ``127.0.0.1`` unless you set the environment
-        variable ``TRAME_DEFAULT_HOST``.
+    This is a thin wrapper of
+    :func:`launch_server() <pyvista.trame.jupyter.launch_server>`.
 
     Returns
     -------
     trame_server.core.Server
-        Trame server.
+        The launched trame server.
 
     Warnings
     --------
@@ -375,7 +365,7 @@ def elegantly_launch(server):
         )
 
     async def launch_it():
-        await launch_server(server).ready
+        await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this
     nest_asyncio.apply()
