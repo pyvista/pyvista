@@ -1261,19 +1261,25 @@ class _TrameConfig(_ThemeConfig):
         '_interactive_ratio',
         '_still_ratio',
         '_jupyter_server_name',
+        '_jupyter_server_port',
         '_server_proxy_enabled',
         '_server_proxy_prefix',
         '_default_mode',
+        '_enable_vtk_warnings',
     ]
 
     def __init__(self):
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
+        self._jupyter_server_port = 0
         self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
         # default for ``jupyter-server-proxy``
         self._server_proxy_prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
         self._default_mode = 'trame'
+        self._enable_vtk_warnings = (
+            os.environ.get('VTK_ENABLE_SERIALIZER_WARNINGS', 'false').lower() == 'true'
+        )
 
     @property
     def interactive_ratio(self) -> Number:
@@ -1326,6 +1332,15 @@ class _TrameConfig(_ThemeConfig):
         self._jupyter_server_name = name
 
     @property
+    def jupyter_server_port(self) -> int:
+        """Return or set the port for the Trame Jupyter server."""
+        return self._jupyter_server_port
+
+    @jupyter_server_port.setter
+    def jupyter_server_port(self, port: int):
+        self._jupyter_server_port = port
+
+    @property
     def server_proxy_enabled(self) -> bool:
         """Return or set if use of relative URLs is enabled for the Jupyter interface."""
         return self._server_proxy_enabled
@@ -1359,6 +1374,15 @@ class _TrameConfig(_ThemeConfig):
     @default_mode.setter
     def default_mode(self, mode: str):
         self._default_mode = mode
+
+    @property
+    def enable_vtk_warnings(self) -> bool:
+        """Return or set if VTK web serializer warnings are enabled."""
+        return self._enable_vtk_warnings
+
+    @enable_vtk_warnings.setter
+    def enable_vtk_warnings(self, enabled: bool):
+        self._enable_vtk_warnings = bool(enabled)
 
 
 class DefaultTheme(_ThemeConfig):
