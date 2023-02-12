@@ -3689,7 +3689,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             .. note::
                 If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
                 mapper (``vtkUnstructuredGridVolumeRayCastMapper``) will be
-                used regargless.
+                used regardless.
 
             .. note::
                 The ``'smart'`` mapper chooses one of the other listed
