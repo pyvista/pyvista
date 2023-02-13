@@ -2655,7 +2655,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     clim,
                     cmap,
                     flip_scalars,
-                    categories,
                     log_scale,
                 )
             else:
