@@ -566,6 +566,7 @@ def test_outline_composite(composite):
     assert isinstance(output, pyvista.PolyData)
     output = composite.outline(nested=True, progress_bar=True)
 
+    # modern vtk returns polydata
     assert isinstance(output, (pyvista.MultiBlock, pyvista.PolyData))
     if isinstance(output, pyvista.MultiBlock):
         assert output.n_blocks == composite.n_blocks

@@ -18,9 +18,6 @@ from pyvista import CellType
 # format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_
 # for available cell types and their descriptions.
 
-# offset array.  Identifies the start of each cell in the cells array
-offset = np.array([0, 9])
-
 # Contains information on the points composing each cell.
 # Each cell begins with the number of points in the cell and then the points
 # composing the cell
@@ -63,8 +60,8 @@ points = np.vstack((cell1, cell2)).astype(float)
 grid = pv.UnstructuredGrid(cells, cell_type, points)
 
 # For cells of fixed sizes (like the mentioned Hexahedra), it is also possible to use the
-# simplified dictionary interface. This automatically calculates the cell array with types
-# and offsets. Note that for mixing with additional cell types, just the appropriate key needs to be
+# simplified dictionary interface. This automatically calculates the cell array.
+# Note that for mixing with additional cell types, just the appropriate key needs to be
 # added to the dictionary.
 cells_hex = np.arange(16).reshape([2, 8])
 # = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
@@ -131,23 +128,7 @@ cells = np.array(
 ).ravel()
 
 # each cell is a HEXAHEDRON
-celltypes = np.empty(8, dtype=np.uint8)
-celltypes[:] = CellType.HEXAHEDRON
-
-# the offset array points to the start of each cell (via flat indexing)
-offset = np.array([0, 9, 18, 27, 36, 45, 54, 63])
-
-# Effectively, when visualizing a VTK unstructured grid, it will
-# sequentially access the cell array by first looking at each index of
-# cell array (based on the offset array), and then read the number of
-# points based on the first value of the cell.  In this case, the
-# HEXAHEDRON is described by 8 points.
-
-# for example, the 5th cell would be accessed by vtk with:
-start_of_cell = offset[4]
-n_points_in_cell = cells[start_of_cell]
-indices_in_cell = cells[start_of_cell + 1 : start_of_cell + n_points_in_cell + 1]
-print(indices_in_cell)
+celltypes = np.full(8, CellType.HEXAHEDRON, dtype=np.uint8)
 
 
 ###############################################################################
