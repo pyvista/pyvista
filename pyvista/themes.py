@@ -1593,9 +1593,11 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista as pv
 
         Load a cylinder which has cells with a wide spread
+
         >>> cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
 
         Common display argument to make sure all else is constant
+
         >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
         >>> p = pv.Plotter(shape=(1, 2))
