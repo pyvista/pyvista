@@ -3524,10 +3524,6 @@ def download_notch_stress(load=True):  # pragma: no cover
     pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
-    Notes
-    -----
-    This file may have issues being read in on VTK 8.1.2
-
     Examples
     --------
     >>> from pyvista import examples

@@ -40,7 +40,7 @@ class CompositeFilters:
 
         tolerance : float, default: 0.0
             The absolute tolerance to use to find coincident points when
-            ``merge_points=True``. Note, this was added in VTK v9.
+            ``merge_points=True``.
 
         Returns
         -------
@@ -75,8 +75,7 @@ class CompositeFilters:
                 )
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
-        if pyvista.vtk_version_info >= (9,):
-            alg.SetTolerance(tolerance)
+        alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 

@@ -165,16 +165,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
           N Arrays:     0
 
         """
-        args = [
+        return pyvista.UnstructuredGrid(
             [len(self.point_ids)] + list(range(len(self.point_ids))),
             [int(self.type)],
             self.points.copy(),
-        ]
-
-        if not _vtk.VTK9:  # pragma: no cover
-            args.insert(0, [0])
-
-        return pyvista.UnstructuredGrid(*args)
+        )
 
     @property
     def dimension(self) -> int:

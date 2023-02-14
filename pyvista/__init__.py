@@ -35,11 +35,11 @@ _set_plot_theme_from_env()
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
 
-# determine if using at least vtk 5.0.0
-if vtk_version_info.major < 5:  # pragma: no cover
+# determine if using at least vtk 9.0.0
+if vtk_version_info.major < 9:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    raise VTKVersionError('VTK version must be 5.0 or greater.')
+    raise VTKVersionError('VTK version must be 9.0.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)

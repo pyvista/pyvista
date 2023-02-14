@@ -13,13 +13,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import (
-    CellArray,
-    create_mixed_cells,
-    generate_cell_offsets,
-    get_mixed_cells,
-    numpy_to_idarr,
-)
+from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells
 
 from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
@@ -775,22 +769,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if not self.n_faces or self.n_lines or self.n_verts:
             return CallableBool(False)
 
-        # in VTK9, they use connectivity and offset rather than cell
-        # data.  Use the new API as this is faster
-        if _vtk.VTK9:
-            # early return if not all triangular
-            if self._connectivity_array.size % 3:
-                return CallableBool(False)
-
-            # next, check if there are three points per face
-            return CallableBool((np.diff(self._offset_array) == 3).all())
-
-        else:  # pragma: no cover
-            # All we have are faces, check if all faces are indeed triangles
-            faces = self.faces  # grab once as this takes time to build
-            if faces.size % 4 == 0:
-                return CallableBool((faces[::4] == 3).all())
+        # early return if not all triangular
+        if self._connectivity_array.size % 3:
             return CallableBool(False)
+
+        # next, check if there are three points per face
+        return CallableBool((np.diff(self._offset_array) == 3).all())
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
@@ -799,10 +783,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     @property
     def _offset_array(self):
         """Return the array used to store cell offsets."""
-        try:
-            return _vtk.vtk_to_numpy(self.GetPolys().GetOffsetsArray())
-        except AttributeError:  # pragma: no cover
-            raise VTKVersionError('Offset array implemented in VTK 9 or newer.')
+        return _vtk.vtk_to_numpy(self.GetPolys().GetOffsetsArray())
 
     @property
     def _connectivity_array(self):
@@ -1247,7 +1228,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
     >>> grid.plot(show_edges=True)
 
-    From arrays (VTK >= 9). Here we create a single tetrahedron.
+    From arrays. Here we create a single tetrahedron.
 
     >>> cells = [4, 0, 1, 2, 3]
     >>> celltypes = [pyvista.CellType.TETRA]
@@ -1298,7 +1279,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._from_cells_dict(args[0], args[1], deep)
             self._check_for_consistency()
 
-        elif len(args) == 3:  # and VTK9:
+        elif len(args) == 3:
             arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
             arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
             arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
@@ -1320,16 +1301,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 self._check_for_consistency()
             else:
                 raise TypeError('All input types must be sequences.')
-
         else:
-            err_msg = (
-                'Invalid parameters.  Initialization with arrays '
-                + 'requires the following arrays:\n'
+            raise TypeError(
+                'Invalid parameters.  Initialization with arrays requires the '
+                'following arrays:\n`cells`, `cell_type`, `points`'
             )
-            if _vtk.VTK9:
-                raise TypeError(err_msg + '`cells`, `cell_type`, `points`')
-            else:
-                raise TypeError(err_msg + '(`offset` optional), `cells`, `cell_type`, `points`')
 
     def __repr__(self):
         """Return the standard representation."""
@@ -1344,12 +1320,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             raise ValueError("Points array must be a [M, 3] array")
 
         nr_points = points.shape[0]
-        if _vtk.VTK9:
-            cell_types, cells = create_mixed_cells(cells_dict, nr_points)
-            self._from_arrays(None, cells, cell_types, points, deep=deep)
-        else:
-            cell_types, cells, offset = create_mixed_cells(cells_dict, nr_points)
-            self._from_arrays(offset, cells, cell_types, points, deep=deep)
+        cell_types, cells = create_mixed_cells(cells_dict, nr_points)
+        self._from_arrays(None, cells, cell_types, points, deep=deep)
 
     def _from_arrays(
         self,
@@ -1364,9 +1336,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Parameters
         ----------
-        offset : sequence or numpy.ndarray dtype=np.int64
-            Array indicating the start location of each cell in the cells
-            array.  Set to ``None`` when using VTK 9+.
+        offset : any, default None
+            Ignored (this is a pre-VTK9 legacy).
 
         cells : sequence or numpy.ndarray dtype=np.int64
             Array of cells.  Each cell contains the number of points in the
@@ -1394,7 +1365,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> import numpy as np
         >>> from pyvista import CellType
         >>> import pyvista
-        >>> offset = np.array([0, 9])
         >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
         >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
@@ -1418,12 +1388,12 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         >>> points = np.vstack((cell1, cell2))
 
-        >>> grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
+        >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
 
         """
-        # convert to arrays upfront
         if offset is not None:
-            offset = np.asarray(offset)
+            warnings.warn('VTK 9 no longer accepts an offset array', stacklevel=3)
+        # convert to arrays upfront
         cells = np.asarray(cells)
         cell_type = np.asarray(cell_type)
         points = np.asarray(points)
@@ -1432,22 +1402,12 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         vtkcells = CellArray(cells, cell_type.size, deep)
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
-        cell_type_np = cell_type
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
         points = pyvista.vtk_points(points, deep, force_float)
         self.SetPoints(points)
 
-        # vtk9 does not require an offset array
-        if _vtk.VTK9:
-            if offset is not None:
-                warnings.warn('VTK 9 no longer accepts an offset array', stacklevel=3)
-            self.SetCells(cell_type, vtkcells)
-        else:
-            if offset is None:
-                offset = generate_cell_offsets(cells, cell_type_np)
-
-            self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)
+        self.SetCells(cell_type, vtkcells)
 
     def _check_for_consistency(self):
         """Check if size of offsets and celltypes match the number of cells.
@@ -1462,19 +1422,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 f'must match the number of cells {self.n_cells})'
             )
 
-        if _vtk.VTK9:
-            if self.n_cells != self.offset.size - 1:
-                raise ValueError(
-                    f'Size of the offset ({self.offset.size}) '
-                    'must be one greater than the number of cells '
-                    f'({self.n_cells})'
-                )
-        else:
-            if self.n_cells != self.offset.size:
-                raise ValueError(
-                    f'Size of the offset ({self.offset.size}) '
-                    f'must match the number of cells ({self.n_cells})'
-                )
+        if self.n_cells != self.offset.size - 1:
+            raise ValueError(
+                f'Size of the offset ({self.offset.size}) '
+                f'must be one greater than the number of cells ({self.n_cells})'
+            )
 
     @property
     def cells(self) -> np.ndarray:
@@ -1542,9 +1494,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         This is effecively :attr:`UnstructuredGrid.cells` without the
         padding.
 
-        .. note::
-           This is only available in ``vtk>=9.0.0``.
-
         Returns
         -------
         numpy.ndarray
@@ -1562,12 +1511,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         """
         carr = self.GetCells()
-        if _vtk.VTK9:
-            return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
-        raise VTKVersionError(
-            'Install vtk>=9.0.0 for `cell_connectivity`\n'
-            'Otherwise, use the legacy `cells` method'
-        )  # pragma: no cover
+        return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
@@ -1616,34 +1560,19 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):
-            if _vtk.VTK9:
-                quad_offset = lgrid.offset[:-1][quad_quad_mask]
-                base_point = lgrid.cell_connectivity[quad_offset]
-                lgrid.cell_connectivity[quad_offset + 4] = base_point
-                lgrid.cell_connectivity[quad_offset + 5] = base_point
-                lgrid.cell_connectivity[quad_offset + 6] = base_point
-                lgrid.cell_connectivity[quad_offset + 7] = base_point
-            else:
-                quad_offset = lgrid.offset[quad_quad_mask]
-                base_point = lgrid.cells[quad_offset + 1]
-                lgrid.cells[quad_offset + 5] = base_point
-                lgrid.cells[quad_offset + 6] = base_point
-                lgrid.cells[quad_offset + 7] = base_point
-                lgrid.cells[quad_offset + 8] = base_point
+            quad_offset = lgrid.offset[:-1][quad_quad_mask]
+            base_point = lgrid.cell_connectivity[quad_offset]
+            lgrid.cell_connectivity[quad_offset + 4] = base_point
+            lgrid.cell_connectivity[quad_offset + 5] = base_point
+            lgrid.cell_connectivity[quad_offset + 6] = base_point
+            lgrid.cell_connectivity[quad_offset + 7] = base_point
 
         if np.any(quad_tri_mask):
-            if _vtk.VTK9:
-                tri_offset = lgrid.offset[:-1][quad_tri_mask]
-                base_point = lgrid.cell_connectivity[tri_offset]
-                lgrid.cell_connectivity[tri_offset + 3] = base_point
-                lgrid.cell_connectivity[tri_offset + 4] = base_point
-                lgrid.cell_connectivity[tri_offset + 5] = base_point
-            else:
-                tri_offset = lgrid.offset[quad_tri_mask]
-                base_point = lgrid.cells[tri_offset + 1]
-                lgrid.cells[tri_offset + 4] = base_point
-                lgrid.cells[tri_offset + 5] = base_point
-                lgrid.cells[tri_offset + 6] = base_point
+            tri_offset = lgrid.offset[:-1][quad_tri_mask]
+            base_point = lgrid.cell_connectivity[tri_offset]
+            lgrid.cell_connectivity[tri_offset + 3] = base_point
+            lgrid.cell_connectivity[tri_offset + 4] = base_point
+            lgrid.cell_connectivity[tri_offset + 5] = base_point
 
         return lgrid
 
@@ -1714,9 +1643,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def offset(self) -> np.ndarray:
         """Return the cell locations array.
 
-        In VTK 9, this is the location of the start of each cell in
-        :attr:`cell_connectivity`, and in VTK < 9, this is the
-        location of the start of each cell in :attr:`cells`.
+        This is the location of the start of each cell in
+        :attr:`cell_connectivity`.
 
         Returns
         -------
@@ -1740,17 +1668,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         """
         carr = self.GetCells()
-        if _vtk.VTK9:
-            # This will be the number of cells + 1.
-            return _vtk.vtk_to_numpy(carr.GetOffsetsArray())
-        else:  # this is no longer used in >= VTK9
-            return _vtk.vtk_to_numpy(self.GetCellLocationsArray())
+        # This will be the number of cells + 1.
+        return _vtk.vtk_to_numpy(carr.GetOffsetsArray())
 
     def cast_to_explicit_structured_grid(self):
         """Cast to an explicit structured grid.
-
-        .. note::
-           This feature is only available in ``vtk>=9.0.0``
 
         Returns
         -------
@@ -1783,8 +1705,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
-        if not _vtk.VTK9:
-            raise VTKVersionError('VTK 9 or higher is required')  # pragma: no cover
         s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
         s2 = self.cell_data.keys()
         if not s1.issubset(s2):
@@ -2222,8 +2142,6 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     def __init__(self, *args, deep=False, **kwargs):
         """Initialize the explicit structured grid."""
-        if not _vtk.VTK9:
-            raise VTKVersionError('VTK 9 or higher is required')  # pragma: no cover
         super().__init__()
         n = len(args)
         if n > 2:

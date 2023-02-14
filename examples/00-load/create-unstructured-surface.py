@@ -60,12 +60,7 @@ cell2 = np.array(
 points = np.vstack((cell1, cell2)).astype(float)
 
 # create the unstructured grid directly from the numpy arrays
-# The offset is optional and will be either calculated if not given (VTK version < 9),
-# or is not necessary anymore (VTK version >= 9)
-if pv.vtk_version_info < (9,):
-    grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
-else:
-    grid = pv.UnstructuredGrid(cells, cell_type, points)
+grid = pv.UnstructuredGrid(cells, cell_type, points)
 
 # For cells of fixed sizes (like the mentioned Hexahedra), it is also possible to use the
 # simplified dictionary interface. This automatically calculates the cell array with types
@@ -157,15 +152,7 @@ print(indices_in_cell)
 
 ###############################################################################
 # Finally, create the unstructured grid and plot it
-
-# if you are using VTK 9.0 or newer, you do not need to input the offset array:
-# grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-# if you are not using VTK 9.0 or newer, you must use the offset array
-if pv.vtk_version_info < (9,):
-    grid = pv.UnstructuredGrid(offset, cells, celltypes, points)
-else:
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
+grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # Alternate versions:
 grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)

@@ -114,116 +114,10 @@ class CellArray(_vtk.vtkCellArray):
         return self.GetNumberOfCells()
 
 
-def generate_cell_offsets_loop(cells, cell_types):
-    """Create cell offsets that are required by VTK < 9 versions.
-
-    This method creates the cell offsets, that need to be passed to
-    the vtk unstructured grid constructor. The offsets are
-    automatically generated from the data. This function will generate
-    the cell offset in an iterative fashion, usable also for dynamic
-    sized cells.
-
-    Parameters
-    ----------
-    cells : np.ndarray (int)
-        The cells array in VTK format
-    cell_types : np.ndarray (int)
-        The types of the cell arrays given to the function
-
-    Returns
-    -------
-    numpy.ndarray
-        Array of VTK offsets
-
-    Raises
-    ------
-    ValueError
-        If cell types and cell arrays are inconsistent, or have wrong size/dtype
-    """
-    if not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(
-        cell_types.dtype, np.integer
-    ):
-        raise ValueError("The cells and cell-type arrays must have an integral data-type")
-
-    offsets = np.zeros(shape=[cell_types.size], dtype=np.int64)
-
-    current_cell_pos = 0
-    for cell_i, _ in enumerate(cell_types):
-        if current_cell_pos >= cells.size:
-            raise ValueError(
-                f"Cell types and cell array are inconsistent. Got {cell_types.size - current_cell_pos} values left after reading all types"
-            )
-
-        cell_size = cells[current_cell_pos]
-        offsets[cell_i] = current_cell_pos
-        current_cell_pos += cell_size + 1
-
-    if current_cell_pos != cells.size:
-        raise ValueError(
-            f"Cell types and cell array are inconsistent. Got {cell_types.size - current_cell_pos} values left after reading all types"
-        )
-
-    return offsets
-
-
-def generate_cell_offsets(cells, cell_types):
-    """Create cell offsets that are required by VTK < 9 versions.
-
-    Similar to generate_cell_offsets_loop, but only works for fixed sized cells
-    to gain additional speedup. Will use generate_cell_offsets_loop as a fallback
-    method if dynamic sized cells are present.
-
-    Parameters
-    ----------
-    cells : np.ndarray (int)
-        The cells array in VTK format
-    cell_types : np.ndarray (int)
-        The types of the cell arrays given to the function
-
-    Returns
-    -------
-    numpy.ndarray
-        Array of VTK offsets
-
-    Raises
-    ------
-    ValueError
-        If cell types and cell arrays are inconsistent, or have wrong size/dtype
-    """
-    from .cell_type_helper import enum_cell_type_nr_points_map
-
-    if not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(
-        cell_types.dtype, np.integer
-    ):
-        raise ValueError("The cells and cell-type arrays must have an integral data-type")
-
-    try:
-        cell_sizes = np.array(
-            [enum_cell_type_nr_points_map[cell_t] for cell_t in cell_types], dtype=np.int32
-        )
-    except KeyError:
-        return generate_cell_offsets_loop(cells, cell_types)  # Unknown requested cell type present
-
-    if np.any(cell_sizes == 0):
-        return generate_cell_offsets_loop(cells, cell_types)
-
-    cell_sizes_cum = np.cumsum(cell_sizes + 1)
-
-    if cell_sizes_cum[-1] != cells.size:
-        raise ValueError(
-            f"Cell types and cell array are inconsistent. Expected a cell array of length {cell_sizes_cum[-1]} according to the cell types"
-        )
-
-    offsets = np.concatenate([[0], cell_sizes_cum])[:-1]
-
-    return offsets
-
-
 def create_mixed_cells(mixed_cell_dict, nr_points=None):
     """Generate the required cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
-    This function generates all required cell arrays (cells, celltypes
-    and offsets for VTK versions < 9.0), according to a given cell
+    This function generates all required cell arrays according to a given cell
     dictionary. The given cell-dictionary should contain a proper
     mapping of vtk_type -> np.ndarray (int), where the given ndarray
     for each cell-type has to be an array of dimensions [N, D] or
@@ -248,10 +142,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         Types of each cell
 
     cell_arr : numpy.ndarray (int)
-        VTK-cell array. Format depends if the VTK version is < 9.0 or not.
-
-    cell_offsets : numpy.ndarray (int)
-        Array of VTK offsets.  Only for VTK versions < 9.0
+        VTK-cell array
 
     Raises
     ------
@@ -270,9 +161,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     >>> import numpy as np
     >>> import vtk
     >>> from pyvista.utilities.cells import create_mixed_cells
-    >>> cell_arrays = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
-    >>> #VTK versions < 9.0: cell_types, cell_arr, cell_offsets = cell_arrays
-    >>> #VTK versions >= 9.0: cell_types, cell_arr = cell_arrays
+    >>> cell_types, cell_arr = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
@@ -286,8 +175,6 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
 
     final_cell_types = []
     final_cell_arr = []
-    final_cell_offsets = [np.array([0])]
-    current_cell_offset = 0
     for elem_t, cells_arr in mixed_cell_dict.items():
         nr_points_per_elem = enum_cell_type_nr_points_map[elem_t]
         if (
@@ -318,22 +205,10 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             ).reshape([-1])
         )
 
-        if not _vtk.VTK9:
-            final_cell_offsets.append(
-                current_cell_offset + (nr_points_per_elem + 1) * (np.arange(nr_elems) + 1)
-            )
-            current_cell_offset += final_cell_offsets[-1][-1]
-
     final_cell_types = np.concatenate(final_cell_types)
     final_cell_arr = np.concatenate(final_cell_arr)
 
-    if not _vtk.VTK9:
-        final_cell_offsets = np.concatenate(final_cell_offsets)[:-1]
-
-    if not _vtk.VTK9:
-        return final_cell_types, final_cell_arr, final_cell_offsets
-    else:
-        return final_cell_types, final_cell_arr
+    return final_cell_types, final_cell_arr
 
 
 def get_mixed_cells(vtkobj):

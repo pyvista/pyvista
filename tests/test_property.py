@@ -71,20 +71,12 @@ def test_property_specular_power(prop):
 
 def test_property_metallic(prop):
     value = 0.1
-    if pv.vtk_version_info < (9,):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.metallic = value
-        return
     prop.metallic = value
     assert prop.metallic == value
 
 
 def test_property_roughness(prop):
     value = 0.1
-    if pv.vtk_version_info < (9,):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.roughness = value
-        return
     prop.roughness = value
     assert prop.roughness == value
 

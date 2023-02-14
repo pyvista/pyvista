@@ -136,7 +136,7 @@ jobs:
       matrix:
         include:
           - python-version: '3.7'
-            vtk-version: '8.1.2'
+            vtk-version: '9.0.3'  # Requires numpy<1.24
           - python-version: '3.8'
             vtk-version: '9.0.3'  # Requires numpy<1.24
           - python-version: '3.9'
@@ -204,7 +204,7 @@ jobs:
           pip list
 
       - name: Unit Testing
-        run: xvfb-run python -m pytest --cov=pyvista --skip_image_cache_vtk8 --fail_extra_image_cache --cov-report=xml -v
+        run: xvfb-run python -m pytest --cov=pyvista --fail_extra_image_cache --cov-report=xml -v
 
       - uses: codecov/codecov-action@v3
         name: 'Upload coverage to CodeCov'
