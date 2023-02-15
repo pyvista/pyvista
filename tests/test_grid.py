@@ -99,11 +99,17 @@ def test_init_from_numpy_arrays():
 
 
 def test_init_bad_input():
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Cannot work with input type"):
         pyvista.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="must be a numeric type"):
         pyvista.UnstructuredGrid(np.array(1), np.array(1), 'woa')
+
+    with pytest.raises(TypeError, match="must be sequences"):
+        pyvista.UnstructuredGrid(*range(4))
+
+    with pytest.raises(TypeError, match="requires the following arrays"):
+        pyvista.UnstructuredGrid(*range(5))
 
 
 def create_hex_example():
@@ -121,15 +127,20 @@ def create_hex_example():
     )
 
     points = np.vstack((cell1, cell2))
+    offset = np.array([0, 9], np.int8)
 
-    return cells, cell_type, points
+    return offset, cells, cell_type, points
 
 
 # Try both with and without an offset array
 @pytest.mark.parametrize('specify_offset', [False, True])
 def test_init_from_arrays(specify_offset):
-    cells, cell_type, points = create_hex_example()
-    grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
+    offset, cells, cell_type, points = create_hex_example()
+    if specify_offset:
+        grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
+    else:
+        with pytest.warns(UserWarning, match="no longer accepts an offset array"):
+            grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points, deep=False)
 
     assert grid.n_cells == 2
     assert np.allclose(cells, grid.cells)
@@ -140,7 +151,7 @@ def test_init_from_arrays(specify_offset):
 @pytest.mark.parametrize('flat_cells', [False, True])
 def test_init_from_dict(multiple_cell_types, flat_cells):
     # Try mixed construction
-    vtk_cell_format, cell_type, points = create_hex_example()
+    _, vtk_cell_format, cell_type, points = create_hex_example()
 
     offsets = np.array([0, 8, 16])
     cells_hex = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])

@@ -450,6 +450,10 @@ def test_chart_common(pl, chart_f, request):
     assert chart.border_style == bs
     chart.background_color = c_blue
     assert chart.background_color == c_blue
+    chart.active_border_color = c_red
+    assert chart.active_border_color == c_red
+    chart.active_background_color = c_blue
+    assert chart.active_background_color == c_blue
 
     # Check remaining properties and methods
     chart.visible = False
