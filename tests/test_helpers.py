@@ -60,6 +60,15 @@ def test_wrap_trimesh():
     assert np.allclose(tmesh.vertices, mesh.points)
     assert np.allclose(tmesh.faces, mesh.faces[1:])
 
+    assert mesh.active_t_coords is None
+
+    uvs = [[0, 0], [0, 1], [1, 0]]
+    tmesh.visual = trimesh.visual.TextureVisuals(uv=uvs)
+    mesh_with_uv = pyvista.wrap(tmesh)
+
+    assert mesh_with_uv.active_t_coords is not None
+    assert np.allclose(mesh_with_uv.active_t_coords, uvs)
+
 
 def test_make_tri_mesh(sphere):
     with pytest.raises(ValueError):
@@ -113,6 +122,19 @@ def test_wrappers():
 
     finally:
         pyvista._wrappers = default_wrappers  # always reset back to default
+
+
+def test_wrap_no_copy():
+    # makes sure that wrapping an already wrapped object returns source
+    mesh = pyvista.Wavelet()
+    wrapped = pyvista.wrap(mesh)
+    assert mesh == wrapped
+    assert wrapped is mesh
+
+    mesh = vtk.vtkPolyData()
+    wrapped = pyvista.wrap(mesh)
+    assert wrapped == pyvista.wrap(wrapped)
+    assert wrapped is pyvista.wrap(wrapped)
 
 
 def test_inheritance_no_wrappers():
@@ -326,7 +348,6 @@ def test_set_default_active_scalarrs():
 
 
 def test_vtk_points_deep_shallow():
-
     points = np.array([[0.0, 0.0, 0.0]])
     vtk_points = pyvista.vtk_points(points, deep=False)
 

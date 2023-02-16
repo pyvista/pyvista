@@ -36,6 +36,14 @@ def test_volume_property_shade(vol_prop):
     assert vol_prop.shade is False
 
 
+def test_volume_independent_components(vol_prop):
+    assert isinstance(vol_prop.independent_components, bool)
+    vol_prop.independent_components = True
+    assert vol_prop.independent_components is True
+    vol_prop.independent_components = False
+    assert vol_prop.independent_components is False
+
+
 def test_volume_property_ambient(vol_prop):
     assert isinstance(vol_prop.ambient, float)
     value = 0.45

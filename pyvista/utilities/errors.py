@@ -181,7 +181,7 @@ import pyvista; \
 plotter = pyvista.Plotter(notebook=False, off_screen=True); \
 plotter.add_mesh(pyvista.Sphere()); \
 plotter.show(auto_close=False); \
-gpu_info = plotter.ren_win.ReportCapabilities(); \
+gpu_info = plotter.render_window.ReportCapabilities(); \
 print(gpu_info); \
 plotter.close()\
 """
@@ -335,12 +335,19 @@ class Report(scooby.Report):
             'colorcet',
             'cmocean',
             'ipyvtklink',
+            'ipywidgets',
             'scipy',
             'tqdm',
             'meshio',
             'jupyterlab',
             'pythreejs',
             'pytest_pyvista',
+            'trame',
+            'trame_client',
+            'trame_server',
+            'trame_vtk',
+            'jupyter_server_proxy',
+            'nest_asyncio',
         ]
 
         # Information about the GPU - bare except in case there is a rendering

@@ -3,6 +3,11 @@
 Using ``ipyvtklink`` with PyVista
 ---------------------------------
 
+.. deprecated:: 0.38.0
+   This backend has been deprecated in favor of :ref:`trame_jupyter` - a new
+   framework for building dynamic web applications with Python with great
+   support for VTK.
+
 ``pyvista`` has the ability to display fully featured plots within a
 JupyterLab environment using ``ipyvtklink``.  This feature works by
 streaming the current render window to a canvas within JupyterLab and
@@ -68,7 +73,7 @@ Using pip, you can set up your jupyterlab environment with:
 
 
 Other Considerations
-~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
 
 If you do not have GPU acceleration, be sure to start up a virtual
@@ -78,7 +83,6 @@ framebuffer using ``Xvfb``.  You can either start it using bash with:
 
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_IPYVTK=true
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3

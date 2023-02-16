@@ -3,10 +3,12 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 has_ipygany = True
 try:
     from ipygany.ipygany import Scene
+    from ipywidgets import AppLayout
 
     from pyvista.jupyter.pv_ipygany import check_colormap
 except:  # noqa: E722
@@ -17,9 +19,12 @@ skip_no_ipygany = pytest.mark.skipif(not has_ipygany, reason="Requires ipygany p
 
 @skip_no_ipygany
 def test_set_jupyter_backend_ipygany():
-    pv.global_theme.jupyter_backend = 'ipygany'
-    assert pv.global_theme.jupyter_backend == 'ipygany'
-    pv.global_theme.jupyter_backend = None
+    try:
+        with pytest.warns(PyVistaDeprecationWarning):
+            pv.global_theme.jupyter_backend = 'ipygany'
+        assert pv.global_theme.jupyter_backend == 'ipygany'
+    finally:
+        pv.global_theme.jupyter_backend = None
 
 
 @skip_no_ipygany
@@ -37,7 +42,7 @@ def test_ipygany_from_plotter(dataset):
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(dataset)
     viewer = pl.show(jupyter_backend='ipygany', return_viewer=True)
-    assert isinstance(viewer, Scene)
+    assert isinstance(viewer, (AppLayout, Scene))
 
 
 @skip_no_ipygany

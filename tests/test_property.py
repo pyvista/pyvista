@@ -92,11 +92,9 @@ def test_property_roughness(prop):
 def test_property_interpolation(prop):
     value = 'Gouraud'
     prop.interpolation = value
-    assert prop.interpolation == value
+    assert prop.interpolation == pv.opts.InterpolationType.from_any(value)
 
-    with pytest.raises(TypeError, match='`interpolation`'):
-        prop.interpolation = 1
-    with pytest.raises(ValueError, match='Should be one of'):
+    with pytest.raises(ValueError, match='InterpolationType has no value matching'):
         prop.interpolation = 'foo'
 
 

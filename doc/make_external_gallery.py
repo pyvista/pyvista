@@ -174,6 +174,12 @@ articles = dict(
         link="https://medium.com/towards-data-science/neighborhood-analysis-kd-trees-and-octrees-for-meshes-and-point-clouds-in-python-19fa96527b77",
         image="nikolov3.gif",
     ),
+    magpylib=Example(
+        title="Coil Field Lines example in Magpylib",
+        description="Pyvista streamlines of Coil Field Lines",
+        link="https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html#pyvista-streamlines",
+        image="coil_field_lines.png",
+    ),
     # entry=Example(title="",
     #     description="",
     #     link="",
@@ -240,7 +246,7 @@ glad to add it!
 
     # write if different or does not exist
     if new_text != existing:
-        with open(path, "w") as fid:
+        with open(path, "w", encoding="utf-8") as fid:
             fid.write(new_text)
 
     return

@@ -636,6 +636,34 @@ def download_head(load=True):  # pragma: no cover
     return _download_and_read('HeadMRVolume.mhd', load=load)
 
 
+def download_head_2(load=True):  # pragma: no cover
+    """Download head dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> dataset = examples.download_head_2()
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_volume(dataset, cmap="cool", opacity="sigmoid_6")
+    >>> pl.show()
+
+    """
+    download_file('head.vti')
+    return _download_and_read('head.vti', load=load)
+
+
 def download_bolt_nut(load=True):  # pragma: no cover
     """Download bolt nut dataset.
 

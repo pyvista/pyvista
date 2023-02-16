@@ -1,7 +1,6 @@
-"""Wrap vtkActor."""
+"""Wrap vtkActor module."""
 
 from typing import Optional, Union
-import weakref
 
 import numpy as np
 
@@ -31,6 +30,9 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     prop : pyvista.Property, optional
         Property of the actor.
+
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
 
     Examples
     --------
@@ -76,15 +78,29 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _renderer = None
+    _new_attr_exceptions = ['_name']
 
-    def __init__(self, mapper=None, prop=None):
+    def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
             self.mapper = mapper
         if prop is None:
             self.prop = Property()
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        """Get or set the unique name identifier used by PyVista."""
+        if self._name is None:
+            self._name = f'{type(self).__name__}({self.memory_address})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        if not value:
+            raise ValueError('Name must be truthy.')
+        self._name = value
 
     @property
     def mapper(self) -> _BaseMapper:
@@ -177,17 +193,6 @@ class Actor(Prop3D, _vtk.vtkActor):
     @texture.setter
     def texture(self, obj):
         self.SetTexture(obj)
-
-    @property
-    def renderer(self):
-        """Return the renderer associated with this actor."""
-        return self._renderer
-
-    @renderer.setter
-    def renderer(self, obj):
-        if not isinstance(obj, weakref.ProxyType):
-            raise TypeError("Only a ProxyType can be assigned to `renderer`")
-        self._renderer = obj
 
     @property
     def memory_address(self):

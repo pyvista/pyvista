@@ -127,6 +127,37 @@ def test_enable_mesh_picking(sphere, left_clicking):
     assert pl.picked_mesh is None
 
 
+def test_enable_mesh_picking_actor(sphere):
+    picked = []
+
+    def callback(picked_actor):
+        picked.append(picked_actor)
+
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(sphere)
+    pl.enable_mesh_picking(callback=callback, use_actor=True)
+    pl.show(auto_close=False)
+
+    width, height = pl.window_size
+
+    # clicking is to "activate" the renderer
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+    pl.iren._mouse_left_button_release(width, height)
+    pl.iren._mouse_move(width // 2, height // 2)
+    pl.iren._simulate_keypress('p')
+
+    assert actor in picked
+    assert pl.picked_mesh == sphere
+
+    # invalid selection
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(0, 0)
+    pl.iren._mouse_move(0, 0)
+    pl.iren._simulate_keypress('p')
+
+    assert pl.picked_mesh is None
+
+
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_enable_surface_picking(sphere, left_clicking):
     picked = []
@@ -163,7 +194,6 @@ def test_enable_surface_picking(sphere, left_clicking):
 
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_disable_picking(sphere, left_clicking):
-
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
     pl.enable_surface_picking(left_clicking=left_clicking)
@@ -187,7 +217,6 @@ def test_disable_picking(sphere, left_clicking):
 
 
 def test_enable_cell_picking_interactive():
-
     n_cells = []
 
     def callback(picked_cells):
@@ -209,7 +238,6 @@ def test_enable_cell_picking_interactive():
 
 
 def test_enable_cell_picking_interactive_two_ren_win():
-
     n_cells = []
 
     def callback(picked_cells):
@@ -269,7 +297,6 @@ def test_point_picking(left_clicking):
 
 @pytest.mark.needs_vtk9
 def test_point_picking_window_not_pickable():
-
     plotter = pyvista.Plotter(
         window_size=(100, 100),
     )
@@ -382,7 +409,6 @@ def test_horizon_picking():
 
 
 def test_enable_fly_to_right_click(sphere):
-
     point = []
 
     def callback(click_point):

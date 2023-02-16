@@ -10,11 +10,13 @@ except:  # noqa: E722
 
 import pyvista
 from pyvista.jupyter import pv_pythreejs
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
-def test_set_jupyter_backend_ipygany():
+def test_set_jupyter_backend_threejs():
     try:
-        pyvista.global_theme.jupyter_backend = 'pythreejs'
+        with pytest.warns(PyVistaDeprecationWarning):
+            pyvista.global_theme.jupyter_backend = 'pythreejs'
         assert pyvista.global_theme.jupyter_backend == 'pythreejs'
     finally:
         pyvista.global_theme.jupyter_backend = None
@@ -120,7 +122,6 @@ def test_output_face_scalars(sphere):
     [np.iinfo(np.uint16).max - 1, np.iinfo(np.uint32).max - 1, np.iinfo(np.uint32).max + 1],
 )
 def test_cast_to_min_size(max_index):
-
     if max_index < np.iinfo(np.uint16).max:
         buf_attr = pv_pythreejs.cast_to_min_size(np.arange(1000), max_index)
         assert buf_attr.array.dtype == np.uint16

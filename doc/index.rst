@@ -44,6 +44,17 @@ Share this project on Twitter: |tweet|
 
 Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
 
+.. grid::
+
+   .. grid-item-card:: PyVista is a NumFOCUS affiliated project
+      :link: https://numfocus.org/sponsored-projects/affiliated-projects
+      :class-title: pyvista-card-title
+
+      .. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
+         :target: https://numfocus.org/sponsored-projects/affiliated-projects
+         :alt: NumFOCUS affiliated projects
+         :height: 60px
+
 
 .. toctree::
    :hidden:
@@ -164,6 +175,20 @@ Subtract a sphere from a cube mesh.
     # Perform a boolean difference
     boolean = cube.boolean_difference(sphere)
     boolean.plot(color='darkgrey', smooth_shading=True, split_sharp_edges=True)
+
+
+Plot Volumetric Data
+~~~~~~~~~~~~~~~~~~~~
+Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
+
+.. note::
+   This example requires `sympy <https://www.sympy.org/>`_.
+
+.. jupyter-execute::
+
+    from pyvista import examples
+    grid = examples.load_hydrogen_orbital(3, 2, -2)
+    grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
 
 Translating

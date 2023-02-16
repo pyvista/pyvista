@@ -296,6 +296,48 @@ class Renderers:
             raise IndexError(f'Column index is out of range ({self.shape[1]})')
         self._active_index = self.loc_to_index((index_row, index_column))
 
+    def set_chart_interaction(self, interactive, toggle=False):
+        """
+        Set or toggle interaction with charts for the active renderer.
+
+        Interaction with other charts in other renderers is disabled.
+        Interaction with other charts in the active renderer is only disabled
+        when ``toggle`` is ``False``.
+
+        Parameters
+        ----------
+        interactive : bool, Chart, int, list of Chart or list of int
+            Following parameter values are accepted:
+
+                * A boolean to enable (``True``) or disable (``False``) interaction
+                  with all charts in the active renderer.
+                * The chart or its index to enable interaction with. Interaction
+                  with multiple charts can be enabled by passing a list of charts
+                  or indices.
+
+        toggle : bool, default: False
+            Instead of enabling interaction with the provided chart(s), interaction
+            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            is not a boolean.
+
+        Returns
+        -------
+        list of Chart
+            The list of all interactive charts for the active renderer.
+
+        """
+        interactive_scene, interactive_charts = None, []
+        if self.active_renderer.has_charts:
+            interactive_scene = self.active_renderer._charts._scene
+            interactive_charts = self.active_renderer.set_chart_interaction(interactive, toggle)
+        # Disable chart interaction for other renderers
+        for renderer in self:
+            if renderer is not self.active_renderer:
+                renderer.set_chart_interaction(False)
+        # Setup the context interactor style based on the resulting amount of interactive charts.
+        self._plotter.iren._set_context_style(interactive_scene if interactive_charts else None)
+        return interactive_charts
+
     def on_plotter_render(self):
         """Notify all renderers of explicit plotter render call."""
         for renderer in self:

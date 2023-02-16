@@ -9,6 +9,7 @@ import numpy as np
 from . import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
+    from .plotting.charts import Chart2D, ChartBox, ChartMPL, ChartPie
     from .plotting.colors import Color
 
 Vector = Union[List[float], Tuple[float, float, float], np.ndarray]
@@ -32,3 +33,4 @@ ColorLike = Union[
 # when it is put beneath the definition somehow?
 ColorLike.__doc__ = "Any object convertible to a :class:`Color`."
 BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
+Chart = Union["Chart2D", "ChartBox", "ChartPie", "ChartMPL"]

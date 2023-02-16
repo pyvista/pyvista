@@ -548,6 +548,25 @@ def test_compute_normals(sphere):
     assert cell_normals.shape[0] == sphere.n_cells
 
 
+def test_compute_normals_inplace(sphere):
+    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere2 = sphere.copy(deep=False)
+
+    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+    sphere.compute_normals(inplace=True)
+
+    sphere[
+        'numbers'
+    ] *= -1  # sphere2 'numbers' are also modified after adding to Plotter.  (See  issue #2461)
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+
 def test_compute_normals_split_vertices(cube):
     # verify edge splitting occurs and point IDs are tracked
     cube_split_norm = cube.compute_normals(split_vertices=True)

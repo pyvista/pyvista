@@ -509,7 +509,6 @@ def test_check_valid_vector():
 
 
 def test_cells_dict_utils():
-
     # No pyvista object
     with pytest.raises(ValueError):
         cells.get_mixed_cells(None)
@@ -875,6 +874,18 @@ def test_copy_vtk_array():
     arr.SetValue(1, new_value)
     assert value_1 == arr_copy.GetValue(1)
     assert new_value == arr_copy_shallow.GetValue(1)
+
+
+def test_cartesian_to_spherical():
+    def polar2cart(r, theta, phi):
+        return np.vstack(
+            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
+        ).T
+
+    points = np.random.random((1000, 3))
+    x, y, z = points.T
+    r, theta, phi = pyvista.cartesian_to_spherical(x, y, z)
+    assert np.allclose(polar2cart(r, theta, phi), points)
 
 
 def test_set_pickle_format():

@@ -33,6 +33,16 @@ def test_show_bounds_axes_ranges():
     assert test_ranges == axes_ranges
 
 
+def test_show_bounds_with_scaling(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    actor0 = plotter.show_bounds()
+    assert actor0.GetUseTextActor3D()
+    plotter.set_scale(0.5, 0.5, 2)
+    actor1 = plotter.show_bounds()
+    assert not actor1.GetUseTextActor3D()
+
+
 def test_show_bounds_invalid_axes_ranges():
     plotter = pyvista.Plotter()
 
@@ -72,6 +82,15 @@ def test_renderer_set_viewup():
 def test_reset_camera():
     plotter = pyvista.Plotter()
     plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_camera_is_set():
+    plotter = pyvista.Plotter()
+    assert not plotter.camera_set
+    assert not plotter.renderer.camera_set
+
+    renderer = pyvista.Renderer(plotter)
+    assert not renderer.camera_set
 
 
 def test_layer():
