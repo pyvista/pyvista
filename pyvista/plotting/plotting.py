@@ -4253,7 +4253,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
 
         try:
-            for mh in self._scalar_bar_mappers[name]:
+            for mh in self.scalar_bars._scalar_bar_mappers[name]:
                 update_mapper(mh)
         except KeyError:
             raise KeyError('Name ({}) not valid/not found in this plotter.')
