@@ -70,7 +70,9 @@ jobs:
       - name: Install Qt and testing dependencies
         run: pip install PyQt6 pytest pytest-qt pytest-cov ipython
       - name: Clone PyVistaQt
-        run: git clone --depth=1 https://github.com/pyvista/pyvistaqt.git --branch main --single-branch
+        # TODO: REVERT THIS BEFORE MERGE!
+        # run: git clone --depth=1 https://github.com/pyvista/pyvistaqt.git --branch main --single-branch
+        run: git clone --depth=1 https://github.com/larsoner/pyvistaqt.git --branch bug --single-branch
       - name: Setup Xvfb and Qt dependencies
         run: ./pyvistaqt/.ci/setup_headless_display.sh
       - name: Install PyVistaQt
