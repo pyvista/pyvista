@@ -8,7 +8,7 @@ ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
 jupyterlab==3.6.1
 lxml==4.9.2
-matplotlib==3.6.3
+matplotlib==3.7.0
 meshio==5.3.4
 mypy==1.0.0
 mypy-extensions==1.0.0
@@ -28,12 +28,12 @@ sphinx-design==0.3.0
 sphinx-gallery==0.11.1
 sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.4.0
-sphinxcontrib-asciinema==0.3.6
+sphinxcontrib-asciinema==0.3.7
 sphinxcontrib-websupport==1.2.4
 sympy==1.11.1
-trame==2.3.1
-trame-client==2.6.1
+trame==2.3.2
+trame-client==2.7.0
 trame-server==2.9.0
 trame-vtk==2.0.17
-trimesh==3.19.4
+trimesh==3.20.0
 typed-ast==1.5.4
