@@ -5147,7 +5147,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(f'Points type not usable: {type(points)}')
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
-            if pyvista.vtk_version_info < (9, 1):
+            if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
                 from pyvista.core.errors import VTKVersionError
 
                 raise VTKVersionError(
@@ -6165,16 +6165,6 @@ class Plotter(BasePlotter):
         # check if a plotting backend is enabled
         _warn_xserver()
 
-        def on_timer(iren, event_id):
-            """Resume execution after processing interaction events during an interactive update."""
-            # For some odd reason when vtkContextInteractorStyle is active, TimerEvents
-            # are constantly being fired. As we cannot differentiate between different
-            # timers from the python side, we assume all TimerEvents that are fired while
-            # the ContextInteractorStyle is not active are coming from the update_timer.
-            if event_id == 'TimerEvent' and self.iren._style != "Context":
-                # Simulate 'q' press to break out of blocking call in the update method.
-                self.iren.terminate_app()
-
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
 
@@ -6513,7 +6503,7 @@ class Plotter(BasePlotter):
                 self.iren.update_style()
                 if not interactive_update:
                     # Resolves #1260
-                    if os.name == 'nt':
+                    if os.name == 'nt':  # pragma: no cover
                         self.iren.process_events()
                     self.iren.start()
                 self.iren.initialize()

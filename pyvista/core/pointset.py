@@ -1422,7 +1422,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 f'must match the number of cells {self.n_cells})'
             )
 
-        if self.n_cells != self.offset.size - 1:
+        if self.n_cells != self.offset.size - 1:  # pragma: no cover
             raise ValueError(
                 f'Size of the offset ({self.offset.size}) '
                 f'must be one greater than the number of cells ({self.n_cells})'
