@@ -78,6 +78,8 @@ jobs:
       - name: Install PyVistaQt
         run: pip install -ve .
         working-directory: pyvistaqt
+      - name: Install dependencies
+        run: pip install sphinx-gallery
       - name: Run pyvistaqt tests
         uses: GabrielBB/xvfb-action@v1
         with:
