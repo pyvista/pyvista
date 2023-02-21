@@ -958,5 +958,9 @@ def test_xdmf_reader():
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_xdmf_timepoints():
-    # TODO Add a time points test using meshio/out.xdmf
-    assert True
+    filename = examples.download_fenicsx_xdmf()
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.XdmfReader)
+    assert reader.path == filename
+    assert reader.number_time_points == 2
+    # TODO Add tests reference from test_ensightreader_timepoints.
