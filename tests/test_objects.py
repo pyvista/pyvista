@@ -210,7 +210,7 @@ def test_table_iter():
 
 
 def test_get_data_range():
-    nr, nc = 3, 3
+    nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
     table = pyvista.Table(arrays)
     nanmin, nanmax = table.get_data_range()
