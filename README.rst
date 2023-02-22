@@ -102,6 +102,14 @@ PyVista.
 Share this project on Twitter: |tweet|
 
 
+PyVista is a NumFOCUS affiliated project
+
+.. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
+   :target: https://numfocus.org/sponsored-projects/affiliated-projects
+   :alt: NumFOCUS affiliated projects
+   :height: 60px
+
+
 Highlights
 ==========
 
