@@ -335,7 +335,7 @@ if VTK9:
 
     try:
         from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
-    except ModuleNotFoundError:  # pragma: no cover
+    except ImportError:  # pragma: no cover
         # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
         pass
     from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
