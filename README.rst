@@ -54,6 +54,9 @@ PyVista
 .. |python| image:: https://img.shields.io/badge/python-3.7+-blue.svg
    :target: https://www.python.org/downloads/
 
+.. |Powered by NumFOCUS| image:: https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
+   :target: https://numfocus.org
+
 
 +----------------------+-----------+------------+
 | Deployment           | |pypi|    |   |conda|  |
@@ -71,6 +74,8 @@ PyVista
 | Community            | |slack|   |  |discuss| |
 +----------------------+-----------+------------+
 | Formatter            | |black|   |  |isort|   |
++----------------------+-----------+------------+
+| Affiliated           | |Powered by NumFOCUS|  |
 +----------------------+-----------+------------+
 
 
