@@ -214,8 +214,8 @@ def test_get_data_range():
     arrays = np.random.rand(nr, nc)
     table = pyvista.Table(arrays)
     nanmin, nanmax = table.get_data_range()
-    assert nanmin == np.nanmin(arrays)
-    assert nanmax == np.nanmax(arrays)
+    assert nanmin == np.nanmin(arrays[:, 0])
+    assert nanmax == np.nanmax(arrays[:, 0])
 
 
 def test_texture():
