@@ -179,7 +179,7 @@ jobs:
       - uses: awalsh128/cache-apt-pkgs-action@v1.2.4
         with:
           packages: libgl1-mesa-glx xvfb
-          version: 1.0
+          version: 3.0
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
