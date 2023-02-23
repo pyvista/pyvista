@@ -346,7 +346,7 @@ class Table(_vtk.vtkTable, DataObject):
         """
         if arr is None:
             # use the first array in the row data
-            self.GetRowData().GetArrayName(0)
+            arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
