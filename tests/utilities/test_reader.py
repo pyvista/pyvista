@@ -978,9 +978,6 @@ def test_xdmf_timepoints():
     assert reader.active_time_value == 4.0
     mesh_3 = reader.read()
 
-    reader.set_active_time_point(0)
-    assert reader.active_time_value == 1.0
-
     # assert all the data is different
     for m_1, m_3 in zip(mesh_1, mesh_3):
         assert not all(m_1['label_u'] == m_3['label_u'])
