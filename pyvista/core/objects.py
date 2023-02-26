@@ -185,24 +185,6 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self.row_arrays.pop(name)
 
-    def _add_row_array(self, scalars, name, deep=True):
-        """Add scalars to the vtk object.
-
-        Parameters
-        ----------
-        scalars : numpy.ndarray
-            Numpy array of scalars.  Must match number of points.
-
-        name : str
-            Name of point scalars to add.
-
-        deep : bool, optional
-            Does not copy scalars when False.  A reference to the scalars
-            must be kept to avoid a segfault.
-
-        """
-        self.row_arrays[name] = scalars
-
     def __getitem__(self, index):
         """Search row data for an array."""
         return self._row_array(name=index)
@@ -346,7 +328,7 @@ class Table(_vtk.vtkTable, DataObject):
         """
         if arr is None:
             # use the first array in the row data
-            self.GetRowData().GetArrayName(0)
+            arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range

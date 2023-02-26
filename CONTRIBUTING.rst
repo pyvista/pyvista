@@ -353,7 +353,7 @@ To streamline development, we have the following requirements for naming
 branches. These requirements help the core developers know what kind of
 changes any given branch is introducing before looking at the code.
 
--  ``fix/``: any bug fixes, patches, or experimental changes that are
+-  ``fix/``, ``patch/`` and ``bug/``: any bug fixes, patches, or experimental changes that are
    minor
 -  ``feat/``: any changes that introduce a new feature or significant
    addition
