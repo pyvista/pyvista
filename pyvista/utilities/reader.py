@@ -2388,6 +2388,9 @@ class XdmfReader(BaseReader, PointCellDataSelection):
         """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
 
+    def set_active_time_value(self, time_value):  # noqa: D102
+        self.reader.UpdateTimeStep(time_value)
+
 
 CLASS_READERS = {
     # Standard dataset readers:
