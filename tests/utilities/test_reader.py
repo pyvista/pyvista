@@ -958,7 +958,7 @@ def test_xdmf_reader():
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_xdmf_timepoints():
-    filename = examples.download_fenicsx_xdmf()
+    filename = examples.download_fenicsx_xdmf(load=False)
 
     reader = pyvista.get_reader(filename)
     assert reader.path == filename

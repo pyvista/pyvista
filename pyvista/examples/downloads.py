@@ -5066,8 +5066,8 @@ def download_fenicsx_xdmf(load=True):  # pragma: no cover
 
     Returns
     -------
-    tuple
-        Tuple of DataSet or filename depending on ``load``.
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -5078,7 +5078,4 @@ def download_fenicsx_xdmf(load=True):  # pragma: no cover
     """
     _ = download_file("dolfinx/checkpoint.xdmf")
     _ = download_file("dolfinx/checkpoint.h5")
-    return (
-        _download_and_read("dolfinx/checkpoint.xdmf", load=load),
-        _download_and_read("dolfinx/checkpoint.h5", load=load),
-    )
+    return _download_and_read("dolfinx/checkpoint.xdmf", load=load)
