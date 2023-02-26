@@ -953,5 +953,8 @@ def test_xdmf_reader():
     assert isinstance(reader, pyvista.XdmfReader)
     assert reader.path == filename
 
-    assert reader.number_of_grids == 5
-    assert reader.get_number_of_point_arrays == 2
+    assert reader.number_grids == 5
+    assert reader.number_point_arrays == 2
+
+    assert reader.point_array_names == ['phi', 'u']
+    assert reader.cell_array_names == ['a']

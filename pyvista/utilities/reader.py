@@ -2356,8 +2356,8 @@ class XdmfReader(BaseReader, PointCellDataSelection):
     _class_reader = staticmethod(_vtk.lazy_vtkXdmfReader)
 
     @property
-    def number_of_grids(self):
-        """Get/Set information about grids.
+    def number_grids(self):
+        """Get information about grids.
 
         Returns
         -------
@@ -2365,6 +2365,28 @@ class XdmfReader(BaseReader, PointCellDataSelection):
 
         """
         return self.reader.GetNumberOfGrids()
+
+    @property
+    def number_point_arrays(self):
+        """Return the number of point arrays.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfPointArrays()
+
+    @property
+    def point_array_names(self):
+        """Return the list of all point array names.
+
+        Returns
+        -------
+        list[str]
+
+        """
+        return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
 
 
 CLASS_READERS = {
