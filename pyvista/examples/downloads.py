@@ -5053,3 +5053,32 @@ def download_meshio_xdmf(load=True):  # pragma: no cover
     """
     _ = download_file("meshio/out.h5")
     return _download_and_read("meshio/out.xdmf", load=load)
+
+
+def download_fenicsx_xdmf(load=True):  # pragma: no cover
+    """Download a mesh of FEniCSx.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    tuple
+        Tuple of DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_fenicsx_xdmf()
+    >>> dataset.plot()
+
+    """
+    _ = download_file("dolfinx/checkpoint.xdmf")
+    _ = download_file("dolfinx/checkpoint.h5")
+    return (
+        _download_and_read("dolfinx/checkpoint.xdmf", load=load),
+        _download_and_read("dolfinx/checkpoint.h5", load=load),
+    )
