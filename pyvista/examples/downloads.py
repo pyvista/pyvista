@@ -5076,6 +5076,6 @@ def download_fenicsx_xdmf(load=True):  # pragma: no cover
     >>> dataset.plot()
 
     """
-    _ = download_file("dolfinx/checkpoint.xdmf")
+    filename = download_file("dolfinx/checkpoint.xdmf")
     _ = download_file("dolfinx/checkpoint.h5")
-    return _download_and_read("dolfinx/checkpoint.xdmf", load=load)
+    return _download_and_read(filename, load=load)

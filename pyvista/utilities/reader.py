@@ -2332,7 +2332,7 @@ class GIFReader(BaseReader):
     _class_reader = _GIFReader
 
 
-class XdmfReader(BaseReader, PointCellDataSelection):
+class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
 
     Parameters
@@ -2354,6 +2354,32 @@ class XdmfReader(BaseReader, PointCellDataSelection):
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkXdmfReader)
+
+    @property
+    def number_time_points(self):  # noqa: D102
+        # TODO fix for XdmfReader
+        return self.reader.GetTimeSets().GetItem(0).GetSize()
+
+    def time_point_value(self, time_point):  # noqa: D102
+        # TODO fix for XdmfReader
+        return self.reader.GetTimeSets().GetItem(0).GetValue(time_point)
+
+    @property
+    def active_time_value(self):  # noqa: D102
+        # TODO fix for XdmfReader
+        return self.reader.GetTimeValue()
+
+    def set_active_time_value(self, time_value):  # noqa: D102
+        # TODO fix for XdmfReader
+        if time_value not in self.time_values:
+            raise ValueError(
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
+            )
+        self.reader.SetTimeValue(time_value)
+
+    def set_active_time_point(self, time_point):  # noqa: D102
+        # TODO fix for XdmfReader
+        self.reader.SetTimeValue(self.time_point_value(time_point))
 
 
 CLASS_READERS = {
