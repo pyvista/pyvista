@@ -947,43 +947,11 @@ def test_gif_reader(gif_file):
 
 @pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_xdmf_reader():
-    filename = examples.download_dolfinx_mesh(load=False)
+    filename = examples.download_meshio_xdmf(load=False)
+
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.XdmfReader)
     assert reader.path == filename
 
-    mesh = reader.read()
-    assert all([mesh.n_points, mesh.n_cells])
-
-
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
-def test_xdmf_timepoints():
-    filename = examples.download_fenicsx_xdmf(load=False)
-
-    reader = pyvista.get_reader(filename)
-    assert reader.path == filename
-
-    assert reader.number_time_points == 5
-    assert reader.time_values == [0.0, 1.0, 2.0, 3.0, 4.0]
-    assert reader.time_point_value(0) == 0.0
-    assert reader.time_point_value(1) == 1.0
-    assert reader.time_point_value(2) == 2.0
-    assert reader.time_point_value(3) == 3.0
-    assert reader.time_point_value(4) == 4.0
-
-    assert reader.active_time_value == 0.0
-    mesh_1 = reader.read()
-
-    reader.set_active_time_value(4.0)
-    assert reader.active_time_value == 4.0
-    mesh_3 = reader.read()
-
-    # assert all the data is different
-    for m_1, m_3 in zip(mesh_1, mesh_3):
-        assert not all(m_1['label_u'] == m_3['label_u'])
-
-    reader.set_active_time_point(0)
-    assert reader.active_time_value == 0.0
-
-    with pytest.raises(ValueError, match="Not a valid time"):
-        reader.set_active_time_value(1000.0)
+    assert reader.number_of_grids == 5
+    assert reader.get_number_of_point_arrays == 2

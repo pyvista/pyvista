@@ -1,0 +1,55 @@
+<Xdmf>
+	<Domain Name="MSI">
+		<Grid Name="CellTime" GridType="Collection" CollectionType="Temporal">
+
+			<Grid Name="Cells" GridType="Uniform">
+				<Time Value="0.00" />
+				<Topology TopologyType="Polyvertex" NodesPerElement="100">
+				</Topology>
+				<Geometry GeometryType="XYZ">
+					<DataItem DataType="Float" Dimensions="100 3" Format="HDF">
+						fiber_run3.h5:/iter00/cells/position
+					</DataItem>
+				</Geometry>
+				<Attribute AttributeType="Scalar" Center="Node" Name="CellType">
+					<DataItem DataType="Int" Dimensions="100 1" Format="HDF">
+						fiber_run3.h5:/iter00/cells/numtype
+					</DataItem>
+				</Attribute>
+			</Grid>
+
+			<Grid Name="Cells" GridType="Uniform">
+				<Time Value="0.01" />
+				<Topology TopologyType="Polyvertex" NodesPerElement="100">
+				</Topology>
+				<Geometry GeometryType="XYZ">
+					<DataItem DataType="Float" Dimensions="100 3" Format="HDF">
+						fiber_run3.h5:/iter01/cells/position
+					</DataItem>
+				</Geometry>
+				<Attribute AttributeType="Scalar" Center="Node" Name="CellType">
+					<DataItem DataType="Int" Dimensions="100 1" Format="HDF">
+						fiber_run3.h5:/iter01/cells/numtype
+					</DataItem>
+				</Attribute>
+			</Grid>
+
+			<Grid Name="Cells" GridType="Uniform">
+				<Time Value="0.02" />
+				<Topology TopologyType="Polyvertex" NodesPerElement="100">
+				</Topology>
+				<Geometry GeometryType="XYZ">
+					<DataItem DataType="Float" Dimensions="100 3" Format="HDF">
+						fiber_run3.h5:/iter02/cells/position
+					</DataItem>
+				</Geometry>
+				<Attribute AttributeType="Scalar" Center="Node" Name="CellType">
+					<DataItem DataType="Int" Dimensions="100 1" Format="HDF">
+						fiber_run3.h5:/iter02/cells/numtype
+					</DataItem>
+				</Attribute>
+			</Grid>
+
+		</Grid>
+	</Domain>
+</Xdmf>

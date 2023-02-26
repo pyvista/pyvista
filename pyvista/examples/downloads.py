@@ -5033,6 +5033,8 @@ def download_dolfinx_mesh(load=True):  # pragma: no cover
 def download_meshio_xdmf(load=True):  # pragma: no cover
     """Download xdmf file created by meshio.
 
+    The dataset was created by ``test_time_series`` test function in meshio.
+
     Parameters
     ----------
     load : bool, optional
