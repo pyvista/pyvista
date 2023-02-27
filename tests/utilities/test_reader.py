@@ -945,7 +945,6 @@ def test_gif_reader(gif_file):
         assert np.allclose(grid[data_name], new_grid[data_name])
 
 
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
