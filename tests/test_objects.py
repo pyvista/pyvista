@@ -209,6 +209,15 @@ def test_table_iter():
         assert np.allclose(array, arrays[:, i])
 
 
+def test_get_data_range():
+    nr, nc = 50, 3
+    arrays = np.random.rand(nr, nc)
+    table = pyvista.Table(arrays)
+    nanmin, nanmax = table.get_data_range()
+    assert nanmin == np.nanmin(arrays[:, 0])
+    assert nanmax == np.nanmax(arrays[:, 0])
+
+
 def test_texture():
     texture = pyvista.Texture(examples.mapfile)
     assert texture is not None
