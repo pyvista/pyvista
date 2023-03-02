@@ -17,16 +17,12 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pyvista, 'BUILDING_GALLERY', True)
     pyvista.close_all()
-    plotters = [
-        pyvista.Plotter(off_screen=True)
-        for _ in range(n_win)
-    ]
+    plotters = [pyvista.Plotter(off_screen=True) for _ in range(n_win)]
     scraper = Scraper()
     src_dir = str(tmpdir)
     out_dir = op.join(str(tmpdir), '_build', 'html')
     img_fnames = [
-        op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png')
-        for n in range(n_win)
+        op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
     ]
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
