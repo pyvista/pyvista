@@ -3344,7 +3344,7 @@ def test_add_point_scalar_labels_fmt():
 
 
 def test_plot_individual_cell(hexbeam):
-    hexbeam.cell[0].plot(color='b')
+    hexbeam.get_cell(0).plot(color='b')
 
 
 def test_add_point_scalar_labels_list():
