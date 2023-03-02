@@ -1,3 +1,5 @@
+from types import GeneratorType
+
 import numpy as np
 import pytest
 import vtk
@@ -17,12 +19,12 @@ from pyvista.examples import (
 )
 
 cells = [
-    example_cells.Hexahedron().cell[0],
-    example_cells.Triangle().cell[0],
-    example_cells.Voxel().cell[0],
-    example_cells.Quadrilateral().cell[0],
-    example_cells.Tetrahedron().cell[0],
-    example_cells.Voxel().cell[0],
+    example_cells.Hexahedron().get_cell(0),
+    example_cells.Triangle().get_cell(0),
+    example_cells.Voxel().get_cell(0),
+    example_cells.Quadrilateral().get_cell(0),
+    example_cells.Tetrahedron().get_cell(0),
+    example_cells.Voxel().get_cell(0),
 ]
 grids = [
     load_hexbeam(),
@@ -72,8 +74,7 @@ def test_bad_init():
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
 def test_cell_attribute(grid):
-    assert isinstance(grid.cell, list)
-    assert len(grid.cell) == grid.n_cells
+    assert isinstance(grid.cell, GeneratorType)
     assert all([issubclass(type(cell), Cell) for cell in grid.cell])
 
 
@@ -201,9 +202,9 @@ def test_cell_faces(cell):
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
 def test_cell_bounds(grid):
-    assert isinstance(grid.cell[0].bounds, tuple)
-    assert all(bc >= bg for bc, bg in zip(grid.cell[0].bounds[::2], grid.bounds[::2]))
-    assert all(bc <= bg for bc, bg in zip(grid.cell[0].bounds[1::2], grid.bounds[1::2]))
+    assert isinstance(grid.get_cell(0).bounds, tuple)
+    assert all(bc >= bg for bc, bg in zip(grid.get_cell(0).bounds[::2], grid.bounds[::2]))
+    assert all(bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2]))
 
 
 @pytest.mark.parametrize("cell,type_", zip(cells[:5], types[:5]))

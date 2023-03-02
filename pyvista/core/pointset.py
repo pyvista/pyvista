@@ -1480,6 +1480,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def cells(self) -> np.ndarray:
         """Return a pointer to the cells as a numpy object.
 
+        See Also
+        --------
+        pyvista.DataSet.get_cell
+
         Examples
         --------
         Return the indices of the first two cells from the example hex
@@ -1509,6 +1513,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         dict
             A dictionary mapping containing all cells of this unstructured grid.
             Structure: vtk_enum_type (int) -> cells (:class:`numpy.ndarray`).
+
+        See Also
+        --------
+        pyvista.DataSet.get_cell
 
         Examples
         --------
@@ -1544,6 +1552,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         .. note::
            This is only available in ``vtk>=9.0.0``.
+
+        See Also
+        --------
+        pyvista.DataSet.get_cell
 
         Returns
         -------

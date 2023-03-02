@@ -46,7 +46,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     >>> import pyvista
     >>> mesh = pyvista.Sphere()
-    >>> cell = mesh.cell[0]
+    >>> cell = mesh.get_cell(0)
     >>> cell  # doctest: +SKIP
     Cell (0x7fa760075a10)
       Type:       <CellType.TRIANGLE: 5>
@@ -63,7 +63,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     >>> from pyvista import examples
     >>> mesh = examples.load_hexbeam()
-    >>> cell = mesh.cell[0]
+    >>> cell = mesh.get_cell(0)
     >>> cell  # doctest: +SKIP
     Cell (0x7fdc71a3c210)
       Type:       <CellType.HEXAHEDRON: 12>
@@ -103,7 +103,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].type
+        >>> mesh.get_cell(0).type
         <CellType.TRIANGLE: 5>
         """
         return CellType(self.GetCellType())
@@ -116,7 +116,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].is_linear
+        >>> mesh.get_cell(0).is_linear
         True
 
         """
@@ -135,7 +135,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> cell.plot()
 
         """
@@ -153,7 +153,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> grid = cell.cast_to_unstructured_grid()
         >>> grid  # doctest: +SKIP
         UnstructuredGrid (0x7f9383619540)
@@ -187,7 +187,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].dimension
+        >>> mesh.get_cell(0).dimension
         2
         """
         return self.GetCellDimension()
@@ -200,7 +200,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].n_points
+        >>> mesh.get_cell(0).n_points
         3
         """
         return self.GetNumberOfPoints()
@@ -213,7 +213,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> mesh.cell[0].n_faces
+        >>> mesh.get_cell(0).n_faces
         4
         """
         return self.GetNumberOfFaces()
@@ -226,7 +226,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].n_edges
+        >>> mesh.get_cell(0).n_edges
         3
         """
         return self.GetNumberOfEdges()
@@ -239,7 +239,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].point_ids
+        >>> mesh.get_cell(0).point_ids
         [2, 30, 0]
         """
         point_ids = self.GetPointIds()
@@ -253,7 +253,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].points
+        >>> mesh.get_cell(0).points
         array([[-5.40595092e-02,  0.00000000e+00, -4.97068971e-01],
                [-5.28781787e-02,  1.12396041e-02, -4.97068971e-01],
                [-5.55111512e-17,  0.00000000e+00, -5.00000000e-01]])
@@ -280,7 +280,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> edge = cell.get_edge(0)
         >>> edge.point_ids
         [2, 30]
@@ -299,7 +299,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         >>> from pyvista.examples.cells import Hexahedron
         >>> mesh = Hexahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> edges = cell.edges
         >>> len(edges)
         12
@@ -313,7 +313,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> faces = cell.faces
         >>> len(faces)
         4
@@ -340,7 +340,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> face = cell.get_face(0)
         >>> face.point_ids
         [0, 1, 3]
@@ -363,7 +363,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].bounds
+        >>> mesh.get_cell(0).bounds
         (-0.05405950918793678, -5.551115123125783e-17, 0.0, 0.011239604093134403, -0.5, -0.49706897139549255)
         """
         return self.GetBounds()
@@ -414,7 +414,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> deep_cell = cell.copy(deep=True)
         >>> deep_cell.points[:] = 0
         >>> cell != deep_cell
