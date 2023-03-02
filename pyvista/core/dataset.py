@@ -2571,7 +2571,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))   # 9 points, 4 cells
         >>> for cell in mesh.cell:  # doctest: +SKIP
-            print(cell)
+        ...     print(cell)
 
         """
         for i in range(self.n_cells):
