@@ -2522,9 +2522,9 @@ class DataSet(DataSetFilters, DataObject):
         Get the point coordinates of the first cell
 
         >>> cell.points
-        array([[897., 48.8, 82.3],
-               [907., 48.8, 80.7],
-               [908., 48.8, 83.7]])
+        array([[897.0,  48.8,  82.3],
+               [906.6,  48.8,  80.7],
+               [907.5,  55.5,  83.7]])
 
         For the first cell, get the points associated with the first edge
 
@@ -2534,8 +2534,8 @@ class DataSet(DataSetFilters, DataObject):
         For a Tetrahedoren, get the point ids of the last face
         >>> mesh = examples.cells.Tetrahedron()
         >>> cell = mesh.get_cell(0)
-        >>> cell.faces[-1]
-        >>> [0, 2, 1]
+        >>> cell.faces[-1].point_ids
+        [0, 2, 1]
 
         """
         # must check upper bounds, otherwise segfaults (on Linux, 9.2)
