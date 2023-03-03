@@ -1553,14 +1553,14 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         .. note::
            This is only available in ``vtk>=9.0.0``.
 
-        See Also
-        --------
-        pyvista.DataSet.get_cell
-
         Returns
         -------
         numpy.ndarray
             Connectivity array.
+
+        See Also
+        --------
+        pyvista.DataSet.get_cell
 
         Examples
         --------
