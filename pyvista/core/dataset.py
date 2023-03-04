@@ -2531,7 +2531,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> cell.edges[0].point_ids
         [0, 1]
 
-        For a Tetrahedoren, get the point ids of the last face
+        For a Tetrahedron, get the point ids of the last face
+
         >>> mesh = examples.cells.Tetrahedron()
         >>> cell = mesh.get_cell(0)
         >>> cell.faces[-1].point_ids
