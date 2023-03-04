@@ -2556,6 +2556,10 @@ class DataSet(DataSetFilters, DataObject):
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
 
+        .. versionchanged:: 0.39.0
+            Now returns a generator instead of a list.
+            Use ``get_cell(i)`` instead of ``cell[i]``.
+
         Yields
         ------
         pyvista.Cell
