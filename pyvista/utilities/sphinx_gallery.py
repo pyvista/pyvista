@@ -57,7 +57,7 @@ class Scraper:
                 # move gif to fname
                 shutil.move(plotter._gif_filename, fname)
             else:
-                plotter.ren_win.MakeCurrent()
+                # plotter.ren_win.MakeCurrent()
                 plotter.screenshot(fname)
             image_names.append(fname)
         pyvista.close_all()  # close and clear all plotters
