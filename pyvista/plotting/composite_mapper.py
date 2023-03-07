@@ -666,7 +666,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         clim,
         cmap,
         flip_scalars,
-        categories,
         log_scale,
     ):
         """Set the scalars of the mapper.
@@ -745,11 +744,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         flip_scalars : bool
             Flip direction of cmap. Most colormaps allow ``*_r``
             suffix to do this as well.
-
-        categories : bool
-            If set to ``True``, then the number of unique values in
-            the scalar array will be used as the ``n_colors``
-            argument.
 
         log_scale : bool
             Use log scale when mapping data to colors. Scalars less
