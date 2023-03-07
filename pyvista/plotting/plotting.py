@@ -2636,6 +2636,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
 
             if categories:
+                # Deprecated on 0.39.0, estimated removal on v0.42.0
+                warnings.warn(
+                    '`categories` is deprecated for composite datasets. Use `n_colors` instead.',
+                    PyVistaDeprecationWarning,
+                )
                 if not isinstance(categories, int):
                     raise TypeError('Categories must be an integer for a composite dataset.')
                 n_colors = categories
