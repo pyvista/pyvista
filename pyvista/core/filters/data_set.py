@@ -5357,7 +5357,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.MultiBlock or pyvista.UnstructuredGrid
-            UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
+            UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
 
         Notes
         -----
