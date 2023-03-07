@@ -36,7 +36,7 @@ jobs:
       with:
         labels: enhancement
     - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch')
+      if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch') || startsWith(github.event.pull_request.head.ref, 'bug')
       with:
         labels: bug
     - uses: actions-ecosystem/action-add-labels@v1

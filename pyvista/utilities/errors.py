@@ -335,6 +335,7 @@ class Report(scooby.Report):
             'colorcet',
             'cmocean',
             'ipyvtklink',
+            'ipywidgets',
             'scipy',
             'tqdm',
             'meshio',
@@ -346,6 +347,7 @@ class Report(scooby.Report):
             'trame_server',
             'trame_vtk',
             'jupyter_server_proxy',
+            'nest_asyncio',
         ]
 
         # Information about the GPU - bare except in case there is a rendering
