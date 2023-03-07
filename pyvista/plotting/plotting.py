@@ -2410,6 +2410,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the scalar array will be used as the ``n_colors``
             argument.
 
+            .. deprecated:: 0.39.0
+               This keyword argument is no longer used. Instead, use
+               ``n_colors``.
+
         below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
@@ -2636,6 +2640,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
 
             if categories:
+                # Deprecated on 0.39.0, estimated removal on v0.42.0
+                warnings.warn(
+                    '`categories` is deprecated for composite datasets. Use `n_colors` instead.',
+                    PyVistaDeprecationWarning,
+                )
                 if not isinstance(categories, int):
                     raise TypeError('Categories must be an integer for a composite dataset.')
                 n_colors = categories
@@ -2655,7 +2664,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     clim,
                     cmap,
                     flip_scalars,
-                    categories,
                     log_scale,
                 )
             else:
