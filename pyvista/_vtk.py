@@ -11,10 +11,6 @@ the entire library.
 
 from vtkmodules.vtkCommonCore import vtkVersion
 
-# keep legacy variable
-VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
-assert VTK9
-
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
 # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
 try:
@@ -442,6 +438,7 @@ try:
     from vtkmodules.vtkPythonContext2D import vtkPythonItem
 except ImportError:  # pragma: no cover
     # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
+
     class vtkPythonItem:  # type: ignore
         """Empty placeholder."""
 
