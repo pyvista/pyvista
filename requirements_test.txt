@@ -20,7 +20,7 @@ pytest<7.3.0
 pytest-cov<4.1.0
 pytest-memprof<0.3.0
 pytest-xdist<3.3.0
-pytest_pyvista==0.1.4
+pytest_pyvista==0.1.7
 pythreejs<2.5.0
 Sphinx<5.4.0
 sphinx-gallery<0.12.0

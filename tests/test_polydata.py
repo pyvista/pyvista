@@ -223,11 +223,10 @@ def test_geodesic_distance(sphere):
     assert isinstance(distance, float)
 
     # Use scalar weights
-    if pyvista.vtk_version_info >= (9,):
-        distance_use_scalar_weights = sphere.geodesic_distance(
-            0, sphere.n_points - 1, use_scalar_weights=True
-        )
-        assert isinstance(distance_use_scalar_weights, float)
+    distance_use_scalar_weights = sphere.geodesic_distance(
+        0, sphere.n_points - 1, use_scalar_weights=True
+    )
+    assert isinstance(distance_use_scalar_weights, float)
 
 
 def test_ray_trace(sphere):
@@ -909,7 +908,6 @@ def test_n_lines():
     assert mesh.n_lines == 1
 
 
-@pytest.mark.needs_vtk9
 def test_geodesic_disconnected(sphere, sphere_shifted):
     # the sphere and sphere_shifted are disconnected - no path between them
     combined = sphere + sphere_shifted
