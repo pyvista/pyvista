@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import sys
+import traceback
 
 import scooby
 
@@ -73,7 +74,7 @@ class VtkErrorCatcher:
         obs.observe(error_output)
         self._observer = obs
 
-    def __exit__(self, type, val, traceback):
+    def __exit__(self, type, val, tb):
         """Stop observing VTK string output window."""
         error_win = _vtk.vtkOutputWindow()
         error_win.SetInstance(self._error_output_orig)
@@ -116,7 +117,6 @@ class Observer:
             logging.error(alert)
         else:
             logging.warning(alert)
-        return
 
     def __call__(self, obj, event, message):
         """Declare standard call function for the observer.
@@ -124,15 +124,29 @@ class Observer:
         On an event occurrence, this function executes.
 
         """
-        self.__event_occurred = True
-        self.__message_etc = message
-        kind, path, address, alert = self.parse_message(message)
-        self.__message = alert
-        if self.__log:
-            self.log_message(kind, alert)
-        if self.store_history:
-            VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
-            self.event_history.append(VtkEvent(kind, path, address, alert))
+        try:
+            self.__event_occurred = True
+            self.__message_etc = message
+            kind, path, address, alert = self.parse_message(message)
+            self.__message = alert
+            if self.store_history:
+                VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
+                self.event_history.append(VtkEvent(kind, path, address, alert))
+            if self.__log:
+                self.log_message(kind, alert)
+        except Exception:
+            try:
+                if len(message) > 120:
+                    message = f'{repr(message[:100])} ... ({len(message)} characters)'
+                else:
+                    message = repr(message)
+                print(
+                    f'PyViysta error in handling VTK error message:\n{message}',
+                    file=sys.__stdout__,
+                )
+                traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
+            except Exception:
+                pass
 
     def has_event_occurred(self):
         """Ask self if an error has occurred since last queried.
