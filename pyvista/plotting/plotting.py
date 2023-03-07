@@ -1671,11 +1671,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         size_before = self.window_size
         if window_size is not None:
             self.window_size = window_size
-        yield self
-        # Sometimes the render window is destroyed within the context
-        # and re-setting will fail
-        if self.render_window is not None:
-            self.window_size = size_before
+        try:
+            yield self
+        finally:
+            # Sometimes the render window is destroyed within the context
+            # and re-setting will fail
+            if self.render_window is not None:
+                self.window_size = size_before
 
     @property
     def image_depth(self):
@@ -1767,8 +1769,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scale_before = self.image_scale
         if scale is not None:
             self.image_scale = scale
-        yield self
-        self.image_scale = scale_before
+        try:
+            yield self
+        finally:
+            self.image_scale = scale_before
 
     def render(self):
         """Render the main window.
@@ -3684,7 +3688,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             .. note::
                 If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
                 mapper (``vtkUnstructuredGridVolumeRayCastMapper``) will be
-                used regargless.
+                used regardless.
 
             .. note::
                 The ``'smart'`` mapper chooses one of the other listed
@@ -4249,7 +4253,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
 
         try:
-            for mh in self._scalar_bar_mappers[name]:
+            for mh in self.scalar_bars._scalar_bar_mappers[name]:
                 update_mapper(mh)
         except KeyError:
             raise KeyError('Name ({}) not valid/not found in this plotter.')

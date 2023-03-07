@@ -14,17 +14,20 @@ When running VTK v9, you need to add several additional
 
 .. code:: python
 
-    main_py = os.path.join(some_path, 'main.py')
-    a = Analysis([main_py],
-                 pathex=[],
-                 binaries=[],
-                 hiddenimports=['vtkmodules',
-                                'vtkmodules.all',
-                                'vtkmodules.qt.QVTKRenderWindowInteractor',
-                                'vtkmodules.util',
-                                'vtkmodules.util.numpy_support',
-                                'vtkmodules.numpy_interface.dataset_adapter',
-                               ],
+    main_py = os.path.join(some_path, "main.py")
+    a = Analysis(
+        [main_py],
+        pathex=[],
+        binaries=[],
+        hiddenimports=[
+            "vtkmodules",
+            "vtkmodules.all",
+            "vtkmodules.qt.QVTKRenderWindowInteractor",
+            "vtkmodules.util",
+            "vtkmodules.util.numpy_support",
+            "vtkmodules.numpy_interface.dataset_adapter",
+        ],
+    )
 
 From there, you can freeze an application using ``pyvista`` and create
 a standalone application.

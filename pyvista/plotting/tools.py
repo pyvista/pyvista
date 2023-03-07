@@ -3,7 +3,7 @@
 from enum import Enum
 import os
 import platform
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np
 
@@ -56,7 +56,10 @@ def _system_supports_plotting():
     if platform.system() == 'Darwin':
         # check if finder available
         proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE, encoding="utf8")
-        proc.communicate()
+        try:
+            proc.communicate(timeout=10)
+        except TimeoutExpired:
+            return False
         if proc.returncode == 0:
             return True
 
@@ -66,9 +69,9 @@ def _system_supports_plotting():
     # Linux case
     try:
         proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
-        proc.communicate()
+        proc.communicate(timeout=10)
         return proc.returncode == 0
-    except OSError:
+    except (OSError, TimeoutExpired):
         return False
 
 

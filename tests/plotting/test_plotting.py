@@ -719,14 +719,22 @@ def test_plot_silhouette_options(tri_cylinder):
 def test_plotter_scale(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.set_scale(10, 10, 10)
-    assert plotter.scale == [10, 10, 10]
+    plotter.set_scale(10, 10, 15)
+    assert plotter.scale == [10, 10, 15]
+    plotter.show()
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
     plotter.set_scale(5.0)
     plotter.set_scale(yscale=6.0)
     plotter.set_scale(zscale=9.0)
     assert plotter.scale == [5.0, 6.0, 9.0]
+    plotter.show()
+
+    plotter = pyvista.Plotter()
     plotter.scale = [1.0, 4.0, 2.0]
     assert plotter.scale == [1.0, 4.0, 2.0]
+    plotter.add_mesh(sphere)
     plotter.show()
 
 
@@ -3336,7 +3344,7 @@ def test_add_point_scalar_labels_fmt():
 
 
 def test_plot_individual_cell(hexbeam):
-    hexbeam.cell[0].plot(color='b')
+    hexbeam.get_cell(0).plot(color='b')
 
 
 def test_add_point_scalar_labels_list():
