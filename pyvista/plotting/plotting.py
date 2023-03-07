@@ -2410,6 +2410,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the scalar array will be used as the ``n_colors``
             argument.
 
+            .. deprecated:: 0.39.0
+               This keyword argument is no longer used. Instead, use
+               ``n_colors``.
+
         below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
