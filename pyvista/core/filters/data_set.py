@@ -982,9 +982,6 @@ class DataSetFilters:
             in the output with this option off are excluded, while cells that
             would have been excluded from the output are included.
 
-            .. warning::
-                This option is only supported for VTK version 9+
-
         continuous : bool, default: False
             When True, the continuous interval [minimum cell scalar,
             maximum cell scalar] will be used to intersect the threshold bound,
@@ -1150,9 +1147,6 @@ class DataSetFilters:
             Invert the threshold results. That is, cells that would have been
             in the output with this option off are excluded, while cells that
             would have been excluded from the output are included.
-
-            .. warning::
-                This option is only supported for VTK version 9+
 
         continuous : bool, default: False
             When True, the continuous interval [minimum cell scalar,
@@ -1414,13 +1408,11 @@ class DataSetFilters:
                     'This version of VTK does not support `use_all_points=True`. '
                     'VTK v9.1 or newer is required.'
                 )
-        if _vtk.VTK9:
-            # vtkExtractEdges improperly uses INFO for debugging messages
-            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        # vtkExtractEdges improperly uses INFO for debugging messages
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         _update_alg(alg, progress_bar, 'Extracting All Edges')
-        if _vtk.VTK9:
-            # Reset vtkLogger to default verbosity level
-            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
+        # Reset vtkLogger to default verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
         return _get_output(alg)
 
     def elevation(
@@ -2892,7 +2884,7 @@ class DataSetFilters:
 
         locator : vtkAbstractCellLocator, optional
             Prototype cell locator to perform the ``FindCell()``
-            operation.  This requires VTK 9.0.0 or newer.
+            operation.
 
         Returns
         -------
@@ -2926,9 +2918,6 @@ class DataSetFilters:
             alg.SetTolerance(tolerance)
 
         if locator:
-            if pyvista.vtk_version_info < (9,):  # pragma: no cover
-                raise VTKVersionError("Cell locator requires VTK v9.0.0 or newer")
-
             alg.SetCellLocatorPrototype(locator)
 
         _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
@@ -3468,10 +3457,6 @@ class DataSetFilters:
         Particular care must be used to choose a `separating_distance`
         that do not result in too much memory being utilized.  The
         default unit is cell length.
-
-        .. warning::
-            This filter is unstable for ``vtk<9.0``.
-            See `pyvista issue 1508 <https://github.com/pyvista/pyvista/issues/1508>`_.
 
         Parameters
         ----------
@@ -5191,19 +5176,7 @@ class DataSetFilters:
         f = _vtk.vtkTransformFilter()
         f.SetInputDataObject(self)
         f.SetTransform(t)
-
-        if hasattr(f, 'SetTransformAllInputVectors'):
-            f.SetTransformAllInputVectors(transform_all_input_vectors)
-        else:  # pragma: no cover
-            # In VTK 8.1.2 and earlier, vtkTransformFilter does not
-            # support the transformation of all input vectors.
-            # Raise an error if the user requested for input vectors
-            # to be transformed and it is not supported
-            if transform_all_input_vectors:
-                raise VTKVersionError(
-                    'The installed version of VTK does not support '
-                    'transformation of all input vectors.'
-                )
+        f.SetTransformAllInputVectors(transform_all_input_vectors)
 
         _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
@@ -5366,11 +5339,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.MultiBlock or pyvista.UnstructuredGrid
-            UnStructuredGird if ``as_composite=False`` and MultiBlock when ``True``.
-
-        Notes
-        -----
-        This filter requires ``vtk>=9.0.0``.
+            UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
 
         Examples
         --------
@@ -5455,16 +5424,8 @@ class DataSetFilters:
         if not isinstance(split, pyvista.UnstructuredGrid):
             split = split.cast_to_unstructured_grid()
 
-        # VTK changed their cell indexing API in 9.0
-        if pyvista.vtk_version_info < (9, 0, 0):  # pragma: no cover
-            offset = split.offset.copy()
-            offset -= np.arange(offset.size)
-            offset = np.hstack((offset, split.n_points))
-        else:
-            offset = split.offset
-
         vec = (split.cell_centers().points - split.center) * factor
-        split.points += np.repeat(vec, np.diff(offset), axis=0)
+        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
         return split
 
     def separate_cells(self):
@@ -5523,10 +5484,7 @@ def _set_threshold_limit(alg, value, method, invert):
             )
     elif isinstance(value, collections.abc.Iterable):
         raise TypeError('Value must either be a single scalar or a sequence.')
-    if pyvista.vtk_version_info >= (9,):
-        alg.SetInvert(invert)
-    elif invert:  # pragma: no cover
-        raise ValueError('PyVista no longer supports inverted thresholds for VTK<9.')
+    alg.SetInvert(invert)
     # Set values and function
     if pyvista.vtk_version_info >= (9, 1):
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):

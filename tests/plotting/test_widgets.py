@@ -151,12 +151,10 @@ def test_widget_slider(uniform):
     p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
     p.close()
 
-    if pyvista.vtk_version_info >= (9,):
-        # Invert not support for VTK8.1.2
-        p = pyvista.Plotter()
-        p.add_mesh_threshold(uniform, invert=True)
-        p.add_mesh(uniform.outline())
-        p.close()
+    p = pyvista.Plotter()
+    p.add_mesh_threshold(uniform, invert=True)
+    p.add_mesh(uniform.outline())
+    p.close()
 
     p = pyvista.Plotter()
     p.add_mesh_threshold(uniform, invert=False)
