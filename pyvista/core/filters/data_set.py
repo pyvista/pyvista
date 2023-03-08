@@ -4607,8 +4607,7 @@ class DataSetFilters:
         """
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
-        if pyvista.vtk_version_info >= (9,):
-            append_filter.SetTolerance(tolerance)
+        append_filter.SetTolerance(tolerance)
 
         if not main_has_priority:
             append_filter.AddInputData(self)
