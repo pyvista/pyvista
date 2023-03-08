@@ -4618,8 +4618,6 @@ class DataSetFilters:
             grids = grid
             for grid in grids:
                 append_filter.AddInputData(grid)
-        elif grid is None:
-            append_filter.AddInputData(self)
 
         if main_has_priority:
             append_filter.AddInputData(self)
