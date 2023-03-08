@@ -15,7 +15,7 @@ Denotes the first release candidate.
 
 """
 # major, minor, patch
-version_info = 0, 38, 3
+version_info = 0, 38, 4
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))
