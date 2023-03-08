@@ -4568,7 +4568,7 @@ class DataSetFilters:
 
         tolerance : float, default: 0.0
             The absolute tolerance to use to find coincident points when
-            ``merge_points=True``. Note, this was added in VTK v9.
+            ``merge_points=True``.
 
         inplace : bool, optional
             Updates grid inplace when True if the input type is an

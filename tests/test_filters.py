@@ -2674,7 +2674,6 @@ def test_subdivide_tetra(tetbeam):
     assert grid.n_cells == tetbeam.n_cells * 12
 
 
-@pytest.mark.needs_vtk9
 def test_merge_points():
     cells = [2, 0, 1]
     celltypes = [pyvista.CellType.LINE]
