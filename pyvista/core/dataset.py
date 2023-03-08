@@ -2,7 +2,7 @@
 
 import collections.abc
 from copy import deepcopy
-from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, Iterator, List, Literal, Optional, Tuple, Union, cast
 import warnings
 
 import numpy as np
