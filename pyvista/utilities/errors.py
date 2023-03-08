@@ -141,7 +141,7 @@ class Observer:
                 else:
                     message = repr(message)
                 print(
-                    f'PyViysta error in handling VTK error message:\n{message}',
+                    f'PyVista error in handling VTK error message:\n{message}',
                     file=sys.__stdout__,
                 )
                 traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
