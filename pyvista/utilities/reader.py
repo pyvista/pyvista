@@ -1812,7 +1812,7 @@ class PVDDataSet:
 
 
 class _PVDReader(BaseVTKReader):
-    """Simulate a VTK reader for GIF files."""
+    """Simulate a VTK reader for PVD files."""
 
     def __init__(self):
         super().__init__()
@@ -1846,7 +1846,9 @@ class _PVDReader(BaseVTKReader):
             )
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-
+        self._time_mapping = {time: [] for time in self._time_values}
+        for dataset in self._datasets:
+            self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
 
     def Update(self):
@@ -1855,9 +1857,7 @@ class _PVDReader(BaseVTKReader):
 
     def _SetActiveTime(self, time_value):
         """Set active time."""
-        self._active_datasets = [
-            dataset for dataset in self._datasets if dataset.time == time_value
-        ]
+        self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
             get_reader(os.path.join(self._directory, dataset.path))
             for dataset in self._active_datasets
