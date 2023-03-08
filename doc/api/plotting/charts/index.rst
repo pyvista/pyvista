@@ -9,8 +9,6 @@ in older versions though.
 
 Unusable features in older VTK versions:
 
-- Background colors and borders are not supported or erroneous
-  (VTK <9.0).
 - Interaction with charts is bugged when multiple subplots are
   used (VTK <9.3).
 - :class:`ChartBox` and :class:`ChartPie` cannot have a custom

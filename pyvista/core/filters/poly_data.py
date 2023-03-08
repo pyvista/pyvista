@@ -1887,8 +1887,8 @@ class PolyDataFilters(DataSetFilters):
             .. versionadded:: 0.32.0
 
         use_scalar_weights : bool, optional
-            If ``True``, use scalar values in the edge weight (only
-            supported with VTK>=9). This only works for point data.
+            If ``True``, use scalar values in the edge weight.
+            This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1925,8 +1925,7 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetInputData(self)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
-        if _vtk.VTK9:
-            dijkstra.SetUseScalarWeights(use_scalar_weights)
+        dijkstra.SetUseScalarWeights(use_scalar_weights)
         _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
@@ -1967,8 +1966,8 @@ class PolyDataFilters(DataSetFilters):
             Vertex index indicating the end point of the geodesic segment.
 
         use_scalar_weights : bool, optional
-            If ``True``, use scalar values in the edge weight (only
-            supported with VTK>=9). This only works for point data.
+            If ``True``, use scalar values in the edge weight.
+            This only works for point data.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -2428,18 +2427,11 @@ class PolyDataFilters(DataSetFilters):
         if not self.is_all_triangles:
             raise NotAllTrianglesError('Can only flip normals on an all triangle mesh.')
 
-        if _vtk.VTK9:
-            # use new connectivity API
-            f = self._connectivity_array
+        f = self._connectivity_array
 
-            # swap first and last point index in-place
-            # See: https://stackoverflow.com/a/33362288/3369879
-            f[::3], f[2::3] = f[2::3], f[::3].copy()
-
-        else:  # pragma: no cover
-            f = self.faces
-            f[1::4], f[3::4] = f[3::4], f[1::4].copy()
-            self.faces[:] = f
+        # swap first and last point index in-place
+        # See: https://stackoverflow.com/a/33362288/
+        f[::3], f[2::3] = f[2::3], f[::3].copy()
 
     def delaunay_2d(
         self,
@@ -3086,9 +3078,6 @@ class PolyDataFilters(DataSetFilters):
         else:
             raise TypeError('Invalid type given to `capping`. Must be a string.')
 
-        if not hasattr(_vtk, 'vtkTrimmedExtrusionFilter'):  # pragma: no cover
-            raise VTKVersionError('extrude_trim requires VTK 9.0.0 or newer.')
-
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)
         alg.SetExtrusionDirection(*direction)
@@ -3312,9 +3301,6 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`collision_example` for more examples using this filter.
 
         """
-        if not pyvista._vtk.VTK9:  # pragma: no cover
-            raise VTKVersionError('The collision filter requires VTK 9 or newer')
-
         # other mesh must be a polydata
         if not isinstance(other_mesh, pyvista.PolyData):
             other_mesh = other_mesh.extract_surface()

@@ -1394,20 +1394,9 @@ class MultiBlockPlot3DReader(BaseReader):
                 files = [files]
         files = [_process_filename(f) for f in files]
 
-        if hasattr(self.reader, 'AddFileName'):
-            # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
-            # VTK 8.2. This method supports reading multiple q files.
-            for q_filename in files:
-                self.reader.AddFileName(q_filename)
-        else:
-            # SetQFileName is used to add a single q file to be read, and is still
-            # supported in VTK9.
-            if len(files) > 0:
-                if len(files) > 1:
-                    raise RuntimeError(
-                        'Reading of multiple q files is not supported with this version of VTK.'
-                    )
-                self.reader.SetQFileName(files[0])
+        # AddFileName supports reading multiple q files
+        for q_filename in files:
+            self.reader.AddFileName(q_filename)
 
     @property
     def auto_detect_format(self):

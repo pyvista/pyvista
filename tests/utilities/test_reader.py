@@ -890,7 +890,6 @@ def test_tiff_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk9
 def test_hdr_reader():
     filename = examples.download_parched_canal_4k(load=False)
     reader = pyvista.get_reader(filename)
