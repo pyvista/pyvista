@@ -22,7 +22,7 @@ concurrency:
 
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
-  DOCUMENTATION_CNAME: 'docs.pyvista.org'
+  DOCUMENTATION_CNAME: 'https://pyvista.github.io/multiversion-docs-testing/'
 
 jobs:
   doc-check:
@@ -193,7 +193,7 @@ jobs:
 
       - name: Deploy on main multiversion
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: pyansys/actions/doc-deploy-dev@main
+        uses: pyansys/actions/doc-deploy-dev@v4
         with:
             cname: ${{ env.DOCUMENTATION_CNAME }}
             token: ${{ secrets.GITHUB_TOKEN }}
@@ -201,7 +201,7 @@ jobs:
      
       - name: Deploy on release multiversion
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-        uses: pyansys/actions/doc-deploy-stable@main
+        uses: pyansys/actions/doc-deploy-stable@v4
         with:
             cname: ${{ env.DOCUMENTATION_CNAME }}
             token: ${{ secrets.GITHUB_TOKEN }}
