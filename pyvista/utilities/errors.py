@@ -134,7 +134,7 @@ class Observer:
                 self.event_history.append(VtkEvent(kind, path, address, alert))
             if self.__log:
                 self.log_message(kind, alert)
-        except Exception:
+        except Exception:  # pragma: no cover
             try:
                 if len(message) > 120:
                     message = f'{repr(message[:100])} ... ({len(message)} characters)'
