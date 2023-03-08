@@ -1283,10 +1283,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         use_2d : bool, optional
             This can be enabled for smoother plotting.
 
-            .. warning::
-               A bug with vtk 6.3 in Windows seems to cause this
-               function to crash.
-
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
             ``'backface'``) or to the frontface (``'front'``,

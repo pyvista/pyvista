@@ -431,19 +431,14 @@ def from_meshio(mesh):
         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
 
     # Extract cells from meshio.Mesh object
-    offset = []
     cells = []
     cell_type = []
-    next_offset = 0
     for c in mesh.cells:
         vtk_type = meshio_to_vtk_type[c.type]
         numnodes = vtk_type_to_numnodes[vtk_type]
         fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
         cells.append(np.hstack((fill_values, c.data)).ravel())
         cell_type += [vtk_type] * len(c.data)
-        if not _vtk.VTK9:
-            offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
-            next_offset = offset[-1] + numnodes + 1
 
     # Extract cell data from meshio.Mesh object
     cell_data = {k: np.concatenate(v) for k, v in mesh.cell_data.items()}
@@ -456,19 +451,11 @@ def from_meshio(mesh):
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
 
-    if _vtk.VTK9:
-        grid = pyvista.UnstructuredGrid(
-            np.concatenate(cells).astype(np.int64, copy=False),
-            np.array(cell_type),
-            np.array(points, np.float64),
-        )
-    else:
-        grid = pyvista.UnstructuredGrid(
-            np.array(offset),
-            np.concatenate(cells).astype(np.int64, copy=False),
-            np.array(cell_type),
-            np.array(points, np.float64),
-        )
+    grid = pyvista.UnstructuredGrid(
+        np.concatenate(cells).astype(np.int64, copy=False),
+        np.array(cell_type),
+        np.array(points, np.float64),
+    )
 
     # Set point data
     grid.point_data.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
@@ -558,11 +545,8 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     c = 0
     for offset, cell_type in zip(vtk_offset, vtk_cell_type):
         numnodes = vtk_cells[offset + c]
-        if _vtk.VTK9:  # must offset by cell count
-            cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
-            c += 1
-        else:
-            cell = vtk_cells[offset + 1 : offset + 1 + numnodes]
+        cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
+        c += 1
         cell = (
             cell
             if cell_type not in pixel_voxel

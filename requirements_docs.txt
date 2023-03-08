@@ -8,16 +8,16 @@ ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
 jupyterlab==3.6.1
 lxml==4.9.2
-matplotlib==3.7.0
+matplotlib==3.7.1
 meshio==5.3.4
-mypy==1.0.1
+mypy==1.1.1
 mypy-extensions==1.0.0
 numpydoc==1.5.0
 osmnx==1.3.0
 panel==0.14.2
 param==1.12.3  # due to panel bug
-pydata-sphinx-theme==0.12.0
-pypandoc==1.10
+pydata-sphinx-theme==0.13.1
+pypandoc==1.11
 pytest-sphinx==0.5.0
 pythreejs==2.4.2
 scipy==1.10.1
@@ -32,8 +32,8 @@ sphinxcontrib-asciinema==0.3.7
 sphinxcontrib-websupport==1.2.4
 sympy==1.11.1
 trame==2.3.2
-trame-client==2.7.0
+trame-client==2.7.4
 trame-server==2.9.1
-trame-vtk==2.0.17
-trimesh==3.20.0
+trame-vtk==2.2.3
+trimesh==3.20.1
 typed-ast==1.5.4
