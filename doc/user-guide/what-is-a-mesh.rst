@@ -137,9 +137,9 @@ that live either on all points or on all cells of a mesh. These
 attributes can be accessed in a dictionary-like attribute attached to
 any PyVista mesh accessible as one of the following:
 
-* :attr:`point_data <pyvista.DataSet.point_data>`
-* :attr:`cell_data <pyvista.DataSet.cell_data>`
-* :attr:`field_data <pyvista.DataSet.field_data>`
+* :attr:`point_data <pyvista.DataObject.point_data>`
+* :attr:`cell_data <pyvista.DataObject.cell_data>`
+* :attr:`field_data <pyvista.DataObject.field_data>`
 
 Point Data
 ~~~~~~~~~~
