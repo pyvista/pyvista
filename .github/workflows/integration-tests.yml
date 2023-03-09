@@ -52,11 +52,9 @@ jobs:
           path: ~/mne_data
       - run: ./tools/github_actions_download.sh
         working-directory: mne-python
-      - run: pytest --cov=pyvista --cov-report=xml mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends
+      - run: pytest mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends
         working-directory: mne-python
-      - run: cp -a mne-python/*.xml .
-      - uses: codecov/codecov-action@v3
-        name: 'Upload coverage to CodeCov'
+
   pyvistaqt:
     name: PyVistaQt
     runs-on: ubuntu-22.04
@@ -79,8 +77,6 @@ jobs:
       - name: Run pyvistaqt tests
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: pytest --cov=pyvista --cov-report=xml tests
+          run: pytest tests
           working-directory: pyvistaqt
-      - run: cp -a pyvistaqt/*.xml .
-      - uses: codecov/codecov-action@v3
-        name: 'Upload coverage to CodeCov'
+
