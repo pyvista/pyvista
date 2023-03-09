@@ -33,6 +33,7 @@ grids = [
     load_structured(),
     load_tetbeam(),
     load_uniform(),
+    load_explicit_structured(),
 ]
 types = [
     CellType.HEXAHEDRON,
@@ -41,6 +42,7 @@ types = [
     CellType.QUAD,
     CellType.TETRA,
     CellType.VOXEL,
+    CellType.HEXAHEDRON,
 ]
 faces_types = [
     CellType.QUAD,
@@ -49,20 +51,13 @@ faces_types = [
     None,
     CellType.TRIANGLE,
     CellType.PIXEL,
+    CellType.QUAD,
 ]
-dims = [3, 2, 3, 2, 3, 3]
-npoints = [8, 3, 8, 4, 4, 8]
-nfaces = [6, 0, 6, 0, 4, 6]
-nedges = [12, 3, 12, 4, 6, 12, 12]
+dims = [3, 2, 3, 2, 3, 3, 3]
+npoints = [8, 3, 8, 4, 4, 8, 8]
+nfaces = [6, 0, 6, 0, 4, 6, 6]
+nedges = [12, 3, 12, 4, 6, 12, 12, 12]
 
-if pyvista._vtk.VTK9:
-    grids.append(load_explicit_structured())
-    types.append(CellType.HEXAHEDRON)
-    faces_types.append(CellType.QUAD)
-    dims.append(3)
-    npoints.append(8)
-    nfaces.append(6)
-    nedges.append(12)
 ids = [str(type(grid)) for grid in grids]
 cell_ids = list(map(repr, types))
 

@@ -66,11 +66,7 @@ def test_unstructured_grid_eq(hexbeam):
     assert hexbeam != copy
 
     copy = hexbeam.copy()
-
-    if pyvista._vtk.VTK9:
-        hexbeam.cell_connectivity[0] += 1
-    else:
-        hexbeam.cells[0] += 1
+    hexbeam.cell_connectivity[0] += 1
     assert hexbeam != copy
 
 

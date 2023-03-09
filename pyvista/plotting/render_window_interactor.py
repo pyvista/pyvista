@@ -871,14 +871,8 @@ class RenderWindowInteractor:
         """Set the render window."""
         self.interactor.SetRenderWindow(render_window)
 
-    @property
-    def can_process_events(self):
-        """Return whether the interactor can process events (only available in VTK 9+)."""
-        return hasattr(self.interactor, 'ProcessEvents')
-
     def process_events(self):
         """Process events."""
-        # Note: This is only available in VTK 9+
         if not self.initialized:
             raise RuntimeError(
                 'Render window interactor must be initialized before processing events.'

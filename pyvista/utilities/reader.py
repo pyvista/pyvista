@@ -1392,20 +1392,9 @@ class MultiBlockPlot3DReader(BaseReader):
                 files = [files]
         files = [_process_filename(f) for f in files]
 
-        if hasattr(self.reader, 'AddFileName'):
-            # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
-            # VTK 8.2. This method supports reading multiple q files.
-            for q_filename in files:
-                self.reader.AddFileName(q_filename)
-        else:
-            # SetQFileName is used to add a single q file to be read, and is still
-            # supported in VTK9.
-            if len(files) > 0:
-                if len(files) > 1:
-                    raise RuntimeError(
-                        'Reading of multiple q files is not supported with this version of VTK.'
-                    )
-                self.reader.SetQFileName(files[0])
+        # AddFileName supports reading multiple q files
+        for q_filename in files:
+            self.reader.AddFileName(q_filename)
 
     @property
     def auto_detect_format(self):
@@ -1823,7 +1812,7 @@ class PVDDataSet:
 
 
 class _PVDReader(BaseVTKReader):
-    """Simulate a VTK reader for GIF files."""
+    """Simulate a VTK reader for PVD files."""
 
     def __init__(self):
         super().__init__()
@@ -1857,7 +1846,9 @@ class _PVDReader(BaseVTKReader):
             )
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-
+        self._time_mapping = {time: [] for time in self._time_values}
+        for dataset in self._datasets:
+            self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
 
     def Update(self):
@@ -1866,9 +1857,7 @@ class _PVDReader(BaseVTKReader):
 
     def _SetActiveTime(self, time_value):
         """Set active time."""
-        self._active_datasets = [
-            dataset for dataset in self._datasets if dataset.time == time_value
-        ]
+        self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
             get_reader(os.path.join(self._directory, dataset.path))
             for dataset in self._active_datasets

@@ -133,7 +133,6 @@ def test_cast_to_min_size(max_index):
             buf_attr = pv_pythreejs.cast_to_min_size(np.arange(1000), max_index)
 
 
-@pytest.mark.needs_vtk9
 def test_pbr(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_cells), pbr=True)

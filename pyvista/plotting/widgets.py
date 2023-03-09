@@ -1499,9 +1499,6 @@ class WidgetHelper:
             in the output with this option off are excluded, while cells that
             would have been excluded from the output are included.
 
-            .. warning::
-                This option is only supported for VTK version 9+
-
         widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:

@@ -203,9 +203,6 @@ To do this, create a ``build_wheels.sh`` with the following contents in the
     # build based on python version from args
     PYTHON_VERSION="$1"
     case $PYTHON_VERSION in
-    3.7)
-      PYBIN="/opt/python/cp37-cp37m/bin/python"
-      ;;
     3.8)
       PYBIN="/opt/python/cp38-cp38/bin/python"
       ;;
@@ -214,6 +211,9 @@ To do this, create a ``build_wheels.sh`` with the following contents in the
       ;;
     3.10)
       PYBIN="/opt/python/cp310-cp310/bin/python"
+      ;;
+    3.11)
+      PYBIN="/opt/python/cp311-cp311/bin/python"
       ;;
     esac
 
@@ -281,7 +281,7 @@ the ``quay.io/pypa/manylinux2014_aarch64`` image.  Run the following:
 
 .. code-block:: bash
 
-    PYTHON_VERSION=3.7
+    PYTHON_VERSION=3.8
     rm -rf build
     docker run -e \
            --rm -v `pwd`:/io quay.io/pypa/manylinux2014_aarch64 \
@@ -299,9 +299,6 @@ Where ``build_wheels.sh`` is:
     # build based on python version from args
     PYTHON_VERSION="$1"
     case $PYTHON_VERSION in
-    3.7)
-      PYBIN="/opt/python/cp37-cp37m/bin/python"
-      ;;
     3.8)
       PYBIN="/opt/python/cp38-cp38/bin/python"
       ;;
@@ -310,6 +307,9 @@ Where ``build_wheels.sh`` is:
       ;;
     3.10)
       PYBIN="/opt/python/cp310-cp310/bin/python"
+      ;;
+    3.11)
+      PYBIN="/opt/python/cp311-cp311/bin/python"
       ;;
     esac
 
