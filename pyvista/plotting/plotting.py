@@ -6559,7 +6559,10 @@ class Plotter(BasePlotter):
                             VERY_FIRST_RENDER = False
 
                     self.iren.start()
-                self.iren.initialize()
+
+                if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                    self.iren.initialize()
+
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
