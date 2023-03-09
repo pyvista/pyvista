@@ -1,7 +1,6 @@
 import itertools
 import os
 import platform
-import sys
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -16,10 +15,6 @@ from pyvista.errors import MissingDataError
 from pyvista.utilities.misc import can_create_mpl_figure
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
-
-skip_py2_nobind = pytest.mark.skipif(
-    int(sys.version[0]) < 3, reason="Python 2 doesn't support binding methods"
-)
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 skip_no_mpl_figure = pytest.mark.skipif(
@@ -171,7 +166,6 @@ def test_clip_filter_scalar_multiple():
     assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
-@skip_py2_nobind
 def test_clip_filter_composite(composite):
     # Now test composite data structures
     output = composite.clip(normal=normals[0], invert=False)
@@ -219,7 +213,6 @@ def test_clip_box(datasets):
     assert clp is not None
 
 
-@skip_py2_nobind
 def test_clip_box_composite(composite):
     # Now test composite data structures
     output = composite.clip_box(invert=False, progress_bar=True)
@@ -286,7 +279,6 @@ def test_slice_filter(datasets):
     assert result.n_points < 1
 
 
-@skip_py2_nobind
 def test_slice_filter_composite(composite):
     # Now test composite data structures
     output = composite.slice(normal=normals[0], progress_bar=True)
@@ -305,7 +297,6 @@ def test_slice_orthogonal_filter(datasets):
             assert isinstance(slc, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_slice_orthogonal_filter_composite(composite):
     # Now test composite data structures
     output = composite.slice_orthogonal(progress_bar=True)
@@ -328,7 +319,6 @@ def test_slice_along_axis(datasets):
         dataset.slice_along_axis(axis='u')
 
 
-@skip_py2_nobind
 def test_slice_along_axis_composite(composite):
     # Now test composite data structures
     output = composite.slice_along_axis(progress_bar=True)
@@ -559,7 +549,6 @@ def test_outline(datasets):
         assert isinstance(outline, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_outline_composite(composite):
     # Now test composite data structures
     output = composite.outline(progress_bar=True)
@@ -579,7 +568,6 @@ def test_outline_corners(datasets):
         assert isinstance(outline, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_outline_corners_composite(composite):
     # Now test composite data structures
     output = composite.outline_corners(progress_bar=True)
@@ -618,7 +606,6 @@ def test_extract_all_edges(datasets):
         assert edges.n_lines
 
 
-@skip_py2_nobind
 def test_wireframe_composite(composite):
     # Now test composite data structures
     output = composite.extract_all_edges(progress_bar=True)
@@ -709,7 +696,6 @@ def test_elevation():
         elev = dataset.elevation(scalar_range={1, 2}, progress_bar=True)
 
 
-@skip_py2_nobind
 def test_elevation_composite(composite):
     # Now test composite data structures
     output = composite.elevation(progress_bar=True)
@@ -765,7 +751,6 @@ def test_compute_cell_sizes(datasets):
     assert np.allclose(grid.volume, volume)
 
 
-@skip_py2_nobind
 def test_compute_cell_sizes_composite(composite):
     # Now test composite data structures
     output = composite.compute_cell_sizes(progress_bar=True)
@@ -779,7 +764,6 @@ def test_cell_centers(datasets):
         assert isinstance(result, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_cell_centers_composite(composite):
     # Now test composite data structures
     output = composite.cell_centers(progress_bar=True)
@@ -1091,7 +1075,6 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
-@skip_py2_nobind
 def test_cell_data_to_point_data_composite(composite):
     # Now test composite data structures
     output = composite.cell_data_to_point_data(progress_bar=True)
@@ -1106,7 +1089,6 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
-@skip_py2_nobind
 def test_point_data_to_cell_data_composite(composite):
     # Now test composite data structures
     output = composite.point_data_to_cell_data(progress_bar=True)
@@ -1120,7 +1102,6 @@ def test_triangulate():
     assert np.any(tri.cells)
 
 
-@skip_py2_nobind
 def test_triangulate_composite(composite):
     # Now test composite data structures
     output = composite.triangulate(progress_bar=True)
@@ -1673,7 +1654,6 @@ def test_extract_points():
     assert sub_surf_nocells.cells[0] == 1
 
 
-@skip_py2_nobind
 def test_slice_along_line_composite(composite):
     # Now test composite data structures
     a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]

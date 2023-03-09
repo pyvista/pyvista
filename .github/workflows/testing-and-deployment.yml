@@ -135,8 +135,6 @@ jobs:
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
       matrix:
         include:
-          - python-version: '3.7'
-            vtk-version: '9.0.3'  # Requires numpy<1.24
           - python-version: '3.8'
             vtk-version: '9.0.3'  # Requires numpy<1.24
           - python-version: '3.9'
@@ -232,7 +230,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
     steps:
       - uses: actions/checkout@v3
 
