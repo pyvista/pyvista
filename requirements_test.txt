@@ -23,7 +23,7 @@ pytest-xdist<3.3.0
 pytest_pyvista==0.1.7
 pythreejs<2.5.0
 Sphinx<5.4.0
-sphinx-gallery<0.12.0
+sphinx-gallery<0.13.0
 sympy<1.12.0
 tqdm<4.66.0
 trame>=2.2.6,<2.4
