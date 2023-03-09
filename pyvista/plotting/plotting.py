@@ -6514,7 +6514,10 @@ class Plotter(BasePlotter):
                     if os.name == 'nt':  # pragma: no cover
                         self.iren.process_events()
                     self.iren.start()
-                self.iren.initialize()
+
+                if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                    self.iren.initialize()
+
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
