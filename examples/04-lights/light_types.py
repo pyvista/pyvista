@@ -15,9 +15,10 @@ Lights come in three types:
 Headlight
 =========
 
-For headlights the :py:attr:`position` and :py:attr:`focal_point` properties
-are meaningless. No matter where you move the camera, the light always emanates
-from the view point:
+For headlights the :py:attr:`pyvista.Camera.position` and
+:py:attr:`pyvista.Camera.focal_point` properties are meaningless. No matter
+where you move the camera, the light always emanates from the view point:
+
 """
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
@@ -41,12 +42,14 @@ plotter.show()
 # Camera light
 # ============
 #
-# Camera lights define their :py:attr:`position` and :py:attr:`focal_point`
-# properties in a coordinate system that is local to the camera. The coordinates
-# in the scene's coordinate system can be accessed through the :py:attr:`world_position`
-# and :py:attr:`world_focal_point` read-only properties, respectively. For specifics
-# of the local coordinate system used for the coordinates please see the documentation
-# of :func:`pyvista.Light.set_camera_light`.
+# Camera lights define their :py:attr:`pyvista.Camera.position` and
+# :py:attr:`pyvista.Camera.focal_point` properties in a coordinate system that
+# is local to the camera. The coordinates in the scene's coordinate system can
+# be accessed through the :py:attr:`pyvista.Camera.world_position` and
+# :py:attr:`pyvista.Camera.world_focal_point` read-only properties,
+# respectively. For specifics of the local coordinate system used for the
+# coordinates please see the documentation of
+# :func:`pyvista.Light.set_camera_light`.
 
 plotter = pv.Plotter(lighting='none')
 plotter.add_mesh(mesh, color='tan', smooth_shading=True)

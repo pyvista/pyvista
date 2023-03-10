@@ -6,24 +6,25 @@ General Utilities
    :toctree: _autosummary
 
    utilities.VtkErrorCatcher
-   utilities.set_error_output_file
-   utilities.is_inside_bounds
    utilities.axis_rotation
+   utilities.is_inside_bounds
+   utilities.set_error_output_file
 
 
-Object Conversions
-~~~~~~~~~~~~~~~~~~
+Object Conversions or Wrapping
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
 
-   wrap
-   is_pyvista_dataset
-   image_to_texture
-   numpy_to_texture
    array_from_vtkmatrix
-   vtkmatrix_from_array
    cubemap
    cubemap_from_filenames
+   image_to_texture
+   is_pyvista_dataset
+   numpy_to_texture
+   pyvista_ndarray
+   vtkmatrix_from_array
+   wrap
 
 
 File IO
@@ -33,8 +34,8 @@ File IO
 
    read
    read_exodus
-   read_texture
    read_legacy
+   read_texture
    save_meshio
 
 
@@ -43,10 +44,10 @@ Mesh Creation
 .. autosummary::
    :toctree: _autosummary
 
-   lines_from_points
-   vtk_points
-   vector_poly_data
    fit_plane_to_points
+   lines_from_points
+   vector_poly_data
+   vtk_points
 
 
 Array Access
@@ -54,11 +55,11 @@ Array Access
 .. autosummary::
    :toctree: _autosummary
 
-   get_array
-   convert_array
-   point_array
    cell_array
+   convert_array
    field_array
+   get_array
+   point_array
 
 
 Image Comparison and Regression
