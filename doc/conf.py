@@ -18,6 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
+from pyvista.utilities.docs import linkcode_resolve  # noqa: F401
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -67,10 +68,10 @@ extensions = [
     "pyvista.ext.plot_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    'sphinx.ext.linkcode',
     "sphinx.ext.doctest",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.viewcode",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
@@ -462,6 +463,11 @@ html_context = {
     "doc_path": "doc",
 }
 html_show_sourcelink = False
+html_copy_source = False
+
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+html_show_sphinx = False
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
