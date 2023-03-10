@@ -456,8 +456,7 @@ requirements::
   $ pre-commit install
   $ git commit -m "added my cool feature"
   black....................................................................Passed
-  isort....................................................................Passed
-  flake8...................................................................Passed
+  ruff.....................................................................Passed
   codespell................................................................Passed
 
 The actual installation of the environment happens before the first commit
