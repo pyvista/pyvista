@@ -296,7 +296,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Can no longer be used to set the active vectors.  Either use
             :func:`DataSetAttributes.set_vectors` or if the array
             already exists, assign to
-            :attr:`pyvista.DataSetAttribute.active_vectors_name`.
+            :attr:`pyvista.DataSetAttributes.active_vectors_name`.
 
         Examples
         --------

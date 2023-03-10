@@ -120,7 +120,20 @@ def scale_point(camera, point, invert=False):
 
 
 class CameraPosition:
-    """Container to hold camera location attributes."""
+    """Container to hold camera location attributes.
+
+    Parameters
+    ----------
+    position : Sequence
+        Position of the camera.
+
+    focal_point : Sequence
+        The focal point of the camera.
+
+    viewup : Sequence
+        View up of the camera.
+
+    """
 
     def __init__(self, position, focal_point, viewup):
         """Initialize a new camera position descriptor."""

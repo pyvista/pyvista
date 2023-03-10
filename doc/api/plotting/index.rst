@@ -27,14 +27,17 @@ all plotting functionality in PyVista.
 .. autosummary::
    :toctree: _autosummary
 
-   Plotter
-   Renderer
-   Property
-   plotting.volume_property.VolumeProperty
-   plotting.volume.Volume
    Actor
+   CameraPosition
    DataSetMapper
    LookupTable
+   Plotter
+   Property
+   Renderer
+   plotting._BaseMapper
+   plotting.opts.InterpolationType
+   plotting.volume.Volume
+   plotting.volume_property.VolumeProperty
 
 
 Composite Plotting Reference

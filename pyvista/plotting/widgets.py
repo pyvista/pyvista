@@ -737,10 +737,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
+        volume : pyvista.plotting.volume.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.UniformGrid` or
             :class:`pyvista.RectilinearGrid`, or the return value from
-            :class:`pyvista.plotting.Volume` from :func:`Plotter.add_volume`.
+            :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.

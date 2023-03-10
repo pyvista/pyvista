@@ -428,7 +428,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
 
     Returns
     -------
-    pyvista.FieldAssociation
+    pyvista.utilities.helpers.FieldAssociation
         Association of the array. If array is not present and ``err`` is
         ``False``, ``FieldAssociation.NONE`` is returned.
 

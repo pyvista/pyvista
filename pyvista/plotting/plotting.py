@@ -2232,7 +2232,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Accepts only a string name of an array that is present on the
             composite dataset.
 
-        clim : 2 item list, optional
+        clim : Sequence[float, float], optional
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
@@ -2241,11 +2241,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color <pyvista.themes.DefaultTheme.edges_color>`
+        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color <pyvista.themes.DefaultTheme.edge_color>`
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
-            Defaults to :attr:`pyvista.global_theme.edge_color`
+            Defaults to :attr:`pyvista.global_theme.edge_color
             <pyvista.themes.DefaultTheme.edge_color>`.
 
         point_size : float, default: 5.0
@@ -2786,7 +2786,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
 
-        clim : 2 item list, optional
+        clim : Sequence[float, float], optional
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
@@ -3583,7 +3583,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             shaped ``(N, 4)`` where ``N`` is the number of points, and of
             datatype ``np.uint8``.
 
-        clim : 2 item list, optional
+        clim : Sequence[float, float], optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
             ``np.uint8``. ``rng`` is also an accepted alias for this parameter.
@@ -4218,8 +4218,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        clim : sequence
-            The new range of scalar bar. Two item list (e.g. ``[-1, 2]``).
+        clim : Sequence[float, float]
+            The new range of scalar bar. For example ``[-1, 2]``.
 
         name : str, optional
             The title of the scalar bar to update.
@@ -5523,7 +5523,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str, pathlib.Path, BytesIO, optional
+        filename : str, pathlib.Path, io.BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
@@ -5957,7 +5957,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``True``, only add the light to the active
             renderer. The default is that every renderer adds the
             light. To add the light to an arbitrary renderer, see
-            :func:`pyvista.plotting.renderer.Renderer.add_light`.
+            :func:`pyvista.Renderer.add_light`.
 
         Examples
         --------
@@ -6306,7 +6306,7 @@ class Plotter(BasePlotter):
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
-        screenshot : str, pathlib.Path, BytesIO or bool, optional
+        screenshot : str, pathlib.Path, io.BytesIO or bool, optional
             Take a screenshot of the initial state of the plot.
             If a string, it specifies the path to which the screenshot
             is saved. If ``True``, the screenshot is returned as an
@@ -6380,7 +6380,7 @@ class Plotter(BasePlotter):
             * [Window height x Window width x 4] if the theme sets
               ``transparent_background=True``.
 
-        widget
+        widget : ipywidgets.Widget
             IPython widget when ``return_viewer=True``.
 
         Notes

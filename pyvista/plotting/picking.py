@@ -462,8 +462,8 @@ class PickingHelper:
         """Return the picked mesh.
 
         This returns the picked mesh after selecting a mesh with
-        :func:`<enable_mesh_picking> pyvista.Plotter.enable_mesh_picking` or
-        :func:`<enable_point_picking> pyvista.Plotter.enable_point_picking`.
+        :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>` or
+        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
 
         Returns
         -------
@@ -492,7 +492,7 @@ class PickingHelper:
         """Return the picked block index.
 
         This returns the picked block index after selecting a point with
-        :func:`<enable_point_picking> pyvista.Plotter.enable_point_picking`.
+        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
 
         Returns
         -------
@@ -569,7 +569,7 @@ class PickingHelper:
         Notes
         -----
         Picked point can be accessed from :attr:`picked_point
-        <PickingHelper.picked_point>` attribute.
+        <pyvista.Plotter.picked_point>` attribute.
 
         Examples
         --------
@@ -784,7 +784,7 @@ class PickingHelper:
         """Enable picking at paths.
 
         This is a convenience method for :func:`enable_point_picking
-        <PickingHelper.enable_point_picking>` to keep track of the
+        <pyvista.Plotter.enable_point_picking>` to keep track of the
         picked points and create a line using those points.
 
         The line is saved to the ``.picked_path`` attribute of this
@@ -1136,7 +1136,7 @@ class PickingHelper:
         Notes
         -----
         The picked block index can be accessed from :attr:`picked_block_index
-        <PickingHelper.picked_block_index>` attribute.
+        <pyvista.Plotter.picked_block_index>` attribute.
 
         Examples
         --------

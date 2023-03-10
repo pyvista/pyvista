@@ -103,7 +103,7 @@ A :class:`pyvista.PolyData` object can be initialized with:
 This creates an mesh, which you can then add
 
 * Points with :attr:`points <pyvista.DataSet.points>`
-* Vertices with :attr:`verts <pyvista.DataSet.verts>`
+* Vertices with :attr:`verts <pyvista.PolyData.verts>`
 * Lines with :attr:`lines <pyvista.PolyData.lines>`
 * Faces with :attr:`faces <pyvista.PolyData.faces>`
 

@@ -274,7 +274,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
     texture : pyvista.Texture, optional
         Texture used to fill shapes drawn using this brush. Any object
-        convertible to a :class:`Texture` is allowed. Defaults to
+        convertible to a :class:`pyvista.Texture` is allowed. Defaults to
         ``None``.
 
     Other Parameters
@@ -3120,9 +3120,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         y1 : array_like
             Y coordinates of the points on the first outline of the area to draw.
 
-        y2 : array_like, default: np.zeros_like(x)
+        y2 : array_like, optional
             Y coordinates of the points on the second outline of the
-            area to draw.
+            area to draw. Defaults to ``np.zeros_like(x)``.
 
         color : ColorLike, default: "b"
             Color of the area drawn in this plot. Any color parsable

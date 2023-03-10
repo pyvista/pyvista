@@ -189,7 +189,7 @@ def plot(
         * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
 
-    widget
+    widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.
 
     Examples

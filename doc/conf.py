@@ -159,6 +159,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.__init__$',
     r'\.__new__$',
     # parm of abstract classes
+    r'\._BaseMapper$',
     r'\.CompositeFilters$',
     r'\.DataObject$',
     r'\.DataSet$',
@@ -193,8 +194,11 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
+    r'\.ActiveArrayInfo$',
     r'\.CellType$',
     r'\.DataObject\.copy_meta_from$',
+    r'\.FieldAssociation$',
+    r'\.InterpolationType$',
     r'\.MultiBlock\.copy_meta_from$',
     # wraps
     r'\.Plotter\.enable_depth_peeling$',
@@ -220,18 +224,27 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.Texture(\.|$)',  # awaiting Texture refactor
 }
 
+# linkcheck ignore entries
 nitpick_ignore_regex = [
-    (r'py:.*', 'optional'),
-    (r'py:.*', 'vtk.*'),
-    (r'py:.*', 'VTK'),
-    (r'py:.*', 'or'),
-    (r'py:.*', 'of'),
+    (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'ActiveArrayInfo'),
+    (r'py:.*', 'CallableBool'),
     (r'py:.*', 'FieldAssociation'),
-    (r'py:.*', 'Trimesh'),
-    (r'py:.*', 'Mesh'),
-    (r'py:.*', 'ColorLike'),
-    (r'py:.*', 'PVDDataSet'),
+    (r'py:.*', 'VTK'),
+    (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'cycler.Cycler'),
+    (r'py:.*', 'ipywidgets.Widget'),
+    (r'py:.*', 'meshio.*'),
+    (r'py:.*', 'networkx.*'),
+    (r'py:.*', 'of'),
+    (r'py:.*', 'optional'),
+    (r'py:.*', 'or'),
+    (r'py:.*', 'pyvista.LookupTable.n_values'),
+    (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'sys.float_info.max'),
+    (r'py:.*', 'various'),
+    (r'py:.*', 'vtk.*'),
 ]
 
 
@@ -258,6 +271,7 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
+    'trimesh': ('https://trimsh.org', (None, 'intersphinx/trimesh-objects.inv')),
 }
 intersphinx_timeout = 10
 
