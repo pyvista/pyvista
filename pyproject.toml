@@ -165,3 +165,29 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[tool.ruff]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "doc/examples",
+    "doc/_build",
+    "pyvista/**/__init__.py",
+    "pyvista/__init__.py",
+]
+ignore = [
+    "E402",
+    "E501",
+    "E722",
+    "E731",
+    "E741",
+    "Q0",
+]
+select = [
+    "E",
+    "F",
+    "Q",
+    "W",
+]
