@@ -38,7 +38,7 @@ mesh.plot(smooth_shading=True, split_sharp_edges=True)
 
 ###############################################################################
 # We can even plot the edges that will be split using
-# :func:`extract_feature_edges <pyvista.PolyDataFilters.extract_feature_edges>`.
+# :func:`extract_feature_edges <pyvista.DataSetFilters.extract_feature_edges>`.
 
 # extract the feature edges exceeding 30 degrees
 edges = mesh.extract_feature_edges(

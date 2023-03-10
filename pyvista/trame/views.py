@@ -28,7 +28,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     Parameters
     ----------
-    plotter : pyvista.BasePlotter
+    plotter : pyvista.Plotter
         The PyVista Plotter to display in the output view.
 
     interactive_ratio : int, optional
@@ -96,7 +96,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
 
     Parameters
     ----------
-    plotter : pyvista.BasePlotter
+    plotter : pyvista.Plotter
         The PyVista Plotter to represent in the output view.
 
     namespace : str, optional
@@ -137,7 +137,7 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
     Parameters
     ----------
-    plotter : pyvista.BasePlotter
+    plotter : pyvista.Plotter
         The PyVista Plotter to display in the output view.
 
     interactive_ratio : int, optional

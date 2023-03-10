@@ -97,7 +97,7 @@ def scale_point(camera, point, invert=False):
     point : tuple(float)
         Length 3 tuple of the point coordinates.
 
-    invert : bool
+    invert : bool, default: False
         If ``True``, invert the matrix to transform the point out of
         the camera's transformed space. Default is ``False`` to
         transform a point from world coordinates to the camera's
@@ -120,7 +120,20 @@ def scale_point(camera, point, invert=False):
 
 
 class CameraPosition:
-    """Container to hold camera location attributes."""
+    """Container to hold camera location attributes.
+
+    Parameters
+    ----------
+    position : Sequence
+        Position of the camera.
+
+    focal_point : Sequence
+        The focal point of the camera.
+
+    viewup : Sequence
+        View up of the camera.
+
+    """
 
     def __init__(self, position, focal_point, viewup):
         """Initialize a new camera position descriptor."""
@@ -2838,7 +2851,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         radius : float, default: 0.5
             Neighbor pixels considered when computing the occlusion.
 
-        bias : float, default 0.005
+        bias : float, default: 0.005
             Tolerance factor used when comparing pixel depth.
 
         kernel_size : int, default: 256
@@ -3137,9 +3150,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels : list, optional
             When set to ``None``, uses existing labels as specified by
 
-            - :func:`add_mesh <BasePlotter.add_mesh>`
-            - :func:`add_lines <BasePlotter.add_lines>`
-            - :func:`add_points <BasePlotter.add_points>`
+            - :func:`add_mesh <Plotter.add_mesh>`
+            - :func:`add_lines <Plotter.add_lines>`
+            - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
             legend.  Each entry must contain two strings, [label,

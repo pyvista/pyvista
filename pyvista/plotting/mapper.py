@@ -534,16 +534,16 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : color_like, optional
+        nan_color : pyvista.ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : color_like, optional
+        above_color : pyvista.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'above'``.
 
-        below_color : color_like, optional
+        below_color : pyvista.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
@@ -580,7 +580,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
-        clim : 2 item list, optional
+        clim : Sequence, optional
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``(-1, 2)``.
 
@@ -754,7 +754,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             Opacity array to color the dataset. Array length must match either
             the number of points or cells.
 
-        color : color_like
+        color : pyvista.ColorLike
             The color to use with the opacity array.
 
         n_colors : int

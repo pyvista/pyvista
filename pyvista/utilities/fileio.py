@@ -51,7 +51,7 @@ def read_legacy(filename, progress_bar=False):
     """Use VTK's legacy reader to read a file.
 
     .. deprecated:: 0.35.0
-        This function is deprecated. Use :func:`pyvsista.read` instead.
+       This function is deprecated. Use :func:`pyvista.read` instead.
 
     This uses ``vtk.vtkDataSetReader`` to read the data.
 

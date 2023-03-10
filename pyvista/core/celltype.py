@@ -7,17 +7,39 @@ from pyvista import _vtk
 class CellType(IntEnum):
     """Define types of cells.
 
-    Warnings
+    Notes
+    -----
+    See `vtkCellType.h
+    <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ for all
+    cell types.
+
+    Examples
     --------
-    The following types need ``vtk >=v9.0.0`` (See `Implementation of vtkTriQuadraticPyramid cell
-    <https://gitlab.kitware.com/vtk/vtk/-/merge_requests/8295>`_ and `Add Bezier cell types <https://gitlab.kitware.com/vtk/vtk/-/merge_requests/6055>`_ ).
-    * TRIQUADRATIC_PYRAMID
-    * BEZIER_TRIANGLE
-    * BEZIER_QUADRILATERAL
-    * BEZIER_TETRAHEDRON
-    * BEZIER_HEXAHEDRON
-    * BEZIER_WEDGE
-    * BEZIER_PYRAMID
+    Create a single cube. Notice how the cell type is defined using the
+    ``CellType``.
+
+    >>> import numpy as np
+    >>> from pyvista import CellType
+    >>> import pyvista
+    >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
+    >>> points = np.array([[0, 0, 0],
+    ...                    [1, 0, 0],
+    ...                    [1, 1, 0],
+    ...                    [0, 1, 0],
+    ...                    [0, 0, 1],
+    ...                    [1, 0, 1],
+    ...                    [1, 1, 1],
+    ...                    [0, 1, 1]], dtype=np.float32)
+    >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+    >>> grid  # doctest:+SKIP
+    UnstructuredGrid (0x7f5b0a55e1a0)
+      N Cells:    1
+      N Points:   8
+      X Bounds:   0.000e+00, 1.000e+00
+      Y Bounds:   0.000e+00, 1.000e+00
+      Z Bounds:   0.000e+00, 1.000e+00
+      N Arrays:   0
 
     """
 
