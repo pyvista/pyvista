@@ -110,7 +110,7 @@ class DataSet(DataSetFilters, DataObject):
         
         TODO: Better docstring or figure out a better wrapping.
         """
-        return pyvista.plot(*args, **kwargs)
+        return pyvista.plot(self, *args, **kwargs)
 
     @property
     def active_scalars_info(self) -> ActiveArrayInfo:
