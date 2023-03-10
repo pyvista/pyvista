@@ -33,10 +33,11 @@ def check_gc(request):
     #
     # This applies to the entire session, so it's going to be the most useful
     # when debugging tests with `pytest -x`
+    pyvista.close_all()
     if request.session.testsfailed:
         return
 
-    pyvista.close_all()
+    
 
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
