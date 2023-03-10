@@ -4539,6 +4539,7 @@ class DataSetFilters:
         self,
         grid=None,
         merge_points=True,
+        tolerance=0.0,
         inplace=False,
         main_has_priority=True,
         progress_bar=False,
@@ -4564,6 +4565,10 @@ class DataSetFilters:
         merge_points : bool, optional
             Points in exactly the same location will be merged between
             the two meshes. Warning: this can leave degenerate point data.
+
+        tolerance : float, default: 0.0
+            The absolute tolerance to use to find coincident points when
+            ``merge_points=True``.
 
         inplace : bool, optional
             Updates grid inplace when True if the input type is an
@@ -4602,6 +4607,7 @@ class DataSetFilters:
         """
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
+        append_filter.SetTolerance(tolerance)
 
         if not main_has_priority:
             append_filter.AddInputData(self)
