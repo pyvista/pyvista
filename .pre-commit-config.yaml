@@ -69,3 +69,8 @@ repos:
   rev: 0.21.0
   hooks:
     - id: check-github-workflows
+
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.254'
+  hooks:
+    - id: ruff
