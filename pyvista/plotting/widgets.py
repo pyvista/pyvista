@@ -793,7 +793,7 @@ class WidgetHelper:
             All additional keyword arguments are passed to
             :func:`Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
-            :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`.
+            :class:`pyvista.UniformGrid` and :class:`pyvista.RectilinearGrid`.
 
         Returns
         -------
@@ -806,7 +806,7 @@ class WidgetHelper:
         elif not isinstance(volume, pyvista.plotting.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.UniformGrid, '
-                'pyvista.RectangularGrid, or a pyvista.plotting.volume.Volume '
+                'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
             )
         else:
@@ -1076,14 +1076,14 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the line created.
 
-        color : ColorLike, optional, defaults to white
+        color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
 
         use_vertices : bool, optional
             Changes the arguments of the callback method to take the end
             points of the line instead of a PolyData object.
 
-        pass_widget : boollist
+        pass_widget : bool, default: False
             If ``True``, the widget will be passed as the last
             argument of the callback.
 

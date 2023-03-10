@@ -102,8 +102,8 @@ A :class:`pyvista.PolyData` object can be initialized with:
 
 This creates an mesh, which you can then add
 
-* Points with :attr:`points <pyvista.Dataset.points>`
-* Vertices with :attr:`verts <pyvista.Dataset.verts>`
+* Points with :attr:`points <pyvista.DataSet.points>`
+* Vertices with :attr:`verts <pyvista.DataSet.verts>`
 * Lines with :attr:`lines <pyvista.PolyData.lines>`
 * Faces with :attr:`faces <pyvista.PolyData.faces>`
 
@@ -209,7 +209,7 @@ An unstructured grid can be initialized with:
 
 This creates an empty grid, and is it not useful until points and
 cells are added to it. Points and cells can be added later with
-:attr:`points <pyvista.Dataset.points>`, :attr:`cells
+:attr:`points <pyvista.DataSet.points>`, :attr:`cells
 <pyvista.UnstructuredGrid.cells>`, and :attr:`celltypes
 <pyvista.UnstructuredGrid.celltypes>` .
 

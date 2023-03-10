@@ -71,7 +71,7 @@ slices.plot(cmap=cmap)
 # ++++++++++++++++
 #
 # We can also slice a dataset along a :func:`pyvista.Spline` or
-# :func:`pyvista.Line` using the :func:`DataSetFilters.slice_along_line` filter.
+# :func:`pyvista.Line` using the :func:`pyvista.DataSetFilters.slice_along_line` filter.
 #
 # First, define a line source through the dataset of interest. Please note
 # that this type of slicing is computationally expensive and might take a while

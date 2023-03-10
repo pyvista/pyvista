@@ -22,6 +22,7 @@ PyVista.
    themes._ColorbarConfig
    themes._DepthPeelingConfig
    themes._Font
+   themes._LightingConfig
    themes._SilhouetteConfig
    themes._SliderConfig
    themes._SliderStyleConfig

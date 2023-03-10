@@ -2237,11 +2237,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        show_edges : bool, default: :attr:`pyvista.global_theme.show_edges`
+        show_edges : bool, default: :attr:`pyvista.global_theme.show_edges <pyvista.themes.DefaultTheme.show_edges>`
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color`
+        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color <pyvista.themes.DefaultTheme.edges_color>`
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -2929,7 +2929,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, optional
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : ColorLike, optional, defaults to gray
+        nan_color : ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -6320,7 +6320,7 @@ class Plotter(BasePlotter):
             Returns a numpy array representing the last image along
             with the camera position.
 
-        cpos : list(tuple(floats)), optional
+        cpos : list(tuple(float)), optional
             The camera position.  You can also set this with
             :attr:`Plotter.camera_position`.
 

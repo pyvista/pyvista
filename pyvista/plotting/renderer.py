@@ -97,7 +97,7 @@ def scale_point(camera, point, invert=False):
     point : tuple(float)
         Length 3 tuple of the point coordinates.
 
-    invert : bool
+    invert : bool, default: False
         If ``True``, invert the matrix to transform the point out of
         the camera's transformed space. Default is ``False`` to
         transform a point from world coordinates to the camera's
@@ -2834,7 +2834,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         radius : float, default: 0.5
             Neighbor pixels considered when computing the occlusion.
 
-        bias : float, default 0.005
+        bias : float, default: 0.005
             Tolerance factor used when comparing pixel depth.
 
         kernel_size : int, default: 256

@@ -153,7 +153,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     Returns
     -------
-    vtkDataArray, numpy.ndarray, or DataFrame
+    vtkDataArray or numpy.ndarray
         The converted array.  If input is a :class:`numpy.ndarray` then
         returns ``vtkDataArray`` or is input is ``vtkDataArray`` then
         returns NumPy ``ndarray``.
@@ -195,7 +195,7 @@ def is_pyvista_dataset(obj):
 
     Parameters
     ----------
-    obj : anything
+    obj : Any
         Any object to test.
 
     Returns

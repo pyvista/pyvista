@@ -193,8 +193,9 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
-    r'\.MultiBlock\.copy_meta_from$',
+    r'\.CellType$',
     r'\.DataObject\.copy_meta_from$',
+    r'\.MultiBlock\.copy_meta_from$',
     # wraps
     r'\.Plotter\.enable_depth_peeling$',
     r'\.add_scalar_bar$',
@@ -216,7 +217,22 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.PyVistaRemoteView(\.|$)',
     r'\.PyVistaLocalView(\.|$)',
     r'\.PyVistaRemoteLocalView(\.|$)',
+    r'\.Texture(\.|$)',  # awaiting Texture refactor
 }
+
+nitpick_ignore_regex = [
+    (r'py:.*', 'optional'),
+    (r'py:.*', 'vtk.*'),
+    (r'py:.*', 'VTK'),
+    (r'py:.*', 'or'),
+    (r'py:.*', 'of'),
+    (r'py:.*', 'ActiveArrayInfo'),
+    (r'py:.*', 'FieldAssociation'),
+    (r'py:.*', 'Trimesh'),
+    (r'py:.*', 'Mesh'),
+    (r'py:.*', 'ColorLike'),
+    (r'py:.*', 'PVDDataSet'),
+]
 
 
 add_module_names = False

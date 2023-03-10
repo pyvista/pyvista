@@ -2663,7 +2663,8 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int
-            VTK cell type. See `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
+            VTK cell type. See `vtkCellType.h
+            <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0

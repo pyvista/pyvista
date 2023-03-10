@@ -68,9 +68,9 @@ class PickingHelper:
 
         Parameters
         ----------
-        callback : function, optional
-            When input, calls this function after a selection is made. The
-            ``mesh`` is input as the first parameter to this function.
+        callback : callable, optional
+            When input, calls this callable after a selection is made. The
+            ``mesh`` is input as the first parameter to this callable.
 
         show : bool, optional
             Show the selection interactively. Best when combined with
@@ -259,10 +259,10 @@ class PickingHelper:
 
         Parameters
         ----------
-        callback : function, optional
-            When input, calls this function after a selection is made.
+        callback : callable, optional
+            When input, calls this callable after a selection is made.
             The picked_cells are input as the first parameter to this
-            function.
+            callable.
 
         through : bool, optional
             When ``True`` (default) the picker will select all cells
@@ -520,9 +520,9 @@ class PickingHelper:
 
         Parameters
         ----------
-        callback : function, optional
-            When input, calls this function after a selection is made. The
-            ``mesh`` is input as the first parameter to this function.
+        callback : callable, optional
+            When input, calls this callable after a selection is made. The
+            ``mesh`` is input as the first parameter to this callable.
 
         show_message : bool or str, optional
             Show the message about how to use the mesh picking tool. If this
@@ -654,17 +654,17 @@ class PickingHelper:
         Enable picking a point at the mouse location in the render
         view using the ``P`` key. This point is saved to the
         ``.picked_point`` attribute on the plotter. Pass a callback
-        function that takes that point as an argument. The picked
+        that takes that point as an argument. The picked
         point can either be a point on the first intersecting mesh, or
         a point in the 3D window.
 
         Parameters
         ----------
         callback : callable, optional
-            When input, calls this function after a pick is made.  The
+            When input, calls this callable after a pick is made.  The
             picked point is input as the first parameter to this
-            function.  If ``use_mesh`` is ``True``, the callback
-            function will be passed a pointer to the picked mesh and
+            callable.  If ``use_mesh`` is ``True``, the callback
+            callable will be passed a pointer to the picked mesh and
             the point ID of the selected mesh.
 
         show_message : bool or str, optional
@@ -682,9 +682,8 @@ class PickingHelper:
             ``True``. Default 10.
 
         use_mesh : bool, optional
-            If ``True``, the callback function will be passed a
-            pointer to the picked mesh and the point ID of the
-            selected mesh.
+            If ``True``, the callback will be passed a pointer to the picked
+            mesh and the point ID of the selected mesh.
 
         show_point : bool, optional
             Show the picked point after clicking.
@@ -794,9 +793,9 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this function after a pick is made.  The
+            When given, calls this callable after a pick is made.  The
             entire picked path is passed as the only parameter to this
-            function.
+            callable.
 
         show_message : bool or str, optional
             Show the message about how to use the point picking
@@ -902,9 +901,9 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this function after a pick is made.  The
+            When given, calls this callable after a pick is made.  The
             entire picked, geodesic path is passed as the only
-            parameter to this function.
+            parameter to this callable.
 
         show_message : bool or str, optional
             Show the message about how to use the point picking
@@ -1035,9 +1034,9 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this function after a pick is made.  The
+            When given, calls this callable after a pick is made.  The
             entire picked path is passed as the only parameter to this
-            function.
+            callable.
 
         normal : tuple(float), optional
             The normal to the horizon surface's projection plane.
@@ -1126,7 +1125,7 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When input, this picker calls this function after a selection is
+            When input, this picker calls this callable after a selection is
             made. The composite index is passed to ``callback`` as the first
             argument and the dataset as the second argument.
 
@@ -1242,8 +1241,7 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable
-            Callback function to call immediately after right
-            clicking.
+            Callback to call immediately after right clicking.
 
         """
 

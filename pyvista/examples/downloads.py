@@ -4935,7 +4935,7 @@ def download_dikhololo_night():  # pragma: no cover
 
     Returns
     -------
-    pyvista.texture
+    pyvista.Texture
         HDR Texture.
 
     Examples

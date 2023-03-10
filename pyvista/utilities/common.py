@@ -102,21 +102,21 @@ def sample_function(
     ----------
     function : vtk.vtkImplicitFunction
         Implicit function to evaluate.  For example, the function
-        generated from :func:`pyvista.perlin_noise`.
+        generated from :func:`perlin_noise() <pyvista.utilities.common.perlin_noise>`.
 
-    bounds : length 6 sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    bounds : Sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:
 
         - ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
-    dim : length 3 sequence, default: (50, 50, 50)
+    dim : Sequence, default: (50, 50, 50)
         Dimensions of the data on which to sample in the format of
         ``(xdim, ydim, zdim)``.
 
     compute_normals : bool, default: False
         Enable or disable the computation of normals.
 
-    output_type : np.dtype, default: numpy.double
+    output_type : numpy.dtype, default: numpy.double
         Set the output scalar type.  One of the following:
 
         - ``np.float64``

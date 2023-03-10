@@ -13,6 +13,17 @@ class pyvista_ndarray(np.ndarray):
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
+    Parameters
+    ----------
+    array : Iterable or vtk.vtkAbstractArray
+        Array like.
+
+    dataset : pyvista.DataSet
+        Input dataset.
+
+    association : pyvista.utilities.helpers.FieldAssociation
+        Field association.
+
     Examples
     --------
     Return the points of a Sphere as a :class:`pyvista.pyvista_ndarray`.

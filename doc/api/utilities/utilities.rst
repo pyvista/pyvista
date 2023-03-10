@@ -44,6 +44,7 @@ Mesh Creation
 .. autosummary::
    :toctree: _autosummary
 
+   CellType
    fit_plane_to_points
    lines_from_points
    vector_poly_data
