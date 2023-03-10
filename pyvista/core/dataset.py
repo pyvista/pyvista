@@ -92,9 +92,6 @@ class ActiveArrayInfo:
 class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
-    # Simply bind pyvista.plotting.plot to the object
-    plot = pyvista.plot
-
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__()
@@ -107,6 +104,13 @@ class DataSet(DataSetFilters, DataObject):
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
+
+    def plot(self, *args, **kwargs):
+        """Plot a dataset.
+        
+        TODO: Better docstring or figure out a better wrapping.
+        """
+        return pyvista.plot(*args, **kwargs)
 
     @property
     def active_scalars_info(self) -> ActiveArrayInfo:
