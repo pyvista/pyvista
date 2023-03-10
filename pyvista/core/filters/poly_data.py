@@ -1400,9 +1400,9 @@ class PolyDataFilters(DataSetFilters):
 
         Notes
         -----
-        If you encounter a segmentation fault or other error,
-        consider using :func:`pyvista.clean` to remove any invalid
-        cells before using this filter.
+        If you encounter a segmentation fault or other error, consider using
+        :func:`pyvista.PolyDataFilters.clean` to remove any invalid cells
+        before using this filter.
 
         Examples
         --------
@@ -3403,7 +3403,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        output : pyvista.Polydata
+        output : pyvista.PolyData
             Surface containing the contour surface.
 
         edges : pyvista.PolyData

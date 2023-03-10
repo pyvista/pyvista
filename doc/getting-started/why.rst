@@ -90,10 +90,10 @@ For more details comparing the two APIs, please see
 
 PyVista API
 ~~~~~~~~~~~
-For example, triangular surface meshes in VTK can be subdivided but
-every other object in VTK cannot.  It then makes sense that a
-:func:`subdivide` method be added to the existing triangular surface
-mesh.  That way, subdivision can be performed with:
+For example, triangular surface meshes in VTK can be subdivided but every other
+object in VTK cannot. It then makes sense that a
+:func:`pyvista.PolyDataFilters.subdivide` method be added to the existing
+triangular surface mesh. That way, subdivision can be performed with:
 
 .. jupyter-execute::
 

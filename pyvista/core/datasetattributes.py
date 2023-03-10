@@ -175,7 +175,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str
             Name of the array item you want to return the value from.
 
-        value : anything, optional
+        value : Any, optional
             A value to return if the key does not exist.  Default
             is ``None``.
 
@@ -264,7 +264,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Can no longer be used to set the active scalars.  Either use
             :func:`DataSetAttributes.set_scalars` or if the array
             already exists, assign to
-            :attr:`DataSetAttribute.active_scalars_name`.
+            :attr:`pyvista.DataSetAttributes.active_scalars_name`.
 
         Examples
         --------
@@ -296,7 +296,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Can no longer be used to set the active vectors.  Either use
             :func:`DataSetAttributes.set_vectors` or if the array
             already exists, assign to
-            :attr:`DataSetAttribute.active_vectors_name`.
+            :attr:`pyvista.DataSetAttributes.active_vectors_name`.
 
         Examples
         --------
@@ -862,7 +862,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str
             The name of the array to remove and return.
 
-        default : anything, optional
+        default : Any, optional
             If default is not given and key is not in the dictionary,
             a KeyError is raised.
 

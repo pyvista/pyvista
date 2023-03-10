@@ -705,7 +705,7 @@ the case of RGB data).
 
 Vectors are treated differently within VTK than scalars when
 performing transformations using the :func:`transform()
-<pyvista.DataSet.transform>` filter.  Unlike scalar
+<pyvista.DataSetFilters.transform>` filter.  Unlike scalar
 arrays, vector arrays will be transformed along with the geometry as
 these vectors represent quantities with direction.
 
@@ -714,7 +714,7 @@ these vectors represent quantities with direction.
    VTK permits only one "active" vector.  If you have multiple vector
    arrays that you wish to transform, set
    ``transform_all_input_vectors=True`` in :func:`transform()
-   <pyvista.DataSet.transform>`.  Be aware that this will
+   <pyvista.DataSetFilters.transform>`.  Be aware that this will
    transform any array with three components, so multi-component
    scalar arrays like RGB arrays will have to be discarded after
    transformation.

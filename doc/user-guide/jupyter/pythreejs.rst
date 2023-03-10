@@ -195,7 +195,7 @@ See the :ref:`ref_texture_example` example for more details regarding textures.
 RGB and RGBA Coloring
 ~~~~~~~~~~~~~~~~~~~~~
 The ``pythreejs`` supports RGBA plotting.  See the ``rgba`` parameter
-within :func:`add_mesh() <pyvista.Plotting.add_mesh>` for more details.
+within :func:`add_mesh() <pyvista.Plotter.add_mesh>` for more details.
 
 .. jupyter-execute::
 
@@ -343,7 +343,7 @@ Missing features include:
 * Scalar bars
 * Physically based rendering textures (e.g. from gLTF files).
 * Plotting points as spheres or lines as tubes.  Use :func:`glyph()
-  <pyvista.DataSet.glyph>` or :func:`tube()
-  <pyvista.PolyData.tube>` to convert to surfaces first and then plot.
+  <pyvista.DataSetFilters.glyph>` or :func:`tube()
+  <pyvista.PolyDataFilters.tube>` to convert to surfaces first and then plot.
 * Point labels
 * 2D text actors

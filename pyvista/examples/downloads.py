@@ -3110,8 +3110,8 @@ def download_cubemap_space_4k():  # pragma: no cover
     https://jaxry.github.io/panorama-to-cubemap/
 
     See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/cubemap_space>`_ for
-    more details.
+    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_
+    for more details.
 
     Returns
     -------
@@ -3145,7 +3145,7 @@ def download_cubemap_space_16k():  # pragma: no cover
     https://jaxry.github.io/panorama-to-cubemap/
 
     See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/cubemap_space>`_ for
+    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_ for
     more details.
 
     Returns
@@ -4935,7 +4935,7 @@ def download_dikhololo_night():  # pragma: no cover
 
     Returns
     -------
-    pyvista.texture
+    pyvista.Texture
         HDR Texture.
 
     Examples

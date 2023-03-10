@@ -997,8 +997,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def point_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the point normals.
 
-        If the point data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
-        normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
+        If the point data already contains an array named ``'Normals'``, this
+        array will be returned. Otherwise, the normals will be computed using
+        the default options of :func:`compute_normals()
+        <pyvista.PolyDataFilters.compute_normals>` and returned.
 
         Returns
         -------
@@ -1030,8 +1032,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def cell_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the cell normals.
 
-        If the cell data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
-        normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
+        If the cell data already contains an array named ``'Normals'``, this
+        array will be returned. Otherwise, the normals will be computed using
+        the default options of :func:`compute_normals()
+        <pyvista.PolyDataFilters.compute_normals>` and returned.
 
         Returns
         -------
@@ -1202,9 +1206,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     Parameters
     ----------
-    args : various
-        See below examples.
-    deep : optional
+    args : str, vtk.vtkUnstructuredGrid, iterable
+        See examples below.
+    deep : bool, default: False
         Whether to deep copy a vtkUnstructuredGrid object.
         Default is ``False``.  Keyword only.
 
@@ -1595,7 +1599,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Returns
         -------
         numpy.ndarray
-            Array of cell types.  Some of the most popular cell types:
+            Array of cell types.
+
+        Notes
+        -----
+        Here are some of the most popular cell types:
 
         * ``EMPTY_CELL = 0``
         * ``VERTEX = 1``
@@ -1630,9 +1638,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         * ``BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
         * ``BIQUADRATIC_TRIANGLE = 34``
 
-        See
-        https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
-        for all cell types.
+        See `vtkCellType.h
+        <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ for all
+        cell types.
 
         Examples
         --------
@@ -2115,11 +2123,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     Parameters
     ----------
-    args : various
-        See below examples.
-    deep : optional
+    args : vtk.vtkExplicitStructuredGrid, vtk.vtkUnstructuredGrid, str, Sequence
+        See examples below.
+    deep : bool, default: False
         Whether to deep copy a ``vtk.vtkUnstructuredGrid`` object.
-        Default is ``False``.  Keyword only.
 
     Examples
     --------
