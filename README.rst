@@ -43,9 +43,9 @@ PyVista
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
-.. |isort| image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat
-  :target: https://timothycrosley.github.io/isort
-  :alt: isort
+.. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json
+  :target: https://github.com/charliermarsh/ruff
+  :alt: ruff
 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
   :target: https://github.com/psf/black
@@ -73,7 +73,7 @@ PyVista
 +----------------------+------------+-------------+
 | Community            | |slack|    | |discuss|   |
 +----------------------+------------+-------------+
-| Formatter            | |black|    | |isort|     |
+| Formatter            | |black|    | |ruff|      |
 +----------------------+------------+-------------+
 | Affiliated           | |Sponsored by NumFOCUS|  |
 +----------------------+------------+-------------+
