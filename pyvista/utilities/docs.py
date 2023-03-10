@@ -60,8 +60,6 @@ def linkcode_resolve(domain, info):
             fn = inspect.getsourcefile(sys.modules[obj.__module__])
         except Exception:
             return None
-
-    if not fn:  # pragma: no cover
         return None
 
     fn = op.relpath(fn, start=op.dirname(pyvista.__file__))
