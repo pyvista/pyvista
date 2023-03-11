@@ -4,13 +4,6 @@ repos:
   hooks:
   - id: black
 
-- repo: https://github.com/keewis/blackdoc
-  rev: v0.3.8
-  hooks:
-  - id: blackdoc
-    files: '\.py$'
-    exclude: pyvista/plotting/charts.py
-
 - repo: https://github.com/pycqa/isort
   rev: 5.12.0
   hooks:
