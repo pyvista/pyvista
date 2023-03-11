@@ -196,7 +196,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(
-        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ...     dataset,
+        ...     show_scalar_bar=False,
+        ...     n_colors=3,
+        ...     cmap='bwr',
         ... )
         >>> mapper.interpolate_before_map = False
         >>> pl.show()
@@ -205,7 +208,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(
-        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ...     dataset,
+        ...     show_scalar_bar=False,
+        ...     n_colors=3,
+        ...     cmap='bwr',
         ... )
         >>> mapper.interpolate_before_map = True
         >>> pl.show()

@@ -1365,6 +1365,7 @@ class WidgetHelper:
         ...     res = int(value)
         ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
         ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
+        ...
         >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
@@ -2230,6 +2231,7 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
+        ...
         >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 

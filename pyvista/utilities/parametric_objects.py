@@ -92,7 +92,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     >>> import pyvista as pv
     >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     >>> z = np.linspace(-2, 2, 100)
-    >>> r = z ** 2 + 1
+    >>> r = z**2 + 1
     >>> x = r * np.sin(theta)
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
