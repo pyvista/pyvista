@@ -18,12 +18,16 @@ vtkSuperquadricSource
 as well as some pure-python helpers.
 
 """
+import warnings
+
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import check_valid_vector
 from pyvista.utilities.arrays import _coerce_pointslike_arg
+
+from .misc import PyVistaDeprecationWarning
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -1235,12 +1239,12 @@ def Triangle(points=None):
 
 
 def Rectangle(points=None):
-    """Create a rectangle defined by 4 points.
+    """Create a rectangle defined by 3 points.
 
     Parameters
     ----------
     points : sequence, optional
-        Points of the rectangle.  Defaults to a simple example.
+        Points of the rectangle. Defaults to a simple example.
 
     Returns
     -------
@@ -1253,9 +1257,85 @@ def Rectangle(points=None):
     >>> pointa = [1.0, 0.0, 0.0]
     >>> pointb = [1.0, 1.0, 0.0]
     >>> pointc = [0.0, 1.0, 0.0]
-    >>> pointd = [0.0, 0.0, 0.0]
-    >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
+    >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc])
     >>> rectangle.plot(show_edges=True, line_width=5)
+    """
+    if points is None:
+        points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
+    if len(points) == 4:
+        warnings.warn(
+            'Rectangle defined by 4 points is deprecated. Please use ``pyvista.Quadrilateral``.',
+            PyVistaDeprecationWarning,
+        )
+        return Quadrilateral(points)
+    elif len(points) != 3:
+        raise TypeError('Points must be given as length 3 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+
+    point_0 = np.array(points[0])
+    point_1 = np.array(points[1])
+    point_2 = np.array(points[2])
+
+    vec_01 = point_1 - point_0
+    vec_02 = point_2 - point_0
+    vec_12 = point_2 - point_1
+
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02)
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12)
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12)
+
+    if not (
+        np.isclose(scalar_pdct_01_02, 0)
+        or np.isclose(scalar_pdct_01_12, 0)
+        or np.isclose(scalar_pdct_02_12, 0)
+    ):
+        raise ValueError("The three points should defined orthogonal vectors")
+    if (
+        len([val for val in [scalar_pdct_01_02, scalar_pdct_01_12, scalar_pdct_02_12] if val == 0])
+        > 1
+    ):
+        raise ValueError("Unable to build a rectangle with less than three different points")
+    if np.isclose(scalar_pdct_01_02, 0):
+        point_3 = point_0 + vec_01 + vec_02
+        points.append(point_3)
+        cells = np.array([[4, 0, 1, 3, 2]])
+    if np.isclose(scalar_pdct_01_12, 0):
+        point_3 = point_1 + vec_12 - vec_01
+        points.append(point_3)
+        cells = np.array([[4, 0, 1, 2, 3]])
+    if np.isclose(scalar_pdct_02_12, 0):
+        point_3 = point_2 - vec_02 - vec_12
+        points.append(point_3)
+        cells = np.array([[4, 0, 2, 1, 3]])
+
+    return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
+def Quadrilateral(points=None):
+    """Create a quadrilateral defined by 4 points.
+
+    Parameters
+    ----------
+    points : sequence, optional
+        Points of the quadrilateral.  Defaults to a simple example.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Quadrilateral mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [1.0, 0.0, 0.0]
+    >>> pointb = [1.0, 1.0, 0.0]
+    >>> pointc = [0.0, 1.0, 0.0]
+    >>> pointd = [0.0, 0.0, 0.0]
+    >>> quadrilateral = pyvista.Quadrilateral([pointa, pointb, pointc, pointd])
+    >>> quadrilateral.plot(show_edges=True, line_width=5)
 
     """
     if points is None:
