@@ -37,8 +37,6 @@ def check_gc(request):
     if request.session.testsfailed:
         return
 
-    
-
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
     msg = 'Not all objects GCed:\n'
