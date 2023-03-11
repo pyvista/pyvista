@@ -86,7 +86,7 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 
 @pytest.fixture(autouse=True)
 def verify_image_cache_wrapper(verify_image_cache):
-    yield verify_image_cache
+    return verify_image_cache
 
 
 @pytest.fixture()
