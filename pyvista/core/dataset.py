@@ -49,7 +49,14 @@ class ActiveArrayInfo:
         self.name = name
 
     def copy(self):
-        """Return a copy of this object."""
+        """Return a copy of this object.
+
+        Returns
+        -------
+        ActiveArrayInfo
+            A copy of this object.
+
+        """
         return ActiveArrayInfo(self.association, self.name)
 
     def __getstate__(self):
@@ -584,7 +591,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Association of the scalars matching ``name``.
 
         numpy.ndarray
@@ -1777,7 +1784,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Field association of the array.
 
         Examples
@@ -2700,7 +2707,8 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int
-            VTK cell type. See `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
+            VTK cell type. See `vtkCellType.h
+            <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0

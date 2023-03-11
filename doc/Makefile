@@ -52,6 +52,11 @@ phtml:
 # deploy to https://github.com/pyvista/pyvista-docs
 # WARNING: Use with care as this overwrites history of gh-pages
 deploy:
+	@echo "*** Warning ***"
+	@echo "You are about to deploy to 'pyvista docs'."
+	@echo "This overwrites the history of gh-pages."
+	@echo "Are you sure? [y/N] " && read answer && [ $${answer:-N} = y ]
+	@echo "Deploying..."
 	cp README.md _build/html
 	cp ads.txt _build/html
 	touch _build/html/.nojekyll
@@ -66,3 +71,10 @@ deploy:
 
 update-intersphinx:
 	cd intersphinx && ./update.sh
+
+# nitpicky linkcheck
+linkcheck:
+	@$(SPHINXBUILD) -b linkcheck -D nitpicky=1 -d _build/doctrees . _build/linkcheck
+
+linkcheck-grep:
+	@! grep -h "^.*:.*: \[\(\(local\)\|\(broken\)\)\]" _build/linkcheck/output.txt

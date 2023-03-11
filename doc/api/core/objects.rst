@@ -23,3 +23,16 @@ VTK pipelines and holds arrays of data.
    :toctree: _autosummary
 
    pyvista.Table
+
+
+Textures
+--------
+
+The :class:`pyvista.Texture` class is used to load and represent images that
+can be placed on the surface of :class:`pyvista.DataSet` that have texture
+coordinates.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.Texture

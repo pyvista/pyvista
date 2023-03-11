@@ -29,7 +29,7 @@ rng = np.random.default_rng(2)
 # ~~~~~~~~~~~~~~~~~~~~
 # PyVista contains a simple utility to plot a single cell, which is the
 # fundamental unit of each :class:`pyvista.UnstructuredGrid`. For example,
-# let's plot a simple :func:`Wedge <pyvista.cells.Wedge`.
+# let's plot a simple :func:`Wedge <pyvista.examples.cells.Wedge>`.
 #
 grid = example_cells.Wedge()
 example_cells.plot_cell(grid)
@@ -58,8 +58,8 @@ grid.cells
 # using the ``+`` operator.
 #
 # .. note::
-#    This is an inefficient way of creating :class:`UnstructuredGrid`
-#    objects. To see a more efficient implement ion see
+#    This is an inefficient way of creating :class:`pyvista.UnstructuredGrid`
+#    objects. To see a more efficient implementation see
 #    :ref:`create_unstructured_example`.
 
 grid_a = example_cells.Hexahedron()
@@ -84,7 +84,7 @@ combined.cells
 ###############################################################################
 # Cell Types
 # ~~~~~~~~~~
-# PyVista contains the :class:`pv.CellType` enumerator, which contains all the
+# PyVista contains the :class:`pyvista.CellType` enumerator, which contains all the
 # available VTK cell types mapped to a Python enumerator. These cell types are
 # used when creating cells and also can be used when checking the
 # :attr:`celltypes <pyvista.UnstructuredGrid.celltypes>` attribute. For example
@@ -102,7 +102,7 @@ print(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 # :class:`pyvista.UnstructuredGrid`, it's quite straightforward to create an
 # unstructured grid with a one or more cells. If you need to reference point
 # ordering or additional, you can either read the source of `cells.py
-# <https://github.com/pyvista/pyvista/blob/main/pyvista/cells/cells.py>`_ or
+# <https://github.com/pyvista/pyvista/blob/main/pyvista/examples/cells.py>`_ or
 # simply create a cell from the ``pyvista.cells`` module and inspect its attributes.
 
 points = [

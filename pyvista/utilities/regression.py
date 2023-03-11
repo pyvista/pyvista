@@ -81,11 +81,11 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
 
     Parameters
     ----------
-    im1 : filename, numpy.ndarray, vtkRenderWindow, or vtkImageData
+    im1 : str, numpy.ndarray, vtkRenderWindow, or vtkImageData
         Render window, numpy array representing the output of a render
         window, or ``vtkImageData``.
 
-    im2 : filename, numpy.ndarray, vtkRenderWindow, or vtkImageData
+    im2 : str, numpy.ndarray, vtkRenderWindow, or vtkImageData
         Render window, numpy array representing the output of a render
         window, or ``vtkImageData``.
 

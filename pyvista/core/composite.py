@@ -948,7 +948,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray

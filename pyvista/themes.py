@@ -83,6 +83,11 @@ def _check_between_zero_and_one(value: float, value_name: str = 'value'):
 def load_theme(filename):
     """Load a theme from a file.
 
+    Parameters
+    ----------
+    filename : str
+        Theme file. Must be json.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -254,12 +259,13 @@ class _LightingConfig(_ThemeConfig):
     def interpolation(self) -> InterpolationType:
         """Return or set the default interpolation type.
 
-        See :class:`pyvista.plotting.opts.InterpolationType`
+        See :class:`pyvista.plotting.opts.InterpolationType`.
 
         Options are:
-        * 'Phong'
-        * 'Flat'
-        * 'Physically based rendering'
+
+        * ``'Phong'``
+        * ``'Flat'``
+        * ``'Physically based rendering'``
 
         This is stored as a integer value of the ``InterpolationType``
         so that the theme can be JSON-serializable.
@@ -1553,7 +1559,7 @@ class DefaultTheme(_ThemeConfig):
 
         See Also
         --------
-        pyvista.BasePlotter.enable_hidden_line_removal
+        pyvista.Plotter.enable_hidden_line_removal
 
         Examples
         --------
@@ -2754,7 +2760,7 @@ class DefaultTheme(_ThemeConfig):
 
         Parameters
         ----------
-        theme : pyvista.DefaultTheme
+        theme : pyvista.themes.DefaultTheme
             Theme to use to overwrite this theme.
 
         Examples
