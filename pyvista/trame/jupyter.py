@@ -259,8 +259,10 @@ def show_trame(
 
             mesh = pv.Wavelet()
 
+
             def handler(viewer, src, **kwargs):
                 return IFrame(src, '75%', '500px')
+
 
             p = pv.Plotter(notebook=True)
             _ = p.add_mesh(mesh)

@@ -99,8 +99,7 @@ def Cylinder(
     --------
     >>> import pyvista
     >>> import numpy as np
-    >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1],
-    ...                             radius=1, height=2)
+    >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2)
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
     cylinderSource = _vtk.vtkCylinderSource()
@@ -952,9 +951,15 @@ def Wavelet(
     Examples
     --------
     >>> import pyvista
-    >>> wavelet = pyvista.Wavelet(extent=(0, 50, 0, 50, 0, 10), x_freq=20,
-    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100,
-    ...                           z_mag=1000)
+    >>> wavelet = pyvista.Wavelet(
+    ...     extent=(0, 50, 0, 50, 0, 10),
+    ...     x_freq=20,
+    ...     y_freq=10,
+    ...     z_freq=1,
+    ...     x_mag=100,
+    ...     y_mag=100,
+    ...     z_mag=1000,
+    ... )
     >>> wavelet.plot(show_scalar_bar=False)
 
     Extract lower valued cells of the wavelet and create a surface from it.
@@ -1412,9 +1417,9 @@ def Superquadric(
     Examples
     --------
     >>> import pyvista
-    >>> superquadric = pyvista.Superquadric(scale=(3., 1., 0.5),
-    ...                                     phi_roundness=0.1,
-    ...                                     theta_roundness=0.5)
+    >>> superquadric = pyvista.Superquadric(
+    ...     scale=(3.0, 1.0, 0.5), phi_roundness=0.1, theta_roundness=0.5
+    ... )
     >>> superquadric.plot(show_edges=True)
 
     """

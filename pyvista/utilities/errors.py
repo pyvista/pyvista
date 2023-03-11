@@ -57,6 +57,7 @@ class VtkErrorCatcher:
     >>> import pyvista
     >>> with pyvista.VtkErrorCatcher() as error_catcher:
     ...     sphere = pyvista.Sphere()
+    ...
     """
 
     def __init__(self, raise_errors=False, send_to_logging=True):

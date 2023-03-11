@@ -23,14 +23,19 @@ class CellType(IntEnum):
     >>> import pyvista
     >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
     >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
-    >>> points = np.array([[0, 0, 0],
-    ...                    [1, 0, 0],
-    ...                    [1, 1, 0],
-    ...                    [0, 1, 0],
-    ...                    [0, 0, 1],
-    ...                    [1, 0, 1],
-    ...                    [1, 1, 1],
-    ...                    [0, 1, 1]], dtype=np.float32)
+    >>> points = np.array(
+    ...     [
+    ...         [0, 0, 0],
+    ...         [1, 0, 0],
+    ...         [1, 1, 0],
+    ...         [0, 1, 0],
+    ...         [0, 0, 1],
+    ...         [1, 0, 1],
+    ...         [1, 1, 1],
+    ...         [0, 1, 1],
+    ...     ],
+    ...     dtype=np.float32,
+    ... )
     >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
     >>> grid  # doctest:+SKIP
     UnstructuredGrid (0x7f5b0a55e1a0)

@@ -315,10 +315,15 @@ class ScalarBars:
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
-        >>> _ = plotter.add_scalar_bar('Data', interactive=True, vertical=False,
-        ...                            title_font_size=35,
-        ...                            label_font_size=30,
-        ...                            outline=True, fmt='%10.5f')
+        >>> _ = plotter.add_scalar_bar(
+        ...     'Data',
+        ...     interactive=True,
+        ...     vertical=False,
+        ...     title_font_size=35,
+        ...     label_font_size=30,
+        ...     outline=True,
+        ...     fmt='%10.5f',
+        ... )
         >>> plotter.show()
 
         """

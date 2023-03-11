@@ -13,6 +13,7 @@ A user-defined Foo class is defined that extends the functionality of
 >>> import pyvista
 >>> class Foo(pyvista.PolyData):
 ...     pass  # Extend PolyData here
+...
 >>> pyvista._wrappers['vtkPolyData'] = Foo
 >>> uniform_grid = pyvista.UniformGrid()
 >>> surface = uniform_grid.extract_surface()

@@ -331,12 +331,19 @@ def create_axes_orientation_box(
 
     >>> import pyvista
     >>> actor = pyvista.create_axes_orientation_box(
-    ...    line_width=1, text_scale=0.53,
-    ...    edge_color='black', x_color='k',
-    ...    y_color=None, z_color=None,
-    ...    xlabel='X', ylabel='Y', zlabel='Z',
-    ...    color_box=False,
-    ...    labels_off=False, opacity=1.0)
+    ...     line_width=1,
+    ...     text_scale=0.53,
+    ...     edge_color='black',
+    ...     x_color='k',
+    ...     y_color=None,
+    ...     z_color=None,
+    ...     xlabel='X',
+    ...     ylabel='Y',
+    ...     zlabel='Z',
+    ...     color_box=False,
+    ...     labels_off=False,
+    ...     opacity=1.0,
+    ... )
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_actor(actor)
     >>> pl.show()
@@ -490,7 +497,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
-    >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
+    >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.0
     >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)
