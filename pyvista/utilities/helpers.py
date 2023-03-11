@@ -664,11 +664,22 @@ def make_tri_mesh(points, faces):
 
     >>> import numpy as np
     >>> import pyvista
-    >>> points = np.array([[0, 0, 0], [0.5, 0, 0], [1, 0, 0], [0, 0.5, 0],
-    ...                    [0.5, 0.5, 0], [1, 0.5, 0], [0, 1, 0], [0.5, 1, 0],
-    ...                    [1, 1, 0]])
-    >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
-    ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
+    >>> points = np.array(
+    ...     [
+    ...         [0, 0, 0],
+    ...         [0.5, 0, 0],
+    ...         [1, 0, 0],
+    ...         [0, 0.5, 0],
+    ...         [0.5, 0.5, 0],
+    ...         [1, 0.5, 0],
+    ...         [0, 1, 0],
+    ...         [0.5, 1, 0],
+    ...         [1, 1, 0],
+    ...     ]
+    ... )
+    >>> faces = np.array(
+    ...     [[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8], [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]]
+    ... )
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
     >>> tri_mesh.plot(show_edges=True, line_width=5)
 
@@ -708,11 +719,11 @@ def vector_poly_data(orig, vec):
 
     >>> import pyvista
     >>> import numpy as np
-    >>> x, y = np.meshgrid(np.linspace(-5,5,10),np.linspace(-5,5,10))
+    >>> x, y = np.meshgrid(np.linspace(-5, 5, 10), np.linspace(-5, 5, 10))
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
-    >>> u = x/np.sqrt(x**2 + y**2)
-    >>> v = y/np.sqrt(x**2 + y**2)
-    >>> vectors = np.vstack((u.ravel()**3, v.ravel()**3, np.zeros(u.size))).T
+    >>> u = x / np.sqrt(x**2 + y**2)
+    >>> v = y / np.sqrt(x**2 + y**2)
+    >>> vectors = np.vstack((u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))).T
     >>> pdata = pyvista.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']
@@ -1139,8 +1150,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
-    >>> _ = pl.add_points(cloud, render_points_as_spheres=True,
-    ...                   color='r', point_size=30)
+    >>> _ = pl.add_points(cloud, render_points_as_spheres=True, color='r', point_size=30)
     >>> pl.show()
 
     """

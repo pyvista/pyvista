@@ -140,7 +140,9 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     >>> import numpy as np
     >>> import vtk
     >>> from pyvista.utilities.cells import create_mixed_cells
-    >>> cell_types, cell_arr = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
+    >>> cell_types, cell_arr = create_mixed_cells(
+    ...     {vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])}
+    ... )
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 

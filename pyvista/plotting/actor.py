@@ -363,12 +363,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         ...     lighting=False,
         ... )
         >>> arr = np.array(
-        ...     [
-        ...         [0.707, -0.707, 0, 0],
-        ...         [0.707, 0.707, 0, 0],
-        ...         [0, 0, 1, 1.500001],
-        ...         [0, 0, 0, 2]
-        ...     ]
+        ...     [[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]]
         ... )
         >>> actor.user_matrix = arr
         >>> pl.show_axes()
@@ -414,7 +409,11 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor = pl.add_mesh(mesh, smooth_shading=True)
         >>> actor.backface_prop.color = 'lightblue'
         >>> _ = pl.add_mesh(
-        ...     plane, opacity=0.25, show_edges=True, color='grey', lighting=False,
+        ...     plane,
+        ...     opacity=0.25,
+        ...     show_edges=True,
+        ...     color='grey',
+        ...     lighting=False,
         ... )
         >>> pl.show()
 

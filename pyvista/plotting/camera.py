@@ -120,7 +120,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc") # doctest:+SKIP
+        >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
         """
@@ -308,10 +308,14 @@ class Camera(_vtk.vtkCamera):
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
-        >>> pl.camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                              [0., 1., 0., 0.],
-        ...                                              [0., 0., 1., 0.],
-        ...                                              [0., 0., 0., 0.5]])
+        >>> pl.camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 0.5],
+        ...     ]
+        ... )
         >>>
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
@@ -745,17 +749,25 @@ class Camera(_vtk.vtkCamera):
         >>> import pyvista as pv
         >>> import numpy as np
         >>> camera = pv.Camera()
-        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                           [0., 1., 0., 0.],
-        ...                                           [0., 0., 1., 0.],
-        ...                                           [0., 0., 0., 1.]])
+        >>> camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
+        ...     ]
+        ... )
         >>> copied_camera = camera.copy()
         >>> copied_camera == camera
         True
-        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                           [0., 1., 0., 0.],
-        ...                                           [0., 0., 1., 0.],
-        ...                                           [0., 0., 0., 0.5]])
+        >>> camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 0.5],
+        ...     ]
+        ... )
         >>> copied_camera == camera
         False
         """

@@ -114,8 +114,9 @@ class Light(vtkLight):
     Create a positional light at (0, 0, 3) with a cone angle of
     30, exponent of 20, and a visible actor.
 
-    >>> light = pv.Light(position=(0, 0, 3), show_actor=True,
-    ...                  positional=True, cone_angle=30, exponent=20)
+    >>> light = pv.Light(
+    ...     position=(0, 0, 3), show_actor=True, positional=True, cone_angle=30, exponent=20
+    ... )
 
     """
 
@@ -1012,8 +1013,7 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0],
-        ...                           [0, 0, 0, 1]]
+        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
         >>> shallow_copied = light.copy(deep=False)
         >>> shallow_copied == light
         True

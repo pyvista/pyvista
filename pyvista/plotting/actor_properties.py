@@ -24,9 +24,9 @@ class ActorProperties:
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
 
     >>> pl = pv.Plotter()
-    >>> pl.add_actor(axes.axes_actor)   # doctest:+SKIP
-    >>> pl.add_mesh(pv.Sphere())   # doctest:+SKIP
-    >>> pl.show()   # doctest:+SKIP
+    >>> pl.add_actor(axes.axes_actor)  # doctest:+SKIP
+    >>> pl.add_mesh(pv.Sphere())  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     """
 

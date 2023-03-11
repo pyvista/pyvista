@@ -1150,9 +1150,11 @@ class PickingHelper:
         >>> actor, mapper = pl.add_composite(multiblock)
         >>> def turn_blue(index, dataset):
         ...     mapper.block_attr[index].color = 'blue'
+        ...
         >>> pl.enable_block_picking(callback=turn_blue, side='left')
         >>> def clear_color(index, dataset):
         ...     mapper.block_attr[index].color = None
+        ...
         >>> pl.enable_block_picking(callback=clear_color, side='right')
         >>> pl.show()
 

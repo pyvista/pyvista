@@ -24,7 +24,6 @@ pyvista.
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
-...
 >>> pv.global_theme.load_theme(my_theme)
 >>> pv.global_theme.font.size
 20
@@ -1874,8 +1873,7 @@ class DefaultTheme(_ThemeConfig):
         Set both the position and view of the camera.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.camera = {'position': [1, 1, 1],
-        ...                                'viewup': [0, 0, 1]}
+        >>> pv.global_theme.camera = {'position': [1, 1, 1], 'viewup': [0, 0, 1]}
 
         Set the default position of the camera.
 
@@ -2088,9 +2086,9 @@ class DefaultTheme(_ThemeConfig):
         >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
-        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
-        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
         >>> pl.show()  # doctest: +SKIP
 
@@ -2774,7 +2772,6 @@ class DefaultTheme(_ThemeConfig):
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
         >>> my_theme.cmap = 'jet'
-        ...
         >>> pv.global_theme.load_theme(my_theme)
         >>> pv.global_theme.font.size
         20

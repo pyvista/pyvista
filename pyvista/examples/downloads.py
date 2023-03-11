@@ -621,11 +621,7 @@ def download_head(load=True):  # pragma: no cover
     >>> dataset = examples.download_head()
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_volume(dataset, cmap="cool", opacity="sigmoid_6")
-    >>> pl.camera_position = [
-    ...     (-228.0, -418.0, -158.0),
-    ...     (94.0, 122.0, 82.0),
-    ...     (-0.2, -0.3, 0.9)
-    ... ]
+    >>> pl.camera_position = [(-228.0, -418.0, -158.0), (94.0, 122.0, 82.0), (-0.2, -0.3, 0.9)]
     >>> pl.show()
 
     See :ref:`volume_rendering_example` for an example using this
@@ -685,13 +681,12 @@ def download_bolt_nut(load=True):  # pragma: no cover
     >>> dataset = examples.download_bolt_nut()
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_volume(
-    ...         dataset, cmap="coolwarm", opacity="sigmoid_5", show_scalar_bar=False,
+    ...     dataset,
+    ...     cmap="coolwarm",
+    ...     opacity="sigmoid_5",
+    ...     show_scalar_bar=False,
     ... )
-    >>> pl.camera_position = [
-    ...     (194.6, -141.8, 182.0),
-    ...     (34.5, 61.0, 32.5),
-    ...     (-0.229, 0.45, 0.86)
-    ... ]
+    >>> pl.camera_position = [(194.6, -141.8, 182.0), (34.5, 61.0, 32.5), (-0.229, 0.45, 0.86)]
     >>> pl.show()
 
     See :ref:`volume_rendering_example` for an example using this
@@ -860,11 +855,7 @@ def download_knee_full(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_knee_full()
-    >>> cpos = [
-    ...     (-381.74, -46.02, 216.54),
-    ...     (74.8305, 89.2905, 100.0),
-    ...     (0.23, 0.072, 0.97)
-    ... ]
+    >>> cpos = [(-381.74, -46.02, 216.54), (74.8305, 89.2905, 100.0), (0.23, 0.072, 0.97)]
     >>> dataset.plot(volume=True, cmap="bone", cpos=cpos, show_scalar_bar=False)
 
     This dataset is used in the following examples:
@@ -1632,9 +1623,9 @@ def download_frog(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [ 8.4287e+02, -5.7418e+02, -4.4085e+02],
-    ...     [ 2.4950e+02,  2.3450e+02,  1.0125e+02],
-    ...     [-3.2000e-01,  3.5000e-01, -8.8000e-01]
+    ...     [8.4287e02, -5.7418e02, -4.4085e02],
+    ...     [2.4950e02, 2.3450e02, 1.0125e02],
+    ...     [-3.2000e-01, 3.5000e-01, -8.8000e-01],
     ... ]
     >>> dataset = examples.download_frog()
     >>> dataset.plot(volume=True, cpos=cpos)
@@ -2279,11 +2270,7 @@ def download_carotid(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [220.96, -24.38, -69.96],
-    ...     [135.86, 106.55,  17.72],
-    ...     [ -0.25,   0.42,  -0.87]
-    ... ]
+    >>> cpos = [[220.96, -24.38, -69.96], [135.86, 106.55, 17.72], [-0.25, 0.42, -0.87]]
     >>> dataset = examples.download_carotid()
     >>> dataset.plot(volume=True, cpos=cpos)
 
@@ -2320,11 +2307,7 @@ def download_blow(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [71.96, 86.1 , 28.45],
-    ...     [ 3.5 , 12.  ,  1.  ],
-    ...     [-0.18, -0.19,  0.96]
-    ... ]
+    >>> cpos = [[71.96, 86.1, 28.45], [3.5, 12.0, 1.0], [-0.18, -0.19, 0.96]]
     >>> dataset = examples.download_blow()
     >>> dataset.plot(
     ...     scalars='displacement1',
@@ -2356,9 +2339,9 @@ def download_shark(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [-2.3195e+02, -3.3930e+01,  1.2981e+02],
-    ...     [-8.7100e+00,  1.9000e-01, -1.1740e+01],
-    ...     [-1.4000e-01,  9.9000e-01,  2.0000e-02]
+    ...     [-2.3195e02, -3.3930e01, 1.2981e02],
+    ...     [-8.7100e00, 1.9000e-01, -1.1740e01],
+    ...     [-1.4000e-01, 9.9000e-01, 2.0000e-02],
     ... ]
     >>> dataset = examples.download_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
@@ -2417,11 +2400,7 @@ def download_armadillo(load=True):  # pragma: no cover
     Plot the armadillo dataset. Use a custom camera position.
 
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     (161.5, 82.1, -330.2),
-    ...     (-4.3, 24.5, -1.6),
-    ...     (-0.1, 1, 0.12)
-    ... ]
+    >>> cpos = [(161.5, 82.1, -330.2), (-4.3, 24.5, -1.6), (-0.1, 1, 0.12)]
     >>> dataset = examples.download_armadillo()
     >>> dataset.plot(cpos=cpos)
 
@@ -2455,6 +2434,7 @@ def download_gears(load=True):  # pragma: no cover
     ...     bid = np.empty(body.n_points)
     ...     bid[:] = i
     ...     body.point_data["Body ID"] = bid
+    ...
     >>> bodies.plot(cmap='jet')
     """
     return _download_and_read('gears.stl', load=load)
@@ -2772,11 +2752,7 @@ def download_crater_imagery(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [  66.,  73. , -382.6],
-    ...     [  66.,  73. ,    0. ],
-    ...     [  -0.,  -1. ,    0. ]
-    ... ]
+    >>> cpos = [[66.0, 73.0, -382.6], [66.0, 73.0, 0.0], [-0.0, -1.0, 0.0]]
     >>> dataset = examples.download_crater_imagery()
     >>> dataset.plot(cpos=cpos)
 
@@ -2828,9 +2804,9 @@ def download_damavand_volcano(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [ 4.66316700e+04,  4.32796241e+06, -3.82467050e+05],
-    ...     [ 5.52532740e+05,  3.98017300e+06, -2.47450000e+04],
-    ...     [ 4.10000000e-01, -2.90000000e-01, -8.60000000e-01]
+    ...     [4.66316700e04, 4.32796241e06, -3.82467050e05],
+    ...     [5.52532740e05, 3.98017300e06, -2.47450000e04],
+    ...     [4.10000000e-01, -2.90000000e-01, -8.60000000e-01],
     ... ]
     >>> dataset = examples.download_damavand_volcano()
     >>> dataset.plot(cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True)
@@ -3291,11 +3267,7 @@ def download_woman(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_woman()
-    >>> cpos = [
-    ...     (-2600.0, 1970.6, 1836.9),
-    ...     (48.5, -20.3, 843.9),
-    ...     (0.23, -0.168, 0.958)
-    ... ]
+    >>> cpos = [(-2600.0, 1970.6, 1836.9), (48.5, -20.3, 843.9), (0.23, -0.168, 0.958)]
     >>> dataset.plot(cpos=cpos)
 
     """
@@ -3374,9 +3346,9 @@ def download_urn(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [-7.123e+02,  5.715e+02,  8.601e+02],
-    ...     [ 4.700e+00,  2.705e+02, -1.010e+01],
-    ...     [ 2.000e-01,  1.000e+00, -2.000e-01]
+    ...     [-7.123e02, 5.715e02, 8.601e02],
+    ...     [4.700e00, 2.705e02, -1.010e01],
+    ...     [2.000e-01, 1.000e00, -2.000e-01],
     ... ]
     >>> dataset = examples.download_urn()
     >>> dataset.plot(cpos=cpos)
@@ -3465,13 +3437,10 @@ def download_action_figure(load=True):  # pragma: no cover
     >>> _ = dataset.clean(inplace=True)
     >>> pl = pyvista.Plotter(lighting=None)
     >>> pl.add_light(pyvista.Light((30, 10, 10)))
-    >>> _ = pl.add_mesh(dataset, color='w', smooth_shading=True,
-    ...                 pbr=True, metallic=0.3, roughness=0.5)
-    >>> pl.camera_position = [
-    ...     (32.3, 116.3, 220.6),
-    ...     (-0.05, 3.8, 33.8),
-    ...     (-0.017, 0.86, -0.51)
-    ... ]
+    >>> _ = pl.add_mesh(
+    ...     dataset, color='w', smooth_shading=True, pbr=True, metallic=0.3, roughness=0.5
+    ... )
+    >>> pl.camera_position = [(32.3, 116.3, 220.6), (-0.05, 3.8, 33.8), (-0.017, 0.86, -0.51)]
     >>> pl.show()
 
     """
@@ -3588,11 +3557,7 @@ def download_louis_louvre(load=True):  # pragma: no cover
     >>> pl = pyvista.Plotter(lighting=None)
     >>> _ = pl.add_mesh(dataset, smooth_shading=True)
     >>> pl.add_light(pyvista.Light((10, -10, 10)))
-    >>> pl.camera_position = [
-    ...     [ -6.71, -14.55,  15.17],
-    ...     [  1.44,   2.54,   9.84],
-    ...     [  0.16,   0.22,   0.96]
-    ... ]
+    >>> pl.camera_position = [[-6.71, -14.55, 15.17], [1.44, 2.54, 9.84], [0.16, 0.22, 0.96]]
     >>> pl.show()
 
     See :ref:`pbr_example` for an example using this dataset.
@@ -3654,11 +3619,7 @@ def download_naca(load=True):  # pragma: no cover
     ``"jet"`` color map.
 
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [-0.22,  0.  ,  2.52],
-    ...     [ 0.43,  0.  ,  0.  ],
-    ...     [ 0.  ,  1.  ,  0.  ]
-    ... ]
+    >>> cpos = [[-0.22, 0.0, 2.52], [0.43, 0.0, 0.0], [0.0, 1.0, 0.0]]
     >>> dataset = examples.download_naca()
     >>> dataset.plot(cpos=cpos, cmap="jet")
 
@@ -3743,6 +3704,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     ...     plotter.write_frame()
     ...     plotter.clear()
     ...     plotter.enable_lightkit()
+    ...
     >>> plotter.close()
 
     """
@@ -3794,6 +3756,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     ...     plotter.write_frame()
     ...     plotter.clear()
     ...     plotter.enable_lightkit()
+    ...
     >>> plotter.close()
 
     """
@@ -3904,11 +3867,11 @@ def download_lucy(load=True):  # pragma: no cover
 
     >>> flame_light = pyvista.Light(
     ...     color=[0.886, 0.345, 0.133],
-    ...     position=[550,  140, 950],
+    ...     position=[550, 140, 950],
     ...     intensity=1.5,
     ...     positional=True,
     ...     cone_angle=90,
-    ...     attenuation_values=(0.001, 0.005, 0)
+    ...     attenuation_values=(0.001, 0.005, 0),
     ... )
 
     Create a scene light
@@ -4114,7 +4077,11 @@ def download_cgns_multi(load=True):  # pragma: no cover
     >>> ugrid = dataset.combine()
     >>> ugrid = ugrid = ugrid.cell_data_to_point_data()
     >>> ugrid.plot(
-    ...     cmap='bwr', scalars='ViscosityEddy', zoom=4, cpos='xz', show_scalar_bar=False,
+    ...     cmap='bwr',
+    ...     scalars='ViscosityEddy',
+    ...     zoom=4,
+    ...     cpos='xz',
+    ...     show_scalar_bar=False,
     ... )
 
     """
@@ -4355,7 +4322,7 @@ def download_particles_lethe(load=True):  # pragma: no cover
     ...     scalars='Velocity',
     ...     background='w',
     ...     scalar_bar_args={'color': 'k'},
-    ...     cmap='bwr'
+    ...     cmap='bwr',
     ... )
 
     """
@@ -4382,23 +4349,11 @@ def download_gif_simple(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> grid = examples.download_gif_simple()
-    >>> grid.plot(
-    ...     scalars='frame0',
-    ...     rgb=True,
-    ...     background='w',
-    ...     show_scalar_bar=False,
-    ...     cpos='xy'
-    ... )
+    >>> grid.plot(scalars='frame0', rgb=True, background='w', show_scalar_bar=False, cpos='xy')
 
     Plot the second frame.
 
-    >>> grid.plot(
-    ...     scalars='frame1',
-    ...     rgb=True,
-    ...     background='w',
-    ...     show_scalar_bar=False,
-    ...     cpos='xy'
-    ... )
+    >>> grid.plot(scalars='frame1', rgb=True, background='w', show_scalar_bar=False, cpos='xy')
 
     """
     return _download_and_read('gifs/sample.gif', load=load)
@@ -4691,9 +4646,7 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_ivan_angel()
-    >>> cpos = [(-476.14, -393.73, 282.14),
-    ...         (-15.00, 11.25, 44.08),
-    ...         (0.26, 0.24, 0.93)]
+    >>> cpos = [(-476.14, -393.73, 282.14), (-15.00, 11.25, 44.08), (0.26, 0.24, 0.93)]
     >>> mesh.plot(cpos=cpos)
 
     Return the statistics of the dataset.
@@ -4798,9 +4751,7 @@ def download_owl(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_owl()
-    >>> cpos = [(-315.18, -402.21, 230.71),
-    ...         (6.06, -1.74, 101.48),
-    ...         (0.108, 0.226, 0.968)]
+    >>> cpos = [(-315.18, -402.21, 230.71), (6.06, -1.74, 101.48), (0.108, 0.226, 0.968)]
     >>> mesh.plot(cpos=cpos)
 
     Return the statistics of the dataset.

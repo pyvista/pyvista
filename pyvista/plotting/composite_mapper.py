@@ -545,7 +545,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.dataset   # doctest:+SKIP
+        >>> mapper.dataset  # doctest:+SKIP
         MultiBlock (...)
           N Blocks:     2
           X Bounds:     -0.500, 0.500
