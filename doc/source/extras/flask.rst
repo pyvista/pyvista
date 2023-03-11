@@ -18,7 +18,7 @@ Dynamic Example
 Python Application ``app.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../../examples_flask/dynamic_ex/app.py
+.. literalinclude:: ../../../examples_flask/dynamic_ex/app.py
 
 
 Ajax Template ``index.html``
@@ -30,7 +30,7 @@ This template returns the ``meshtype`` parameter back to the
 ``get_img`` method in the flask app, which is used to select the type
 of mesh to be plotted.
 
-.. literalinclude:: ../../examples_flask/dynamic_ex/templates/index.html
+.. literalinclude:: ../../../examples_flask/dynamic_ex/templates/index.html
 
 
 Static Example
@@ -44,7 +44,7 @@ Static Example
 Python Application ``app.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../../examples_flask/static_ex/app.py
+.. literalinclude:: ../../../examples_flask/static_ex/app.py
 
 
 Ajax Template ``index.html``
@@ -56,4 +56,4 @@ This template returns the ``meshtype`` parameter back to the
 ``get_img`` method in the flask app, which is used to select the type
 of mesh to be plotted.
 
-.. literalinclude:: ../../examples_flask/static_ex/templates/index.html
+.. literalinclude:: ../../../examples_flask/static_ex/templates/index.html

@@ -255,24 +255,27 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', (None, 'intersphinx/python-objects.inv')),
+    'python': ('https://docs.python.org/3', (None, '../intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
-        (None, 'intersphinx/scipy-objects.inv'),
+        (None, '../intersphinx/scipy-objects.inv'),
     ),
-    'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-objects.inv')),
-    'matplotlib': ('https://matplotlib.org/stable', (None, 'intersphinx/matplotlib-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable', (None, '../intersphinx/numpy-objects.inv')),
+    'matplotlib': (
+        'https://matplotlib.org/stable',
+        (None, '../intersphinx/matplotlib-objects.inv'),
+    ),
     'imageio': (
         'https://imageio.readthedocs.io/en/stable',
-        (None, 'intersphinx/imageio-objects.inv'),
+        (None, '../intersphinx/imageio-objects.inv'),
     ),
     'pandas': (
         'https://pandas.pydata.org/pandas-docs/stable',
-        (None, 'intersphinx/pandas-objects.inv'),
+        (None, '../intersphinx/pandas-objects.inv'),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimsh.org', (None, 'intersphinx/trimesh-objects.inv')),
+    'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
+    'trimesh': ('https://trimsh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
 intersphinx_timeout = 10
 
@@ -381,7 +384,7 @@ sphinx_gallery_conf = {
     # convert rst to md for ipynb
     "pypandoc": True,
     # path to your examples scripts
-    "examples_dirs": ["../examples/"],
+    "examples_dirs": ["../../examples/"],
     # path where to save gallery generated examples
     "gallery_dirs": ["examples"],
     # Pattern to search for example files
