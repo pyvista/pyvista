@@ -45,7 +45,7 @@ repos:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
     additional_dependencies: [
-    "mypy-extensions==0.4.3",
+    "mypy-extensions==1.0.0",
     "toml==0.10.2",
   ]
 
