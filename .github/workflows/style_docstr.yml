@@ -31,6 +31,10 @@ jobs:
         with:
           commit_message: auto fixes from pre-commit hooks
 
+      - name: Run pre-commit
+        continue-on-error: false
+        run: pre-commit run --all-files
+
   docstringcheck:
     runs-on: ubuntu-20.04
     steps:
