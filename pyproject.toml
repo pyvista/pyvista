@@ -163,5 +163,10 @@ markers = [
 ]
 image_cache_dir = "tests/plotting/image_cache"
 
+[tool.docformatter]
+recursive = true
+wrap-summaries = 0
+blank = true
+
 [tool.mypy]
 ignore_missing_imports = true
