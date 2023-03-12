@@ -158,7 +158,7 @@ def get_reader(filename, force_ext=None):
     >>> reader  # doctest: +ELLIPSIS
     XMLPolyDataReader('.../Human.vtp')
     >>> mesh = reader.read()
-    >>> mesh # doctest: +ELLIPSIS
+    >>> mesh  # doctest: +ELLIPSIS
     PolyData ...
     >>> mesh.plot(color='tan')
 
@@ -665,8 +665,7 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz',
-    ...                  show_scalar_bar=False)
+    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz', show_scalar_bar=False)
 
     """
 
@@ -691,8 +690,7 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     'notch_disp.vtu'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="Nodal Displacement", component=0,
-    ...           cpos='xy', show_scalar_bar=False)
+    >>> mesh.plot(scalars="Nodal Displacement", component=0, cpos='xy', show_scalar_bar=False)
 
     """
 
@@ -718,8 +716,7 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(
-    ...    cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
-    ...    clim=[0, 100], show_scalar_bar=False
+    ...     cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)), clim=[0, 100], show_scalar_bar=False
     ... )
 
     """
@@ -767,8 +764,14 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     'cylinder_Re35.case'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="velocity", component=1, clim=[-20, 20],
-    ...           cpos='xy', cmap='RdBu', show_scalar_bar=False)
+    >>> mesh.plot(
+    ...     scalars="velocity",
+    ...     component=1,
+    ...     clim=[-20, 20],
+    ...     cpos='xy',
+    ...     cmap='RdBu',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -1085,7 +1088,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
         >>> reader = pyvista.OpenFOAMReader(filename)
-        >>> reader.all_patch_arrays_status  #doctest: +NORMALIZE_WHITESPACE
+        >>> reader.all_patch_arrays_status  # doctest: +NORMALIZE_WHITESPACE
         {'internalMesh': True, 'patch/movingWall': True, 'patch/fixedWalls': True,
          'patch/frontAndBack': True}
 
@@ -1424,10 +1427,12 @@ class MultiBlockPlot3DReader(BaseReader):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> filename  = examples.download_file('multi-bin.xyz')
+        >>> filename = examples.download_file('multi-bin.xyz')
         >>> reader = pyvista.reader.MultiBlockPlot3DReader(filename)
         >>> reader.add_function(112)  # add a function by its integer value
-        >>> reader.add_function(reader.PRESSURE_COEFFICIENT)  # add a function by enumeration via class variable alias
+        >>> reader.add_function(
+        ...     reader.PRESSURE_COEFFICIENT
+        ... )  # add a function by enumeration via class variable alias
 
         """
         if isinstance(value, enum.Enum):
@@ -1814,7 +1819,7 @@ class PVDDataSet:
 
 
 class _PVDReader(BaseVTKReader):
-    """Simulate a VTK reader for GIF files."""
+    """Simulate a VTK reader for PVD files."""
 
     def __init__(self):
         super().__init__()
@@ -1848,7 +1853,9 @@ class _PVDReader(BaseVTKReader):
             )
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-
+        self._time_mapping = {time: [] for time in self._time_values}
+        for dataset in self._datasets:
+            self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
 
     def Update(self):
@@ -1857,9 +1864,7 @@ class _PVDReader(BaseVTKReader):
 
     def _SetActiveTime(self, time_value):
         """Set active time."""
-        self._active_datasets = [
-            dataset for dataset in self._datasets if dataset.time == time_value
-        ]
+        self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
             get_reader(os.path.join(self._directory, dataset.path))
             for dataset in self._active_datasets

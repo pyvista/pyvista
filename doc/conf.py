@@ -18,6 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
+from pyvista.utilities.docs import linkcode_resolve  # noqa: F401
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -67,10 +68,10 @@ extensions = [
     "pyvista.ext.plot_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    'sphinx.ext.linkcode',
     "sphinx.ext.doctest",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.viewcode",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
@@ -159,6 +160,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.__init__$',
     r'\.__new__$',
     # parm of abstract classes
+    r'\._BaseMapper$',
     r'\.CompositeFilters$',
     r'\.DataObject$',
     r'\.DataSet$',
@@ -193,8 +195,12 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.key_press_event$',
     r'\.left_button_down$',
     # MISC
-    r'\.MultiBlock\.copy_meta_from$',
+    r'\.ActiveArrayInfo$',
+    r'\.CellType$',
     r'\.DataObject\.copy_meta_from$',
+    r'\.FieldAssociation$',
+    r'\.InterpolationType$',
+    r'\.MultiBlock\.copy_meta_from$',
     # wraps
     r'\.Plotter\.enable_depth_peeling$',
     r'\.add_scalar_bar$',
@@ -216,7 +222,31 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.PyVistaRemoteView(\.|$)',
     r'\.PyVistaLocalView(\.|$)',
     r'\.PyVistaRemoteLocalView(\.|$)',
+    r'\.Texture(\.|$)',  # awaiting Texture refactor
 }
+
+# linkcheck ignore entries
+nitpick_ignore_regex = [
+    (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*lookup_table_ndarray'),
+    (r'py:.*', 'ActiveArrayInfo'),
+    (r'py:.*', 'CallableBool'),
+    (r'py:.*', 'FieldAssociation'),
+    (r'py:.*', 'VTK'),
+    (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'cycler.Cycler'),
+    (r'py:.*', 'ipywidgets.Widget'),
+    (r'py:.*', 'meshio.*'),
+    (r'py:.*', 'networkx.*'),
+    (r'py:.*', 'of'),
+    (r'py:.*', 'optional'),
+    (r'py:.*', 'or'),
+    (r'py:.*', 'pyvista.LookupTable.n_values'),
+    (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'sys.float_info.max'),
+    (r'py:.*', 'various'),
+    (r'py:.*', 'vtk.*'),
+]
 
 
 add_module_names = False
@@ -242,6 +272,7 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
+    'trimesh': ('https://trimsh.org', (None, 'intersphinx/trimesh-objects.inv')),
 }
 intersphinx_timeout = 10
 
@@ -432,6 +463,11 @@ html_context = {
     "doc_path": "doc",
 }
 html_show_sourcelink = False
+html_copy_source = False
+
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+html_show_sphinx = False
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

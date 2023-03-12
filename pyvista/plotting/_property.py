@@ -121,7 +121,7 @@ class Property(_vtk.vtkProperty):
     ...     show_edges=True,
     ...     interpolation='Physically based rendering',
     ...     metallic=0.5,
-    ...     roughness=0.1
+    ...     roughness=0.1,
     ... )
 
     Visualize how the property would look when applied to a mesh.
@@ -1112,11 +1112,7 @@ class Property(_vtk.vtkProperty):
         --------
         >>> import pyvista as pv
         >>> prop = pv.Property(
-        ...     show_edges=True,
-        ...     color='brown',
-        ...     edge_color='blue',
-        ...     line_width=4,
-        ...     specular=1.0
+        ...     show_edges=True, color='brown', edge_color='blue', line_width=4, specular=1.0
         ... )
         >>> prop.plot()
 

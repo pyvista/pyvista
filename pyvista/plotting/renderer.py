@@ -97,7 +97,7 @@ def scale_point(camera, point, invert=False):
     point : tuple(float)
         Length 3 tuple of the point coordinates.
 
-    invert : bool
+    invert : bool, default: False
         If ``True``, invert the matrix to transform the point out of
         the camera's transformed space. Default is ``False`` to
         transform a point from world coordinates to the camera's
@@ -120,7 +120,20 @@ def scale_point(camera, point, invert=False):
 
 
 class CameraPosition:
-    """Container to hold camera location attributes."""
+    """Container to hold camera location attributes.
+
+    Parameters
+    ----------
+    position : Sequence
+        Position of the camera.
+
+    focal_point : Sequence
+        The focal point of the camera.
+
+    viewup : Sequence
+        View up of the camera.
+
+    """
 
     def __init__(self, position, focal_point, viewup):
         """Initialize a new camera position descriptor."""
@@ -276,9 +289,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.renderer.set_color_cycler(['red', 'green', 'blue'])
-        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
-        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
-        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
         >>> pl.show()
 
@@ -1072,7 +1085,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...     shaft_length=0.7,
         ...     tip_length=0.3,
         ...     ambient=0.5,
-        ...     label_size=(0.4, 0.16)
+        ...     label_size=(0.4, 0.16),
         ... )
         >>> pl.show()
 
@@ -1987,7 +2000,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.renderer.lights   # doctest:+SKIP
+        >>> pl.renderer.lights  # doctest:+SKIP
         [<Light (Headlight) at 0x7f1dd8155820>,
          <Light (Camera Light) at 0x7f1dd8155760>,
          <Light (Camera Light) at 0x7f1dd8155340>,
@@ -2709,14 +2722,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.background_color = "w"
         >>> for i in range(5):
         ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
-        ...     color = [0, 255 - i*20, 30 + i*50]
-        ...     _ = pl.add_mesh(
-        ...         mesh,
-        ...         show_edges=False,
-        ...         pbr=True,
-        ...         metallic=1.0,
-        ...         color=color
-        ...     )
+        ...     color = [0, 255 - i * 20, 30 + i * 50]
+        ...     _ = pl.add_mesh(mesh, show_edges=False, pbr=True, metallic=1.0, color=color)
+        ...
         >>> pl.camera.zoom(1.8)
         >>> pl.camera_position = [
         ...     (4.74, 0.959, 0.525),
@@ -2834,7 +2842,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         radius : float, default: 0.5
             Neighbor pixels considered when computing the occlusion.
 
-        bias : float, default 0.005
+        bias : float, default: 0.005
             Tolerance factor used when comparing pixel depth.
 
         kernel_size : int, default: 256
@@ -3133,9 +3141,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels : list, optional
             When set to ``None``, uses existing labels as specified by
 
-            - :func:`add_mesh <BasePlotter.add_mesh>`
-            - :func:`add_lines <BasePlotter.add_lines>`
-            - :func:`add_points <BasePlotter.add_points>`
+            - :func:`add_mesh <Plotter.add_mesh>`
+            - :func:`add_lines <Plotter.add_lines>`
+            - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
             legend.  Each entry must contain two strings, [label,
@@ -3402,7 +3410,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = plotter.add_ruler(
         ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
         ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
-        ...     title="X Distance"
+        ...     title="X Distance",
         ... )
 
         Measure y direction of cone and place ruler slightly to left.
@@ -3413,7 +3421,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
         ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
         ...     flip_range=True,
-        ...     title="Y Distance"
+        ...     title="Y Distance",
         ... )
         >>> plotter.enable_parallel_projection()
         >>> plotter.view_xy()

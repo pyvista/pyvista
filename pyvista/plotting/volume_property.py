@@ -64,7 +64,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
     >>> grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40))
     >>> grid['scalars'] -= grid['scalars'].min()
-    >>> grid['scalars']*= 255/grid['scalars'].max()
+    >>> grid['scalars'] *= 255 / grid['scalars'].max()
     >>> pl = pv.Plotter()
     >>> actor = pl.add_volume(grid, show_scalar_bar=False)
     >>> lut = pv.LookupTable(cmap='bwr')
@@ -124,7 +124,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
         >>> grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40))
         >>> grid['scalars'] -= grid['scalars'].min()
-        >>> grid['scalars']*= 255/grid['scalars'].max()
+        >>> grid['scalars'] *= 255 / grid['scalars'].max()
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(grid, show_scalar_bar=False)
         >>> lut = pv.LookupTable(cmap='bwr')
@@ -152,10 +152,10 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> n = 21
-        >>> c = -(n-1)/2
+        >>> c = -(n - 1) / 2
         >>> vol = pv.UniformGrid(dimensions=(n, n, n), origin=(c, c, c))
         >>> scalars = np.linalg.norm(vol.points, axis=1)
-        >>> scalars *= 255/scalars.max()
+        >>> scalars *= 255 / scalars.max()
         >>> vol['scalars'] = scalars
 
         Demonstrate nearest (default) interpolation.
@@ -165,7 +165,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         ...     vol,
         ...     show_scalar_bar=False,
         ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap='plasma'
+        ...     cmap='plasma',
         ... )
         >>> actor.prop.interpolation_type = 'nearest'
         >>> pl.show()
@@ -177,7 +177,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         ...     vol,
         ...     show_scalar_bar=False,
         ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap='plasma'
+        ...     cmap='plasma',
         ... )
         >>> actor.prop.interpolation_type = 'linear'
         >>> pl.show()
@@ -332,7 +332,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         Returns
         -------
-        pyvista.VolumeProperty
+        pyvista.plotting.volume_property.VolumeProperty
             Deep copy of this property.
 
         """

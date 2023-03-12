@@ -68,9 +68,9 @@ class PickingHelper:
 
         Parameters
         ----------
-        callback : function, optional
-            When input, calls this function after a selection is made. The
-            ``mesh`` is input as the first parameter to this function.
+        callback : callable, optional
+            When input, calls this callable after a selection is made. The
+            ``mesh`` is input as the first parameter to this callable.
 
         show : bool, optional
             Show the selection interactively. Best when combined with
@@ -259,10 +259,10 @@ class PickingHelper:
 
         Parameters
         ----------
-        callback : function, optional
-            When input, calls this function after a selection is made.
+        callback : callable, optional
+            When input, calls this callable after a selection is made.
             The picked_cells are input as the first parameter to this
-            function.
+            callable.
 
         through : bool, optional
             When ``True`` (default) the picker will select all cells
@@ -462,8 +462,8 @@ class PickingHelper:
         """Return the picked mesh.
 
         This returns the picked mesh after selecting a mesh with
-        :func:`<enable_mesh_picking> pyvista.Plotter.enable_mesh_picking` or
-        :func:`<enable_point_picking> pyvista.Plotter.enable_point_picking`.
+        :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>` or
+        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
 
         Returns
         -------
@@ -492,7 +492,7 @@ class PickingHelper:
         """Return the picked block index.
 
         This returns the picked block index after selecting a point with
-        :func:`<enable_point_picking> pyvista.Plotter.enable_point_picking`.
+        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
 
         Returns
         -------
@@ -520,9 +520,9 @@ class PickingHelper:
 
         Parameters
         ----------
-        callback : function, optional
-            When input, calls this function after a selection is made. The
-            ``mesh`` is input as the first parameter to this function.
+        callback : callable, optional
+            When input, calls this callable after a selection is made. The
+            ``mesh`` is input as the first parameter to this callable.
 
         show_message : bool or str, optional
             Show the message about how to use the mesh picking tool. If this
@@ -569,7 +569,7 @@ class PickingHelper:
         Notes
         -----
         Picked point can be accessed from :attr:`picked_point
-        <PickingHelper.picked_point>` attribute.
+        <pyvista.Plotter.picked_point>` attribute.
 
         Examples
         --------
@@ -654,17 +654,17 @@ class PickingHelper:
         Enable picking a point at the mouse location in the render
         view using the ``P`` key. This point is saved to the
         ``.picked_point`` attribute on the plotter. Pass a callback
-        function that takes that point as an argument. The picked
+        that takes that point as an argument. The picked
         point can either be a point on the first intersecting mesh, or
         a point in the 3D window.
 
         Parameters
         ----------
         callback : callable, optional
-            When input, calls this function after a pick is made.  The
+            When input, calls this callable after a pick is made.  The
             picked point is input as the first parameter to this
-            function.  If ``use_mesh`` is ``True``, the callback
-            function will be passed a pointer to the picked mesh and
+            callable.  If ``use_mesh`` is ``True``, the callback
+            callable will be passed a pointer to the picked mesh and
             the point ID of the selected mesh.
 
         show_message : bool or str, optional
@@ -682,9 +682,8 @@ class PickingHelper:
             ``True``. Default 10.
 
         use_mesh : bool, optional
-            If ``True``, the callback function will be passed a
-            pointer to the picked mesh and the point ID of the
-            selected mesh.
+            If ``True``, the callback will be passed a pointer to the picked
+            mesh and the point ID of the selected mesh.
 
         show_point : bool, optional
             Show the picked point after clicking.
@@ -785,7 +784,7 @@ class PickingHelper:
         """Enable picking at paths.
 
         This is a convenience method for :func:`enable_point_picking
-        <PickingHelper.enable_point_picking>` to keep track of the
+        <pyvista.Plotter.enable_point_picking>` to keep track of the
         picked points and create a line using those points.
 
         The line is saved to the ``.picked_path`` attribute of this
@@ -794,9 +793,9 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this function after a pick is made.  The
+            When given, calls this callable after a pick is made.  The
             entire picked path is passed as the only parameter to this
-            function.
+            callable.
 
         show_message : bool or str, optional
             Show the message about how to use the point picking
@@ -902,9 +901,9 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this function after a pick is made.  The
+            When given, calls this callable after a pick is made.  The
             entire picked, geodesic path is passed as the only
-            parameter to this function.
+            parameter to this callable.
 
         show_message : bool or str, optional
             Show the message about how to use the point picking
@@ -1035,9 +1034,9 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this function after a pick is made.  The
+            When given, calls this callable after a pick is made.  The
             entire picked path is passed as the only parameter to this
-            function.
+            callable.
 
         normal : tuple(float), optional
             The normal to the horizon surface's projection plane.
@@ -1126,7 +1125,7 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable, optional
-            When input, this picker calls this function after a selection is
+            When input, this picker calls this callable after a selection is
             made. The composite index is passed to ``callback`` as the first
             argument and the dataset as the second argument.
 
@@ -1137,7 +1136,7 @@ class PickingHelper:
         Notes
         -----
         The picked block index can be accessed from :attr:`picked_block_index
-        <PickingHelper.picked_block_index>` attribute.
+        <pyvista.Plotter.picked_block_index>` attribute.
 
         Examples
         --------
@@ -1151,9 +1150,11 @@ class PickingHelper:
         >>> actor, mapper = pl.add_composite(multiblock)
         >>> def turn_blue(index, dataset):
         ...     mapper.block_attr[index].color = 'blue'
+        ...
         >>> pl.enable_block_picking(callback=turn_blue, side='left')
         >>> def clear_color(index, dataset):
         ...     mapper.block_attr[index].color = None
+        ...
         >>> pl.enable_block_picking(callback=clear_color, side='right')
         >>> pl.show()
 
@@ -1242,8 +1243,7 @@ class PickingHelper:
         Parameters
         ----------
         callback : callable
-            Callback function to call immediately after right
-            clicking.
+            Callback to call immediately after right clicking.
 
         """
 

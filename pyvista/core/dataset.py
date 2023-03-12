@@ -2,14 +2,8 @@
 
 import collections.abc
 from copy import deepcopy
-import sys
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, Iterator, List, Literal, Optional, Tuple, Union, cast
 import warnings
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:  # pragma: no cover
-    from typing_extensions import Literal
 
 import numpy as np
 
@@ -49,7 +43,14 @@ class ActiveArrayInfo:
         self.name = name
 
     def copy(self):
-        """Return a copy of this object."""
+        """Return a copy of this object.
+
+        Returns
+        -------
+        ActiveArrayInfo
+            A copy of this object.
+
+        """
         return ActiveArrayInfo(self.association, self.name)
 
     def __getstate__(self):
@@ -372,7 +373,7 @@ class DataSet(DataSetFilters, DataObject):
 
         You can also update the points in-place:
 
-        >>> cube.points[...] = 2*points
+        >>> cube.points[...] = 2 * points
         >>> cube.points
         pyvista_ndarray([[-1., -1.,  1.],
                          [-1., -1.,  3.],
@@ -584,7 +585,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Association of the scalars matching ``name``.
 
         numpy.ndarray
@@ -1777,7 +1778,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Field association of the array.
 
         Examples
@@ -2285,8 +2286,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> unit_square = pyvista.Rectangle()
         >>> index, closest_point = unit_square.find_closest_cell(
-        ...     [0.25, 0.25, 0.5],
-        ...     return_closest_point=True
+        ...     [0.25, 0.25, 0.5], return_closest_point=True
         ... )
         >>> closest_point
         array([0.25, 0.25, 0.  ])
@@ -2296,8 +2296,7 @@ class DataSet(DataSetFilters, DataObject):
         desired, see :func:`DataSet.find_closest_point`.
 
         >>> index, closest_point = unit_square.find_closest_cell(
-        ...     [1.0, 1.0, 0.5],
-        ...     return_closest_point=True
+        ...     [1.0, 1.0, 0.5], return_closest_point=True
         ... )
         >>> closest_point
         array([1., 1., 0.])
@@ -2367,7 +2366,7 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista
-        >>> mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
         >>> mesh
         UniformGrid...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
@@ -2574,9 +2573,10 @@ class DataSet(DataSetFilters, DataObject):
         Loop over the cells
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))   # 9 points, 4 cells
+        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))  # 9 points, 4 cells
         >>> for cell in mesh.cell:  # doctest: +SKIP
-        ...     print(cell)
+        ...     cell
+        ...
 
         """
         for i in range(self.n_cells):
@@ -2669,7 +2669,8 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int
-            VTK cell type. See `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
+            VTK cell type. See `vtkCellType.h
+            <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0

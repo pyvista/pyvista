@@ -393,7 +393,9 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> _below, _above = dataset.clip_scalar(scalars="sample_point_scalars", value=100, both=True)
+        >>> _below, _above = dataset.clip_scalar(
+        ...     scalars="sample_point_scalars", value=100, both=True
+        ... )
 
         Remove the part of the mesh with "sample_point_scalars" below 100.
 
@@ -900,8 +902,7 @@ class DataSetFilters:
 
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(hills, smooth_shading=True, style='wireframe')
-        >>> _ = pl.add_mesh(line_slice, line_width=10, render_lines_as_tubes=True,
-        ...                 color='k')
+        >>> _ = pl.add_mesh(line_slice, line_width=10, render_lines_as_tubes=True, color='k')
         >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
         >>> pl.show()
 
@@ -1051,16 +1052,14 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
-        ...                                dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20))
         >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=True, show_edges=False)
 
         Next, apply the threshold.
 
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
-        ...                                dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20))
         >>> threshed = grid.threshold(value=0.02)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
@@ -1183,8 +1182,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
-        ...                                dim=(30, 30, 30))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30))
         >>> threshed = grid.threshold_percent(0.5)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
@@ -1601,29 +1599,34 @@ class DataSetFilters:
         >>> a = 0.4
         >>> b = 0.1
         >>> def f(x, y, z):
-        ...     xx = x*x
-        ...     yy = y*y
-        ...     zz = z*z
-        ...     xyz = x*y*z
+        ...     xx = x * x
+        ...     yy = y * y
+        ...     zz = z * z
+        ...     xyz = x * y * z
         ...     xx_yy = xx + yy
-        ...     a_xx = a*xx
-        ...     b_yy = b*yy
+        ...     a_xx = a * xx
+        ...     b_yy = b * yy
         ...     return (
         ...         (xx_yy + 1) * (a_xx + b_yy)
-        ...         + zz * (b * xx + a * yy) - 2 * (a - b) * xyz
+        ...         + zz * (b * xx + a * yy)
+        ...         - 2 * (a - b) * xyz
         ...         - a * b * xx_yy
-        ...     )**2 - 4 * (xx + yy) * (a_xx + b_yy - xyz * (a - b))**2
+        ...     ) ** 2 - 4 * (xx + yy) * (a_xx + b_yy - xyz * (a - b)) ** 2
+        ...
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.UniformGrid(
         ...     dimensions=(n, n, n),
-        ...     spacing=(abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
+        ...     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
         ...     origin=(x_min, y_min, z_min),
         ... )
         >>> x, y, z = grid.points.T
         >>> values = f(x, y, z)
         >>> out = grid.contour(
-        ...     1, scalars=values, rng=[0, 0], method='flying_edges',
+        ...     1,
+        ...     scalars=values,
+        ...     rng=[0, 0],
+        ...     method='flying_edges',
         ... )
         >>> out.plot(color='tan', smooth_shading=True)
 
@@ -1943,8 +1946,9 @@ class DataSetFilters:
         >>> centers = mesh.cell_centers()
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(mesh, show_edges=True)
-        >>> actor = pl.add_points(centers, render_points_as_spheres=True,
-        ...                       color='red', point_size=20)
+        >>> actor = pl.add_points(
+        ...     centers, render_points_as_spheres=True, color='red', point_size=20
+        ... )
         >>> pl.show()
 
         See :ref:`cell_centers_example` for more examples using this filter.
@@ -2043,8 +2047,7 @@ class DataSetFilters:
         >>> arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(arrows, color="black")
-        >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain",
-        ...                     show_scalar_bar=False)
+        >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
         >>> pl.show()
 
         See :ref:`glyph_example` and :ref:`glyph_table_example` for more
@@ -2813,8 +2816,7 @@ class DataSetFilters:
         >>> sphere = pyvista.Sphere()
         >>> plane = pyvista.Plane()
         >>> selected = plane.select_enclosed_points(sphere)
-        >>> pts = plane.extract_points(selected['SelectedPoints'].view(bool),
-        ...                            adjacent_cells=False)
+        >>> pts = plane.extract_points(selected['SelectedPoints'].view(bool), adjacent_cells=False)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(sphere, style='wireframe')
         >>> _ = pl.add_points(pts, color='r')
@@ -3538,9 +3540,9 @@ class DataSetFilters:
         >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = examples.download_cylinder_crossflow()
-        >>> streams = mesh[0].streamlines_evenly_spaced_2D(start_position=(4, 0.1, 0.),
-        ...                                                separating_distance=3,
-        ...                                                separating_distance_ratio=0.2)
+        >>> streams = mesh[0].streamlines_evenly_spaced_2D(
+        ...     start_position=(4, 0.1, 0.0), separating_distance=3, separating_distance_ratio=0.2
+        ... )
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
         >>> plotter.view_xy()
@@ -3840,7 +3842,9 @@ class DataSetFilters:
         >>> plane = pyvista.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
-        >>> sample = plane.sample_over_multiple_lines([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
+        >>> sample = plane.sample_over_multiple_lines(
+        ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
+        ... )
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
@@ -3978,8 +3982,7 @@ class DataSetFilters:
         >>> normal = [0, 0, 1]
         >>> polar = [0, 9, 0]
         >>> center = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[5]]
-        >>> arc = uniform.sample_over_circular_arc_normal(center, normal=normal,
-        ...                                               polar=polar)
+        >>> arc = uniform.sample_over_circular_arc_normal(center, normal=normal, polar=polar)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(arc, line_width=10)
@@ -4539,6 +4542,7 @@ class DataSetFilters:
         self,
         grid=None,
         merge_points=True,
+        tolerance=0.0,
         inplace=False,
         main_has_priority=True,
         progress_bar=False,
@@ -4564,6 +4568,10 @@ class DataSetFilters:
         merge_points : bool, optional
             Points in exactly the same location will be merged between
             the two meshes. Warning: this can leave degenerate point data.
+
+        tolerance : float, default: 0.0
+            The absolute tolerance to use to find coincident points when
+            ``merge_points=True``.
 
         inplace : bool, optional
             Updates grid inplace when True if the input type is an
@@ -4602,6 +4610,7 @@ class DataSetFilters:
         """
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
+        append_filter.SetTolerance(tolerance)
 
         if not main_has_priority:
             append_filter.AddInputData(self)
@@ -5078,10 +5087,9 @@ class DataSetFilters:
         ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
         accepted.
 
-        >>> transform_matrix = np.array([[1, 0, 0, 50],
-        ...                              [0, 1, 0, 100],
-        ...                              [0, 0, 1, 200],
-        ...                              [0, 0, 0, 1]])
+        >>> transform_matrix = np.array(
+        ...     [[1, 0, 0, 50], [0, 1, 0, 100], [0, 0, 1, 200], [0, 0, 0, 1]]
+        ... )
         >>> transformed = mesh.transform(transform_matrix)
         >>> transformed.plot(show_edges=True)
 

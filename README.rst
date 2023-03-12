@@ -51,27 +51,32 @@ PyVista
   :target: https://github.com/psf/black
   :alt: black
 
-.. |python| image:: https://img.shields.io/badge/python-3.7+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
    :target: https://www.python.org/downloads/
 
+.. |Sponsored by NumFOCUS| image:: https://img.shields.io/badge/sponsored%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
+   :target: https://numfocus.org
 
-+----------------------+-----------+------------+
-| Deployment           | |pypi|    |   |conda|  |
-+----------------------+-----------+------------+
-| Build Status         | |GH-CI|   |  |python|  |
-+----------------------+-----------+------------+
-| Metrics              | |codacy|  |  |codecov| |
-+----------------------+-----------+------------+
-| Activity             | |PyPIact| | |condaact| |
-+----------------------+-----------+------------+
-| Citation             | |joss|    |  |zenodo|  |
-+----------------------+-----------+------------+
-| License              | |MIT|     |            |
-+----------------------+-----------+------------+
-| Community            | |slack|   |  |discuss| |
-+----------------------+-----------+------------+
-| Formatter            | |black|   |  |isort|   |
-+----------------------+-----------+------------+
+
++----------------------+------------+-------------+
+| Deployment           | |pypi|     | |conda|     |
++----------------------+------------+-------------+
+| Build Status         | |GH-CI|    | |python|    |
++----------------------+------------+-------------+
+| Metrics              | |codacy|   | |codecov|   |
++----------------------+------------+-------------+
+| Activity             | |PyPIact|  | |condaact|  |
++----------------------+------------+-------------+
+| Citation             | |joss|     | |zenodo|    |
++----------------------+------------+-------------+
+| License              | |MIT|      |             |
++----------------------+------------+-------------+
+| Community            | |slack|    | |discuss|   |
++----------------------+------------+-------------+
+| Formatter            | |black|    | |isort|     |
++----------------------+------------+-------------+
+| Affiliated           | |Sponsored by NumFOCUS|  |
++----------------------+------------+-------------+
 
 
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
@@ -165,7 +170,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.7::
+using ``pip`` on Python >= 3.8::
 
     pip install pyvista
 

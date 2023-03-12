@@ -50,7 +50,10 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
-    >>> _ = pl.add_orientation_widget(axes_actor, viewport=(0, 0, 0.5, 0.5),)
+    >>> _ = pl.add_orientation_widget(
+    ...     axes_actor,
+    ...     viewport=(0, 0, 0.5, 0.5),
+    ... )
     >>> pl.show()  # doctest:+SKIP
 
     """

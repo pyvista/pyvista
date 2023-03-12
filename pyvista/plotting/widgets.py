@@ -270,7 +270,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -644,7 +644,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -737,10 +737,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
+        volume : pyvista.plotting.volume.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.UniformGrid` or
             :class:`pyvista.RectilinearGrid`, or the return value from
-            :class:`pyvista.plotting.Volume` from :func:`BasePlotter.add_volume`.
+            :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -791,9 +791,9 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_volume` to control how the volume is
+            :func:`Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
-            :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`.
+            :class:`pyvista.UniformGrid` and :class:`pyvista.RectilinearGrid`.
 
         Returns
         -------
@@ -806,7 +806,7 @@ class WidgetHelper:
         elif not isinstance(volume, pyvista.plotting.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.UniformGrid, '
-                'pyvista.RectangularGrid, or a pyvista.plotting.volume.Volume '
+                'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
             )
         else:
@@ -915,7 +915,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1010,7 +1010,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1076,14 +1076,14 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the line created.
 
-        color : ColorLike, optional, defaults to white
+        color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
 
         use_vertices : bool, optional
             Changes the arguments of the callback method to take the end
             points of the line instead of a PolyData object.
 
-        pass_widget : boollist
+        pass_widget : bool, default: False
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
@@ -1365,6 +1365,7 @@ class WidgetHelper:
         ...     res = int(value)
         ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
         ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
+        ...
         >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
@@ -1696,7 +1697,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1966,7 +1967,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -2230,6 +2231,7 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
+        ...
         >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 

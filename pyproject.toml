@@ -9,7 +9,7 @@ authors = [
     {name = 'PyVista Developers', email = 'info@pyvista.org'},
 ]
 readme = 'README.rst'
-requires-python = '>=3.7'
+requires-python = '>=3.8'
 keywords = ['vtk', 'numpy', 'plotting', 'mesh']
 license = {text = 'MIT'}
 classifiers = [
@@ -20,7 +20,6 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX',
     'Operating System :: MacOS',
-    'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
@@ -32,7 +31,6 @@ dependencies = [
     'pillow',
     'pooch',
     'scooby>=0.5.1',
-    "typing-extensions; python_version < '3.8'",
     'vtk',  # keep without version constraints
 ]
 dynamic = ['version']

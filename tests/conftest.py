@@ -16,6 +16,7 @@ def set_mpl():
     except ImportError:
         pass
     else:
+        matplotlib.rcdefaults()
         matplotlib.use('agg', force=True)
 
 

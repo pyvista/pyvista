@@ -12,10 +12,9 @@ VTK-friendly file format.
 Wrapping a VTK Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The wrapping function :func:`pyvista.wrap` is under the
-:mod:`pyvista.utilities` module, which is usable from the top level of
-PyVista. This allows users to quickly wrap any VTK dataset they have
-as a PyVista object:
+The wrapping function :func:`pyvista.wrap` is usable from the top level of
+PyVista. This allows users to quickly wrap any VTK dataset they have as a
+PyVista object:
 
 .. code:: python
 
@@ -84,7 +83,7 @@ First, check out some common meta-properties:
 
 
 Access the points by fetching the :attr:`points
-<pyvista.core.dataset.DataSet.points>` attribute on any PyVista mesh
+<pyvista.DataSet.points>` attribute on any PyVista mesh
 as a :class:`numpy.ndarray`:
 
 .. code:: python

@@ -16,12 +16,13 @@ def Spline(points, n_points=None):
 
     Parameters
     ----------
-    points : np.ndarray
+    points : numpy.ndarray
         Array of points to build a spline out of.  Array must be 3D
         and directionally ordered.
 
-    n_points : int, default: points.shape[0]
-        Number of points to interpolate along the points array.
+    n_points : int, optional
+        Number of points to interpolate along the points array. Defaults to
+        ``points.shape[0]``.
 
     Returns
     -------
@@ -91,7 +92,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     >>> import pyvista as pv
     >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     >>> z = np.linspace(-2, 2, 100)
-    >>> r = z ** 2 + 1
+    >>> r = z**2 + 1
     >>> x = r * np.sin(theta)
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
