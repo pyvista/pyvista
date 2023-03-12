@@ -1514,7 +1514,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def cell_connectivity(self) -> np.ndarray:
         """Return a the vtk cell connectivity as a numpy array.
 
-        This is effecively :attr:`UnstructuredGrid.cells` without the
+        This is effectively :attr:`UnstructuredGrid.cells` without the
         padding.
 
         Returns
