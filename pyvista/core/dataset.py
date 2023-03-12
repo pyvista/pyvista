@@ -2600,7 +2600,10 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
-        warnings.warn('`cell_n_points` is deprecated. Use `get_cell(i).n_points` instead', PyVistaDeprecationWarning)
+        warnings.warn(
+            '`cell_n_points` is deprecated. Use `get_cell(i).n_points` instead',
+            PyVistaDeprecationWarning,
+        )
         return self.get_cell(ind).n_points
 
     def cell_points(self, ind: int) -> np.ndarray:
