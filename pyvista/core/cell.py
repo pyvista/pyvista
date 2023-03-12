@@ -19,6 +19,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     be useful when walking through a cell's individual faces or investigating
     cell properties.
 
+    Prameters
+    ----------
     vtk_cell : vtk.vtkCell, optional
         The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
 
