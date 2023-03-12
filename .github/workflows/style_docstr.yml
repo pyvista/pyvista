@@ -25,6 +25,11 @@ jobs:
       - name: Run pre-commit
         run: pre-commit run --all-files
 
+      - name: Auto fixes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: auto fixes from pre-commit hooks
+
   docstringcheck:
     runs-on: ubuntu-20.04
     steps:
