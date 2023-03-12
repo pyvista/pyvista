@@ -2011,10 +2011,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(
-            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
-            PyVistaDeprecationWarning,
-        )
+        warnings.warn("Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.", PyVistaDeprecationWarning)
         self.copy_from(mesh)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
