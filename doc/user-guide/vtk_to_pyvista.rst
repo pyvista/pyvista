@@ -206,8 +206,8 @@ Whereas in VTK you would have to do:
    >>> vtk_poly_data.SetPoints(vtk_points)
 
 The same goes with assigning face or cell connectivity/topology.  With
-VTK you would normally have to loop using :func:`InsertNextCell` and
-:func:`InsertCellPoint`.  For example, to create a single cell
+VTK you would normally have to loop using ``InsertNextCell`` and
+``InsertCellPoint``.  For example, to create a single cell
 (triangle) and then assign it to `vtkPolyData`_:
 
 .. jupyter-execute::

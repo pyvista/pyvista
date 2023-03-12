@@ -57,6 +57,7 @@ class VtkErrorCatcher:
     >>> import pyvista
     >>> with pyvista.VtkErrorCatcher() as error_catcher:
     ...     sphere = pyvista.Sphere()
+    ...
     """
 
     def __init__(self, raise_errors=False, send_to_logging=True):
@@ -277,7 +278,7 @@ class Report(scooby.Report):
 
     Parameters
     ----------
-    additional : list(ModuleType), list(str)
+    additional : list(types.ModuleType), list(str)
         List of packages or package names to add to output information.
 
     ncol : int, default: 3

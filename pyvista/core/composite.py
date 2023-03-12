@@ -60,8 +60,7 @@ class MultiBlock(
 
     Instantiate from a list of objects.
 
-    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)),
-    ...         pv.Cone()]
+    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
@@ -75,9 +74,11 @@ class MultiBlock(
 
     >>> for name in blocks.keys():
     ...     block = blocks[name]
+    ...
 
     >>> for block in blocks:
     ...     surf = block.extract_surface()  # Do something with each dataset
+    ...
 
     """
 
@@ -543,7 +544,7 @@ class MultiBlock(
         >>> blocks.replace(1, pv.Sphere(center=(10, 10, 10)))
         >>> blocks.keys()
         ['cube', 'sphere']
-        >>> np.allclose(blocks[1].center, [10., 10., 10.])
+        >>> np.allclose(blocks[1].center, [10.0, 10.0, 10.0])
         True
 
         """
@@ -948,7 +949,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray

@@ -545,7 +545,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.dataset   # doctest:+SKIP
+        >>> mapper.dataset  # doctest:+SKIP
         MultiBlock (...)
           N Blocks:     2
           X Bounds:     -0.500, 0.500
@@ -719,7 +719,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
 
-        clim : 2 item list
+        clim : Sequence
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.

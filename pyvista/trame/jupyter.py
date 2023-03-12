@@ -215,7 +215,7 @@ def show_trame(
 
     Parameters
     ----------
-    plotter : pyvista.BasePlotter
+    plotter : pyvista.Plotter
         The PyVista plotter to show.
 
     mode : str, optional
@@ -259,8 +259,10 @@ def show_trame(
 
             mesh = pv.Wavelet()
 
+
             def handler(viewer, src, **kwargs):
                 return IFrame(src, '75%', '500px')
+
 
             p = pv.Plotter(notebook=True)
             _ = p.add_mesh(mesh)

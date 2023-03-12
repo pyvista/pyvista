@@ -38,9 +38,10 @@ class UniformGridFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell
-        data to point data using the :func:`DataSet.cell_data_to_point_data`
-        filter to convert any cell data to point data.
+        This filter only supports point data. Consider converting any cell data
+        to point data using the :func:`cell_data_to_point_data()
+        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert any
+        cell data to point data.
 
         Examples
         --------
@@ -264,9 +265,10 @@ class UniformGridFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell
-        data to point data using the :func:`DataSet.cell_data_to_point_data`
-        filter to convert ny cell data to point data.
+        This filter only supports point data. Consider converting any cell data
+        to point data using the :func:`cell_data_to_point_data()
+        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert ny
+        cell data to point data.
 
         Examples
         --------
@@ -595,13 +597,13 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        x_cutoff : double
+        x_cutoff : float
             The cutoff frequency for the x axis.
 
-        y_cutoff : double
+        y_cutoff : float
             The cutoff frequency for the y axis.
 
-        z_cutoff : double
+        z_cutoff : float
             The cutoff frequency for the z axis.
 
         order : int, optional
@@ -673,13 +675,13 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        x_cutoff : double
+        x_cutoff : float
             The cutoff frequency for the x axis.
 
-        y_cutoff : double
+        y_cutoff : float
             The cutoff frequency for the y axis.
 
-        z_cutoff : double
+        z_cutoff : float
             The cutoff frequency for the z axis.
 
         order : int, optional

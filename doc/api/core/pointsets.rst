@@ -102,8 +102,8 @@ A :class:`pyvista.PolyData` object can be initialized with:
 
 This creates an mesh, which you can then add
 
-* Points with :attr:`points <pyvista.Dataset.points>`
-* Vertices with :attr:`verts <pyvista.Dataset.verts>`
+* Points with :attr:`points <pyvista.DataSet.points>`
+* Vertices with :attr:`verts <pyvista.PolyData.verts>`
 * Lines with :attr:`lines <pyvista.PolyData.lines>`
 * Faces with :attr:`faces <pyvista.PolyData.faces>`
 
@@ -209,7 +209,7 @@ An unstructured grid can be initialized with:
 
 This creates an empty grid, and is it not useful until points and
 cells are added to it. Points and cells can be added later with
-:attr:`points <pyvista.Dataset.points>`, :attr:`cells
+:attr:`points <pyvista.DataSet.points>`, :attr:`cells
 <pyvista.UnstructuredGrid.cells>`, and :attr:`celltypes
 <pyvista.UnstructuredGrid.celltypes>` .
 
@@ -434,11 +434,11 @@ You can also render the beam as as a wire-frame object:
 Adding Labels to a Plot
 -----------------------
 Labels can be added to a plot using :func:`add_point_labels()
-<pyvista.BasePlotter.add_point_labels>` within the :class:`Plotter <pyvista.BasePlotter>`.
+<pyvista.Plotter.add_point_labels>` within the :class:`Plotter <pyvista.Plotter>`.
 The following example loads the included example beam, generates a
 plotting class, and sub-selects points along the y-z plane and labels
 their coordinates.  :func:`add_point_labels()
-<pyvista.BasePlotter.add_point_labels>` requires that the number of
+<pyvista.Plotter.add_point_labels>` requires that the number of
 labels matches the number of points, and that labels is a list
 containing one entry per point.  The code automatically converts each
 item in the list to a string.

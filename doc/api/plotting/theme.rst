@@ -14,14 +14,16 @@ PyVista.
 .. autosummary::
    :toctree: _autosummary
 
+   themes.DarkTheme
    themes.DefaultTheme
-   themes._SliderConfig
-   themes._SliderStyleConfig
-   themes._Font
+   themes.DocumentTheme
+   themes.ParaViewTheme
    themes._AxesConfig
    themes._ColorbarConfig
-   themes._SilhouetteConfig
    themes._DepthPeelingConfig
-   themes.DarkTheme
-   themes.ParaViewTheme
-   themes.DocumentTheme
+   themes._Font
+   themes._LightingConfig
+   themes._SilhouetteConfig
+   themes._SliderConfig
+   themes._SliderStyleConfig
+   themes._TrameConfig

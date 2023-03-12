@@ -24,7 +24,6 @@ pyvista.
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
-...
 >>> pv.global_theme.load_theme(my_theme)
 >>> pv.global_theme.font.size
 20
@@ -82,6 +81,11 @@ def _check_between_zero_and_one(value: float, value_name: str = 'value'):
 
 def load_theme(filename):
     """Load a theme from a file.
+
+    Parameters
+    ----------
+    filename : str
+        Theme file. Must be json.
 
     Examples
     --------
@@ -254,12 +258,13 @@ class _LightingConfig(_ThemeConfig):
     def interpolation(self) -> InterpolationType:
         """Return or set the default interpolation type.
 
-        See :class:`pyvista.plotting.opts.InterpolationType`
+        See :class:`pyvista.plotting.opts.InterpolationType`.
 
         Options are:
-        * 'Phong'
-        * 'Flat'
-        * 'Physically based rendering'
+
+        * ``'Phong'``
+        * ``'Flat'``
+        * ``'Physically based rendering'``
 
         This is stored as a integer value of the ``InterpolationType``
         so that the theme can be JSON-serializable.
@@ -1553,7 +1558,7 @@ class DefaultTheme(_ThemeConfig):
 
         See Also
         --------
-        pyvista.BasePlotter.enable_hidden_line_removal
+        pyvista.Plotter.enable_hidden_line_removal
 
         Examples
         --------
@@ -1868,8 +1873,7 @@ class DefaultTheme(_ThemeConfig):
         Set both the position and view of the camera.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.camera = {'position': [1, 1, 1],
-        ...                                'viewup': [0, 0, 1]}
+        >>> pv.global_theme.camera = {'position': [1, 1, 1], 'viewup': [0, 0, 1]}
 
         Set the default position of the camera.
 
@@ -2082,9 +2086,9 @@ class DefaultTheme(_ThemeConfig):
         >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
-        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
-        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
         >>> pl.show()  # doctest: +SKIP
 
@@ -2754,7 +2758,7 @@ class DefaultTheme(_ThemeConfig):
 
         Parameters
         ----------
-        theme : pyvista.DefaultTheme
+        theme : pyvista.themes.DefaultTheme
             Theme to use to overwrite this theme.
 
         Examples
@@ -2768,7 +2772,6 @@ class DefaultTheme(_ThemeConfig):
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
         >>> my_theme.cmap = 'jet'
-        ...
         >>> pv.global_theme.load_theme(my_theme)
         >>> pv.global_theme.font.size
         20

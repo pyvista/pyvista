@@ -557,7 +557,7 @@ class LookupTable(_vtk.vtkLookupTable):
         * The default is S-curve, which tails off gradually at either end.
         * The equation used for ``"s-curve"`` is ``y = (sin((x - 1/2)*pi) +
           1)/2``, For an S-curve greyscale ramp, you should set
-          :attr:`LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
+          :attr:`pyvista.LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
           room for the tails of the ramp.
 
         * The equation for the ``"linear"`` is simply ``y = x``.

@@ -409,7 +409,16 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     @property
     def n_components(self):
-        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
+        """Components in the image (e.g. 3 [or 4] for RGB[A]).
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.n_components
+        3
+
+        """
         image = self.to_image()
         return image.active_scalars.shape[1]
 
@@ -438,7 +447,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         Returns
         -------
         numpy.ndarray
-            Texture as a numpy array
+            Texture as a numpy array.
 
         """
         image = self.to_image()
@@ -450,10 +459,17 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
 
-    def plot(self, *args, **kwargs):
-        """Plot the texture as image data by itself."""
+    def plot(self, **kwargs):
+        """Plot the texture as image data by itself.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Optional keyworld arguments. See :func:`pyvista.plot`.
+
+        """
         kwargs.setdefault("rgba", True)
-        return self.to_image().plot(*args, **kwargs)
+        return self.to_image().plot(**kwargs)
 
     @property
     def cube_map(self):
@@ -468,7 +484,6 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     @cube_map.setter
     def cube_map(self, flag):
-        """Enable cube mapping if ``flag`` is True, disable it otherwise."""
         self.SetCubeMap(flag)
 
     def copy(self):

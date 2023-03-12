@@ -167,7 +167,7 @@ def plot(
         Enable surface space ambient occlusion (SSAO). See
         :func:`Plotter.enable_ssao` for more details.
 
-    **kwargs : optional keyword arguments
+    **kwargs : dict, optional
         See :func:`pyvista.Plotter.add_mesh` for additional options.
 
     Returns
@@ -189,7 +189,7 @@ def plot(
         * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
 
-    widget
+    widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.
 
     Examples
@@ -206,7 +206,7 @@ def plot(
     >>> import numpy as np
     >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
-    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
+    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max()) ** 3
     >>> grid.plot(volume=True)
 
     """
