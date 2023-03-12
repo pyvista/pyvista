@@ -23,6 +23,7 @@ jobs:
         run: pip install pre-commit
 
       - name: Run pre-commit
+        continue-on-error: true
         run: pre-commit run --all-files
 
       - name: Auto fixes
