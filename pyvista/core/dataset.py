@@ -5,14 +5,8 @@ from collections import namedtuple
 import collections.abc
 from copy import deepcopy
 from functools import partial
-import sys
-from typing import Any, Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Generator, Iterable, Iterator, List, Literal, Optional, Tuple, Union, cast
 import warnings
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:  # pragma: no cover
-    from typing_extensions import Literal
 
 import numpy as np
 
@@ -2513,17 +2507,34 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
-        >>> mesh.get_cell(0) # doctest:+SKIP
-        GenericCell (0x7f6304e0a730)
-          Type:	CellType.TRIANGLE
-          Linear:	True
-          Dimension:	2
-          N Points:	3
-          N Faces:	0
-          N Edges:	3
-          X Bounds:	8.970e+02, 9.075e+02
-          Y Bounds:	4.876e+01, 5.549e+01
-          Z Bounds:	8.075e+01, 8.366e+01
+        >>> cell = mesh.get_cell(0)
+        >>> cell
+        Cell ...
+
+        Get the point ids of the first cell
+
+        >>> cell.point_ids
+        [0, 1, 2]
+
+        Get the point coordinates of the first cell
+
+        >>> cell.points
+        array([[897.0,  48.8,  82.3],
+               [906.6,  48.8,  80.7],
+               [907.5,  55.5,  83.7]])
+
+        For the first cell, get the points associated with the first edge
+
+        >>> cell.edges[0].point_ids
+        [0, 1]
+
+        For a Tetrahedron, get the point ids of the last face
+
+        >>> mesh = examples.cells.Tetrahedron()
+        >>> cell = mesh.get_cell(0)
+        >>> cell.faces[-1].point_ids
+        [0, 2, 1]
+
         """
         # must check upper bounds, otherwise segfaults (on Linux, 9.2)
         if index + 1 > self.n_cells:
@@ -2538,35 +2549,31 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self) -> List[pyvista.Cell]:
-        """Return a list of cells.
+    def cell(self) -> Iterator['pyvista.Cell']:
+        """A generator that provides an easy way to loop over all cells.
 
-        Returns
-        -------
-        list[pyvista.Cell]
-            A list of :class:`pyvista.Cell` objects.
+        To access a single cell, use :func:`pyvista.DataSet.get_cell`.
 
-        Warnings
+        .. versionchanged:: 0.39.0
+            Now returns a generator instead of a list.
+            Use ``get_cell(i)`` instead of ``cell[i]``.
+
+        Yields
+        ------
+        pyvista.Cell
+
+        See Also
         --------
-        For large meshes, the list can take some time to compute and you might
-        prefer to use the :func:`DataSet.get_cell` method within a for-loop.
+        pyvista.DataSet.get_cell
 
         Examples
         --------
-        Get the last cell of a dataset.
+        Loop over the cells
 
-        >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> mesh.cell[-1] # doctest:+SKIP
-        Type: CellType.HEXAHEDRON
-        Linear: True
-        Dimension: 3
-        N Points: 8
-        N Faces: 6
-        N Edges: 12
-        X Bounds: 5.000e-01, 1.000e+00
-        Y Bounds: 5.000e-01, 1.000e+00
-        Z Bounds: 4.500e+00, 5.000e+00
+        >>> import pyvista as pv
+        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))   # 9 points, 4 cells
+        >>> for cell in mesh.cell:  # doctest: +SKIP
+        ...     print(cell)
 
         Get the point ids of the last cell
 
@@ -2586,6 +2593,8 @@ class DataSet(DataSetFilters, DataObject):
                [0.5, 1. , 5. ]])
 
         Get the point ids of the edges of the last cell.
+        Note that the `edges` attributes returns a generator of
+        `pyvista.Cell` objects.
 
         >>> for e in mesh.cell[-1].edges:
         ...     print(e.point_ids)
@@ -2614,7 +2623,8 @@ class DataSet(DataSetFilters, DataObject):
         [2, 0, 3]
         [0, 2, 1]
         """
-        return [self.get_cell(i) for i in range(self.n_cells)]
+        for i in range(self.n_cells):
+            yield self.get_cell(i)
 
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
@@ -2635,7 +2645,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_n_points` is deprecated. Use `cell[i].n_points` instead',
+            '`cell_n_points` is deprecated. Use `get_cell(i).n_points` instead',
             PyVistaDeprecationWarning,
         )
         return self.get_cell(ind).n_points
@@ -2660,7 +2670,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_points` is deprecated. Use `cell[i].points` instead', PyVistaDeprecationWarning
+            '`cell_points` is deprecated. Use `get_cell(i).points` instead',
+            PyVistaDeprecationWarning,
         )
         return self.get_cell(ind).points
 
@@ -2683,7 +2694,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_bounds` is deprecated. Use `cell[i].bounds` instead', PyVistaDeprecationWarning
+            '`cell_bounds` is deprecated. Use `get_cell(i).bounds` instead',
+            PyVistaDeprecationWarning,
         )
         return self.get_cell(ind).bounds
 
@@ -2706,7 +2718,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_type` is deprecated. Use `cell[i].type` instead', PyVistaDeprecationWarning
+            '`cell_type` is deprecated. Use `get_cell(i).type` instead', PyVistaDeprecationWarning
         )
         return self.get_cell(ind).type
 
@@ -2729,10 +2741,10 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_point_ids` is deprecated. Use `cell[i].point_ids` instead',
+            '`cell_point_ids` is deprecated. Use `get_cell(i).point_ids` instead',
             PyVistaDeprecationWarning,
         )
-        return self.cell[ind].point_ids
+        return self.get_cell(ind).point_ids
 
     def cell_neighbors(self, ind: int, connections: str = "points") -> List[int]:
         """Get the cell neighbors of the ind-th cell.
@@ -3171,7 +3183,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
-        >>> mesh.cell[0].bounds
+        >>> mesh.get_cell(0).bounds
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True

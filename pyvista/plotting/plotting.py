@@ -80,7 +80,6 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
-VERY_FIRST_RENDER = True  # windows plotter helper
 
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
@@ -419,11 +418,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_gltf` for a full example using this method.
 
         """
-        if not _vtk.VTK9:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError('Support for glTF requires VTK v9 or newer')
-
         filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
             raise FileNotFoundError(f'Unable to locate {filename}')
@@ -627,11 +621,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        if not _vtk.VTK9:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError('Support for glTF requires VTK v9 or newer')
-
         if self.render_window is None:
             raise RuntimeError('This plotter has been closed and is unable to export the scene.')
 
@@ -1671,11 +1660,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         size_before = self.window_size
         if window_size is not None:
             self.window_size = window_size
-        yield self
-        # Sometimes the render window is destroyed within the context
-        # and re-setting will fail
-        if self.render_window is not None:
-            self.window_size = size_before
+        try:
+            yield self
+        finally:
+            # Sometimes the render window is destroyed within the context
+            # and re-setting will fail
+            if self.render_window is not None:
+                self.window_size = size_before
 
     @property
     def image_depth(self):
@@ -1767,8 +1758,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scale_before = self.image_scale
         if scale is not None:
             self.image_scale = scale
-        yield self
-        self.image_scale = scale_before
+        try:
+            yield self
+        finally:
+            self.image_scale = scale_before
 
     def render(self):
         """Render the main window.
@@ -2150,17 +2143,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             update_rate = self.iren.get_desired_update_rate()
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
                 # Allow interaction for a brief moment during interactive updating
-                if self.iren.can_process_events:
-                    # For newer VTK versions we can use the non-blocking ProcessEvents method.
-                    self.iren.process_events()
-                else:
-                    # For older VTK versions we have to use the blocking Start method instead.
-                    # Setup a timer to break out of the next blocking call
-                    Plotter.update_timer_id = self.iren.create_timer(stime)
-                    # Allow interaction for a brief moment during interactive updating, blocking call.
-                    self.iren.start()
-                    # Execution resumed after TerminateApp() call in on_timer callback, destroy the timer
-                    self.iren.destroy_timer(Plotter.update_timer_id)
+                # Use the non-blocking ProcessEvents method.
+                self.iren.process_events()
                 # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time
@@ -2406,6 +2390,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the scalar array will be used as the ``n_colors``
             argument.
 
+            .. deprecated:: 0.39.0
+               This keyword argument is no longer used. Instead, use
+               ``n_colors``.
+
         below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
@@ -2439,7 +2427,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pbr : bool, default: False
             Enable physics based rendering (PBR) if the mesh is
             ``PolyData``.  Use the ``color`` argument to set the base
-            color. This is only available in VTK>=9.
+            color.
 
         metallic : float, default: 0.0
             Usually this value is either 0 or 1 for a real material
@@ -2632,6 +2620,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
 
             if categories:
+                # Deprecated on 0.39.0, estimated removal on v0.42.0
+                warnings.warn(
+                    '`categories` is deprecated for composite datasets. Use `n_colors` instead.',
+                    PyVistaDeprecationWarning,
+                )
                 if not isinstance(categories, int):
                     raise TypeError('Categories must be an integer for a composite dataset.')
                 n_colors = categories
@@ -2651,7 +2644,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     clim,
                     cmap,
                     flip_scalars,
-                    categories,
                     log_scale,
                 )
             else:
@@ -3015,7 +3007,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
             ``PolyData``.  Use the ``color`` argument to set the base
-            color. This is only available in VTK>=9.
+            color.
 
         metallic : float, optional
             Usually this value is either 0 or 1 for a real material
@@ -3684,7 +3676,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             .. note::
                 If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
                 mapper (``vtkUnstructuredGridVolumeRayCastMapper``) will be
-                used regargless.
+                used regardless.
 
             .. note::
                 The ``'smart'`` mapper chooses one of the other listed
@@ -4249,7 +4241,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
 
         try:
-            for mh in self._scalar_bar_mappers[name]:
+            for mh in self.scalar_bars._scalar_bar_mappers[name]:
                 update_mapper(mh)
         except KeyError:
             raise KeyError('Name ({}) not valid/not found in this plotter.')
@@ -5163,8 +5155,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(f'Points type not usable: {type(points)}')
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
-            if not _vtk.VTK91:
-                raise RuntimeError(
+            if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                raise VTKVersionError(
                     'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
                 )
             # Extract points filter
@@ -5835,9 +5829,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        if pyvista.vtk_version_info <= (8, 1, 2):
-            raise pyvista.core.errors.VTKVersionError()
-
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -6136,7 +6127,6 @@ class Plotter(BasePlotter):
     """
 
     last_update_time = 0.0
-    update_timer_id = -1
 
     def __init__(
         self,
@@ -6182,16 +6172,6 @@ class Plotter(BasePlotter):
 
         # check if a plotting backend is enabled
         _warn_xserver()
-
-        def on_timer(iren, event_id):
-            """Resume execution after processing interaction events during an interactive update."""
-            # For some odd reason when vtkContextInteractorStyle is active, TimerEvents
-            # are constantly being fired. As we cannot differentiate between different
-            # timers from the python side, we assume all TimerEvents that are fired while
-            # the ContextInteractorStyle is not active are coming from the update_timer.
-            if event_id == 'TimerEvent' and self.iren._style != "Context":
-                # Simulate 'q' press to break out of blocking call in the update method.
-                self.iren.terminate_app()
 
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
@@ -6265,10 +6245,6 @@ class Plotter(BasePlotter):
                 self._window_size_unset = True
         else:
             self.window_size = window_size
-
-        # add timer event callback to break out of blocking interactive update call (only needed for VTK<9)
-        if not self.iren.can_process_events:
-            self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
         if self._theme.depth_peeling.enabled:
             if self.enable_depth_peeling():
@@ -6535,17 +6511,13 @@ class Plotter(BasePlotter):
                 self.iren.update_style()
                 if not interactive_update:
                     # Resolves #1260
-                    if os.name == 'nt':
-                        if _vtk.VTK9:
-                            self.iren.process_events()
-                        else:
-                            global VERY_FIRST_RENDER
-                            if not VERY_FIRST_RENDER:
-                                self.iren.start()
-                            VERY_FIRST_RENDER = False
-
+                    if os.name == 'nt':  # pragma: no cover
+                        self.iren.process_events()
                     self.iren.start()
-                self.iren.initialize()
+
+                if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                    self.iren.initialize()
+
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()

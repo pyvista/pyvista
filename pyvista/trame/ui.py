@@ -158,9 +158,10 @@ class Viewer:
 
         """
         value = kwargs[self.EDGES]
-        for _, actor in self.plotter.actors.items():
-            if isinstance(actor, pyvista.Actor):
-                actor.prop.show_edges = value
+        for renderer in self.plotter.renderers:
+            for _, actor in renderer.actors.items():
+                if isinstance(actor, pyvista.Actor):
+                    actor.prop.show_edges = value
         self.update()
 
     def on_grid_visiblity_change(self, **kwargs):
@@ -172,10 +173,12 @@ class Viewer:
             Unused keyword arguments.
 
         """
-        if kwargs[self.GRID]:
-            self.plotter.show_grid()
-        else:
-            self.plotter.remove_bounds_axes()
+        value = kwargs[self.GRID]
+        for renderer in self.plotter.renderers:
+            if value:
+                renderer.show_grid()
+            else:
+                renderer.remove_bounds_axes()
         self.update()
 
     def on_outline_visiblity_change(self, **kwargs):
@@ -187,10 +190,12 @@ class Viewer:
             Unused keyword arguments.
 
         """
-        if kwargs[self.OUTLINE]:
-            self.plotter.add_bounding_box(reset_camera=False)
-        else:
-            self.plotter.remove_bounding_box()
+        value = kwargs[self.OUTLINE]
+        for renderer in self.plotter.renderers:
+            if value:
+                renderer.add_bounding_box(reset_camera=False)
+            else:
+                renderer.remove_bounding_box()
         self.update()
 
     def on_axis_visiblity_change(self, **kwargs):
@@ -202,10 +207,12 @@ class Viewer:
             Unused keyword arguments.
 
         """
-        if kwargs[self.AXIS]:
-            self.plotter.show_axes()
-        else:
-            self.plotter.hide_axes()
+        value = kwargs[self.AXIS]
+        for renderer in self.plotter.renderers:
+            if value:
+                renderer.show_axes()
+            else:
+                renderer.hide_axes()
         self.update()
 
     def on_rendering_mode_change(self, **kwargs):
@@ -407,9 +414,12 @@ class Viewer:
             server = container.server
             # Initialize state variables
             server.state[self.EDGES] = False
-            server.state[self.GRID] = False
-            server.state[self.OUTLINE] = False
-            server.state[self.AXIS] = False
+            server.state[self.GRID] = hasattr(self.plotter.renderer, 'cube_axes_actor')
+            server.state[self.OUTLINE] = hasattr(self.plotter.renderer, '_box_object')
+            server.state[self.AXIS] = (
+                hasattr(self.plotter.renderer, 'axes_widget')
+                and self.plotter.renderer.axes_widget.GetEnabled()
+            )
             server.state[self.SERVER_RENDERING] = default_server_rendering
             if add_menu:
                 server.state[self.SHOW_UI] = not collapse_menu
