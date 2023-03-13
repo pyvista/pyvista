@@ -678,7 +678,16 @@ def make_tri_mesh(points, faces):
     ...     ]
     ... )
     >>> faces = np.array(
-    ...     [[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8], [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]]
+    ...     [
+    ...         [0, 1, 4],
+    ...         [4, 7, 6],
+    ...         [2, 5, 4],
+    ...         [4, 5, 8],
+    ...         [0, 4, 3],
+    ...         [3, 4, 6],
+    ...         [1, 2, 4],
+    ...         [4, 8, 7],
+    ...     ]
     ... )
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
     >>> tri_mesh.plot(show_edges=True, line_width=5)
@@ -723,7 +732,9 @@ def vector_poly_data(orig, vec):
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
     >>> u = x / np.sqrt(x**2 + y**2)
     >>> v = y / np.sqrt(x**2 + y**2)
-    >>> vectors = np.vstack((u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))).T
+    >>> vectors = np.vstack(
+    ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
+    ... ).T
     >>> pdata = pyvista.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']
@@ -1144,13 +1155,20 @@ def fit_plane_to_points(points, return_meta=False):
     >>> import numpy as np
     >>> cloud = np.random.random((10, 3))
     >>> cloud[:, 2] *= 0.1
-    >>> plane, center, normal = pyvista.fit_plane_to_points(cloud, return_meta=True)
+    >>> plane, center, normal = pyvista.fit_plane_to_points(
+    ...     cloud, return_meta=True
+    ... )
 
     Plot the fitted plane.
 
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
-    >>> _ = pl.add_points(cloud, render_points_as_spheres=True, color='r', point_size=30)
+    >>> _ = pl.add_points(
+    ...     cloud,
+    ...     render_points_as_spheres=True,
+    ...     color='r',
+    ...     point_size=30,
+    ... )
     >>> pl.show()
 
     """
@@ -1526,7 +1544,9 @@ def cubemap(path='', prefix='', ext='.jpg'):
     Load a skybox given a directory, prefix, and file extension.
 
     >>> import pyvista
-    >>> skybox = pyvista.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+    >>> skybox = pyvista.cubemap(
+    ...     'my_directory', 'skybox', '.jpeg'
+    ... )  # doctest:+SKIP
 
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']

@@ -14,7 +14,9 @@ like this:
     >>> import vtk
     >>> import pyvista
     >>> offset = np.array([0, 9])
-    >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
+    >>> cells = np.array(
+    ...     [8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15]
+    ... )
     >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
 
 there will be a ``NameError`` when the code block is copied into Python

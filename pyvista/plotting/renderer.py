@@ -2723,7 +2723,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> for i in range(5):
         ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
         ...     color = [0, 255 - i * 20, 30 + i * 50]
-        ...     _ = pl.add_mesh(mesh, show_edges=False, pbr=True, metallic=1.0, color=color)
+        ...     _ = pl.add_mesh(
+        ...         mesh,
+        ...         show_edges=False,
+        ...         pbr=True,
+        ...         metallic=1.0,
+        ...         color=color,
+        ...     )
         ...
         >>> pl.camera.zoom(1.8)
         >>> pl.camera_position = [
@@ -3212,7 +3218,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> sphere = pyvista.Sphere(center=(0, 0, 1))
         >>> cube = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
+        >>> _ = plotter.add_mesh(
+        ...     sphere, 'grey', smooth_shading=True, label='Sphere'
+        ... )
         >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
         >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()

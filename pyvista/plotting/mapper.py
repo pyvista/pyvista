@@ -265,7 +265,9 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, scalars='data', show_scalar_bar=False
+        ... )
         >>> mapper.scalar_map_mode
         'point'
         >>> pl.close()

@@ -62,7 +62,9 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
     >>> import pyvista as pv
     >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
-    >>> grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40))
+    >>> grid = pv.sample_function(
+    ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+    ... )
     >>> grid['scalars'] -= grid['scalars'].min()
     >>> grid['scalars'] *= 255 / grid['scalars'].max()
     >>> pl = pv.Plotter()
@@ -122,7 +124,9 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
-        >>> grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40))
+        >>> grid = pv.sample_function(
+        ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+        ... )
         >>> grid['scalars'] -= grid['scalars'].min()
         >>> grid['scalars'] *= 255 / grid['scalars'].max()
         >>> pl = pv.Plotter()

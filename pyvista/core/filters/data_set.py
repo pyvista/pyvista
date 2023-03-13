@@ -385,7 +385,9 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
+        >>> clipped = dataset.clip_scalar(
+        ...     scalars="sample_point_scalars", value=100
+        ... )
         >>> clipped.plot()
 
         Get clipped meshes corresponding to the portions of the mesh above and below 100.
@@ -402,7 +404,9 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100, invert=False)
+        >>> clipped = dataset.clip_scalar(
+        ...     scalars="sample_point_scalars", value=100, invert=False
+        ... )
         >>> clipped.plot()
 
         """
@@ -902,7 +906,12 @@ class DataSetFilters:
 
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(hills, smooth_shading=True, style='wireframe')
-        >>> _ = pl.add_mesh(line_slice, line_width=10, render_lines_as_tubes=True, color='k')
+        >>> _ = pl.add_mesh(
+        ...     line_slice,
+        ...     line_width=10,
+        ...     render_lines_as_tubes=True,
+        ...     color='k',
+        ... )
         >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
         >>> pl.show()
 
@@ -1052,16 +1061,28 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20))
-        >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=True, show_edges=False)
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
+        ... )
+        >>> grid.plot(
+        ...     cmap='gist_earth_r',
+        ...     show_scalar_bar=True,
+        ...     show_edges=False,
+        ... )
 
         Next, apply the threshold.
 
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
+        ... )
         >>> threshed = grid.threshold(value=0.02)
-        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+        >>> threshed.plot(
+        ...     cmap='gist_earth_r',
+        ...     show_scalar_bar=False,
+        ...     show_edges=True,
+        ... )
 
         See :ref:`common_filter_example` for more examples using this filter.
 
@@ -1182,14 +1203,24 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30)
+        ... )
         >>> threshed = grid.threshold_percent(0.5)
-        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+        >>> threshed.plot(
+        ...     cmap='gist_earth_r',
+        ...     show_scalar_bar=False,
+        ...     show_edges=True,
+        ... )
 
         Apply a 80% threshold filter.
 
         >>> threshed = grid.threshold_percent(0.8)
-        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+        >>> threshed.plot(
+        ...     cmap='gist_earth_r',
+        ...     show_scalar_bar=False,
+        ...     show_edges=True,
+        ... )
 
         See :ref:`common_filter_example` for more examples using a similar filter.
 
@@ -1617,7 +1648,11 @@ class DataSetFilters:
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.UniformGrid(
         ...     dimensions=(n, n, n),
-        ...     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
+        ...     spacing=(
+        ...         abs(x_min) / n * 2,
+        ...         abs(y_min) / n * 2,
+        ...         abs(z_min) / n * 2,
+        ...     ),
         ...     origin=(x_min, y_min, z_min),
         ... )
         >>> x, y, z = grid.points.T
@@ -1947,7 +1982,10 @@ class DataSetFilters:
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(mesh, show_edges=True)
         >>> actor = pl.add_points(
-        ...     centers, render_points_as_spheres=True, color='red', point_size=20
+        ...     centers,
+        ...     render_points_as_spheres=True,
+        ...     color='red',
+        ...     point_size=20,
         ... )
         >>> pl.show()
 
@@ -2044,10 +2082,17 @@ class DataSetFilters:
         >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = examples.load_random_hills()
-        >>> arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+        >>> arrows = mesh.glyph(
+        ...     scale="Normals", orient="Normals", tolerance=0.05
+        ... )
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(arrows, color="black")
-        >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+        >>> actor = pl.add_mesh(
+        ...     mesh,
+        ...     scalars="Elevation",
+        ...     cmap="terrain",
+        ...     show_scalar_bar=False,
+        ... )
         >>> pl.show()
 
         See :ref:`glyph_example` and :ref:`glyph_table_example` for more
@@ -2816,7 +2861,10 @@ class DataSetFilters:
         >>> sphere = pyvista.Sphere()
         >>> plane = pyvista.Plane()
         >>> selected = plane.select_enclosed_points(sphere)
-        >>> pts = plane.extract_points(selected['SelectedPoints'].view(bool), adjacent_cells=False)
+        >>> pts = plane.extract_points(
+        ...     selected['SelectedPoints'].view(bool),
+        ...     adjacent_cells=False,
+        ... )
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(sphere, style='wireframe')
         >>> _ = pl.add_points(pts, color='r')
@@ -3088,7 +3136,9 @@ class DataSetFilters:
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
         >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(
+        ...     pdata, render_points_as_spheres=True, point_size=50
+        ... )
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
@@ -3541,10 +3591,14 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.download_cylinder_crossflow()
         >>> streams = mesh[0].streamlines_evenly_spaced_2D(
-        ...     start_position=(4, 0.1, 0.0), separating_distance=3, separating_distance_ratio=0.2
+        ...     start_position=(4, 0.1, 0.0),
+        ...     separating_distance=3,
+        ...     separating_distance_ratio=0.2,
         ... )
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
+        >>> _ = plotter.add_mesh(
+        ...     streams.tube(radius=0.02), scalars="vorticity_mag"
+        ... )
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -3685,7 +3739,9 @@ class DataSetFilters:
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
         >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(
+        ...     pdata, render_points_as_spheres=True, point_size=50
+        ... )
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
         >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
         >>> pl.show()
@@ -3846,7 +3902,9 @@ class DataSetFilters:
         ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
         ... )
         >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(
+        ...     pdata, render_points_as_spheres=True, point_size=50
+        ... )
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
         >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
         >>> pl.show()
@@ -3901,10 +3959,24 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
-        >>> pointa = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[5]]
-        >>> pointb = [uniform.bounds[1], uniform.bounds[3], uniform.bounds[4]]
-        >>> center = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
-        >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
+        >>> pointa = [
+        ...     uniform.bounds[1],
+        ...     uniform.bounds[2],
+        ...     uniform.bounds[5],
+        ... ]
+        >>> pointb = [
+        ...     uniform.bounds[1],
+        ...     uniform.bounds[3],
+        ...     uniform.bounds[4],
+        ... ]
+        >>> center = [
+        ...     uniform.bounds[1],
+        ...     uniform.bounds[2],
+        ...     uniform.bounds[4],
+        ... ]
+        >>> sampled_arc = uniform.sample_over_circular_arc(
+        ...     pointa, pointb, center
+        ... )
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(sampled_arc, line_width=10)
@@ -3981,8 +4053,14 @@ class DataSetFilters:
         >>> uniform["height"] = uniform.points[:, 2]
         >>> normal = [0, 0, 1]
         >>> polar = [0, 9, 0]
-        >>> center = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[5]]
-        >>> arc = uniform.sample_over_circular_arc_normal(center, normal=normal, polar=polar)
+        >>> center = [
+        ...     uniform.bounds[1],
+        ...     uniform.bounds[2],
+        ...     uniform.bounds[5],
+        ... ]
+        >>> arc = uniform.sample_over_circular_arc_normal(
+        ...     center, normal=normal, polar=polar
+        ... )
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(arc, line_width=10)
@@ -4075,7 +4153,9 @@ class DataSetFilters:
         >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
         >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)  # doctest:+SKIP
+        >>> mesh.plot_over_circular_arc(
+        ...     a, b, center, resolution=1000, show=False
+        ... )  # doctest:+SKIP
 
         """
         # Ensure matplotlib is available
@@ -4205,7 +4285,9 @@ class DataSetFilters:
         >>> polar = [0, 9, 0]
         >>> angle = 90
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle)  # doctest:+SKIP
+        >>> mesh.plot_over_circular_arc_normal(
+        ...     center, polar=polar, angle=angle
+        ... )  # doctest:+SKIP
 
         """
         # Ensure matplotlib is available
@@ -4275,7 +4357,9 @@ class DataSetFilters:
         >>> subset.n_cells
         20
         >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(grid, style='wireframe', line_width=5, color='black')
+        >>> actor = pl.add_mesh(
+        ...     grid, style='wireframe', line_width=5, color='black'
+        ... )
         >>> actor = pl.add_mesh(subset, color='grey')
         >>> pl.show()
 
@@ -5088,7 +5172,12 @@ class DataSetFilters:
         accepted.
 
         >>> transform_matrix = np.array(
-        ...     [[1, 0, 0, 50], [0, 1, 0, 100], [0, 0, 1, 200], [0, 0, 0, 1]]
+        ...     [
+        ...         [1, 0, 0, 50],
+        ...         [0, 1, 0, 100],
+        ...         [0, 0, 1, 200],
+        ...         [0, 0, 0, 1],
+        ...     ]
         ... )
         >>> transformed = mesh.transform(transform_matrix)
         >>> transformed.plot(show_edges=True)

@@ -60,13 +60,20 @@ class MultiBlock(
 
     Instantiate from a list of objects.
 
-    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+    >>> data = [
+    ...     pv.Sphere(center=(2, 0, 0)),
+    ...     pv.Cube(center=(0, 2, 0)),
+    ...     pv.Cone(),
+    ... ]
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
     Instantiate from a dictionary.
 
-    >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+    >>> data = {
+    ...     "cube": pv.Cube(),
+    ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+    ... }
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
@@ -147,7 +154,11 @@ class MultiBlock(
         Return the bounds across blocks.
 
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
         (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
@@ -176,7 +187,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.center  # doctest:+SKIP
         array([1., 1., 0.])
@@ -192,7 +207,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.length
         4.3584
@@ -207,7 +226,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.n_blocks
         3
@@ -233,7 +256,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.volume
         1.7348
@@ -293,7 +320,10 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.get_index_by_name('sphere')
         1
@@ -354,7 +384,10 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.append(pv.Cone())
         >>> len(blocks)
@@ -392,9 +425,14 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
-        >>> blocks_uniform = pv.MultiBlock({"uniform": examples.load_uniform()})
+        >>> blocks_uniform = pv.MultiBlock(
+        ...     {"uniform": examples.load_uniform()}
+        ... )
         >>> blocks.extend(blocks_uniform)
         >>> len(blocks)
         3
@@ -461,7 +499,10 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.append(pv.Cone())
         >>> blocks.set_block_name(2, 'cone')
@@ -491,7 +532,10 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.get_block_name(0)
         'cube'
@@ -514,7 +558,10 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -539,7 +586,10 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.replace(1, pv.Sphere(center=(10, 10, 10)))
         >>> blocks.keys()
@@ -704,7 +754,10 @@ class MultiBlock(
         Insert a new :class:`pyvista.PolyData` at the start of the multiblock.
 
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -742,7 +795,10 @@ class MultiBlock(
         Pop the ``"cube"`` multiblock.
 
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -765,7 +821,10 @@ class MultiBlock(
         Reverse a multiblock.
 
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -907,7 +966,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> new_blocks = blocks.copy()
         >>> len(new_blocks)

@@ -99,7 +99,9 @@ def Cylinder(
     --------
     >>> import pyvista
     >>> import numpy as np
-    >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2)
+    >>> cylinder = pyvista.Cylinder(
+    ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
     cylinderSource = _vtk.vtkCylinderSource()
@@ -1107,7 +1109,9 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     >>> import pyvista
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pyvista.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
+    >>> arc = pyvista.CircularArcFromNormal(
+    ...     [0, 0, 0], normal=normal, polar=polar
+    ... )
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
@@ -1418,7 +1422,9 @@ def Superquadric(
     --------
     >>> import pyvista
     >>> superquadric = pyvista.Superquadric(
-    ...     scale=(3.0, 1.0, 0.5), phi_roundness=0.1, theta_roundness=0.5
+    ...     scale=(3.0, 1.0, 0.5),
+    ...     phi_roundness=0.1,
+    ...     theta_roundness=0.5,
     ... )
     >>> superquadric.plot(show_edges=True)
 

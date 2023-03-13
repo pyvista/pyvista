@@ -909,7 +909,9 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
+    >>> image_path = examples.planets.download_milkyway_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> pl.show()
 
