@@ -43,7 +43,11 @@ repos:
   rev: v1.5.0
   hooks:
     - id: docformatter
-      args: [--in-place --config ./pyproject.toml]
+      args: [
+      "--in-place",
+      "--config",
+      "./pyproject.toml",
+      ]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.1.1

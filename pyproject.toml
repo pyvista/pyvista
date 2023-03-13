@@ -166,6 +166,7 @@ image_cache_dir = "tests/plotting/image_cache"
 [tool.docformatter]
 recursive = true
 wrap-summaries = 0
+wrap-descriptions = 79
 blank = true
 
 [tool.mypy]
