@@ -4570,10 +4570,10 @@ def download_fea_bracket(load=True):  # pragma: no cover
 def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     """Download a hertzian contact finite element solution.
 
-    The Hertzian contact is referred to the frictionless contact between two
+    Hertzian contact is referred to the frictionless contact between two
     bodies. Spherical contact is a special case of the Hertz contact, which is
     between two spheres, or as in the case of this dataset, between a sphere
-    and the surface of a half space.
+    and the surface of a half space (flat plane).
 
     Parameters
     ----------
@@ -4612,7 +4612,10 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     >>> pl.show()
 
     """
-    filename = _download_archive('fea/hertzian_contact_cylinder/Hertzian_cylinder_on_plate.zip', target_file='bfac9fd1-e982-4825-9a95-9e5d8c5b4d3e_result_1.pvtu')
+    filename = _download_archive(
+        'fea/hertzian_contact_cylinder/Hertzian_cylinder_on_plate.zip',
+        target_file='bfac9fd1-e982-4825-9a95-9e5d8c5b4d3e_result_1.pvtu',
+    )
     if load:
         return pyvista.read(filename)
     return filename
