@@ -116,13 +116,13 @@ pl.add_mesh(
     mesh,
     scalars=z_stress,
     clim=[0, 1.2e9],
-    cmap='jet',
-    scalar_bar_args={'title': 'Z Component Stress (Pa)'},
+    cmap='gouldian',
+    scalar_bar_args={'title': 'Z Component Stress (Pa)', 'color': 'w'},
     lighting=True,
     show_edges=False,
     ambient=0.2,
 )
 pl.camera_position = 'xz'
 pl.set_focus(a)
-pl.camera.zoom(1.5)
+pl.camera.zoom(2.5)
 pl.show()
