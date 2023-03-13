@@ -584,7 +584,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time point index.
 
         Returns
@@ -621,7 +621,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_value: float
+        time_value : float
             Time or iteration value to set as active.
 
         """
@@ -632,7 +632,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time or iteration point index for setting active time.
 
         """

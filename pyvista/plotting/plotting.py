@@ -785,7 +785,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def scalar_bar(self):
-        """First scalar bar.  Kept for backwards compatibility."""
+        """First scalar bar.
+
+        Kept for backwards compatibility.
+        """
         return list(self.scalar_bars.values())[0]
 
     @property

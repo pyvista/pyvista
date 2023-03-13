@@ -329,7 +329,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     See Also
     --------
-    :func:`pyvista.plot`
+    pyvista.plot
 
     Examples
     --------

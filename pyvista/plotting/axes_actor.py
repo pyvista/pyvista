@@ -349,7 +349,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @property
     def shaft_type(self) -> ShaftType:
-        """Return or set the shaft type. Can be either a cylinder(0) or a line(1).
+        """Return or set the shaft type.
+
+        Can be either a cylinder(0) or a line(1).
 
         Examples
         --------
@@ -372,7 +374,9 @@ class AxesActor(pv._vtk.vtkAxesActor):
 
     @property
     def tip_type(self) -> TipType:
-        """Return or set the shaft type. Can be either a cone(0) or a sphere(1).
+        """Return or set the shaft type.
+
+        Can be either a cone(0) or a sphere(1).
 
         Examples
         --------

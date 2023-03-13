@@ -1372,7 +1372,7 @@ def Superquadric(
     center : Sequence, default: (0.0, 0.0, 0.0)
         Center of the superquadric in ``[x, y, z]``.
 
-    scale :  Sequence, default: (1.0, 1.0, 1.0)
+    scale : Sequence, default: (1.0, 1.0, 1.0)
         Scale factors of the superquadric in ``[x, y, z]``.
 
     size : float, default: 0.5

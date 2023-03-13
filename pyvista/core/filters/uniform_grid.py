@@ -453,9 +453,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        rfft: The reverse transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        rfft : The reverse transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -532,9 +532,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: The direct transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        fft : The direct transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -624,9 +624,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        high_pass: High-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -702,9 +702,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        low_pass: Low-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        low_pass : Low-pass filtering of FFT output.
 
         Examples
         --------
