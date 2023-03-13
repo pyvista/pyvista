@@ -39,9 +39,11 @@ structure using VTK Python's bindings, one would write the following:
 
    >>> image_data.GetPointData().SetScalars(points)
 
-The creation of a simple `vtk.vtkImageData`_ dataset involves a significant
-amount of boilerplate code. However, PyVista provides more concise and
-"Pythonic" syntax. The equivalent code in PyVista is:
+As you can see, there is quite a bit of boilerplate that goes into
+the creation of a simple `vtk.vtkImageData`_ dataset. PyVista provides
+much more concise syntax that is more "Pythonic." The equivalent code in
+PyVista is:
+
 
 .. code:: python
 
@@ -60,27 +62,29 @@ amount of boilerplate code. However, PyVista provides more concise and
    >>> grid = pyvista.UniformGrid(dimensions=(300, 300, 1))
    >>> grid.point_data["values"] = values.flatten(order="F")
 
-PyVista simplifies several steps in this process:
+Here, PyVista has done several things for us:
 
-#. Combines the dimensionality of the data (in the shape of the
-   :class:`numpy.ndarray`) with the values of the data in one line. In
-   contrast, VTK uses "tuples" to describe the shape of the data (where it sits
-   in space) and "components" to describe the type of data (1 = scalars/scalar
-   fields, 2 = vectors/vector fields, n = tensors/tensor fields). With PyVista,
-   shape and values are stored concretely in one variable.
+#. PyVista combines the dimensionality of the data (in the shape of
+   the :class:`numpy.ndarray`) with the values of the data in one line. VTK uses
+   "tuples" to describe the shape of the data (where it sits in space)
+   and "components" to describe the type of data (1 = scalars/scalar
+   fields, 2 = vectors/vector fields, n = tensors/tensor
+   fields). Here, shape and values are stored concretely in one
+   variable.
 
-#. :class:`pyvista.UniformGrid` is a wrapper around `vtk.vtkImageData`_ and
-   functions as a container for evenly spaced points. Despite the name, your
-   data does not have to be an "image" to be used with
-   `vtk.vtkImageData`_. Instead, the dataset can contain values that are spaced
-   evenly apart, similar to pixels in an image.
+#. :class:`pyvista.UniformGrid` wraps `vtk.vtkImageData`_, just with a
+   different name; they are both containers of evenly spaced points. Your
+   data does not have to be an "image" to use it with
+   `vtk.vtkImageData`_; rather, like images, values in the dataset are
+   evenly spaced apart like pixels in an image.
 
-   Since PyVista knows that the container is for uniformly spaced data, it sets
-   the origin and spacing to ``(0, 0, 0)`` and ``(1, 1, 1)`` by default. This
-   is one of the advantages of PyVista and Python. You don't need to know
-   everything about the VTK library upfront to get started. You can start
-   easily and dive deeper once you become more familiar with it. For example,
-   changing the origin and spacing is as simple as:
+   Furthermore, since we know the container is for uniformly spaced data,
+   pyvista sets the origin and spacing by default to ``(0, 0, 0)`` and
+   ``(1, 1, 1)``. This is another great thing about PyVista and Python.
+   Rather than having to know everything about the VTK library up front,
+   you can get started very easily. Once you get more familiar with it
+   and need to do something more complex, you can dive deeper. For
+   example, changing the origin and spacing is as simple as:
 
    .. code:: python
 
@@ -90,11 +94,11 @@ PyVista simplifies several steps in this process:
 #. The name for the :attr:`point_array <pyvista.point_array>` is given
    directly in dictionary-style fashion. Also, since VTK stores data
    on the heap (linear segments of RAM; a C++ concept), the
-   data must be flattened and put in FORTRAN ordering (which controls
+   data must be flattened and put in Fortran ordering (which controls
    how multidimensional data is laid out in physically 1D memory; numpy
-   uses "C"-style memory layout by default). This is why in the earlier
+   uses "C"-style memory layout by default). This is why in our earlier
    example, the first argument to ``SetValue()`` was written as
-   ``x*300 + y``. Here, numpy takes care of this quite nicely
+   ``x*300 + y``. Here, numpy takes care of this for us quite nicely
    and it's made more explicit in the code, following the Python best
    practice of "Explicit is better than implicit."
 
@@ -124,8 +128,9 @@ However, with PyVista you only need:
    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
 ..
-   This is here to generate a plot. Everything is repeated since
-   jupyter-execute doesn't allow for plain text between command blocks.
+   This is here so we can generate a plot. We have to repeat
+   everything since jupyter-execute doesn't allow for
+   plain text between command blocks.
 
 .. jupyter-execute::
    :hide-code:
@@ -145,8 +150,8 @@ However, with PyVista you only need:
 .. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 
 
-Construction of a ``PointSet``
-------------------------------
+PointSet construction
+---------------------
 PyVista heavily relies on NumPy to efficiently allocate and access
 VTK's C arrays. For example, to create an array of points within VTK
 one would normally loop through all the points of a list and supply
@@ -214,8 +219,8 @@ VTK you would normally have to loop using ``InsertNextCell`` and
    >>> cell_arr.InsertCellPoint(2)
    >>> vtk_poly_data.SetPolys(cell_arr)
 
-With PyVista, you can assign the faces of a :class:`pyvista.PolyData` directly
-in the constructor and then access or modify them using the :attr:`faces
+In PyVista, we can assign this directly in the constructor and then
+access it (or change it) from the :attr:`faces
 <pyvista.PolyData.faces>` attribute.
 
 .. jupyter-execute::
@@ -246,7 +251,7 @@ For example:
 
    >>> poly_data
 
-This representation shows the following information about the mesh:
+In this representation we see:
 
 * Number of cells :attr:`n_cells <pyvista.DataSet.n_cells>`
 * Number of points :attr:`n_points <pyvista.DataSet.n_points>`
@@ -262,11 +267,12 @@ for a brief summary showing key parts of the :class:`DataSet
 
 Tradeoffs
 ---------
-Although PyVista simplifies many features, not everything can be simplified
-without sacrificing functionality or performance.
+While most features can, not everything can be simplified without
+losing functionality or performance.
 
-For instance, the :class:`collision <pyvista.PolyDataFilters.collision>` filter
-shows how to compute the collision between two meshes:
+In the :class:`collision <pyvista.PolyDataFilters.collision>` filter,
+we demonstrate how to calculate the collision between two meshes. For
+example:
 
 .. jupyter-execute::
    :hide-code:

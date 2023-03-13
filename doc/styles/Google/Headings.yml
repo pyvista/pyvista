@@ -13,17 +13,18 @@ exceptions:
   - Cosmos
   - Docker
   - Emmet
-  - gRPC
   - I
   - Kubernetes
   - Linux
-  - macOS
   - Marketplace
   - MongoDB
+  - PointSet
   - REPL
   - Studio
   - TypeScript
   - URLs
-  - Visual
   - VS
+  - Visual
   - Windows
+  - gRPC
+  - macOS
