@@ -3457,7 +3457,8 @@ def download_mars_jpg():
     """
     # Deprecated on v0.37.0, estimated removal on v0.40.0
     warnings.warn(
-        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with load=False",
+        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with"
+        " load=False",
         PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_mars_surface(load=False)
@@ -3473,7 +3474,8 @@ def download_stars_jpg():
     """
     # Deprecated on v0.37.0, estimated removal on v0.40.0
     warnings.warn(
-        "examples.download_stars_jpg is deprecated.  Use examples.planets.download_stars_sky_background with load=False",
+        "examples.download_stars_jpg is deprecated.  Use"
+        " examples.planets.download_stars_sky_background with load=False",
         PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_stars_sky_background(load=False)
@@ -4563,6 +4565,57 @@ def download_fea_bracket(load=True):  # pragma: no cover
 
     """
     return _download_and_read('fea/kiefer/dataset.vtu', load=load)
+
+
+def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
+    """Download a hertzian contact finite element solution.
+
+    The Hertzian contact is referred to the frictionless contact between two
+    bodies. Spherical contact is a special case of the Hertz contact, which is
+    between two spheres, or as in the case of this dataset, between a sphere
+    and the surface of a half space.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Plot by part ID.
+
+    >>> from pyvista import examples
+    >>> grid = examples.download_fea_hertzian_contact_cylinder()
+    >>> mesh.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
+
+    Plot the absolute value of the component stress in the Z direction.
+
+    >>> pl = pv.Plotter()
+    >>> z_stress = np.abs(mesh['Stress'][:, 2])
+    >>> pl.add_mesh(
+    ...     mesh,
+    ...     scalars=z_stress,
+    ...     clim=[0, 1.2E9],
+    ...     cmap='jet',
+    ...     lighting=True,
+    ...     show_edges=False,
+    ...     ambient=0.2,
+    ... )
+    >>> pl.camera_position = 'xz'
+    >>> pl.camera.zoom(1.4)
+    >>> pl.show()
+
+    """
+    filename = _download_archive('fea/hertzian_contact_cylinder/Hertzian_cylinder_on_plate.zip', target_file='bfac9fd1-e982-4825-9a95-9e5d8c5b4d3e_result_1.pvtu')
+    if load:
+        return pyvista.read(filename)
+    return filename
 
 
 def download_black_vase(load=True):  # pragma: no cover
