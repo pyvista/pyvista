@@ -4590,16 +4590,17 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     --------
     Plot by part ID.
 
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> grid = examples.download_fea_hertzian_contact_cylinder()
-    >>> mesh.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
+    >>> grid.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
 
     Plot the absolute value of the component stress in the Z direction.
 
     >>> pl = pv.Plotter()
-    >>> z_stress = np.abs(mesh['Stress'][:, 2])
-    >>> pl.add_mesh(
-    ...     mesh,
+    >>> z_stress = np.abs(grid['Stress'][:, 2])
+    >>> _ = pl.add_mesh(
+    ...     grid,
     ...     scalars=z_stress,
     ...     clim=[0, 1.2E9],
     ...     cmap='jet',
