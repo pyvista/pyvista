@@ -4590,6 +4590,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     --------
     Plot by part ID.
 
+    >>> import numpy as np
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> grid = examples.download_fea_hertzian_contact_cylinder()
