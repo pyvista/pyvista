@@ -66,7 +66,7 @@ line
 #
 # The expected values array is the Hertzian contact pressure and is the
 # analytical solution to the non-adhesive contact problem. Computation of these
-# values is an exercise left up to the reader (radius of the cylinder is
+# values is an exercise left up to the reader (the radius of the cylinder is
 # 0.05). See `Contact Mechanics
 # <https://en.wikipedia.org/wiki/Contact_mechanics>`_
 
