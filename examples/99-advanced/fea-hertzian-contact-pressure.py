@@ -100,6 +100,7 @@ h_pressure = np.array(
 
 plt.plot(x_coord, samp_z_stress, '.', label='Z Component Stress')
 plt.plot(h_pressure[:, 0], h_pressure[:, 1], label='Hertzian contact pressure')
+plt.legend()
 plt.show()
 
 
