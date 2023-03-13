@@ -47,6 +47,7 @@ repos:
       "--in-place",
       "--config",
       "./pyproject.toml",
+      "pyvista",
       ]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
