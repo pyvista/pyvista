@@ -1,25 +1,57 @@
+"""
+.. _hertzian_contact_example:
+
+Visualize Hertzian Contact Stress
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The following is a Python script that demonstrates how to use the PyVista
+library to visualize Hertzian contact stress between a cylinder and a
+flat plate.
+
+The example code loads a dataset, constructs a line to represent the point of
+contact between the two shapes, and samples the stress along that
+line. Finally, it plots the dataset and the stress distribution.
+
+Hertzian contact stress refers to the stress that occurs between two curved
+surfaces that are in contact with each other. It is named after Heinrich Rudolf
+Hertz, a German physicist who first described the phenomenon in the late
+1800s. Hertzian contact stress is an important concept in materials science,
+engineering, and other fields where the behavior of materials under stress is a
+critical consideration.
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-import os
 import pyvista as pv
 from pyvista import examples
 
 
 ###############################################################################
-# Load the dataset and plot it by "PartID"
+# Load the dataset
+# ~~~~~~~~~~~~~~~~
+# Start by loading the dataset using :mod:`pyvista.examples` module. This module
+# provides access to a range of datasets, including FEA (finite element
+# analysis) datasets that are useful for stress analysis.
+
+mesh = examples.download_fea_hertzian_contact_cylinder()
+mesh
 
 
 ###############################################################################
-# Plot the DataSet
+# Plot the Dataset
 # ~~~~~~~~~~~~~~~~
+# Here we plot the dataset by part ID.
 
 mesh.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
 
 
 ###############################################################################
-# Make two points to construct a line denoting the point of contact between the
-# cylinder and the sphere
+# Creating a Line to Denote the Point of Contact
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Construct a line to represent the point of contact between the cylinder and
+# the plate.
+
 ypos = 0.024
 a = [0.1, ypos, 0.2 - 1E-4]
 b = [0.095, ypos, 0.2 - 1E-4]
@@ -28,53 +60,65 @@ line.clear_data()
 
 
 ###############################################################################
-# Plot the line and the dataset
+# Sampling the Stress along the Line
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# We can sample the Z component stress along the contact edge and compare it
+# with expected pressure.
+#
+# The expected values array is the Hertzian contact pressure and is the
+# analytical solution to the non-adhesive contact problem. Computation of these
+# values is an exercise left up to the reader (radius of the cylinder is
+# 0.05). See `Contact Mechanics
+# <https://en.wikipedia.org/wiki/Contact_mechanics>`_
 
-# pl = pv.Plotter()
-# pl.add_mesh(line, style='wireframe', color='red', line_width=10)
-# pl.add_mesh(mesh, scalars='PartID', cmap=['green', 'blue'])
-# pl.camera_position = 'iso'
-# pl.set_focus(a)
-# pl.camera.zoom(4)
-# pl.show()
-
-
-###############################################################################
-# Sample along the Line
-# ~~~~~~~~~~~~~~~~~~~~~
-# Sample along the contact edge and compare with expected pressures.
-
+# sample the stress
 sampled = line.sample(mesh, tolerance=1E-3)
 x_coord = 0.1 - sampled.points[:, 0]
-samp_stress = -sampled['Stress'][:, 2]
+samp_z_stress = -sampled['Stress'][:, 2]
 
-plt.plot(x_coord, samp_stress, '.')
+h_pressure = np.array([[0.0000,1718094092],
+                     [0.0002,1715185734],
+                     [0.0004,1703502649],
+                     [0.0006,1683850714],
+                     [0.0008,1655946243],
+                     [0.001,1619362676],
+                     [0.0012,1573494764],
+                     [0.0014,1517500856],
+                     [0.0016,1450208504],
+                     [0.0018,1369953775],
+                     [0.002,1274289906],
+                     [0.0022,1159408887],
+                     [0.0024,1018830677],
+                     [0.0026,839747409.8],
+                     [0.0028,587969605.2],
+                     [0.003,0],
+                     [0.005,0],
+]
+)
 
-expected = np.loadtxt('Hertzian_contact_pressure_F201152.csv', delimiter=',')
-
-
-plt.plot(expected[:, 0], expected[:, 1])
+plt.plot(x_coord, samp_z_stress, '.')
+plt.plot(h_pressure[:, 0], h_pressure[:, 1])
 plt.show()
 
 
 ###############################################################################
+# Visualizing the Z Stress Distribution
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# You can now visualize the Z stress distribution. Use :class:`pyvista.Plotter` to
+# create a plot window and add the dataset to it.
+
 pl = pv.Plotter()
-pl.add_mesh(sampled, style='wireframe', line_width=10, clim=[-1.8E9, -1.5E9], cmap='jet_r', scalars='Stress', component=2)
 z_stress = np.abs(mesh['Stress'][:, 2])
 pl.add_mesh(mesh,
-            # scalars='vonMises',
             scalars=z_stress,
             clim=[0, 1.2E9],
-            # cmap='bwr',
             cmap='jet',
-            # color='w',
+            scalar_bar_args={'title': 'Z Component Stress (Pa)'},
             lighting=True,
             show_edges=False,
-            # split_sharp_edges=True,
-            # smooth_shading=True,
             ambient=0.2,
 )
 pl.camera_position = 'xz'
-# pl.set_focus(a)
-# pl.camera.zoom(20)
+pl.set_focus(a)
+pl.camera.zoom(1.5)
 pl.show()
