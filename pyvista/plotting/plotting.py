@@ -410,7 +410,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> helmet_file = (
         ...     examples.gltf.download_damaged_helmet()
         ... )  # doctest:+SKIP
-        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
+        >>> texture = (
+        ...     examples.hdr.download_dikhololo_night()
+        ... )  # doctest:+SKIP
         >>> pl = pyvista.Plotter()  # doctest:+SKIP
         >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
         >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
@@ -453,7 +455,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
+        >>> sextant_file = (
+        ...     examples.vrml.download_sextant()
+        ... )  # doctest:+SKIP
         >>> pl = pyvista.Plotter()  # doctest:+SKIP
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
@@ -511,7 +515,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     mesh, scalars='Spatial Point Data', show_edges=True
         ... )
         >>> pl.subplot(0, 1)
-        >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     mesh, scalars='Spatial Cell Data', show_edges=True
+        ... )
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
         Export as a vtk.js scene using the panel backend.
@@ -2508,7 +2514,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         case of multiple nested composite datasets.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'b'
@@ -4851,7 +4859,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
+        >>> pl.open_gif(
+        ...     'movie.gif', fps=8, palettesize=64
+        ... )  # doctest:+SKIP
 
         See :ref:`gif_movie_example` for a full example using this method.
 
@@ -5775,7 +5785,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> filename = os.path.join(mkdtemp(), 'orbit.gif')
         >>> plotter = pyvista.Plotter(window_size=[300, 300])
-        >>> _ = plotter.add_mesh(examples.load_globe(), smooth_shading=True)
+        >>> _ = plotter.add_mesh(
+        ...     examples.load_globe(), smooth_shading=True
+        ... )
         >>> plotter.open_gif(filename)
         >>> viewup = [0, 0, 1]
         >>> orbit = plotter.generate_orbital_path(
@@ -6176,7 +6188,9 @@ class Plotter(BasePlotter):
     >>> mesh = pv.Cube()
     >>> another_mesh = pv.Sphere()
     >>> pl = pv.Plotter()
-    >>> actor = pl.add_mesh(mesh, color='red', style='wireframe', line_width=4)
+    >>> actor = pl.add_mesh(
+    ...     mesh, color='red', style='wireframe', line_width=4
+    ... )
     >>> actor = pl.add_mesh(another_mesh, color='blue')
     >>> pl.show()
 

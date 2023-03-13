@@ -1162,7 +1162,9 @@ def fit_plane_to_points(points, return_meta=False):
     Plot the fitted plane.
 
     >>> pl = pyvista.Plotter()
-    >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
+    >>> _ = pl.add_mesh(
+    ...     plane, color='tan', style='wireframe', line_width=4
+    ... )
     >>> _ = pl.add_points(
     ...     cloud,
     ...     render_points_as_spheres=True,

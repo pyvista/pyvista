@@ -324,7 +324,9 @@ class DataSetFilters:
         Plot these distances as a heatmap
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
+        >>> _ = pl.add_mesh(
+        ...     sphere, scalars='implicit_distance', cmap='bwr'
+        ... )
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
         >>> pl.show()
 
@@ -899,7 +901,9 @@ class DataSetFilters:
         >>> center = np.array(hills.center)
         >>> point_a = center + np.array([5, 0, 0])
         >>> point_b = center + np.array([-5, 0, 0])
-        >>> arc = pyvista.CircularArc(point_a, point_b, center, resolution=100)
+        >>> arc = pyvista.CircularArc(
+        ...     point_a, point_b, center, resolution=100
+        ... )
         >>> line_slice = hills.slice_along_line(arc)
 
         Plot the circular arc and the hills mesh.
@@ -5369,7 +5373,9 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> import numpy as np
-        >>> sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+        >>> sphere = pyvista.Sphere(
+        ...     theta_resolution=100, phi_resolution=100
+        ... )
         >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
         >>> integrated = sphere.integrate_data()
 

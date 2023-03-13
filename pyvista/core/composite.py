@@ -84,7 +84,9 @@ class MultiBlock(
     ...
 
     >>> for block in blocks:
-    ...     surf = block.extract_surface()  # Do something with each dataset
+    ...     surf = (
+    ...         block.extract_surface()
+    ...     )  # Do something with each dataset
     ...
 
     """

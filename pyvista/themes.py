@@ -1619,7 +1619,9 @@ class DefaultTheme(_ThemeConfig):
 
         Common display argument to make sure all else is constant
 
-        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
+        >>> dargs = dict(
+        ...     scalars='Elevation', cmap='rainbow', show_edges=True
+        ... )
 
         >>> p = pv.Plotter(shape=(1, 2))
         >>> _ = p.add_mesh(

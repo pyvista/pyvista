@@ -73,7 +73,9 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_sun())
     >>> pl.show()
@@ -111,7 +113,9 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_moon())
     >>> pl.show()
@@ -149,7 +153,9 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_mercury())
     >>> pl.show()
@@ -187,7 +193,9 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_venus())
     >>> pl.show()
@@ -227,7 +235,9 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_earth())
     >>> pl.show()
@@ -264,7 +274,9 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_mars())
     >>> pl.show()
@@ -302,7 +314,9 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_jupiter())
     >>> pl.show()
@@ -340,7 +354,9 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_saturn())
     >>> pl.show()
@@ -380,7 +396,9 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_saturn_rings())
     >>> pl.show()
@@ -420,7 +438,9 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_uranus())
     >>> pl.show()
@@ -458,7 +478,9 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_neptune())
     >>> pl.show()
@@ -496,7 +518,9 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(examples.planets.load_pluto())
     >>> pl.show()
@@ -872,7 +896,9 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
+    >>> image_path = examples.planets.download_stars_sky_background(
+    ...     load=False
+    ... )
     >>> pl.add_background_image(image_path)
     >>> pl.show()
 

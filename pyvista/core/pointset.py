@@ -427,7 +427,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     Initialize from just vertices.
 
-    >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    >>> vertices = np.array(
+    ...     [[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]]
+    ... )
     >>> mesh = pyvista.PolyData(vertices)
 
     Initialize from vertices and faces.
@@ -942,7 +944,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ...     ::-1
         ... ]  # just blue channel
         >>> sphere.point_data['my_texture'] = texture
-        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest:+SKIP
+        >>> sphere.save(
+        ...     'my_mesh.ply', texture='my_texture'
+        ... )  # doctest:+SKIP
 
         Alternatively, provide just the texture array.  This will be
         written to the file as ``'RGB'`` since it does not contain an
@@ -2652,7 +2656,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>>
         >>> plotter = pv.Plotter()
         >>> plotter.add_axes()  # doctest:+SKIP
-        >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest:+SKIP
+        >>> plotter.add_mesh(
+        ...     cell, color='r', show_edges=True
+        ... )  # doctest:+SKIP
         >>> plotter.add_mesh(
         ...     neighbors, color='w', show_edges=True
         ... )  # doctest:+SKIP

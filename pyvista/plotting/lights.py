@@ -503,7 +503,9 @@ class Light(vtkLight):
         >>> light_bright = pv.Light(
         ...     position=(3, 0, 0), light_type='scene light'
         ... )
-        >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
+        >>> light_dim = pv.Light(
+        ...     position=(0, 3, 0), light_type='scene light'
+        ... )
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
@@ -634,7 +636,9 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     _ = plotter.add_mesh(
+        ...         pv.Plane((offset, 0, 0)), color='white'
+        ...     )
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -681,7 +685,9 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     _ = plotter.add_mesh(
+        ...         pv.Plane((offset, 0, 0)), color='white'
+        ...     )
         ...     light = pv.Light(
         ...         position=(offset, 0, 1), focal_point=(offset, 0, 0)
         ...     )

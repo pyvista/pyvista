@@ -182,7 +182,9 @@ def reflection(normal, point=None):
     ...         [-1, 1, 1],
     ...     ]
     ... )
-    >>> mirrored = transformations.apply_transformation_to_points(trans, verts)
+    >>> mirrored = transformations.apply_transformation_to_points(
+    ...     trans, verts
+    ... )
     >>> np.allclose(mirrored, verts[[np.r_[4:8, 0:4]], :])
     True
 

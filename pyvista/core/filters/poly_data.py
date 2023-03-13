@@ -1677,7 +1677,9 @@ class PolyDataFilters(DataSetFilters):
         sphere in the positive Z direction.  Shift the clip upwards to
         leave a smaller mesh behind.
 
-        >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
+        >>> clipped_mesh = sphere.clip_closed_surface(
+        ...     'z', origin=[0, 0, 0.3]
+        ... )
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
         """
@@ -3086,7 +3088,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> plane = pyvista.Plane(i_size=2, j_size=2, direction=[0, 0.8, 1])
+        >>> plane = pyvista.Plane(
+        ...     i_size=2, j_size=2, direction=[0, 0.8, 1]
+        ... )
         >>> disc = pyvista.Disc(center=(0, 0, -1), c_res=50)
         >>> direction = [0, 0, 1]
         >>> extruded_disc = disc.extrude_trim(direction, plane)

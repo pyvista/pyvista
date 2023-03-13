@@ -2577,7 +2577,9 @@ class DataSet(DataSetFilters, DataObject):
         Loop over the cells
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))  # 9 points, 4 cells
+        >>> mesh = pv.UniformGrid(
+        ...     dimensions=(3, 3, 1)
+        ... )  # 9 points, 4 cells
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     cell
         ...

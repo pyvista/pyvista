@@ -2633,7 +2633,9 @@ def download_thermal_probes(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_thermal_probes()
-    >>> dataset.plot(render_points_as_spheres=True, point_size=5, cpos="xy")
+    >>> dataset.plot(
+    ...     render_points_as_spheres=True, point_size=5, cpos="xy"
+    ... )
 
     See :ref:`interpolate_example` for an example using this dataset.
 
@@ -2937,7 +2939,9 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_antarctica_velocity()
-    >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+    >>> dataset.plot(
+    ...     cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True
+    ... )
 
     See :ref:`antarctica_example` for an example using this dataset.
 
@@ -3141,7 +3145,9 @@ def download_cubemap_space_4k():  # pragma: no cover
     >>> _ = pl.add_actor(cubemap.to_skybox())
     >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
+    >>> _ = pl.add_mesh(
+    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
+    ... )
     >>> pl.show()
 
     """
@@ -3182,7 +3188,9 @@ def download_cubemap_space_16k():  # pragma: no cover
     >>> _ = pl.add_actor(cubemap.to_skybox())
     >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
+    >>> _ = pl.add_mesh(
+    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
+    ... )
     >>> pl.show()
 
     """
@@ -3835,7 +3843,9 @@ def download_osmnx_graph():  # pragma: no cover
         >>> graph = ox.graph_from_address(
         ...     address, dist=500, network_type='drive'
         ... )  # doctest:+SKIP
-        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest:+SKIP
+        >>> pickle.dump(
+        ...     graph, open('osmnx_graph.p', 'wb')
+        ... )  # doctest:+SKIP
 
     Returns
     -------
