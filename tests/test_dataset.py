@@ -1598,16 +1598,14 @@ grids = [
     load_rectilinear(),
     load_tetbeam(),
     load_uniform(),
+    load_explicit_structured()
 ]
-if pyvista._vtk.VTK9:
-    grids.append(load_explicit_structured())
-grids_cells = grids[:-1] if pyvista._vtk.VTK9 else grids
+grids_cells = grids[:-1]
 
 ids = list(map(type, grids))
 ids_cells = list(map(type, grids_cells))
 
 
-@pytest.mark.needs_vtk9
 def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
     for dataset in datasets_vtk9:
         with pytest.raises(TypeError):
