@@ -634,9 +634,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = (
-        ...     'pbr'  # requires physically based rendering
-        ... )
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.1
         >>> prop.metallic
         0.1
@@ -676,9 +675,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = (
-        ...     'pbr'  # requires physically based rendering
-        ... )
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.5  # helps to visualize metallic
         >>> prop.roughness = 0.1
         >>> prop.roughness
@@ -1082,9 +1080,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = (
-        ...     'pbr'  # requires physically based rendering
-        ... )
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.anisotropy
         0.1
 

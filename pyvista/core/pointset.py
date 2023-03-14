@@ -940,9 +940,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import numpy as np
         >>> sphere = pyvista.Sphere()
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
-        >>> texture[:, 1] = np.arange(sphere.n_points)[
-        ...     ::-1
-        ... ]  # just blue channel
+        >>> # Just the green channel is set as a repeatedly
+        >>> # decreasing value
+        >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]
         >>> sphere.point_data['my_texture'] = texture
         >>> sphere.save(
         ...     'my_mesh.ply', texture='my_texture'
