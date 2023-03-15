@@ -32,7 +32,9 @@ def download_damaged_helmet():  # pragma: no cover
     --------
     >>> import pyvista
     >>> from pyvista import examples  # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+    >>> gltf_file = (
+    ...     examples.gltf.download_damaged_helmet()
+    ... )  # doctest:+SKIP
     >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP

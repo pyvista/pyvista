@@ -427,7 +427,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     Initialize from just vertices.
 
-    >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    >>> vertices = np.array(
+    ...     [[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]]
+    ... )
     >>> mesh = pyvista.PolyData(vertices)
 
     Initialize from vertices and faces.
@@ -588,9 +590,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> mesh = pyvista.Plane(i_resolution=3, j_resolution=3)
         >>> mesh.verts = np.vstack(
-        ...     (np.ones(mesh.n_points, dtype=np.int64), np.arange(mesh.n_points))
+        ...     (
+        ...         np.ones(mesh.n_points, dtype=np.int64),
+        ...         np.arange(mesh.n_points),
+        ...     )
         ... ).T
-        >>> mesh.plot(color='tan', render_points_as_spheres=True, point_size=60)
+        >>> mesh.plot(
+        ...     color='tan',
+        ...     render_points_as_spheres=True,
+        ...     point_size=60,
+        ... )
 
         """
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
@@ -836,7 +845,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+        >>> vertices = np.array(
+        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
+        ... )
         >>> strip = np.array([3, 0, 1, 2])
         >>> mesh = pyvista.PolyData(vertices, strips=strip)
         >>> mesh.n_strips
@@ -929,9 +940,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import numpy as np
         >>> sphere = pyvista.Sphere()
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
-        >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]  # just blue channel
+        >>> # Just the green channel is set as a repeatedly
+        >>> # decreasing value
+        >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]
         >>> sphere.point_data['my_texture'] = texture
-        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest:+SKIP
+        >>> sphere.save(
+        ...     'my_mesh.ply', texture='my_texture'
+        ... )  # doctest:+SKIP
 
         Alternatively, provide just the texture array.  This will be
         written to the file as ``'RGB'`` since it does not contain an
@@ -1370,8 +1385,12 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> import numpy as np
         >>> from pyvista import CellType
         >>> import pyvista
-        >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
+        >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
+        >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
+        >>> cells = np.hstack((cell0_ids, cell1_ids))
+        >>> cell_type = np.array(
+        ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
+        ... )
 
         >>> cell1 = np.array(
         ...     [
@@ -2149,7 +2168,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     >>> si, sj, sk = 20, 10, 1
     >>>
     >>> # create raw coordinate grid
-    >>> grid_ijk = np.mgrid[: (ni + 1) * si : si, : (nj + 1) * sj : sj, : (nk + 1) * sk : sk]
+    >>> grid_ijk = np.mgrid[
+    ...     : (ni + 1) * si : si,
+    ...     : (nj + 1) * sj : sj,
+    ...     : (nk + 1) * sk : sk,
+    ... ]
     >>>
     >>> # repeat array along each Cartesian axis for connectivity
     >>> for axis in range(1, 4):
@@ -2274,16 +2297,24 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid = grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid = grid.cast_to_unstructured_grid()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid = grid.cast_to_explicit_structured_grid()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         """
         grid = ExplicitStructuredGrid()
@@ -2321,10 +2352,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> grid.save('grid.vtu')  # doctest:+SKIP
 
         >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid.show_cells()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         """
         grid = self.cast_to_unstructured_grid()
@@ -2602,8 +2637,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>>
         >>> plotter = pv.Plotter()
         >>> plotter.add_axes()  # doctest:+SKIP
-        >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest:+SKIP
-        >>> plotter.add_mesh(neighbors, color='w', show_edges=True)  # doctest:+SKIP
+        >>> plotter.add_mesh(
+        ...     cell, color='r', show_edges=True
+        ... )  # doctest:+SKIP
+        >>> plotter.add_mesh(
+        ...     neighbors, color='w', show_edges=True
+        ... )  # doctest:+SKIP
         >>> plotter.show()  # doctest:+SKIP
 
         """
