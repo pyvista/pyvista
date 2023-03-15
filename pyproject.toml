@@ -168,6 +168,8 @@ ignore_missing_imports = true
 
 [tool.ruff]
 exclude = [
+    ".venv",
+    "venv",
     ".git",
     "__pycache__",
     "build",
