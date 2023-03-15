@@ -9,7 +9,7 @@ CODE_FILES ?= *.py *.rst *.md
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
 doctest-modules:
-	@echo "Runnnig module doctesting"
+	@echo "Running module doctesting"
 	pytest -v --doctest-modules pyvista
 
 doctest-modules-local-namespace:

@@ -93,6 +93,14 @@ def test_download_exodus():
     assert data.n_blocks
 
 
+def test_download_fea_hertzian_contact_cylinder():
+    filename = examples.download_fea_hertzian_contact_cylinder(load=False)
+    assert os.path.isfile(filename)
+
+    data = examples.download_fea_hertzian_contact_cylinder()
+    assert data.n_cells
+
+
 def test_download_nefertiti():
     filename = examples.download_nefertiti(load=False)
     assert os.path.isfile(filename)
