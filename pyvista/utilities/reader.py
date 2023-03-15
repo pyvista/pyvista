@@ -155,10 +155,10 @@ def get_reader(filename, force_ext=None):
     >>> filename.split("/")[-1]  # omit the path
     'Human.vtp'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader  # doctest: +ELLIPSIS
+    >>> reader
     XMLPolyDataReader('.../Human.vtp')
     >>> mesh = reader.read()
-    >>> mesh  # doctest: +ELLIPSIS
+    >>> mesh
     PolyData ...
     >>> mesh.plot(color='tan')
 
@@ -386,7 +386,7 @@ class PointCellDataSelection:
     >>> filename.split("/")[-1]  # omit the path
     'foam_case_0_0_0_0.case'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader  # doctest: +ELLIPSIS
+    >>> reader
     EnSightReader('.../foam_case_0_0_0_0.case')
     >>> reader.cell_array_names
     ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
@@ -586,7 +586,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time point index.
 
         Returns
@@ -623,7 +623,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_value: float
+        time_value : float
             Time or iteration value to set as active.
 
         """
@@ -634,7 +634,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time or iteration point index for setting active time.
 
         """
@@ -665,7 +665,11 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz', show_scalar_bar=False)
+    >>> sliced_mesh.plot(
+    ...     scalars='Void Volume Fraction',
+    ...     cpos='xz',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -690,7 +694,12 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     'notch_disp.vtu'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="Nodal Displacement", component=0, cpos='xy', show_scalar_bar=False)
+    >>> mesh.plot(
+    ...     scalars="Nodal Displacement",
+    ...     component=0,
+    ...     cpos='xy',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -716,7 +725,9 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(
-    ...     cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)), clim=[0, 100], show_scalar_bar=False
+    ...     cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
+    ...     clim=[0, 100],
+    ...     show_scalar_bar=False,
     ... )
 
     """
@@ -1883,7 +1894,7 @@ class PVDReader(BaseReader, TimeReader):
     >>> filename.split("/")[-1]  # omit the path
     'wavy.pvd'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader.time_values  # doctest: +ELLIPSIS
+    >>> reader.time_values
     [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
     >>> reader.set_active_time_point(5)
     >>> reader.active_time_value

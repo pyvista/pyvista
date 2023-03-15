@@ -98,7 +98,12 @@ def logo_basic():
     Add scalars and plot the logo.
 
     >>> logo['x_coord'] = logo.points[:, 0]
-    >>> cpos = logo.plot(scalars='x_coord', cmap='Spectral', smooth_shading=True, cpos='xy')
+    >>> cpos = logo.plot(
+    ...     scalars='x_coord',
+    ...     cmap='Spectral',
+    ...     smooth_shading=True,
+    ...     cpos='xy',
+    ... )
 
     """
     return logo_letters(merge=True).compute_normals(split_vertices=True)

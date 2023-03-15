@@ -53,7 +53,10 @@ class CompositeFilters:
 
         >>> import pyvista
         >>> block = pyvista.MultiBlock(
-        ...     [pyvista.Cube(clean=False), pyvista.Cube(center=(1, 0, 0), clean=False)]
+        ...     [
+        ...         pyvista.Cube(clean=False),
+        ...         pyvista.Cube(center=(1, 0, 0), clean=False),
+        ...     ]
         ... )
         >>> merged = block.combine()
         >>> merged.n_points
