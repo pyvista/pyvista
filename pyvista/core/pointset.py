@@ -1958,7 +1958,6 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     @dimensions.setter
     def dimensions(self, dims):
-        """Set the dataset dimensions. Pass a length three tuple of integers."""
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()

@@ -252,7 +252,9 @@ class DataObject:
         raise NotImplementedError('Called only by the inherited class')
 
     def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
-        """Copy pyvista meta data onto this object from another object. Intended to be overridden by subclasses.
+        """Copy pyvista meta data onto this object from another object.
+
+        Intended to be overridden by subclasses.
 
         Parameters
         ----------
