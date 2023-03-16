@@ -25,18 +25,18 @@ a ``threejs`` scene including:
 
 You can use this backend to display PyVista scenes directly within a
 jupyter notebook, create interactive web documentation, or even export
-to standalone HTML pages.
+to standalone html pages.
 
 .. note::
    This backend has better support and features than the ``ipygany``
    backend, but is still missing support for vtk widgets and some
-   features (like scalar bars and labels).  See :ref:`pythreejs_caveats`.
+   features (like scalar bars and labels). See :ref:`pythreejs_caveats`.
 
 
 PyVista Wrapping
 ~~~~~~~~~~~~~~~~
 Plotting scenes from pyvista are automatically serialized to a
-three.js scene when using the ``pythreejs`` backend.  This can be
+three.js scene when using the ``pythreejs`` backend. This can be
 enabled globally with :func:`pyvista.set_jupyter_backend` or by
 setting it in :func:`pyvista.Plotter.show`.
 
@@ -69,7 +69,7 @@ existing code and change the backend depending on the type of plotting
 backend you wish to use.
 
 Note that there are many missing features, including all vtk widgets,
-but many of these can be replaced with jupyterlab widgets.  If you
+but many of these can be replaced with jupyterlab widgets. If you
 wish to assemble your own scene, change the jupyter_backend while
 returning the "viewer" with:
 
@@ -84,7 +84,7 @@ returning the "viewer" with:
     pythreejs.core.Renderer.Renderer
 
 This renderer can then be added to any number of jupyterlab widgets and
-then shown as a complete widget.  For example, you could even display
+then shown as a complete widget. For example, you could even display
 two side by side using ``ipywidgets.AppLayout``.
 
 
@@ -194,7 +194,7 @@ See the :ref:`ref_texture_example` example for more details regarding textures.
 
 RGB and RGBA Coloring
 ~~~~~~~~~~~~~~~~~~~~~
-The ``pythreejs`` supports RGBA plotting.  See the ``rgba`` parameter
+The ``pythreejs`` supports RGBA plotting. See the ``rgba`` parameter
 within :func:`add_mesh() <pyvista.Plotter.add_mesh>` for more details.
 
 .. jupyter-execute::
@@ -235,7 +235,7 @@ Large Models and Physically Based Rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example shows a large mesh and demonstrates how even fairly large
 meshes, like the carburetor example which contains 500,000 faces and
-250,000 points, can be quickly loaded.  This is, of course, bandwidth
+250,000 points, can be quickly loaded. This is, of course, bandwidth
 dependent, as this mesh is around 6 MB.
 
 Note that here we enable physically based rendering using ``pbr=True``.
@@ -251,7 +251,7 @@ Note that here we enable physically based rendering using ``pbr=True``.
    mesh = examples.download_carburator()
    mesh.decimate(0.5, inplace=True)
 
-   # Plot it on a white background with a lightgrey mesh color.  Enable
+   # Plot it on a white background with a lightgrey mesh color. Enable
    # physically based rendering and give the mesh a metallic look.
    mesh.plot(window_size=(600, 600), background='w', color='lightgrey',
              pbr=True, metallic=0.5)
@@ -312,10 +312,10 @@ In your ``conf.py``, add the following:
    ]
 
 
-Export to HTML
+Export to Html
 ~~~~~~~~~~~~~~
 Using ``pythreejs``, you can export most scenes completely to a
-standalone HTML file.  For example:
+standalone html file. For example:
 
 .. code:: python
 
@@ -341,8 +341,8 @@ feature request at `PyVista Issues
 Missing features include:
 
 * Scalar bars
-* Physically based rendering textures (e.g. from gLTF files).
-* Plotting points as spheres or lines as tubes.  Use :func:`glyph()
+* Physically based rendering textures (for example, from gLTF files).
+* Plotting points as spheres or lines as tubes. Use :func:`glyph()
   <pyvista.DataSetFilters.glyph>` or :func:`tube()
   <pyvista.PolyDataFilters.tube>` to convert to surfaces first and then plot.
 * Point labels

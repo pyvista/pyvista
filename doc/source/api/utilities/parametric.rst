@@ -5,7 +5,7 @@ These objects represent surfaces that are parametrised by a set of independent
 variables. Some of these are impossible to represent (correctly or at all)
 using implicit functions, such as the Mobius strip.
 
-The following functions can be used to create parametric surfaces.  To
+The following functions can be used to create parametric surfaces. To
 see additional examples, see :ref:`ref_parametric_example`.
 
 .. currentmodule:: pyvista

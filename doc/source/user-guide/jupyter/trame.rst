@@ -1,6 +1,6 @@
 .. _trame_jupyter:
 
-Trame Jupyter backend for PyVista
+Trame Jupyter Backend for PyVista
 ---------------------------------
 
 PyVista has the ability to display fully featured plots within a
