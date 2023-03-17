@@ -560,6 +560,8 @@ Build the documentation on Linux or Mac OS with:
 
 Build the documentation on Windows with:
 
+.. code::
+
    cd doc
    python -msphinx -M html . _build
 

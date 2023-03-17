@@ -30,11 +30,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    # this is equivalent to
+    # ~/source/vale/bin/vale --config doc/.vale.ini doc pyvista examples *.rst --glob='!*{_build,AUTHORS.rst}*'
     - name: "Run Vale"
       uses: errata-ai/vale-action@reviewdog
       with:
-        files: 'doc,pyvista'
-        vale_flags: "--config=doc/.vale.ini"
+        files: '["doc", "pyvista", "examples", "*.rst"]'
+        vale_flags: "--config=doc/.vale.ini --glob='!*{_build,AUTHORS.rst}*'"
         reporter: github-pr-check
         level: error
         filter_mode: nofilter
