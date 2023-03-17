@@ -5,7 +5,20 @@ from collections import namedtuple
 import collections.abc
 from copy import deepcopy
 from functools import partial
-from typing import Any, Callable, Dict, Generator, Iterable, Iterator, List, Literal, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 import warnings
 
 import numpy as np
@@ -2549,7 +2562,7 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self) -> Iterator['pyvista.Cell']:
+    def cell(self) -> Iterator[pyvista.Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
@@ -2574,54 +2587,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))   # 9 points, 4 cells
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     print(cell)
-
-        Get the point ids of the last cell
-
-        >>> mesh.cell[-1].point_ids
-        [98, 62, 53, 80, 17, 13, 12, 15]
-
-        Get the points coordinates of the last cell
-
-        >>> mesh.cell[-1].points
-        array([[0.5, 0.5, 4.5],
-               [1. , 0.5, 4.5],
-               [1. , 1. , 4.5],
-               [0.5, 1. , 4.5],
-               [0.5, 0.5, 5. ],
-               [1. , 0.5, 5. ],
-               [1. , 1. , 5. ],
-               [0.5, 1. , 5. ]])
-
-        Get the point ids of the edges of the last cell.
-        Note that the `edges` attributes returns a generator of
-        `pyvista.Cell` objects.
-
-        >>> for e in mesh.cell[-1].edges:
-        ...     print(e.point_ids)
-        [98, 62]
-        [62, 53]
-        [80, 53]
-        [98, 80]
-        [17, 13]
-        [13, 12]
-        [15, 12]
-        [17, 15]
-        [98, 17]
-        [62, 13]
-        [80, 15]
-        [53, 12]
-
-        Get the point ids of the faces of the last cell.
-
-        >>> from pyvista.examples.cells import Tetrahedron
-        >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[-1]
-        >>> for face in cell.faces:
-        ...     print(face.point_ids)
-        [0, 1, 3]
-        [1, 2, 3]
-        [2, 0, 3]
-        [0, 2, 1]
         """
         for i in range(self.n_cells):
             yield self.get_cell(i)
