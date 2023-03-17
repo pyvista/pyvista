@@ -4,7 +4,9 @@ from pyvista.plotting.opts import InterpolationType, RepresentationType
 
 
 class ActorProperties:
-    """Properties wrapper for ``vtkProperty``. Contains the surface properties of the object.
+    """Properties wrapper for ``vtkProperty``.
+
+    Contains the surface properties of the object.
 
     Parameters
     ----------
@@ -24,9 +26,9 @@ class ActorProperties:
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
 
     >>> pl = pv.Plotter()
-    >>> pl.add_actor(axes.axes_actor)   # doctest:+SKIP
-    >>> pl.add_mesh(pv.Sphere())   # doctest:+SKIP
-    >>> pl.show()   # doctest:+SKIP
+    >>> pl.add_actor(axes.axes_actor)  # doctest:+SKIP
+    >>> pl.add_mesh(pv.Sphere())  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     """
 
@@ -90,7 +92,10 @@ class ActorProperties:
 
     @property
     def interpolation_model(self):
-        """Return or set the interpolation model. Can be any of the options in :class:`pyvista.plotting.opts.InterpolationType` enum."""
+        """Return or set the interpolation model.
+
+        Can be any of the options in :class:`pyvista.plotting.opts.InterpolationType` enum.
+        """
         return InterpolationType.from_any(self.properties.GetInterpolation())
 
     @interpolation_model.setter
@@ -126,7 +131,10 @@ class ActorProperties:
 
     @property
     def representation(self) -> RepresentationType:
-        """Return or set the representation of the actor. Can be any of the options in :class:`pyvista.plotting.opts.RepresentationType` enum."""
+        """Return or set the representation of the actor.
+
+        Can be any of the options in :class:`pyvista.plotting.opts.RepresentationType` enum.
+        """
         return RepresentationType.from_any(self.properties.GetRepresentation())
 
     @representation.setter

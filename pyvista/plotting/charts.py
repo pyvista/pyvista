@@ -272,9 +272,9 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         Fill color of the shapes drawn using this brush. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
-    texture : Texture, optional
+    texture : pyvista.Texture, optional
         Texture used to fill shapes drawn using this brush. Any object
-        convertible to a :class:`Texture` is allowed. Defaults to
+        convertible to a :class:`pyvista.Texture` is allowed. Defaults to
         ``None``.
 
     Other Parameters
@@ -2280,8 +2280,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     y1 : array_like
         Y coordinates of the points on the first outline of the area to draw.
 
-    y2 : array_like, default: np.zeros_like(x)
-        Y coordinates of the points on the second outline of the area to draw.
+    y2 : array_like, optional
+        Y coordinates of the points on the second outline of the area to
+        draw. Defaults to ``numpy.zeros_like(x)``.
 
     color : ColorLike, default: "b"
         Color of the area drawn in this plot. Any color parsable by :class:`pyvista.Color` is allowed.
@@ -2399,8 +2400,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         y1 : array_like
             The new y coordinates of the points on the first outline of the area.
 
-        y2 : array_like, default: np.zeros_like(x)
-            The new y coordinates of the points on the second outline of the area.
+        y2 : array_like, optional
+            The new y coordinates of the points on the second outline of the
+            area. Default ``numpy.zeros_like(x)``.
 
         Examples
         --------
@@ -3118,9 +3120,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         y1 : array_like
             Y coordinates of the points on the first outline of the area to draw.
 
-        y2 : array_like, default: np.zeros_like(x)
+        y2 : array_like, optional
             Y coordinates of the points on the second outline of the
-            area to draw.
+            area to draw. Defaults to ``np.zeros_like(x)``.
 
         color : ColorLike, default: "b"
             Color of the area drawn in this plot. Any color parsable

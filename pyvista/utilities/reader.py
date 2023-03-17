@@ -153,10 +153,10 @@ def get_reader(filename, force_ext=None):
     >>> filename.split("/")[-1]  # omit the path
     'Human.vtp'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader  # doctest: +ELLIPSIS
+    >>> reader
     XMLPolyDataReader('.../Human.vtp')
     >>> mesh = reader.read()
-    >>> mesh # doctest: +ELLIPSIS
+    >>> mesh
     PolyData ...
     >>> mesh.plot(color='tan')
 
@@ -384,7 +384,7 @@ class PointCellDataSelection:
     >>> filename.split("/")[-1]  # omit the path
     'foam_case_0_0_0_0.case'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader  # doctest: +ELLIPSIS
+    >>> reader
     EnSightReader('.../foam_case_0_0_0_0.case')
     >>> reader.cell_array_names
     ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
@@ -584,7 +584,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time point index.
 
         Returns
@@ -621,7 +621,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_value: float
+        time_value : float
             Time or iteration value to set as active.
 
         """
@@ -632,7 +632,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time or iteration point index for setting active time.
 
         """
@@ -663,8 +663,11 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz',
-    ...                  show_scalar_bar=False)
+    >>> sliced_mesh.plot(
+    ...     scalars='Void Volume Fraction',
+    ...     cpos='xz',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -689,8 +692,12 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     'notch_disp.vtu'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="Nodal Displacement", component=0,
-    ...           cpos='xy', show_scalar_bar=False)
+    >>> mesh.plot(
+    ...     scalars="Nodal Displacement",
+    ...     component=0,
+    ...     cpos='xy',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -716,8 +723,9 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(
-    ...    cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
-    ...    clim=[0, 100], show_scalar_bar=False
+    ...     cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
+    ...     clim=[0, 100],
+    ...     show_scalar_bar=False,
     ... )
 
     """
@@ -765,8 +773,14 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     'cylinder_Re35.case'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="velocity", component=1, clim=[-20, 20],
-    ...           cpos='xy', cmap='RdBu', show_scalar_bar=False)
+    >>> mesh.plot(
+    ...     scalars="velocity",
+    ...     component=1,
+    ...     clim=[-20, 20],
+    ...     cpos='xy',
+    ...     cmap='RdBu',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -1083,7 +1097,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
         >>> reader = pyvista.OpenFOAMReader(filename)
-        >>> reader.all_patch_arrays_status  #doctest: +NORMALIZE_WHITESPACE
+        >>> reader.all_patch_arrays_status  # doctest: +NORMALIZE_WHITESPACE
         {'internalMesh': True, 'patch/movingWall': True, 'patch/fixedWalls': True,
          'patch/frontAndBack': True}
 
@@ -1422,10 +1436,12 @@ class MultiBlockPlot3DReader(BaseReader):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> filename  = examples.download_file('multi-bin.xyz')
+        >>> filename = examples.download_file('multi-bin.xyz')
         >>> reader = pyvista.reader.MultiBlockPlot3DReader(filename)
         >>> reader.add_function(112)  # add a function by its integer value
-        >>> reader.add_function(reader.PRESSURE_COEFFICIENT)  # add a function by enumeration via class variable alias
+        >>> reader.add_function(
+        ...     reader.PRESSURE_COEFFICIENT
+        ... )  # add a function by enumeration via class variable alias
 
         """
         if isinstance(value, enum.Enum):
@@ -1876,7 +1892,7 @@ class PVDReader(BaseReader, TimeReader):
     >>> filename.split("/")[-1]  # omit the path
     'wavy.pvd'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader.time_values  # doctest: +ELLIPSIS
+    >>> reader.time_values
     [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
     >>> reader.set_active_time_point(5)
     >>> reader.active_time_value

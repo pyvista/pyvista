@@ -99,8 +99,9 @@ def Cylinder(
     --------
     >>> import pyvista
     >>> import numpy as np
-    >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1],
-    ...                             radius=1, height=2)
+    >>> cylinder = pyvista.Cylinder(
+    ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
     cylinderSource = _vtk.vtkCylinderSource()
@@ -489,7 +490,9 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     Create a multiple lines between ``(0, 0, 0)``, ``(1, 1, 1)`` and ``(0, 0, 1)``.
 
     >>> import pyvista
-    >>> mesh = pyvista.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
+    >>> mesh = pyvista.MultipleLines(
+    ...     points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]]
+    ... )
     >>> mesh.plot(color='k', line_width=10)
     """
     points, _ = _coerce_pointslike_arg(points)
@@ -952,9 +955,15 @@ def Wavelet(
     Examples
     --------
     >>> import pyvista
-    >>> wavelet = pyvista.Wavelet(extent=(0, 50, 0, 50, 0, 10), x_freq=20,
-    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100,
-    ...                           z_mag=1000)
+    >>> wavelet = pyvista.Wavelet(
+    ...     extent=(0, 50, 0, 50, 0, 10),
+    ...     x_freq=20,
+    ...     y_freq=10,
+    ...     z_freq=1,
+    ...     x_mag=100,
+    ...     y_mag=100,
+    ...     z_mag=1000,
+    ... )
     >>> wavelet.plot(show_scalar_bar=False)
 
     Extract lower valued cells of the wavelet and create a surface from it.
@@ -1102,7 +1111,9 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     >>> import pyvista
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pyvista.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
+    >>> arc = pyvista.CircularArcFromNormal(
+    ...     [0, 0, 0], normal=normal, polar=polar
+    ... )
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
@@ -1367,7 +1378,7 @@ def Superquadric(
     center : Sequence, default: (0.0, 0.0, 0.0)
         Center of the superquadric in ``[x, y, z]``.
 
-    scale :  Sequence, default: (1.0, 1.0, 1.0)
+    scale : Sequence, default: (1.0, 1.0, 1.0)
         Scale factors of the superquadric in ``[x, y, z]``.
 
     size : float, default: 0.5
@@ -1412,9 +1423,11 @@ def Superquadric(
     Examples
     --------
     >>> import pyvista
-    >>> superquadric = pyvista.Superquadric(scale=(3., 1., 0.5),
-    ...                                     phi_roundness=0.1,
-    ...                                     theta_roundness=0.5)
+    >>> superquadric = pyvista.Superquadric(
+    ...     scale=(3.0, 1.0, 0.5),
+    ...     phi_roundness=0.1,
+    ...     theta_roundness=0.5,
+    ... )
     >>> superquadric.plot(show_edges=True)
 
     """
