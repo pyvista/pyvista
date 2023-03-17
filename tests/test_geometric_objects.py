@@ -256,6 +256,19 @@ def test_triangle():
     assert np.allclose(mesh.points, points)
 
 
+def test_quadrilateral():
+    pointa = [1.0, 1.0, 1.0]
+    pointb = [-1.0, 1.0, 1.0]
+    pointc = [-1.0, -1.0, 1.0]
+    pointd = [1.0, -1.0, 1.0]
+    points = np.array([pointa, pointb, pointc, pointd])
+
+    mesh = pyvista.Quadrilateral(points)
+    assert mesh.n_points
+    assert mesh.n_cells
+    assert np.allclose(mesh.points, points)
+
+
 def test_rectangle_4points_deprecation():
     pointa = [1.0, 1.0, 1.0]
     pointb = [-1.0, 1.0, 1.0]
