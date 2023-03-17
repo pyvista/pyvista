@@ -1,5 +1,4 @@
-"""
-Support dynamic or static jupyter notebook plotting.
+"""Support dynamic or static jupyter notebook plotting.
 
 Includes:
 
@@ -56,7 +55,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
 
     except ImportError as e:
         warnings.warn(
-            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
+            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.',
         )
 
     return show_static_image(plotter, screenshot)
@@ -83,7 +82,7 @@ def show_ipyvtk(plotter):
             '``ipyvtklink`` backend is incompatible with Spyder.\n'
             'Use notebook=False for interactive '
             'plotting within spyder or disable it globally with:\n'
-            'pyvista.set_jupyter_backend(None)'
+            'pyvista.set_jupyter_backend(None)',
         )
 
     try:
@@ -91,7 +90,7 @@ def show_ipyvtk(plotter):
     except ImportError:  # pragma: no cover
         raise ImportError(
             'Please install `ipyvtklink` to use this feature: '
-            'https://github.com/Kitware/ipyvtklink'
+            'https://github.com/Kitware/ipyvtklink',
         )
 
     # Have to leave the Plotter open for the widget to use
@@ -135,7 +134,6 @@ def show_panel(plotter):
     )
 
     # if plotter.renderer.axes_enabled:
-    # pan.axes = build_panel_axes()
 
     if hasattr(plotter.renderer, 'cube_axes_actor'):
         pan.axes = build_panel_bounds(plotter.renderer.cube_axes_actor)

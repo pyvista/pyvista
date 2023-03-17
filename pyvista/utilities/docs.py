@@ -70,10 +70,7 @@ def linkcode_resolve(domain, info):
     except Exception:  # pragma: no cover
         lineno = None
 
-    if lineno:
-        linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
-    else:
-        linespec = ""
+    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno else ''
 
     if 'dev' in pyvista.__version__:
         kind = 'main'

@@ -111,7 +111,7 @@ def Cylinder(
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
     surf = pyvista.wrap(cylinderSource.GetOutput())
-    surf.rotate_z(-90, inplace=True)
+    surf = surf.rotate_z(-90)
     translate(surf, center, direction)
     return surf
 
@@ -285,7 +285,7 @@ def Arrow(
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
-    if isinstance(scale, float) or isinstance(scale, int):
+    if isinstance(scale, float | int):
         surf.points *= scale
     elif scale is not None:
         raise TypeError("Scale must be either float, int or 'auto'.")
@@ -367,13 +367,13 @@ def Sphere(
     sphere.SetEndPhi(end_phi)
     sphere.Update()
     surf = pyvista.wrap(sphere.GetOutput())
-    surf.rotate_y(-90, inplace=True)
+    surf = surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
 
 
 def Plane(
-    center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=10, j_resolution=10,
 ):
     """Create a plane.
 
@@ -420,7 +420,7 @@ def Plane(
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
-    surf.rotate_y(-90, inplace=True)
+    surf = surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
 
@@ -622,7 +622,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
     if bounds is not None:
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         src.SetBounds(bounds)
     else:
@@ -639,7 +639,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     # clean duplicate points
     if clean:
-        cube.clean(inplace=True)
+        cube = cube.clean()
 
     return cube
 
@@ -676,7 +676,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     """
     if np.array(bounds).size != 6:
         raise TypeError(
-            'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
         )
     src = _vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
@@ -850,7 +850,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
     normal = np.array(normal)
     center = np.array(center)
     surf = pyvista.wrap(src.GetOutput())
-    surf.rotate_y(90, inplace=True)
+    surf = surf.rotate_y(90)
     translate(surf, center, normal)
     return surf
 
@@ -1510,7 +1510,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     solid.clear_data()
     solid.cell_data['FaceIndex'] = cell_data
     # scale and translate
-    solid.scale(radius, inplace=True)
+    solid = solid.scale(radius)
     solid.points += np.asanyarray(center) - solid.center
     return solid
 

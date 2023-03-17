@@ -1,5 +1,4 @@
-"""
-.. _scalar_bar_example:
+""".. _scalar_bar_example:
 
 Customize Scalar Bars
 ~~~~~~~~~~~~~~~~~~~~~
@@ -9,7 +8,6 @@ how a user can customize scalar bars.
 
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -38,7 +36,7 @@ p.show()
 # scalar bar are defined in :func:`pyvista.Plotter.add_scalar_bar`.
 
 # create dictionary of parameters to control scalar bar
-sargs = dict(interactive=True)  # Simply make the bar interactive
+sargs = {"interactive": True}  # Simply make the bar interactive
 
 p = pv.Plotter(notebook=False)  # If in IPython, be sure to show the scene
 p.add_mesh(mesh, scalar_bar_args=sargs)
@@ -53,7 +51,7 @@ pv.plotting._ALL_PLOTTERS.clear()
 # Or manually define the scalar bar's location:
 
 # Set a custom position and size
-sargs = dict(height=0.25, vertical=True, position_x=0.05, position_y=0.05)
+sargs = {"height": 0.25, "vertical": True, "position_x": 0.05, "position_y": 0.05}
 
 p = pv.Plotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)
@@ -63,15 +61,15 @@ p.show()
 # The text properties of the scalar bar can also be controlled:
 
 # Controlling the text properties
-sargs = dict(
-    title_font_size=20,
-    label_font_size=16,
-    shadow=True,
-    n_labels=3,
-    italic=True,
-    fmt="%.1f",
-    font_family="arial",
-)
+sargs = {
+    "title_font_size": 20,
+    "label_font_size": 16,
+    "shadow": True,
+    "n_labels": 3,
+    "italic": True,
+    "fmt": "%.1f",
+    "font_family": "arial",
+}
 
 p = pv.Plotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)

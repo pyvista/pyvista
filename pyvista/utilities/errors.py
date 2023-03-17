@@ -1,13 +1,13 @@
 """Module managing errors."""
 
 import collections
-from collections.abc import Iterable
 import logging
 import os
 import re
 import subprocess
 import sys
 import traceback
+from collections.abc import Iterable
 
 import scooby
 
@@ -60,7 +60,7 @@ class VtkErrorCatcher:
     ...
     """
 
-    def __init__(self, raise_errors=False, send_to_logging=True):
+    def __init__(self, raise_errors=False, send_to_logging=True) -> None:
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
@@ -88,7 +88,7 @@ class VtkErrorCatcher:
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
+    def __init__(self, event_type='ErrorEvent', log=True, store_history=False) -> None:
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
@@ -109,7 +109,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:  # noqa: E722
+        except:
             return '', '', '', message
 
     def log_message(self, kind, alert):
@@ -213,7 +213,7 @@ def get_gpu_info():
 class GPUInfo:
     """A class to hold GPU details."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Instantiate a container for the GPU information."""
         self._gpu_info = get_gpu_info()
 
@@ -334,7 +334,7 @@ class Report(scooby.Report):
 
     """
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
+    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True) -> None:
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'imageio', 'scooby', 'pooch']

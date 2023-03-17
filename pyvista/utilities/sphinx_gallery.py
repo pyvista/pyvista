@@ -18,8 +18,7 @@ def _get_sg_image_scraper():
 
 
 class Scraper:
-    """
-    Save ``pyvista.Plotter`` objects.
+    """Save ``pyvista.Plotter`` objects.
 
     Used by sphinx-gallery to generate the plots from the code in the examples.
 
@@ -45,10 +44,10 @@ class Scraper:
             raise RuntimeError(
                 'pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture '
                 'images within sphinx_gallery or when building documentation using the '
-                'pyvista-plot directive.'
+                'pyvista-plot directive.',
             )
 
-        image_names = list()
+        image_names = []
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting._ALL_PLOTTERS
         for _, plotter in figures.items():

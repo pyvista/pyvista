@@ -1,5 +1,4 @@
 """This module contains the Property class."""
-from typing import Union
 
 import pyvista as pv
 from pyvista import _vtk
@@ -169,7 +168,7 @@ class Property(_vtk.vtkProperty):
         lighting=None,
         line_width=None,
         culling=None,
-    ):
+    ) -> None:
         """Initialize this property."""
         self._theme = pv.themes.DefaultTheme()
         if theme is None:
@@ -289,7 +288,7 @@ class Property(_vtk.vtkProperty):
                 f'Invalid style "{new_style}".  Must be one of the following:\n'
                 '\t"surface"\n'
                 '\t"wireframe"\n'
-                '\t"points"\n'
+                '\t"points"\n',
             )
 
     @property
@@ -752,7 +751,7 @@ class Property(_vtk.vtkProperty):
         return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation.setter
-    def interpolation(self, value: Union[str, int, InterpolationType]):
+    def interpolation(self, value: str | int | InterpolationType):
         value = InterpolationType.from_any(value).value
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()
@@ -963,7 +962,7 @@ class Property(_vtk.vtkProperty):
             self.BackfaceCullingOff()
         else:
             raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"'
+                f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"',
             )
 
     @property

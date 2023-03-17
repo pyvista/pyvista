@@ -1,16 +1,16 @@
 import os
 import platform
 
-from PIL import Image, ImageSequence
 import numpy as np
 import pytest
+from PIL import Image, ImageSequence
 
 import pyvista
 from pyvista import examples
 from pyvista.examples.downloads import download_file
 
 pytestmark = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
+    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading',
 )
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
@@ -528,7 +528,7 @@ def test_pvdreader_no_part_group():
 
     reader.set_active_time_value(1.0)
     assert len(reader.active_datasets) == 2
-    for i, dataset in enumerate(reader.active_datasets):
+    for _i, dataset in enumerate(reader.active_datasets):
         assert dataset.time == 1.0
         assert dataset.group == ""
         assert dataset.part == 0
@@ -563,7 +563,7 @@ def test_openfoamreader_active_time():
     assert reader.active_time_value == 1.0
 
     with pytest.raises(
-        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]'
+        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]',
     ):
         reader.set_active_time_value(1000)
 
@@ -714,7 +714,7 @@ def test_openfoam_patch_arrays():
     reader.enable_patch_array(f'{reader_patch_prefix}fixedWalls')
     mesh = reader.read()
     assert mesh.n_blocks == 2
-    assert patch_array_key in mesh.keys()
+    assert patch_array_key in mesh
     assert mesh[patch_array_key].keys() == ['fixedWalls']
 
     # check multiple patch arrays without 'internalMesh'
@@ -722,7 +722,7 @@ def test_openfoam_patch_arrays():
     reader.disable_patch_array('internalMesh')
     mesh = reader.read()
     assert mesh.n_blocks == 1
-    assert patch_array_key in mesh.keys()
+    assert patch_array_key in mesh
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
 
 

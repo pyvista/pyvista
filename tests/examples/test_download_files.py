@@ -1,5 +1,4 @@
-"""
-Test downloading files.
+"""Test downloading files.
 
 Enable these tests with:
 
@@ -110,7 +109,7 @@ def test_download_nefertiti():
 
 
 def test_download_blood_vessels():
-    """Tests the parallel VTU reader"""
+    """Tests the parallel VTU reader."""
     filename = examples.download_blood_vessels(load=False)
     assert os.path.isfile(filename)
 

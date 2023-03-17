@@ -16,7 +16,7 @@ def test_single_cell_picking():
     width, height = 100, 100
 
     class PickCallback:
-        def __init__(self):
+        def __init__(self) -> None:
             self.called = False
 
         def __call__(self, *args, **kwargs):
@@ -299,12 +299,12 @@ def test_point_picking_window_not_pickable():
 
     # bottom left corner, pickable
     sphere = pyvista.Sphere()
-    sphere.translate([-100, -100, 0], inplace=True)
+    sphere = sphere.translate([-100, -100, 0])
     plotter.add_mesh(sphere, pickable=True)
 
     # top right corner, not pickable
     unpickable_sphere = pyvista.Sphere()
-    unpickable_sphere.translate([100, 100, 0], inplace=True)
+    unpickable_sphere = unpickable_sphere.translate([100, 100, 0])
     plotter.add_mesh(unpickable_sphere, pickable=False)
 
     plotter.view_xy()
@@ -421,7 +421,7 @@ def test_enable_fly_to_right_click(sphere):
 
 
 def test_enable_fly_to_right_click_multi_render(sphere):
-    """Same as enable as fly_to_right_click except with two renders for coverage"""
+    """Same as enable as fly_to_right_click except with two renders for coverage."""
     point = []
 
     def callback(click_point):
@@ -441,7 +441,6 @@ def test_enable_fly_to_right_click_multi_render(sphere):
 
 def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
-
     pl = pyvista.Plotter()
     width, height = pl.window_size
     actor, mapper = pl.add_composite(multiblock_poly)

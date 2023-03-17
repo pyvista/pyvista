@@ -1,5 +1,4 @@
-"""
-.. _antarctica_example:
+""".. _antarctica_example:
 
 Compare Field Across Mesh Regions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -18,7 +17,6 @@ software.
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -48,7 +46,7 @@ p.show(cpos="xy")
 
 ###############################################################################
 
-vel_dargs = dict(scalars="magnitude", clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+vel_dargs = {"scalars": "magnitude", "clim": [1e-3, 1e4], "cmap": 'Blues', "log_scale": True}
 
 mesh.plot(cpos="xy", **vel_dargs)
 

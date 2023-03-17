@@ -1,5 +1,4 @@
-"""
-.. _light_actors_example:
+""".. _light_actors_example:
 
 Light Actors
 ~~~~~~~~~~~~
@@ -12,14 +11,13 @@ so they can be visualized using a cone.
 This is exactly the purpose of a ``vtk.vtkLightActor``, the
 functionality of which can be enabled for spotlights:
 """
-# sphinx_gallery_thumbnail_number = 1
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
 cow = examples.download_cow()
-cow.rotate_x(90, inplace=True)
+cow = cow.rotate_x(90)
 plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
 plotter.add_mesh(cow, color='white')
 floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]), i_size=30, j_size=25)

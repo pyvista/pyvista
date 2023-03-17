@@ -1,5 +1,4 @@
-"""
-.. _light_shadows_example:
+""".. _light_shadows_example:
 
 Shadows
 ~~~~~~~
@@ -9,13 +8,12 @@ Demonstrate the usage of lights and shadows in PyVista.
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista
 from pyvista import examples
 
 mesh = examples.download_dragon()
-mesh.rotate_x(90, inplace=True)
-mesh.rotate_z(120, inplace=True)
+mesh = mesh.rotate_x(90)
+mesh = mesh.rotate_z(120)
 
 
 ###############################################################################
@@ -55,8 +53,8 @@ length = rnge[1] * (1 + expand)
 base_mesh = pyvista.Cube(center, width, length, height)
 
 # rotate base and mesh to get a better view
-base_mesh.rotate_z(30, inplace=True)
-mesh.rotate_z(30, inplace=True)
+base_mesh = base_mesh.rotate_z(30)
+mesh = mesh.rotate_z(30)
 
 # create the plotter with custom lighting
 pl = pyvista.Plotter(lighting=None, window_size=(800, 800))

@@ -1,5 +1,4 @@
-"""
-.. _extending_pyvista_example:
+""".. _extending_pyvista_example:
 
 Extending PyVista
 ~~~~~~~~~~~~~~~~~
@@ -62,7 +61,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # Using an inplace operation like :func:`pyvista.DataSet.rotate_y` does not
 # affect the type of the object.
 
-foo_sphere.rotate_y(90, inplace=True)
+foo_sphere = foo_sphere.rotate_y(90)
 print("\nRotated foo sphere:")
 print(f"Type: {type(foo_sphere)}")
 print(f"Maximum point index: {foo_sphere.max_point}")
@@ -114,7 +113,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # Using an inplace operation like :func:`rotate_y <pyvista.DataSet.rotate_y>` does not
 # affect the type of the object.
 
-foo_sphere.rotate_y(90, inplace=True)
+foo_sphere = foo_sphere.rotate_y(90)
 print("\nRotated foo sphere:")
 print(f"Type: {type(foo_sphere)}")
 print(f"Maximum point index: {foo_sphere.max_point}")
@@ -139,7 +138,7 @@ poly_object = pyvista.PolyData(vtk.vtkPolyData())
 print(f"Type: {type(poly_object)}")
 # catch error
 try:
-    poly_object.rotate_y(90, inplace=True)
+    poly_object = poly_object.rotate_y(90)
 except TypeError:
     print("This operation fails")
 

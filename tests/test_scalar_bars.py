@@ -45,7 +45,7 @@ def test_add_fail(scalar_bars):
 
 def test_dict(scalar_bars):
     assert KEY in scalar_bars
-    assert 'Data' in scalar_bars.keys()
+    assert 'Data' in scalar_bars
     assert len(scalar_bars) == 1
     assert list(scalar_bars.keys())[0] == KEY
     assert isinstance(list(scalar_bars.values())[0], _vtk.vtkScalarBarActor)

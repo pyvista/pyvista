@@ -1,8 +1,6 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Tuple
-
 import numpy as np
 
 import pyvista
@@ -78,7 +76,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     """
 
-    def __init__(self, vtk_cell=None, cell_type=None, deep=False):
+    def __init__(self, vtk_cell=None, cell_type=None, deep=False) -> None:
         """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
@@ -166,7 +164,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         """
         return pyvista.UnstructuredGrid(
-            [len(self.point_ids)] + list(range(len(self.point_ids))),
+            [len(self.point_ids), *list(range(len(self.point_ids)))],
             [int(self.type)],
             self.points.copy(),
         )
@@ -227,7 +225,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.GetNumberOfEdges()
 
     @property
-    def point_ids(self) -> List[int]:
+    def point_ids(self) -> list[int]:
         """Get the point IDs composing the cell.
 
         Examples
@@ -351,7 +349,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(cell, deep=True, cell_type=cell.GetCellType())
 
     @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def bounds(self) -> tuple[float, float, float, float, float, float]:
         """Get the cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Examples

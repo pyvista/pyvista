@@ -336,7 +336,7 @@ def load_sphere_vectors():
             np.sin(sphere.points[:, 0]),
             np.cos(sphere.points[:, 1]),
             np.cos(sphere.points[:, 2]),
-        )
+        ),
     ).T
 
     # add and scale
@@ -474,7 +474,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
         from sympy.physics.hydrogen import Psi_nlm
     except ImportError:  # pragma: no cover
         raise ImportError(
-            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
+            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n',
         ) from None
 
     if n < 1:
@@ -486,10 +486,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
     psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
 
-    if n == 1:
-        org = 1.5 * n**2 + 1.0
-    else:
-        org = 1.5 * n**2 + 10.0
+    org = 1.5 * n ** 2 + 1.0 if n == 1 else 1.5 * n ** 2 + 10.0
 
     org /= zoom_fac
 

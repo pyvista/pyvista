@@ -30,8 +30,6 @@ volume = examples.download_head_2()
 
 contour = vtkContourFilter()
 contour.SetInputDataObject(volume)
-# contour.SetComputeNormals(True)
-# contour.SetComputeScalars(False)
 
 # Extract data range => Update store/state
 data_range = tuple(volume.get_data_range())
@@ -93,14 +91,13 @@ with SinglePageLayout(server) as layout:
             active=("trame__busy",),
         )
 
-    with layout.content:
-        with vuetify.VContainer(
-            fluid=True,
-            classes="pa-0 fill-height",
-        ):
-            # Use PyVista UI template for Plotters
-            view = plotter_ui(pl, namespace='demo')
-            ctrl.view_update = view.update
-            ctrl.view_update_image = view.update_image
+    with layout.content, vuetify.VContainer(
+        fluid=True,
+        classes="pa-0 fill-height",
+    ):
+        # Use PyVista UI template for Plotters
+        view = plotter_ui(pl, namespace='demo')
+        ctrl.view_update = view.update
+        ctrl.view_update_image = view.update_image
 
 server.start()

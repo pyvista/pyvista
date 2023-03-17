@@ -1,8 +1,8 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-from functools import wraps
 import pathlib
-from typing import Sequence, Tuple, Union
 import warnings
+from collections.abc import Sequence
+from functools import wraps
 
 import numpy as np
 
@@ -10,8 +10,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
-from pyvista.utilities import abstract_class, assert_empty_kwargs
-import pyvista.utilities.helpers as helpers
+from pyvista.utilities import abstract_class, assert_empty_kwargs, helpers
 from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
 
 
@@ -19,12 +18,12 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicat
 class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the grid."""
         super().__init__()
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> tuple[int, int, int]:
         """Return the grid's dimensions.
 
         These are effectively the number of points along each of the
@@ -123,7 +122,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
-    def __init__(self, *args, check_duplicates=False, deep=False, **kwargs):
+    def __init__(self, *args, check_duplicates=False, deep=False, **kwargs) -> None:
         """Initialize the rectilinear grid."""
         super().__init__()
 
@@ -133,7 +132,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], (str, pathlib.Path)):
+            elif isinstance(args[0], str | pathlib.Path):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0], None, None, check_duplicates)
@@ -143,10 +142,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
-            if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], np.ndarray)
-            else:
-                arg2_is_arr = False
+            arg2_is_arr = isinstance(args[2], np.ndarray) if len(args) == 3 else False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], check_duplicates)
@@ -168,7 +164,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
     def _from_arrays(
-        self, x: np.ndarray, y: np.ndarray, z: np.ndarray, check_duplicates: bool = False
+        self, x: np.ndarray, y: np.ndarray, z: np.ndarray, check_duplicates: bool = False,
     ):
         """Create VTK rectilinear grid directly from numpy arrays.
 
@@ -268,7 +264,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         raise AttributeError(
             "The points cannot be set. The points of "
             "`RectilinearGrid` are defined in each axial direction. Please "
-            "use the `x`, `y`, and `z` setters individually."
+            "use the `x`, `y`, and `z` setters individually.",
         )
 
     @property
@@ -375,7 +371,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         """Do not let the dimensions of the RectilinearGrid be set."""
         raise AttributeError(
             "The dimensions of a `RectilinearGrid` are implicitly "
-            "defined and thus cannot be set."
+            "defined and thus cannot be set.",
         )
 
     def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
@@ -487,7 +483,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         origin=(0.0, 0.0, 0.0),
         deep=False,
         **kwargs,
-    ):
+    ) -> None:
         """Initialize the uniform grid."""
         super().__init__()
 
@@ -506,7 +502,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             dimensions = kwargs.pop('dims')
             # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
-                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning
+                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning,
             )
         assert_empty_kwargs(**kwargs)
 
@@ -528,7 +524,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             if len(args) > 2:
                 raise ValueError(
                     "Too many additional arguments specified for UniformGrid. "
-                    f"Accepts at most 2, and {len(args)} have been input."
+                    f"Accepts at most 2, and {len(args)} have been input.",
                 )
 
         # first argument must be either vtkImageData or a path
@@ -538,7 +534,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                     self.deep_copy(uinput)
                 else:
                     self.shallow_copy(uinput)
-            elif isinstance(uinput, (str, pathlib.Path)):
+            elif isinstance(uinput, str | pathlib.Path):
                 self._from_file(uinput)
             else:
                 raise TypeError(
@@ -549,7 +545,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                     "    ...     dimensions=(10, 10, 10),\n"
                     "    ...     spacing=(2, 1, 5),\n"
                     "    ...     origin=(10, 35, 50),\n"
-                    "    ... )\n"
+                    "    ... )\n",
                 )
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
@@ -637,7 +633,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         raise AttributeError(
             "The points cannot be set. The points of "
             "`UniformGrid`/`vtkImageData` are implicitly defined by the "
-            "`origin`, `spacing`, and `dimensions` of the grid."
+            "`origin`, `spacing`, and `dimensions` of the grid.",
         )
 
     @property
@@ -683,7 +679,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.points[:, 2]
 
     @property
-    def origin(self) -> Tuple[float]:
+    def origin(self) -> tuple[float]:
         """Return the origin of the grid (bottom southwest corner).
 
         Examples
@@ -716,13 +712,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, origin: Sequence[Union[float, int]]):
+    def origin(self, origin: Sequence[float | int]):
         """Set the origin."""
         self.SetOrigin(origin[0], origin[1], origin[2])
         self.Modified()
 
     @property
-    def spacing(self) -> Tuple[float, float, float]:
+    def spacing(self) -> tuple[float, float, float]:
         """Return or set the spacing for each axial direction.
 
         Notes
@@ -750,7 +746,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetSpacing()
 
     @spacing.setter
-    def spacing(self, spacing: Sequence[Union[float, int]]):
+    def spacing(self, spacing: Sequence[float | int]):
         """Set spacing."""
         if min(spacing) < 0:
             raise ValueError(f"Spacing must be non-negative, got {spacing}")

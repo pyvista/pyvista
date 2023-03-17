@@ -24,7 +24,7 @@ class Renderers:
         border=None,
         border_color='k',
         border_width=2.0,
-    ):
+    ) -> None:
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
         self._plotter = proxy(plotter)
@@ -33,10 +33,7 @@ class Renderers:
 
         # by default add border for multiple plots
         if border is None:
-            if shape != (1, 1):
-                border = True
-            else:
-                border = False
+            border = shape != (1, 1)
 
         self.groups = np.empty((0, 4), dtype=int)
 
@@ -56,10 +53,7 @@ class Renderers:
                 splitting_position = pyvista.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
-                if n >= m:
-                    xsplit = m / (n + m)
-                else:
-                    xsplit = 1 - n / (n + m)
+                xsplit = m / (n + m) if n >= m else 1 - n / (n + m)
             else:
                 xsplit = splitting_position
 
@@ -82,7 +76,7 @@ class Renderers:
             self._render_idxs = np.arange(n + m)
 
         else:
-            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
+            if not isinstance(shape, np.ndarray | collections.abc.Sequence):
                 raise TypeError('"shape" should be a list, tuple or string descriptor')
             if len(shape) != 2:
                 raise ValueError('"shape" must have length 2.')
@@ -108,13 +102,13 @@ class Renderers:
                 raise ValueError(
                     f'"row_weights" must have {shape[0]} items '
                     f'for {shape[0]} rows of subplots, not '
-                    f'{row_weights.size}.'
+                    f'{row_weights.size}.',
                 )
             if col_weights.size != shape[1]:
                 raise ValueError(
                     f'"col_weights" must have {shape[1]} items '
                     f'for {shape[1]} columns of subplots, not '
-                    f'{col_weights.size}.'
+                    f'{col_weights.size}.',
                 )
             row_off = np.cumsum(row_weights) / np.sum(row_weights)
             row_off = 1 - np.concatenate(([0], row_off))
@@ -128,13 +122,13 @@ class Renderers:
             if groups is not None:
                 if not isinstance(groups, collections.abc.Sequence):
                     raise TypeError(
-                        f'"groups" should be a list or tuple, not {type(groups).__name__}.'
+                        f'"groups" should be a list or tuple, not {type(groups).__name__}.',
                     )
                 for group in groups:
                     if not isinstance(group, collections.abc.Sequence):
                         raise TypeError(
                             'Each group entry should be a list or '
-                            f'tuple, not {type(group).__name__}.'
+                            f'tuple, not {type(group).__name__}.',
                         )
                     if len(group) != 2:
                         raise ValueError('Each group entry must have length 2.')
@@ -153,10 +147,10 @@ class Renderers:
                         for j in range(norm_group[1], norm_group[3] + 1):
                             if self.loc_to_group((i, j)) is not None:
                                 raise ValueError(
-                                    f'Groups cannot overlap. Overlap found at position {(i, j)}.'
+                                    f'Groups cannot overlap. Overlap found at position {(i, j)}.',
                                 )
                     self.groups = np.concatenate(
-                        (self.groups, np.array([norm_group], dtype=int)), axis=0
+                        (self.groups, np.array([norm_group], dtype=int)), axis=0,
                     )
             # Create subplot renderers
             for row in range(shape[0]):
@@ -183,7 +177,7 @@ class Renderers:
                         self._renderers.append(renderer)
                     else:
                         self._render_idxs[row, col] = self._render_idxs[
-                            self.groups[group, 0], self.groups[group, 1]
+                            self.groups[group, 0], self.groups[group, 1],
                         ]
 
         # each render will also have an associated background renderer
@@ -221,9 +215,9 @@ class Renderers:
             Index of the render window.
 
         """
-        if isinstance(loc, (int, np.integer)):
+        if isinstance(loc, int | np.integer):
             return loc
-        elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
+        elif isinstance(loc, np.ndarray | collections.abc.Sequence):
             if not len(loc) == 2:
                 raise ValueError('"loc" must contain two items')
             index_row = loc[0]
@@ -255,7 +249,7 @@ class Renderers:
 
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid."""
-        if not isinstance(index, (int, np.integer)):
+        if not isinstance(index, int | np.integer):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
             return index
@@ -297,8 +291,7 @@ class Renderers:
         self._active_index = self.loc_to_index((index_row, index_column))
 
     def set_chart_interaction(self, interactive, toggle=False):
-        """
-        Set or toggle interaction with charts for the active renderer.
+        """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
         Interaction with other charts in the active renderer is only disabled

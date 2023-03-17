@@ -1,6 +1,6 @@
-from IPython.display import IFrame
 import numpy as np
 import pytest
+from IPython.display import IFrame
 
 import pyvista as pv
 from pyvista.plotting import system_supports_plotting
@@ -11,8 +11,12 @@ try:
 
     from pyvista.trame.jupyter import Widget
     from pyvista.trame.ui import get_or_create_viewer
-    from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
-except:  # noqa: E722
+    from pyvista.trame.views import (
+        PyVistaLocalView,
+        PyVistaRemoteLocalView,
+        PyVistaRemoteView,
+    )
+except:
     has_trame = False
 
 # skip all tests if VTK<9.1.0
@@ -20,7 +24,7 @@ if pv.vtk_version_info < (9, 1):
     pytestmark = pytest.mark.skip
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
+    not system_supports_plotting(), reason="Requires system to support plotting",
 )
 
 skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
@@ -197,7 +201,7 @@ def test_trame_jupyter_custom_handler():
     _ = plotter.add_mesh(pv.Cone())
     iframe = plotter.show(
         jupyter_backend='trame',
-        jupyter_kwargs=dict(handler=handler),
+        jupyter_kwargs={"handler": handler},
         return_viewer=True,
     )
     assert isinstance(iframe, IFrame)

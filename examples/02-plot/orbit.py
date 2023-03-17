@@ -1,5 +1,4 @@
-"""
-.. _orbiting_example:
+""".. _orbiting_example:
 
 Orbiting
 ~~~~~~~~
@@ -21,7 +20,6 @@ with ``.show(auto_close=False)``.  You may also have to set
 
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 

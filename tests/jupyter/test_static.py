@@ -8,13 +8,13 @@ has_ipython = True
 try:
     import IPython  # noqa
     from PIL.Image import Image
-except:  # noqa: E722
+except:
     has_ipython = False
 
 skip_no_ipython = pytest.mark.skipif(not has_ipython, reason="Requires IPython package")
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
+    not system_supports_plotting(), reason="Requires system to support plotting",
 )
 
 

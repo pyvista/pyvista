@@ -6,7 +6,9 @@ import warnings
 
 from trame.app import get_server
 from trame.ui.vuetify import VAppLayout
-from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
+from trame.widgets import html as html_widgets
+from trame.widgets import vtk as vtk_widgets
+from trame.widgets import vuetify as vuetify_widgets
 
 try:
     from ipywidgets.widgets import HTML
@@ -46,7 +48,7 @@ logger = logging.getLogger(__name__)
 class TrameServerDownError(RuntimeError):
     """Exception when trame server is down for Jupyter."""
 
-    def __init__(self, server_name):
+    def __init__(self, server_name) -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(SERVER_DOWN_MESSAGE.format(name=server_name))
 
@@ -54,7 +56,7 @@ class TrameServerDownError(RuntimeError):
 class TrameJupyterServerDownError(RuntimeError):
     """Exception when trame server is down for Jupyter."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Call the base class constructor with the custom message."""
         # Be incredibly verbose on how users should launch trame server
         # Both warn so it appears at top
@@ -66,7 +68,7 @@ class TrameJupyterServerDownError(RuntimeError):
 class Widget(HTML):
     """Custom HTML iframe widget for trame viewer."""
 
-    def __init__(self, viewer, src, width, height, **kwargs):
+    def __init__(self, viewer, src, width, height, **kwargs) -> None:
         """Initialize."""
         if HTML is object:
             raise ImportError('Please install `ipywidgets`.')
@@ -180,7 +182,7 @@ def build_url(
 
 
 def initialize(
-    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
+    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs,
 ):
     """Generate the UI for a given plotter."""
     state = server.state
@@ -295,7 +297,7 @@ def show_trame(
     if name is None and not server.running:
         elegantly_launch(server)
         if not server.running:
-            raise TrameJupyterServerDownError()
+            raise TrameJupyterServerDownError
     elif not server.running:
         raise TrameServerDownError(name)
 
@@ -342,12 +344,12 @@ def elegantly_launch(*args, **kwargs):
     This is a thin wrapper of
     :func:`launch_server() <pyvista.trame.jupyter.launch_server>`.
 
-    Returns
+    Returns:
     -------
     trame_server.core.Server
         The launched trame server.
 
-    Warnings
+    Warnings:
     --------
     This uses `nest_asyncio <https://github.com/erdewit/nest_asyncio>`_ which
     patches the standard lib `asyncio` package and may have unintended
@@ -363,7 +365,7 @@ def elegantly_launch(*args, **kwargs):
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
-"""
+""",
         )
 
     async def launch_it():

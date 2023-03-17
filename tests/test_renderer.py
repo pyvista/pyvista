@@ -106,7 +106,7 @@ def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
     plotter = pyvista.Plotter(
-        border=has_border, border_color=border_color, border_width=border_width
+        border=has_border, border_color=border_color, border_width=border_width,
     )
     assert plotter.renderer.has_border is has_border
 
@@ -142,7 +142,6 @@ def test_add_legend_loc(loc):
     legend = pl.add_legend(loc=loc)
 
     # note: this is only valid with the defaults:
-    # border=0.05 and size=(0.2, 0.2)
     positions = {
         'upper right': (0.75, 0.75),
         'upper left': (0.05, 0.75),

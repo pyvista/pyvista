@@ -1,5 +1,4 @@
-"""
-.. _planets_example:
+""".. _planets_example:
 
 3D Earth and Celestial Bodies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,15 +49,15 @@ pluto = examples.planets.load_pluto(radius=1151.0)
 
 # Move planets to a nice position for the plotter. These numbers are not
 # grounded in reality and are for demonstration purposes only.
-mercury.translate((0.0, 0.0, 0.0), inplace=True)
-venus.translate((-15000.0, 0.0, 0.0), inplace=True)
-earth.translate((-30000.0, 0.0, 0.0), inplace=True)
-mars.translate((-45000.0, 0.0, 0.0), inplace=True)
-jupiter.translate((-150000.0, 0.0, 0.0), inplace=True)
-saturn.translate((-400000.0, 0.0, 0.0), inplace=True)
-saturn_rings.translate((-400000.0, 0.0, 0.0), inplace=True)
-uranus.translate((-600000.0, 0.0, 0.0), inplace=True)
-neptune.translate((-700000.0, 0.0, 0.0), inplace=True)
+mercury = mercury.translate((0.0, 0.0, 0.0))
+venus = venus.translate((-15000.0, 0.0, 0.0))
+earth = earth.translate((-30000.0, 0.0, 0.0))
+mars = mars.translate((-45000.0, 0.0, 0.0))
+jupiter = jupiter.translate((-150000.0, 0.0, 0.0))
+saturn = saturn.translate((-400000.0, 0.0, 0.0))
+saturn_rings = saturn_rings.translate((-400000.0, 0.0, 0.0))
+uranus = uranus.translate((-600000.0, 0.0, 0.0))
+neptune = neptune.translate((-700000.0, 0.0, 0.0))
 
 # Add planets to Plotter.
 pl = pyvista.Plotter(lighting="none")

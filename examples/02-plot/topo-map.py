@@ -1,5 +1,4 @@
-"""
-.. _ref_topo_map_example:
+""".. _ref_topo_map_example:
 
 Topographic Map
 ~~~~~~~~~~~~~~~
@@ -8,7 +7,6 @@ This is very similar to the :ref:`ref_texture_example` example except it is
 focused on plotting aerial imagery from a GeoTIFF on top of some topography
 mesh.
 """
-# sphinx_gallery_thumbnail_number = 4
 
 import pyvista as pv
 from pyvista import examples
@@ -41,7 +39,7 @@ bounds = (1818000, 1824500, 5645000, 5652500, 0, 3000)
 # Clip the elevation dataset to the map's extent
 local = elevation.clip_box(bounds, invert=False)
 # Apply texturing coordinates to associate the image to the surface
-local.texture_map_to_plane(use_bounds=True, inplace=True)
+local = local.texture_map_to_plane(use_bounds=True)
 
 ###############################################################################
 # Now display it! Note that the imagery is aligned as we expect.

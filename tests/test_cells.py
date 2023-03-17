@@ -9,6 +9,8 @@ import pyvista
 from pyvista import Cell, CellType
 from pyvista.examples import (
     cells as example_cells,
+)
+from pyvista.examples import (
     load_airplane,
     load_explicit_structured,
     load_hexbeam,
@@ -70,7 +72,7 @@ def test_bad_init():
 @pytest.mark.parametrize("grid", grids, ids=ids)
 def test_cell_attribute(grid):
     assert isinstance(grid.cell, GeneratorType)
-    assert all([issubclass(type(cell), Cell) for cell in grid.cell])
+    assert all(issubclass(type(cell), Cell) for cell in grid.cell)
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
@@ -94,7 +96,7 @@ def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize("cell,type", zip(cells[:5], types[:5]))
+@pytest.mark.parametrize(("cell", "type"), zip(cells[:5], types[:5]))
 def test_cell_type(cell, type):
     assert cell.type == type
 
@@ -104,22 +106,22 @@ def test_cell_is_linear(cell):
     assert cell.is_linear
 
 
-@pytest.mark.parametrize("cell, dim", zip(cells[:5], dims[:5]))
+@pytest.mark.parametrize(("cell", "dim"), zip(cells[:5], dims[:5]))
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
-@pytest.mark.parametrize("cell, np", zip(cells[:5], npoints[:5]))
+@pytest.mark.parametrize(("cell", "np"), zip(cells[:5], npoints[:5]))
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
 
 
-@pytest.mark.parametrize("cell, nf", zip(cells[:5], nfaces[:5]))
+@pytest.mark.parametrize(("cell", "nf"), zip(cells[:5], nfaces[:5]))
 def test_cell_n_faces(cell, nf):
     assert cell.n_faces == nf
 
 
-@pytest.mark.parametrize("cell, ne", zip(cells[:5], nedges[:5]))
+@pytest.mark.parametrize(("cell", "ne"), zip(cells[:5], nedges[:5]))
 def test_cell_n_edges(cell, ne):
     assert cell.n_edges == ne
 
@@ -202,12 +204,12 @@ def test_cell_bounds(grid):
     assert all(bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2]))
 
 
-@pytest.mark.parametrize("cell,type_", zip(cells[:5], types[:5]))
+@pytest.mark.parametrize(("cell", "type_"), zip(cells[:5], types[:5]))
 def test_str(cell, type_):
     assert str(type_) in str(cell)
 
 
-@pytest.mark.parametrize("cell,type_", zip(cells[:5], types[:5]))
+@pytest.mark.parametrize(("cell", "type_"), zip(cells[:5], types[:5]))
 def test_repr(cell, type_):
     assert str(type_) in repr(cell)
 

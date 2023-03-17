@@ -1,6 +1,5 @@
-"""
-Multi-Window Plot
-~~~~~~~~~~~~~~~~~
+"""Multi-Window Plot
+~~~~~~~~~~~~~~~~~.
 
 
 Subplotting: having multiple scenes in a single window
@@ -30,7 +29,6 @@ plotter.add_text("Render Window 2", font_size=30)
 sphere = pv.Sphere()
 plotter.add_mesh(sphere, scalars=sphere.points[:, 2])
 plotter.add_scalar_bar("Z")
-# plotter.add_axes()
 plotter.add_axes(interactive=True)
 
 plotter.subplot(1, 1)

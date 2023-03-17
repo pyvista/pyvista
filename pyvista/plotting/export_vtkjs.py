@@ -143,7 +143,7 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
 
     if compress:
         with open(ppath, 'rb') as f_in, gzip.open(
-            os.path.join(data_dir, pMd5 + '.gz'), 'wb'
+            os.path.join(data_dir, pMd5 + '.gz'), 'wb',
         ) as f_out:
             shutil.copyfileobj(f_in, f_out)
         # Close then remove.
@@ -350,7 +350,7 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
     # Strips
     if dataset.GetStrips() and dataset.GetStrips().GetData().GetNumberOfTuples() > 0:
         _strips = dump_data_array(
-            dataset_dir, data_dir, dataset.GetStrips().GetData(), {}, compress
+            dataset_dir, data_dir, dataset.GetStrips().GetData(), {}, compress,
         )
         _cells['strips'] = _strips
         _cells['strips']['vtkClass'] = 'vtkCellArray'
@@ -477,7 +477,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                 else:
                     dataset = mapper.GetInputAsDataSet()
 
-                if dataset and not isinstance(dataset, (_vtk.vtkPolyData, _vtk.vtkImageData)):
+                if dataset and not isinstance(dataset, _vtk.vtkPolyData | _vtk.vtkImageData):
                     # All data must be PolyData surfaces
                     gf = _vtk.vtkGeometryFilter()
                     gf.SetInputData(dataset)
@@ -487,8 +487,6 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                 if dataset:  # and dataset.GetPoints(): # NOTE: vtkImageData does not have points
                     componentName = f'data_{rIdx}_{rpIdx}'  # getComponentName(renProp)
                     scalarVisibility = mapper.GetScalarVisibility()
-                    # arrayAccessMode = mapper.GetArrayAccessMode()
-                    # colorArrayName = mapper.GetArrayName() #TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
                     colorMode = mapper.GetColorMode()
                     scalarMode = mapper.GetScalarMode()
                     lookupTable = mapper.GetLookupTable()
@@ -534,7 +532,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                             color_array_info,
                             new_name=componentName,
                             compress=doCompressArrays,
-                        )
+                        ),
                     )
 
                     # Handle texture if any
@@ -612,7 +610,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                                 if hasattr(lookupTable, 'GetHueRange')
                                 else [0.5, 0],
                             },
-                        }
+                        },
                     )
 
                     if textureName:
@@ -631,7 +629,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
             "focalPoint": plotter.camera.focal_point,
             "position": plotter.camera.position,
             "viewUp": plotter.camera.up,
-            "clippingRange": [elt for elt in cameraClippingRange],
+            "clippingRange": list(cameraClippingRange),
         },
         "centerOfRotation": plotter.camera.focal_point,
         "scene": sceneComponents,
@@ -650,7 +648,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         import zlib  # noqa
 
         compression = zipfile.ZIP_DEFLATED
-    except:  # noqa: E722
+    except:
         compression = zipfile.ZIP_STORED
 
     zf = zipfile.ZipFile(sceneFileName, mode='w')
@@ -697,7 +695,7 @@ def get_vtkjs_url(*args):
 
     - Dropbox
 
-    Args
+    Args:
     ----
         host (str): the name of the file hosting service.
         inURL (str): the web URL to the ``.vtkjs`` file.
@@ -715,8 +713,7 @@ def get_vtkjs_url(*args):
         convertURL = convert_dropbox_url(inURL)
     else:
         print(
-            "--> Warning: Web host not specified or supported. URL is simply appended to standalone scene loader link."
+            "--> Warning: Web host not specified or supported. URL is simply appended to standalone scene loader link.",
         )
         convertURL = inURL
-    # print("--> Your link: %s" % generate_viewer_url(convertURL))
     return generate_viewer_url(convertURL)

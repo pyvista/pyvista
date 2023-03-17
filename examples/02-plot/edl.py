@@ -1,5 +1,4 @@
-"""
-.. _ref_edl:
+""".. _ref_edl:
 
 Eye Dome Lighting
 ~~~~~~~~~~~~~~~~~
@@ -13,7 +12,6 @@ To learn more, please see `this blog post`_.
 """
 ###############################################################################
 
-# sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples
 

@@ -7,7 +7,7 @@ CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. D
 
 
 class _BasePyVistaView:
-    def __init__(self, plotter):
+    def __init__(self, plotter) -> None:
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
 
@@ -59,7 +59,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs) -> None:
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
@@ -85,7 +85,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     def push_camera(self, *args, **kwargs):
         """No-op implementation to match local viewers."""
-        pass  # pragma: no cover
+        # pragma: no cover
 
 
 class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
@@ -109,7 +109,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, namespace=None, **kwargs):
+    def __init__(self, plotter, namespace=None, **kwargs) -> None:
         """Create a trame local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
@@ -163,7 +163,7 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs) -> None:
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:

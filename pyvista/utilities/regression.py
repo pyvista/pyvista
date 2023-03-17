@@ -143,13 +143,13 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
                 img.render()
             if img.render_window is None:
                 raise RuntimeError(
-                    'Unable to extract image from Plotter as it has already been closed.'
+                    'Unable to extract image from Plotter as it has already been closed.',
                 )
             return image_from_window(img.render_window, True, ignore_alpha=True)
         else:
             raise TypeError(
                 f'Unsupported data type {type(img)}.  Should be '
-                'Either a np.ndarray, vtkRenderWindow, or vtkImageData'
+                'Either a np.ndarray, vtkRenderWindow, or vtkImageData',
             )
 
     im1 = remove_alpha(to_img(im1))
@@ -164,7 +164,6 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         img_diff.SetInputData(im1)
         img_diff.SetImageData(im2)
         img_diff.AllowShiftOff()  # vastly increases compute time when enabled
-        # img_diff.AveragingOff()  # increases compute time
         img_diff.Update()
         return img_diff.GetThresholdedError()
 

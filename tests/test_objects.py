@@ -1,6 +1,4 @@
-"""
-Tests for non-spatially referenced objects
-"""
+"""Tests for non-spatially referenced objects."""
 import numpy as np
 import pytest
 import vtk
@@ -15,7 +13,7 @@ except ImportError:
 
 
 def test_table_init(tmpdir):
-    """Save some delimited text to a file and read it"""
+    """Save some delimited text to a file and read it."""
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.csv'))
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
@@ -60,7 +58,7 @@ def test_table_init(tmpdir):
     assert table.n_columns == len(array_dict)
 
     assert len(table.row_arrays) == len(array_dict)
-    for name in table.keys():
+    for name in table:
         assert np.allclose(dataset[name], table[name])
 
     # Create from vtkTable object
@@ -130,7 +128,7 @@ def test_table_row_arrays():
     assert table.n_columns == len(array_dict)
 
     assert len(table.row_arrays) == len(array_dict)
-    for name in table.keys():
+    for name in table:
         assert np.allclose(dataset[name], table[name])
 
     for i, array in enumerate(table.values()):

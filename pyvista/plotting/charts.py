@@ -1,25 +1,25 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
-from functools import wraps
 import inspect
 import itertools
 import re
-from typing import Dict, Optional, Sequence
 import weakref
+from collections.abc import Sequence
+from functools import wraps
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista._typing import Chart
+from pyvista.utilities.misc import vtk_version_info
 
-from .._typing import Chart
-from ..utilities.misc import vtk_version_info
 from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
 
 
 # region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
-    def __init__(cls, clsname, bases, attrs):
+    def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
         sig = inspect.signature(cls.__init__)
@@ -65,7 +65,7 @@ class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
 
     # The substitutions to use for this (sub)class
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
     # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
     _DOC_STORE = {}  # type: ignore
     # Tag used to mark members that require docstring substitutions.
@@ -114,7 +114,7 @@ class DocSubs:
             mem_sub = property(member.fget, member.fset, member.fdel)
         else:
             raise NotImplementedError(
-                "Members other than methods and properties are currently not supported."
+                "Members other than methods and properties are currently not supported.",
             )
         return mem_sub
 
@@ -184,7 +184,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
     }
 
-    def __init__(self, color="k", width=1, style="-"):
+    def __init__(self, color="k", width=1, style="-") -> None:
         """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
@@ -284,7 +284,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
     """
 
-    def __init__(self, color="k", texture=None):
+    def __init__(self, color="k", texture=None) -> None:
         """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
@@ -448,7 +448,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label="", range=None, grid=True):
+    def __init__(self, label="", range=None, grid=True) -> None:
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -991,7 +991,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
             # item is the _CustomContextItem subclass instance
             return item.paint(painter)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
@@ -1003,7 +1003,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
 class _ChartBackground(_CustomContextItem):
     """Utility class for chart backgrounds."""
 
-    def __init__(self, chart):
+    def __init__(self, chart) -> None:
         super().__init__()
         # Note: This SHOULD be a weakref proxy, as otherwise the garbage collector will not clean up unused charts
         # (because of the cyclic references between charts and their background).
@@ -1019,7 +1019,7 @@ class _ChartBackground(_CustomContextItem):
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
-                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush
+                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush,
             )
             l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
@@ -1036,9 +1036,9 @@ class _Chart(DocSubs):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
 
-    def __init__(self, size=(1, 1), loc=(0, 0)):
+    def __init__(self, size=(1, 1), loc=(0, 0)) -> None:
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()
@@ -1078,7 +1078,7 @@ class _Chart(DocSubs):
         """
         # edge race case
         if self._renderer is None:  # pragma: no cover
-            return
+            return None
 
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
@@ -1527,9 +1527,9 @@ class _Plot(DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
 
-    def __init__(self, chart):
+    def __init__(self, chart) -> None:
         super().__init__()
         self._chart = weakref.proxy(chart)
         self._pen = Pen()
@@ -1742,9 +1742,9 @@ class _MultiCompPlot(_Plot):
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
 
-    def __init__(self, chart):
+    def __init__(self, chart) -> None:
         super().__init__(chart)
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
@@ -1827,13 +1827,13 @@ class _MultiCompPlot(_Plot):
                 for i, color in enumerate(val):
                     self._color_series.SetColor(i, Color(color).vtk_c3ub)
                 self._color_series.BuildLookupTable(
-                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL
+                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL,
                 )
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
                 self.color_scheme = self.DEFAULT_COLOR_SCHEME
                 raise ValueError(
-                    "Invalid colors specified, falling back to default color scheme."
+                    "Invalid colors specified, falling back to default color scheme.",
                 ) from e
 
     @property  # type: ignore
@@ -1980,7 +1980,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
-    def __init__(self, chart, x, y, color="b", width=1.0, style="-", label=""):
+    def __init__(self, chart, x, y, color="b", width=1.0, style="-", label="") -> None:
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -2127,7 +2127,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
-    def __init__(self, chart, x, y, color="b", size=10, style="o", label=""):
+    def __init__(self, chart, x, y, color="b", size=10, style="o", label="") -> None:
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -2317,7 +2317,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
     }
 
-    def __init__(self, chart, x, y1, y2=None, color="b", label=""):
+    def __init__(self, chart, x, y1, y2=None, color="b", label="") -> None:
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
@@ -2325,7 +2325,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                 "x": np.empty(0, np.float32),
                 "y1": np.empty(0, np.float32),
                 "y2": np.empty(0, np.float32),
-            }
+            },
         )
         self.SetInputData(self._table)
         self.SetInputArray(0, "x")
@@ -2427,7 +2427,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                     "x": np.array(x, copy=False),
                     "y1": np.array(y1, copy=False),
                     "y2": np.array(y2, copy=False),
-                }
+                },
             )
             self.visible = True
         else:
@@ -2495,10 +2495,10 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, chart, x, y, color=None, orientation="V", label=None):
+    def __init__(self, chart, x, y, color=None, orientation="V", label=None) -> None:
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
-        if not isinstance(y[0], (Sequence, np.ndarray)):
+        if not isinstance(y[0], Sequence | np.ndarray):
             y = (y,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(y))}
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
@@ -2580,7 +2580,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
         """
         if len(x) > 0:
-            if not isinstance(y[0], (Sequence, np.ndarray)):
+            if not isinstance(y[0], Sequence | np.ndarray):
                 y = (y,)
             y_data = {f"y{i}": np.array(y[i], copy=False) for i in range(len(y))}
             self._table.update({"x": np.array(x, copy=False), **y_data})
@@ -2617,7 +2617,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         except KeyError:
             formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
             raise ValueError(
-                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\""
+                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"",
             )
 
 
@@ -2680,10 +2680,10 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, chart, x, ys, colors=None, labels=None):
+    def __init__(self, chart, x, ys, colors=None, labels=None) -> None:
         """Initialize a new 2D stack plot instance."""
         super().__init__(chart)
-        if not isinstance(ys[0], (Sequence, np.ndarray)):
+        if not isinstance(ys[0], Sequence | np.ndarray):
             ys = (ys,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(ys))}
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
@@ -2764,7 +2764,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
         """
         if len(x) > 0:
-            if not isinstance(ys[0], (Sequence, np.ndarray)):
+            if not isinstance(ys[0], Sequence | np.ndarray):
                 ys = (ys,)
             y_data = {f"y{i}": np.array(ys[i], copy=False) for i in range(len(ys))}
             self._table.update({"x": np.array(x, copy=False), **y_data})
@@ -2847,10 +2847,10 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "chart_set_labels": 'plot.label = "My awesome plot"',
     }
 
-    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
+    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True) -> None:
         """Initialize the chart."""
         super().__init__(size, loc)
-        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
+        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES}
         self.SetAutoSize(False)  # We manually set the appropriate size
         # Overwrite custom X and Y axis using a wrapper object, as using the
         # SetAxis method causes a crash at the end of the script's execution (nonzero exit code).
@@ -2858,10 +2858,6 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
         # Note: registering the axis prevents the nonzero exit code at the end, however
         # this results in memory leaks in the plotting tests.
-        # self.SetAxis(_vtk.vtkAxis.BOTTOM, self._x_axis)
-        # self.SetAxis(_vtk.vtkAxis.LEFT, self._y_axis)
-        # self.Register(self._x_axis)
-        # self.Register(self._y_axis)
         self.x_label = x_label
         self.y_label = y_label
         self.grid = grid
@@ -2947,7 +2943,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             if style in fmt:
                 marker_style = style
                 fmt = fmt.replace(
-                    marker_style, "", 1
+                    marker_style, "", 1,
                 )  # Remove found marker_style from format string
                 break
         # Extract line style from format string
@@ -3559,11 +3555,11 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         "multiplot_init": "chart.plot",
     }
 
-    def __init__(self, chart, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None) -> None:
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
-            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)}
+            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)},
         )
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
@@ -3684,7 +3680,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         "chart_set_labels": 'chart.plot.label = "Data label"',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
+    def __init__(self, data, colors=None, labels=None, size=None, loc=None) -> None:
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -3776,7 +3772,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -3815,7 +3811,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
@@ -3869,7 +3865,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         "multiplot_init": "chart.plot",
     }
 
-    def __init__(self, chart, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None) -> None:
         """Initialize a new pie plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(data)
@@ -3970,7 +3966,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
+    def __init__(self, data, colors=None, labels=None, size=None, loc=None) -> None:
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4065,7 +4061,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -4104,7 +4100,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
@@ -4178,12 +4174,12 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
-    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
+    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True) -> None:
         """Initialize chart."""
         try:
-            from matplotlib.backends.backend_agg import FigureCanvasAgg
-            import matplotlib.figure  # noqa
+            import matplotlib.figure
             import matplotlib.pyplot as plt
+            from matplotlib.backends.backend_agg import FigureCanvasAgg
         except ModuleNotFoundError:
             raise ImportError("ChartMPL requires matplotlib")
 
@@ -4192,7 +4188,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             figure, _ = plt.subplots()
         self._fig = figure
         self._canvas = FigureCanvasAgg(
-            self._fig
+            self._fig,
         )  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
         self._fig.patch.set_alpha(0)
@@ -4275,7 +4271,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         else:
             # Called from draw_event callback
             img = np.frombuffer(
-                self._canvas.buffer_rgba(), dtype=np.uint8
+                self._canvas.buffer_rgba(), dtype=np.uint8,
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
@@ -4304,17 +4300,10 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     # Below code can be used to customize the chart's background without a _ChartBackground instance
     # @property
     # def background_color(self):
-    #     return self._bg_color
     #
     # @background_color.setter
     # def background_color(self, val):
-    #     color = Color(val).int_rgba if val is not None else [1.0, 1.0, 1.0, 1.0]
-    #     opacity = color[3]
-    #     self._bg_color = color
-    #     self._fig.patch.set_color(color[:3])
-    #     self._fig.patch.set_alpha(opacity)
     #     for ax in self._fig.axes:
-    #         ax.patch.set_alpha(0 if opacity < 1 else 1)  # Make axes fully transparent if opacity is lower than 1
 
     @property
     def position(self):
@@ -4396,7 +4385,7 @@ class Charts:
 
     """
 
-    def __init__(self, renderer):
+    def __init__(self, renderer) -> None:
         """Create a new collection of charts for the given renderer."""
         self._charts = []
 
@@ -4447,8 +4436,7 @@ class Charts:
             chart._interactive = False  # Charts are not interactive by default
 
     def set_interaction(self, interactive, toggle=False):
-        """
-        Set or toggle interaction with charts for this renderer.
+        """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``
         is ``False``.

@@ -1,15 +1,14 @@
-"""
-.. _moeller_ray_trace_example:
+""".. _moeller_ray_trace_example:
 
-Visualize the Moeller–Trumbore Algorithm
+Visualize the Moeller-Trumbore Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example demonstrates the Moeller–Trumbore intersection algorithm
+This example demonstrates the Moeller-Trumbore intersection algorithm
 using pyvista.
 
 For additional details, please reference the following:
 
-- `Möller–Trumbore intersection algorithm <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>`_
+- `Möller-Trumbore intersection algorithm <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>`_
 - `Fast Minimum Storage Ray Triangle Intersectio <https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf>`_
 
 First, define the ray triangle intersection method.
@@ -21,7 +20,7 @@ import pyvista as pv
 
 
 def ray_triangle_intersection(ray_start, ray_vec, triangle):
-    """Moeller–Trumbore intersection algorithm.
+    """Moeller-Trumbore intersection algorithm.
 
     Parameters
     ----------

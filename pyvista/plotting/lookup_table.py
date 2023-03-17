@@ -1,14 +1,14 @@
 """Wrap vtkLookupTable."""
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._typing import ColorLike
 from pyvista.utilities.helpers import convert_array
 from pyvista.utilities.misc import has_module, no_new_attr
 
-from .._typing import ColorLike
 from .colors import Color, get_cmap_safe
 from .tools import opacity_transfer_function
 
@@ -193,7 +193,7 @@ class LookupTable(_vtk.vtkLookupTable):
     _nan_color_set = False
     _cmap = None
     _values_manual = False
-    _opacity_parm: Tuple[Any, bool, str] = (None, False, 'quadratic')
+    _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
     def __init__(
         self,
@@ -211,7 +211,7 @@ class LookupTable(_vtk.vtkLookupTable):
         below_range_color=None,
         ramp=None,
         annotations=None,
-    ):
+    ) -> None:
         """Initialize the lookup table."""
         if cmap is not None and values is not None:
             raise ValueError('Cannot set both `cmap` and `values`.')
@@ -245,7 +245,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.annotations = annotations
 
     @property
-    def value_range(self) -> Optional[tuple]:
+    def value_range(self) -> tuple | None:
         """Return or set the brightness of the mapped lookup table.
 
         This range is only used when creating custom color maps and will return
@@ -273,7 +273,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return
+            return None
         return self.GetValueRange()
 
     @value_range.setter
@@ -282,7 +282,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def hue_range(self) -> Optional[tuple]:
+    def hue_range(self) -> tuple | None:
         """Return or set the hue range.
 
         This range is only used when creating custom color maps and will return
@@ -310,7 +310,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return
+            return None
         return self.GetHueRange()
 
     @hue_range.setter
@@ -319,7 +319,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def cmap(self) -> Optional[str]:
+    def cmap(self) -> str | None:
         """Return or set the color map used by this lookup table.
 
         Examples
@@ -490,7 +490,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.ForceBuild()
 
     @property
-    def nan_color(self) -> Optional[Color]:
+    def nan_color(self) -> Color | None:
         """Return or set the not a number (NAN) color.
 
         Any values that are NANs will be rendered with this color.
@@ -601,7 +601,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def above_range_color(self) -> Optional[Color]:
+    def above_range_color(self) -> Color | None:
         """Return or set the above range color.
 
         Any values above :attr:`LookupTable.scalar_range` will be rendered with this
@@ -629,7 +629,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: Union[bool, ColorLike]):
+    def above_range_color(self, value: bool | ColorLike):
         if value in (None, False):
             self.SetUseAboveRangeColor(False)
         elif value is True:
@@ -665,7 +665,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.above_range_color = Color(color, opacity=value)
 
     @property
-    def below_range_color(self) -> Optional[Color]:
+    def below_range_color(self) -> Color | None:
         """Return or set the below range color.
 
         Any values below :attr:`LookupTable.scalar_range` will be rendered with this
@@ -693,7 +693,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: Union[bool, ColorLike]):
+    def below_range_color(self, value: bool | ColorLike):
         if value in (None, False):
             self.SetUseBelowRangeColor(False)
         elif value is True:
@@ -824,7 +824,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> pl.show()
 
         """
-        if isinstance(opacity, (float, int)):
+        if isinstance(opacity, float | int):
             if not 0 <= opacity <= 1:
                 raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
             self.values[:, -1] = opacity * 255
@@ -833,7 +833,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.values[:, -1] = np.array(opacity)
         else:
             self.values[:, -1] = opacity_transfer_function(
-                opacity, self.n_values, interpolate=interpolate, kind=kind
+                opacity, self.n_values, interpolate=interpolate, kind=kind,
             )
         self._opacity_parm = (opacity, interpolate, kind)
 
@@ -903,7 +903,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             raise RuntimeError(
-                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.',
             )
         else:
             self.SetNumberOfColors(value)
@@ -938,7 +938,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return dict(zip(keys, values))
 
     @annotations.setter
-    def annotations(self, values: Optional[dict]):
+    def annotations(self, values: dict | None):
         self.ResetAnnotations()
         if values is not None:
             for val, anno in values.items():
@@ -1013,7 +1013,6 @@ class LookupTable(_vtk.vtkLookupTable):
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
         scalar_bar.SetPosition2(0.95, 0.9 - label_level * 0.1)
-        # scalar_bar.SetTextPad(-10)
         if self._nan_color_set and self.nan_opacity > 0:
             scalar_bar.SetDrawNanAnnotation(self._nan_color_set)
 
@@ -1098,7 +1097,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     def __call__(self, value):
         """Implement a Matplotlib colormap-like call."""
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             return self.map_value(value)
         else:
             try:

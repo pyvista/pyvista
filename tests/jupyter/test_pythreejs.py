@@ -1,11 +1,11 @@
-"""Test optional pythreejs functionality"""
+"""Test optional pythreejs functionality."""
 
 import numpy as np
 import pytest
 
 try:
     import pythreejs  # noqa
-except:  # noqa: E722
+except:
     pytestmark = pytest.mark.skip
 
 import pyvista
@@ -275,11 +275,11 @@ def test_linked_views(sphere):
 
     # check first row is linked
     cameras = [widget[0, col].camera for col in range(n_col)]
-    assert all([camera is cameras[0] for camera in cameras])
+    assert all(camera is cameras[0] for camera in cameras)
 
     # check second row is linked
     cameras = [widget[0, col].camera for col in range(n_col)]
-    assert all([camera is cameras[0] for camera in cameras])
+    assert all(camera is cameras[0] for camera in cameras)
 
     # check first row camera is different than the second row
     cameras = [widget[row, 0].camera for row in range(2)]

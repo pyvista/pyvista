@@ -35,10 +35,7 @@ def segment_poly_cells(mesh):
 
 def buffer_normals(trimesh):
     """Extract surface normals and return a buffer attribute."""
-    if 'Normals' in trimesh.point_data:
-        normals = trimesh.point_data['Normals']
-    else:
-        normals = trimesh.point_normals
+    normals = trimesh.point_data.get('Normals', trimesh.point_normals)
     normals = normals.astype(np.float32, copy=False)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Given trait value dtype")
@@ -144,7 +141,7 @@ def cast_to_min_size(ind, max_index):
         ind = ind.astype(np.uint32, copy=False)
     else:
         raise ValueError(
-            f'pythreejs does not support a maximum index more than {np.iinfo(np.uint32).max}'
+            f'pythreejs does not support a maximum index more than {np.iinfo(np.uint32).max}',
         )
     return tjs.BufferAttribute(array=ind, normalized=False)
 
@@ -189,10 +186,7 @@ def to_surf_mesh(
     if add_attr is None:
         add_attr = {}
     # convert to an all-triangular surface
-    if surf.is_all_triangles():
-        trimesh = surf
-    else:
-        trimesh = surf.triangulate()
+    trimesh = surf if surf.is_all_triangles() else surf.triangulate()
 
     position = array_to_float_buffer(trimesh.points)
 
@@ -235,12 +229,6 @@ def to_surf_mesh(
         attr['uv'] = array_to_float_buffer(t_coords)
 
     # TODO: Convert PBR textures
-    # base_color_texture = prop.GetTexture("albedoTex")
-    # orm_texture = prop.GetTexture("materialTex")
-    # anisotropy_texture = prop.GetTexture("anisotropyTex")
-    # normal_texture = prop.GetTexture("normalTex")
-    # emissive_texture = prop.GetTexture("emissiveTex")
-    # coatnormal_texture = prop.GetTexture("coatNormalTex")
     if prop.GetNumberOfTextures():  # pragma: no cover
         warnings.warn('pythreejs converter does not support PBR textures (yet).')
 
@@ -254,7 +242,6 @@ def to_surf_mesh(
         data = wrapped_tex.active_scalars
         dim = (wrapped_tex.dimensions[0], wrapped_tex.dimensions[1], data.shape[1])
         data = data.reshape(dim)
-        # fmt = "RGBFormat" if data.shape[1] == 3 else "RGBAFormat"
 
         # Create data texture and catch invalid warning
         with warnings.catch_warnings():
@@ -267,7 +254,6 @@ def to_surf_mesh(
         'wireframe': prop.GetRepresentation() == 1,
         'opacity': opacity,
         'wireframeLinewidth': prop.GetLineWidth(),
-        # 'side': 'DoubleSide'  # enabling seems to mess with textures
     }
 
     if colors is None:
@@ -424,6 +410,7 @@ def pvlight_to_threejs_light(pvlight):
             position=position.tolist(),
             intensity=pvlight.intensity,
         )
+    return None
 
 
 def extract_lights_from_renderer(renderer):
@@ -473,7 +460,7 @@ def dataset_to_mesh(
                     use_edge_coloring=True,
                     color=color,
                     opacity=opacity,
-                )
+                ),
             )
 
         meshes.append(
@@ -488,19 +475,19 @@ def dataset_to_mesh(
                 add_attr,
                 color=color,
                 opacity=opacity,
-            )
+            ),
         )
 
     elif rep_type == 'Points':
         meshes.append(
-            to_tjs_points(dataset, prop, coloring, lookup_table, color=color, opacity=opacity)
+            to_tjs_points(dataset, prop, coloring, lookup_table, color=color, opacity=opacity),
         )
 
     if has_verts:
         # extract just vertices
         poly_points = dataset.extract_cells(dataset.verts[1::2])
         meshes.append(
-            to_tjs_points(poly_points, prop, coloring, lookup_table, color=color, opacity=opacity)
+            to_tjs_points(poly_points, prop, coloring, lookup_table, color=color, opacity=opacity),
         )
 
     if rep_type not in ['Surface', 'Points']:
@@ -652,8 +639,6 @@ def convert_renderer(pv_renderer):
     # for now, we can't dynamically size the render windows.  If
     # unset, the renderer widget will attempt to resize and the
     # threejs renderer will not resize.
-    # renderer.layout.width = f'{width}px'
-    # renderer.layout.height = f'{height}px'
     return renderer
 
 
@@ -662,11 +647,10 @@ def convert_plotter(pl):
     if pl.render_window is None:
         raise AttributeError(
             'This plotter is closed and unable to export to html.\n'
-            'Please run this before showing or closing the plotter.'
+            'Please run this before showing or closing the plotter.',
         )
 
     if len(pl.renderers) == 1:
-        # return HBox(children=(convert_renderer(pl.renderers[0]),))
         return convert_renderer(pl.renderers[0])
 
     # otherwise, determine if we can use a grid layout
@@ -705,5 +689,5 @@ def convert_plotter(pl):
 
     raise RuntimeError(
         'Unsupported plotter shape.  The ``pythreejs`` backend only '
-        'supports single or regular grids of plots'
+        'supports single or regular grids of plots',
     )

@@ -1,5 +1,4 @@
-"""
-.. _ref_texture_example:
+""".. _ref_texture_example:
 
 Applying Textures
 ~~~~~~~~~~~~~~~~~
@@ -7,8 +6,8 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
-from matplotlib.cm import get_cmap
 import numpy as np
+from matplotlib.cm import get_cmap
 
 import pyvista as pv
 from pyvista import examples
@@ -42,7 +41,7 @@ z = np.sin(r)
 curvsurf = pv.StructuredGrid(x, y, z)
 
 # Map the curved surface to a plane - use best fitting plane
-curvsurf.texture_map_to_plane(inplace=True)
+curvsurf = curvsurf.texture_map_to_plane()
 
 curvsurf.plot(texture=tex)
 
@@ -208,7 +207,7 @@ curvsurf.plot(texture=tex, cpos="xy")
 mesh = pv.Sphere()
 tex = examples.download_masonry_texture()
 
-mesh.texture_map_to_sphere(inplace=True)
+mesh = mesh.texture_map_to_sphere()
 mesh.plot(texture=tex)
 
 
@@ -221,7 +220,7 @@ mesh.plot(texture=tex)
 # the mesh that will be used as the globe. Note the `start_theta` for a slight
 # overlappig
 sphere = pv.Sphere(
-    radius=1, theta_resolution=120, phi_resolution=120, start_theta=270.001, end_theta=270
+    radius=1, theta_resolution=120, phi_resolution=120, start_theta=270.001, end_theta=270,
 )
 
 # Initialize the texture coordinates array

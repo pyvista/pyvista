@@ -17,7 +17,7 @@ A string containing the plane orthogonal to the view direction.  For example:
 class NotAllTrianglesError(ValueError):
     """Exception when a mesh does not contain all triangles."""
 
-    def __init__(self, message='Mesh must consist of only triangles'):
+    def __init__(self, message='Mesh must consist of only triangles') -> None:
         """Empty init."""
         ValueError.__init__(self, message)
 
@@ -25,7 +25,7 @@ class NotAllTrianglesError(ValueError):
 class InvalidCameraError(ValueError):
     """Exception when passed an invalid camera."""
 
-    def __init__(self, message=CAMERA_ERROR_MESSAGE):
+    def __init__(self, message=CAMERA_ERROR_MESSAGE) -> None:
         """Empty init."""
         ValueError.__init__(self, message)
 
@@ -33,7 +33,7 @@ class InvalidCameraError(ValueError):
 class DeprecationError(RuntimeError):
     """Used for depreciated methods and functions."""
 
-    def __init__(self, message='This feature has been depreciated'):
+    def __init__(self, message='This feature has been depreciated') -> None:
         """Empty init."""
         RuntimeError.__init__(self, message)
 
@@ -42,7 +42,7 @@ class VTKVersionError(RuntimeError):
     """Requested feature is not supported by the installed VTK version."""
 
     def __init__(
-        self, message='The requested feature is not supported by the installed VTK version.'
-    ):
+        self, message='The requested feature is not supported by the installed VTK version.',
+    ) -> None:
         """Empty init."""
         RuntimeError.__init__(self, message)

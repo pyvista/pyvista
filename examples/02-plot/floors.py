@@ -1,5 +1,4 @@
-"""
-.. _floors_example:
+""".. _floors_example:
 
 Plot with Floors
 ~~~~~~~~~~~~~~~~

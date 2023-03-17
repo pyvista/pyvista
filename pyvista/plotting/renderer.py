@@ -1,18 +1,19 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-from functools import partial, wraps
-from typing import Sequence, cast
 import warnings
+from collections.abc import Sequence
+from functools import partial, wraps
+from typing import cast
 
 import numpy as np
 
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
+from pyvista._typing import BoundsLike
 from pyvista.utilities import check_depth_peeling, try_callback, wrap
 from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
-from .._typing import BoundsLike
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
@@ -81,7 +82,7 @@ def make_legend_face(face):
             '\t"circle"\n'
             '\t"rectangle"\n'
             '\tNone'
-            '\tpyvista.PolyData'
+            '\tpyvista.PolyData',
         )
     return legendface
 
@@ -135,7 +136,7 @@ class CameraPosition:
 
     """
 
-    def __init__(self, position, focal_point, viewup):
+    def __init__(self, position, focal_point, viewup) -> None:
         """Initialize a new camera position descriptor."""
         self._position = position
         self._focal_point = focal_point
@@ -215,7 +216,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         'iso': 'view_isometric',
     }
 
-    def __init__(self, parent, border=True, border_color='w', border_width=2.0):
+    def __init__(self, parent, border=True, border_color='w', border_width=2.0) -> None:
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
@@ -347,12 +348,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 raise err(
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
-                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
+                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}',
                 )
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
-        elif isinstance(camera_location[0], (int, float)):
+        elif isinstance(camera_location[0], int | float):
             if len(camera_location) != 3:
                 raise pyvista.core.errors.InvalidCameraError
             self.view_vector(camera_location)
@@ -361,7 +362,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if not isinstance(camera_location, CameraPosition):
                 if not len(camera_location) == 3:
                     raise pyvista.core.errors.InvalidCameraError
-                elif any([len(item) != 3 for item in camera_location]):
+                elif any(len(item) != 3 for item in camera_location):
                     raise pyvista.core.errors.InvalidCameraError
 
             # everything is set explicitly
@@ -416,7 +417,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             return
 
         for actor in self._actors.values():
-            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
+            if isinstance(actor, _vtk.vtkCubeAxesActor | _vtk.vtkLightActor):
                 continue
             if (
                 hasattr(actor, 'GetBounds')
@@ -535,7 +536,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if not pyvista.BUILDING_GALLERY:
                     warnings.warn(
                         "VTK compiled with OSMesa does not properly support "
-                        "FXAA anti-aliasing and SSAA will be used instead."
+                        "FXAA anti-aliasing and SSAA will be used instead.",
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -650,7 +651,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer."
+                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.",
             )
         self._charts.add_chart(chart, *charts)
 
@@ -905,7 +906,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._marker_actor
 
     def add_orientation_widget(
-        self, actor, interactive=None, color=None, opacity=1.0, viewport=None
+        self, actor, interactive=None, color=None, opacity=1.0, viewport=None,
     ):
         """Use the given actor in an orientation marker widget.
 
@@ -1135,7 +1136,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **kwargs,
             )
         axes_widget = self.add_orientation_widget(
-            self.axes_actor, interactive=interactive, color=None
+            self.axes_actor, interactive=interactive, color=None,
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
@@ -1413,7 +1414,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             else:
                 raise ValueError(
                     f'Value of ticks ("{ticks}") should be either "inside", "outside", '
-                    'or "both".'
+                    'or "both".',
                 )
         elif ticks is not None:
             raise TypeError('ticks must be a string')
@@ -1433,12 +1434,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             else:
                 raise ValueError(
                     f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".'
+                    ' "outer", "default", "closest", "front", "furthest", or "back".',
                 )
         elif location is not None:
             raise TypeError('location must be a string')
 
-        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
+        if isinstance(padding, int | float) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
                 cushion = (
                     np.array(
@@ -1446,7 +1447,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                             np.abs(bounds[1] - bounds[0]),
                             np.abs(bounds[3] - bounds[2]),
                             np.abs(bounds[5] - bounds[4]),
-                        ]
+                        ],
                     )
                     * padding
                 )
@@ -1458,7 +1459,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set axes ranges if input
         if axes_ranges is not None:
-            if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
+            if isinstance(axes_ranges, collections.abc.Sequence | np.ndarray):
                 axes_ranges = np.asanyarray(axes_ranges)
             else:
                 raise TypeError('Input axes_ranges must be a numeric sequence.')
@@ -1469,7 +1470,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # set the axes ranges
             if axes_ranges.shape != (6,):
                 raise ValueError(
-                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
+                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.',
                 )
 
             cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
@@ -1716,7 +1717,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False
+            mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.outline_color).float_rgb)
@@ -1888,7 +1889,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable
+            mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.floor_color).float_rgb)
@@ -2057,9 +2058,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
+        if isinstance(point, np.ndarray) and point.ndim != 1:
+            point = point.ravel()
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
         self.camera_set = True
         self.Modified()
@@ -2088,9 +2088,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
+        if isinstance(point, np.ndarray) and point.ndim != 1:
+            point = point.ravel()
         self.camera.position = scale_point(self.camera, point, invert=False)
         if reset:
             self.reset_camera()
@@ -2120,9 +2119,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(vector, np.ndarray):
-            if vector.ndim != 1:
-                vector = vector.ravel()
+        if isinstance(vector, np.ndarray) and vector.ndim != 1:
+            vector = vector.ravel()
 
         self.camera.up = vector
         if reset:
@@ -2404,15 +2402,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             hasattr(self, '_box_object')
             and self._box_object is not None
             and self.bounding_box_actor is not None
-        ):
-            if not np.allclose(self._box_object.bounds, self.bounds):
-                color = self.bounding_box_actor.GetProperty().GetColor()
-                self.remove_bounding_box()
-                self.add_bounding_box(color=color)
-                self.remove_floors(clear_kwargs=False)
-                for floor_kwargs in self._floor_kwargs:
-                    floor_kwargs['store_floor_kwargs'] = False
-                    self.add_floor(**floor_kwargs)
+        ) and not np.allclose(self._box_object.bounds, self.bounds):
+            color = self.bounding_box_actor.GetProperty().GetColor()
+            self.remove_bounding_box()
+            self.add_bounding_box(color=color)
+            self.remove_floors(clear_kwargs=False)
+            for floor_kwargs in self._floor_kwargs:
+                floor_kwargs['store_floor_kwargs'] = False
+                self.add_floor(**floor_kwargs)
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
@@ -3252,7 +3249,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     'No labels input.\n\n'
                     'Add labels to individual items when adding them to'
                     'the plotting object with the "label=" parameter.  '
-                    'or enter them as the "labels" parameter.'
+                    'or enter them as the "labels" parameter.',
                 )
 
             self._legend.SetNumberOfEntries(len(self._labels))
@@ -3629,7 +3626,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 # This property turns black if set
                 prop.SetColor(*color.int_rgb)
             prop.SetFontSize(
-                int(font_size_factor * 20)
+                int(font_size_factor * 20),
             )  # hack to avoid multiple font size arguments
 
         for ax in ['Bottom', 'Left', 'Right', 'Top']:

@@ -1,5 +1,4 @@
-"""
-.. _distance_labels_example:
+""".. _distance_labels_example:
 
 Label based on Distance on Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,7 +66,7 @@ labels
 pl = pv.Plotter()
 pl.add_mesh(spline, scalars='arc_length', render_lines_as_tubes=True, line_width=10)
 pl.add_point_labels(
-    label_points, labels, always_visible=True, point_size=20, render_points_as_spheres=True
+    label_points, labels, always_visible=True, point_size=20, render_points_as_spheres=True,
 )
 pl.show_bounds()
 pl.show_axes()

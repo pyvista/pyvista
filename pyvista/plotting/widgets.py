@@ -49,13 +49,13 @@ def _parse_interaction_event(interaction_event):
     elif isinstance(interaction_event, str):
         raise ValueError(
             "Expected value for `interaction_event` is 'start', "
-            f"'end', or 'always'. {interaction_event} was given."
+            f"'end', or 'always'. {interaction_event} was given.",
         )
     elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         raise TypeError(
             "Expected type for `interaction_event` is either a str "
             "or an instance of `vtk.vtkCommand.EventIds`."
-            f" ({type(interaction_event)}) was given."
+            f" ({type(interaction_event)}) was given.",
         )
     return interaction_event
 
@@ -67,7 +67,7 @@ class WidgetHelper:
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize widget helper."""
         super().__init__(*args, **kwargs)
         self.camera_widgets = []
@@ -176,10 +176,7 @@ class WidgetHelper:
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                if use_planes:
-                    args = [planes]
-                else:
-                    args = [the_box]
+                args = [planes] if use_planes else [the_box]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)
@@ -187,7 +184,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pyvista.global_theme.font.color).float_rgb
+            Color(color, default_color=pyvista.global_theme.font.color).float_rgb,
         )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -282,7 +279,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -656,7 +653,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -670,9 +667,6 @@ class WidgetHelper:
 
         if isinstance(mesh, _vtk.vtkPolyData):
             clipper = _vtk.vtkClipPolyData()
-        # elif isinstance(mesh, vtk.vtkImageData):
-        #     clipper = vtk.vtkClipVolume()
-        #     clipper.SetMixed3DCellGeneration(True)
         else:
             clipper = _vtk.vtkTableBasedClipDataSet()
         set_algorithm_input(clipper, algo)
@@ -801,13 +795,13 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
-        if isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if isinstance(volume, pyvista.UniformGrid | pyvista.RectilinearGrid):
             volume = self.add_volume(volume, **kwargs)
         elif not isinstance(volume, pyvista.plotting.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.UniformGrid, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
-                'from `Plotter.add_volume`.'
+                'from `Plotter.add_volume`.',
             )
         else:
             assert_empty_kwargs(**kwargs)
@@ -1205,7 +1199,7 @@ class WidgetHelper:
         """
         if not isinstance(data, list):
             raise TypeError(
-                f"The `data` parameter must be a list but {type(data).__name__} was passed instead"
+                f"The `data` parameter must be a list but {type(data).__name__} was passed instead",
             )
         n_states = len(data)
         if n_states == 0:
@@ -1419,7 +1413,7 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError(
-                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
+                    f"Expected type for ``style`` is str but {type(style).__name__} was given.",
                 )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1561,7 +1555,7 @@ class WidgetHelper:
 
         """
         # avoid circular import
-        from ..core.filters.data_set import _set_threshold_limit
+        from pyvista.core.filters.data_set import _set_threshold_limit
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -1591,7 +1585,7 @@ class WidgetHelper:
         alg = _vtk.vtkThreshold()
         set_algorithm_input(alg, algo or mesh)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0, 0, 0, field.value, scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
         alg.SetAllScalars(all_scalars)
@@ -1724,7 +1718,7 @@ class WidgetHelper:
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
             raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.',
             )
 
         rng = mesh.get_data_range(scalars)
@@ -2114,7 +2108,7 @@ class WidgetHelper:
         if center.ndim > 1:
             num = len(center)
 
-        if isinstance(color, (list, tuple, np.ndarray)):
+        if isinstance(color, list | tuple | np.ndarray):
             if len(color) == num and not isinstance(color[0], float):
                 colors = color
             else:
@@ -2126,23 +2120,17 @@ class WidgetHelper:
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
-                if num > 1:
-                    args = [point, index]
-                else:
-                    args = [point]
+                args = [point, index] if num > 1 else [point]
                 if pass_widget:
                     args.append(widget)
                 try_callback(callback, *args)
             return
 
         if indices is None:
-            indices = [x for x in range(num)]
+            indices = list(range(num))
 
         for i in range(num):
-            if center.ndim > 1:
-                loc = center[i]
-            else:
-                loc = center
+            loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
             if style in "wireframe":
@@ -2253,7 +2241,7 @@ class WidgetHelper:
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[
-                border_size : dims[0] - border_size, border_size : dims[1] - border_size
+                border_size : dims[0] - border_size, border_size : dims[1] - border_size,
             ] = color3  # apply color3
             button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button

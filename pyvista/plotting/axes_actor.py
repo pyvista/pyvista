@@ -1,7 +1,6 @@
 """Axes actor module."""
 from collections.abc import Iterable
 from enum import Enum
-from typing import Union
 
 import pyvista as pv
 
@@ -70,7 +69,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         CONE = 0
         SPHERE = 1
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize actor."""
         super().__init__()
 
@@ -365,7 +364,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: Union[ShaftType, int]):
+    def shaft_type(self, shaft_type: ShaftType | int):
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -390,7 +389,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: Union[TipType, int]):
+    def tip_type(self, tip_type: TipType | int):
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()

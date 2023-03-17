@@ -1,6 +1,5 @@
-"""
-Spline Widget
-~~~~~~~~~~~~~
+"""Spline Widget
+~~~~~~~~~~~~~.
 
 
 A spline widget can be enabled and disabled by the
@@ -30,7 +29,7 @@ points = np.array(
         [-0.30179377, -3.21555997, -4.19999019],
         [3.24099167, 2.05814768, 3.39041509],
         [4.39935227, 4.18804542, 8.96391132],
-    ]
+    ],
 )
 
 p = pv.Plotter()

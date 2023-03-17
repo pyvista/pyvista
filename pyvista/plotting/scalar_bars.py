@@ -13,7 +13,7 @@ from .tools import parse_font_family
 class ScalarBars:
     """Plotter Scalar Bars."""
 
-    def __init__(self, plotter):
+    def __init__(self, plotter) -> None:
         """Initialize ScalarBars."""
         self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
@@ -63,7 +63,7 @@ class ScalarBars:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
                     self._plotter.remove_actor(
-                        self._scalar_bar_actors.pop(name), reset_camera=reset_camera, render=render
+                        self._scalar_bar_actors.pop(name), reset_camera=reset_camera, render=render,
                     )
                     self._plotter._scalar_bar_slots.add(slot)
             return
@@ -100,7 +100,7 @@ class ScalarBars:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
                 raise ValueError(
                     'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}'
+                    f'scalar bar from one of the following:\n{titles}',
                 )
             else:
                 title = list(self._scalar_bar_actors.keys())[0]
@@ -343,9 +343,8 @@ class ScalarBars:
             title_font_size = theme.font.title_size
         if fmt is None:
             fmt = theme.font.fmt
-        if vertical is None:
-            if theme.colorbar_orientation.lower() == 'vertical':
-                vertical = True
+        if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
+            vertical = True
 
         # Automatically choose size if not specified
         if width is None:
@@ -376,7 +375,7 @@ class ScalarBars:
             self._scalar_bar_ranges[title] = clim
             self._scalar_bar_actors[title].SetLookupTable(mapper.lookup_table)
             # Color bar already present and ready to be used so returning
-            return
+            return None
 
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
@@ -406,7 +405,6 @@ class ScalarBars:
 
         # Create scalar bar
         scalar_bar = _vtk.vtkScalarBarActor()
-        # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
             background_color = np.array(Color(background_color).int_rgba)

@@ -87,7 +87,7 @@ def spline():
 
 @fixture()
 def tri_cylinder():
-    """Triangulated cylinder"""
+    """Triangulated cylinder."""
     return pyvista.Cylinder().triangulate()
 
 

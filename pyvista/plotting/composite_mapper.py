@@ -1,17 +1,16 @@
 """Module containing composite data mapper."""
-from itertools import cycle
 import sys
-from typing import Optional
 import warnings
 import weakref
+from itertools import cycle
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array
+from pyvista.utilities.misc import has_module, vtk_version_info
 
-from ..utilities.misc import has_module, vtk_version_info
 from .colors import Color
 from .mapper import _BaseMapper
 
@@ -68,7 +67,7 @@ class BlockAttributes:
 
     """
 
-    def __init__(self, block, attr):
+    def __init__(self, block, attr) -> None:
         """Initialize the block attributes class."""
         self._block = block
         self.__attr = weakref.ref(attr)
@@ -133,7 +132,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:
+    def visible(self) -> bool | None:
         """Get or set the visibility of a block.
 
         Examples
@@ -166,17 +165,17 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:
+    def opacity(self) -> float | None:
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
 
-        Warnings
+        Warnings:
         --------
         VTK 9.0.3 has a bug where changing the opacity to less than 1.0 also
         changes the edge visibility on the block that is partially transparent.
 
-        Examples
+        Examples:
         --------
         Change the opacity of the second block of the dataset.
 
@@ -208,7 +207,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:
+    def pickable(self) -> bool | None:
         """Get or set the pickability of a block.
 
         Examples
@@ -253,7 +252,7 @@ class BlockAttributes:
                 f'Opacity:   {self.opacity}',
                 f'Color:     {self.color}',
                 f'Pickable   {self.pickable}',
-            ]
+            ],
         )
 
 
@@ -309,7 +308,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
     """
 
-    def __init__(self, mapper, dataset):
+    def __init__(self, mapper, dataset) -> None:
         """Initialize CompositeAttributes."""
         super().__init__()
         mapper.SetCompositeDataDisplayAttributes(self)
@@ -484,11 +483,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
-        if block is None:
-            if index > len(self) - 1:
-                raise KeyError(
-                    f'index {index} is out of bounds. There are only {len(self)} blocks.'
-                ) from None
+        if block is None and index > len(self) - 1:
+            raise KeyError(
+                f'index {index} is out of bounds. There are only {len(self)} blocks.',
+            ) from None
         return block
 
     def __getitem__(self, index):
@@ -540,8 +538,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     """
 
     def __init__(
-        self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None
-    ):
+        self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None,
+    ) -> None:
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
         self.SetInputDataObject(dataset)
@@ -790,7 +788,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         self._orig_scalars_name = scalars_name
 
         field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
-            scalars_name, preference, component, rgb
+            scalars_name, preference, component, rgb,
         )
 
         self.scalar_visibility = True
@@ -806,9 +804,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
         self.scalar_range = clim
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         if isinstance(cmap, pv.LookupTable):
             self.lookup_table = cmap
@@ -826,7 +823,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             if isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
 
-            # self.lookup_table.SetNumberOfTableValues(n_colors)
             if nan_color:
                 self.lookup_table.nan_color = nan_color
             if above_color:

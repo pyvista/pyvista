@@ -137,7 +137,8 @@ grid = pv.UnstructuredGrid(cells, celltypes, points)
 # Alternate versions:
 grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
 grid = pv.UnstructuredGrid(
-    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points,
+    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))},
+    points,
 )
 
 # plot the grid (and suppress the camera position output)

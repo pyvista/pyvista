@@ -43,13 +43,12 @@ with SinglePageLayout(server) as layout:
     layout.title.set_text("Multi Views")
     layout.icon.click = ctrl.view_reset_camera
 
-    with layout.content:
-        with vuetify.VContainer(
-            fluid=True,
-            classes="pa-0 fill-height",
-        ):
-            # Use PyVista UI template for Plotters
-            view = plotter_ui(pl)
-            ctrl.view_update = view.update
+    with layout.content, vuetify.VContainer(
+        fluid=True,
+        classes="pa-0 fill-height",
+    ):
+        # Use PyVista UI template for Plotters
+        view = plotter_ui(pl)
+        ctrl.view_update = view.update
 
 server.start()

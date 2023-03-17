@@ -1,6 +1,5 @@
-"""
-Sphere Widget
-~~~~~~~~~~~~~
+"""Sphere Widget
+~~~~~~~~~~~~~.
 
 The sphere widget can be enabled and disabled by the
 :func:`pyvista.Plotter.add_sphere_widget` and
@@ -14,7 +13,6 @@ easily add several widgets to a scene.
 
 Let's look at a few use cases that all update a surface mesh.
 """
-# sphinx_gallery_thumbnail_number = 3
 
 ##############################################################################
 # Example A
@@ -33,7 +31,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 
@@ -73,7 +71,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 
@@ -110,7 +108,7 @@ import pyvista as pv
 
 
 def get_colors(n):
-    """A helper function to get n colors"""
+    """A helper function to get n colors."""
     from itertools import cycle
 
     import matplotlib

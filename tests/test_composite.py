@@ -13,6 +13,8 @@ from pyvista import (
     RectilinearGrid,
     StructuredGrid,
     UniformGrid,
+)
+from pyvista import (
     examples as ex,
 )
 
@@ -74,9 +76,9 @@ def test_multi_block_init_dict(rectilinear, airplane):
     assert isinstance(multi, MultiBlock)
     assert multi.n_blocks == 2
     # Note that dictionaries do not maintain order
-    assert isinstance(multi.GetBlock(0), (RectilinearGrid, PolyData))
+    assert isinstance(multi.GetBlock(0), RectilinearGrid | PolyData)
     assert multi.get_block_name(0) in ['grid', 'poly']
-    assert isinstance(multi.GetBlock(1), (RectilinearGrid, PolyData))
+    assert isinstance(multi.GetBlock(1), RectilinearGrid | PolyData)
     assert multi.get_block_name(1) in ['grid', 'poly']
 
 
@@ -84,8 +86,8 @@ def test_multi_block_keys(rectilinear, airplane):
     data = {'grid': rectilinear, 'poly': airplane}
     multi = MultiBlock(data)
     assert len(multi.keys()) == 2
-    assert 'grid' in multi.keys()
-    assert 'poly' in multi.keys()
+    assert 'grid' in multi
+    assert 'poly' in multi
 
 
 def test_multi_block_init_list(rectilinear, airplane):
@@ -98,7 +100,7 @@ def test_multi_block_init_list(rectilinear, airplane):
 
 
 def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
-    """This puts all of the example data objects into a a MultiBlock container"""
+    """This puts all of the example data objects into a a MultiBlock container."""
     multi = MultiBlock()
     # Add and test examples
     datasets = (ant, sphere, uniform, airplane, rectilinear)
@@ -118,7 +120,7 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
 
 
 def test_multi_block_set_get_ers():
-    """This puts all of the example data objects into a a MultiBlock container"""
+    """This puts all of the example data objects into a a MultiBlock container."""
     multi = MultiBlock()
     # Set the number of blocks
     multi.n_blocks = 6
@@ -160,7 +162,7 @@ def test_multi_block_set_get_ers():
     pop = multi.pop(0)
     assert isinstance(pop, RectilinearGrid)
     assert multi.n_blocks == 3
-    assert all([k is None for k in multi.keys()])
+    assert all(k is None for k in multi)
 
     multi["new key"] = pyvista.Sphere()
     assert multi.n_blocks == 4
@@ -207,12 +209,12 @@ def test_del_slice(sphere):
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[0:10:2]
     assert len(multi) == 5
-    assert all([f"{i}" in multi.keys() for i in range(1, 10, 2)])
+    assert all(f"{i}" in multi for i in range(1, 10, 2))
 
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[5:2:-1]
     assert len(multi) == 7
-    assert all([f"{i}" in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9]])
+    assert all(f"{i}" in multi for i in [0, 1, 2, 6, 7, 8, 9])
 
 
 def test_slicing_multiple_in_setitem(sphere):
@@ -224,7 +226,6 @@ def test_slicing_multiple_in_setitem(sphere):
     assert multi.count(pyvista.Cube()) == 2
     assert len(multi) == 10
 
-    # len(slice) < len(data)
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     multi[1:3] = [pyvista.Cube(), pyvista.Cube(), pyvista.Cube()]
     assert multi[1] == pyvista.Cube()
@@ -233,7 +234,6 @@ def test_slicing_multiple_in_setitem(sphere):
     assert multi.count(pyvista.Cube()) == 3
     assert len(multi) == 11
 
-    # len(slice) > len(data)
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     multi[1:3] = [pyvista.Cube()]
     assert multi[1] == pyvista.Cube()
@@ -359,7 +359,7 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, globe):
 @pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
-    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, globe
+    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, globe,
 ):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
@@ -380,7 +380,6 @@ def test_multi_block_io(
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
 def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
-    # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
     # Now check everything
     assert multi.n_blocks == 4
@@ -707,7 +706,7 @@ def test_set_active_scalars_components(multiblock_poly):
 
     multiblock_poly.set_active_scalars(None)
     multiblock_poly.set_active_scalars('data')
-    for block in multiblock_poly:
+    for _block in multiblock_poly:
         assert multiblock_poly[0].point_data.active_scalars_name == 'data'
 
     data = np.zeros((multiblock_poly[2].n_points, 3))
@@ -771,7 +770,7 @@ def test_compute_normals(multiblock_poly):
         block.clear_data()
         block['point_data'] = range(block.n_points)
     mblock = multiblock_poly._compute_normals(
-        cell_normals=False, split_vertices=True, track_vertices=True
+        cell_normals=False, split_vertices=True, track_vertices=True,
     )
     for block in mblock:
         assert 'Normals' in block.point_data

@@ -26,8 +26,7 @@ def camera():
 
 @pytest.fixture()
 def paraview_pvcc():
-    """Fixture returning a paraview camera file with values of the position"""
-
+    """Fixture returning a paraview camera file with values of the position."""
     tmp = """
     <PVCameraConfiguration description="ParaView camera configuration" version="1.0">
       <Proxy group="views" type="RenderView" id="6395" servers="21">
@@ -272,7 +271,7 @@ def test_eq():
         original_value = getattr(other, name)
         if isinstance(value, bool):
             changed_value = not value
-        elif isinstance(value, (int, float)):
+        elif isinstance(value, int | float):
             changed_value = 0
         elif isinstance(value, tuple):
             changed_value = (0.5, 0.5, 0.5)

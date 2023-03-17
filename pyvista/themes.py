@@ -30,11 +30,11 @@ pyvista.
 
 """
 
-from enum import Enum
 import json
 import os
-from typing import Callable, List, Optional, Union
 import warnings
+from collections.abc import Callable
+from enum import Enum
 
 from ._typing import ColorLike, Number
 from .plotting.colors import Color, get_cmap_safe, get_cycler
@@ -51,7 +51,7 @@ class _rcParams(dict):  # pragma: no cover
         import pyvista  # avoids circular import
 
         warnings.warn(
-            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning,
         )
         return getattr(pyvista.global_theme, key)
 
@@ -59,7 +59,7 @@ class _rcParams(dict):  # pragma: no cover
         import pyvista  # avoids circular import
 
         warnings.warn(
-            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning,
         )
         setattr(pyvista.global_theme, key, value)
 
@@ -68,7 +68,7 @@ class _rcParams(dict):  # pragma: no cover
         import pyvista  # avoids circular import
 
         warnings.warn(
-            'rcParams is deprecated.  Please use ``pyvista.global_theme``', DeprecationWarning
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``', DeprecationWarning,
         )
         return repr(pyvista.global_theme)
 
@@ -144,14 +144,14 @@ def set_plot_theme(theme):
     else:
         raise TypeError(
             f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
-            f'a {type(theme).__name__}'
+            f'a {type(theme).__name__}',
         )
 
 
 class _ThemeConfig:
     """Provide common methods for theme configuration classes."""
 
-    __slots__: List[str] = []
+    __slots__: list[str] = []
 
     @classmethod
     def from_dict(cls, dict_):
@@ -192,7 +192,7 @@ class _ThemeConfig:
         for attr_name in other.__slots__:
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
-            if isinstance(attr, (tuple, list)):
+            if isinstance(attr, tuple | list):
                 if tuple(attr) != tuple(other_attr):
                     return False
             else:
@@ -244,7 +244,7 @@ class _LightingConfig(_ThemeConfig):
         '_emissive',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._interpolation = InterpolationType.FLAT.value
         self._metallic = 0.0
         self._roughness = 0.5
@@ -278,7 +278,7 @@ class _LightingConfig(_ThemeConfig):
         return InterpolationType.from_any(self._interpolation)
 
     @interpolation.setter
-    def interpolation(self, interpolation: Union[str, int, InterpolationType]):
+    def interpolation(self, interpolation: str | int | InterpolationType):
         self._interpolation = InterpolationType.from_any(interpolation).value
 
     @property
@@ -375,7 +375,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._number_of_peels = 4
         self._occlusion_ratio = 0.0
         self._enabled = False
@@ -458,7 +458,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._color = Color('black')
         self._line_width = 2
         self._opacity = 1.0
@@ -525,7 +525,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
-    def feature_angle(self) -> Union[float, None]:
+    def feature_angle(self) -> float | None:
         """Return or set the silhouette feature angle.
 
         Examples
@@ -537,7 +537,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._feature_angle
 
     @feature_angle.setter
-    def feature_angle(self, feature_angle: Union[float, None]):
+    def feature_angle(self, feature_angle: float | None):
         self._feature_angle = feature_angle
 
     @property
@@ -591,7 +591,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     __slots__ = ['_width', '_height', '_position_x', '_position_y']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._width = None
         self._height = None
         self._position_x = None
@@ -698,7 +698,7 @@ class _AxesConfig(_ThemeConfig):
 
     __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._x_color = Color('tomato')
         self._y_color = Color('seagreen')
         self._z_color = Color('mediumblue')
@@ -835,7 +835,7 @@ class _Font(_ThemeConfig):
 
     __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._family = 'arial'
         self._size = 12
         self._title_size = None
@@ -989,7 +989,7 @@ class _SliderStyleConfig(_ThemeConfig):
         '_cap_width',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the slider style configuration."""
         self._name = None
         self._slider_length = None
@@ -1188,7 +1188,7 @@ class _SliderConfig(_ThemeConfig):
 
     __slots__ = ['_classic', '_modern']
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the slider configuration."""
         self._classic = _SliderStyleConfig()
         self._classic.name = 'classic'
@@ -1274,7 +1274,7 @@ class _TrameConfig(_ThemeConfig):
         '_enable_vtk_warnings',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
@@ -1470,7 +1470,7 @@ class DefaultTheme(_ThemeConfig):
         '_opacity',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         self._name = 'default'
         self._background = Color([0.3, 0.3, 0.3])
@@ -1907,7 +1907,7 @@ class DefaultTheme(_ThemeConfig):
         self._camera = camera
 
     @property
-    def notebook(self) -> Union[bool, None]:
+    def notebook(self) -> bool | None:
         """Return or set the state of notebook plotting.
 
         Setting this to ``True`` always enables notebook plotting,
@@ -1925,11 +1925,11 @@ class DefaultTheme(_ThemeConfig):
         return self._notebook
 
     @notebook.setter
-    def notebook(self, value: Union[bool, None]):
+    def notebook(self, value: bool | None):
         self._notebook = value
 
     @property
-    def window_size(self) -> List[int]:
+    def window_size(self) -> list[int]:
         """Return or set the default render window size.
 
         Examples
@@ -1943,7 +1943,7 @@ class DefaultTheme(_ThemeConfig):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size: List[int]):
+    def window_size(self, window_size: list[int]):
         if len(window_size) != 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``.')
 
@@ -2037,7 +2037,7 @@ class DefaultTheme(_ThemeConfig):
         except ImportError:  # pragma: no cover
             warnings.warn(
                 'Unable to set a default theme colormap without matplotlib. '
-                'The builtin VTK "jet" colormap will be used.'
+                'The builtin VTK "jet" colormap will be used.',
             )
             self._cmap = None
 
@@ -2437,7 +2437,7 @@ class DefaultTheme(_ThemeConfig):
         self._title = title
 
     @property
-    def anti_aliasing(self) -> Optional[str]:
+    def anti_aliasing(self) -> str | None:
         """Enable or disable anti-aliasing.
 
         Should be either ``"ssaa"``, ``"msaa"``, ``"fxaa"``, or ``None``.
@@ -2463,7 +2463,7 @@ class DefaultTheme(_ThemeConfig):
         return self._anti_aliasing
 
     @anti_aliasing.setter
-    def anti_aliasing(self, anti_aliasing: Union[str, None]):
+    def anti_aliasing(self, anti_aliasing: str | None):
         if isinstance(anti_aliasing, bool):
             # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
@@ -2574,7 +2574,7 @@ class DefaultTheme(_ThemeConfig):
         if mapper not in mappers:
             raise ValueError(
                 f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}"
+                f"include:\n {', '.join(mappers)}",
             )
 
         self._volume_mapper = mapper
@@ -2800,7 +2800,7 @@ class DefaultTheme(_ThemeConfig):
 
         if not isinstance(theme, DefaultTheme):
             raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.themes.DefaultTheme``.'
+                '``theme`` must be a pyvista theme like ``pyvista.themes.DefaultTheme``.',
             )
 
         for attr_name in theme.__slots__:
@@ -2915,7 +2915,7 @@ class DarkTheme(DefaultTheme):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         super().__init__()
         self.name = 'dark'
@@ -2948,7 +2948,7 @@ class ParaViewTheme(DefaultTheme):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
@@ -2993,7 +2993,7 @@ class DocumentTheme(DefaultTheme):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         super().__init__()
         self.name = 'document'
@@ -3024,7 +3024,7 @@ class DocumentProTheme(DocumentTheme):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         super().__init__()
         self.color_cycler = get_cycler('default')
@@ -3048,7 +3048,7 @@ class _TestingTheme(DefaultTheme):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'testing'
         self.multi_samples = 1

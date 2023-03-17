@@ -1,10 +1,9 @@
 """Module containing pyvista implementation of vtkCamera."""
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Union
-from weakref import proxy
 import xml.dom.minidom as md
+from pathlib import Path
+from weakref import proxy
 from xml.etree import ElementTree
 
 import numpy as np
@@ -39,7 +38,7 @@ class Camera(_vtk.vtkCamera):
 
     """
 
-    def __init__(self, renderer=None):
+    def __init__(self, renderer=None) -> None:
         """Initialize a new camera descriptor."""
         self._parallel_projection = False
         self._elevation = 0.0
@@ -49,7 +48,7 @@ class Camera(_vtk.vtkCamera):
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
                 raise TypeError(
-                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
+                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument',
                 )
             self._renderer = proxy(renderer)
         else:
@@ -84,9 +83,8 @@ class Camera(_vtk.vtkCamera):
         if trans_count == 1:
             # either but not both are None
             return False
-        if trans_count == 2:
-            if not np.array_equal(this_trans, that_trans):
-                return False
+        if trans_count == 2 and not np.array_equal(this_trans, that_trans):
+            return False
 
         return True
 
@@ -105,7 +103,7 @@ class Camera(_vtk.vtkCamera):
         self._is_set = bool(value)
 
     @classmethod
-    def from_paraview_pvcc(cls, filename: Union[str, Path]) -> Camera:
+    def from_paraview_pvcc(cls, filename: str | Path) -> Camera:
         """Load a Paraview camera file (.pvcc extension).
 
         Returns a pyvista.Camera object for which attributes has been read
@@ -162,7 +160,7 @@ class Camera(_vtk.vtkCamera):
         camera.is_set = True
         return camera
 
-    def to_paraview_pvcc(self, filename: Union[str, Path]):
+    def to_paraview_pvcc(self, filename: str | Path):
         """Write the camera parameters to a Paraview camera file (.pvcc extension).
 
         Parameters
@@ -180,7 +178,7 @@ class Camera(_vtk.vtkCamera):
         root.attrib["description"] = "ParaView camera configuration"
         root.attrib["version"] = "1.0"
 
-        dico = dict(group="views", type="RenderView", id="0", servers="21")
+        dico = {'group': "views", 'type': "RenderView", 'id': "0", 'servers': "21"}
         proxy = ElementTree.SubElement(root, "Proxy", dico)
 
         # Add tuples
@@ -191,7 +189,7 @@ class Camera(_vtk.vtkCamera):
         }
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="3")
+                proxy, "Property", {'name': name, 'id': f"0.{name}", 'number_of_elements': "3"},
             )
 
             for i in range(3):
@@ -209,7 +207,7 @@ class Camera(_vtk.vtkCamera):
 
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="1")
+                proxy, "Property", {'name': name, 'id': f"0.{name}", 'number_of_elements': "1"},
             )
             tmp = ElementTree.Element("Element")
             tmp.attrib["index"] = "0"
@@ -221,7 +219,7 @@ class Camera(_vtk.vtkCamera):
             else:
                 tmp.attrib["value"] = "1" if val else "0"
                 e.append(tmp)
-                e.append(ElementTree.Element("Domain", dict(name="bool", id=f"0.{name}.bool")))
+                e.append(ElementTree.Element("Domain", {'name': "bool", 'id': f"0.{name}.bool"}))
 
         xmlstr = ElementTree.tostring(root).decode()
         newxml = md.parseString(xmlstr)
@@ -270,7 +268,7 @@ class Camera(_vtk.vtkCamera):
         """
         if self._renderer is None:
             raise AttributeError(
-                'Camera is must be associated with a renderer to reset its clipping range.'
+                'Camera is must be associated with a renderer to reset its clipping range.',
             )
         self._renderer.reset_camera_clipping_range()
 

@@ -111,7 +111,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     check_valid_vector(tension, "tension")
     if not np.all(np.abs(tension) <= 1.0):
         raise ValueError(
-            "The absolute value of all values of the tension array elements must be <= 1.0 "
+            "The absolute value of all values of the tension array elements must be <= 1.0 ",
         )
 
     if bias is None:
@@ -119,7 +119,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     check_valid_vector(bias, "bias")
     if not np.all(np.abs(bias) <= 1.0):
         raise ValueError(
-            "The absolute value of all values of the bias array elements must be <= 1.0 "
+            "The absolute value of all values of the bias array elements must be <= 1.0 ",
         )
 
     if continuity is None:
@@ -127,7 +127,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     check_valid_vector(continuity, "continuity")
     if not np.all(np.abs(continuity) <= 1.0):
         raise ValueError(
-            "The absolute value of all values continuity array elements must be <= 1.0 "
+            "The absolute value of all values continuity array elements must be <= 1.0 ",
         )
 
     spline_function = _vtk.vtkParametricSpline()

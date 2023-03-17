@@ -1,6 +1,5 @@
-"""
-Plotting with VTK Algorithms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Plotting with VTK Algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
 
 Pass a ``vtkAlgorithm`` to the ``Plotter`` for dynamic visualizations.
 

@@ -1,5 +1,4 @@
-"""
-.. _openfoam_example:
+""".. _openfoam_example:
 
 Plot OpenFOAM data
 ~~~~~~~~~~~~~~~~~~
@@ -91,13 +90,13 @@ boundaries = mesh["boundary"]
 def slice_z_center(mesh):
     """Slice mesh through center in z normal direction, move to z=0."""
     slice_mesh = mesh.slice(normal='z')
-    slice_mesh.translate((0, 0, -slice_mesh.center[-1]), inplace=True)
+    slice_mesh = slice_mesh.translate((0, 0, -slice_mesh.center[-1]))
     return slice_mesh
 
 
 slice_internal_mesh = slice_z_center(internal_mesh)
 slice_boundaries = pyvista.MultiBlock(
-    {key: slice_z_center(boundaries[key]) for key in boundaries.keys()}
+    {key: slice_z_center(boundaries[key]) for key in boundaries},
 )
 
 ###############################################################################

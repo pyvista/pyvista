@@ -7,7 +7,7 @@ from pyvista.themes import DefaultTheme
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
-@pytest.fixture
+@pytest.fixture()
 def default_theme():
     return pyvista.themes.DefaultTheme()
 
@@ -28,7 +28,7 @@ def test_backwards_compatibility():
 
 
 @pytest.mark.parametrize(
-    'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
+    'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)],
 )
 def test_depth_peeling_config(default_theme, parm):
     attr, value = parm
@@ -117,11 +117,11 @@ def test_invalid_color_str_single_char():
 
 def test_color_str():
     clr = colors.Color("k")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("black")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("white")
-    assert (1.0, 1.0, 1.0) == clr
+    assert clr == (1.0, 1.0, 1.0)
     with pytest.raises(ValueError):
         colors.Color('not a color')
 
@@ -518,7 +518,7 @@ def test_below_range_color(default_theme):
 
 def test_user_theme():
     class MyTheme(DefaultTheme):
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize the theme."""
             super().__init__()
             self.background = 'lightgrey'

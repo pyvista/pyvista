@@ -14,7 +14,7 @@ https://github.com/pyvista/pyvista/pull/1163
 
 
 def test_vtk_not_loaded():
-    """This test verifies that the vtk module isn't loaded when using vtk>=9
+    """This test verifies that the vtk module isn't loaded when using vtk>=9.
 
     We use ``os.system`` because we need to test the import of pyvista
     outside of the pytest unit test framework as pytest loads vtk.

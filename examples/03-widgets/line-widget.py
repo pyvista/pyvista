@@ -1,5 +1,4 @@
-"""
-.. _line_widget_example:
+""".. _line_widget_example:
 
 Line Widget
 ~~~~~~~~~~~
@@ -38,7 +37,7 @@ p.add_axes()
 
 def simulate(pointa, pointb):
     streamlines = mesh.streamlines(
-        n_points=10, max_steps=100, pointa=pointa, pointb=pointb, integration_direction='forward'
+        n_points=10, max_steps=100, pointa=pointa, pointb=pointb, integration_direction='forward',
     )
     p.add_mesh(streamlines, name='streamlines', line_width=5, render_lines_as_tubes=True, clim=clim)
 

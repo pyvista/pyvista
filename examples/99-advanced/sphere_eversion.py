@@ -1,5 +1,4 @@
-"""
-.. _sphere_eversion_example:
+""".. _sphere_eversion_example:
 
 Turning the sphere inside out
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,7 +20,6 @@ order to unfold the sphere. It's not obvious that the transformation is truly
 smooth; this was proved in the paper by Bednorz and Bednorz!
 
 """
-# sphinx_gallery_thumbnail_number = 2
 import numpy as np
 
 import pyvista as pv
@@ -130,7 +128,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
             - t / n * np.cos(n * phi)
         )
         - (1 - lamda) * eta**(1 + kappa) * t * abs(t)**(2 * kappa)
-            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa
+            * np.sin(theta) / np.cos(theta)**(2 * n)
     )
     # fmt: on
 
@@ -153,14 +151,14 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
 # outside with different colors.
 
 # plot options to use for each frame
-opts = dict(
-    color='aquamarine',
-    specular=1.0,
-    specular_power=50.0,
-    backface_params=dict(color='forestgreen'),
-    smooth_shading=True,
-    reset_camera=True,
-)
+opts = {
+    'color': 'aquamarine',
+    'specular': 1.0,
+    'specular_power': 50.0,
+    'backface_params': {'color': 'forestgreen'},
+    'smooth_shading': True,
+    'reset_camera': True,
+}
 
 # use a small figure window to reduce the size of the GIF
 plotter = pv.Plotter(window_size=(300, 300))

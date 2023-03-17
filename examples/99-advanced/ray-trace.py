@@ -1,6 +1,5 @@
-"""
-Ray Tracing
-~~~~~~~~~~~
+"""Ray Tracing
+~~~~~~~~~~~.
 
 Single line segment ray tracing for PolyData objects.
 """

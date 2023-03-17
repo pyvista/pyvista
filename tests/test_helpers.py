@@ -1,10 +1,10 @@
 import os
 
-from PIL import Image
 import numpy as np
 import pytest
 import trimesh
 import vtk
+from PIL import Image
 from vtk.util import numpy_support
 
 import pyvista
@@ -92,7 +92,6 @@ def test_wrappers():
     class Foo(pyvista.PolyData):
         """A user defined subclass of pyvista.PolyData."""
 
-        pass
 
     default_wrappers = pyvista._wrappers.copy()
     # Use try...finally to set and reset _wrappers
@@ -111,7 +110,7 @@ def test_wrappers():
 
         assert isinstance(surface, Foo)
 
-        surface.delaunay_2d(inplace=True)
+        surface = surface.delaunay_2d()
         assert isinstance(surface, Foo)
 
         sphere = pyvista.Sphere()
@@ -143,7 +142,7 @@ def test_inheritance_no_wrappers():
 
     # inplace operations do not change type
     mesh = Foo(pyvista.Sphere())
-    mesh.decimate(0.5, inplace=True)
+    mesh = mesh.decimate(0.5)
     assert isinstance(mesh, Foo)
 
     # without using _wrappers, we need to explicitly handle inheritance
@@ -371,7 +370,7 @@ def test_vtk_points_deep_shallow():
     assert np.array_equal(points[0], [0.0, 0.0, 0.0])
 
 
-@pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
+@pytest.mark.parametrize(('force_float', 'expected_data_type'), [(False, np.int64), (True, np.float32)])
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
     if force_float:

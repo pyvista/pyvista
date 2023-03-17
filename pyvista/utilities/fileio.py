@@ -34,7 +34,7 @@ def get_ext(filename):
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
     """Set any vtk writer to write as binary or ascii."""
-    if isinstance(vtk_writer, (_vtk.vtkDataWriter, _vtk.vtkPLYWriter, _vtk.vtkSTLWriter)):
+    if isinstance(vtk_writer, _vtk.vtkDataWriter | _vtk.vtkPLYWriter | _vtk.vtkSTLWriter):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
@@ -79,7 +79,7 @@ def read_legacy(filename, progress_bar=False):
     """
     # Deprecated on v0.35.0, estimated removal on v0.40.0
     warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
+        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning,
     )
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     return read(filename, progress_bar=progress_bar)
@@ -153,10 +153,10 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
-    if isinstance(filename, (list, tuple)):
+    if isinstance(filename, list | tuple):
         multi = pyvista.MultiBlock()
         for each in filename:
-            if isinstance(each, (str, pathlib.Path)):
+            if isinstance(each, str | pathlib.Path):
                 name = os.path.basename(str(each))
             else:
                 name = None
@@ -198,7 +198,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
             warnings.warn(
                 f"The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` raised an error"
                 "while reading the file.\n"
-                f'\t"{observer.get_message()}"'
+                f'\t"{observer.get_message()}"',
             )
         return mesh
 
@@ -222,7 +222,7 @@ def _apply_attrs_to_reader(reader, attrs):
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)
         if args is not None:
-            if not isinstance(args, (list, tuple)):
+            if not isinstance(args, list | tuple):
                 args = [args]
             attr(*args)
         else:
@@ -519,7 +519,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type
-    except:  # noqa: E722 pragma: no cover
+    except:
         from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work

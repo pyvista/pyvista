@@ -99,7 +99,7 @@ def test_plotter_image_scale():
 
 
 def test_prepare_smooth_shading_texture(globe):
-    """Test edge cases for smooth shading"""
+    """Test edge cases for smooth shading."""
     mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
     assert scalars is None
     assert "Normals" in mesh.point_data
@@ -107,7 +107,7 @@ def test_prepare_smooth_shading_texture(globe):
 
 
 def test_prepare_smooth_shading_not_poly(hexbeam):
-    """Test edge cases for smooth shading"""
+    """Test edge cases for smooth shading."""
     scalars_name = "sample_point_scalars"
     scalars = hexbeam.point_data[scalars_name]
     mesh, scalars = _plotting.prepare_smooth_shading(hexbeam, scalars, False, True, True, None)
@@ -147,7 +147,8 @@ def test_get_datasets(sphere, hexbeam):
     pl.add_mesh(hexbeam)
     datasets = pl._datasets
     assert len(datasets) == 2
-    assert sphere in datasets and hexbeam in datasets
+    assert sphere in datasets
+    assert hexbeam in datasets
 
 
 def test_remove_scalars_single(sphere, hexbeam):

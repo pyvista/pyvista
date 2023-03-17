@@ -1,6 +1,6 @@
-from math import pi
 import os
 import pathlib
+from math import pi
 
 import numpy as np
 import pytest
@@ -14,27 +14,27 @@ from pyvista.utilities.misc import PyVistaFutureWarning
 radius = 0.5
 
 skip_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
+    not system_supports_plotting(), reason="Requires system to support plotting",
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere():
     # this shadows the main sphere fixture from conftest!
     return pyvista.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere_shifted():
     return pyvista.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere_dense():
     return pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 
-@pytest.fixture
+@pytest.fixture()
 def cube_dense():
     return pyvista.Cube()
 
@@ -88,7 +88,7 @@ def test_init_from_arrays_with_vert():
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]]  # [quad, triangle, triangle, vertex]
+        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]],  # [quad, triangle, triangle, vertex]
     ).astype(np.int8)
 
     mesh = pyvista.PolyData(vertices, faces)
@@ -203,7 +203,7 @@ def test_geodesic(sphere):
     assert geodesic_ordered["vtkOriginalPointIds"][0] == start
 
     # finally, inplace
-    geodesic_inplace = sphere.geodesic(start, end, inplace=True)
+    geodesic_inplace = sphere = sphere.geodesic(start, end)
     assert geodesic_inplace is sphere
     assert np.allclose(geodesic.points, sphere.points)
 
@@ -224,7 +224,7 @@ def test_geodesic_distance(sphere):
 
     # Use scalar weights
     distance_use_scalar_weights = sphere.geodesic_distance(
-        0, sphere.n_points - 1, use_scalar_weights=True
+        0, sphere.n_points - 1, use_scalar_weights=True,
     )
     assert isinstance(distance_use_scalar_weights, float)
 
@@ -238,7 +238,7 @@ def test_ray_trace(sphere):
 @skip_plotting
 def test_ray_trace_plot(sphere):
     points, ind = sphere.ray_trace(
-        [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True
+        [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True,
     )
     assert np.any(points)
     assert np.any(ind)
@@ -328,7 +328,7 @@ def test_merge(sphere, sphere_shifted, hexbeam):
 
     # test in-place merge
     mesh = sphere.copy()
-    merged = mesh.merge(sphere_shifted, inplace=True)
+    merged = mesh = mesh.merge(sphere_shifted)
     assert merged is mesh
 
     # test main_has_priority
@@ -363,7 +363,7 @@ def test_add(sphere, sphere_shifted):
 
 def test_intersection(sphere, sphere_shifted):
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=True, split_second=True, progress_bar=True
+        sphere_shifted, split_first=True, split_second=True, progress_bar=True,
     )
 
     assert intersection.n_points
@@ -371,7 +371,7 @@ def test_intersection(sphere, sphere_shifted):
     assert second.n_points > sphere_shifted.n_points
 
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=False, split_second=False, progress_bar=True
+        sphere_shifted, split_first=False, split_second=False, progress_bar=True,
     )
     assert intersection.n_points
     assert first.n_points == sphere.n_points
@@ -467,7 +467,7 @@ def test_invalid_save(sphere):
 
 def test_triangulate_filter(plane):
     assert not plane.is_all_triangles
-    plane.triangulate(inplace=True)
+    plane = plane.triangulate()
     assert plane.is_all_triangles
     # Make a point cloud and assert false
     assert not pyvista.PolyData(plane.points).is_all_triangles
@@ -482,7 +482,7 @@ def test_subdivision(sphere, subfilter):
     assert mesh.n_faces > sphere.n_faces
 
     mesh = sphere.copy()
-    mesh.subdivide(1, subfilter, inplace=True)
+    mesh = mesh.subdivide(1, subfilter)
     assert mesh.n_points > sphere.n_points
     assert mesh.n_faces > sphere.n_faces
 
@@ -512,7 +512,7 @@ def test_decimate(sphere):
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
-    mesh.decimate(0.5, inplace=True, progress_bar=True)
+    mesh = mesh.decimate(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
@@ -527,7 +527,7 @@ def test_decimate_pro(sphere):
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
-    mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
+    mesh = mesh.decimate_pro(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
@@ -539,7 +539,7 @@ def test_decimate_pro(sphere):
 
 def test_compute_normals(sphere):
     sphere_normals = sphere
-    sphere_normals.compute_normals(inplace=True)
+    sphere_normals = sphere_normals.compute_normals()
 
     point_normals = sphere_normals.point_data['Normals']
     cell_normals = sphere_normals.cell_data['Normals']
@@ -556,7 +556,7 @@ def test_compute_normals_inplace(sphere):
     assert np.array_equal(sphere['numbers'], sphere2['numbers'])
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
-    sphere.compute_normals(inplace=True)
+    sphere = sphere.compute_normals()
 
     sphere[
         'numbers'
@@ -610,12 +610,12 @@ def test_face_normals(sphere):
 
 def test_clip_plane(sphere):
     clipped_sphere = sphere.clip(
-        origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=True
+        origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=True,
     )
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
-    sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False, progress_bar=True)
+    sphere = sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=True)
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
@@ -625,7 +625,7 @@ def test_extract_largest(sphere):
     largest = mesh.extract_largest()
     assert largest.n_faces == sphere.n_faces
 
-    mesh.extract_largest(inplace=True)
+    mesh = mesh.extract_largest()
     assert mesh.n_faces == sphere.n_faces
 
 
@@ -635,7 +635,7 @@ def test_clean(sphere):
     cleaned = mesh.clean(merge_tol=1e-5)
     assert cleaned.n_points == sphere.n_points
 
-    mesh.clean(merge_tol=1e-5, inplace=True)
+    mesh = mesh.clean(merge_tol=1e-5)
     assert mesh.n_points == sphere.n_points
 
     cleaned = mesh.clean(point_merging=False)
@@ -681,7 +681,7 @@ def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
     sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
-    sphere_copy.remove_points(remove, inplace=True, mode='all')
+    sphere_copy = sphere_copy.remove_points(remove, mode='all')
     assert sphere_copy.n_points == sphere.n_points
     assert sphere_copy.n_faces == sphere.n_faces - 1
 
@@ -744,7 +744,7 @@ def test_project_points_to_plane():
     assert projected.n_points
 
     # finally, test inplace
-    poly.project_points_to_plane(normal=(0, 1, 1), inplace=True)
+    poly = poly.project_points_to_plane(normal=(0, 1, 1))
     assert np.allclose(poly.points, projected.points)
 
 
@@ -752,19 +752,22 @@ def test_tube(spline):
     # Simple
     line = pyvista.Line()
     tube = line.tube(n_sides=2, progress_bar=True)
-    assert tube.n_points and tube.n_cells
+    assert tube.n_points
+    assert tube.n_cells
 
     # inplace
-    line.tube(n_sides=2, inplace=True, progress_bar=True)
+    line = line.tube(n_sides=2, progress_bar=True)
     assert np.allclose(line.points, tube.points)
 
     # Complicated
     tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
-    assert tube.n_points and tube.n_cells
+    assert tube.n_points
+    assert tube.n_cells
 
     # Complicated with absolute radius
     tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
-    assert tube.n_points and tube.n_cells
+    assert tube.n_points
+    assert tube.n_cells
 
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))
@@ -772,7 +775,7 @@ def test_tube(spline):
 
 def test_smooth_inplace(sphere):
     orig_pts = sphere.points.copy()
-    sphere.smooth(inplace=True, progress_bar=True)
+    sphere = sphere.smooth(progress_bar=True)
     assert not np.allclose(orig_pts, sphere.points)
 
 
@@ -791,7 +794,7 @@ def test_delaunay_2d():
     assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)
 
     # test inplace
-    pdata.delaunay_2d(inplace=True, progress_bar=True)
+    pdata = pdata.delaunay_2d(progress_bar=True)
     assert np.allclose(pdata.points, surf.points)
 
 
@@ -873,7 +876,7 @@ def test_extrude():
     assert np.any(poly.strips)
 
     n_points_old = arc.n_points
-    arc.extrude([0, 0, 1], inplace=True, capping=True)
+    arc = arc.extrude([0, 0, 1], capping=True)
     assert arc.n_points != n_points_old
 
 
@@ -889,8 +892,8 @@ def test_flip_normals(sphere, plane):
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
 
-    sphere.compute_normals(inplace=True)
-    sphere_flipped.compute_normals(inplace=True)
+    sphere = sphere.compute_normals()
+    sphere_flipped = sphere_flipped.compute_normals()
     assert np.allclose(sphere_flipped.point_data['Normals'], -sphere.point_data['Normals'])
 
     # invalid case

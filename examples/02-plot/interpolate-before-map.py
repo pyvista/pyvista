@@ -1,5 +1,4 @@
-"""
-.. _interpolate_before_mapping_example:
+""".. _interpolate_before_mapping_example:
 
 Interpolate Before Mapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -16,7 +15,6 @@ For more details, please see `What is InterpolateScalarsBeforeMapping in VTK?
 <https://www.kitware.com/what-is-interpolatescalarsbeforemapping-in-vtk/>`_
 
 """
-# sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 
 ###############################################################################
@@ -39,7 +37,7 @@ import pyvista as pv
 cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
 
 # Common display argument to make sure all else is constant
-dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
+dargs = {'scalars': 'Elevation', 'cmap': 'rainbow', 'show_edges': True}
 
 p = pv.Plotter(shape=(1, 2))
 p.add_mesh(
@@ -50,7 +48,7 @@ p.add_mesh(
 )
 p.subplot(0, 1)
 p.add_mesh(
-    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs
+    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs,
 )
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
@@ -65,7 +63,7 @@ p.show()
 # The same interpolation effect occurs for wireframe visualization too:
 
 # Common display argument to make sure all else is constant
-dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True, style='wireframe')
+dargs = {'scalars': 'Elevation', 'cmap': 'rainbow', 'show_edges': True, 'style': 'wireframe'}
 
 p = pv.Plotter(shape=(1, 2))
 p.add_mesh(
@@ -76,7 +74,7 @@ p.add_mesh(
 )
 p.subplot(0, 1)
 p.add_mesh(
-    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs
+    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs,
 )
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
@@ -94,7 +92,7 @@ p.show()
 wavelet = pv.Wavelet().clip('x')
 
 # Common display argument to make sure all else is constant
-dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True)
+dargs = {'scalars': 'RTData', 'cmap': 'rainbow', 'show_edges': True}
 
 p = pv.Plotter(shape=(1, 2))
 p.add_mesh(
@@ -121,7 +119,7 @@ p.show()
 # Let's take a look at the differences when using eight discrete colors via
 # the ``n_colors`` argument:
 
-dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True, n_colors=8)
+dargs = {'scalars': 'RTData', 'cmap': 'rainbow', 'show_edges': True, 'n_colors': 8}
 
 p = pv.Plotter(shape=(1, 2))
 p.add_mesh(

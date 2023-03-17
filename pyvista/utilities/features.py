@@ -48,9 +48,9 @@ def voxelize(mesh, density=None, check_surface=True):
         mesh = pyvista.wrap(mesh)
     if density is None:
         density = mesh.length / 100
-    if isinstance(density, (int, float, np.number)):
+    if isinstance(density, int | float | np.number):
         density_x, density_y, density_z = [density] * 3
-    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
+    elif isinstance(density, collections.abc.Sequence | np.ndarray):
         density_x, density_y, density_z = density
     else:
         raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
@@ -62,7 +62,7 @@ def voxelize(mesh, density=None, check_surface=True):
         raise ValueError('Input mesh must have faces for voxelization.')
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
-        surface.triangulate(inplace=True)
+        surface = surface.triangulate()
 
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x = np.arange(x_min, x_max, density_x)

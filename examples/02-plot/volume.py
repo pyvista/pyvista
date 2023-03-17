@@ -1,5 +1,4 @@
-"""
-.. _volume_rendering_example:
+""".. _volume_rendering_example:
 
 Volume Rendering
 ~~~~~~~~~~~~~~~~
@@ -12,7 +11,6 @@ This also explores how to extract a volume of interest (VOI) from a
 :func:`pyvista.UniformGridFilters.extract_subset` filter.
 """
 
-# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
 

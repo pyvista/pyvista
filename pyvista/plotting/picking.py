@@ -1,8 +1,8 @@
 """Module managing picking events."""
 
-from functools import partial
 import warnings
 import weakref
+from functools import partial
 
 import numpy as np
 
@@ -26,7 +26,7 @@ def _launch_pick_event(interactor, event):
 class PickingHelper:
     """An internal class to hold picking related features."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the picking helper."""
         super().__init__(*args, **kwargs)
         self.picked_cells = None
@@ -202,7 +202,7 @@ class PickingHelper:
                     show_message += "\nor click to select a dataset under the mouse pointer."
 
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_mesh_picking_message'
+                str(show_message), font_size=font_size, name='_mesh_picking_message',
             )
 
         if left_clicking:
@@ -404,14 +404,14 @@ class PickingHelper:
 
                     # TODO: this is too hacky - find better way to avoid non-dataset actors
                     if not actor.GetMapper() or not hasattr(
-                        actor.GetProperty(), 'GetRepresentation'
+                        actor.GetProperty(), 'GetRepresentation',
                     ):
                         continue
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            "Display representations other than `surface` will result in incorrect results."
+                            "Display representations other than `surface` will result in incorrect results.",
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()
@@ -451,7 +451,7 @@ class PickingHelper:
                 if not through:
                     show_message += "\nPress P to pick a single cell under the mouse"
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_cell_picking_message'
+                str(show_message), font_size=font_size, name='_cell_picking_message',
             )
 
         if start:
@@ -630,7 +630,7 @@ class PickingHelper:
                     show_message += "\nor click to select a point under the mouse pointer."
 
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_surf_picking_message'
+                str(show_message), font_size=font_size, name='_surf_picking_message',
             )
 
         return picker
@@ -722,7 +722,7 @@ class PickingHelper:
         def _end_pick_event(picker, event):
             picked_point_id = picker.GetPointId()
             if (not pickable_window) and (picked_point_id < 0):
-                return None
+                return
 
             self._picked_point = np.array(picker.GetPickPosition())
             self._picked_mesh = picker.GetDataSet()
@@ -766,7 +766,7 @@ class PickingHelper:
             elif show_message is True:
                 show_message = "Press P to pick under the mouse"
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_point_picking_message'
+                str(show_message), font_size=font_size, name='_point_picking_message',
             )
 
     def enable_path_picking(

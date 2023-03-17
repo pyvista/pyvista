@@ -1,5 +1,4 @@
-"""
-.. _plot_atomic_orbitals_example:
+""".. _plot_atomic_orbitals_example:
 
 Plot Atomic Orbitals
 --------------------
@@ -39,8 +38,6 @@ from pyvista import examples
 #        =
 #        \sqrt{
 #            \left(\frac{2}{na_0}\right)^3\, \frac{(n-\ell-1)!}{2n[(n+\ell)!]}
-#        }
-#        e^{-r / na_0}
 #        \left(\frac{2r}{na_0}\right)^\ell
 #        L_{n-\ell-1}^{2\ell+1} \cdot Y_\ell^m(\theta, \phi)
 #    \end{equation}
@@ -200,7 +197,7 @@ point_cloud['phase'] = hydro_orbital['real_wf'][indices] < 0
 # Turn the point cloud into individual spheres. We do this so we can improve
 # the plot by enabling surface space ambient occlusion (SSAO)
 dplot = point_cloud.glyph(
-    geom=pv.Sphere(theta_resolution=8, phi_resolution=8), scale=False, orient=False
+    geom=pv.Sphere(theta_resolution=8, phi_resolution=8), scale=False, orient=False,
 )
 
 # be sure to enable SSAO here. This makes the "points" that are deeper within

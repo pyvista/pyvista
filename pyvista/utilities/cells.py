@@ -26,7 +26,7 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
     ind = np.asarray(ind)
 
     # np.asarray will eat anything, so we have to weed out bogus inputs
-    if not issubclass(ind.dtype.type, (np.bool_, np.integer)):
+    if not issubclass(ind.dtype.type, np.bool_ | np.integer):
         raise TypeError('Indices must be either a mask or an integer array-like')
 
     if ind.dtype == np.bool_:
@@ -63,7 +63,7 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
     """
 
-    def __init__(self, cells=None, n_cells=None, deep=False):
+    def __init__(self, cells=None, n_cells=None, deep=False) -> None:
         """Initialize a vtkCellArray."""
         if cells is not None:
             self._set_cells(cells, n_cells, deep)
@@ -75,10 +75,7 @@ class CellArray(_vtk.vtkCellArray):
         # bottleneck and we can consider adding a warning.  Good
         # candidate for Cython or JIT compilation
         if n_cells is None:
-            if cells.ndim == 1:
-                n_cells = ncells_from_cells(cells)
-            else:
-                n_cells = cells.shape[0]
+            n_cells = ncells_from_cells(cells) if cells.ndim == 1 else cells.shape[0]
 
         self.SetCells(n_cells, vtk_idarr)
 
@@ -146,12 +143,12 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
-    if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
+    if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict]):
         raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
 
-    if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict.keys()]):
+    if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict]):
         raise ValueError(
-            "You requested a cell type with variable length, which can't be used in this method"
+            "You requested a cell type with variable length, which can't be used in this method",
         )
 
     final_cell_types = []
@@ -166,7 +163,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)
         ):
             raise ValueError(
-                f"Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type"
+                f"Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type",
             )
 
         if np.any(cells_arr < 0):
@@ -182,8 +179,8 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(
             np.concatenate(
-                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1
-            ).reshape([-1])
+                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1,
+            ).reshape([-1]),
         )
 
     final_cell_types = np.concatenate(final_cell_types)
@@ -240,7 +237,7 @@ def get_mixed_cells(vtkobj):
     if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in unique_cell_types]):
         raise ValueError(
             "You requested a cell-dictionary with a variable length cell, which is not supported "
-            "currently"
+            "currently",
         )
 
     cell_sizes = np.zeros_like(cell_types)
@@ -257,7 +254,7 @@ def get_mixed_cells(vtkobj):
         current_cell_starts = cell_starts[mask]
 
         cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(
-            cell_starts.dtype
+            cell_starts.dtype,
         )
 
         return_dict[cell_type] = cells[cells_inds]

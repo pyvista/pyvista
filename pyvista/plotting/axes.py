@@ -31,7 +31,7 @@ class Axes(_vtk.vtkAxes):
 
     """
 
-    def __init__(self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False):
+    def __init__(self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False) -> None:
         """Initialize a new axes descriptor."""
         super().__init__()
         self.SetSymmetric(symmetric)

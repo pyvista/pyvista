@@ -24,11 +24,11 @@ def test_scraper(tmpdir, monkeypatch):
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
     block = None
-    block_vars = dict(
-        image_path_iterator=(img for img in [img_fname]),
-        example_globals=dict(a=1),
-        target_file=target_file,
-    )
+    block_vars = {
+        'image_path_iterator': (img for img in [img_fname]),
+        'example_globals': {'a': 1},
+        'target_file': target_file,
+    }
     os.makedirs(op.dirname(img_fname))
     assert not os.path.isfile(img_fname)
     os.makedirs(out_dir)
@@ -48,11 +48,11 @@ def test_scraper_raise(tmpdir):
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
     block = None
-    block_vars = dict(
-        image_path_iterator=(img for img in [img_fname]),
-        example_globals=dict(a=1),
-        target_file=target_file,
-    )
+    block_vars = {
+        'image_path_iterator': (img for img in [img_fname]),
+        'example_globals': {'a': 1},
+        'target_file': target_file,
+    }
     os.makedirs(op.dirname(img_fname))
     assert not os.path.isfile(img_fname)
     os.makedirs(out_dir)

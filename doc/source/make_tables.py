@@ -255,7 +255,10 @@ class ColorSchemeTable(DocTable):
             img_path = f"{CHARTS_IMAGE_DIR}/cs_{i}.png"
             n_colors = cls.generate_img(row_data["scheme"], img_path)
             return cls.row_template.format(
-                row_data["scheme"], row_data["descr"], n_colors, img_path,
+                row_data["scheme"],
+                row_data["descr"],
+                n_colors,
+                img_path,
             )
 
     @staticmethod

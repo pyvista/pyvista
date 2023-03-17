@@ -1,5 +1,4 @@
-"""
-.. _depth_peeling_example:
+""".. _depth_peeling_example:
 
 Depth Peeling
 ~~~~~~~~~~~~~
@@ -12,7 +11,6 @@ For this example, we will showcase the difference that depth peeling
 provides.
 
 """
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -25,7 +23,7 @@ for i, c in enumerate(centers):
     spheres.append(pv.Sphere(center=c, radius=radii[i]))
 
 ###############################################################################
-dargs = dict(opacity=0.5, color="red", smooth_shading=True)
+dargs = {"opacity": 0.5, "color": "red", "smooth_shading": True}
 
 p = pv.Plotter(shape=(1, 2), multi_samples=8)
 

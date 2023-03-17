@@ -87,7 +87,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         specular_power=None,
         shade=None,
         opacity_unit_distance=None,
-    ):
+    ) -> None:
         """Initialize the vtkVolumeProperty class."""
         super().__init__()
         if lookup_table is not None:

@@ -1,4 +1,4 @@
-"""Test render window interactor"""
+"""Test render window interactor."""
 
 import platform
 import time
@@ -10,7 +10,7 @@ from pyvista import _vtk
 from pyvista.plotting import system_supports_plotting
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
+    not system_supports_plotting(), reason="Requires system to support plotting",
 )
 
 
@@ -38,7 +38,7 @@ def test_observers():
 
     # Custom events
     assert not pl.iren.interactor.HasObserver(
-        "PickEvent"
+        "PickEvent",
     ), "Subsequent PickEvent HasObserver tests are wrong if this fails."
     # Add different observers
     obs_move = pl.iren.add_observer(_vtk.vtkCommand.MouseMoveEvent, empty_callback)
@@ -58,7 +58,8 @@ def test_observers():
     assert obs_move not in pl.iren._observers
     # Remove all observers of a specific event
     pl.iren.remove_observers(_vtk.vtkCommand.LeftButtonDoubleClickEvent)
-    assert obs_double1 not in pl.iren._observers and obs_double2 not in pl.iren._observers
+    assert obs_double1 not in pl.iren._observers
+    assert obs_double2 not in pl.iren._observers
     # Remove all (remaining) observers
     pl.iren.remove_observers()
     assert len(pl.iren._observers) == 0
@@ -125,14 +126,19 @@ def test_track_click_position():
 
     # Test single and double clicks:
     pl.iren._mouse_left_button_click(10, 10)
-    assert len(events) == 1 and events.pop(0) == "single"
+    assert len(events) == 1
+    assert events.pop(0) == "single"
     pl.iren._mouse_left_button_click(50, 50, count=2)
-    assert len(events) == 2 and events.pop(1) == "double" and events.pop(0) == "single"
+    assert len(events) == 2
+    assert events.pop(1) == "double"
+    assert events.pop(0) == "single"
 
     # Test triple click behaviour:
     pl.iren._mouse_left_button_click(10, 10, count=3)
     assert len(events) == 3
-    assert events.pop(2) == "single" and events.pop(1) == "double" and events.pop(0) == "single"
+    assert events.pop(2) == "single"
+    assert events.pop(1) == "double"
+    assert events.pop(0) == "single"
 
 
 @pytest.mark.skipif(

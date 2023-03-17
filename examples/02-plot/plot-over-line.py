@@ -1,5 +1,4 @@
-"""
-.. _plot_over_line_example:
+""".. _plot_over_line_example:
 
 Plot Over Line
 ~~~~~~~~~~~~~~
@@ -7,7 +6,6 @@ Plot Over Line
 Plot the values of a dataset over a line through that dataset
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 

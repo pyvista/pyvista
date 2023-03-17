@@ -1,11 +1,12 @@
 """Fine-grained control of reading data files."""
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 import enum
-from functools import wraps
 import os
 import pathlib
-from typing import Any, Callable, List, Union
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from dataclasses import dataclass
+from functools import wraps
+from typing import Any
 from xml.etree import ElementTree
 
 import numpy as np
@@ -174,9 +175,9 @@ def get_reader(filename, force_ext=None):
 class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._data_object = None
-        self._observers: List[Union[int, Callable]] = []
+        self._observers: list[int | Callable] = []
 
     def SetFileName(self, filename):
         """Set file name."""
@@ -184,7 +185,6 @@ class BaseVTKReader(ABC):
 
     def UpdateInformation(self):
         """Update Information from file."""
-        pass
 
     def AddObserver(self, event_type, callback):
         """Add Observer that can be triggered during Update."""
@@ -233,7 +233,7 @@ class BaseReader:
 
     _class_reader: Any = None
 
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         """Initialize Reader by setting path."""
         self._reader = self._class_reader()
         self._filename = None
@@ -366,11 +366,9 @@ class BaseReader:
 
     def _set_defaults(self):
         """Set defaults on reader, if needed."""
-        pass
 
     def _set_defaults_post(self):
         """Set defaults on reader post setting file, if needed."""
-        pass
 
 
 class PointCellDataSelection:
@@ -808,7 +806,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self.reader.SetTimeValue(time_value)
 
@@ -843,14 +841,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
             raise AttributeError(
-                "Inspecting active time value only supported for vtk versions >9.1.0"
+                "Inspecting active time value only supported for vtk versions >9.1.0",
             ) from err
         return value
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self.reader.UpdateTimeStep(time_value)
 
@@ -915,17 +913,17 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def cell_to_point_creation(self):
         """Whether cell data is translated to point data when read.
 
-        Returns
+        Returns:
         -------
         bool
             If ``True``, translate cell data to point data.
 
-        Warnings
+        Warnings:
         --------
         When ``True``, cell and point data arrays will have
         duplicate names.
 
-        Examples
+        Examples:
         --------
         >>> import pyvista
         >>> from pyvista import examples
@@ -1401,9 +1399,8 @@ class MultiBlockPlot3DReader(BaseReader):
 
         """
         # files may be a list or a single filename
-        if files:
-            if isinstance(files, (str, pathlib.Path)):
-                files = [files]
+        if files and isinstance(files, str | pathlib.Path):
+            files = [files]
         files = [_process_filename(f) for f in files]
 
         # AddFileName supports reading multiple q files
@@ -1419,7 +1416,7 @@ class MultiBlockPlot3DReader(BaseReader):
     def auto_detect_format(self, value):
         self.reader.SetAutoDetectFormat(value)
 
-    def add_function(self, value: Union[int, Plot3DFunctionEnum]):
+    def add_function(self, value: int | Plot3DFunctionEnum):
         """Specify additional functions to compute.
 
         The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
@@ -1448,7 +1445,7 @@ class MultiBlockPlot3DReader(BaseReader):
             value = value.value
         self.reader.AddFunction(value)
 
-    def remove_function(self, value: Union[int, Plot3DFunctionEnum]):
+    def remove_function(self, value: int | Plot3DFunctionEnum):
         """Remove one function from list of functions to compute.
 
         For details on the types of accepted values, see :meth:``add_function``.
@@ -1666,7 +1663,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self) -> List[str]:
+    def family_array_names(self) -> list[str]:
         """Return the list of all family array names.
 
         Returns
@@ -1830,7 +1827,7 @@ class PVDDataSet:
 class _PVDReader(BaseVTKReader):
     """Simulate a VTK reader for PVD files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._directory = None
         self._datasets = None
@@ -1858,7 +1855,7 @@ class _PVDReader(BaseVTKReader):
                     int(element_attrib.get('part', 0)),
                     element_attrib['file'],
                     element_attrib.get('group'),
-                )
+                ),
             )
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
@@ -2251,7 +2248,7 @@ class HDFReader(BaseReader):
                 raise RuntimeError(
                     f'{self.path} is missing the Type attribute. '
                     'The VTKHDF format has changed as of 9.2.0, '
-                    f'see {HDF_HELP} for more details.'
+                    f'see {HDF_HELP} for more details.',
                 )
             else:
                 raise err
@@ -2284,7 +2281,7 @@ class SegYReader(BaseReader):
 class _GIFReader(BaseVTKReader):
     """Simulate a VTK reader for GIF files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._n_frames = 0
         self._current_frame = 0

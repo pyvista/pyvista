@@ -1,7 +1,7 @@
 """Support for the ipygany plotter."""
 
-from array import array
 import warnings
+from array import array
 
 import numpy as np
 
@@ -60,10 +60,7 @@ def pyvista_polydata_to_polymesh(obj):
         surf = mesh
 
     # convert to an all-triangular surface
-    if surf.is_all_triangles:
-        trimesh = surf
-    else:
-        trimesh = surf.triangulate()
+    trimesh = surf if surf.is_all_triangles else surf.triangulate()
 
     # finally, pass the triangle vertices to PolyMesh
     triangle_indices = trimesh.faces.reshape(-1, 4)[:, 1:]
@@ -88,7 +85,7 @@ def pyvista_polydata_to_polymesh(obj):
 def pyvista_object_to_pointcloud(pv_object):
     """Convert any pyvista object into a ``ipygany.PointCloud``."""
     pc = PointCloud(
-        vertices=pv_object.points, data=_grid_data_to_data_widget(get_ugrid_data(pv_object))
+        vertices=pv_object.points, data=_grid_data_to_data_widget(get_ugrid_data(pv_object)),
     )
     return pc
 
@@ -101,10 +98,10 @@ def check_colormap(cmap):
             cmap = cmap.capitalize()
 
     if cmap not in colormaps:
-        allowed = ', '.join([f"'{clmp}'" for clmp in colormaps.keys()])
+        allowed = ', '.join([f"'{clmp}'" for clmp in colormaps])
         raise ValueError(
             f'``cmap`` "{cmap}" is not supported by ``ipygany``\n'
-            'Pick from one of the following:\n' + allowed
+            'Pick from one of the following:\n' + allowed,
         )
     return cmap
 
@@ -113,7 +110,7 @@ def ipygany_block_from_actor(actor):
     """Convert a vtk actor to a ipygany Block."""
     mapper = actor.GetMapper()
     if mapper is None:
-        return
+        return None
     dataset = pv.wrap(mapper.GetInputAsDataSet())
 
     prop = actor.GetProperty()
@@ -128,7 +125,7 @@ def ipygany_block_from_actor(actor):
         pmesh = pyvista_object_to_pointcloud(dataset)
     elif rep_type == 'Wireframe':
         warnings.warn('Wireframe style is not supported in ipygany')
-        return
+        return None
     else:
         pmesh = pyvista_polydata_to_polymesh(dataset)
     pmesh.default_color = pv.Color(prop.GetColor()).hex_rgb
@@ -197,15 +194,11 @@ def show_ipygany(plotter, height=None, width=None):
         # window is large.
         cbar.layout.max_width = '500px'
         cbar.layout.min_height = '50px'  # stop from getting squished
-        # cbar.layout.height = '20%'  # stop from getting squished
-        # cbar.layout.max_height = ''
 
         # Create a slider that will dynamically change the boundaries of the colormap
         # colormap_slider_range = FloatRangeSlider(value=[height_min, height_max],
-        #                                          min=height_min, max=height_max,
         #                                          step=(height_max - height_min) / 100.)
 
-        # jslink((colored_mesh, 'range'), (colormap_slider_range, 'value'))
 
         # create app
         title = HTML(value=f'<h3>{list(plotter.scalar_bars.keys())[0]}</h3>')

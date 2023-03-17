@@ -1,5 +1,4 @@
-"""
-.. _orthogonal_slices_example:
+""".. _orthogonal_slices_example:
 
 Orthogonal Slices
 ~~~~~~~~~~~~~~~~~
@@ -9,7 +8,6 @@ View three orthogonal slices from a mesh.
 Use the :func:`pyvista.DataSetFilters.slice_orthogonal` filter to create these
 slices simultaneously.
 """
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -27,7 +25,7 @@ cpos = [
     (128.31920055083387, 126.4977720785509, 111.77682599082095),
     (-0.1065160140819035, 0.032750075477590124, 0.9937714884722322),
 ]
-dargs = dict(cmap='gist_ncar_r')
+dargs = {'cmap': 'gist_ncar_r'}
 
 p = pv.Plotter()
 p.add_mesh(slices, **dargs)

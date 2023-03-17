@@ -1,5 +1,4 @@
-"""
-.. _point_picking_example:
+""".. _point_picking_example:
 
 Picking points on a mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -8,7 +7,6 @@ This example demonstrates how to pick points on meshes using
 
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 
 ###############################################################################

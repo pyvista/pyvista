@@ -101,16 +101,16 @@ These options can be set by defining global variables of the same name in
 
 import doctest
 import os
-from os.path import relpath
-from pathlib import Path
 import re
 import shutil
 import textwrap
 import traceback
+from os.path import relpath
+from pathlib import Path
 
+import jinja2  # Sphinx dependency.
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
-import jinja2  # Sphinx dependency.
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
@@ -292,7 +292,7 @@ plot_context = {}
 class ImageFile:
     """Simple representation of an image file path."""
 
-    def __init__(self, dirname, basename):
+    def __init__(self, dirname, basename) -> None:
         """Construct ImageFile."""
         self.basename = basename
         self.dirname = dirname
@@ -306,7 +306,6 @@ class ImageFile:
 class PlotError(RuntimeError):
     """More descriptive plot error."""
 
-    pass
 
 
 def _run_code(code, code_path, ns=None, function_name=None):
@@ -414,7 +413,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             source_file_name = os.path.join(setup.app.builder.srcdir, directives.uri(arguments[0]))
         else:
             source_file_name = os.path.join(
-                setup.confdir, config.plot_basedir, directives.uri(arguments[0])
+                setup.confdir, config.plot_basedir, directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
@@ -424,16 +423,13 @@ def run(arguments, content, options, state_machine, state, lineno):
         if "caption" in options:
             if caption:  # pragma: no cover
                 raise ValueError(
-                    'Caption specified in both content and options. Please remove ambiguity.'
+                    'Caption specified in both content and options. Please remove ambiguity.',
                 )
             # Use caption option
             caption = options["caption"]
 
         # If the optional function name is provided, use it
-        if len(arguments) == 2:
-            function_name = arguments[1]
-        else:
-            function_name = None
+        function_name = arguments[1] if len(arguments) == 2 else None
 
         code = Path(source_file_name).read_text(encoding='utf-8')
         output_base = os.path.basename(source_file_name)
@@ -459,10 +455,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     # is it in doctest format?
     is_doctest = _contains_doctest(code)
     if 'format' in options:
-        if options['format'] == 'python':
-            is_doctest = False
-        else:
-            is_doctest = True
+        is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)
@@ -470,7 +463,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # build_dir: where to place output files (temporarily)
     build_dir = os.path.join(
-        os.path.dirname(setup.app.doctreedir), 'plot_directive', source_rel_dir
+        os.path.dirname(setup.app.doctreedir), 'plot_directive', source_rel_dir,
     )
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
@@ -484,7 +477,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # how to link to files from the RST file
     dest_dir_link = os.path.join(relpath(setup.confdir, rst_dir), source_rel_dir).replace(
-        os.path.sep, '/'
+        os.path.sep, '/',
     )
     try:
         build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
@@ -497,7 +490,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     # make figures
     try:
         results = render_figures(
-            code, source_file_name, build_dir, output_base, keep_context, function_name, config
+            code, source_file_name, build_dir, output_base, keep_context, function_name, config,
         )
         errors = []
     except PlotError as err:  # pragma: no cover
@@ -505,7 +498,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         sm = reporter.system_message(
             2,
             "Exception occurred in plotting {}\n from {}:\n{}".format(
-                output_base, source_file_name, err
+                output_base, source_file_name, err,
             ),
             line=lineno,
         )

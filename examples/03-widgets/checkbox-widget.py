@@ -1,5 +1,4 @@
-"""
-.. _checkbox_widget_example:
+""".. _checkbox_widget_example:
 
 Checkbox Widget
 ~~~~~~~~~~~~~~~
@@ -9,7 +8,6 @@ Use a checkbox to turn on/off the visibility of meshes in a scene.
 See :func:`pyvista.Plotter.add_checkbox_button_widget` for more details.
 
 """
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 
 ###############################################################################
@@ -49,7 +47,7 @@ colors = [
 class SetVisibilityCallback:
     """Helper callback to keep a reference to the actor being modified."""
 
-    def __init__(self, actor):
+    def __init__(self, actor) -> None:
         self.actor = actor
 
     def __call__(self, state):

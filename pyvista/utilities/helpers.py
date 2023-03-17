@@ -7,10 +7,9 @@ import os
 import signal
 import sys
 import threading
-from threading import Thread
 import traceback
-from typing import Optional
 import warnings
+from threading import Thread
 
 import numpy as np
 
@@ -120,7 +119,7 @@ def convert_string_array(arr, name=None):
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
         if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
             raise ValueError(
-                'String array contains non-ASCII characters that are not supported by VTK.'
+                'String array contains non-ASCII characters that are not supported by VTK.',
             )
         vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
@@ -160,8 +159,8 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     """
     if arr is None:
-        return
-    if isinstance(arr, (list, tuple)):
+        return None
+    if isinstance(arr, list | tuple):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
         if arr.dtype == np.dtype('O'):
@@ -178,7 +177,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
             vtk_data.SetName(name)
         return vtk_data
     # Otherwise input must be a vtkDataArray
-    if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
+    if not isinstance(arr, _vtk.vtkDataArray | _vtk.vtkBitArray | _vtk.vtkStringArray):
         raise TypeError(f'Invalid input array type ({type(arr)}).')
     # Handle booleans
     if isinstance(arr, _vtk.vtkBitArray):
@@ -204,7 +203,7 @@ def is_pyvista_dataset(obj):
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
+    return isinstance(obj, pyvista.DataSet | pyvista.MultiBlock)
 
 
 def _assoc_array(obj, name, association='point'):
@@ -343,7 +342,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> np.ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -380,7 +379,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     if preference not in ['cell', 'point', 'field']:
         raise ValueError(
             f'`preference` must be either "cell", "point", "field" for a '
-            f'{type(mesh)}, not "{preference}".'
+            f'{type(mesh)}, not "{preference}".',
         )
 
     parr = point_array(mesh, name)
@@ -502,15 +501,14 @@ def vtk_points(points, deep=True, force_float=False):
     if not np.issubdtype(points.dtype, np.number):
         raise TypeError('Points must be a numeric type')
 
-    if force_float:
-        if not np.issubdtype(points.dtype, np.floating):
-            warnings.warn(
-                'Points is not a float type. This can cause issues when '
-                'transforming or applying filters. Casting to '
-                '``np.float32``. Disable this by passing '
-                '``force_float=False``.'
-            )
-            points = points.astype(np.float32)
+    if force_float and not np.issubdtype(points.dtype, np.floating):
+        warnings.warn(
+            'Points is not a float type. This can cause issues when '
+            'transforming or applying filters. Casting to '
+            '``np.float32``. Disable this by passing '
+            '``force_float=False``.',
+        )
+        points = points.astype(np.float32)
 
     # check dimensionality
     if points.ndim == 1:
@@ -522,7 +520,7 @@ def vtk_points(points, deep=True, force_float=False):
     if points.shape[1] != 3:
         raise ValueError(
             'Points array must contain three values per point. '
-            f'Shape is {points.shape} and should be (X, 3)'
+            f'Shape is {points.shape} and should be (X, 3)',
         )
 
     # use the underlying vtk data if present to avoid memory leaks
@@ -828,7 +826,7 @@ def array_from_vtkmatrix(matrix):
     else:
         raise TypeError(
             'Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
-            f' got {type(matrix).__name__} instead.'
+            f' got {type(matrix).__name__} instead.',
         )
     array = np.zeros(shape)
     for i in range(shape[0]):
@@ -983,7 +981,7 @@ def wrap(dataset):
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
-    if isinstance(dataset, (np.ndarray, pyvista.pyvista_ndarray)):
+    if isinstance(dataset, np.ndarray | pyvista.pyvista_ndarray):
         if dataset.ndim == 1 and dataset.shape[0] == 3:
             return pyvista.PolyData(dataset)
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
@@ -1103,10 +1101,10 @@ def is_inside_bounds(point, bounds):
         ``True`` when ``point`` is inside ``bounds``.
 
     """
-    if isinstance(point, (int, float)):
+    if isinstance(point, int | float):
         point = [point]
-    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
-        point, collections.deque
+    if isinstance(point, np.ndarray | collections.abc.Sequence) and not isinstance(
+        point, collections.deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise ValueError('Bounds mismatch point dimensionality')
@@ -1202,12 +1200,12 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
         )
     raise ValueError(
         f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '
-        f'or the number of cells ({dataset.n_cells}).'
+        f'or the number of cells ({dataset.n_cells}).',
     )
 
 
@@ -1254,7 +1252,7 @@ def try_callback(func, *args):
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
-            traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
+            traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
         warnings.warn(formatted_exception)
 
@@ -1339,7 +1337,7 @@ class conditional_decorator:
 
     """
 
-    def __init__(self, dec, condition):
+    def __init__(self, dec, condition) -> None:
         """Initialize."""
         self.decorator = dec
         self.condition = condition
@@ -1372,7 +1370,7 @@ class ProgressMonitor:
 
     """
 
-    def __init__(self, algorithm, message="", scaling=None):
+    def __init__(self, algorithm, message="", scaling=None) -> None:
         """Initialize observer."""
         try:
             from tqdm import tqdm  # noqa
@@ -1414,7 +1412,7 @@ class ProgressMonitor:
         if threading.current_thread().__class__.__name__ == '_MainThread':
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(
-            total=1, leave=True, bar_format='{l_bar}{bar}[{elapsed}<{remaining}]'
+            total=1, leave=True, bar_format='{l_bar}{bar}[{elapsed}<{remaining}]',
         )
         self._progress_bar.set_description(self.message)
         self.algorithm.AddObserver(self.event_type, self)
@@ -1607,7 +1605,7 @@ def _cubemap_from_paths(image_paths):
             raise FileNotFoundError(
                 f'Unable to locate {image_path}\n'
                 'Expected to find the following files:\n'
-                f'{file_str}'
+                f'{file_str}',
             )
 
     texture = pyvista.Texture()
@@ -1667,10 +1665,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     n_possible_vectors = len(possible_vectors)
 
     if n_possible_vectors == 1:
-        if len(possible_vectors_point) == 1:
-            preference = 'point'
-        else:
-            preference = 'cell'
+        preference = 'point' if len(possible_vectors_point) == 1 else 'cell'
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
         raise MissingDataError("No vector-like data available.")
@@ -1679,7 +1674,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
             "Multiple vector-like data available\n"
             f"cell data: {possible_vectors_cell}.\n"
             f"point data: {possible_vectors_point}.\n"
-            "Set one as active using DataSet.set_active_vectors(name, preference=type)"
+            "Set one as active using DataSet.set_active_vectors(name, preference=type)",
         )
 
 
@@ -1719,10 +1714,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
     n_possible_scalars = len(possible_scalars)
 
     if n_possible_scalars == 1:
-        if len(possible_scalars_point) == 1:
-            preference = 'point'
-        else:
-            preference = 'cell'
+        preference = 'point' if len(possible_scalars_point) == 1 else 'cell'
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
         raise MissingDataError("No data available.")
@@ -1731,5 +1723,5 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
             "Multiple data available\n"
             f"cell data: {possible_scalars_cell}.\n"
             f"point data: {possible_scalars_point}.\n"
-            "Set one as active using DataSet.set_active_scalars(name, preference=type)"
+            "Set one as active using DataSet.set_active_scalars(name, preference=type)",
         )

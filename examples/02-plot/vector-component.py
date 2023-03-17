@@ -1,6 +1,5 @@
-"""
-Plot Vector Component
-~~~~~~~~~~~~~~~~~~~~~
+"""Plot Vector Component
+~~~~~~~~~~~~~~~~~~~~~.
 
 Plot a single component of a vector as a scalar array.
 
@@ -21,11 +20,11 @@ mesh = examples.download_notch_displacement()
 # vector magnitude. We can access each component by specifying the
 # component argument.
 
-dargs = dict(
-    scalars="Nodal Displacement",
-    cmap="jet",
-    show_scalar_bar=False,
-)
+dargs = {
+    "scalars": "Nodal Displacement",
+    "cmap": "jet",
+    "show_scalar_bar": False,
+}
 
 pl = pv.Plotter(shape=(2, 2))
 pl.subplot(0, 0)

@@ -54,7 +54,7 @@ def glyphs(grid_sz=3):
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
     return mesh.glyph(
-        geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1), orient=False
+        geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1), orient=False,
     )
 
 
@@ -125,48 +125,43 @@ def orientation_cube():
 
     x_p = text_3d('X+', depth=0.2)
     x_p.points *= 0.45
-    x_p.rotate_y(90, inplace=True)
-    x_p.rotate_x(90, inplace=True)
-    x_p.translate(-np.array(x_p.center), inplace=True)
-    x_p.translate([0.5, 0, 0], inplace=True)
-    # x_p.point_data['mesh'] = 1
+    x_p = x_p.rotate_y(90)
+    x_p = x_p.rotate_x(90)
+    x_p = x_p.translate(-np.array(x_p.center))
+    x_p = x_p.translate([0.5, 0, 0])
 
     x_n = text_3d('X-', depth=0.2)
     x_n.points *= 0.45
-    x_n.rotate_y(90, inplace=True)
-    x_n.rotate_x(90, inplace=True)
-    x_n.rotate_z(180, inplace=True)
-    x_n.translate(-np.array(x_n.center), inplace=True)
-    x_n.translate([-0.5, 0, 0], inplace=True)
-    # x_n.point_data['mesh'] = 2
+    x_n = x_n.rotate_y(90)
+    x_n = x_n.rotate_x(90)
+    x_n = x_n.rotate_z(180)
+    x_n = x_n.translate(-np.array(x_n.center))
+    x_n = x_n.translate([-0.5, 0, 0])
 
     y_p = text_3d('Y+', depth=0.2)
     y_p.points *= 0.45
-    y_p.rotate_x(90, inplace=True)
-    y_p.rotate_z(180, inplace=True)
-    y_p.translate(-np.array(y_p.center), inplace=True)
-    y_p.translate([0, 0.5, 0], inplace=True)
-    # y_p.point_data['mesh'] = 3
+    y_p = y_p.rotate_x(90)
+    y_p = y_p.rotate_z(180)
+    y_p = y_p.translate(-np.array(y_p.center))
+    y_p = y_p.translate([0, 0.5, 0])
 
     y_n = text_3d('Y-', depth=0.2)
     y_n.points *= 0.45
-    y_n.rotate_x(90, inplace=True)
-    y_n.translate(-np.array(y_n.center), inplace=True)
-    y_n.translate([0, -0.5, 0], inplace=True)
-    # y_n.point_data['mesh'] = 4
+    y_n = y_n.rotate_x(90)
+    y_n = y_n.translate(-np.array(y_n.center))
+    y_n = y_n.translate([0, -0.5, 0])
 
     z_p = text_3d('Z+', depth=0.2)
     z_p.points *= 0.45
-    z_p.rotate_z(90, inplace=True)
-    z_p.translate(-np.array(z_p.center), inplace=True)
-    z_p.translate([0, 0, 0.5], inplace=True)
-    # z_p.point_data['mesh'] = 5
+    z_p = z_p.rotate_z(90)
+    z_p = z_p.translate(-np.array(z_p.center))
+    z_p = z_p.translate([0, 0, 0.5])
 
     z_n = text_3d('Z-', depth=0.2)
     z_n.points *= 0.45
-    z_n.rotate_x(180, inplace=True)
-    z_n.translate(-np.array(z_n.center), inplace=True)
-    z_n.translate([0, 0, -0.5], inplace=True)
+    z_n = z_n.rotate_x(180)
+    z_n = z_n.translate(-np.array(z_n.center))
+    z_n = z_n.translate([0, 0, -0.5])
 
     return {
         'cube': cube,
@@ -266,7 +261,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
     plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
-        title='Wave Example', window_size=[800, 600], auto_close=False, interactive_update=True
+        title='Wave Example', window_size=[800, 600], auto_close=False, interactive_update=True,
     )
 
     # Update Z and display a frame for each updated position
@@ -283,7 +278,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
         # update plotting object, but don't automatically render
         plotter.update_coordinates(points, render=False)
         plotter.update_scalars(Z.ravel(), render=False)
-        mesh.compute_normals(inplace=True)
+        mesh = mesh.compute_normals()
 
         # Render and get time to render
         plotter.update()
@@ -364,12 +359,12 @@ def plot_ants_plane(notebook=None):
 
     # rotate and translate ant so it is on the plane
     ant = examples.load_ant()
-    ant.rotate_x(90, inplace=True)
-    ant.translate([90, 60, 15], inplace=True)
+    ant = ant.rotate_x(90)
+    ant = ant.translate([90, 60, 15])
 
     # Make a copy and add another ant
     ant_copy = ant.copy()
-    ant_copy.translate([30, 0, -10], inplace=True)
+    ant_copy = ant_copy.translate([30, 0, -10])
 
     # Create plotting object
     plotter = pv.Plotter(notebook=notebook)
@@ -379,7 +374,7 @@ def plot_ants_plane(notebook=None):
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(
-        airplane, scalars=plane_scalars, scalar_bar_args={'title': 'Plane Y\nLocation'}
+        airplane, scalars=plane_scalars, scalar_bar_args={'title': 'Plane Y\nLocation'},
     )
     plotter.add_text('Ants and Plane Example')
     plotter.show()
@@ -468,12 +463,11 @@ def plot_datasets(dataset_type=None):
         'RectilinearGrid',
         'StructuredGrid',
     ]
-    if dataset_type is not None:
-        if dataset_type not in allowable_types:
-            raise ValueError(
-                f'Invalid dataset_type {dataset_type}.  Must be one '
-                f'of the following: {allowable_types}'
-            )
+    if dataset_type is not None and dataset_type not in allowable_types:
+        raise ValueError(
+            f'Invalid dataset_type {dataset_type}.  Must be one '
+            f'of the following: {allowable_types}',
+        )
 
     ###########################################################################
     # uniform grid
@@ -521,10 +515,7 @@ def plot_datasets(dataset_type=None):
     cube = pv.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
-    if dataset_type is not None:
-        pl = pv.Plotter()
-    else:
-        pl = pv.Plotter(shape='3/2')
+    pl = pv.Plotter() if dataset_type is not None else pv.Plotter(shape='3/2')
 
     # polydata
     if dataset_type is None:

@@ -1,12 +1,10 @@
-"""
-Plot Scalars Over a Circular Arc
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Plot Scalars Over a Circular Arc
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
 
 Interpolate the scalars of a dataset over a circular arc.
 
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 

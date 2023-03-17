@@ -1,11 +1,11 @@
-""" test pyvista.utilities """
+"""test pyvista.utilities."""
 import itertools
 import os
 import pathlib
 import pickle
 import shutil
-import unittest.mock as mock
 import warnings
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -26,10 +26,14 @@ from pyvista.utilities import (
     transformations,
 )
 from pyvista.utilities.docs import linkcode_resolve
-from pyvista.utilities.misc import PyVistaDeprecationWarning, has_duplicates, raise_has_duplicates
+from pyvista.utilities.misc import (
+    PyVistaDeprecationWarning,
+    has_duplicates,
+    raise_has_duplicates,
+)
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
+    not system_supports_plotting(), reason="Requires system to support plotting",
 )
 
 
@@ -72,7 +76,7 @@ def test_createvectorpolydata():
 
 
 @pytest.mark.parametrize(
-    'path, target_ext',
+    ("path", "target_ext"),
     [
         ("/data/mesh.stl", ".stl"),
         ("/data/image.nii.gz", '.nii.gz'),
@@ -493,8 +497,10 @@ def test_gpuinfo():
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
     _repr_html = gpuinfo._repr_html_()
-    assert isinstance(_repr, str) and len(_repr) > 1
-    assert isinstance(_repr_html, str) and len(_repr_html) > 1
+    assert isinstance(_repr, str)
+    assert len(_repr) > 1
+    assert isinstance(_repr_html, str)
+    assert len(_repr_html) > 1
 
     # test corrupted internal infos
     gpuinfo._gpu_info = 'foo'
@@ -536,7 +542,7 @@ def test_apply_transformation_to_points():
     # scale in-place
     tf = np.eye(4) * 2
     tf[3, 3] = 1
-    r = transformations.apply_transformation_to_points(tf, points, inplace=True)
+    r = transformations.apply_transformation_to_points(tf, points)
     assert r is None
     assert mesh.points == pytest.approx(2 * points_orig)
 
@@ -557,7 +563,6 @@ def _generate_vtk_err():
 
 
 def test_vtk_error_catcher():
-    # raise_errors: False
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
     with error_catcher:
         _generate_vtk_err()
@@ -569,11 +574,9 @@ def test_vtk_error_catcher():
     with error_catcher:
         pass
 
-    # raise_errors: True
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
-    with pytest.raises(RuntimeError):
-        with error_catcher:
-            _generate_vtk_err()
+    with pytest.raises(RuntimeError), error_catcher:
+        _generate_vtk_err()
     assert len(error_catcher.events) == 1
 
     # raise_errors: True, no error
@@ -589,7 +592,7 @@ def test_axis_angle_rotation():
             [1, 0, 0],
             [0, 1, 0],
             [0, 0, 1],
-        ]
+        ],
     )
     axis = [1, 1, 1]
 
@@ -631,7 +634,7 @@ def test_reflection():
             [-1, 1, 0],
             [-1, -1, 0],
             [1, -1, 0],
-        ]
+        ],
     )
     normal = [1, 1, 0]
 
@@ -801,7 +804,7 @@ def test_convert_array():
 
     # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pyvista.utilities.convert_array(
-        pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
+        pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O'),
     )
     assert arr3.GetNumberOfValues() == 4
 
@@ -844,7 +847,7 @@ def test_copy_vtk_array():
 def test_cartesian_to_spherical():
     def polar2cart(r, theta, phi):
         return np.vstack(
-            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
+            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta)),
         ).T
 
     points = np.random.random((1000, 3))

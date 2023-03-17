@@ -4,17 +4,18 @@ These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections.abc
-from itertools import zip_longest
 import pathlib
-from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overload
+from collections.abc import Iterable
+from itertools import zip_longest
+from typing import Any, Union, cast, overload
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista._typing import BoundsLike
 from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
-from .._typing import BoundsLike
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
@@ -23,7 +24,7 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence
+    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence,
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -111,10 +112,10 @@ class MultiBlock(
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], (list, tuple)):
+            elif isinstance(args[0], list | tuple):
                 for block in args[0]:
                     self.append(block)
-            elif isinstance(args[0], (str, pathlib.Path)):
+            elif isinstance(args[0], str | pathlib.Path):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
                 for key, block in args[0].items():
@@ -124,7 +125,7 @@ class MultiBlock(
 
         elif len(args) > 1:
             raise ValueError(
-                'Invalid number of arguments:\n``pyvista.MultiBlock``' 'supports 0 or 1 arguments.'
+                'Invalid number of arguments:\n``pyvista.MultiBlock``' 'supports 0 or 1 arguments.',
             )
 
         # Upon creation make sure all nested structures are wrapped
@@ -269,7 +270,7 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore
+    def get_data_range(self, name: str, allow_missing: bool = False) -> tuple[float, float]:  # type: ignore
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
@@ -336,11 +337,11 @@ class MultiBlock(
         raise KeyError(f'Block name ({name}) not found')
 
     @overload
-    def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105
+    def __getitem__(self, index: int | str) -> _TypeMultiBlockLeaf | None:
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
+    def __getitem__(self, index: slice) -> 'MultiBlock':
         ...  # pragma: no cover
 
     def __getitem__(self, index):
@@ -369,7 +370,7 @@ class MultiBlock(
             data = wrap(data)
         return data
 
-    def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
+    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None):
         """Add a data set to the next block index.
 
         Parameters
@@ -450,8 +451,8 @@ class MultiBlock(
                 self.append(v)
 
     def get(
-        self, index: str, default: Optional[_TypeMultiBlockLeaf] = None
-    ) -> Optional[_TypeMultiBlockLeaf]:
+        self, index: str, default: _TypeMultiBlockLeaf | None = None,
+    ) -> _TypeMultiBlockLeaf | None:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
@@ -486,7 +487,7 @@ class MultiBlock(
         except KeyError:
             return default
 
-    def set_block_name(self, index: int, name: Optional[str]):
+    def set_block_name(self, index: int, name: str | None):
         """Set a block's string name at the specified index.
 
         Parameters
@@ -517,7 +518,7 @@ class MultiBlock(
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-    def get_block_name(self, index: int) -> Optional[str]:
+    def get_block_name(self, index: int) -> str | None:
         """Return the string name of the block at the given index.
 
         Parameters
@@ -548,7 +549,7 @@ class MultiBlock(
             return meta.Get(_vtk.vtkCompositeDataSet.NAME())
         return None
 
-    def keys(self) -> List[Optional[str]]:
+    def keys(self) -> list[str | None]:
         """Get all the block names in the dataset.
 
         Returns
@@ -570,10 +571,10 @@ class MultiBlock(
         """
         return [self.get_block_name(i) for i in range(self.n_blocks)]
 
-    def _ipython_key_completions_(self) -> List[Optional[str]]:
+    def _ipython_key_completions_(self) -> list[str | None]:
         return self.keys()
 
-    def replace(self, index: int, dataset: Optional[_TypeMultiBlockLeaf]) -> None:
+    def replace(self, index: int, dataset: _TypeMultiBlockLeaf | None) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
@@ -605,14 +606,14 @@ class MultiBlock(
 
     @overload
     def __setitem__(
-        self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
-    ):  # noqa: D105
+        self, index: int | str, data: _TypeMultiBlockLeaf | None,
+    ):
         ...  # pragma: no cover
 
     @overload
     def __setitem__(
-        self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
-    ):  # noqa: D105
+        self, index: slice, data: Iterable[_TypeMultiBlockLeaf | None],
+    ):
         ...  # pragma: no cover
 
     def __setitem__(
@@ -624,7 +625,7 @@ class MultiBlock(
 
         To set the name simultaneously, pass a string name as the 2nd index.
 
-        Example
+        Example:
         -------
         >>> import pyvista
         >>> multi = pyvista.MultiBlock()
@@ -639,7 +640,7 @@ class MultiBlock(
 
         """
         i: int = 0
-        name: Optional[str] = None
+        name: str | None = None
         if isinstance(index, str):
             try:
                 i = self.get_index_by_name(index)
@@ -652,7 +653,7 @@ class MultiBlock(
             for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
                 if idx is None:
                     self.insert(
-                        index_iter[-1] + 1 + (i - len(index_iter)), d
+                        index_iter[-1] + 1 + (i - len(index_iter)), d,
                     )  # insert after last entry, increasing
                 elif d is None:
                     del self[index_iter[-1] + 1]  # delete next entry
@@ -684,7 +685,7 @@ class MultiBlock(
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str, slice]) -> None:
+    def __delitem__(self, index: int | str | slice) -> None:
         """Remove a block at the specified index."""
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
@@ -729,7 +730,7 @@ class MultiBlock(
 
         return True
 
-    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
+    def __next__(self) -> _TypeMultiBlockLeaf | None:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
@@ -737,7 +738,7 @@ class MultiBlock(
             return result
         raise StopIteration
 
-    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: Optional[str] = None) -> None:
+    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: str | None = None) -> None:
         """Insert data before index.
 
         Parameters
@@ -777,7 +778,7 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    def pop(self, index: Union[int, str] = -1) -> Optional[_TypeMultiBlockLeaf]:
+    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf | None:
         """Pop off a block at the specified index.
 
         Parameters
@@ -949,7 +950,6 @@ class MultiBlock(
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
-        pass
 
     def copy(self, deep=True):
         """Return a copy of the multiblock.
@@ -989,8 +989,8 @@ class MultiBlock(
         return newobject
 
     def set_active_scalars(
-        self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
-    ) -> Tuple[FieldAssociation, np.ndarray]:  # type: ignore
+        self, name: str | None, preference: str = 'cell', allow_missing: bool = False,
+    ) -> tuple[FieldAssociation, np.ndarray]:  # type: ignore
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -1024,12 +1024,12 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: List[Tuple[FieldAssociation, np.ndarray, _TypeMultiBlockLeaf]] = []
+        data_assoc: list[tuple[FieldAssociation, np.ndarray, _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):
                     field, scalars = block.set_active_scalars(
-                        name, preference, allow_missing=allow_missing
+                        name, preference, allow_missing=allow_missing,
                     )
                 else:
                     try:
@@ -1059,8 +1059,8 @@ class MultiBlock(
                     break
 
         # Verify array consistency
-        dims: Set[int] = set()
-        dtypes: Set[np.dtype] = set()
+        dims: set[int] = set()
+        dtypes: set[np.dtype] = set()
         for block in self:
             for field, scalars, _ in data_assoc:
                 # only check for the active field association
@@ -1168,13 +1168,13 @@ class MultiBlock(
                 dtype = np.bool_
         elif scalars.ndim > 1:
             # multi-component
-            if not isinstance(component, (int, type(None))):
+            if not isinstance(component, int | type(None)):
                 raise TypeError('`component` must be either None or an integer')
             if component is not None:
                 if component >= scalars.shape[1] or component < 0:
                     raise ValueError(
                         'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                        f'dimensionality of the scalars array: {scalars.shape[1]}',
                     )
             scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
 
@@ -1195,7 +1195,7 @@ class MultiBlock(
         return f'{scalars_name}-real'
 
     def _convert_to_single_component(
-        self, data_attr: str, scalars_name: str, component: Union[None, str]
+        self, data_attr: str, scalars_name: str, component: None | str,
     ) -> str:
         """Convert multi-component scalars to a single component."""
         if component is None:

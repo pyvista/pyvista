@@ -9,7 +9,7 @@ from .renderer import Renderer
 class BackgroundRenderer(Renderer):
     """BackgroundRenderer for visualizing a background image."""
 
-    def __init__(self, parent, image_path, scale=1, view_port=None):
+    def __init__(self, parent, image_path, scale=1, view_port=None) -> None:
         """Initialize BackgroundRenderer with an image."""
         # avoiding circular import
         from pyvista import _vtk

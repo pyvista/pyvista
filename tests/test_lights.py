@@ -82,7 +82,7 @@ def test_eq():
             restore_transform = True
         elif isinstance(value, bool):
             changed_value = not value
-        elif isinstance(value, (int, float)):
+        elif isinstance(value, int | float):
             changed_value = 0
         elif isinstance(value, tuple):
             changed_value = (0.5, 0.5, 0.5)
@@ -250,7 +250,7 @@ def test_shape():
 
 
 @pytest.mark.parametrize(
-    'int_code,enum_code',
+    ('int_code', 'enum_code'),
     [
         (1, pyvista.Light.HEADLIGHT),
         (2, pyvista.Light.CAMERA_LIGHT),

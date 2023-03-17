@@ -1,12 +1,10 @@
-"""
-Clearing a Mesh or the Entire Plot
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Clearing a Mesh or the Entire Plot
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
 
 This example demonstrates how to remove elements from a scene.
 
 """
 
-# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 
 ###############################################################################

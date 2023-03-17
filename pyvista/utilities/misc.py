@@ -1,9 +1,9 @@
 """Miscellaneous pyvista functions."""
-from collections import namedtuple
-from functools import lru_cache
 import importlib
 import os
 import warnings
+from collections import namedtuple
+from functools import lru_cache
 
 import numpy as np
 
@@ -23,7 +23,7 @@ def _set_plot_theme_from_env():
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}'
+                f'Should be one of the following: {allowed}',
             )
 
 
@@ -59,19 +59,16 @@ def _get_vtk_id_type():
 class PyVistaDeprecationWarning(Warning):
     """Non-supressed Depreciation Warning."""
 
-    pass
 
 
 class PyVistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
 
-    pass
 
 
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
 
-    pass
 
 
 def VTKVersionInfo():
@@ -127,7 +124,7 @@ def copy_vtk_array(array, deep=True):
     1.0
 
     """
-    if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
+    if not isinstance(array, _vtk.vtkDataArray | _vtk.vtkAbstractArray):
         raise TypeError(f"Invalid type {type(array)}.")
 
     new_array = type(array)()
@@ -160,7 +157,7 @@ def set_pickle_format(format: str):
     format = format.lower()
     if format not in supported:
         raise ValueError(
-            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
+            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.',
         )
     pyvista.PICKLE_FORMAT = format
 
@@ -177,8 +174,8 @@ def no_new_attr(cls):
         else:
             raise AttributeError(
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
+                f'{self.__class__.__name__}',
             )
 
-    setattr(cls, '__setattr__', __setattr__)
+    cls.__setattr__ = __setattr__
     return cls

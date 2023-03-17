@@ -5,8 +5,8 @@ import numpy as np
 
 import pyvista
 from pyvista.utilities import assert_empty_kwargs, get_array
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
-from ..utilities.misc import PyVistaDeprecationWarning
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
@@ -79,10 +79,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             pass_pointid=use_points or texture is not None,
             pass_cellid=not use_points,
         )
-        if use_points:
-            indices_array = 'vtkOriginalPointIds'
-        else:
-            indices_array = 'vtkOriginalCellIds'
+        indices_array = 'vtkOriginalPointIds' if use_points else 'vtkOriginalCellIds'
 
     if split_sharp_edges:
         mesh = mesh.compute_normals(
@@ -90,14 +87,13 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             split_vertices=True,
             feature_angle=feature_angle,
         )
-        if is_polydata:
-            if has_scalars and use_points:
-                # we must track the original IDs with our own array from compute_normals
-                indices_array = 'pyvistaOriginalPointIds'
+        if is_polydata and has_scalars and use_points:
+            # we must track the original IDs with our own array from compute_normals
+            indices_array = 'pyvistaOriginalPointIds'
     else:
         # consider checking if mesh contains active normals
         # if mesh.point_data.active_normals is None:
-        mesh.compute_normals(cell_normals=False, inplace=True)
+        mesh = mesh.compute_normals(cell_normals=False)
 
     if has_scalars and indices_array is not None:
         ind = mesh[indices_array]
@@ -165,9 +161,9 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         else:
             if scalars.shape[0] != opacity.shape[0]:
                 raise ValueError(
-                    "Opacity array and scalars array must have the same number of elements."
+                    "Opacity array and scalars array must have the same number of elements.",
                 )
-    elif isinstance(opacity, (np.ndarray, list, tuple)):
+    elif isinstance(opacity, np.ndarray | list | tuple):
         opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
             # User could pass an array of opacities for every point/cell
@@ -244,10 +240,7 @@ def _common_arg_parser(
             render_points_as_spheres = theme.render_points_as_spheres
 
     if smooth_shading is None:
-        if pbr:
-            smooth_shading = True
-        else:
-            smooth_shading = theme.smooth_shading
+        smooth_shading = True if pbr else theme.smooth_shading
 
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
@@ -282,7 +275,7 @@ def _common_arg_parser(
 
     if "scalar" in kwargs:
         raise TypeError(
-            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?"
+            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?",
         )
 
     assert_empty_kwargs(**kwargs)

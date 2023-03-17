@@ -15,7 +15,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize volume."""
         super().__init__()
 

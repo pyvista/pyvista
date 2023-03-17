@@ -1,5 +1,4 @@
-"""
-.. _ref_attenuation_example:
+""".. _ref_attenuation_example:
 
 Attenuation
 ~~~~~~~~~~~
@@ -22,7 +21,6 @@ by linear attenuation.
 
 Three spotlights with three different attenuation profiles each:
 """
-# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 
 plotter = pv.Plotter(lighting='none')

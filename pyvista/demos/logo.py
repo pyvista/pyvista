@@ -58,10 +58,7 @@ def text_3d(string, depth=0.5):
 
 def logo_letters(merge=False, depth=0.3):
     """Generate a mesh for each letter in "PyVista"."""
-    if merge:
-        mesh_letters = pyvista.PolyData()
-    else:
-        mesh_letters = {}
+    mesh_letters = pyvista.PolyData() if merge else {}
 
     # spacing between letters
     space_factor = 0.9
@@ -69,7 +66,7 @@ def logo_letters(merge=False, depth=0.3):
     for letter in LOGO_TITLE:
         mesh_letter = text_3d(letter, depth=depth)
         this_letter_width = mesh_letter.points[:, 0].max()
-        mesh_letter.translate([width * space_factor, 0, 0.0], inplace=True)
+        mesh_letter = mesh_letter.translate([width * space_factor, 0, 0.0])
         width += this_letter_width
         if merge:
             mesh_letters += mesh_letter
@@ -152,7 +149,7 @@ def plot_logo(
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
     plotter.add_mesh(
-        v_grid_atom_surf, scalars='scalars', show_edges=True, cmap='winter', show_scalar_bar=False
+        v_grid_atom_surf, scalars='scalars', show_edges=True, cmap='winter', show_scalar_bar=False,
     )
 
     # letter 'i'
@@ -208,7 +205,7 @@ def plot_logo(
     if show_note:
         text = text_3d("You can move me!", depth=0.1)
         text.points *= 0.1
-        text.translate([4.0, -0.3, 0], inplace=True)
+        text = text.translate([4.0, -0.3, 0])
         plotter.add_mesh(text, color='black')
 
     # finalize plot and show it
@@ -217,7 +214,6 @@ def plot_logo(
     if 'zoom' in kwargs:
         plotter.camera.zoom(kwargs.pop('zoom'))
 
-    # plotter.remove_scalar_bar()
     plotter.enable_anti_aliasing()
 
     if just_return_plotter:

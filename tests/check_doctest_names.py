@@ -8,8 +8,8 @@ The problem is that pytest doctests (following the standard-library
 doctest module) see the module-global namespace. So when a doctest looks
 like this:
 
-    Examples
-    --------
+Examples
+--------
     >>> import numpy
     >>> import vtk
     >>> import pyvista
@@ -42,10 +42,10 @@ If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
 environmental variable to ``True`` before running the script.
 """
 
-from argparse import ArgumentParser
-from doctest import DocTestFinder
 import re
 import sys
+from argparse import ArgumentParser
+from doctest import DocTestFinder
 from textwrap import indent
 from types import ModuleType
 
@@ -192,7 +192,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
 if __name__ == "__main__":
     parser = ArgumentParser(description='Look for name errors in doctests.')
     parser.add_argument(
-        '-v', '--verbose', action='store_true', help='print passes and failures as tests progress'
+        '-v', '--verbose', action='store_true', help='print passes and failures as tests progress',
     )
     parser.add_argument(
         '--no-respect-skips',

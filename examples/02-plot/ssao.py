@@ -1,5 +1,4 @@
-"""
-.. _ssao_example:
+""".. _ssao_example:
 
 Surface Space Ambient Occlusion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,7 +14,6 @@ See `Kitware: Screen-Space Ambient Occlusion
 <https://www.kitware.com/ssao/>`_ for more details
 
 """
-# sphinx_gallery_thumbnail_number = 3
 
 # First, let's create several cubes nearby each other
 

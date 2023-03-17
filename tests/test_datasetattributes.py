@@ -1,12 +1,12 @@
 import os
 import platform
-from string import ascii_letters, digits, whitespace
 import sys
+from string import ascii_letters, digits, whitespace
 
+import numpy as np
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import integers, lists, text
-import numpy as np
 from pytest import fixture, mark, raises
 
 import pyvista
@@ -55,7 +55,7 @@ def insert_string_array(hexbeam_point_attributes):
 
 def test_init(hexbeam):
     attributes = pyvista.DataSetAttributes(
-        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT
+        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT,
     )
     assert attributes.VTKObject == hexbeam.GetPointData()
     assert attributes.dataset == hexbeam
@@ -435,13 +435,13 @@ def test_length_should_be_0_on_clear(insert_arange_narray):
 
 def test_keys_should_be_strings(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
-    for name in dsa.keys():
+    for name in dsa:
         assert type(name) == str
 
 
 def test_key_should_exist(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
-    assert 'sample_array' in dsa.keys()
+    assert 'sample_array' in dsa
 
 
 def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
@@ -535,7 +535,7 @@ def test_normals_raise_field(plane):
 
 
 def test_add_two_vectors():
-    """Ensure we can add two vectors"""
+    """Ensure we can add two vectors."""
     mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
     mesh.point_data.set_array(range(4), 'my-scalars')
     mesh.point_data.set_array(range(5, 9), 'my-other-scalars')

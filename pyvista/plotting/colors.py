@@ -169,8 +169,6 @@ tab:cyan
 # of methods defined in this module.
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
-
 import numpy as np
 
 import pyvista
@@ -714,11 +712,11 @@ class Color:
 
     def __init__(
         self,
-        color: Optional[ColorLike] = None,
-        opacity: Optional[Union[int, float, str]] = None,
-        default_color: Optional[ColorLike] = None,
-        default_opacity: Union[int, float, str] = 255,
-    ):
+        color: ColorLike | None = None,
+        opacity: int | float | str | None = None,
+        default_color: ColorLike | None = None,
+        default_opacity: int | float | str = 255,
+    ) -> None:
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
         self._opacity = self.convert_color_channel(default_opacity)
@@ -741,7 +739,7 @@ class Color:
             elif isinstance(color, dict):
                 # From dictionary
                 self._from_dict(color)
-            elif isinstance(color, (list, tuple, np.ndarray)):
+            elif isinstance(color, list | tuple | np.ndarray):
                 # From RGB(A) sequence
                 self._from_rgba(color)
             elif isinstance(color, _vtk.vtkColor3ub):
@@ -759,7 +757,7 @@ class Color:
                 "\t\tcolor='w'\n"
                 "\t\tcolor=[1.0, 1.0, 1.0]\n"
                 "\t\tcolor=[255, 255, 255]\n"
-                "\t\tcolor='#FFFFFF'"
+                "\t\tcolor='#FFFFFF'",
             ) from e
 
         # Overwrite opacity if it is provided
@@ -773,7 +771,7 @@ class Color:
                 "\tMust be an integer, float or string.  For example:\n"
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
-                "\t\topacity='#FF'"
+                "\t\topacity='#FF'",
             ) from e
 
     @staticmethod
@@ -797,7 +795,7 @@ class Color:
         return h
 
     @staticmethod
-    def convert_color_channel(val: Union[int, np.integer, float, np.floating, str]) -> int:
+    def convert_color_channel(val: int | np.integer | float | np.floating | str) -> int:
         """Convert the given color channel value to the integer representation.
 
         Parameters
@@ -883,7 +881,7 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def int_rgba(self) -> Tuple[int, int, int, int]:
+    def int_rgba(self) -> tuple[int, int, int, int]:
         """Get the color value as an RGBA integer tuple.
 
         Examples
@@ -909,7 +907,7 @@ class Color:
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def int_rgb(self) -> Tuple[int, int, int]:
+    def int_rgb(self) -> tuple[int, int, int]:
         """Get the color value as an RGB integer tuple.
 
         Examples
@@ -935,7 +933,7 @@ class Color:
         return self.int_rgba[:3]
 
     @property
-    def float_rgba(self) -> Tuple[float, float, float, float]:
+    def float_rgba(self) -> tuple[float, float, float, float]:
         """Get the color value as an RGBA float tuple.
 
         Examples
@@ -961,7 +959,7 @@ class Color:
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def float_rgb(self) -> Tuple[float, float, float]:
+    def float_rgb(self) -> tuple[float, float, float]:
         """Get the color value as an RGB float tuple.
 
         Examples
@@ -1041,7 +1039,7 @@ class Color:
         return self.hex_rgba[:-2]
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """Get the color name.
 
         Returns
@@ -1153,7 +1151,7 @@ class Color:
 
     def __getitem__(self, item):
         """Support indexing the float RGBA representation for backward compatibility."""
-        if not isinstance(item, (str, slice, int, np.integer)):
+        if not isinstance(item, str | slice | int | np.integer):
             raise TypeError("Invalid index specified, only strings and integers are supported.")
         if isinstance(item, str):
             for i, cnames in enumerate(self.CHANNEL_NAMES):
@@ -1207,7 +1205,7 @@ def get_cmap_safe(cmap):
         # Else use Matplotlib
         if not has_module('matplotlib'):
             raise ImportError(
-                'The use of custom colormaps requires the installation of matplotlib.'
+                'The use of custom colormaps requires the installation of matplotlib.',
             )  # pragma: no cover
 
         try:
@@ -1220,7 +1218,7 @@ def get_cmap_safe(cmap):
             if not scooby.meets_version(matplotlib.__version__, min_req):
                 raise ImportError(
                     'The use of custom colormaps requires the installation of '
-                    f'matplotlib>={min_req}.'
+                    f'matplotlib>={min_req}.',
                 ) from None
 
         if not isinstance(cmap, colors.Colormap):
@@ -1233,7 +1231,7 @@ def get_cmap_safe(cmap):
 
         if not has_module('matplotlib'):
             raise ImportError(
-                'The use of custom colormaps requires the installation of matplotlib.'
+                'The use of custom colormaps requires the installation of matplotlib.',
             )  # pragma: no cover
 
         from matplotlib.colors import ListedColormap
@@ -1324,7 +1322,7 @@ def get_cycler(color_cycler):
             return color_scheme_to_cycler(color_cycler)
         else:
             raise ValueError(f'color cycler of name `{color_cycler}` not found.')
-    elif isinstance(color_cycler, (tuple, list)):
+    elif isinstance(color_cycler, tuple | list):
         return cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
         return color_cycler

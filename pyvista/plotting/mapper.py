@@ -6,6 +6,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._typing import BoundsLike
 from pyvista.utilities import (
     FieldAssociation,
     abstract_class,
@@ -17,7 +18,6 @@ from pyvista.utilities import (
 )
 from pyvista.utilities.misc import has_module, no_new_attr
 
-from .._typing import BoundsLike
 from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
@@ -29,7 +29,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     _new_attr_exceptions = ('_theme',)
 
-    def __init__(self, theme=None, **kwargs):
+    def __init__(self, theme=None, **kwargs) -> None:
         self._theme = pv.themes.DefaultTheme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
@@ -40,7 +40,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(
-            'interpolate_before_map', self._theme.interpolate_before_map
+            'interpolate_before_map', self._theme.interpolate_before_map,
         )
 
     @property
@@ -295,7 +295,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):
+    def scalar_map_mode(self, scalar_mode: str | FieldAssociation):
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
         scalar_mode = scalar_mode.lower()  # type: ignore
@@ -314,7 +314,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         else:
             raise ValueError(
                 f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
-                '"default", "point", "cell", "point_field", "cell_field" or "field".'
+                '"default", "point", "cell", "point_field", "cell_field" or "field".',
             )
 
     @property
@@ -390,7 +390,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         self,
         dataset: Optional['pv.DataSet'] = None,
         theme: Optional['pv.themes.DefaultTheme'] = None,
-    ):
+    ) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         if dataset is not None:
@@ -403,7 +403,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):
         set_algorithm_input(self, obj)
 
@@ -645,7 +645,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 scalars.shape[0] == self.dataset.n_points
                 or scalars.shape[0] == self.dataset.n_cells
             ):
-                if not isinstance(component, (int, type(None))):
+                if not isinstance(component, int | type(None)):
                     raise TypeError('component must be either None or an integer')
                 if component is None:
                     scalars = np.linalg.norm(scalars.copy(), axis=1)
@@ -656,7 +656,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 else:
                     raise ValueError(
                         'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                        f'dimensionality of the scalars array: {scalars.shape[1]}',
                     )
             else:
                 scalars = scalars.ravel()
@@ -667,12 +667,11 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         # Set scalars range
         if clim is None:
             clim = [np.nanmin(scalars), np.nanmax(scalars)]
-        elif isinstance(clim, (int, float)):
+        elif isinstance(clim, int | float):
             clim = [-clim, clim]
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         if np.any(clim) and not rgb:
             self.scalar_range = clim[0], clim[1]
@@ -683,12 +682,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         else:
             self.lookup_table.scalar_range = self.scalar_range
             # Set default map if matplotlib is available
-            if cmap is None:
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+            if cmap is None and has_module('matplotlib'):
+                cmap = pv.global_theme.cmap if self._theme is None else self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -699,7 +694,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             else:
                 jupyter_backend = self._theme.jupyter_backend
             if jupyter_backend == 'ipygany':  # pragma: no cover
-                from ..jupyter.pv_ipygany import check_colormap
+                from pyvista.jupyter.pv_ipygany import check_colormap
 
                 check_colormap(cmap)
             else:
@@ -793,7 +788,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             raise ValueError(
                 f"Opacity array size ({opacity.size}) does not equal "
                 f"the number of points ({self.dataset.n_points}) or the "
-                f"number of cells ({self.dataset.n_cells})."
+                f"number of cells ({self.dataset.n_cells}).",
             )
 
         if self._theme is not None:
@@ -886,7 +881,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
             f"  float scale = ({opacity} - dist);\n"
             "  ambientColor *= scale;\n"
             "  diffuseColor *= scale;\n"
-            "}\n"
+            "}\n",
         )
         # maintain consistency with the default style
         self.emissive = True
@@ -919,7 +914,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 class _BaseVolumeMapper(_BaseMapper):
     """Volume mapper class to override methods and attributes for to volume mappers."""
 
-    def __init__(self, theme=None):
+    def __init__(self, theme=None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self._lut = LookupTable()
@@ -928,7 +923,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def interpolate_before_map(self):
         """Interpolate before map is not supported with volume mappers."""
-        return None
+        return
 
     @interpolate_before_map.setter
     def interpolate_before_map(self, *args):
@@ -942,7 +937,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):
         set_algorithm_input(self, obj)
 
@@ -995,11 +990,11 @@ class _BaseVolumeMapper(_BaseMapper):
             return 'additive'
 
         raise NotImplementedError(
-            f'Unsupported blend mode return value {value}'
+            f'Unsupported blend mode return value {value}',
         )  # pragma: no cover
 
     @blend_mode.setter
-    def blend_mode(self, value: Union[str, int]):
+    def blend_mode(self, value: str | int):
         if isinstance(value, int):
             self.SetBlendMode(value)
         elif isinstance(value, str):
@@ -1018,7 +1013,7 @@ class _BaseVolumeMapper(_BaseMapper):
                 raise ValueError(
                     f'Blending mode {value!r} invalid. '
                     'Please choose either "additive", '
-                    '"composite", "minimum" or "maximum".'
+                    '"composite", "minimum" or "maximum".',
                 )
         else:
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
@@ -1030,30 +1025,25 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
-    pass
 
 
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 
-    pass
 
 
 class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
-    pass
 
 
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
-    pass
 
 
 class UnstructuredGridVolumeRayCastMapper(
-    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper
+    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper,
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
 
-    pass

@@ -3,8 +3,8 @@ import os
 import re
 import sys
 
-from packaging.version import parse as parse_version
 import sphinx
+from packaging.version import parse as parse_version
 
 import pyvista
 

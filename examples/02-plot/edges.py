@@ -1,5 +1,4 @@
-"""
-.. _show_edges_example:
+""".. _show_edges_example:
 
 Show Edges
 ~~~~~~~~~~
@@ -13,7 +12,6 @@ Show the edges of all geometries within a mesh
 # Showing the edges for any rendered dataset is as simple as specifying the
 # the ``show_edges`` keyword argument to ``True`` when plotting a dataset.
 
-# sphinx_gallery_thumbnail_number = 1
 from pyvista import examples
 
 nefertiti = examples.download_nefertiti()

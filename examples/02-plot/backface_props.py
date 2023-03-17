@@ -95,7 +95,10 @@ clipped = globe.clip(normal='z', value=4.37e9)
 
 pl = pv.Plotter()
 pl.add_mesh(
-    clipped, backface_params={'color': [0.2, 0.2, 0.2]}, lighting=False, smooth_shading=True,
+    clipped,
+    backface_params={'color': [0.2, 0.2, 0.2]},
+    lighting=False,
+    smooth_shading=True,
 )
 pl.show()
 

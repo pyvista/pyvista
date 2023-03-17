@@ -1,5 +1,4 @@
-"""
-.. _open_street_map_example:
+""".. _open_street_map_example:
 
 Plot Open Street Map Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,9 +22,6 @@ from pyvista import examples
 ###############################################################################
 # Read in the graph directly from the Open Street Map server.
 
-# address = 'Holzgerlingen DE'
-# graph = ox.graph_from_address(address, dist=500, network_type='drive')
-# pickle.dump(graph, open('/tmp/tmp.p', 'wb'))
 
 graph = examples.download_osmnx_graph()
 

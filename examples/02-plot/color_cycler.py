@@ -1,5 +1,4 @@
-"""
-.. _color_cycler_example:
+""".. _color_cycler_example:
 
 Color Cycling
 ~~~~~~~~~~~~~
@@ -14,7 +13,6 @@ Cycle through colors when sequentially adding meshes to a plotter.
 # .. note::
 #    This requires matplotlib (or at least cycler) to be installed.
 
-# sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 
 ###############################################################################

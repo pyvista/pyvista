@@ -28,7 +28,7 @@ class Table(_vtk.vtkTable, DataObject):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the table."""
         super().__init__(*args, **kwargs)
         if len(args) == 1:
@@ -38,7 +38,7 @@ class Table(_vtk.vtkTable, DataObject):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], (np.ndarray, list)):
+            elif isinstance(args[0], np.ndarray | list):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
@@ -70,7 +70,7 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = array
 
     def _from_pandas(self, data_frame):
-        for name in data_frame.keys():
+        for name in data_frame:
             self.row_arrays[name] = data_frame[name].values
 
     @property
@@ -117,7 +117,7 @@ class Table(_vtk.vtkTable, DataObject):
     def row_arrays(self):
         """Return the all row arrays."""
         return DataSetAttributes(
-            vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
+            vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW,
         )
 
     def keys(self):
@@ -162,7 +162,7 @@ class Table(_vtk.vtkTable, DataObject):
             Other dataset attributes to update from.
 
         """
-        if isinstance(data, (np.ndarray, list)):
+        if isinstance(data, np.ndarray | list):
             # Allow table updates using array data
             data = self._prepare_arrays(data)
             data = {f'Array {i}': array for i, array in enumerate(data)}
@@ -259,10 +259,7 @@ class Table(_vtk.vtkTable, DataObject):
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
-                if arr.ndim > 1:
-                    ncomp = arr.shape[1]
-                else:
-                    ncomp = 1
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
                 return row.format(key, arr.dtype, ncomp, dl, dh)
 
             for i in range(self.n_arrays):
@@ -303,7 +300,7 @@ class Table(_vtk.vtkTable, DataObject):
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
         raise NotImplementedError(
-            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
+            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
         )
 
     def get_data_range(self, arr=None, preference='row'):
@@ -341,7 +338,7 @@ class Table(_vtk.vtkTable, DataObject):
 class Texture(_vtk.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the texture."""
         super().__init__(*args, **kwargs)
 
@@ -393,7 +390,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         grid = pyvista.UniformGrid(dimensions=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
-            (-1, n_components), order='F'
+            (-1, n_components), order='F',
         )
         grid.set_active_scalars('Image')
         self._from_image_data(grid)
@@ -512,3 +509,4 @@ class Texture(_vtk.vtkTexture, DataObject):
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)
             return skybox
+        return None

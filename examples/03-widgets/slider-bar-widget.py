@@ -1,5 +1,4 @@
-"""
-.. _slider_bar_widget_example:
+""".. _slider_bar_widget_example:
 
 Slider Bar Widget
 ~~~~~~~~~~~~~~~~~
@@ -10,7 +9,6 @@ The slider widget can be enabled and disabled by the
 This is one of the most versatile widgets as it can control a value that can
 be used for just about anything.
 """
-# sphinx_gallery_thumbnail_number = 1
 
 ##############################################################################
 # One helper method we've added is the

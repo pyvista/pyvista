@@ -8,7 +8,7 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 has_panel = True
 try:
     from panel.pane.vtk.vtk import VTKRenderWindowSynchronized
-except:  # noqa: E722
+except:
     has_panel = False
 
 skip_no_panel = pytest.mark.skipif(not has_panel, reason='Requires panel')
@@ -36,6 +36,7 @@ def test_panel(sphere, return_viewer):
     )
     if return_viewer:
         assert isinstance(viewer, VTKRenderWindowSynchronized)
+        return None
     else:
         return viewer is None
 

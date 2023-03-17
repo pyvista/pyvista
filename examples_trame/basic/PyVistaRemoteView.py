@@ -54,14 +54,13 @@ with SinglePageLayout(server) as layout:
             style="max-width: 250px",
         )
 
-    with layout.content:
-        with vuetify.VContainer(
-            fluid=True,
-            classes="pa-0 fill-height",
-        ):
-            view = PyVistaRemoteView(plotter)
-            ctrl.view_update = view.update
-            ctrl.view_reset_camera = view.reset_camera
+    with layout.content, vuetify.VContainer(
+        fluid=True,
+        classes="pa-0 fill-height",
+    ):
+        view = PyVistaRemoteView(plotter)
+        ctrl.view_update = view.update
+        ctrl.view_reset_camera = view.reset_camera
 
     # hide footer
     layout.footer.hide()

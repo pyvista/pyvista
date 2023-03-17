@@ -12,25 +12,25 @@ def test_load_nut():
 
 
 def test_load_ant():
-    """Load ply ant mesh"""
+    """Load ply ant mesh."""
     mesh = examples.load_ant()
     assert mesh.n_points
 
 
 def test_load_airplane():
-    """Load ply airplane mesh"""
+    """Load ply airplane mesh."""
     mesh = examples.load_airplane()
     assert mesh.n_points
 
 
 def test_load_sphere():
-    """Loads sphere ply mesh"""
+    """Loads sphere ply mesh."""
     mesh = examples.load_sphere()
     assert mesh.n_points
 
 
 def test_load_channels():
-    """Loads geostat training image"""
+    """Loads geostat training image."""
     mesh = examples.load_channels()
     assert mesh.n_points
 

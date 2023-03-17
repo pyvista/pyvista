@@ -2,7 +2,7 @@
 
 try:
     from vtkmodules import vtkCommonDataModel
-except:  # noqa: E722
+except:
     import vtk as vtkCommonDataModel
 
 vtkcell_types = [
@@ -64,5 +64,5 @@ for cell_num_str, cell_str in vtkcell_types:
             cell_num = getattr(vtkCommonDataModel, cell_num_str)
             n_points = getattr(vtkCommonDataModel, cell_str)().GetNumberOfPoints()
             enum_cell_type_nr_points_map[cell_num] = n_points
-        except:  # noqa: E722
+        except:
             pass

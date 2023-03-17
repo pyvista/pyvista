@@ -1,8 +1,8 @@
 """Module containing useful plotting tools."""
 
-from enum import Enum
 import os
 import platform
+from enum import Enum
 from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np
@@ -369,8 +369,6 @@ def create_axes_orientation_box(
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(False)
-    # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
-    # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
@@ -379,7 +377,6 @@ def create_axes_orientation_box(
     axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
@@ -533,9 +530,9 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         except KeyError:
             raise ValueError(
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}'
+                f'Valid options: {list(transfer_func.keys())}',
             ) from None
-    elif isinstance(mapping, (np.ndarray, list, tuple)):
+    elif isinstance(mapping, np.ndarray | list | tuple):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
             # User could pass transfer function ready for lookup table
@@ -565,7 +562,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
             raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
             )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')

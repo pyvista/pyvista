@@ -17,10 +17,9 @@ Examples
 """
 import logging
 import os
-from pathlib import PureWindowsPath
 import shutil
-from typing import Union
 import warnings
+from pathlib import PureWindowsPath
 
 import numpy as np
 import pooch
@@ -43,7 +42,7 @@ CACHE_VERSION = 3
 if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _path = os.environ['PYVISTA_VTK_DATA']
 
-    if not os.path.basename(_path) == 'Data':
+    if os.path.basename(_path) != 'Data':
         # append 'Data' if user does not provide it
         _path = os.path.join(_path, 'Data')
 
@@ -77,7 +76,7 @@ else:
             # Warn, don't raise just in case there's an environment issue.
             warnings.warn(
                 f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
-                'examples cache with the PYVISTA_USERDATA_PATH environment variable.'
+                'examples cache with the PYVISTA_USERDATA_PATH environment variable.',
             )
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
@@ -1001,7 +1000,7 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
     """
     filename = _download_archive(
-        'pvtu_blood_vessels/blood_vessels.zip', target_file='T0000000500.pvtu'
+        'pvtu_blood_vessels/blood_vessels.zip', target_file='T0000000500.pvtu',
     )
 
     if not load:
@@ -3772,7 +3771,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     """
     filename = _download_archive(
-        'PVD/paraview/singleSphereAnimation.zip', 'singleSphereAnimation.pvd'
+        'PVD/paraview/singleSphereAnimation.zip', 'singleSphereAnimation.pvd',
     )
     if not load:
         return filename
@@ -3991,7 +3990,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
     if pyvista.vtk_version_info > (9, 1):  # pragma: no cover
         raise VTKVersionError(
             'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
+            'Use `download_can_crushed_hdf` instead.',
         )
 
     can_0 = _download_and_read('hdf/can_0.hdf', load=load)
@@ -4164,7 +4163,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     return reader.read()
 
 
-def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
+def download_dicom_stack(load: bool = True) -> pyvista.UniformGrid | str:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)

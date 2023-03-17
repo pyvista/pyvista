@@ -1,5 +1,4 @@
-"""
-.. _ref_light_beam_shape_example:
+""".. _ref_light_beam_shape_example:
 
 Beam Shape
 ~~~~~~~~~~
@@ -11,13 +10,12 @@ options for beam customization.
 
 Consider two hemispheres:
 """
-# sphinx_gallery_thumbnail_number = 5
 import pyvista as pv
 
 plotter = pv.Plotter()
 
 hemi = pv.Sphere().clip()
-hemi.translate((-1, 0, 0), inplace=True)
+hemi = hemi.translate((-1, 0, 0))
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 hemi = hemi.rotate_z(180, inplace=False)
@@ -36,7 +34,7 @@ plotter.show()
 plotter = pv.Plotter(lighting='none')
 
 hemi = pv.Sphere().clip()
-hemi.translate((-1, 0, 0), inplace=True)
+hemi = hemi.translate((-1, 0, 0))
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 hemi = hemi.rotate_z(180, inplace=False)
@@ -58,7 +56,7 @@ plotter.show()
 plotter = pv.Plotter(lighting='none')
 
 hemi = pv.Sphere().clip()
-hemi.translate((-1, 0, 0), inplace=True)
+hemi = hemi.translate((-1, 0, 0))
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 hemi = hemi.rotate_z(180, inplace=False)
@@ -128,7 +126,7 @@ exponents = [1, 0.3, 5]
 
 for center, exponent in zip(centers, exponents):
     hemi = hemi_template.copy()
-    hemi.translate(center, inplace=True)
+    hemi = hemi.translate(center)
     plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
     # spotlight in the center of the hemisphere, shining into it

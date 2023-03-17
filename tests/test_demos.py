@@ -9,7 +9,7 @@ from pyvista import demos
 from pyvista.plotting import system_supports_plotting
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Test requires system to support plotting"
+    not system_supports_plotting(), reason="Test requires system to support plotting",
 )
 
 
@@ -34,7 +34,7 @@ def test_logo_voxel():
 
 
 @pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
+    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading',
 )
 @skip_no_plotting
 @pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')

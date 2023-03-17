@@ -131,7 +131,8 @@ grid = pv.UniformGrid(dimensions=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
 
 print(
-    'Low and High Pass identical to the original:', np.allclose(grid['scalars'], sampled['scalars']),
+    'Low and High Pass identical to the original:',
+    np.allclose(grid['scalars'], sampled['scalars']),
 )
 
 pl = pv.Plotter(shape=(1, 2))

@@ -57,7 +57,9 @@ p.show()
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
 mesh.set_active_scalars("velocity")
 streamlines, src = mesh.streamlines(
-    return_source=True, source_radius=10, source_center=(92.46, 74.37, 135.5),
+    return_source=True,
+    source_radius=10,
+    source_center=(92.46, 74.37, 135.5),
 )
 
 
@@ -149,7 +151,11 @@ vectors[:, 2] = np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) * np.
 mesh['vectors'] = vectors
 ###############################################################################
 stream, src = mesh.streamlines(
-    'vectors', return_source=True, terminal_speed=0.0, n_points=200, source_radius=0.1,
+    'vectors',
+    return_source=True,
+    terminal_speed=0.0,
+    n_points=200,
+    source_radius=0.1,
 )
 ###############################################################################
 cpos = [(1.2, 1.2, 1.2), (-0.0, -0.0, -0.0), (0.0, 0.0, 1.0)]

@@ -1,6 +1,5 @@
-"""
-Displaying eigenmodes of vibration using ``warp_by_vector``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Displaying eigenmodes of vibration using ``warp_by_vector``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
 
 This example applies the ``warp_by_vector`` filter to a cube whose eigenmodes
 have been computed using the Ritz method, as outlined in Visscher, William M.,
@@ -23,7 +22,8 @@ import pyvista as pv
 
 def analytical_integral_rppd(p, q, r, a, b, c):
     """Returns the analytical value of the RPPD integral, i.e. the integral
-    of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c)."""
+    of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c).
+    """
     if p < 0:
         return 0.0
     elif q < 0:
@@ -44,7 +44,8 @@ def analytical_integral_rppd(p, q, r, a, b, c):
 
 def make_cijkl_E_nu(E=200, nu=0.3):
     """Makes cijkl from E and nu.
-    Default values for steel are: E=200 GPa, nu=0.3."""
+    Default values for steel are: E=200 GPa, nu=0.3.
+    """
     lambd = E * nu / (1 + nu) / (1 - 2 * nu)
     mu = E / 2 / (1 + nu)
     cij = np.zeros((6, 6))
@@ -79,7 +80,8 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
     """Returns first N unique frequencies with amplitude above threshold based
-    on first decimals."""
+    on first decimals.
+    """
     unique_freqs, unique_indices = np.unique(np.round(freqs, decimals=decimals), return_index=True)
     nonzero = unique_freqs > thresh
     unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[nonzero]
@@ -168,7 +170,7 @@ l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
 geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
-    N, analytical_integral_rppd, geometry_parameters, cijkl
+    N, analytical_integral_rppd, geometry_parameters, cijkl,
 )
 
 # solving the eigenvalue problem using symmetric solver
@@ -220,7 +222,7 @@ for i, mode_index in enumerate(mode_indices):
 
 warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
-warped.translate([-1.5 * l1, 0.0, 0.0], inplace=True)
+warped = warped.translate([-1.5 * l1, 0.0, 0.0])
 p = pv.Plotter()
 p.add_mesh(vol, style='wireframe', scalars=warpby)
 p.add_mesh(warped, scalars=warpby)

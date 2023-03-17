@@ -1,6 +1,5 @@
-"""
-Multiple Slider Widgets
-~~~~~~~~~~~~~~~~~~~~~~~
+"""Multiple Slider Widgets
+~~~~~~~~~~~~~~~~~~~~~~~.
 
 Use a class based callback to track multiple slider widgets for updating a
 single mesh.
@@ -14,7 +13,7 @@ import pyvista as pv
 
 
 class MyCustomRoutine:
-    def __init__(self, mesh):
+    def __init__(self, mesh) -> None:
         self.output = mesh  # Expected PyVista mesh type
         # default parameters
         self.kwargs = {

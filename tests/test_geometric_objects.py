@@ -162,7 +162,7 @@ def test_disc():
     geom = pyvista.Disc(center=center)
 
     assert np.allclose(
-        geom.bounds, pyvista.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6])
+        geom.bounds, pyvista.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6]),
     )
 
 
@@ -172,13 +172,9 @@ def test_superquadric():
 
 
 # def test_supertoroid():
-#     geom = pyvista.SuperToroid()
-#     assert np.any(geom.points)
 
 
 # def test_ellipsoid():
-#     geom = pyvista.Ellipsoid()
-#     assert np.any(geom.points)
 
 
 def test_text_3d():
@@ -296,7 +292,7 @@ def test_ellipse():
 
 
 @pytest.mark.parametrize(
-    'kind_str, kind_int, n_vertices, n_faces',
+    ('kind_str', 'kind_int', 'n_vertices', 'n_faces'),
     zip(
         ['tetrahedron', 'cube', 'octahedron', 'icosahedron', 'dodecahedron'],
         range(5),

@@ -1,10 +1,10 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
 import collections.abc
-from functools import partial
 import logging
 import time
 import warnings
 import weakref
+from functools import partial
 
 from pyvista import _vtk
 from pyvista.utilities import try_callback
@@ -26,7 +26,7 @@ class RenderWindowInteractor:
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
+    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None) -> None:
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -55,7 +55,7 @@ class RenderWindowInteractor:
         # enable interaction with visible charts)
         self._context_style = _vtk.vtkContextInteractorStyle()
         self.track_click_position(
-            self._toggle_chart_interaction, side="left", double=True, viewport=True
+            self._toggle_chart_interaction, side="left", double=True, viewport=True,
         )
 
     @property
@@ -273,7 +273,7 @@ class RenderWindowInteractor:
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
             raise ValueError(
-                "Invalid callback provided, it should be either ``None`` or a callable."
+                "Invalid callback provided, it should be either ``None`` or a callable.",
             )
 
         if add_observer:
@@ -304,7 +304,7 @@ class RenderWindowInteractor:
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
         self._last_key = key
-        if key in self._key_press_event_callbacks.keys():
+        if key in self._key_press_event_callbacks:
             # Note that defaultdict's will never throw a key error
             callbacks = self._key_press_event_callbacks[key]
             for func in callbacks:
@@ -335,7 +335,7 @@ class RenderWindowInteractor:
                 # when there are overlapping charts).
                 origin = renderer.GetOrigin()  # Correct for viewport origin (see #3278)
                 charts = renderer._get_charts_by_pos(
-                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1])
+                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1]),
                 )
                 if charts:
                     # Toggle interaction for indicated charts and determine whether
@@ -358,8 +358,7 @@ class RenderWindowInteractor:
         self._set_context_style(interactive_scene)
 
     def _set_context_style(self, scene):
-        """
-        Set the context style interactor or switch back to previous interactor style.
+        """Set the context style interactor or switch back to previous interactor style.
 
         Parameters
         ----------
@@ -372,7 +371,7 @@ class RenderWindowInteractor:
             if scene is not None and len(self._plotter.renderers) > 1:
                 warnings.warn(
                     "Interaction with charts is not possible when using multiple subplots."
-                    "Upgrade to VTK 9.3 or newer to enable this feature."
+                    "Upgrade to VTK 9.3 or newer to enable this feature.",
                 )
                 scene = None
         self._context_style.SetScene(scene)
@@ -884,7 +883,7 @@ class RenderWindowInteractor:
         """Process events."""
         if not self.initialized:
             raise RuntimeError(
-                'Render window interactor must be initialized before processing events.'
+                'Render window interactor must be initialized before processing events.',
             )
         self.interactor.ProcessEvents()
 
@@ -944,7 +943,7 @@ def _style_factory(klass):
     """Create a subclass with capturing ability, return it."""
     # We have to use a custom subclass for this because the default ones
     # swallow the release events
-    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
+    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html
 
     def _make_class(klass):
         """Make the class."""
@@ -954,16 +953,16 @@ def _style_factory(klass):
             import vtk as vtkInteractionStyle
 
         class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-            def __init__(self, parent):
+            def __init__(self, parent) -> None:
                 super().__init__()
                 self._parent = weakref.ref(parent)
 
                 self._observers = []
                 self._observers.append(
-                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press)),
                 )
                 self._observers.append(
-                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release)),
                 )
 
             def _press(self, obj, event):

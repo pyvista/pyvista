@@ -62,13 +62,12 @@ with SinglePageLayout(server) as layout:
             style="max-width: 250px",
         )
 
-    with layout.content:
-        with vuetify.VContainer(
-            fluid=True,
-            classes="pa-0 fill-height",
-        ):
-            # Use PyVista UI template for Plotters
-            view = plotter_ui(pl, default_server_rendering=False)
-            ctrl.view_update = view.update
+    with layout.content, vuetify.VContainer(
+        fluid=True,
+        classes="pa-0 fill-height",
+    ):
+        # Use PyVista UI template for Plotters
+        view = plotter_ui(pl, default_server_rendering=False)
+        ctrl.view_update = view.update
 
 server.start()

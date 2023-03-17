@@ -32,7 +32,7 @@ class RenderPasses:
 
     """
 
-    def __init__(self, renderer):
+    def __init__(self, renderer) -> None:
         """Initialize render passes."""
         self._renderer_ref = weakref.ref(renderer)
 
@@ -102,6 +102,7 @@ class RenderPasses:
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
+        return None
 
     def deep_clean(self):
         """Delete all render passes."""
@@ -124,7 +125,7 @@ class RenderPasses:
     def enable_edl_pass(self):
         """Enable the EDL pass."""
         if self._edl_pass is not None:
-            return
+            return None
         self._edl_pass = _vtk.vtkEDLShading()
         self._add_pass(self._edl_pass)
         return self._edl_pass
@@ -157,7 +158,7 @@ class RenderPasses:
         """Enable shadow pass."""
         # shadow pass can be directly added to the base pass collection
         if self._shadow_map_pass is not None:
-            return
+            return None
         self._shadow_map_pass = _vtk.vtkShadowMapPass()
         self._pass_collection.AddItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.AddItem(self._shadow_map_pass)
@@ -175,7 +176,7 @@ class RenderPasses:
     def enable_depth_of_field_pass(self, automatic_focal_distance=True):
         """Enable the depth of field pass."""
         if self._dof_pass is not None:
-            return
+            return None
 
         if self._ssao_pass is not None:
             raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
@@ -198,7 +199,7 @@ class RenderPasses:
             raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
 
         if self._ssao_pass is not None:
-            return
+            return None
         self._ssao_pass = _vtk.vtkSSAOPass()
         self._ssao_pass.SetRadius(radius)
         self._ssao_pass.SetBias(bias)
@@ -217,7 +218,7 @@ class RenderPasses:
     def enable_ssaa_pass(self):
         """Enable super-sample anti-aliasing pass."""
         if self._ssaa_pass is not None:
-            return
+            return None
         self._ssaa_pass = _vtk.vtkSSAAPass()
         self._add_pass(self._ssaa_pass)
         return self._ssaa_pass

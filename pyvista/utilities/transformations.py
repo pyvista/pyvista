@@ -113,7 +113,6 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
 
     if point is not None:
         # rotation of point p would be R @ (p - point) + point
-        # which is R @ p + (point - R @ point)
         augmented[:-1, -1] = point - R @ point
 
     return augmented
@@ -212,7 +211,6 @@ def reflection(normal, point=None):
 
     if point is not None:
         # reflection of point p would be R @ (p - point) + point
-        # which is R @ p + (point - R @ point)
         augmented[:-1, -1] = point - R @ point
 
     return augmented
@@ -281,6 +279,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     # If inplace, set the points
     if inplace:
         points[:] = points_2
+        return None
     else:
         # otherwise return the new points
         return points_2
