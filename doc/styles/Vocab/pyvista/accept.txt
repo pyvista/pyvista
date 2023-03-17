@@ -1,4 +1,7 @@
-3d
+matplotlib
+Autosummary
+rst
+textwrap
 APIs
 Abaqus
 Ansys
@@ -8,6 +11,7 @@ CLI
 Codespell
 Colab
 Colormaps
+renderers
 Comms
 Cookiecutter
 Coords

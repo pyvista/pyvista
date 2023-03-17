@@ -1,5 +1,5 @@
-Welcome to tinypages's documentation!
-=====================================
+Welcome to Tinypages's Documentation
+====================================
 
 Contents:
 
@@ -9,7 +9,7 @@ Contents:
     some_plots
     some_autodocs
 
-Indices and tables
+Indices and Tables
 ==================
 
 * :ref:`genindex`
