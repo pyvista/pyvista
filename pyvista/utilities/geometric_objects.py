@@ -1252,10 +1252,10 @@ def Triangle(points=None):
 def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
-    The 3 points must define an orthogonal set of vectors.
-
     .. deprecated:: 0.39.0
        To deal with more than 3 points use :attr:`pyvista.Quadrilateral` instead
+
+    The 3 points must define an orthogonal set of vectors.
 
     Parameters
     ----------
