@@ -41,6 +41,8 @@ jobs:
         level: error
         filter_mode: nofilter
         fail_on_error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   doc:
     name: Build Documentation
