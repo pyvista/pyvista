@@ -266,7 +266,7 @@ class _LightingConfig(_ThemeConfig):
         * ``'Flat'``
         * ``'Physically based rendering'``
 
-        This is stored as a integer value of the ``InterpolationType``
+        This is stored as an integer value of the ``InterpolationType``
         so that the theme can be JSON-serializable.
 
         Examples
