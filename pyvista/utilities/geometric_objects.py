@@ -1255,7 +1255,7 @@ def Rectangle(points=None):
     Parameters
     ----------
     points : sequence, optional
-        Points of the rectangle. Defaults to a simple example.
+        Points of the rectangle. Defaults to a unit square in xy-plane.
 
     Returns
     -------
