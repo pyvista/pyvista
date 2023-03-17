@@ -1,5 +1,4 @@
-"""
-.. _subdivide_example:
+""".. _subdivide_example:
 
 Subdivide Cells
 ~~~~~~~~~~~~~~~
@@ -32,7 +31,7 @@ cpos = [
 
 
 def plot_subdivisions(mesh, a, b):
-    display_args = dict(show_edges=True, color=True)
+    display_args = {"show_edges": True, "color": True}
     p = pv.Plotter(shape=(3, 3))
 
     for i in range(3):

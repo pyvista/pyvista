@@ -1,5 +1,4 @@
-"""
-.. _extract_surface_example:
+""".. _extract_surface_example:
 
 Extract Surface
 ~~~~~~~~~~~~~~~
@@ -8,7 +7,6 @@ You can extract the surface of nearly any object within ``pyvista``
 using the ``extract_surface`` filter.
 """
 
-# sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
 
@@ -53,7 +51,7 @@ quad_pts = np.array(
         (lin_pts[1] + lin_pts[5]) / 2,
         (lin_pts[2] + lin_pts[6]) / 2,
         (lin_pts[3] + lin_pts[7]) / 2,
-    ]
+    ],
 )
 
 # introduce a minor variation to the location of the mid-side points

@@ -1,5 +1,4 @@
-"""
-.. _clip_with_surface_example:
+""".. _clip_with_surface_example:
 
 Clipping with a Surface
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,7 +14,6 @@ the mesh geometries along the clip.
 """
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
 
@@ -41,7 +39,7 @@ p.show()
 # The clipping operation field is performed where the ``implicit_distance``
 # field is zero and the ``invert`` flag controls which sides of zero to
 # preserve.
-dataset.compute_implicit_distance(surface, inplace=True)
+dataset = dataset.compute_implicit_distance(surface)
 
 inner = dataset.threshold(0.0, scalars="implicit_distance", invert=True)
 outer = dataset.threshold(0.0, scalars="implicit_distance", invert=False)

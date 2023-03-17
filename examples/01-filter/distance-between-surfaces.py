@@ -1,6 +1,5 @@
-"""
-Distance Between Two Surfaces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Distance Between Two Surfaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
 
 Compute the average thickness between two surfaces.
 
@@ -38,7 +37,7 @@ import pyvista as pv
 def hill(seed):
     """A helper to make a random surface."""
     mesh = pv.ParametricRandomHills(randomseed=seed, u_res=50, v_res=50, hillamplitude=0.5)
-    mesh.rotate_y(-10, inplace=True)  # give the surfaces some tilt
+    mesh = mesh.rotate_y(-10)  # give the surfaces some tilt
 
     return mesh
 

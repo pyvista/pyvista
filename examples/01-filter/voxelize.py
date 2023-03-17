@@ -1,5 +1,4 @@
-"""
-.. _voxelize_surface_mesh_example:
+""".. _voxelize_surface_mesh_example:
 
 Voxelize a Surface Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -13,8 +12,6 @@ bounding :class:`pyvista.PolyData` surface.
 import numpy as np
 
 import pyvista as pv
-
-# sphinx_gallery_thumbnail_number = 2
 from pyvista import examples
 
 # Load a surface to voxelize
@@ -55,7 +52,7 @@ voxels.plot(scalars="density", cpos=cpos)
 ###############################################################################
 # A constant scalar field is kind of boring, so let's get a little fancier by
 # added a scalar field that varies by the distance from the bounding surface.
-voxels.compute_implicit_distance(surface, inplace=True)
+voxels = voxels.compute_implicit_distance(surface)
 voxels
 
 ###############################################################################

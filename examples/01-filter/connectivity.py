@@ -1,5 +1,4 @@
-"""
-.. _connectivity_example:
+""".. _connectivity_example:
 
 Connectivity
 ~~~~~~~~~~~~
@@ -8,7 +7,6 @@ Use the connectivity filter to remove noisy isosurfaces.
 
 This example is very similar to `this VTK example <https://kitware.github.io/vtk-examples/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__
 """
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 

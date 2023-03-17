@@ -1,5 +1,4 @@
-"""
-.. _ref_reflect_example:
+""".. _ref_reflect_example:
 
 Reflect Meshes
 ~~~~~~~~~~~~~~
@@ -19,7 +18,6 @@ airplane = examples.load_airplane()
 
 ###############################################################################
 # Reflect the mesh across a plane parallel to Z plane and coincident with
-# (0, 0, -100)
 airplane_reflected = airplane.reflect((0, 0, 1), point=(0, 0, -100))
 
 ###############################################################################

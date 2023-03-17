@@ -1,5 +1,4 @@
-"""
-.. _backface_props_example:
+""".. _backface_props_example:
 
 Setting Backface Properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -12,7 +11,6 @@ One straightforward example is when a closed (or close enough) surface has a
 different color on the inside. Note that the notion of "inside" and "outside"
 depend on the orientation of the surface normals:
 """
-# sphinx_gallery_thumbnail_number = 1
 import numpy as np
 
 import pyvista as pv
@@ -22,10 +20,10 @@ mesh = pv.ParametricEllipsoid(min_v=np.pi / 2 - 0.2, max_v=np.pi / 2 + 0.2)
 
 # create a shifted copy with flipped normals
 mesh_inside_out = mesh.translate((0, 0, 1), inplace=False)
-mesh_inside_out.compute_normals(flip_normals=True, inplace=True)
+mesh_inside_out = mesh_inside_out.compute_normals(flip_normals=True)
 meshes = mesh + mesh_inside_out
 
-backface_params = dict(color='orangered')
+backface_params = {'color': 'orangered'}
 meshes.plot(color='aquamarine', backface_params=backface_params, smooth_shading=True)
 
 
@@ -57,7 +55,7 @@ henneberg = pv.ParametricHenneberg().scale(0.25, inplace=False)
 klein = pv.ParametricKlein().rotate_z(150, inplace=False).translate((6, 0, 0), inplace=False)
 meshes = henneberg + klein
 
-backface_params = dict(color='mediumseagreen', specular=1.0, specular_power=50.0)
+backface_params = {'color': 'mediumseagreen', 'specular': 1.0, 'specular_power': 50.0}
 meshes.plot(color='gold', backface_params=backface_params, smooth_shading=True)
 
 
@@ -70,7 +68,7 @@ meshes.plot(color='gold', backface_params=backface_params, smooth_shading=True)
 # strip:
 
 mobius = pv.ParametricMobius().rotate_z(-90, inplace=False)
-backface_params = dict(opacity=0.5)
+backface_params = {'opacity': 0.5}
 plotter = pv.Plotter()
 plotter.add_mesh(mobius, color='deepskyblue', backface_params=backface_params, smooth_shading=True)
 plotter.open_gif('mobius_semiopaque.gif')
@@ -97,7 +95,7 @@ clipped = globe.clip(normal='z', value=4.37e9)
 
 pl = pv.Plotter()
 pl.add_mesh(
-    clipped, backface_params={'color': [0.2, 0.2, 0.2]}, lighting=False, smooth_shading=True
+    clipped, backface_params={'color': [0.2, 0.2, 0.2]}, lighting=False, smooth_shading=True,
 )
 pl.show()
 

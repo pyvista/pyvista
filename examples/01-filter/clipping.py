@@ -1,12 +1,10 @@
-"""
-.. _clip_with_plane_box_example:
+""".. _clip_with_plane_box_example:
 
 Clipping with Planes & Boxes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Clip/cut any dataset using using planes or boxes.
 """
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -55,7 +53,7 @@ mesh = examples.load_airplane()
 
 # Use `pv.Box()` or `pv.Cube()` to create a region of interest
 roi = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500)
-roi.rotate_z(33, inplace=True)
+roi = roi.rotate_z(33)
 
 p = pv.Plotter()
 p.add_mesh(roi, opacity=0.75, color="red")
@@ -79,7 +77,7 @@ p.show()
 ###############################################################################
 # Crinkled Clipping
 # +++++++++++++++++
-# Crinkled clipping is useful if you don’t want the clip filter to truly clip
+# Crinkled clipping is useful if you don`t want the clip filter to truly clip
 # cells on the boundary, but want to preserve the input cell structure and to
 # pass the entire cell on through the boundary.
 #

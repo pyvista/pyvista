@@ -1,5 +1,4 @@
-"""
-.. _platonic_example:
+""".. _platonic_example:
 
 Platonic Solids
 ~~~~~~~~~~~~~~~
@@ -45,9 +44,9 @@ solids = [pv.PlatonicSolid(kind, radius=0.4, center=center) for kind, center in 
 
 # download and align teapotahedron
 teapot = examples.download_teapot()
-teapot.rotate_x(90, inplace=True)
-teapot.rotate_z(-45, inplace=True)
-teapot.scale(0.16, inplace=True)
+teapot = teapot.rotate_x(90)
+teapot = teapot.rotate_z(-45)
+teapot = teapot.scale(0.16)
 teapot.points += np.array([-1, 1, 0]) - teapot.center
 solids.append(teapot)
 
@@ -66,7 +65,7 @@ for ind, solid in enumerate(solids):
     # only use smooth shading for the teapot
     smooth_shading = ind == len(solids) - 1
     p.add_mesh(
-        solid, color='silver', smooth_shading=smooth_shading, specular=1.0, specular_power=10
+        solid, color='silver', smooth_shading=smooth_shading, specular=1.0, specular_power=10,
     )
 p.view_vector((5.0, 2, 3))
 p.add_floor('-z', lighting=True, color='tan', pad=1.0)

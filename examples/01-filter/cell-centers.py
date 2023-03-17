@@ -1,5 +1,4 @@
-"""
-.. _cell_centers_example:
+""".. _cell_centers_example:
 
 Extract Cell Centers
 ~~~~~~~~~~~~~~~~~~~~
@@ -10,8 +9,6 @@ Here we use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>`.
 
 """
 import pyvista as pv
-
-# sphinx_gallery_thumbnail_number = 3
 from pyvista import examples
 
 ###############################################################################

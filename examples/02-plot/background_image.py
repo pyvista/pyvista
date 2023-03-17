@@ -1,5 +1,4 @@
-"""
-.. _background_image_example:
+""".. _background_image_example:
 
 Background Image
 ~~~~~~~~~~~~~~~~

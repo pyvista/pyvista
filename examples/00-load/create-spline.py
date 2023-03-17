@@ -1,5 +1,4 @@
-"""
-.. _create_spline_example:
+""".. _create_spline_example:
 
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
@@ -10,7 +9,6 @@ Create a spline/polyline from a numpy array of XYZ vertices using
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 
 ###############################################################################
@@ -18,7 +16,7 @@ import pyvista as pv
 
 
 def make_points():
-    """Helper to make XYZ points"""
+    """Helper to make XYZ points."""
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
     r = z**2 + 1
@@ -37,7 +35,7 @@ points[0:5, :]
 
 
 def lines_from_points(points):
-    """Given an array of points, make a line set"""
+    """Given an array of points, make a line set."""
     poly = pv.PolyData()
     poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)

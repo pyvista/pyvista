@@ -1,5 +1,4 @@
-"""
-.. _streamlines_example:
+""".. _streamlines_example:
 
 Streamlines
 ~~~~~~~~~~~
@@ -11,7 +10,6 @@ Integrate a vector field to generate streamlines.
 # provides context. The starting positions for the streamtubes were determined
 # by experimenting with the data.
 
-# sphinx_gallery_thumbnail_number = 3
 import numpy as np
 
 import pyvista as pv
@@ -59,14 +57,14 @@ p.show()
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
 mesh.set_active_scalars("velocity")
 streamlines, src = mesh.streamlines(
-    return_source=True, source_radius=10, source_center=(92.46, 74.37, 135.5)
+    return_source=True, source_radius=10, source_center=(92.46, 74.37, 135.5),
 )
 
 
 ###############################################################################
 boundary = mesh.decimate_boundary().extract_all_edges()
 
-sargs = dict(vertical=True, title_font_size=16)
+sargs = {"vertical": True, "title_font_size": 16}
 p = pv.Plotter()
 p.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
 p.add_mesh(src)
@@ -93,7 +91,7 @@ print([array_name for array_name in streamlines.array_names if array_name not in
 ###############################################################################
 # Plot streamlines colored by the time along the streamlines.
 
-sargs = dict(vertical=True, title_font_size=16)
+sargs = {"vertical": True, "title_font_size": 16}
 p = pv.Plotter()
 p.add_mesh(
     streamlines.tube(radius=0.2),
@@ -151,7 +149,7 @@ vectors[:, 2] = np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) * np.
 mesh['vectors'] = vectors
 ###############################################################################
 stream, src = mesh.streamlines(
-    'vectors', return_source=True, terminal_speed=0.0, n_points=200, source_radius=0.1
+    'vectors', return_source=True, terminal_speed=0.0, n_points=200, source_radius=0.1,
 )
 ###############################################################################
 cpos = [(1.2, 1.2, 1.2), (-0.0, -0.0, -0.0), (0.0, 0.0, 1.0)]

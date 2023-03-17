@@ -1,5 +1,4 @@
-"""
-.. _create_draped_surf_example:
+""".. _create_draped_surf_example:
 
 Drape 2D Surface From Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,7 +31,6 @@ profile in 2D with the coordinates associated to the top of each column in your
 import matplotlib.pyplot as plt
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
 

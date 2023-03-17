@@ -1,5 +1,4 @@
-"""
-.. _integrate_example:
+""".. _integrate_example:
 
 Integrate Data
 ~~~~~~~~~~~~~~
@@ -32,7 +31,7 @@ plotter.add_mesh(
     inlet_surface,
     scalars="normal_velocity",
     component=2,
-    scalar_bar_args=dict(vertical=True, title_font_size=16),
+    scalar_bar_args={'vertical': True, 'title_font_size': 16},
     lighting=False,
 )
 plotter.add_axes()

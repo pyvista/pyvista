@@ -295,7 +295,7 @@ autosummary_context = {
     # Methods that should be skipped when generating the docs
     # __init__ should be documented in the class docstring
     # override is a VTK method
-    "skipmethods": ["__init__", "override"]
+    "skipmethods": ["__init__", "override"],
 }
 
 # The suffix(es) of source filenames.
@@ -354,7 +354,7 @@ class ResetPyVista:
     """Reset pyvista module to default settings."""
 
     def __call__(self, gallery_conf, fname):
-        """Reset pyvista module to default settings
+        """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.
         """
@@ -376,7 +376,7 @@ try:
     import osmnx, fiona  # noqa: F401,E401 isort: skip
 
     has_osmnx = True
-except:  # noqa: E722
+except:
     pass
 
 
@@ -458,7 +458,6 @@ SphinxDocString._str_examples = _str_examples
 import pydata_sphinx_theme  # noqa
 
 html_theme = "pydata_sphinx_theme"
-# html_theme_path = [pydata_sphinx_theme.get_html_theme_path()]
 html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
@@ -529,16 +528,12 @@ htmlhelp_basename = "pyvistadoc"
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    # 'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
     #
-    # 'point_size': '10pt',
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
     # Latex figure (float) alignment
     #
-    # 'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

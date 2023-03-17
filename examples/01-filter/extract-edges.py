@@ -1,5 +1,4 @@
-"""
-.. _extract_edges_example:
+""".. _extract_edges_example:
 
 Extract Edges
 ~~~~~~~~~~~~~
@@ -7,7 +6,6 @@ Extract Edges
 Extract edges from a surface.
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 

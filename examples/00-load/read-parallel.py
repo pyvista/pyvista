@@ -1,5 +1,4 @@
-"""
-.. _read_parallel_example:
+""".. _read_parallel_example:
 
 Parallel Files
 ~~~~~~~~~~~~~~
@@ -9,7 +8,6 @@ several files is natively supported by VTK and PyVista.
 """
 import os
 
-# sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples
 

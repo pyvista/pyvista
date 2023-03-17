@@ -1,5 +1,4 @@
-"""
-.. _ref_geometric_example:
+""".. _ref_geometric_example:
 
 Geometric Objects
 ~~~~~~~~~~~~~~~~~

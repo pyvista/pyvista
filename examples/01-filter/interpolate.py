@@ -1,5 +1,4 @@
-"""
-.. _interpolate_example:
+""".. _interpolate_example:
 
 Interpolating
 ~~~~~~~~~~~~~
@@ -7,7 +6,6 @@ Interpolating
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
 """
-# sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
 
@@ -59,7 +57,7 @@ grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)
 
 ###############################################################################
-dargs = dict(cmap="coolwarm", clim=[0, 300], scalars="temperature (C)")
+dargs = {"cmap": "coolwarm", "clim": [0, 300], "scalars": "temperature (C)"}
 cpos = [
     (364280.5723737897, 4285326.164400684, 14093.431895014139),
     (337748.7217949739, 4261154.45054595, -637.1092549935128),

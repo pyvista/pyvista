@@ -1,5 +1,4 @@
-"""
-.. _collision_example:
+""".. _collision_example:
 
 Collision
 ~~~~~~~~~
@@ -60,11 +59,10 @@ pl.add_mesh(sphere1, style='wireframe', color='green', line_width=5)
 pl.open_gif("collision_movie.gif")
 
 # alternatively, to disable movie generation:
-# pl.show(auto_close=False, interactive=False)
 
 delta_x = 0.05
 for _ in range(int(2 / delta_x)):
-    sphere1.translate([delta_x, 0, 0], inplace=True)
+    sphere1 = sphere1.translate([delta_x, 0, 0])
     col, n_contacts = sphere0.collision(sphere1)
 
     collision_mask = np.zeros(sphere0.n_cells, dtype=bool)
@@ -74,6 +72,5 @@ for _ in range(int(2 / delta_x)):
     pl.write_frame()
 
     # alternatively, disable movie plotting and simply render the image
-    # pl.render()
 
 pl.close()

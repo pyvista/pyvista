@@ -1,5 +1,4 @@
-"""
-.. _linear_cells_example:
+""".. _linear_cells_example:
 
 Linear Cells
 ~~~~~~~~~~~~
@@ -18,7 +17,8 @@ see :ref:`point_sets_api`.
 import numpy as np
 
 import pyvista as pv
-from pyvista.examples import cells as example_cells, plot_cell
+from pyvista.examples import cells as example_cells
+from pyvista.examples import plot_cell
 
 # random generator for examples
 rng = np.random.default_rng(2)
@@ -92,7 +92,7 @@ combined.cells
 # ``pv.CellType.HEXAGONAL_PRISM`` cell types.
 
 print(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
-(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM) == combined.celltypes
+combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 
 
 ###############################################################################
@@ -112,7 +112,7 @@ points = [
     [1.0, -1.0, 0.0],
     [0.0, 0.0, 1.60803807],
 ]
-cells = [len(points)] + list(range(len(points)))
+cells = [len(points), *list(range(len(points)))]
 pyrmaid = pv.UnstructuredGrid(cells, [pv.CellType.PYRAMID], points)
 example_cells.plot_cell(pyrmaid)
 
@@ -158,7 +158,7 @@ add_cell_helper(pl, f'LINE ({pv.CellType.LINE})', example_cells.Line(), (0, 2))
 add_cell_helper(pl, f'POLY_LINE ({pv.CellType.POLY_LINE})', example_cells.PolyLine(), (0, 3))
 
 add_cell_helper(
-    pl, f'TRIANGLE ({pv.CellType.TRIANGLE})', example_cells.Triangle(), (1, 0), cpos='xy'
+    pl, f'TRIANGLE ({pv.CellType.TRIANGLE})', example_cells.Triangle(), (1, 0), cpos='xy',
 )
 add_cell_helper(
     pl,
@@ -192,7 +192,7 @@ add_cell_helper(
     (3, 2),
 )
 add_cell_helper(
-    pl, f'HEXAGONAL_PRISM ({pv.CellType.HEXAGONAL_PRISM})', example_cells.HexagonalPrism(), (3, 3)
+    pl, f'HEXAGONAL_PRISM ({pv.CellType.HEXAGONAL_PRISM})', example_cells.HexagonalPrism(), (3, 3),
 )
 
 pl.background_color = 'w'

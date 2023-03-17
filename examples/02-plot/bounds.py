@@ -1,5 +1,4 @@
-"""
-.. _bounds_example:
+""".. _bounds_example:
 
 Plotting Bounds
 ~~~~~~~~~~~~~~~
@@ -8,7 +7,6 @@ This example demonstrates to show bounds within a :class:`pyvista.Plotter`
 using :func:`show_grid() <pyvista.Plotter.show_grid>`
 
 """
-# sphinx_gallery_thumbnail_number = 2
 
 import pyvista as pv
 from pyvista import examples
@@ -52,7 +50,7 @@ print(f'Actual dataset bounds: {gears.bounds}')
 # separate and shift the central gear
 split_gears = gears.split_bodies()
 central_gear = split_gears.pop(1)
-central_gear.translate([0, 60, 60], inplace=True)
+central_gear = central_gear.translate([0, 60, 60])
 
 # also, grab the size of the central gear
 x_size = central_gear.bounds[1] - central_gear.bounds[0]

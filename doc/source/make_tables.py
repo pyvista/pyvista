@@ -77,7 +77,8 @@ class DocTable:
     @classmethod
     def get_row(cls, i, row_data):
         """Get the rst for the given row. Can return ``None`` if no row should
-        be generated for the provided ``row_data``."""
+        be generated for the provided ``row_data``.
+        """
         raise NotImplementedError("Subclasses should specify a get_row method.")
 
 
@@ -94,14 +95,14 @@ class LineStyleTable(DocTable):
         |   * - Style
         |     - Description
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
         |   * - ``"{}"``
         |     - {}
         |     - .. image:: /{}
-        """
+        """,
     )
 
     @classmethod
@@ -158,14 +159,14 @@ class MarkerStyleTable(DocTable):
         |   * - Style
         |     - Description
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
         |   * - ``"{}"``
         |     - {}
         |     - .. image:: /{}
-        """
+        """,
     )
 
     @classmethod
@@ -225,7 +226,7 @@ class ColorSchemeTable(DocTable):
         |     - Description
         |     - # colors
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
@@ -233,7 +234,7 @@ class ColorSchemeTable(DocTable):
         |     - {}
         |     - {}
         |     - .. image:: /{}
-        """
+        """,
     )
 
     @classmethod
@@ -254,7 +255,7 @@ class ColorSchemeTable(DocTable):
             img_path = f"{CHARTS_IMAGE_DIR}/cs_{i}.png"
             n_colors = cls.generate_img(row_data["scheme"], img_path)
             return cls.row_template.format(
-                row_data["scheme"], row_data["descr"], n_colors, img_path
+                row_data["scheme"], row_data["descr"], n_colors, img_path,
             )
 
     @staticmethod
@@ -300,7 +301,7 @@ class ColorTable(DocTable):
         |   * - Name
         |     - Hex value
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
@@ -309,7 +310,7 @@ class ColorTable(DocTable):
         |     - .. raw:: html
         |
         |          <span style='width:100%; height:100%; display:block; background-color: {};'>&nbsp;</span>
-        """
+        """,
     )
 
     @classmethod

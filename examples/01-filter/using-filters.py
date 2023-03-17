@@ -1,5 +1,4 @@
-"""
-.. _common_filter_example:
+""".. _common_filter_example:
 
 Using Common Filters
 ~~~~~~~~~~~~~~~~~~~~
@@ -7,7 +6,6 @@ Using Common Filters
 Using common filters like thresholding and clipping.
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 

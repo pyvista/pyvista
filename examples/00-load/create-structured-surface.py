@@ -1,5 +1,4 @@
-"""
-.. _ref_create_structured:
+""".. _ref_create_structured:
 
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9,7 +8,6 @@ Create a StructuredGrid surface from NumPy arrays
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -66,7 +64,8 @@ grid.points
 
 def make_point_set():
     """Ignore the contents of this function. Just know that it returns an
-    n by 3 numpy array of structured coordinates."""
+    n by 3 numpy array of structured coordinates.
+    """
     n, m = 29, 32
     x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
     y = np.linspace(-200, 200, num=m) + np.random.uniform(-5, 5, size=m)
@@ -75,7 +74,7 @@ def make_point_set():
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
     foo = pv.PolyData(points)
-    foo.rotate_z(36.6, inplace=True)
+    foo = foo.rotate_z(36.6)
     return foo.points
 
 

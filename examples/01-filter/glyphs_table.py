@@ -1,5 +1,4 @@
-"""
-.. _glyph_table_example:
+""".. _glyph_table_example:
 
 Table of Glyphs
 ~~~~~~~~~~~~~~~
@@ -28,8 +27,6 @@ values = np.arange(N)  # values for scalars to look up glyphs by
 
 
 # taken from:
-# rng = np.random.default_rng()
-# params = rng.uniform(0.5, 2, size=(N, 2))  # (n1, n2) parameters for the toroids
 params = np.array(
     [
         [1.56821334, 0.99649769],
@@ -37,7 +34,7 @@ params = np.array(
         [1.49598881, 0.83495047],
         [1.52442129, 0.89600688],
         [1.92212387, 0.78096621],
-    ]
+    ],
 )
 
 geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
@@ -47,9 +44,8 @@ x, y, z = np.mgrid[:3.0, :3.0, :3.0]
 mesh = pv.StructuredGrid(x, y, z)
 
 # add random scalars
-# rng_int = rng.integers(0, N, size=x.size)
 rng_int = np.array(
-    [4, 1, 2, 0, 4, 0, 1, 4, 3, 1, 1, 3, 3, 4, 3, 4, 4, 3, 3, 2, 2, 1, 1, 1, 2, 0, 3]
+    [4, 1, 2, 0, 4, 0, 1, 4, 3, 1, 1, 3, 3, 4, 3, 4, 4, 3, 3, 2, 2, 1, 1, 1, 2, 0, 3],
 )
 mesh.point_data['scalars'] = rng_int
 

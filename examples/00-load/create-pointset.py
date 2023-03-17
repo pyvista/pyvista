@@ -1,5 +1,4 @@
-"""
-.. _create_pointset_example:
+""".. _create_pointset_example:
 
 Create a PointSet
 ~~~~~~~~~~~~~~~~~
@@ -33,7 +32,6 @@ clipped.plot(show_scalar_bar=False)
 # Show the performance improvement when using a PointSet.
 # This is only available with VTK >= 9.1.0.
 
-# pset = lidar.cast_to_pointset()
 
 if pv.vtk_version_info >= (9, 1):
     lidar_pset = lidar.cast_to_pointset()

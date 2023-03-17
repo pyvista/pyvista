@@ -1,5 +1,4 @@
-"""
-.. _read_file_example:
+""".. _read_file_example:
 
 Load and Plot from a File
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,7 +14,6 @@ Read a dataset from a known file type.
 # The following code block uses a built-in example file and displays an
 # airplane mesh.
 
-# sphinx_gallery_thumbnail_number = 5
 import pyvista as pv
 from pyvista import examples
 

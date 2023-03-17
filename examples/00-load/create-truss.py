@@ -1,5 +1,4 @@
-"""
-.. _create_truss:
+""".. _create_truss:
 
 Plot Truss-like FEA Solution with Cylinders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,7 +38,7 @@ edges = np.array(
         [2, 5],
         [5, 6],
         [2, 6],
-    ]
+    ],
 )
 
 # We must "pad" the edges to indicate to vtk how many points per edge

@@ -1,12 +1,10 @@
-"""
-.. _2d_streamlines_example:
+""".. _2d_streamlines_example:
 
 2D Streamlines
 ~~~~~~~~~~~~~~
 
 Integrate a vector field to generate streamlines on a 2D surface.
 """
-# sphinx_gallery_thumbnail_number = 3
 
 ###############################################################################
 # This example generates streamlines of flow around a cylinder in cross flow.

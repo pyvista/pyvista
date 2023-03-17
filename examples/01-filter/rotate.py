@@ -1,5 +1,4 @@
-"""
-.. _rotate_example:
+""".. _rotate_example:
 
 Rotations
 ~~~~~~~~~
@@ -9,7 +8,6 @@ to right; the y axis is from bottom to top; and the z axis emerges from the
 image. The camera location is the same in all four images.
 
 """
-# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
 

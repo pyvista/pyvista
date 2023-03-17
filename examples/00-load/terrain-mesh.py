@@ -1,5 +1,4 @@
-"""
-.. _terrain_following_mesh_example:
+""".. _terrain_following_mesh_example:
 
 Terrain Following Mesh
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -20,7 +19,6 @@ triangulated): this is common for DEMs.
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
 

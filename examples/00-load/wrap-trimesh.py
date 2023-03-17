@@ -1,5 +1,4 @@
-"""
-.. _ref_wrap_trimesh:
+""".. _ref_wrap_trimesh:
 
 Wrapping Other Objects
 ~~~~~~~~~~~~~~~~~~~~~~

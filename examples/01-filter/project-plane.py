@@ -1,12 +1,10 @@
-"""
-Project to a Plane
-~~~~~~~~~~~~~~~~~~
+"""Project to a Plane
+~~~~~~~~~~~~~~~~~~.
 
 :class:`pyvista.PolyData` surfaces and pointsets can easily be projected to a
 plane defined by a normal and origin
 """
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 

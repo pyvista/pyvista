@@ -1,6 +1,5 @@
-"""
-Extract Cells Inside Surface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Extract Cells Inside Surface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
 
 Extract the cells in a mesh that exist inside or outside a closed surface of
 another mesh
@@ -8,7 +7,6 @@ another mesh
 """
 ###############################################################################
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -16,7 +14,7 @@ mesh = examples.download_cow()
 
 cpos = [(13.0, 7.6, -13.85), (0.44, -0.4, -0.37), (-0.28, 0.9, 0.3)]
 
-dargs = dict(show_edges=True)
+dargs = {"show_edges": True}
 # Rotate the mesh to have a second mesh
 rot = mesh.rotate_y(90, inplace=False)
 

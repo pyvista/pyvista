@@ -1,5 +1,4 @@
-"""
-.. _volumetric_example:
+""".. _volumetric_example:
 
 Volumetric Analysis
 ~~~~~~~~~~~~~~~~~~~
@@ -8,7 +7,6 @@ Volumetric Analysis
 Calculate mass properties such as the volume or area of datasets
 """
 
-# sphinx_gallery_thumbnail_number = 4
 import numpy as np
 
 from pyvista import examples
@@ -141,7 +139,7 @@ channels = data.threshold([0.9, 1.1])
 
 bodies = channels.split_bodies()
 # Now remove all bodies with a small volume
-for key in bodies.keys():
+for key in bodies:
     b = bodies[key]
     vol = b.volume
     if vol < 1000.0:

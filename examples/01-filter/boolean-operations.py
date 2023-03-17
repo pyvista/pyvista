@@ -1,5 +1,4 @@
-"""
-.. _boolean_example:
+""".. _boolean_example:
 
 Boolean Operations
 ~~~~~~~~~~~~~~~~~~
@@ -41,7 +40,6 @@ must be all triangle meshes, which you can check with
 
 """
 
-# sphinx_gallery_thumbnail_number = 6
 import pyvista as pv
 
 sphere_a = pv.Sphere()

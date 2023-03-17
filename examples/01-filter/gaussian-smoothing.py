@@ -1,5 +1,4 @@
-"""
-.. _gaussian_smoothing_example:
+""".. _gaussian_smoothing_example:
 
 Gaussian Smoothing
 ~~~~~~~~~~~~~~~~~~
@@ -14,7 +13,6 @@ to reduce noise or decrease the detail of an image dataset.
 See also :func:`pyvista.UniformGridFilters.gaussian_smooth`.
 
 """
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -62,18 +60,16 @@ data = examples.download_brain()
 smoothed_data = data.gaussian_smooth(std_dev=3.0)
 
 
-dargs = dict(clim=smoothed_data.get_data_range(), opacity=[0, 0, 0, 0.1, 0.3, 0.6, 1])
+dargs = {"clim": smoothed_data.get_data_range(), "opacity": [0, 0, 0, 0.1, 0.3, 0.6, 1]}
 
 n = [100, 150, 200, 245, 255]
 
 p = pv.Plotter(shape=(1, 2))
 p.subplot(0, 0)
 p.add_text("Original Image", font_size=24)
-# p.add_mesh(data.contour(n), **dargs)
 p.add_volume(data, **dargs)
 p.subplot(0, 1)
 p.add_text("Gaussian smoothing", font_size=24)
-# p.add_mesh(smoothed_data.contour(n), **dargs)
 p.add_volume(smoothed_data, **dargs)
 p.link_views()
 p.camera_position = [(-162.0, 704.8, 65.02), (90.0, 108.0, 90.0), (0.0068, 0.0447, 0.999)]

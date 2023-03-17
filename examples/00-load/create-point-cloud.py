@@ -1,5 +1,4 @@
-"""
-.. _create_point_cloud:
+""".. _create_point_cloud:
 
 Create Point Cloud
 ~~~~~~~~~~~~~~~~~~
@@ -24,7 +23,7 @@ from pyvista import examples
 
 # Define some helpers - ignore these and use your own data!
 def generate_points(subset=0.02):
-    """A helper to make a 3D NumPy array of points (n_points by 3)"""
+    """A helper to make a 3D NumPy array of points (n_points by 3)."""
     dataset = examples.download_lidar()
     ids = np.random.randint(low=0, high=dataset.n_points - 1, size=int(dataset.n_points * subset))
     return dataset.points[ids]

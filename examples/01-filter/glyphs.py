@@ -1,5 +1,4 @@
-"""
-.. _glyph_example:
+""".. _glyph_example:
 
 Plotting Glyphs (Vectors or PolyData)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9,7 +8,6 @@ Use vectors in a dataset to plot and orient glyphs/geometric objects.
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
 
@@ -49,7 +47,7 @@ vectors = np.vstack(
         np.sin(sphere.points[:, 0]),
         np.cos(sphere.points[:, 1]),
         np.cos(sphere.points[:, 2]),
-    )
+    ),
 ).T
 
 # add and scale

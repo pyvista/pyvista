@@ -1,5 +1,4 @@
-"""
-.. _polyhedron_example:
+""".. _polyhedron_example:
 
 Unstructured Grid with Polyhedra
 --------------------------------
@@ -144,7 +143,7 @@ polyhedron_connectivity = [
 ]
 
 # note how we retroactively add NItems
-polyhedron = [len(polyhedron_connectivity)] + polyhedron_connectivity
+polyhedron = [len(polyhedron_connectivity), *polyhedron_connectivity]
 
 
 ###############################################################################

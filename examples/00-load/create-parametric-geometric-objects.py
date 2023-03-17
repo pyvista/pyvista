@@ -1,5 +1,4 @@
-"""
-.. _ref_parametric_example:
+""".. _ref_parametric_example:
 
 Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9,7 +8,6 @@ Creating parametric objects
 
 from math import pi
 
-# sphinx_gallery_thumbnail_number = 12
 import pyvista as pv
 
 ###############################################################################

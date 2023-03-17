@@ -1,5 +1,4 @@
-"""
-.. _resampling_example:
+""".. _resampling_example:
 
 Resampling
 ~~~~~~~~~~
@@ -10,7 +9,6 @@ Resample one mesh's point/cell arrays onto another mesh's nodes.
 # This example will resample a volumetric mesh's  scalar data onto the surface
 # of a sphere contained in that volume.
 
-# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
 
@@ -52,7 +50,7 @@ cpos = [
     (121.65121514580106, 140.29327609542105, 112.28137570357188),
     (-0.10881224951051659, 0.006229357618166009, 0.9940428006178236),
 ]
-dargs = dict(clim=[0, 200], cmap='rainbow')
+dargs = {"clim": [0, 200], "cmap": 'rainbow'}
 
 p = pv.Plotter(shape=(1, 2))
 p.add_mesh(threshold(data_to_probe), **dargs)

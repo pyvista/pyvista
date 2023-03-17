@@ -1,5 +1,4 @@
-"""
-.. _slice_example:
+""".. _slice_example:
 
 Slicing
 ~~~~~~~
@@ -9,7 +8,6 @@ Extract thin planar slices from a volume.
 import matplotlib.pyplot as plt
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -82,7 +80,7 @@ model = examples.load_channels()
 
 
 def path(y):
-    """Equation: x = a(y-h)^2 + k"""
+    """Equation: x = a(y-h)^2 + k."""
     a = 110.0 / 160.0**2
     x = a * y**2 + 0.0
     return x, y
