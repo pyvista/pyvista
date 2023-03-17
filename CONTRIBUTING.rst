@@ -789,7 +789,7 @@ Patch releases are for critical and important bugfixes that can not or
 should not wait until a minor release. The steps for a patch release
 
 1. Push the necessary bugfix(es) to the applicable release branch. This
-   will generally be the latest release branch (for example. ``release/0.25``).
+   will generally be the latest release branch (for example ``release/0.25``).
 
 2. Update ``pyvista/_version.py`` with the next patch increment (for example
    ``v0.25.1``), commit it, and open a PR that merge with the release

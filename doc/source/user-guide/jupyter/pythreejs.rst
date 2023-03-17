@@ -25,7 +25,7 @@ a ``threejs`` scene including:
 
 You can use this backend to display PyVista scenes directly within a
 jupyter notebook, create interactive web documentation, or even export
-to standalone html pages.
+to standalone HTML pages.
 
 .. note::
    This backend has better support and features than the ``ipygany``
@@ -312,7 +312,7 @@ In your ``conf.py``, add the following:
    ]
 
 
-Export to Html
+Export to HTML
 ~~~~~~~~~~~~~~
 Using ``pythreejs``, you can export most scenes completely to a
 standalone html file. For example:
