@@ -191,7 +191,7 @@ class ScalarBars:
         italic : bool, optional
             Italicises title and bar labels.  Default ``False``.
 
-        bold  : bool, optional
+        bold : bool, optional
             Bolds title and bar labels.  Default ``True``.
 
         title_font_size : float, optional

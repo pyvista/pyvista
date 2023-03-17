@@ -16,6 +16,16 @@ repos:
       "tomli"
     ]
 
+- repo: https://github.com/DanielNoord/pydocstringformatter
+  rev: v0.7.3
+  hooks:
+    - id: pydocstringformatter
+      args: [
+        "--style {numpydoc,pep257}",
+        "--no-strip-whitespace",
+        "--no-capitalize-first-letter",
+      ]
+
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.1.1
   hooks:

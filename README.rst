@@ -2,7 +2,7 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/main/doc/_static/pyvista_banner_small.png
+.. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
@@ -54,8 +54,8 @@ PyVista
 .. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
    :target: https://www.python.org/downloads/
 
-.. |Sponsored by NumFOCUS| image:: https://img.shields.io/badge/sponsored%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
-   :target: https://numfocus.org
+.. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
+   :target: https://numfocus.org/sponsored-projects/affiliated-projects
 
 
 +----------------------+------------+-------------+
@@ -75,7 +75,7 @@ PyVista
 +----------------------+------------+-------------+
 | Formatter            | |black|    | |ruff|      |
 +----------------------+------------+-------------+
-| Affiliated           | |Sponsored by NumFOCUS|  |
+| Affiliated           | |NumFOCUS Affiliated|    |
 +----------------------+------------+-------------+
 
 
