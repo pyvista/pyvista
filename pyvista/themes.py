@@ -1281,7 +1281,12 @@ class _TrameConfig(_ThemeConfig):
         self._jupyter_server_port = 0
         self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
         # default for ``jupyter-server-proxy``
-        self._server_proxy_prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
+        prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        if service:
+            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
+        else:
+            self._server_proxy_prefix = prefix
         self._default_mode = 'trame'
         self._enable_vtk_warnings = (
             os.environ.get('VTK_ENABLE_SERIALIZER_WARNINGS', 'false').lower() == 'true'
