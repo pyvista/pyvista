@@ -121,7 +121,7 @@ class Property(_vtk.vtkProperty):
     ...     show_edges=True,
     ...     interpolation='Physically based rendering',
     ...     metallic=0.5,
-    ...     roughness=0.1
+    ...     roughness=0.1,
     ... )
 
     Visualize how the property would look when applied to a mesh.
@@ -634,7 +634,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.1
         >>> prop.metallic
         0.1
@@ -674,7 +675,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.5  # helps to visualize metallic
         >>> prop.roughness = 0.1
         >>> prop.roughness
@@ -1078,7 +1080,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.anisotropy
         0.1
 
@@ -1116,7 +1119,7 @@ class Property(_vtk.vtkProperty):
         ...     color='brown',
         ...     edge_color='blue',
         ...     line_width=4,
-        ...     specular=1.0
+        ...     specular=1.0,
         ... )
         >>> prop.plot()
 

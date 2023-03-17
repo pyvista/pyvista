@@ -423,7 +423,10 @@ class Texture(_vtk.vtkTexture, DataObject):
         return image.active_scalars.shape[1]
 
     def flip(self, axis):
-        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
+        """Flip this texture inplace along the specified axis.
+
+        0 for X and 1 for Y.
+        """
         if not 0 <= axis <= 1:
             raise ValueError(f"Axis {axis} out of bounds")
         array = self.to_array()

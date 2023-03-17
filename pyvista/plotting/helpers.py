@@ -204,9 +204,11 @@ def plot(
     UniformGrid. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid = pv.UniformGrid(
+    ...     dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5)
+    ... )
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
-    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
+    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max()) ** 3
     >>> grid.plot(volume=True)
 
     """
@@ -329,7 +331,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     See Also
     --------
-    :func:`pyvista.plot`
+    pyvista.plot
 
     Examples
     --------

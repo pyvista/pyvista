@@ -913,7 +913,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data0'] = [0] * mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.items()
         [('data0', pyvista_ndarray([0, 0, 0, 0, 0, 0])), ('data1', pyvista_ndarray([0, 1, 2, 3, 4, 5]))]
@@ -934,7 +934,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.clear_data()
-        >>> mesh.point_data['data0'] = [0]*mesh.n_points
+        >>> mesh.point_data['data0'] = [0] * mesh.n_points
         >>> mesh.point_data['data1'] = range(mesh.n_points)
         >>> mesh.point_data.keys()
         ['data0', 'data1']
@@ -966,7 +966,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data0'] = [0] * mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.values()
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
@@ -1096,8 +1096,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.point_data.set_vectors(np.random.random((mesh.n_points, 3)),
-        ...                             'my-vectors')
+        >>> mesh.point_data.set_vectors(
+        ...     np.random.random((mesh.n_points, 3)), 'my-vectors'
+        ... )
         >>> mesh.point_data.active_vectors_name
         'my-vectors'
 

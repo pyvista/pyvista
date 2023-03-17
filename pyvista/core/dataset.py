@@ -373,7 +373,7 @@ class DataSet(DataSetFilters, DataObject):
 
         You can also update the points in-place:
 
-        >>> cube.points[...] = 2*points
+        >>> cube.points[...] = 2 * points
         >>> cube.points
         pyvista_ndarray([[-1., -1.,  1.],
                          [-1., -1.,  3.],
@@ -2286,8 +2286,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> unit_square = pyvista.Rectangle()
         >>> index, closest_point = unit_square.find_closest_cell(
-        ...     [0.25, 0.25, 0.5],
-        ...     return_closest_point=True
+        ...     [0.25, 0.25, 0.5], return_closest_point=True
         ... )
         >>> closest_point
         array([0.25, 0.25, 0.  ])
@@ -2297,8 +2296,7 @@ class DataSet(DataSetFilters, DataObject):
         desired, see :func:`DataSet.find_closest_point`.
 
         >>> index, closest_point = unit_square.find_closest_cell(
-        ...     [1.0, 1.0, 0.5],
-        ...     return_closest_point=True
+        ...     [1.0, 1.0, 0.5], return_closest_point=True
         ... )
         >>> closest_point
         array([1., 1., 0.])
@@ -2368,7 +2366,9 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista
-        >>> mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh = pyvista.UniformGrid(
+        ...     dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0]
+        ... )
         >>> mesh
         UniformGrid...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
@@ -2474,7 +2474,9 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Cube()
-        >>> index = mesh.find_cells_within_bounds([-2.0, 2.0, -2.0, 2.0, -2.0, 2.0])
+        >>> index = mesh.find_cells_within_bounds(
+        ...     [-2.0, 2.0, -2.0, 2.0, -2.0, 2.0]
+        ... )
 
         """
         if np.array(bounds).size != 6:
@@ -2575,9 +2577,11 @@ class DataSet(DataSetFilters, DataObject):
         Loop over the cells
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))   # 9 points, 4 cells
+        >>> # Create a grid with 9 points and 4 cells
+        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     cell
+        ...
 
         """
         for i in range(self.n_cells):

@@ -16,14 +16,14 @@ section, please be sure to head over to the `Contributors Graph`_.
   possible.
 
 
-.. include:: ../../CITATION.rst
+.. include:: ../../../CITATION.rst
 
 
-.. include:: ../../AUTHORS.rst
+.. include:: ../../../AUTHORS.rst
 
 
 
 License
 -------
 
-.. include:: ../../LICENSE
+.. include:: ../../../LICENSE
