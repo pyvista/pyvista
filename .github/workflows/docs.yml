@@ -31,12 +31,12 @@ jobs:
     - uses: actions/checkout@v3
 
     # this is equivalent to
-    # vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
+    # vale --config doc/.vale.ini doc pyvista examples
     - name: "Run Vale"
       uses: errata-ai/vale-action@reviewdog
       with:
         files: '["doc", "pyvista", "examples"]'
-        vale_flags: "--config=doc/.vale.ini --glob='!*{_build}*'"
+        vale_flags: "--config=doc/.vale.ini"
         reporter: github-pr-check
         level: error
         filter_mode: nofilter
