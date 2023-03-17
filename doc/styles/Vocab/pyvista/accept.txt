@@ -32,9 +32,9 @@ GitHub
 GitHub Actions
 Gitpod
 Gmsh
+HTML
 Helens
 Hotfixes
-HTML
 Isort
 Jupyter
 Kaszynski
@@ -100,6 +100,7 @@ doctest
 dotfiles
 dunder
 ele
+flem
 framebuffer
 gemgis
 geomodeling
@@ -119,7 +120,9 @@ isort
 itkwidgets
 jupyter
 kubernetes
+lamda
 linenos
+lod
 manylinux
 matplotlib
 matplotlib
@@ -133,6 +136,7 @@ numpydoc
 omf
 omfvista
 parametrizing
+parm
 performant
 postprocessing
 pre
@@ -151,6 +155,7 @@ pyvista
 relicense
 renderers
 reusability
+revered
 rst
 rtree
 scipy
@@ -186,8 +191,3 @@ worktree
 wslink
 xy
 zenodo
-flem
-parm
-lamda
-revered
-lod

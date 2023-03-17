@@ -24,6 +24,22 @@ env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
 
 jobs:
+  doc-check:
+    name: Check Documentation (Vale)
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: "Run Vale"
+      uses: errata-ai/vale-action@reviewdog
+      with:
+        files: 'doc,pyvista'
+        vale_flags: "--config=doc/.vale.ini"
+        reporter: github-pr-check
+        level: error
+        filter_mode: nofilter
+        fail_on_error: true
+
   doc:
     name: Build Documentation
     runs-on: ubuntu-20.04
