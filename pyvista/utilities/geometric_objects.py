@@ -1287,16 +1287,14 @@ def Rectangle(points=None):
     scalar_pdct_01_12 = np.dot(vec_01, vec_12)
     scalar_pdct_02_12 = np.dot(vec_02, vec_12)
 
-    if not (
-        np.isclose(scalar_pdct_01_02, 0)
-        or np.isclose(scalar_pdct_01_12, 0)
-        or np.isclose(scalar_pdct_02_12, 0)
-    ):
+    non_null_scalar_products = [
+        val
+        for val in [scalar_pdct_01_02, scalar_pdct_01_12, scalar_pdct_02_12]
+        if np.isclose(val, 0)
+    ]
+    if len(non_null_scalar_products) == 0:
         raise ValueError("The three points should defined orthogonal vectors")
-    if (
-        len([val for val in [scalar_pdct_01_02, scalar_pdct_01_12, scalar_pdct_02_12] if val == 0])
-        > 1
-    ):
+    if len(non_null_scalar_products) > 1:
         raise ValueError("Unable to build a rectangle with less than three different points")
 
     points = np.array([point_0, point_1, point_2, point_0])
