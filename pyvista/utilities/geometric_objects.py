@@ -1319,7 +1319,7 @@ def Rectangle(points=None):
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return pyvista.PolyData(points, cells)
 
 
 def Quadrilateral(points=None):
