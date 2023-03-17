@@ -1598,7 +1598,7 @@ grids = [
     load_rectilinear(),
     load_tetbeam(),
     load_uniform(),
-    load_explicit_structured()
+    load_explicit_structured(),
 ]
 grids_cells = grids[:-1]
 
