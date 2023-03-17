@@ -1252,6 +1252,11 @@ def Triangle(points=None):
 def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
+    The 3 points must define an orthogonal set of vectors.
+
+    .. deprecated:: 0.39.0
+       To deal with more than 3 points use :attr:`pyvista.Quadrilateral` instead
+
     Parameters
     ----------
     points : sequence, optional
@@ -1282,13 +1287,11 @@ def Rectangle(points=None):
     elif len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
 
-    check_valid_vector(points[0], 'points[0]')
-    check_valid_vector(points[1], 'points[1]')
-    check_valid_vector(points[2], 'points[2]')
+    points, _ = _coerce_pointslike_arg(points)
 
-    point_0 = np.array(points[0])
-    point_1 = np.array(points[1])
-    point_2 = np.array(points[2])
+    point_0 = points[0]
+    point_1 = points[1]
+    point_2 = points[2]
 
     vec_01 = point_1 - point_0
     vec_02 = point_2 - point_0
@@ -1298,24 +1301,24 @@ def Rectangle(points=None):
     scalar_pdct_01_12 = np.dot(vec_01, vec_12)
     scalar_pdct_02_12 = np.dot(vec_02, vec_12)
 
-    non_null_scalar_products = [
+    null_scalar_products = [
         val
         for val in [scalar_pdct_01_02, scalar_pdct_01_12, scalar_pdct_02_12]
         if np.isclose(val, 0)
     ]
-    if len(non_null_scalar_products) == 0:
+    if len(null_scalar_products) == 0:
         raise ValueError("The three points should defined orthogonal vectors")
-    if len(non_null_scalar_products) > 1:
+    if len(null_scalar_products) > 1:
         raise ValueError("Unable to build a rectangle with less than three different points")
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):
         points[3] = point_0 + vec_01 + vec_02
         cells = np.array([[4, 0, 1, 3, 2]])
-    if np.isclose(scalar_pdct_01_12, 0):
+    elif np.isclose(scalar_pdct_01_12, 0):
         points[3] = point_1 + vec_12 - vec_01
         cells = np.array([[4, 0, 1, 2, 3]])
-    if np.isclose(scalar_pdct_02_12, 0):
+    else:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
@@ -1351,10 +1354,7 @@ def Quadrilateral(points=None):
     if len(points) != 4:
         raise TypeError('Points must be given as length 4 np.ndarray or list')
 
-    check_valid_vector(points[0], 'points[0]')
-    check_valid_vector(points[1], 'points[1]')
-    check_valid_vector(points[2], 'points[2]')
-    check_valid_vector(points[3], 'points[3]')
+    points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
     return pyvista.wrap(pyvista.PolyData(points, cells))
