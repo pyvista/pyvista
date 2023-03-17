@@ -11,7 +11,7 @@ The `ipygany <https://github.com/QuantStack/ipygany>`_ jupyterlab
 plotting backend is a powerful module that enables pure plotting that
 leverages `threejs <https://threejs.org/>`_ through the `pythreejs
 widget <https://github.com/jupyter-widgets/pythreejs>`_. It allows
-for embedded html documentation (as shown here), rapid plotting (as
+for embedded HTML documentation (as shown here), rapid plotting (as
 compared to the other client jupyterlab plotting modules like
 ``panel``).
 

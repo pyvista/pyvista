@@ -11,7 +11,7 @@ Using ``pythreejs`` with PyVista
 The `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_
 jupyterlab plotting backend is a powerful library that enables
 web-based visualization leveraging `threejs <https://threejs.org/>`_.
-It allows for embedded html documentation (as shown here).
+It allows for embedded HTML documentation (as shown here).
 
 The biggest advantage to using the ``pythreejs`` backend compared to
 the other backends is that it accurately recreates the VTK scene into

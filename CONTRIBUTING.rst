@@ -197,6 +197,33 @@ PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
 
+Documentation Style
+^^^^^^^^^^^^^^^^^^^
+
+PyVista follows the `Google Developer Documentation Style
+<https://developers.google.com/style>`_ with the following exceptions:
+
+- Allow first person pronouns. These pronouns (for example, "We") refer to
+  "PyVista Developers", which can be anyone who contributes to PyVista.
+- Future tense is permitted.
+
+These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
+and partially enforced for Python source files.
+
+These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
+GitHub Actions, and you can run Vale locally with:
+
+.. code::
+
+   pip install vale
+   vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
+
+If you are on Linux or macOS, you can run:
+
+.. code::
+
+   make docstyle
+
 
 Docstrings
 ^^^^^^^^^^
