@@ -19,6 +19,7 @@ exceptions:
   - are
   - VTK
   - PointSet
+  - HTML
   - to
   - for
   - through
