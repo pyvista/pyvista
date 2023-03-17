@@ -3,4 +3,4 @@
 PyVista Pytest Plugin
 =====================
 
-PyVista provides a Pytest plugin `pytest-pyvista <https://pytest.pyvista.org/>`_ for image regression testing.
+PyVista provides a pytest plugin `pytest-pyvista <https://pytest.pyvista.org/>`_ for image regression testing.
