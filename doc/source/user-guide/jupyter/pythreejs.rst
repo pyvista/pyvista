@@ -315,7 +315,7 @@ In your ``conf.py``, add the following:
 Export to HTML
 ~~~~~~~~~~~~~~
 Using ``pythreejs``, you can export most scenes completely to a
-standalone html file. For example:
+standalone HTML file. For example:
 
 .. code:: python
 
