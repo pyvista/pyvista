@@ -1298,17 +1298,19 @@ def Rectangle(points=None):
         > 1
     ):
         raise ValueError("Unable to build a rectangle with less than three different points")
+
+    points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):
         point_3 = point_0 + vec_01 + vec_02
-        points.append(point_3)
+        points[3] = point_3
         cells = np.array([[4, 0, 1, 3, 2]])
     if np.isclose(scalar_pdct_01_12, 0):
         point_3 = point_1 + vec_12 - vec_01
-        points.append(point_3)
+        points[3] = point_3
         cells = np.array([[4, 0, 1, 2, 3]])
     if np.isclose(scalar_pdct_02_12, 0):
         point_3 = point_2 - vec_02 - vec_12
-        points.append(point_3)
+        points[3] = point_3
         cells = np.array([[4, 0, 2, 1, 3]])
 
     return pyvista.wrap(pyvista.PolyData(points, cells))
