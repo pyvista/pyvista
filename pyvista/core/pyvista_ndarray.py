@@ -9,7 +9,7 @@ from pyvista.utilities.helpers import FieldAssociation, convert_array
 
 
 class pyvista_ndarray(np.ndarray):
-    """An ndarray which references the owning dataset and the underlying vtkArray.
+    """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
