@@ -1242,7 +1242,7 @@ def Triangle(points=None):
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return pyvista.PolyData(points, cells)
 
 
 def Rectangle(points=None):
@@ -1280,7 +1280,7 @@ def Rectangle(points=None):
     check_valid_vector(points[3], 'points[3]')
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return pyvista.PolyData(points, cells)
 
 
 def Circle(radius=0.5, resolution=100):
@@ -1318,7 +1318,7 @@ def Circle(radius=0.5, resolution=100):
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return pyvista.PolyData(points, cells)
 
 
 def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
@@ -1357,7 +1357,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return pyvista.PolyData(points, cells)
 
 
 def Superquadric(
