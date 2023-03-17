@@ -45,7 +45,7 @@ grid.plot(scalars='Cell Data')
 # If you wanted to assign data to each point of each cell and plot that, it's
 # simply not possible since these hexahedral cells all share the same
 # points. To split up individual cells, separate them using
-# :func:`pyvista.DataSet.separate_cells`.
+# :func:`pyvista.DataSetFilters.separate_cells`.
 #
 # With this filter the resulting :class:`pyvista.UnstructuredGrid` now contains
 # 32 points, or 8 for each cell. They are now fully separated with no shared

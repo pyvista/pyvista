@@ -25,6 +25,7 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
+from pyvista.utilities.docs import linkcode_resolve
 from pyvista.utilities.misc import PyVistaDeprecationWarning, has_duplicates, raise_has_duplicates
 
 skip_no_plotting = pytest.mark.skipif(
@@ -861,3 +862,24 @@ def test_set_pickle_format():
 
     with pytest.raises(ValueError):
         pyvista.set_pickle_format('invalid_format')
+
+
+def test_linkcode_resolve():
+    assert linkcode_resolve('not-py', {}) is None
+    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})
+    assert 'dataobject.py' in link
+    assert '#L' in link
+
+    # badmodule name
+    assert linkcode_resolve('py', {'module': 'doesnotexist', 'fullname': 'foo.bar'}) is None
+
+    assert (
+        linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.not.an.object'}) is None
+    )
+
+    # test property
+    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
+    assert 'dataset.py' in link
+
+    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
+    assert link.endswith('__init__.py')

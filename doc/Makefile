@@ -8,7 +8,7 @@ SPHINXOPTS    =
 DEFAULTS	  = -w sphinx_warnings.txt -W --keep-going
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = pyvista
-SOURCEDIR     = .
+SOURCEDIR     = source
 BUILDDIR      = _build
 
 
@@ -20,24 +20,24 @@ help:
 
 clean:
 	rm -rf $(BUILDDIR)/*
-	rm -rf examples/
+	rm -rf $(SOURCEDIR)/examples/
 	rm -f errors.txt
 	rm -f sphinx_warnings.txt
-	rm -rf images/auto-generated
-	rm -f getting-started/external_examples.rst
-	find . -type d -name "_autosummary" -exec rm -rf {} +
+	rm -rf $(SOURCEDIR)/images/auto-generated
+	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
+	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
 
 clean-except-examples:
 	rm -rf $(BUILDDIR)/*
 	rm -f errors.txt
 	rm -f sphinx_warnings.txt
-	rm -rf images/auto-generated
-	rm -f getting-started/external_examples.rst
-	find . -type d -name "_autosummary" -exec rm -rf {} +
+	rm -rf $(SOURCEDIR)/images/auto-generated
+	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
+	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
 
 # remove autosummary files
 clean-autosummary:
-	find . -type d -name "_autosummary" -exec rm -rf {} +
+	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
 
 # build html docs in parallel using all available CPUs
 # WARNING: this is a resource hog
@@ -52,6 +52,11 @@ phtml:
 # deploy to https://github.com/pyvista/pyvista-docs
 # WARNING: Use with care as this overwrites history of gh-pages
 deploy:
+	@echo "*** Warning ***"
+	@echo "You are about to deploy to 'pyvista docs'."
+	@echo "This overwrites the history of gh-pages."
+	@echo "Are you sure? [y/N] " && read answer && [ $${answer:-N} = y ]
+	@echo "Deploying..."
 	cp README.md _build/html
 	cp ads.txt _build/html
 	touch _build/html/.nojekyll
@@ -66,3 +71,10 @@ deploy:
 
 update-intersphinx:
 	cd intersphinx && ./update.sh
+
+# nitpicky linkcheck
+linkcheck:
+	@$(SPHINXBUILD) -b linkcheck -D nitpicky=1 -d _build/doctrees . _build/linkcheck
+
+linkcheck-grep:
+	@! grep -h "^.*:.*: \[\(\(local\)\|\(broken\)\)\]" _build/linkcheck/output.txt

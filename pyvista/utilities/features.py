@@ -112,11 +112,11 @@ def grid_from_sph_coords(theta, phi, r):
 
     Parameters
     ----------
-    theta: array-like
+    theta : array-like
         Azimuthal angle in degrees ``[0, 360]``.
-    phi: array-like
+    phi : array-like
         Polar (zenith) angle in degrees ``[0, 180]``.
-    r: array-like
+    r : array-like
         Distance (radius) from the point of origin.
 
     Returns

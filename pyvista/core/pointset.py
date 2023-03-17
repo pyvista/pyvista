@@ -427,7 +427,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     Initialize from just vertices.
 
-    >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    >>> vertices = np.array(
+    ...     [[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]]
+    ... )
     >>> mesh = pyvista.PolyData(vertices)
 
     Initialize from vertices and faces.
@@ -587,9 +589,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         mesh and the additional vertices in a single plot.
 
         >>> mesh = pyvista.Plane(i_resolution=3, j_resolution=3)
-        >>> mesh.verts = np.vstack((np.ones(mesh.n_points, dtype=np.int64),
-        ...                         np.arange(mesh.n_points))).T
-        >>> mesh.plot(color='tan', render_points_as_spheres=True, point_size=60)
+        >>> mesh.verts = np.vstack(
+        ...     (
+        ...         np.ones(mesh.n_points, dtype=np.int64),
+        ...         np.arange(mesh.n_points),
+        ...     )
+        ... ).T
+        >>> mesh.plot(
+        ...     color='tan',
+        ...     render_points_as_spheres=True,
+        ...     point_size=60,
+        ... )
 
         """
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
@@ -835,7 +845,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+        >>> vertices = np.array(
+        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
+        ... )
         >>> strip = np.array([3, 0, 1, 2])
         >>> mesh = pyvista.PolyData(vertices, strips=strip)
         >>> mesh.n_strips
@@ -928,9 +940,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import numpy as np
         >>> sphere = pyvista.Sphere()
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
-        >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]  # just blue channel
+        >>> # Just the green channel is set as a repeatedly
+        >>> # decreasing value
+        >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]
         >>> sphere.point_data['my_texture'] = texture
-        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest:+SKIP
+        >>> sphere.save(
+        ...     'my_mesh.ply', texture='my_texture'
+        ... )  # doctest:+SKIP
 
         Alternatively, provide just the texture array.  This will be
         written to the file as ``'RGB'`` since it does not contain an
@@ -997,8 +1013,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def point_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the point normals.
 
-        If the point data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
-        normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
+        If the point data already contains an array named ``'Normals'``, this
+        array will be returned. Otherwise, the normals will be computed using
+        the default options of :func:`compute_normals()
+        <pyvista.PolyDataFilters.compute_normals>` and returned.
 
         Returns
         -------
@@ -1030,8 +1048,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def cell_normals(self) -> 'pyvista.pyvista_ndarray':
         """Return the cell normals.
 
-        If the cell data already contains an array named ``'Normals'``, this array will be returned. Otherwise, the
-        normals will be computed using the default options of :func:`PolyData.compute_normals()` and returned.
+        If the cell data already contains an array named ``'Normals'``, this
+        array will be returned. Otherwise, the normals will be computed using
+        the default options of :func:`compute_normals()
+        <pyvista.PolyDataFilters.compute_normals>` and returned.
 
         Returns
         -------
@@ -1202,9 +1222,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     Parameters
     ----------
-    args : various
-        See below examples.
-    deep : optional
+    args : str, vtk.vtkUnstructuredGrid, iterable
+        See examples below.
+    deep : bool, default: False
         Whether to deep copy a vtkUnstructuredGrid object.
         Default is ``False``.  Keyword only.
 
@@ -1365,26 +1385,40 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> import numpy as np
         >>> from pyvista import CellType
         >>> import pyvista
-        >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
+        >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
+        >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
+        >>> cells = np.hstack((cell0_ids, cell1_ids))
+        >>> cell_type = np.array(
+        ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
+        ... )
 
-        >>> cell1 = np.array([[0, 0, 0],
-        ...                   [1, 0, 0],
-        ...                   [1, 1, 0],
-        ...                   [0, 1, 0],
-        ...                   [0, 0, 1],
-        ...                   [1, 0, 1],
-        ...                   [1, 1, 1],
-        ...                   [0, 1, 1]], dtype=np.float32)
+        >>> cell1 = np.array(
+        ...     [
+        ...         [0, 0, 0],
+        ...         [1, 0, 0],
+        ...         [1, 1, 0],
+        ...         [0, 1, 0],
+        ...         [0, 0, 1],
+        ...         [1, 0, 1],
+        ...         [1, 1, 1],
+        ...         [0, 1, 1],
+        ...     ],
+        ...     dtype=np.float32,
+        ... )
 
-        >>> cell2 = np.array([[0, 0, 2],
-        ...                   [1, 0, 2],
-        ...                   [1, 1, 2],
-        ...                   [0, 1, 2],
-        ...                   [0, 0, 3],
-        ...                   [1, 0, 3],
-        ...                   [1, 1, 3],
-        ...                   [0, 1, 3]], dtype=np.float32)
+        >>> cell2 = np.array(
+        ...     [
+        ...         [0, 0, 2],
+        ...         [1, 0, 2],
+        ...         [1, 1, 2],
+        ...         [0, 1, 2],
+        ...         [0, 0, 3],
+        ...         [1, 0, 3],
+        ...         [1, 1, 3],
+        ...         [0, 1, 3],
+        ...     ],
+        ...     dtype=np.float32,
+        ... )
 
         >>> points = np.vstack((cell1, cell2))
 
@@ -1499,7 +1533,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def cell_connectivity(self) -> np.ndarray:
         """Return a the vtk cell connectivity as a numpy array.
 
-        This is effecively :attr:`UnstructuredGrid.cells` without the
+        This is effectively :attr:`UnstructuredGrid.cells` without the
         padding.
 
         Returns
@@ -1595,7 +1629,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Returns
         -------
         numpy.ndarray
-            Array of cell types.  Some of the most popular cell types:
+            Array of cell types.
+
+        Notes
+        -----
+        Here are some of the most popular cell types:
 
         * ``EMPTY_CELL = 0``
         * ``VERTEX = 1``
@@ -1630,9 +1668,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         * ``BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
         * ``BIQUADRATIC_TRIANGLE = 34``
 
-        See
-        https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
-        for all cell types.
+        See `vtkCellType.h
+        <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ for all
+        cell types.
 
         Examples
         --------
@@ -1920,7 +1958,6 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     @dimensions.setter
     def dimensions(self, dims):
-        """Set the dataset dimensions. Pass a length three tuple of integers."""
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()
@@ -2027,7 +2064,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> z = 0
         >>> x, y, z = np.meshgrid(x, y, z)
         >>> grid = pv.StructuredGrid(x, y, z)
-        >>> grid = grid.hide_cells(range(79*30, 79*50))
+        >>> grid = grid.hide_cells(range(79 * 30, 79 * 50))
         >>> grid.plot(color=True, show_edges=True)
         """
         if not inplace:
@@ -2078,7 +2115,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> z = 0
         >>> x, y, z = np.meshgrid(x, y, z)
         >>> grid = pv.StructuredGrid(x, y, z)
-        >>> grid.hide_points(range(80*30, 80*50))
+        >>> grid.hide_points(range(80 * 30, 80 * 50))
         >>> grid.plot(color=True, show_edges=True)
         """
         if isinstance(ind, np.ndarray):
@@ -2115,11 +2152,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     Parameters
     ----------
-    args : various
-        See below examples.
-    deep : optional
+    args : vtk.vtkExplicitStructuredGrid, vtk.vtkUnstructuredGrid, str, Sequence
+        See examples below.
+    deep : bool, default: False
         Whether to deep copy a ``vtk.vtkUnstructuredGrid`` object.
-        Default is ``False``.  Keyword only.
 
     Examples
     --------
@@ -2131,11 +2167,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     >>> si, sj, sk = 20, 10, 1
     >>>
     >>> # create raw coordinate grid
-    >>> grid_ijk = np.mgrid[:(ni+1)*si:si, :(nj+1)*sj:sj, :(nk+1)*sk:sk]
+    >>> grid_ijk = np.mgrid[
+    ...     : (ni + 1) * si : si,
+    ...     : (nj + 1) * sj : sj,
+    ...     : (nk + 1) * sk : sk,
+    ... ]
     >>>
     >>> # repeat array along each Cartesian axis for connectivity
     >>> for axis in range(1, 4):
     ...     grid_ijk = grid_ijk.repeat(2, axis=axis)
+    ...
     >>>
     >>> # slice off unnecessarily doubled edge coordinates
     >>> grid_ijk = grid_ijk[:, 1:-1, 1:-1, 1:-1]
@@ -2255,16 +2296,24 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid = grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid = grid.cast_to_unstructured_grid()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid = grid.cast_to_explicit_structured_grid()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         """
         grid = ExplicitStructuredGrid()
@@ -2302,10 +2351,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> grid.save('grid.vtu')  # doctest:+SKIP
 
         >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         >>> grid.show_cells()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid.plot(
+        ...     color='w', show_edges=True, show_bounds=True
+        ... )  # doctest:+SKIP
 
         """
         grid = self.cast_to_unstructured_grid()
@@ -2484,10 +2537,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> grid.cell_id((3, 4, 0))  # doctest:+SKIP
         19
 
-        >>> coords = [(3, 4, 0),
-        ...           (3, 2, 1),
-        ...           (1, 0, 2),
-        ...           (2, 3, 2)]
+        >>> coords = [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)]
         >>> grid.cell_id(coords)  # doctest:+SKIP
         array([19, 31, 41, 54])
 
@@ -2586,8 +2636,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>>
         >>> plotter = pv.Plotter()
         >>> plotter.add_axes()  # doctest:+SKIP
-        >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest:+SKIP
-        >>> plotter.add_mesh(neighbors, color='w', show_edges=True)  # doctest:+SKIP
+        >>> plotter.add_mesh(
+        ...     cell, color='r', show_edges=True
+        ... )  # doctest:+SKIP
+        >>> plotter.add_mesh(
+        ...     neighbors, color='w', show_edges=True
+        ... )  # doctest:+SKIP
         >>> plotter.show()  # doctest:+SKIP
 
         """

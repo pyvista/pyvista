@@ -557,7 +557,7 @@ class LookupTable(_vtk.vtkLookupTable):
         * The default is S-curve, which tails off gradually at either end.
         * The equation used for ``"s-curve"`` is ``y = (sin((x - 1/2)*pi) +
           1)/2``, For an S-curve greyscale ramp, you should set
-          :attr:`LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
+          :attr:`pyvista.LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
           room for the tails of the ramp.
 
         * The equation for the ``"linear"`` is simply ``y = x``.
@@ -815,7 +815,10 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> mesh = examples.load_random_hills()
         >>> lut = pv.LookupTable(cmap='viridis')
         >>> lut.apply_opacity([1.0, 0.4, 0.0, 0.4, 0.9])
-        >>> lut.scalar_range = (mesh.active_scalars.min(), mesh.active_scalars.max())
+        >>> lut.scalar_range = (
+        ...     mesh.active_scalars.min(),
+        ...     mesh.active_scalars.max(),
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, cmap=lut)
         >>> pl.show()

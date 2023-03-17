@@ -89,7 +89,7 @@ pl.show()
 # most likely locations of the electron for this orbital.
 #
 # Note how we use the absolute value of the scalars when evaluating
-# :func:`contour() <pyvista.PolyDataFilters.contour>` to capture where the
+# :func:`contour() <pyvista.DataSetFilters.contour>` to capture where the
 # positive and negative phases cross ``eval_at``.
 
 eval_at = grid['real_wf'].max() * 0.1
