@@ -1328,7 +1328,7 @@ def Quadrilateral(points=None):
     Parameters
     ----------
     points : sequence, optional
-        Points of the quadrilateral.  Defaults to a simple example.
+        Points of the quadrilateral.  Defaults to a unit square in xy-plane.
 
     Returns
     -------
