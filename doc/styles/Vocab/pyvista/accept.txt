@@ -110,7 +110,6 @@ gitpod
 hexahedra
 hexahedral
 hotfixes
-html
 https
 imageio
 img
