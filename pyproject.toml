@@ -27,6 +27,7 @@ classifiers = [
 ]
 dependencies = [
     'imageio',
+    'matplotlib',
     'numpy',
     'pillow',
     'pooch',
@@ -40,7 +41,6 @@ all = [
     'cmocean',
     'colorcet',
     'ipyvtklink',
-    'matplotlib',
     'meshio>=5.2',
     'panel',
     'pythreejs',
