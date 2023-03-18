@@ -4344,7 +4344,7 @@ class DataSetFilters:
         ind : numpy.ndarray
             Numpy array of cell indices to be extracted.
 
-        invert : bool
+        invert : bool, default: False
             Invert the selection.
 
         progress_bar : bool, default: False

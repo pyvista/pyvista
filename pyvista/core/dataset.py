@@ -2734,11 +2734,10 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        connections : str, optional
+        connections : str, default: "points"
             Describe how the neighbor cell(s) must be connected to the current
             cell to be considered as a neighbor.
             Can be either ``'points'``, ``'edges'`` or ``'faces'``.
-            Defaults to ``'points'``.
 
         Returns
         -------
@@ -2747,8 +2746,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Warnings
         --------
-        For an ExplicitStructuredGrid, use the :func:`pyvista.ExplicitStructuredGrid.neighbors`
-        method.
+        For an :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
@@ -2760,25 +2758,25 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = examples.load_airplane()
 
         Get the neighbor cell ids that have at least one point in common with
-        the 0-th cell
+        the 0-th cell.
 
         >>> mesh.cell_neighbors(0, "points")
         [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
 
         Get the neighbor cell ids that have at least one edge in common with
-        the 0-th cell
+        the 0-th cell.
 
         >>> mesh.cell_neighbors(0, "edges")
         [1, 3, 12]
 
         For unstructured grids with cells of dimension 3 (Tetrahedron for example),
-        cell neighbors can be defined using faces
+        cell neighbors can be defined using faces.
 
         >>> mesh = examples.download_tetrahedron()
         >>> mesh.cell_neighbors(0, "faces")
         [1, 5, 7]
 
-        Show a visual example
+        Show a visual example.
 
         >>> from functools import partial
         >>> import pyvista
@@ -2890,14 +2888,14 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the point neighbors of the 0-th point
+        Get the point neighbors of the 0-th point.
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
         >>> mesh.point_neighbors(0)
         [2, 226, 198, 170, 142, 114, 86, 254, 58, 30]
 
-        Plot them
+        Plot them.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True)
@@ -2938,9 +2936,9 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Point ID.
 
-        n_levels : int
+        n_levels : int, default: 1
             Number of levels to search for point neighbors.
-            When equals to 1, it is equivalent to pyvista.DataSet.point_neighbors.
+            When equal to 1, it is equivalent to :func:`pyvista.DataSet.point_neighbors`.
 
         Returns
         -------
@@ -2954,7 +2952,7 @@ class DataSet(DataSetFilters, DataObject):
         Examples
         --------
         Get the point neighbors IDs starting from the 0-th point
-        up until the third level
+        up until the third level.
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
@@ -2965,7 +2963,7 @@ class DataSet(DataSetFilters, DataObject):
         [3, 227, 255, 199, 171, 143, 115, 87, 59, 31]
         [256, 32, 4, 228, 200, 172, 144, 116, 88, 60]
 
-        Visualize these points IDs
+        Visualize these points IDs.
 
         >>> from functools import partial
         >>> pl = pv.Plotter()
@@ -3011,15 +3009,14 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        connections : str, optional
+        connections : str, default: "points"
             Describe how the neighbor cell(s) must be connected to the current
             cell to be considered as a neighbor.
             Can be either ``'points'``, ``'edges'`` or ``'faces'``.
-            Defaults to ``'points'``.
 
-        n_levels : int
+        n_levels : int, default: 1
             Number of levels to search for cell neighbors.
-            When equals to 1, it is equivalent to pyvista.DataSet.cell_neighbors.
+            When equal to 1, it is equivalent to :func:`pyvista.DataSet.point_neighbors`.
 
         Returns
         -------
@@ -3028,8 +3025,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Warnings
         --------
-        For an ExplicitStructuredGrid, use the :func:`pyvista.ExplicitStructuredGrid.neighbors`
-        method.
+        For an :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
@@ -3038,7 +3034,7 @@ class DataSet(DataSetFilters, DataObject):
         Examples
         --------
         Get the cell neighbors IDs starting from the 0-th cell
-        up until the third level
+        up until the third level.
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
@@ -3051,7 +3047,7 @@ class DataSet(DataSetFilters, DataObject):
         [2, 8, 74, 75, 20, 507]
         [128, 129, 3, 453, 7, 77, 23, 506]
 
-        Visualize these cells IDs
+        Visualize these cells IDs.
 
         >>> from functools import partial
         >>> pv.global_theme.color_cycler = [
@@ -3142,14 +3138,14 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the cell ids using the 0-th point
+        Get the cell ids using the 0-th point.
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
         >>> mesh.point_cell_ids(0)
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-        Plot them
+        Plot them.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True)
