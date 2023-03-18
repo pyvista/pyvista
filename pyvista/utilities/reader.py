@@ -2366,11 +2366,12 @@ class XdmfReader(BaseReader, PointCellDataSelection):
 
     @property
     def number_grids(self):
-        """Get information about grids.
+        """Return the number of grids that can be read by the reader.
 
         Returns
         -------
         int
+            The number of grids to be read.
 
         """
         return self.reader.GetNumberOfGrids()
