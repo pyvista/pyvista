@@ -1,5 +1,7 @@
-"""Project to a Plane
-~~~~~~~~~~~~~~~~~~.
+""".. _project_plane_example:
+
+Project to a Plane
+~~~~~~~~~~~~~~~~~~
 
 :class:`pyvista.PolyData` surfaces and pointsets can easily be projected to a
 plane defined by a normal and origin

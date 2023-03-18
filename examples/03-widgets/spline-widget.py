@@ -1,5 +1,7 @@
-"""Spline Widget
-~~~~~~~~~~~~~.
+""".. _spline_widget_example:
+
+Spline Widget
+~~~~~~~~~~~~~
 
 
 A spline widget can be enabled and disabled by the

@@ -1,5 +1,7 @@
-"""Plot Vector Component
-~~~~~~~~~~~~~~~~~~~~~.
+""".. _vector_component_example:
+
+Plot Vector Component
+~~~~~~~~~~~~~~~~~~~~~
 
 Plot a single component of a vector as a scalar array.
 

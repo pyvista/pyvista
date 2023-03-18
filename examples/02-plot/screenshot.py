@@ -1,5 +1,7 @@
-"""Saving Screenshots
-~~~~~~~~~~~~~~~~~~.
+""".. _screenshot_example:
+
+Saving Screenshots
+~~~~~~~~~~~~~~~~~~
 """
 import matplotlib.pyplot as plt
 

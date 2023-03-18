@@ -1,5 +1,7 @@
-"""Hide Cells with Ghosting
-~~~~~~~~~~~~~~~~~~~~~~~~.
+""".. _ghost_cells_example:
+
+Hide Cells with Ghosting
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Specify specific cells to hide when plotting.
 

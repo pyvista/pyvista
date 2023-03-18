@@ -1,5 +1,7 @@
-"""Render a depth image
-~~~~~~~~~~~~~~~~~~~~.
+""".. _image_depth_example
+
+Render a depth image
+~~~~~~~~~~~~~~~~~~~~
 
 Plot a depth image as viewed from a camera overlooking the "hills"
 example mesh.

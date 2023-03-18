@@ -1,5 +1,7 @@
-"""Read FEniCS/Dolfin Meshes
-~~~~~~~~~~~~~~~~~~~~~~~~~.
+""".. _read_dolfin_example:
+
+Read FEniCS/Dolfin Meshes
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PyVista leverages `meshio`_ to read many mesh formats not natively supported
 by VTK including the `FEniCS/Dolfin`_ XML format.

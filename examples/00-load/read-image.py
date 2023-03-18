@@ -1,5 +1,7 @@
-"""Read Image Files
-~~~~~~~~~~~~~~~~.
+""".. _read_image_example:
+
+Read Image Files
+~~~~~~~~~~~~~~~~
 
 Read and plot image files (JPEG, TIFF, PNG, etc).
 

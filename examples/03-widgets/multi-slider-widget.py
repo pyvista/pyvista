@@ -1,5 +1,7 @@
-"""Multiple Slider Widgets
-~~~~~~~~~~~~~~~~~~~~~~~.
+""".. _multi_slider_widget_example:
+
+Multiple Slider Widgets
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Use a class based callback to track multiple slider widgets for updating a
 single mesh.

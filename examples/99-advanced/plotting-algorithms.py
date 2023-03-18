@@ -1,5 +1,7 @@
-"""Plotting with VTK Algorithms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
+""".. _plotting_algorithms_example:
+
+Plotting with VTK Algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a ``vtkAlgorithm`` to the ``Plotter`` for dynamic visualizations.
 

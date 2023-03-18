@@ -1,5 +1,7 @@
-"""Ray Tracing
-~~~~~~~~~~~.
+""".. _ray_trace_example:
+
+Ray Tracing
+~~~~~~~~~~~
 
 Single line segment ray tracing for PolyData objects.
 """

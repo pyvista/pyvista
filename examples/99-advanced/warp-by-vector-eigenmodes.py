@@ -1,5 +1,7 @@
-"""Displaying eigenmodes of vibration using ``warp_by_vector``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
+""".. _warp_by_vector_eigenmodes_example:
+
+Displaying eigenmodes of vibration using ``warp_by_vector``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example applies the ``warp_by_vector`` filter to a cube whose eigenmodes
 have been computed using the Ritz method, as outlined in Visscher, William M.,

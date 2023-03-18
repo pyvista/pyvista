@@ -1,5 +1,7 @@
-"""Sphere Widget
-~~~~~~~~~~~~~.
+""".. _sphere_widget_example:
+
+Sphere Widget
+~~~~~~~~~~~~~
 
 The sphere widget can be enabled and disabled by the
 :func:`pyvista.Plotter.add_sphere_widget` and

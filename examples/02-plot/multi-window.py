@@ -1,5 +1,7 @@
-"""Multi-Window Plot
-~~~~~~~~~~~~~~~~~.
+""".. _multi_window_example
+
+Multi-Window Plot
+~~~~~~~~~~~~~~~~~
 
 
 Subplotting: having multiple scenes in a single window

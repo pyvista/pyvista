@@ -1,5 +1,8 @@
-"""Visible Vertices
-~~~~~~~~~~~~~~~~.
+""".. _visible_vertices_example:
+
+Visible Vertices
+~~~~~~~~~~~~~~~~
+
 
 Display vertices on a mesh in the same fashion as edge visibility.
 """

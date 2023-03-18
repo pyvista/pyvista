@@ -1,5 +1,7 @@
-"""Distance Between Two Surfaces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.
+""".. _distance_between_surfaces_example:
+
+Distance Between Two Surfaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Compute the average thickness between two surfaces.
 
