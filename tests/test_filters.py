@@ -12,14 +12,10 @@ from pyvista import examples
 from pyvista._vtk import vtkStaticCellLocator
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
-from pyvista.utilities.misc import can_create_mpl_figure
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
-)
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -1349,7 +1345,6 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@skip_no_mpl_figure
 def test_plot_over_line(tmpdir):
     """This test requires matplotlib."""
     tmp_dir = tmpdir.mkdir("tmpdir")
@@ -1473,7 +1468,6 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@skip_no_mpl_figure
 def test_plot_over_circular_arc(tmpdir):
     """This test requires matplotlib."""
     mesh = examples.load_uniform()
@@ -1517,7 +1511,6 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
-@skip_no_mpl_figure
 def test_plot_over_circular_arc_normal(tmpdir):
     """This test requires matplotlib."""
     mesh = examples.load_uniform()
