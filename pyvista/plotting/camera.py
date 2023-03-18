@@ -848,7 +848,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.show()
 
         """
-        # inspired by vedo resetCamera. Thanks @marcomusy
+        # Inspired by vedo resetCamera. Thanks @marcomusy.
         x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
 
         self.enable_parallel_projection()

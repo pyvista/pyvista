@@ -55,7 +55,7 @@ available as callable methods directly from any ``UniformGrid`` mesh.
 
 Composite Filters
 ~~~~~~~~~~~~~~~~~
-These are filters that can be applied to composite datasets, for example
+These are filters that can be applied to composite datasets, that is
 :class:`pyvista.MultiBlock`. The :class:`pyvista.CompositeFilters` class
 inherits many but not all of the filters from :class:`pyvista.DataSetFilters`.
 

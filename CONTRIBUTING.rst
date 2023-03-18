@@ -587,7 +587,7 @@ Build the documentation on Linux or Mac OS with:
 
 Build the documentation on Windows with:
 
-.. code::
+.. code:: winbatch
 
    cd doc
    python -msphinx -M html . _build

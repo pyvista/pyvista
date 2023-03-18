@@ -25,7 +25,7 @@ following features:
 - WarpByScalar: deform your mesh given a 1-D input data (for example terrain
   elevation)
 - Threshold: only visualize mesh parts inside a range of data
-  (for example, 222 K≤ temperature ≤ 240 K)
+  (for example, 222 K ≤ temperature ≤ 240 K)
 - IsoSurface: only visualize the surface where the mesh respects a
   data value (for example, pressure == 3 bar)
 - Glyph effects like PointCloud

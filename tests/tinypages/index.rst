@@ -1,5 +1,5 @@
-Welcome to Tinypages's Documentation
-====================================
+Welcome to the Documentation of Tinypages
+=========================================
 
 Contents:
 
