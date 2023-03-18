@@ -361,7 +361,12 @@ class PolyDataFilters(DataSetFilters):
         return merged
 
     def merge(
-        self, dataset, merge_points=True, inplace=False, main_has_priority=True, progress_bar=False,
+        self,
+        dataset,
+        merge_points=True,
+        inplace=False,
+        main_has_priority=True,
+        progress_bar=False,
     ):
         """Merge this mesh with one or more datasets.
 
@@ -451,7 +456,9 @@ class PolyDataFilters(DataSetFilters):
         merged = _get_output(append_filter)
         if merge_points:
             merged = merged.clean(
-                lines_to_points=False, polys_to_lines=False, strips_to_polys=False,
+                lines_to_points=False,
+                polys_to_lines=False,
+                strips_to_polys=False,
             )
 
         if inplace:
@@ -1588,7 +1595,8 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds',
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE),
+                'pyvistaOriginalPointIds',
             )
 
         normal = _vtk.vtkPolyDataNormals()
@@ -1616,7 +1624,12 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     def clip_closed_surface(
-        self, normal='x', origin=None, tolerance=1e-06, inplace=False, progress_bar=False,
+        self,
+        normal='x',
+        origin=None,
+        tolerance=1e-06,
+        inplace=False,
+        progress_bar=False,
     ):
         """Clip a closed polydata surface with a plane.
 
@@ -1970,7 +1983,11 @@ class PolyDataFilters(DataSetFilters):
         return output
 
     def geodesic_distance(
-        self, start_vertex, end_vertex, use_scalar_weights=False, progress_bar=False,
+        self,
+        start_vertex,
+        end_vertex,
+        use_scalar_weights=False,
+        progress_bar=False,
     ):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
 
@@ -2007,7 +2024,10 @@ class PolyDataFilters(DataSetFilters):
         """
         path = self.geodesic(start_vertex, end_vertex, use_scalar_weights=use_scalar_weights)
         sizes = path.compute_cell_sizes(
-            length=True, area=False, volume=False, progress_bar=progress_bar,
+            length=True,
+            area=False,
+            volume=False,
+            progress_bar=progress_bar,
         )
         distance = np.sum(sizes['Length'])
         del path
@@ -2096,7 +2116,11 @@ class PolyDataFilters(DataSetFilters):
         return intersection_points, intersection_cells
 
     def multi_ray_trace(
-        self, origins, directions, first_point=False, retry=False,
+        self,
+        origins,
+        directions,
+        first_point=False,
+        retry=False,
     ):  # pragma: no cover
         """Perform multiple ray trace calculations.
 
@@ -2181,7 +2205,9 @@ class PolyDataFilters(DataSetFilters):
         faces_as_array = self.faces.reshape((self.n_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(self.points, faces_as_array)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
-            origins, directions, multiple_hits=not first_point,
+            origins,
+            directions,
+            multiple_hits=not first_point,
         )
         if retry:
             # gather intersecting rays in lists
@@ -2197,7 +2223,9 @@ class PolyDataFilters(DataSetFilters):
             origins_retry = origins[retry_ray_indices, :]  # shape (n_retry, 3)
             directions_retry = directions[retry_ray_indices, :]
             unit_directions = directions_retry / np.linalg.norm(
-                directions_retry, axis=1, keepdims=True,
+                directions_retry,
+                axis=1,
+                keepdims=True,
             )
             second_points = origins_retry + unit_directions * self.length  # shape (n_retry, 3)
 
@@ -2253,17 +2281,29 @@ class PolyDataFilters(DataSetFilters):
         edges = DataSetFilters.extract_feature_edges(self, progress_bar=progress_bar)
 
         plotter = pyvista.Plotter(
-            off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None),
+            off_screen=kwargs.pop('off_screen', None),
+            notebook=kwargs.pop('notebook', None),
         )
         plotter.add_mesh(
-            edges, color=edge_color, style='wireframe', label='Edges', line_width=line_width,
+            edges,
+            color=edge_color,
+            style='wireframe',
+            label='Edges',
+            line_width=line_width,
         )
         plotter.add_mesh(self, label='Mesh', **kwargs)
         plotter.add_legend()
         return plotter.show()
 
     def plot_normals(
-        self, show_mesh=True, mag=1.0, flip=False, use_every=1, faces=False, color=None, **kwargs,
+        self,
+        show_mesh=True,
+        mag=1.0,
+        flip=False,
+        use_every=1,
+        faces=False,
+        color=None,
+        **kwargs,
     ):
         """Plot the point normals of a mesh.
 
@@ -2317,7 +2357,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         plotter = pyvista.Plotter(
-            off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None),
+            off_screen=kwargs.pop('off_screen', None),
+            notebook=kwargs.pop('notebook', None),
         )
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
@@ -2335,7 +2376,11 @@ class PolyDataFilters(DataSetFilters):
             normals *= -1
 
         plotter.add_arrows(
-            centers, normals[::use_every], mag=mag, color=color, show_scalar_bar=False,
+            centers,
+            normals[::use_every],
+            mag=mag,
+            color=color,
+            show_scalar_bar=False,
         )
 
         return plotter.show()
@@ -2742,7 +2787,11 @@ class PolyDataFilters(DataSetFilters):
         if scalars is not None:
             alg.SetVaryWidth(True)
             alg.SetInputArrayToProcess(
-                0, 0, 0, field.value, scalars,
+                0,
+                0,
+                0,
+                field.value,
+                scalars,
             )  # args: (idx, port, connection, field, name)
             alg.SetWidthFactor(factor)
         else:
@@ -3512,7 +3561,11 @@ class PolyDataFilters(DataSetFilters):
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars,
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.GenerateValues(n_contours, rng[0], rng[1])
         alg.SetInputDataObject(self)

@@ -24,7 +24,10 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence,
+    _vtk.vtkMultiBlockDataSet,
+    CompositeFilters,
+    DataObject,
+    collections.abc.MutableSequence,
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -451,7 +454,9 @@ class MultiBlock(
                 self.append(v)
 
     def get(
-        self, index: str, default: _TypeMultiBlockLeaf | None = None,
+        self,
+        index: str,
+        default: _TypeMultiBlockLeaf | None = None,
     ) -> _TypeMultiBlockLeaf | None:
         """Get a block by its name.
 
@@ -606,13 +611,17 @@ class MultiBlock(
 
     @overload
     def __setitem__(
-        self, index: int | str, data: _TypeMultiBlockLeaf | None,
+        self,
+        index: int | str,
+        data: _TypeMultiBlockLeaf | None,
     ):
         ...  # pragma: no cover
 
     @overload
     def __setitem__(
-        self, index: slice, data: Iterable[_TypeMultiBlockLeaf | None],
+        self,
+        index: slice,
+        data: Iterable[_TypeMultiBlockLeaf | None],
     ):
         ...  # pragma: no cover
 
@@ -653,7 +662,8 @@ class MultiBlock(
             for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
                 if idx is None:
                     self.insert(
-                        index_iter[-1] + 1 + (i - len(index_iter)), d,
+                        index_iter[-1] + 1 + (i - len(index_iter)),
+                        d,
                     )  # insert after last entry, increasing
                 elif d is None:
                     del self[index_iter[-1] + 1]  # delete next entry
@@ -989,7 +999,10 @@ class MultiBlock(
         return newobject
 
     def set_active_scalars(
-        self, name: str | None, preference: str = 'cell', allow_missing: bool = False,
+        self,
+        name: str | None,
+        preference: str = 'cell',
+        allow_missing: bool = False,
     ) -> tuple[FieldAssociation, np.ndarray]:  # type: ignore
         """Find the scalars by name and appropriately set it as active.
 
@@ -1029,7 +1042,9 @@ class MultiBlock(
             if block is not None:
                 if isinstance(block, MultiBlock):
                     field, scalars = block.set_active_scalars(
-                        name, preference, allow_missing=allow_missing,
+                        name,
+                        preference,
+                        allow_missing=allow_missing,
                     )
                 else:
                     try:
@@ -1195,7 +1210,10 @@ class MultiBlock(
         return f'{scalars_name}-real'
 
     def _convert_to_single_component(
-        self, data_attr: str, scalars_name: str, component: None | str,
+        self,
+        data_attr: str,
+        scalars_name: str,
+        component: None | str,
     ) -> str:
         """Convert multi-component scalars to a single component."""
         if component is None:

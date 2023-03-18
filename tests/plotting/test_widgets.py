@@ -175,7 +175,10 @@ def test_widget_slider(uniform):
     p = pyvista.Plotter()
     title_opacity = np.random.random()
     s = p.add_slider_widget(
-        callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity,
+        callback=func,
+        rng=[0, 10],
+        style="classic",
+        title_opacity=title_opacity,
     )
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
@@ -195,7 +198,11 @@ def test_widget_slider(uniform):
     # custom width
     p = pyvista.Plotter()
     slider = p.add_slider_widget(
-        callback=func, rng=[0, 10], fmt=fmt, tube_width=0.1, slider_width=0.2,
+        callback=func,
+        rng=[0, 10],
+        fmt=fmt,
+        tube_width=0.1,
+        slider_width=0.2,
     )
     assert slider.GetRepresentation().GetSliderWidth() == 0.2
     assert slider.GetRepresentation().GetTubeWidth() == 0.1

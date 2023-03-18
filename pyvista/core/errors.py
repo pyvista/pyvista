@@ -42,7 +42,8 @@ class VTKVersionError(RuntimeError):
     """Requested feature is not supported by the installed VTK version."""
 
     def __init__(
-        self, message='The requested feature is not supported by the installed VTK version.',
+        self,
+        message='The requested feature is not supported by the installed VTK version.',
     ) -> None:
         """Empty init."""
         RuntimeError.__init__(self, message)

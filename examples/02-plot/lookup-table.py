@@ -146,7 +146,11 @@ pl.add_slider_widget(
     tube_width=0.003,
 )
 pl.add_slider_widget(
-    set_max_alpha, (0, 1), value=lut.alpha_range[1], interaction_event='always', tube_width=0.0,
+    set_max_alpha,
+    (0, 1),
+    value=lut.alpha_range[1],
+    interaction_event='always',
+    tube_width=0.0,
 )
 
 pl.show()

@@ -373,7 +373,12 @@ def Sphere(
 
 
 def Plane(
-    center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=10, j_resolution=10,
+    center=(0, 0, 0),
+    direction=(0, 0, 1),
+    i_size=1,
+    j_size=1,
+    i_resolution=10,
+    j_resolution=10,
 ):
     """Create a plane.
 

@@ -54,7 +54,12 @@ def glyphs(grid_sz=3):
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
     return mesh.glyph(
-        geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1), orient=False,
+        geom=geoms,
+        indices=values,
+        scale=False,
+        factor=0.3,
+        rng=(0, n - 1),
+        orient=False,
     )
 
 
@@ -261,7 +266,10 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
     plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
-        title='Wave Example', window_size=[800, 600], auto_close=False, interactive_update=True,
+        title='Wave Example',
+        window_size=[800, 600],
+        auto_close=False,
+        interactive_update=True,
     )
 
     # Update Z and display a frame for each updated position
@@ -374,7 +382,9 @@ def plot_ants_plane(notebook=None):
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(
-        airplane, scalars=plane_scalars, scalar_bar_args={'title': 'Plane Y\nLocation'},
+        airplane,
+        scalars=plane_scalars,
+        scalar_bar_args={'title': 'Plane Y\nLocation'},
     )
     plotter.add_text('Ants and Plane Example')
     plotter.show()

@@ -79,7 +79,8 @@ def read_legacy(filename, progress_bar=False):
     """
     # Deprecated on v0.35.0, estimated removal on v0.40.0
     warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning,
+        "Using read_legacy is deprecated. Use pyvista.read instead",
+        PyVistaDeprecationWarning,
     )
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     return read(filename, progress_bar=progress_bar)

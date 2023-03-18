@@ -40,7 +40,8 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(
-            'interpolate_before_map', self._theme.interpolate_before_map,
+            'interpolate_before_map',
+            self._theme.interpolate_before_map,
         )
 
     @property
@@ -403,7 +404,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
+        self,
+        obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):
         set_algorithm_input(self, obj)
 
@@ -937,7 +939,8 @@ class _BaseVolumeMapper(_BaseMapper):
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
+        self,
+        obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):
         set_algorithm_input(self, obj)
 
@@ -1026,24 +1029,20 @@ class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _Base
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
 
-
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
-
 
 
 class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
 
-
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
 
-
 class UnstructuredGridVolumeRayCastMapper(
-    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper,
+    _vtk.vtkUnstructuredGridVolumeRayCastMapper,
+    _BaseVolumeMapper,
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
-

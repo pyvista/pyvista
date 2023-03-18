@@ -55,7 +55,9 @@ def insert_string_array(hexbeam_point_attributes):
 
 def test_init(hexbeam):
     attributes = pyvista.DataSetAttributes(
-        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT,
+        hexbeam.GetPointData(),
+        dataset=hexbeam,
+        association=FieldAssociation.POINT,
     )
     assert attributes.VTKObject == hexbeam.GetPointData()
     assert attributes.dataset == hexbeam

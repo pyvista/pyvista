@@ -20,7 +20,8 @@ STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
 pointsetmark = pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    pyvista.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 
 
@@ -179,7 +180,8 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     assert grid.n_cells == (3 if multiple_cell_types else 2)
     assert np.all(grid.cells == vtk_cell_format)
     assert np.allclose(
-        grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16)),
+        grid.cell_connectivity,
+        (np.arange(20) if multiple_cell_types else np.arange(16)),
     )
 
     # Now fetch the arrays
@@ -217,7 +219,9 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     # Incorrect size
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid(
-            {vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False,
+            {vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1]},
+            points,
+            deep=False,
         )
 
     # Unknown cell type
@@ -231,7 +235,8 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     # Non-integer arrays
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid(
-            {vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)}, points,
+            {vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)},
+            points,
         )
 
     # Invalid point dimensions
@@ -838,7 +843,8 @@ def test_create_uniform_grid_from_specs():
 
     # all args (deprecated)
     with pytest.warns(
-        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed",
+        PyVistaDeprecationWarning,
+        match="Behavior of pyvista.UniformGrid has changed",
     ):
         grid = pyvista.UniformGrid(dims, origin, spacing)
         assert grid.dimensions == dims
@@ -847,7 +853,8 @@ def test_create_uniform_grid_from_specs():
 
     # just dims (deprecated)
     with pytest.warns(
-        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed",
+        PyVistaDeprecationWarning,
+        match="Behavior of pyvista.UniformGrid has changed",
     ):
         grid = pyvista.UniformGrid(dims)
         assert grid.dimensions == dims
@@ -872,7 +879,8 @@ def test_create_uniform_grid_from_specs():
 
 def test_uniform_grid_invald_args():
     with pytest.warns(
-        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed",
+        PyVistaDeprecationWarning,
+        match="Behavior of pyvista.UniformGrid has changed",
     ):
         pyvista.UniformGrid((1, 1, 1))
 
@@ -1087,7 +1095,8 @@ def test_grid_points():
     assert grid.dimensions == (3, 3, 2)
     assert np.allclose(grid.meshgrid, (xx, yy, zz))
     assert np.allclose(
-        grid.points, np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')],
+        grid.points,
+        np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')],
     )
 
 

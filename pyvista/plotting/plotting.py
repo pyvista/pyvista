@@ -1985,7 +1985,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.add_key_event('q', self._prep_for_close)  # Add no matter what
         b_left_down_callback = lambda: self.iren.add_observer(
-            'LeftButtonPressEvent', self.left_button_down,
+            'LeftButtonPressEvent',
+            self.left_button_down,
         )
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
@@ -3373,7 +3374,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     'Smooth shading is not currently supported when a vtkAlgorithm is passed.',
                 )
             mesh, scalars = prepare_smooth_shading(
-                mesh, scalars, texture, split_sharp_edges, feature_angle, preference,
+                mesh,
+                scalars,
+                texture,
+                split_sharp_edges,
+                feature_angle,
+                preference,
             )
 
         if rgb:
@@ -3419,7 +3425,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Handle making opacity array
         custom_opac, opacity = process_opacity(
-            mesh, opacity, preference, n_colors, scalars, use_transparency,
+            mesh,
+            opacity,
+            preference,
+            n_colors,
+            scalars,
+            use_transparency,
         )
 
         # Scalars formatting ==================================================
@@ -3968,7 +3979,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'Type {type(volume)} not supported for volume rendering as it is not 3D.',
             )
         elif not isinstance(
-            volume, pyvista.UniformGrid | pyvista.RectilinearGrid | pyvista.UnstructuredGrid,
+            volume,
+            pyvista.UniformGrid | pyvista.RectilinearGrid | pyvista.UnstructuredGrid,
         ):
             volume = volume.cast_to_unstructured_grid()
 

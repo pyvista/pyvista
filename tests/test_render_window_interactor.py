@@ -10,7 +10,8 @@ from pyvista import _vtk
 from pyvista.plotting import system_supports_plotting
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting",
+    not system_supports_plotting(),
+    reason="Requires system to support plotting",
 )
 
 

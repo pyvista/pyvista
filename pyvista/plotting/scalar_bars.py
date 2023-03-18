@@ -63,7 +63,9 @@ class ScalarBars:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
                     self._plotter.remove_actor(
-                        self._scalar_bar_actors.pop(name), reset_camera=reset_camera, render=render,
+                        self._scalar_bar_actors.pop(name),
+                        reset_camera=reset_camera,
+                        render=render,
                     )
                     self._plotter._scalar_bar_slots.add(slot)
             return

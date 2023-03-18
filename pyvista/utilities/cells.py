@@ -179,7 +179,8 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(
             np.concatenate(
-                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1,
+                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr],
+                axis=-1,
             ).reshape([-1]),
         )
 

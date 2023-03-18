@@ -106,7 +106,9 @@ def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
     plotter = pyvista.Plotter(
-        border=has_border, border_color=border_color, border_width=border_width,
+        border=has_border,
+        border_color=border_color,
+        border_width=border_width,
     )
     assert plotter.renderer.has_border is has_border
 

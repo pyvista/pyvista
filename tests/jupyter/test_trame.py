@@ -24,7 +24,8 @@ if pv.vtk_version_info < (9, 1):
     pytestmark = pytest.mark.skip
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting",
+    not system_supports_plotting(),
+    reason="Requires system to support plotting",
 )
 
 skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")

@@ -61,24 +61,29 @@ def using_mesa():
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_windows_mesa = pytest.mark.skipif(
-    using_mesa() and os.name == 'nt', reason='Does not display correctly within OSMesa on Windows',
+    using_mesa() and os.name == 'nt',
+    reason='Does not display correctly within OSMesa on Windows',
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
 skip_lesser_9_0_X = pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X",
+    pyvista.vtk_version_info < (9, 1),
+    reason="Functions not implemented before 9.0.X",
 )
 skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib",
+    not can_create_mpl_figure(),
+    reason="Cannot create a figure using matplotlib",
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples',
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 skip_mac_flaky = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='This is a flaky test on MacOS',
+    platform.system() == 'Darwin',
+    reason='This is a flaky test on MacOS',
 )
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
@@ -180,7 +185,13 @@ def test_pbr(sphere, verify_image_cache):
     pl.set_environment_texture(texture)
     pl.add_light(pyvista.Light())
     pl.add_mesh(
-        sphere, color='w', pbr=True, metallic=0.8, roughness=0.2, smooth_shading=True, diffuse=1,
+        sphere,
+        color='w',
+        pbr=True,
+        metallic=0.8,
+        roughness=0.2,
+        smooth_shading=True,
+        diffuse=1,
     )
     pl.add_mesh(
         pyvista.Sphere(center=(0, 0, 1)),
@@ -571,7 +582,8 @@ def test_set_camera_position(cpos, sphere):
 
 
 @pytest.mark.parametrize(
-    'cpos', [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid'],
+    'cpos',
+    [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid'],
 )
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pyvista.Plotter()
@@ -739,7 +751,11 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(
-        label_font_size=10, title_font_size=20, title='woa', interactive=True, vertical=True,
+        label_font_size=10,
+        title_font_size=20,
+        title='woa',
+        interactive=True,
+        vertical=True,
     )
     plotter.add_scalar_bar(background_color='white', n_colors=256)
     assert isinstance(plotter.scalar_bar, vtk.vtkScalarBarActor)
@@ -817,7 +833,11 @@ def test_legend_circle_face(sphere):
     legend_labels = [['sphere', 'r']]
     face = "circle"
     _ = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face,
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        face=face,
     )
     plotter.show()
 
@@ -828,7 +848,11 @@ def test_legend_rectangle_face(sphere):
     legend_labels = [['sphere', 'r']]
     face = "rectangle"
     _ = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face,
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        face=face,
     )
     plotter.show()
 
@@ -840,7 +864,11 @@ def test_legend_invalid_face(sphere):
     face = "invalid_face"
     with pytest.raises(ValueError):
         plotter.add_legend(
-            labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face,
+            labels=legend_labels,
+            border=True,
+            bcolor=None,
+            size=[0.1, 0.1],
+            face=face,
         )
 
 
@@ -922,7 +950,11 @@ def test_add_point_labels():
 
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
     plotter.add_point_labels(
-        points - 1, range(n), show_points=False, point_color='r', point_size=10,
+        points - 1,
+        range(n),
+        show_points=False,
+        point_color='r',
+        point_size=10,
     )
     plotter.show()
 
@@ -932,7 +964,9 @@ def test_add_point_labels_always_visible(always_visible):
     # just make sure it runs without exception
     plotter = pyvista.Plotter()
     plotter.add_point_labels(
-        np.array([[0.0, 0.0, 0.0]]), ['hello world'], always_visible=always_visible,
+        np.array([[0.0, 0.0, 0.0]]),
+        ['hello world'],
+        always_visible=always_visible,
     )
     plotter.show()
 
@@ -966,7 +1000,11 @@ def test_add_points():
     n = points.shape[0]
 
     plotter.add_points(
-        points, scalars=np.arange(n), cmap=None, flip_scalars=True, show_scalar_bar=False,
+        points,
+        scalars=np.arange(n),
+        cmap=None,
+        flip_scalars=True,
+        show_scalar_bar=False,
     )
     plotter.show()
 
@@ -2229,7 +2267,11 @@ def test_plot_shadows_enable_disable():
         plotter.add_mesh(screen, color='white')
 
     light = pyvista.Light(
-        position=(0, 0, 0), focal_point=(0, 1, 0), color='cyan', intensity=15, cone_angle=15,
+        position=(0, 0, 0),
+        focal_point=(0, 1, 0),
+        color='cyan',
+        intensity=15,
+        cone_angle=15,
     )
     light.positional = True
     light.attenuation_values = (2, 0, 0)
@@ -3135,7 +3177,10 @@ def test_plot_nan_color(uniform):
     # nan annotation should appear on scalar bar
     pl = pyvista.Plotter()
     pl.add_mesh(
-        uniform, nan_opacity=0.5, nan_color='green', scalar_bar_args={'nan_annotation': True},
+        uniform,
+        nan_opacity=0.5,
+        nan_color='green',
+        scalar_bar_args={'nan_annotation': True},
     )
     pl.enable_depth_peeling()
     pl.show()

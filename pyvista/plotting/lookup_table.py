@@ -833,7 +833,10 @@ class LookupTable(_vtk.vtkLookupTable):
             self.values[:, -1] = np.array(opacity)
         else:
             self.values[:, -1] = opacity_transfer_function(
-                opacity, self.n_values, interpolate=interpolate, kind=kind,
+                opacity,
+                self.n_values,
+                interpolate=interpolate,
+                kind=kind,
             )
         self._opacity_parm = (opacity, interpolate, kind)
 

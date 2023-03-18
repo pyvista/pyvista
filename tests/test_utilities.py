@@ -33,7 +33,8 @@ from pyvista.utilities.misc import (
 )
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting",
+    not system_supports_plotting(),
+    reason="Requires system to support plotting",
 )
 
 
@@ -804,7 +805,8 @@ def test_convert_array():
 
     # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pyvista.utilities.convert_array(
-        pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O'),
+        pickle.loads(pickle.dumps(np.arange(4).astype('O'))),
+        array_type=np.dtype('O'),
     )
     assert arr3.GetNumberOfValues() == 4
 

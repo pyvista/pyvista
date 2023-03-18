@@ -60,15 +60,12 @@ class PyVistaDeprecationWarning(Warning):
     """Non-supressed Depreciation Warning."""
 
 
-
 class PyVistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
 
 
-
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
-
 
 
 def VTKVersionInfo():

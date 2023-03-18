@@ -1,4 +1,4 @@
-""".. _multi_window_example
+""".. _multi_window_example.
 
 Multi-Window Plot
 ~~~~~~~~~~~~~~~~~

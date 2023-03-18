@@ -33,7 +33,11 @@ def test_contour_banded_points(sphere):
 
     rng = [-100, 100]
     out = sphere.contour_banded(
-        10, rng=rng, generate_contour_edges=False, scalar_mode='index', clipping=True,
+        10,
+        rng=rng,
+        generate_contour_edges=False,
+        scalar_mode='index',
+        clipping=True,
     )
     assert out['data'].min() <= rng[0]
     assert out['data'].max() >= rng[1]

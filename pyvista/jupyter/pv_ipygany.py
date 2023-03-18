@@ -85,7 +85,8 @@ def pyvista_polydata_to_polymesh(obj):
 def pyvista_object_to_pointcloud(pv_object):
     """Convert any pyvista object into a ``ipygany.PointCloud``."""
     pc = PointCloud(
-        vertices=pv_object.points, data=_grid_data_to_data_widget(get_ugrid_data(pv_object)),
+        vertices=pv_object.points,
+        data=_grid_data_to_data_widget(get_ugrid_data(pv_object)),
     )
     return pc
 
@@ -198,7 +199,6 @@ def show_ipygany(plotter, height=None, width=None):
         # Create a slider that will dynamically change the boundaries of the colormap
         # colormap_slider_range = FloatRangeSlider(value=[height_min, height_max],
         #                                          step=(height_max - height_min) / 100.)
-
 
         # create app
         title = HTML(value=f'<h3>{list(plotter.scalar_bars.keys())[0]}</h3>')

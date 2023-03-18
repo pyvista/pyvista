@@ -150,7 +150,8 @@ class Renderers:
                                     f'Groups cannot overlap. Overlap found at position {(i, j)}.',
                                 )
                     self.groups = np.concatenate(
-                        (self.groups, np.array([norm_group], dtype=int)), axis=0,
+                        (self.groups, np.array([norm_group], dtype=int)),
+                        axis=0,
                     )
             # Create subplot renderers
             for row in range(shape[0]):
@@ -177,7 +178,8 @@ class Renderers:
                         self._renderers.append(renderer)
                     else:
                         self._render_idxs[row, col] = self._render_idxs[
-                            self.groups[group, 0], self.groups[group, 1],
+                            self.groups[group, 0],
+                            self.groups[group, 1],
                         ]
 
         # each render will also have an associated background renderer

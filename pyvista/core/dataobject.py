@@ -409,7 +409,9 @@ class DataObject:
 
         """
         return DataSetAttributes(
-            self.GetFieldData(), dataset=self, association=FieldAssociation.NONE,
+            self.GetFieldData(),
+            dataset=self,
+            association=FieldAssociation.NONE,
         )
 
     def clear_field_data(self):
@@ -567,7 +569,8 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
-            'PICKLE_FORMAT', 'legacy',  # backwards compatibility - assume 'legacy'
+            'PICKLE_FORMAT',
+            'legacy',  # backwards compatibility - assume 'legacy'
         )
         self.__dict__.update(state)
 

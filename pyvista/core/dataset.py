@@ -173,7 +173,8 @@ class DataSet(DataSetFilters, DataObject):
             for attr in [self.point_data, self.cell_data]:
                 if attr.active_scalars_name is not None:
                     self._active_scalars_info = ActiveArrayInfo(
-                        attr.association, attr.active_scalars_name,
+                        attr.association,
+                        attr.active_scalars_name,
                     )
                     break
 
@@ -799,7 +800,9 @@ class DataSet(DataSetFilters, DataObject):
         return self.cell_data.active_normals
 
     def get_data_range(
-        self, arr_var: str | np.ndarray | None = None, preference='cell',
+        self,
+        arr_var: str | np.ndarray | None = None,
+        preference='cell',
     ) -> tuple[float | np.ndarray, float | np.ndarray]:
         """Get the non-NaN min and max of a named array.
 
@@ -840,7 +843,11 @@ class DataSet(DataSetFilters, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
     def rotate_x(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False,
+        self,
+        angle: float,
+        point=(0.0, 0.0, 0.0),
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Rotate mesh about the x-axis.
 
@@ -890,11 +897,17 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def rotate_y(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False,
+        self,
+        angle: float,
+        point=(0.0, 0.0, 0.0),
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Rotate mesh about the y-axis.
 
@@ -944,11 +957,17 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def rotate_z(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False,
+        self,
+        angle: float,
+        point=(0.0, 0.0, 0.0),
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Rotate mesh about the z-axis.
 
@@ -998,7 +1017,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def rotate_vector(
@@ -1061,11 +1082,16 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def translate(
-        self, xyz: list | tuple | np.ndarray, transform_all_input_vectors=False, inplace=False,
+        self,
+        xyz: list | tuple | np.ndarray,
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Translate the mesh.
 
@@ -1108,7 +1134,9 @@ class DataSet(DataSetFilters, DataObject):
         transform = _vtk.vtkTransform()
         transform.Translate(xyz)
         return self.transform(
-            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def scale(
@@ -1168,7 +1196,9 @@ class DataSet(DataSetFilters, DataObject):
         transform = _vtk.vtkTransform()
         transform.Scale(xyz)
         return self.transform(
-            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
@@ -1219,7 +1249,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection((1, 0, 0), point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
@@ -1270,7 +1302,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
@@ -1321,11 +1355,17 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_normal(
-        self, normal: list[float], point=None, transform_all_input_vectors=False, inplace=False,
+        self,
+        normal: list[float],
+        point=None,
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Flip mesh about the normal.
 
@@ -1378,7 +1418,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def copy_meta_from(self, ido: 'DataSet', deep: bool = True):
@@ -1448,7 +1490,9 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return DataSetAttributes(
-            self.GetPointData(), dataset=self, association=FieldAssociation.POINT,
+            self.GetPointData(),
+            dataset=self,
+            association=FieldAssociation.POINT,
         )
 
     def clear_point_data(self):
@@ -1532,7 +1576,9 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return DataSetAttributes(
-            self.GetCellData(), dataset=self, association=FieldAssociation.CELL,
+            self.GetCellData(),
+            dataset=self,
+            association=FieldAssociation.CELL,
         )
 
     @property
@@ -1714,7 +1760,9 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Area'].sum()
 
     def get_array(
-        self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell',
+        self,
+        name: str,
+        preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> 'pyvista.pyvista_ndarray':
         """Search both point, cell and field data for an array.
 
@@ -1768,7 +1816,9 @@ class DataSet(DataSetFilters, DataObject):
         return arr
 
     def get_array_association(
-        self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell',
+        self,
+        name: str,
+        preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> FieldAssociation:
         """Get the association of an array.
 
@@ -2325,9 +2375,7 @@ class DataSet(DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
-        out_cells: int | np.ndarray = (
-            closest_cells[0] if singular else np.array(closest_cells)
-        )
+        out_cells: int | np.ndarray = closest_cells[0] if singular else np.array(closest_cells)
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
 
         if return_closest_point:
@@ -2335,7 +2383,8 @@ class DataSet(DataSetFilters, DataObject):
         return out_cells
 
     def find_containing_cell(
-        self, point: VectorArray | NumericArray,
+        self,
+        point: VectorArray | NumericArray,
     ) -> int | np.ndarray:
         """Find index of a cell that contains the given point.
 
@@ -2682,7 +2731,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_type` is deprecated. Use `get_cell(i).type` instead', PyVistaDeprecationWarning,
+            '`cell_type` is deprecated. Use `get_cell(i).type` instead',
+            PyVistaDeprecationWarning,
         )
         return self.get_cell(ind).type
 
@@ -2711,7 +2761,9 @@ class DataSet(DataSetFilters, DataObject):
         return self.get_cell(ind).point_ids
 
     def point_is_inside_cell(
-        self, ind: int, point: VectorArray | NumericArray,
+        self,
+        ind: int,
+        point: VectorArray | NumericArray,
     ) -> int | np.ndarray:
         """Return whether one or more points are inside a cell.
 

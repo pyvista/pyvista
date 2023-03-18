@@ -345,7 +345,13 @@ class DataSetFilters:
         return result
 
     def clip_scalar(
-        self, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False,
+        self,
+        scalars=None,
+        invert=True,
+        value=0.0,
+        inplace=False,
+        progress_bar=False,
+        both=False,
     ):
         """Clip a dataset by a scalar.
 
@@ -523,7 +529,11 @@ class DataSetFilters:
         return result
 
     def slice_implicit(
-        self, implicit_function, generate_triangles=False, contour=False, progress_bar=False,
+        self,
+        implicit_function,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
     ):
         """Slice a dataset by a VTK implicit function.
 
@@ -580,7 +590,12 @@ class DataSetFilters:
         return output
 
     def slice(
-        self, normal='x', origin=None, generate_triangles=False, contour=False, progress_bar=False,
+        self,
+        normal='x',
+        origin=None,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
     ):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
@@ -644,7 +659,13 @@ class DataSetFilters:
         )
 
     def slice_orthogonal(
-        self, x=None, y=None, z=None, generate_triangles=False, contour=False, progress_bar=False,
+        self,
+        x=None,
+        y=None,
+        z=None,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
     ):
         """Create three orthogonal slices through the dataset on the three cartesian planes.
 
@@ -701,7 +722,11 @@ class DataSetFilters:
             for i in range(self.n_blocks):
                 output.append(
                     self[i].slice_orthogonal(
-                        x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour,
+                        x=x,
+                        y=y,
+                        z=z,
+                        generate_triangles=generate_triangles,
+                        contour=contour,
                     ),
                 )
             return output
@@ -1103,7 +1128,11 @@ class DataSetFilters:
         alg.SetAllScalars(all_scalars)
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars,
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         # set thresholding parameters
         alg.SetUseContinuousCellRange(continuous)
@@ -2374,7 +2403,13 @@ class DataSetFilters:
         return bodies
 
     def warp_by_scalar(
-        self, scalars=None, factor=1.0, normal=None, inplace=False, progress_bar=False, **kwargs,
+        self,
+        scalars=None,
+        factor=1.0,
+        normal=None,
+        inplace=False,
+        progress_bar=False,
+        **kwargs,
     ):
         """Warp the dataset's points by a point data scalars array's values.
 
@@ -2439,7 +2474,11 @@ class DataSetFilters:
         alg = _vtk.vtkWarpScalar()
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars,
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetScaleFactor(factor)
         if normal is not None:
@@ -2614,7 +2653,10 @@ class DataSetFilters:
 
         """
         return DataSetFilters.cell_data_to_point_data(
-            self, pass_cell_data=pass_cell_data, progress_bar=progress_bar, **kwargs,
+            self,
+            pass_cell_data=pass_cell_data,
+            progress_bar=progress_bar,
+            **kwargs,
         )
 
     def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
@@ -2701,7 +2743,10 @@ class DataSetFilters:
 
         """
         return DataSetFilters.point_data_to_cell_data(
-            self, pass_point_data=pass_point_data, progress_bar=progress_bar, **kwargs,
+            self,
+            pass_point_data=pass_point_data,
+            progress_bar=progress_bar,
+            **kwargs,
         )
 
     def triangulate(self, inplace=False, progress_bar=False):
@@ -2802,7 +2847,12 @@ class DataSetFilters:
         return _get_output(alg)
 
     def select_enclosed_points(
-        self, surface, tolerance=0.001, inside_out=False, check_surface=True, progress_bar=False,
+        self,
+        surface,
+        tolerance=0.001,
+        inside_out=False,
+        check_surface=True,
+        progress_bar=False,
     ):
         """Mark points as to whether they are inside a closed surface.
 
@@ -3290,7 +3340,10 @@ class DataSetFilters:
         source.Update()
         input_source = pyvista.wrap(source.GetOutput())
         output = self.streamlines_from_source(
-            input_source, vectors, progress_bar=progress_bar, **kwargs,
+            input_source,
+            vectors,
+            progress_bar=progress_bar,
+            **kwargs,
         )
         if return_source:
             return output, input_source
@@ -3829,7 +3882,12 @@ class DataSetFilters:
 
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
-            self, pointa, pointb, resolution, tolerance, progress_bar=progress_bar,
+            self,
+            pointa,
+            pointb,
+            resolution,
+            tolerance,
+            progress_bar=progress_bar,
         )
 
         # Get variable of interest
@@ -3913,12 +3971,20 @@ class DataSetFilters:
         # Make a multiple lines and sample the dataset
         multiple_lines = pyvista.MultipleLines(points=points)
         sampled_multiple_lines = multiple_lines.sample(
-            self, tolerance=tolerance, progress_bar=progress_bar,
+            self,
+            tolerance=tolerance,
+            progress_bar=progress_bar,
         )
         return sampled_multiple_lines
 
     def sample_over_circular_arc(
-        self, pointa, pointb, center, resolution=None, tolerance=None, progress_bar=False,
+        self,
+        pointa,
+        pointb,
+        center,
+        resolution=None,
+        tolerance=None,
+        progress_bar=False,
     ):
         """Sample a dataset over a circular arc.
 
@@ -3989,7 +4055,9 @@ class DataSetFilters:
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
         sampled_circular_arc = circular_arc.sample(
-            self, tolerance=tolerance, progress_bar=progress_bar,
+            self,
+            tolerance=tolerance,
+            progress_bar=progress_bar,
         )
         return sampled_circular_arc
 
@@ -4072,7 +4140,11 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArcFromNormal(
-            center, resolution=resolution, normal=normal, polar=polar, angle=angle,
+            center,
+            resolution=resolution,
+            normal=normal,
+            polar=polar,
+            angle=angle,
         )
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
@@ -4166,7 +4238,13 @@ class DataSetFilters:
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
-            self, pointa, pointb, center, resolution, tolerance, progress_bar=progress_bar,
+            self,
+            pointa,
+            pointb,
+            center,
+            resolution,
+            tolerance,
+            progress_bar=progress_bar,
         )
 
         # Get variable of interest
@@ -4298,7 +4376,14 @@ class DataSetFilters:
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
-            self, center, resolution, normal, polar, angle, tolerance, progress_bar=progress_bar,
+            self,
+            center,
+            resolution,
+            normal,
+            polar,
+            angle,
+            tolerance,
+            progress_bar=progress_bar,
         )
 
         # Get variable of interest
@@ -4449,7 +4534,11 @@ class DataSetFilters:
         return _get_output(extract_sel)
 
     def extract_surface(
-        self, pass_pointid=True, pass_cellid=True, nonlinear_subdivision=1, progress_bar=False,
+        self,
+        pass_pointid=True,
+        pass_cellid=True,
+        nonlinear_subdivision=1,
+        progress_bar=False,
     ):
         """Extract surface mesh of the grid.
 
@@ -4740,7 +4829,10 @@ class DataSetFilters:
         return merged
 
     def compute_cell_quality(
-        self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False,
+        self,
+        quality_measure='scaled_jacobian',
+        null_value=-1.0,
+        progress_bar=False,
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 

@@ -128,7 +128,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     """
 
     def __init__(
-        self, vtkobject: _vtk.vtkFieldData, dataset: _vtk.vtkDataSet, association: FieldAssociation,
+        self,
+        vtkobject: _vtk.vtkFieldData,
+        dataset: _vtk.vtkDataSet,
+        association: FieldAssociation,
     ) -> None:
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
@@ -284,7 +287,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
             array = pyvista_ndarray(
-                self.GetScalars(), dataset=self.dataset, association=self.association,
+                self.GetScalars(),
+                dataset=self.dataset,
+                association=self.association,
             )
             return self._patch_type(array)
         return None
@@ -502,7 +507,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return narray
 
     def set_array(
-        self, data: Sequence[Number] | Number | np.ndarray, name: str, deep_copy=False,
+        self,
+        data: Sequence[Number] | Number | np.ndarray,
+        name: str,
+        deep_copy=False,
     ) -> None:
         """Add an array to this object.
 
@@ -568,7 +576,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def set_scalars(
-        self, scalars: Sequence[Number] | Number | np.ndarray, name='scalars', deep_copy=False,
+        self,
+        scalars: Sequence[Number] | Number | np.ndarray,
+        name='scalars',
+        deep_copy=False,
     ):
         """Set the active scalars of the dataset with an array.
 
@@ -623,7 +634,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def set_vectors(
-        self, vectors: Sequence[Number] | Number | np.ndarray, name: str, deep_copy=False,
+        self,
+        vectors: Sequence[Number] | Number | np.ndarray,
+        name: str,
+        deep_copy=False,
     ):
         """Set the active vectors of this data attribute.
 
@@ -701,7 +715,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def _prepare_array(
-        self, data: Sequence[Number] | Number | np.ndarray, name: str, deep_copy: bool,
+        self,
+        data: Sequence[Number] | Number | np.ndarray,
+        name: str,
+        deep_copy: bool,
     ) -> _vtk.vtkDataSet:
         """Prepare an array to be added to this dataset.
 

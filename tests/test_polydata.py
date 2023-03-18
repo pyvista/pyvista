@@ -14,7 +14,8 @@ from pyvista.utilities.misc import PyVistaFutureWarning
 radius = 0.5
 
 skip_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting",
+    not system_supports_plotting(),
+    reason="Requires system to support plotting",
 )
 
 
@@ -224,7 +225,9 @@ def test_geodesic_distance(sphere):
 
     # Use scalar weights
     distance_use_scalar_weights = sphere.geodesic_distance(
-        0, sphere.n_points - 1, use_scalar_weights=True,
+        0,
+        sphere.n_points - 1,
+        use_scalar_weights=True,
     )
     assert isinstance(distance_use_scalar_weights, float)
 
@@ -238,7 +241,11 @@ def test_ray_trace(sphere):
 @skip_plotting
 def test_ray_trace_plot(sphere):
     points, ind = sphere.ray_trace(
-        [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True,
+        [0, 0, 0],
+        [1, 1, 1],
+        plot=True,
+        first_point=True,
+        off_screen=True,
     )
     assert np.any(points)
     assert np.any(ind)
@@ -363,7 +370,10 @@ def test_add(sphere, sphere_shifted):
 
 def test_intersection(sphere, sphere_shifted):
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=True, split_second=True, progress_bar=True,
+        sphere_shifted,
+        split_first=True,
+        split_second=True,
+        progress_bar=True,
     )
 
     assert intersection.n_points
@@ -371,7 +381,10 @@ def test_intersection(sphere, sphere_shifted):
     assert second.n_points > sphere_shifted.n_points
 
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=False, split_second=False, progress_bar=True,
+        sphere_shifted,
+        split_first=False,
+        split_second=False,
+        progress_bar=True,
     )
     assert intersection.n_points
     assert first.n_points == sphere.n_points
@@ -610,7 +623,10 @@ def test_face_normals(sphere):
 
 def test_clip_plane(sphere):
     clipped_sphere = sphere.clip(
-        origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=True,
+        origin=[0, 0, 0],
+        normal=[0, 0, -1],
+        invert=False,
+        progress_bar=True,
     )
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)

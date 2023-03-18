@@ -143,7 +143,8 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
 
     if compress:
         with open(ppath, 'rb') as f_in, gzip.open(
-            os.path.join(data_dir, pMd5 + '.gz'), 'wb',
+            os.path.join(data_dir, pMd5 + '.gz'),
+            'wb',
         ) as f_out:
             shutil.copyfileobj(f_in, f_out)
         # Close then remove.
@@ -350,7 +351,11 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
     # Strips
     if dataset.GetStrips() and dataset.GetStrips().GetData().GetNumberOfTuples() > 0:
         _strips = dump_data_array(
-            dataset_dir, data_dir, dataset.GetStrips().GetData(), {}, compress,
+            dataset_dir,
+            data_dir,
+            dataset.GetStrips().GetData(),
+            {},
+            compress,
         )
         _cells['strips'] = _strips
         _cells['strips']['vtkClass'] = 'vtkCellArray'

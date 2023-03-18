@@ -92,7 +92,6 @@ def test_wrappers():
     class Foo(pyvista.PolyData):
         """A user defined subclass of pyvista.PolyData."""
 
-
     default_wrappers = pyvista._wrappers.copy()
     # Use try...finally to set and reset _wrappers
     try:
@@ -370,7 +369,9 @@ def test_vtk_points_deep_shallow():
     assert np.array_equal(points[0], [0.0, 0.0, 0.0])
 
 
-@pytest.mark.parametrize(('force_float', 'expected_data_type'), [(False, np.int64), (True, np.float32)])
+@pytest.mark.parametrize(
+    ('force_float', 'expected_data_type'), [(False, np.int64), (True, np.float32)],
+)
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
     if force_float:

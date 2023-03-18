@@ -162,7 +162,8 @@ def test_disc():
     geom = pyvista.Disc(center=center)
 
     assert np.allclose(
-        geom.bounds, pyvista.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6]),
+        geom.bounds,
+        pyvista.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6]),
     )
 
 

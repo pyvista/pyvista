@@ -164,7 +164,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
     def _from_arrays(
-        self, x: np.ndarray, y: np.ndarray, z: np.ndarray, check_duplicates: bool = False,
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
+        check_duplicates: bool = False,
     ):
         """Create VTK rectilinear grid directly from numpy arrays.
 
@@ -502,7 +506,8 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             dimensions = kwargs.pop('dims')
             # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
-                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning,
+                '`dims` argument is deprecated. Please use `dimensions`.',
+                PyVistaDeprecationWarning,
             )
         assert_empty_kwargs(**kwargs)
 

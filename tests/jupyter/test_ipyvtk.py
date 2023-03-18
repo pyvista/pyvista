@@ -14,7 +14,8 @@ except:
 
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting",
+    not system_supports_plotting(),
+    reason="Requires system to support plotting",
 )
 
 skip_no_ipyvtk = pytest.mark.skipif(not has_ipyvtklink, reason="Requires IPython package")

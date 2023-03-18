@@ -1827,7 +1827,8 @@ class _MultiCompPlot(_Plot):
                 for i, color in enumerate(val):
                     self._color_series.SetColor(i, Color(color).vtk_c3ub)
                 self._color_series.BuildLookupTable(
-                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL,
+                    self._lookup_table,
+                    _vtk.vtkColorSeries.CATEGORICAL,
                 )
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
@@ -2943,7 +2944,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             if style in fmt:
                 marker_style = style
                 fmt = fmt.replace(
-                    marker_style, "", 1,
+                    marker_style,
+                    "",
+                    1,
                 )  # Remove found marker_style from format string
                 break
         # Extract line style from format string
@@ -4271,7 +4274,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         else:
             # Called from draw_event callback
             img = np.frombuffer(
-                self._canvas.buffer_rgba(), dtype=np.uint8,
+                self._canvas.buffer_rgba(),
+                dtype=np.uint8,
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])

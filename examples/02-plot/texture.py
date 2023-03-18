@@ -220,7 +220,11 @@ mesh.plot(texture=tex)
 # the mesh that will be used as the globe. Note the `start_theta` for a slight
 # overlappig
 sphere = pv.Sphere(
-    radius=1, theta_resolution=120, phi_resolution=120, start_theta=270.001, end_theta=270,
+    radius=1,
+    theta_resolution=120,
+    phi_resolution=120,
+    start_theta=270.001,
+    end_theta=270,
 )
 
 # Initialize the texture coordinates array

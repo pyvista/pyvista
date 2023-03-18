@@ -192,7 +192,10 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
 if __name__ == "__main__":
     parser = ArgumentParser(description='Look for name errors in doctests.')
     parser.add_argument(
-        '-v', '--verbose', action='store_true', help='print passes and failures as tests progress',
+        '-v',
+        '--verbose',
+        action='store_true',
+        help='print passes and failures as tests progress',
     )
     parser.add_argument(
         '--no-respect-skips',

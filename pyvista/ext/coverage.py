@@ -86,16 +86,20 @@ class CoverageBuilder(Builder):
         for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
-            'coverage_ignore_modules', self.config.coverage_ignore_modules,
+            'coverage_ignore_modules',
+            self.config.coverage_ignore_modules,
         )
         self.cls_ignorexps = compile_regex_list(
-            'coverage_ignore_classes', self.config.coverage_ignore_classes,
+            'coverage_ignore_classes',
+            self.config.coverage_ignore_classes,
         )
         self.fun_ignorexps = compile_regex_list(
-            'coverage_ignore_functions', self.config.coverage_ignore_functions,
+            'coverage_ignore_functions',
+            self.config.coverage_ignore_functions,
         )
         self.py_ignorexps = compile_regex_list(
-            'coverage_ignore_pyobjects', self.config.coverage_ignore_pyobjects,
+            'coverage_ignore_pyobjects',
+            self.config.coverage_ignore_pyobjects,
         )
         self.add_modules = self.config.coverage_additional_modules
 
@@ -146,7 +150,10 @@ class CoverageBuilder(Builder):
                     if self.config.coverage_show_missing_items:
                         if self.app.quiet or self.app.warningiserror:
                             logger.warning(
-                                __('undocumented c api: %s [%s] in file %s'), name, typ, filename,
+                                __('undocumented c api: %s [%s] in file %s'),
+                                name,
+                                typ,
+                                filename,
                             )
                         else:
                             logger.info(
@@ -289,7 +296,9 @@ class CoverageBuilder(Builder):
                             if self.app.quiet or self.app.warningiserror:
                                 for func in undoc['funcs']:
                                     logger.warning(
-                                        __('undocumented python function: %s :: %s'), name, func,
+                                        __('undocumented python function: %s :: %s'),
+                                        name,
+                                        func,
                                     )
                             else:
                                 for func in undoc['funcs']:

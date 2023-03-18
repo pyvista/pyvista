@@ -48,7 +48,10 @@ p.add_mesh(
 )
 p.subplot(0, 1)
 p.add_mesh(
-    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs,
+    cyl,
+    interpolate_before_map=True,
+    scalar_bar_args={'title': 'Elevation - interpolated'},
+    **dargs,
 )
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
@@ -74,7 +77,10 @@ p.add_mesh(
 )
 p.subplot(0, 1)
 p.add_mesh(
-    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs,
+    cyl,
+    interpolate_before_map=True,
+    scalar_bar_args={'title': 'Elevation - interpolated'},
+    **dargs,
 )
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]

@@ -53,7 +53,8 @@ def test_scalar_map_mode(composite_mapper):
 
 
 @pytest.mark.parametrize(
-    'value', ['default', 'point', 'cell', 'point_field', 'cell_field', 'field'],
+    'value',
+    ['default', 'point', 'cell', 'point_field', 'cell_field', 'field'],
 )
 def test_scalar_map_mode_values(value, composite_mapper):
     composite_mapper.scalar_map_mode = value

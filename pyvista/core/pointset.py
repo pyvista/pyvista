@@ -160,7 +160,10 @@ class _PointSet(DataSet):
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
     def translate(
-        self, xyz: list | tuple | np.ndarray, transform_all_input_vectors=False, inplace=None,
+        self,
+        xyz: list | tuple | np.ndarray,
+        transform_all_input_vectors=False,
+        inplace=None,
     ):
         """Translate the mesh.
 
@@ -199,7 +202,9 @@ class _PointSet(DataSet):
             self.points += np.asarray(xyz)  # type: ignore
             return self
         return super().translate(
-            xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace,
+            xyz,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
 

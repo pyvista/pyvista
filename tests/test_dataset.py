@@ -569,7 +569,8 @@ def active_component_consistency_check(grid, component_type, field_association="
 
     pv_arr = getattr(grid, "active_" + component_type)
     vtk_arr = getattr(
-        getattr(grid, f"Get{vtk_field_association}Data")(), f"Get{vtk_component_type}",
+        getattr(grid, f"Get{vtk_field_association}Data")(),
+        f"Get{vtk_component_type}",
     )()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
@@ -1447,7 +1448,8 @@ def test_active_normals(sphere):
 
 
 @pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    pyvista.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
@@ -1467,7 +1469,8 @@ def test_cast_to_pointset(sphere):
 
 
 @pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    pyvista.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)

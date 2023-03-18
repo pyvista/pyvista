@@ -159,7 +159,8 @@ class StructuredGridFilters(DataSetFilters):
 
         # concatenate points, cutting off duplicate
         new_points = np.concatenate(
-            (self.points_matrix[slice_spec], other.points_matrix), axis=axis,
+            (self.points_matrix[slice_spec], other.points_matrix),
+            axis=axis,
         )
 
         # concatenate point arrays, cutting off duplicate
@@ -168,7 +169,8 @@ class StructuredGridFilters(DataSetFilters):
             arr_1 = self._reshape_point_array(point_array)
             arr_2 = other._reshape_point_array(other.point_data[name])
             if not np.array_equal(
-                np.take(arr_1, indices=-1, axis=axis), np.take(arr_2, indices=0, axis=axis),
+                np.take(arr_1, indices=-1, axis=axis),
+                np.take(arr_2, indices=0, axis=axis),
             ):
                 raise RuntimeError(
                     f'Grids cannot be joined along axis {axis}, as field '

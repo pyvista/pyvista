@@ -906,7 +906,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._marker_actor
 
     def add_orientation_widget(
-        self, actor, interactive=None, color=None, opacity=1.0, viewport=None,
+        self,
+        actor,
+        interactive=None,
+        color=None,
+        opacity=1.0,
+        viewport=None,
     ):
         """Use the given actor in an orientation marker widget.
 
@@ -1136,7 +1141,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **kwargs,
             )
         axes_widget = self.add_orientation_widget(
-            self.axes_actor, interactive=interactive, color=None,
+            self.axes_actor,
+            interactive=interactive,
+            color=None,
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
@@ -1717,7 +1724,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False,
+            mapper,
+            reset_camera=reset_camera,
+            name=name,
+            culling=culling,
+            pickable=False,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.outline_color).float_rgb)
@@ -1889,7 +1900,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable,
+            mapper,
+            reset_camera=reset_camera,
+            name=f'Floor({face})',
+            pickable=pickable,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.floor_color).float_rgb)

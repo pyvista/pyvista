@@ -359,7 +359,15 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, globe):
 @pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
-    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, globe,
+    extension,
+    binary,
+    tmpdir,
+    use_pathlib,
+    ant,
+    sphere,
+    uniform,
+    airplane,
+    globe,
 ):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
@@ -770,7 +778,9 @@ def test_compute_normals(multiblock_poly):
         block.clear_data()
         block['point_data'] = range(block.n_points)
     mblock = multiblock_poly._compute_normals(
-        cell_normals=False, split_vertices=True, track_vertices=True,
+        cell_normals=False,
+        split_vertices=True,
+        track_vertices=True,
     )
     for block in mblock:
         assert 'Normals' in block.point_data

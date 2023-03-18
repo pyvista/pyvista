@@ -10,7 +10,8 @@ from pyvista import examples
 from pyvista.examples.downloads import download_file
 
 pytestmark = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading',
+    platform.system() == 'Darwin',
+    reason='MacOS testing on Azure fails when downloading',
 )
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
@@ -563,7 +564,8 @@ def test_openfoamreader_active_time():
     assert reader.active_time_value == 1.0
 
     with pytest.raises(
-        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]',
+        ValueError,
+        match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]',
     ):
         reader.set_active_time_value(1000)
 

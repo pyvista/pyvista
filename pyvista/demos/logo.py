@@ -149,7 +149,11 @@ def plot_logo(
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
     plotter.add_mesh(
-        v_grid_atom_surf, scalars='scalars', show_edges=True, cmap='winter', show_scalar_bar=False,
+        v_grid_atom_surf,
+        scalars='scalars',
+        show_edges=True,
+        cmap='winter',
+        show_scalar_bar=False,
     )
 
     # letter 'i'

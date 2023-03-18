@@ -202,7 +202,9 @@ class PickingHelper:
                     show_message += "\nor click to select a dataset under the mouse pointer."
 
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_mesh_picking_message',
+                str(show_message),
+                font_size=font_size,
+                name='_mesh_picking_message',
             )
 
         if left_clicking:
@@ -404,7 +406,8 @@ class PickingHelper:
 
                     # TODO: this is too hacky - find better way to avoid non-dataset actors
                     if not actor.GetMapper() or not hasattr(
-                        actor.GetProperty(), 'GetRepresentation',
+                        actor.GetProperty(),
+                        'GetRepresentation',
                     ):
                         continue
 
@@ -451,7 +454,9 @@ class PickingHelper:
                 if not through:
                     show_message += "\nPress P to pick a single cell under the mouse"
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_cell_picking_message',
+                str(show_message),
+                font_size=font_size,
+                name='_cell_picking_message',
             )
 
         if start:
@@ -630,7 +635,9 @@ class PickingHelper:
                     show_message += "\nor click to select a point under the mouse pointer."
 
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_surf_picking_message',
+                str(show_message),
+                font_size=font_size,
+                name='_surf_picking_message',
             )
 
         return picker
@@ -766,7 +773,9 @@ class PickingHelper:
             elif show_message is True:
                 show_message = "Press P to pick under the mouse"
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_point_picking_message',
+                str(show_message),
+                font_size=font_size,
+                name='_point_picking_message',
             )
 
     def enable_path_picking(

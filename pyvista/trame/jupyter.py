@@ -182,7 +182,12 @@ def build_url(
 
 
 def initialize(
-    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs,
+    server,
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    **kwargs,
 ):
     """Generate the UI for a given plotter."""
     state = server.state

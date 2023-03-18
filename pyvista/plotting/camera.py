@@ -189,7 +189,9 @@ class Camera(_vtk.vtkCamera):
         }
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", {'name': name, 'id': f"0.{name}", 'number_of_elements': "3"},
+                proxy,
+                "Property",
+                {'name': name, 'id': f"0.{name}", 'number_of_elements': "3"},
             )
 
             for i in range(3):
@@ -207,7 +209,9 @@ class Camera(_vtk.vtkCamera):
 
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", {'name': name, 'id': f"0.{name}", 'number_of_elements': "1"},
+                proxy,
+                "Property",
+                {'name': name, 'id': f"0.{name}", 'number_of_elements': "1"},
             )
             tmp = ElementTree.Element("Element")
             tmp.attrib["index"] = "0"

@@ -1000,7 +1000,8 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
     """
     filename = _download_archive(
-        'pvtu_blood_vessels/blood_vessels.zip', target_file='T0000000500.pvtu',
+        'pvtu_blood_vessels/blood_vessels.zip',
+        target_file='T0000000500.pvtu',
     )
 
     if not load:
@@ -3771,7 +3772,8 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     """
     filename = _download_archive(
-        'PVD/paraview/singleSphereAnimation.zip', 'singleSphereAnimation.pvd',
+        'PVD/paraview/singleSphereAnimation.zip',
+        'singleSphereAnimation.pvd',
     )
     if not load:
         return filename

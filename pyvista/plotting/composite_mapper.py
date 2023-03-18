@@ -538,7 +538,11 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     """
 
     def __init__(
-        self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None,
+        self,
+        dataset,
+        theme=None,
+        color_missing_with_nan=None,
+        interpolate_before_map=None,
     ) -> None:
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
@@ -788,7 +792,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         self._orig_scalars_name = scalars_name
 
         field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
-            scalars_name, preference, component, rgb,
+            scalars_name,
+            preference,
+            component,
+            rgb,
         )
 
         self.scalar_visibility = True
