@@ -1578,11 +1578,11 @@ class DataSetFilters:
 
         Parameters
         ----------
-        isosurfaces : int or sequence, optional
+        isosurfaces : int | sequence, optional
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str, collections.abc.Sequence, numpy.ndarray, optional
+        scalars : str | sequence, optional
             Name or array of scalars to threshold on. If this is an array, the
             output of this filter will save them as ``"Contour Data"``.
             Defaults to currently active scalars.

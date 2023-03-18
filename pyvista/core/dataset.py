@@ -2148,7 +2148,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : iterable(float)
+        point : iterable[float]
             Length 3 coordinate of the point to query.
 
         n : int, optional
@@ -2208,9 +2208,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Sequence(float) or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : sequence[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
         return_closest_point : bool, optional
             If ``True``, the closest point within a mesh cell to that point is
@@ -2339,9 +2339,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Sequence(float) or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : sequence[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
         Returns
         -------
@@ -2720,7 +2720,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Sequence[float] or np.ndarray
+        point : sequence[float]
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
             points with shape ``(n, 3)``.
 

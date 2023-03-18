@@ -2619,12 +2619,12 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origin : numpy.ndarray or collections.abc.Sequence, optional
+        origin : sequence[float], optional
             Plane origin.  Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
-        normal : numpy.ndarray or collections.abc.Sequence, optional
+        normal : sequence[float], optional
             Plane normal.  Defaults to +Z, i.e. ``[0, 0, 1]``.
 
         inplace : bool, optional
