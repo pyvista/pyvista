@@ -2277,7 +2277,8 @@ def test_tessellate():
 
 
 @pytest.mark.parametrize(
-    ('num_cell_arrays', 'num_point_data'), itertools.product([0, 1, 2], [0, 1, 2]),
+    ('num_cell_arrays', 'num_point_data'),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
@@ -2318,7 +2319,8 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 
 
 @pytest.mark.parametrize(
-    ('num_cell_arrays', 'num_point_data'), itertools.product([0, 1, 2], [0, 1, 2]),
+    ('num_cell_arrays', 'num_point_data'),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
@@ -2370,7 +2372,8 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
 
 @pytest.mark.parametrize(
-    ('num_cell_arrays', 'num_point_data'), itertools.product([0, 1, 2], [0, 1, 2]),
+    ('num_cell_arrays', 'num_point_data'),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:

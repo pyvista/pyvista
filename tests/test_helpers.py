@@ -370,7 +370,8 @@ def test_vtk_points_deep_shallow():
 
 
 @pytest.mark.parametrize(
-    ('force_float', 'expected_data_type'), [(False, np.int64), (True, np.float32)],
+    ('force_float', 'expected_data_type'),
+    [(False, np.int64), (True, np.float32)],
 )
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
