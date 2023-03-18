@@ -2371,28 +2371,6 @@ class XdmfReader(BaseReader, PointCellDataSelection):
         """
         return self.reader.GetNumberOfGrids()
 
-    @property
-    def number_point_arrays(self):
-        """Return the number of point arrays.
-
-        Returns
-        -------
-        int
-
-        """
-        return self.reader.GetNumberOfPointArrays()
-
-    @property
-    def point_array_names(self):
-        """Return the list of all point array names.
-
-        Returns
-        -------
-        list[str]
-
-        """
-        return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
-
     def set_active_time_value(self, time_value):  # noqa: D102
         self.reader.UpdateTimeStep(time_value)
 
