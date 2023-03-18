@@ -62,7 +62,7 @@ PyPI
 PyThreeJS
 PyVista
 Pydocstyle
-Pyinstaller
+PyInstaller
 Python
 Pytorch
 Resampling
