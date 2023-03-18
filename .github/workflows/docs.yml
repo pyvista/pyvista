@@ -130,7 +130,7 @@ jobs:
       - name: Copy meta data
         run: |
           cp doc/README.md doc/_build/html/
-          cp doc/ads.txt doc/_build/html/
+          cp doc/source/ads.txt doc/_build/html/
 
       - name: Deploy on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -170,7 +170,7 @@ jobs:
 
       - name: Make Cookiecutter
         run: |
-          cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
           cp -r doc/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/

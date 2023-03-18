@@ -167,6 +167,8 @@ class WidgetHelper:
         For a full example see :ref:`box_widget_example`.
 
         """
+        interaction_event = _parse_interaction_event(interaction_event)
+
         if bounds is None:
             bounds = self.bounds
 
