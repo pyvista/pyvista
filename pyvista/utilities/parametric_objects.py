@@ -42,7 +42,11 @@ def Spline(points, n_points=None):
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
     >>> spline = pv.Spline(points, 1000)
-    >>> spline.plot(render_lines_as_tubes=True, line_width=10, show_scalar_bar=False)
+    >>> spline.plot(
+    ...     render_lines_as_tubes=True,
+    ...     line_width=10,
+    ...     show_scalar_bar=False,
+    ... )
 
     """
     spline_function = _vtk.vtkParametricSpline()

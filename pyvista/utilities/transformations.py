@@ -73,7 +73,9 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     ...         [0, 0, 1],
     ...     ]
     ... )
-    >>> rotated = transformations.apply_transformation_to_points(trans, corners)
+    >>> rotated = transformations.apply_transformation_to_points(
+    ...     trans, corners
+    ... )
     >>> np.allclose(rotated, corners[[1, 2, 0], :])
     True
 
@@ -180,7 +182,9 @@ def reflection(normal, point=None):
     ...         [-1, 1, 1],
     ...     ]
     ... )
-    >>> mirrored = transformations.apply_transformation_to_points(trans, verts)
+    >>> mirrored = transformations.apply_transformation_to_points(
+    ...     trans, verts
+    ... )
     >>> np.allclose(mirrored, verts[[np.r_[4:8, 0:4]], :])
     True
 
@@ -244,11 +248,10 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     >>> points_orig = points.copy()
     >>> scale_factor = 2
     >>> tf = scale_factor * np.eye(4)
-    >>> tf[
-    ...     3,
-    ...     3,
-    ... ] = 1
-    >>> pyvista.transformations.apply_transformation_to_points(tf, points, inplace=True)
+    >>> tf[3, 3] = 1
+    >>> pyvista.transformations.apply_transformation_to_points(
+    ...     tf, points, inplace=True
+    ... )
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))
 
     """

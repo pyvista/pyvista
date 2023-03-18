@@ -52,7 +52,9 @@ class UniformGridFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -141,7 +143,9 @@ class UniformGridFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -453,9 +457,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        rfft: The reverse transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        rfft : The reverse transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -532,9 +536,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: The direct transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        fft : The direct transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -624,9 +628,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        high_pass: High-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -702,9 +706,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        low_pass: Low-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        low_pass : Low-pass filtering of FFT output.
 
         Examples
         --------

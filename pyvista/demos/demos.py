@@ -339,7 +339,9 @@ def plot_ants_plane(notebook=None):
 
        >>> plane_scalars = airplane.points[:, 1]
        >>> _ = plotter.add_mesh(
-       ...     airplane, scalars=plane_scalars, scalar_bar_args={'title': 'Plane Y Location'}
+       ...     airplane,
+       ...     scalars=plane_scalars,
+       ...     scalar_bar_args={'title': 'Plane Y Location'},
        ... )
        >>> _ = plotter.add_text('Ants and Plane Example')
        >>> plotter.show()

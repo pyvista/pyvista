@@ -1,7 +1,6 @@
 """Plot directive module.
 
 A directive for including a PyVista plot in a Sphinx document
-=============================================================
 
 The ``.. pyvista-plot::`` sphinx directive will include an inline
 ``.png`` image.

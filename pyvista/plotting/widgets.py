@@ -167,6 +167,8 @@ class WidgetHelper:
         For a full example see :ref:`box_widget_example`.
 
         """
+        interaction_event = _parse_interaction_event(interaction_event)
+
         if bounds is None:
             bounds = self.bounds
 
@@ -1363,7 +1365,9 @@ class WidgetHelper:
         >>> pl = pv.Plotter()
         >>> def create_mesh(value):
         ...     res = int(value)
-        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     sphere = pv.Sphere(
+        ...         phi_resolution=res, theta_resolution=res
+        ...     )
         ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
         ...
         >>> slider = pl.add_slider_widget(
@@ -2309,7 +2313,9 @@ class WidgetHelper:
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
+        >>> _ = plotter.add_mesh(
+        ...     mesh, scalars=range(6), show_scalar_bar=False
+        ... )
         >>> _ = plotter.add_camera_orientation_widget()
         >>> plotter.show()
 

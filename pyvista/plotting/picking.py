@@ -1145,7 +1145,9 @@ class PickingHelper:
         color.
 
         >>> import pyvista as pv
-        >>> multiblock = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> multiblock = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(multiblock)
         >>> def turn_blue(index, dataset):

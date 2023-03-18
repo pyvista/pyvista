@@ -300,7 +300,6 @@ class Report(scooby.Report):
     --------
     >>> import pyvista as pv
     >>> pv.Report()  # doctest:+SKIP
-    ---------------------------------------------------------------------------
       Date: Fri Oct 28 15:54:11 2022 MDT
     <BLANKLINE>
                     OS : Linux
@@ -332,7 +331,6 @@ class Report(scooby.Report):
                 meshio : 5.3.4
             jupyterlab : 3.4.7
              pythreejs : Version unknown
-    ---------------------------------------------------------------------------
 
     """
 
