@@ -39,4 +39,4 @@ coverage-docs:
 # Install vale first with `pip install vale`
 docstyle:
 	@echo "Running vale"
-	@vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
+	@vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst,_autosummary,source/examples}*'
