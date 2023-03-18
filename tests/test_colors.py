@@ -3,7 +3,7 @@ import pytest
 
 from pyvista.plotting.colors import get_cmap_safe
 
-COLORMAPS = []
+COLORMAPS = ['Greys']
 
 try:
     import cmocean  # noqa: F401
