@@ -2726,8 +2726,8 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors(self, ind: int, connections: str = "points") -> List[int]:
         """Get the cell neighbors of the ind-th cell.
 
-        Concrete implementation of vtkDataSet's ``GetCellNeighbors`` method
-        (see https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4)
+        Concrete implementation of vtkDataSet's `GetCellNeighbors
+        <https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4>`_.
 
         Parameters
         ----------
@@ -2746,7 +2746,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Warnings
         --------
-        For an :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
@@ -2942,7 +2942,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        List[int]
+        generator[list[[int]]
             A generator of list of neighbor points IDs for the ind-th point.
 
         See Also
@@ -2956,11 +2956,13 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
-        >>> for neighbors in mesh.point_neighbors_levels(0, 3):
-        ...     print(neighbors)
-        ...
+        >>> pt_nbr_levels = mesh.point_neighbors_levels(0, 3)
+        >>> pt_nbr_levels = list(pt_nbr_levels)
+        >>> pt_nbr_levels[0]
         [2, 226, 198, 170, 142, 114, 86, 30, 58, 254]
+        >>> pt_nbr_levels[1]
         [3, 227, 255, 199, 171, 143, 115, 87, 59, 31]
+        >>> pt_nbr_levels[2]
         [256, 32, 4, 228, 200, 172, 144, 116, 88, 60]
 
         Visualize these points IDs.
@@ -3020,12 +3022,12 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        List[int]
+        generator[list[int]]
             A generator of list of cell IDs for each level.
 
         Warnings
         --------
-        For an :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
@@ -3038,13 +3040,15 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
-        >>>
-        >>> for ids in mesh.cell_neighbors_levels(
+        >>> nbr_levels = mesh.cell_neighbors_levels(
         ...     0, connections="edges", n_levels=3
-        ... ):
-        ...     print(ids)
+        ... )
+        >>> nbr_levels = list(nbr_levels)
+        >>> nbr_levels[0]
         [1, 21, 9]
+        >>> nbr_levels[1]
         [2, 8, 74, 75, 20, 507]
+        >>> nbr_levels[2]
         [128, 129, 3, 453, 7, 77, 23, 506]
 
         Visualize these cells IDs.
@@ -3123,8 +3127,7 @@ class DataSet(DataSetFilters, DataObject):
     def point_cell_ids(self, ind: int) -> List[int]:
         """Get the cell IDs that use the ind-th point.
 
-        Implements vtkDataSet's ``GetPointCells`` method
-        (see https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49)
+        Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
 
         Parameters
         ----------
