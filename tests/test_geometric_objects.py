@@ -276,15 +276,14 @@ def test_rectangle_4points_deprecation():
     pointd = [1.0, -1.0, 1.0]
     points = np.array([pointa, pointb, pointc, pointd])
 
-    with pytest.raises(pyvista.utilities.misc.PyVistaDeprecationWarning) as warn:
+    with pytest.warns(
+        pyvista.utilities.misc.PyVistaDeprecationWarning,
+        match='Please use ``pyvista.Quadrilateral``.',
+    ):
         mesh = pyvista.Rectangle(points)
         assert mesh.n_points
         assert mesh.n_cells
         assert np.allclose(mesh.points, points)
-    assert (
-        'Rectangle defined by 4 points is deprecated. Please use ``pyvista.Quadrilateral``.'
-        in str(warn.value)
-    )
 
 
 def test_rectangle():
@@ -318,9 +317,8 @@ def test_rectangle_not_orthognal_entries():
         trans, np.array([pointa, pointb, pointc])
     )
 
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError, match="The three points should defined orthogonal vectors"):
         pyvista.Rectangle(rotated)
-    assert "The three points should defined orthogonal vectors" in str(err.value)
 
 
 def test_rectangle_two_identical_points():
@@ -334,18 +332,18 @@ def test_rectangle_two_identical_points():
         trans, np.array([pointa, pointb, pointc])
     )
 
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(
+        ValueError, match="Unable to build a rectangle with less than three different points"
+    ):
         pyvista.Rectangle(rotated)
-    assert "Unable to build a rectangle with less than three different points" in str(err.value)
 
 
 def test_rectangle_not_enough_points():
     pointa = [3.0, 1.0, 1.0]
     pointb = [4.0, 3.0, 1.0]
 
-    with pytest.raises(TypeError) as err:
+    with pytest.raises(TypeError, match='Points must be given as length 3 np.ndarray or list'):
         pyvista.Rectangle([pointa, pointb])
-    assert 'Points must be given as length 3 np.ndarray or list' in str(err.value)
 
 
 def test_circle():

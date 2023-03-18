@@ -1190,7 +1190,7 @@ def Pyramid(points=None):
         ]
 
     if len(points) != 5:
-        raise TypeError('Points must be given as length 5 np.ndarray or list')
+        raise TypeError('Points must be given as length 5 np.ndarray or list.')
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1253,7 +1253,7 @@ def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
     .. deprecated:: 0.39.0
-       To deal with more than 3 points use :attr:`pyvista.Quadrilateral` instead
+       To deal with more than 3 points use :attr:`pyvista.Quadrilateral` instead.
 
     The 3 points must define an orthogonal set of vectors.
 
@@ -1340,12 +1340,12 @@ def Quadrilateral(points=None):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> pointa = [1.0, 0.0, 0.0]
     >>> pointb = [1.0, 1.0, 0.0]
     >>> pointc = [0.0, 1.0, 0.0]
     >>> pointd = [0.0, 0.0, 0.0]
-    >>> quadrilateral = pyvista.Quadrilateral([pointa, pointb, pointc, pointd])
+    >>> quadrilateral = pv.Quadrilateral([pointa, pointb, pointc, pointd])
     >>> quadrilateral.plot(show_edges=True, line_width=5)
 
     """
