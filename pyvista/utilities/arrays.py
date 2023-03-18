@@ -14,8 +14,8 @@ def _coerce_pointslike_arg(
 
     Parameters
     ----------
-    points : Sequence(float) or np.ndarray
-        Argument to coerce into (n, 3) ``np.ndarray``.
+    points : sequence[float]
+        Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
         Whether to copy the ``points`` array.  Copying always occurs if ``points``
@@ -33,7 +33,7 @@ def _coerce_pointslike_arg(
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
-        raise TypeError("Given points must be a sequence or an array.")
+        raise TypeError("Given points must be a sequence.")
 
     if points.ndim > 2:
         raise ValueError("Array of points must be 1D or 2D")
