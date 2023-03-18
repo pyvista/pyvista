@@ -1253,7 +1253,8 @@ def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
     .. deprecated:: 0.39.0
-       To deal with more than 3 points use :attr:`pyvista.Quadrilateral` instead.
+       To deal with more than 3 points use :func:`pyvista.Quadrilateral()
+       <pyvista.examples.cells.Quadrilateral>` instead.
 
     The 3 points must define an orthogonal set of vectors.
 
@@ -1284,7 +1285,7 @@ def Rectangle(points=None):
             PyVistaDeprecationWarning,
         )
         return Quadrilateral(points)
-    elif len(points) != 3:
+    if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
 
     points, _ = _coerce_pointslike_arg(points)
