@@ -18,7 +18,7 @@ the following projects are required dependencies of PyVista:
 
 * `vtk <https://pypi.org/project/vtk/>`_ - PyVista directly inherits types from the VTK library.
 * `NumPy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
-* `Matplotlib <https://matplotlib.org/>`_ - PyVista's plotting API depends on Matplotlib for colormaps and color cyclers.
+* `matplotlib <https://pypi.org/project/matplotlib/>`_ - Used for colormaps and 2D plotting with :class:`pyvista.ChartMPL`.
 * `pillow <https://pypi.org/project/Pillow/>`_ - PIL fork used for saving screenshots.
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for reading images and writing animations.
 * `pooch <https://pypi.org/project/pooch/>`_ - Data management for our example datasets so users can download tutorials on the fly.
@@ -32,7 +32,6 @@ PyVista includes several optional dependencies for visualization and reading a v
 * `cmocean <https://pypi.org/project/cmocean/>`_ - Colormaps for Oceanography.
 * `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
 * `trame <https://github.com/Kitware/trame>`_ - Used for client and server-side rendering in Jupyter.
-* `matplotlib <https://pypi.org/project/matplotlib/>`_ - Used for colormaps and 2D plotting with :class:`pyvista.ChartMPL`.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
 * `pythreejs <https://pythreejs.readthedocs.io/en/stable/>`_ - Jupyter widgets based notebook extension that allows Jupyter to leverage the WebGL capabilities of modern browsers.
 
@@ -98,8 +97,6 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | Package                           | Purpose                                 |
 +===================================+=========================================+
-| ``matplotlib``                    | Using Colormaps                         |
-+-----------------------------------+-----------------------------------------+
 | ``trame``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
