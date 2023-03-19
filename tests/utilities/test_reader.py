@@ -942,3 +942,32 @@ def test_gif_reader(gif_file):
         data_name = f'frame{i}'
         new_grid.point_data.set_array(data, data_name)
         assert np.allclose(grid[data_name], new_grid[data_name])
+
+
+def test_xdmf_reader():
+    filename = examples.download_meshio_xdmf(load=False)
+
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.XdmfReader)
+    assert reader.path == filename
+
+    assert reader.number_grids == 6
+    assert reader.number_point_arrays == 2
+
+    assert reader.point_array_names == ['phi', 'u']
+    assert reader.cell_array_names == ['a']
+
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
+    reader.set_active_time_value(0.25)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.25, 0.25, 0.25, 0.25]))
+    reader.set_active_time_value(0.5)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.5, 0.5, 0.5, 0.5]))
+    reader.set_active_time_value(0.75)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.75, 0.75, 0.75, 0.75]))
+    reader.set_active_time_value(1.0)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([1.0, 1.0, 1.0, 1.0]))

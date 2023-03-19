@@ -3,8 +3,7 @@
 Jupyter Notebook Plotting
 =========================
 Plot with ``pyvista`` interactively within a `Jupyter
-<https://jupyter.org/>`_ notebook!
-
+<https://jupyter.org/>`_ notebook.
 
 .. note::
    We recommend using the Trame-based backed. See :ref:`trame_jupyter`.
@@ -99,17 +98,17 @@ State of 3D Interactive Jupyter Plotting
    partially because Jupyter is still relatively new, but also because
    the web technology used here is also new and rapidly developing as
    more and more users and developers shift to the cloud or cloud-based
-   visualization.  Things here are likely to break and rapidly change
+   visualization. Things here are likely to break and rapidly change
 
    This was written in March 2021 and updated in January 2023, and may
-   already be out of date.  Be sure to check the developer websites
+   already be out of date. Be sure to check the developer websites
    for any changes.
 
 When plotting using Jupyter you have the option of using one of
 many modules, each of which has its advantages, disadvantages, and
-quirks.  While ``pyvista`` attempts to remove some of the differences
+quirks. While ``pyvista`` attempts to remove some of the differences
 in the API when using the ``Plotting`` class, the plots will still
-look and feel differently depending on the backend.  Additionally,
+look and feel differently depending on the backend. Additionally,
 different backends have different requirements and may not support
 your deployment environment.
 
@@ -139,19 +138,19 @@ packages, you should stick with a module like ``threejs`` or the
 which do not require any server side rendering or framebuffer.
 
 See :ref:`install_ref` for more details installing on a headless
-environment for the backends requiring a framebuffer.  When installing
+environment for the backends requiring a framebuffer. When installing
 the individual packages, the Jupyterlab 3 compatible packages can be
-installed with a simple ``pip install <package>``.  See the
+installed with a simple ``pip install <package>``. See the
 installation instructions for the other packages for more details.
 
 
 Usage with PyVista
 ~~~~~~~~~~~~~~~~~~
-There are two ways to set the jupyter plotting backend.  First, it can
+There are two ways to set the jupyter plotting backend. First, it can
 be done on a plot by plot basis by setting the ``jupyter_backend`` parameter in
 either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
-<pyvista.DataSet.plot>`.  You can also set it globally with the
-:func:`pyvista.set_jupyter_backend`.  For further details:
+<pyvista.DataSet.plot>`. You can also set it globally with the
+:func:`pyvista.set_jupyter_backend`. For further details:
 
 
 .. code:: python

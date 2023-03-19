@@ -13,7 +13,7 @@
 
 Overview
 ********
-PyVista is...
+PyVista is:
 
 * *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
 * mesh data structures and filtering methods for spatial datasets
@@ -23,7 +23,7 @@ PyVista is...
 
 PyVista is a helper library for the Visualization Toolkit (VTK) that
 takes a different approach on interfacing with VTK through NumPy and
-direct array access.  This package provides a Pythonic,
+direct array access. This package provides a Pythonic,
 well-documented interface exposing VTK's powerful visualization
 backend to facilitate rapid prototyping, analysis, and visual
 integration of spatially referenced datasets.
@@ -110,10 +110,10 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
    mesh.plot(scalars='Nodal Stress', component=0, cmap='turbo', cpos='xy')
 
 
-Simple Point Cloud with Numpy
+Simple Point Cloud with NumPy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Easily integrate with NumPy and create a variety of geometries and plot
-them.  You could use any geometry to create your glyphs, or even plot
+them. You could use any geometry to create your glyphs, or even plot
 the points directly.
 
 .. jupyter-execute::

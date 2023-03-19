@@ -1,7 +1,7 @@
 Examples
 ========
 PyVista contains a variety of built-in demos and downloadable example
-datasets.  For example:
+datasets. For example:
 
 .. pyvista-plot::
 
@@ -12,7 +12,7 @@ datasets.  For example:
    >>> globe.plot()
 
 Many datasets are too large to be included with PyVista, but can be
-downloaded and cached locally.  These datasets can be downloaded and
+downloaded and cached locally. These datasets can be downloaded and
 used with:
 
 .. pyvista-plot::
@@ -53,7 +53,7 @@ demonstrate features.
    statue, which contains elements of religious significance to Hindus; and Lucy, a
    Christian angel commonly seen as statues in Italian churches.
    Keep your renderings and other uses of these particular models in good
-   taste.  Don't animate or morph them, don't apply Boolean operators to them,
+   taste. Don't animate or morph them, don't apply Boolean operators to them,
    and don't simulate nasty things happening to them (like breaking, exploding,
    melting, etc.).
    Choose another model for these sorts of experiments.
