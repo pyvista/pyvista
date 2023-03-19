@@ -1,6 +1,6 @@
 """Color module supporting plotting module.
 
-Used code from matplotlib.colors.  Thanks for your work!
+Used code from matplotlib.colors.  Thanks for your work.
 
 
 SUPPORTED COLORS

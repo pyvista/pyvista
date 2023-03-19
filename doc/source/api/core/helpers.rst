@@ -25,8 +25,8 @@ Line Segments from Points
 .. automethod:: pyvista.helpers.line_segments_from_points
 
 
-Convert to and from VTK Datatypes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Convert to and from VTK Data Types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automethod:: pyvista.helpers.convert_array
 
 
