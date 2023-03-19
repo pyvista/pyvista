@@ -70,7 +70,8 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = array
 
     def _from_pandas(self, data_frame):
-        for name in data_frame:
+        names = data_frame.keys()
+        for name in names:
             self.row_arrays[name] = data_frame[name].values
 
     @property

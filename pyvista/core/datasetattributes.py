@@ -249,8 +249,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __contains__(self, name: str) -> bool:
         """Implement the ``in`` operator."""
-        keys = self.keys()
-        return name in keys
+        names = self.keys()
+        return name in names
 
     def __iter__(self) -> Iterator[str]:
         """Implement for loop iteration."""
@@ -989,8 +989,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
-        keys = self.keys()
-        return [self.get_array(name) for name in keys]
+        names = self.keys()
+        return [self.get_array(name) for name in names]
 
     def clear(self):
         """Remove all arrays in this object.
@@ -1011,7 +1011,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         0
 
         """
-        for array_name in self:
+        array_names = self.keys()
+        for array_name in array_names:
             self.remove(key=array_name)
 
     def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):

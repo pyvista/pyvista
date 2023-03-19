@@ -85,9 +85,10 @@ def test_multi_block_init_dict(rectilinear, airplane):
 def test_multi_block_keys(rectilinear, airplane):
     data = {'grid': rectilinear, 'poly': airplane}
     multi = MultiBlock(data)
-    assert len(multi.keys()) == 2
-    assert 'grid' in multi
-    assert 'poly' in multi
+    names = multi.keys()
+    assert len(names) == 2
+    assert 'grid' in names
+    assert 'poly' in names
 
 
 def test_multi_block_init_list(rectilinear, airplane):
@@ -209,12 +210,14 @@ def test_del_slice(sphere):
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[0:10:2]
     assert len(multi) == 5
-    assert all(f"{i}" in multi for i in range(1, 10, 2))
+    names = multi.keys()
+    assert all(f"{i}" in names for i in range(1, 10, 2))
 
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[5:2:-1]
     assert len(multi) == 7
-    assert all(f"{i}" in multi for i in [0, 1, 2, 6, 7, 8, 9])
+    names = multi.keys()
+    assert all(f"{i}" in names for i in [0, 1, 2, 6, 7, 8, 9])
 
 
 def test_slicing_multiple_in_setitem(sphere):
@@ -714,7 +717,7 @@ def test_set_active_scalars_components(multiblock_poly):
 
     multiblock_poly.set_active_scalars(None)
     multiblock_poly.set_active_scalars('data')
-    for _block in multiblock_poly:
+    for _ in multiblock_poly:
         assert multiblock_poly[0].point_data.active_scalars_name == 'data'
 
     data = np.zeros((multiblock_poly[2].n_points, 3))
