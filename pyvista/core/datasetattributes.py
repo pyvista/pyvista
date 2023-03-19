@@ -989,7 +989,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
-        return [self.get_array(name) for name in self]
+        keys = self.keys()
+        return [self.get_array(name) for name in keys]
 
     def clear(self):
         """Remove all arrays in this object.
