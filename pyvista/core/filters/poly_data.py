@@ -34,7 +34,7 @@ class PolyDataFilters(DataSetFilters):
         angle : float
             Angle to consider an edge.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -155,7 +155,7 @@ class PolyDataFilters(DataSetFilters):
             Tolerance used to determine when a point's absolute
             distance is considered to be zero.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -228,7 +228,7 @@ class PolyDataFilters(DataSetFilters):
             Tolerance used to determine when a point's absolute
             distance is considered to be zero.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -305,7 +305,7 @@ class PolyDataFilters(DataSetFilters):
             Tolerance used to determine when a point's absolute
             distance is considered to be zero.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -396,7 +396,7 @@ class PolyDataFilters(DataSetFilters):
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -483,7 +483,7 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, return the second input mesh split by the
             intersection with the first input mesh.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -551,7 +551,7 @@ class PolyDataFilters(DataSetFilters):
             * ``"maximum"``
             * ``"minimum"``
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress. Default
             ``False``.
 
@@ -646,7 +646,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -730,7 +730,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -840,7 +840,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -968,7 +968,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1159,7 +1159,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place. Default ``False``.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1278,7 +1278,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1403,7 +1403,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Whether to update the mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1538,7 +1538,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place. Defaults to ``False``.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1655,7 +1655,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place. Defaults to ``False``.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1734,7 +1734,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Return new mesh or overwrite input.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1813,7 +1813,7 @@ class PolyDataFilters(DataSetFilters):
             Control if ``tolerance`` is an absolute distance or a
             fraction.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
@@ -1908,7 +1908,7 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, use scalar values in the edge weight.
             This only works for point data.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -1987,7 +1987,7 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, use scalar values in the edge weight.
             This only works for point data.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -2234,7 +2234,7 @@ class PolyDataFilters(DataSetFilters):
         line_width : int, optional
             Width of the boundary lines.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
@@ -2579,7 +2579,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress. Default
             ``False``.
 
@@ -2698,7 +2698,7 @@ class PolyDataFilters(DataSetFilters):
             Set the maximum ribbon width in terms of a multiple of the
             minimum width. The default is 2.0.
 
-        normal : tuple(float), optional
+        normal : sequence[float], optional
             Normal to use as default.
 
         tcoords : bool, str, optional
@@ -2710,7 +2710,7 @@ class PolyDataFilters(DataSetFilters):
             The field preference when searching for the scalars array by
             name.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -2815,7 +2815,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Overwrites the original mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -2937,7 +2937,7 @@ class PolyDataFilters(DataSetFilters):
             The direction vector of the axis around which the rotation is done.
             It requires vtk>=9.1.0.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -3074,7 +3074,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Overwrites the original mesh in-place.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -3193,7 +3193,7 @@ class PolyDataFilters(DataSetFilters):
             vertex that produced each output vertex. This is useful
             for picking. The default is ``False`` to conserve memory.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -3278,7 +3278,7 @@ class PolyDataFilters(DataSetFilters):
             .. note::
                This will remove any other cell arrays in the mesh.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -3589,7 +3589,7 @@ class PolyDataFilters(DataSetFilters):
             The spacing of the 3D sampling grid.  If not set, a
             reasonable guess will be made.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
