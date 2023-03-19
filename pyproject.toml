@@ -116,6 +116,13 @@ skip-string-normalization = true
 target-version = ['py39']
 exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist|node_modules'
 
+[tool.blackdoc]
+# From https://numpydoc.readthedocs.io/en/latest/format.html
+# Extended discussion: https://github.com/pyvista/pyvista/pull/4129
+# The length of docstring lines should be kept to 75 characters to facilitate
+# reading the docstrings in text terminals.
+line-length = 75
+
 [tool.build_sphinx]
 source-dir = 'doc'
 build-dir  = './doc/_build'
