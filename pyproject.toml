@@ -167,6 +167,7 @@ image_cache_dir = "tests/plotting/image_cache"
 ignore_missing_imports = true
 
 [tool.ruff]
+target-version = "py38"
 exclude = [
     ".venv",
     "venv",
