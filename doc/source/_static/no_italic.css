@@ -1,0 +1,7 @@
+/* Disable italic for parameter types */
+/* See https://github.com/pyvista/pyvista/pull/4155#issuecomment-1475308020 */
+
+
+span.classifier, span.classifier * {
+  font-style: normal;
+}

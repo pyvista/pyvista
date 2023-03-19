@@ -516,6 +516,7 @@ panels_add_bootstrap_css = False
 html_static_path = ["_static"]
 html_css_files = [
     'cards.css',  # used in card CSS
+    'no_italic.css',  # disable italic for span classes
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------

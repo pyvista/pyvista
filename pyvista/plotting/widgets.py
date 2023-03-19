@@ -2199,16 +2199,16 @@ class WidgetHelper:
             The method called every time the button is clicked. This should take
             a single parameter: the bool value of the button.
 
-        value : bool, optional
+        value : bool, default: False
             The default state of the button.
 
-        position : tuple(float), optional
+        position : sequence[float], default: (10.0, 10.0)
             The absolute coordinates of the bottom left point of the button.
 
-        size : int, optional
+        size : int, default: 50
             The size of the button in number of pixels.
 
-        border_size : int, optional
+        border_size : int, default: 5
             The size of the borders of the button in pixels.
 
         color_on : ColorLike, optional
@@ -2296,9 +2296,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        animate : bool, optional
+        animate : bool, default: True
             Enable or disable jump-to-axis-view animation.
-        n_frames : int, optional
+
+        n_frames : int, default: 20
             The number of frames to animate the jump-to-axis-viewpoint feature.
 
         Returns
