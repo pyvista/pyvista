@@ -26,7 +26,7 @@ For additional details regarding PyVista's data model, please see
 Dataset API Reference
 ---------------------
 The :class:`pyvista.DataSet` class holds attributes that
-are *common* to all spatially referenced datasets in PyVista.  This
+are *common* to all spatially referenced datasets in PyVista. This
 base class is analogous to VTK's `vtk.vtkDataSet`_ class.
 
 The :class:`pyvista.DataSetAttributes` class contains the methods to access

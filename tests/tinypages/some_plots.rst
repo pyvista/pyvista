@@ -1,5 +1,5 @@
 ##########
-Some plots
+Some Plots
 ##########
 
 Plot 1 does not use doctest syntax
@@ -38,7 +38,7 @@ Plot 4 defines ``a`` in a context block:
     pyvista.Plane().plot()
     
 
-Plot 5 shows that a block with context sees the new variable.  It also uses
+Plot 5 shows that a block with context sees the new variable. It also uses
 ``:nofigs:``:
 
 .. pyvista-plot::

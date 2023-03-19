@@ -11,11 +11,11 @@ Using ``Panel`` with PyVista
 
 PyVista supports the usage of the `panel
 <https://github.com/holoviz/panel>`_ module as a ``vtk.js`` jupyterlab
-plotting backend that can be utialized as either a standalone VTK
-viewer, or as a tightly integrated ``pyvista`` plotting backend.  For
+plotting backend that can be utilized as either a standalone VTK
+viewer, or as a tightly integrated ``pyvista`` plotting backend. For
 example, within a Jupyter notebook environment, you can pass
 ``jupyter_backend='panel'`` to ``plot``, or ``Plotter.show`` to
-automatically enable plotting with Juptyer and ``panel``.
+automatically enable plotting with Jupyter and ``panel``.
 
 For example, here's the ``PyVista`` logo:
 
@@ -32,7 +32,7 @@ Jupyterlab.
 
 Examples and Usage
 ~~~~~~~~~~~~~~~~~~
-There are two ways to use ``panel`` within Jupyter notebooks.  It can
+There are two ways to use ``panel`` within Jupyter notebooks. It can
 be done on a plot by plot basis by setting the ``jupyter_backend`` in
 ``mesh.plot()``:
 
@@ -62,7 +62,7 @@ Alternatively, you can set the backend globally:
     import pyvista
     from pyvista import examples
 
-    # set the global jupyterlab backend.  All plots from this point
+    # set the global jupyterlab backend. All plots from this point
     # onward will use the ``panel`` backend and do not have to be
     # specified in ``show``
     pyvista.set_jupyter_backend('panel')
@@ -87,8 +87,8 @@ Alternatively, you can set the backend globally:
 
 Configuration Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If running on a headless environment (e.g. Google Colab, your own VM),
-be sure to start up a virtual framebuffer using ``Xvfb``.  You can
+If running on a headless environment (for example, Google Colab, your own VM, etc.),
+be sure to start up a virtual framebuffer using ``Xvfb``. You can
 either start it using bash with:
 
 .. code-block:: bash
@@ -103,7 +103,7 @@ either start it using bash with:
 
 
 Or alternatively, start it using the built in
-``pyvista.start_xvfb()``.  Be sure to install ``xvfb`` and
+``pyvista.start_xvfb()``. Be sure to install ``xvfb`` and
 ``libgl1-mesa-glx`` with:
 
 .. code-block:: bash

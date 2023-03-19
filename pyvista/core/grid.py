@@ -441,7 +441,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     >>> vtkgrid = vtk.vtkImageData()
     >>> grid = pyvista.UniformGrid(vtkgrid)
 
-    Initialize using using just the grid dimensions and default
+    Initialize using just the grid dimensions and default
     spacing and origin. These must be keyword arguments.
 
     >>> grid = pyvista.UniformGrid(dimensions=(10, 10, 10))

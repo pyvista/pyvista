@@ -4,38 +4,38 @@ What is a Mesh?
 ===============
 In PyVista, a mesh is any spatially referenced information and usually
 consists of geometrical representations of a surface or volume in 3D
-space.  We commonly refer to any spatially referenced dataset as a
+space. We commonly refer to any spatially referenced dataset as a
 mesh, so often the distinction between a mesh, a grid, and a volume
-can get fuzzy – but that does not matter in PyVista. If you have a
+can get fuzzy, but that does not matter in PyVista. If you have a
 dataset that is a surface mesh with 2D geometries like triangles, we
 call it a mesh, and if you have a dataset with 3D geometries like
 voxels, tetrahedra, hexahedra, etc., then we also call that a
-mesh! Why? Because it is simple that way.
+mesh. Why? Because it is simple that way.
 
 In all spatially referenced datasets, there lies an underlying mesh structure
-– the connectivity or geometry between nodes to define cells. Whether those
+which is the connectivity between vertices to define cells. Whether those
 cells are 2D or 3D is not always of importance and we've worked hard to make
 PyVista work for datasets of either or mixed geometries so that you as a user
 do not have to get bogged down in the nuances.
 
 .. note::
-   This is a very high level overview of the PyVista API.  For further
+   This is a very high level overview of the PyVista API. For further
    details regarding our data model and how it relates to the
    underlying VTK data model, please see :ref:`pyvista_data_model`.
 
 
-What is a point?
+What is a Point?
 ----------------
-Points are the vertices of the mesh – the Cartesian coordinates of the
-underlying structure. All PyVista datasets (meshes!) have points and
-sometimes, you can have a mesh that only has points – like a point
+Points are the vertices of the mesh, also referred to as the Cartesian
+coordinates of the underlying structure. All PyVista datasets (meshes) have
+points and sometimes, you can have a mesh that only has points, like a point
 cloud.
 
 For example, you can create a point cloud mesh using the
 :class:`pyvista.PolyData` class which is built for meshes that have 1D
 and 2D cell types (we'll get into what a cell is briefly).
 
-Let's start with a point cloud – this is a mesh type that only has vertices.
+Let's start with a point cloud; this is a mesh type that only has vertices.
 You can create one by defining a 2D array of Cartesian coordinates like so:
 
 
@@ -128,7 +128,7 @@ points, a line between two points, or even a single point could be its
 own cell (but that's a special case).
 
 
-What are attributes?
+What are Attributes?
 --------------------
 Attributes are data values that live on either the points or cells of
 a mesh. In PyVista, we work with both point data and cell data and
@@ -144,9 +144,9 @@ any PyVista mesh accessible as one of the following:
 Point Data
 ~~~~~~~~~~
 Point data refers to arrays of values (scalars, vectors, etc.) that
-live on each point of the mesh.  Each element in an attribute array
-corresponds to a point in the mesh.  Let's create some point
-data for the beam mesh.  When plotting, the values between points are
+live on each point of the mesh. Each element in an attribute array
+corresponds to a point in the mesh. Let's create some point
+data for the beam mesh. When plotting, the values between points are
 interpolated across the cells.
 
 .. jupyter-execute::
@@ -157,7 +157,7 @@ interpolated across the cells.
 Cell Data
 ~~~~~~~~~
 Cell data refers to arrays of values (scalars, vectors, etc.) that
-live throughout each cell of the mesh.  That is the entire cell (2D
+live throughout each cell of the mesh. That is the entire cell (2D
 face or 3D volume) is assigned the value of that attribute.
 
 .. jupyter-execute::
@@ -188,7 +188,7 @@ data which has a single value across the cell's domain:
 Field Data
 ~~~~~~~~~~
 Field data is not directly associated with either the points or cells
-but still should be attached to the mesh.  This may be a string array
+but still should be attached to the mesh. This may be a string array
 storing notes, or even indices of a :ref:`collision_example`.
 
 
@@ -197,7 +197,7 @@ storing notes, or even indices of a :ref:`collision_example`.
 Assigning Scalars to a Mesh
 ---------------------------
 
-Here's how we assign values to cell attributes and plot it.  Here, we
+Here's how we assign values to cell attributes and plot it. Here, we
 generate cube containing 6 faces and assign each face an integer from
 ``range(6)`` and then have it plotted.
 
