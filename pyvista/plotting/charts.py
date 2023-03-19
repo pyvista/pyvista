@@ -1,5 +1,4 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
-
 from functools import wraps
 import inspect
 import itertools
@@ -7,6 +6,9 @@ import re
 from typing import Dict, Optional, Sequence
 import weakref
 
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+import matplotlib.figure  # noqa
+import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -4180,13 +4182,6 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
         """Initialize chart."""
-        try:
-            from matplotlib.backends.backend_agg import FigureCanvasAgg
-            import matplotlib.figure  # noqa
-            import matplotlib.pyplot as plt
-        except ModuleNotFoundError:
-            raise ImportError("ChartMPL requires matplotlib")
-
         super().__init__(size, loc)
         if figure is None:
             figure, _ = plt.subplots()

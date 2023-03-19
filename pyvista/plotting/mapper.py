@@ -15,7 +15,7 @@ from pyvista.utilities import (
     set_algorithm_input,
     wrap,
 )
-from pyvista.utilities.misc import has_module, no_new_attr
+from pyvista.utilities.misc import no_new_attr
 
 from .._typing import BoundsLike
 from .colors import Color, get_cmap_safe
@@ -682,13 +682,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.scalar_range = self.lookup_table.scalar_range
         else:
             self.lookup_table.scalar_range = self.scalar_range
-            # Set default map if matplotlib is available
+            # Set default map
             if cmap is None:
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -713,7 +712,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     self.lookup_table.apply_cmap(cmap, n_colors)
                 else:  # pragma: no cover
                     # should be impossible to get to this point as VTK package
-                    # no requires matplotlib
                     self.lookup_table.n_values = n_colors
                     if flip_scalars:
                         self.lookup_table.hue_range = (0.0, 0.66667)

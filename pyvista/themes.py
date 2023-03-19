@@ -2036,15 +2036,8 @@ class DefaultTheme(_ThemeConfig):
 
     @cmap.setter
     def cmap(self, cmap):
-        try:
-            get_cmap_safe(cmap)  # for validation
-            self._cmap = cmap
-        except ImportError:  # pragma: no cover
-            warnings.warn(
-                'Unable to set a default theme colormap without matplotlib. '
-                'The builtin VTK "jet" colormap will be used.'
-            )
-            self._cmap = None
+        get_cmap_safe(cmap)  # for validation
+        self._cmap = cmap
 
     @property
     def color(self) -> Color:

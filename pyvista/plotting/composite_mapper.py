@@ -2,16 +2,16 @@
 from itertools import cycle
 import sys
 from typing import Optional
-import warnings
 import weakref
 
+import matplotlib
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array
 
-from ..utilities.misc import has_module, vtk_version_info
+from ..utilities.misc import vtk_version_info
 from .colors import Color
 from .mapper import _BaseMapper
 
@@ -672,15 +672,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
-        if has_module('matplotlib'):
-            import matplotlib
-
-            colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
-            for attr in self.block_attr:
-                attr.color = next(colors)['color']
-
-        else:  # pragma: no cover
-            warnings.warn('Please install matplotlib for color cycles.')
+        colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+        for attr in self.block_attr:
+            attr.color = next(colors)['color']
 
     def set_scalars(
         self,
@@ -837,11 +831,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 scalar_bar_args.setdefault('below_label', 'below')
 
             if cmap is None:  # Set default map if matplotlib is available
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)
