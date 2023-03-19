@@ -127,7 +127,7 @@ jobs:
       - name: Get Notebooks
         run: |
           mkdir _notebooks
-          find doc/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
+          find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
 
       - uses: actions/upload-artifact@v3
         with:
@@ -192,7 +192,7 @@ jobs:
         run: |
           cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
-          cp -r doc/examples/ ./pyvista-examples/
+          cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
 
       - name: Publish notebooks on release
