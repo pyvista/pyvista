@@ -19,6 +19,7 @@ and how you can help develop PyVista.
    flask
    developer_notes
    plot_directive
+   pytest_plugin
    vtk_data
    extending_pyvista
 
