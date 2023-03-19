@@ -196,10 +196,6 @@ def show_ipygany(plotter, height=None, width=None):
         cbar.layout.max_width = '500px'
         cbar.layout.min_height = '50px'  # stop from getting squished
 
-        # Create a slider that will dynamically change the boundaries of the colormap
-        # colormap_slider_range = FloatRangeSlider(value=[height_min, height_max],
-        #                                          step=(height_max - height_min) / 100.)
-
         # create app
         title = HTML(value=f'<h3>{list(plotter.scalar_bars.keys())[0]}</h3>')
         legend = VBox((title, colormap_dd, cbar))
