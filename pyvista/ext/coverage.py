@@ -1,5 +1,6 @@
-"""sphinx.ext.coverage
-~~~~~~~~~~~~~~~~~~~.
+""".. _ref_sphinx_ext_coverage:
+sphinx.ext.coverage
+~~~~~~~~~~~~~~~~~~~
 
 Check Python modules and C API for coverage.  Mostly written by Josip
 Dzolonga for the Google Highly Open Participation contest.
