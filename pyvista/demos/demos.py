@@ -1,4 +1,5 @@
 """Demos to show off the functionality of PyVista."""
+
 import time
 
 import numpy as np
