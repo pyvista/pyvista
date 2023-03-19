@@ -180,8 +180,6 @@ articles = {
         link="https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html#pyvista-streamlines",
         image="coil_field_lines.png",
     ),
-    # entry=Example(title="",
-    #     image=""),
 }
 
 
