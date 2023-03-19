@@ -5171,7 +5171,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Skip adding the visibility filter.
 
         render : bool, default: True
-            Force a render when ``True``
+            Force a render when ``True``.
 
         Returns
         -------
@@ -5752,7 +5752,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             travel.
 
         focus : sequence[float], optional
-            The point of focus the camera. For example ``(0.0, 0.0, 0.0)``
+            The point of focus the camera. For example ``(0.0, 0.0, 0.0)``.
 
         step : float, default: 0.5
             The timestep between flying to each camera position. Ignored when

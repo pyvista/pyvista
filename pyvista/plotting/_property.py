@@ -70,10 +70,10 @@ class Property(_vtk.vtkProperty):
         viewer.
 
     diffuse : float, optional
-        The diffuse lighting coefficient. Default 1.0.
+        The diffuse lighting coefficient.
 
     specular : float, optional
-        The specular lighting coefficient. Default 0.0.
+        The specular lighting coefficient.
 
     specular_power : float, optional
         The specular power. Between 0.0 and 128.0.
