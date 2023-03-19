@@ -249,7 +249,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __contains__(self, name: str) -> bool:
         """Implement the ``in`` operator."""
-        return name in self
+        keys = self.keys()
+        return name in keys
 
     def __iter__(self) -> Iterator[str]:
         """Implement for loop iteration."""
