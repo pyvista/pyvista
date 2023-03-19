@@ -1,6 +1,6 @@
 """Wrap vtkActor module."""
 
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -340,7 +340,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def user_matrix(self) -> np.ndarray | None:
+    def user_matrix(self) -> Optional[np.ndarray]:
         """Return or set the orientation matrix.
 
         Examples
@@ -381,7 +381,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return mat
 
     @user_matrix.setter
-    def user_matrix(self, value: pv._vtk.vtkMatrix4x4 | np.ndarray):
+    def user_matrix(self, value: Union[pv._vtk.vtkMatrix4x4, np.ndarray]):
         if isinstance(value, np.ndarray):
             value = pv.vtkmatrix_from_array(value)
         self.SetUserMatrix(value)

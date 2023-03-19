@@ -3,6 +3,7 @@ import sys
 import warnings
 import weakref
 from itertools import cycle
+from typing import Optional
 
 import numpy as np
 
@@ -132,7 +133,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> bool | None:
+    def visible(self) -> Optional[bool]:
         """Get or set the visibility of a block.
 
         Examples
@@ -165,7 +166,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> float | None:
+    def opacity(self) -> Optional[float]:
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -207,7 +208,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> bool | None:
+    def pickable(self) -> Optional[bool]:
         """Get or set the pickability of a block.
 
         Examples

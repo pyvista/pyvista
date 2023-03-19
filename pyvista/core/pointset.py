@@ -4,9 +4,9 @@ import numbers
 import os
 import pathlib
 import warnings
-from collections.abc import Sequence
 from functools import wraps
 from textwrap import dedent
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
@@ -161,7 +161,7 @@ class _PointSet(DataSet):
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
     def translate(
         self,
-        xyz: list | tuple | np.ndarray,
+        xyz: Union[list, tuple, np.ndarray],
         transform_all_input_vectors=False,
         inplace=None,
     ):
@@ -492,7 +492,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         # filename
         opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
-        if isinstance(var_inp, str | pathlib.Path):
+        if isinstance(var_inp, (str, pathlib.Path)):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
@@ -516,7 +516,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             return
 
         # First parameter is points
-        if isinstance(var_inp, np.ndarray | list | _vtk.vtkDataArray):
+        if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
             self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
 
         else:
@@ -1288,10 +1288,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 else:
                     self.shallow_copy(args[0])
 
-            elif isinstance(args[0], str | pathlib.Path):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
 
-            elif isinstance(args[0], _vtk.vtkStructuredGrid | _vtk.vtkPolyData):
+            elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
                 vtkappend = _vtk.vtkAppendFilter()
                 vtkappend.AddInputData(args[0])
                 vtkappend.Update()
@@ -1307,9 +1307,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._check_for_consistency()
 
         elif len(args) == 3:
-            arg0_is_seq = isinstance(args[0], np.ndarray | collections.abc.Sequence)
-            arg1_is_seq = isinstance(args[1], np.ndarray | collections.abc.Sequence)
-            arg2_is_seq = isinstance(args[2], np.ndarray | collections.abc.Sequence)
+            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
@@ -1318,10 +1318,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 raise TypeError('All input types must be sequences.')
 
         elif len(args) == 4:  # pragma: no cover
-            arg0_is_arr = isinstance(args[0], np.ndarray | collections.abc.Sequence)
-            arg1_is_arr = isinstance(args[1], np.ndarray | collections.abc.Sequence)
-            arg2_is_arr = isinstance(args[2], np.ndarray | collections.abc.Sequence)
-            arg3_is_arr = isinstance(args[3], np.ndarray | collections.abc.Sequence)
+            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
+            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
+            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
@@ -1869,7 +1869,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 self.deep_copy(uinput)
             else:
                 self.shallow_copy(uinput)
-        elif isinstance(uinput, str | pathlib.Path):
+        elif isinstance(uinput, (str, pathlib.Path)):
             self._from_file(uinput, **kwargs)
         elif (
             isinstance(uinput, np.ndarray)
@@ -2216,7 +2216,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
                 grid = arg0.cast_to_explicit_structured_grid()
                 self.shallow_copy(grid)
-            elif isinstance(arg0, str | pathlib.Path):
+            elif isinstance(arg0, (str, pathlib.Path)):
                 grid = UnstructuredGrid(arg0)
                 grid = grid.cast_to_explicit_structured_grid()
                 self.shallow_copy(grid)
@@ -2467,7 +2467,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return int(dims[0]), int(dims[1]), int(dims[2])
 
     @property
-    def dimensions(self) -> tuple[int, int, int]:
+    def dimensions(self) -> Tuple[int, int, int]:
         """Return the topological dimensions of the grid.
 
         Returns
@@ -2520,7 +2520,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             return self.bounds
 
-    def cell_id(self, coords) -> int | np.ndarray | None:
+    def cell_id(self, coords) -> Union[int, np.ndarray, None]:
         """Return the cell ID.
 
         Parameters

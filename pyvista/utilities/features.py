@@ -48,9 +48,9 @@ def voxelize(mesh, density=None, check_surface=True):
         mesh = pyvista.wrap(mesh)
     if density is None:
         density = mesh.length / 100
-    if isinstance(density, int | float | np.number):
+    if isinstance(density, (int, float, np.number)):
         density_x, density_y, density_z = [density] * 3
-    elif isinstance(density, collections.abc.Sequence | np.ndarray):
+    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
         raise TypeError(f'Invalid density {density!r}, expected number or array-like.')

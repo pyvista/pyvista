@@ -4,8 +4,8 @@ import inspect
 import itertools
 import re
 import weakref
-from collections.abc import Sequence
 from functools import wraps
+from typing import Dict, Optional, Sequence
 
 import numpy as np
 
@@ -65,7 +65,7 @@ class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
 
     # The substitutions to use for this (sub)class
-    _DOC_SUBS: dict[str, str] | None = None
+    _DOC_SUBS: Optional[Dict[str, str]] = None
     # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
     _DOC_STORE = {}  # type: ignore
     # Tag used to mark members that require docstring substitutions.
@@ -1036,7 +1036,7 @@ class _Chart(DocSubs):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
-    _DOC_SUBS: dict[str, str] | None = None
+    _DOC_SUBS: Optional[Dict[str, str]] = None
 
     def __init__(self, size=(1, 1), loc=(0, 0)) -> None:
         super().__init__()
@@ -1527,7 +1527,7 @@ class _Plot(DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
-    _DOC_SUBS: dict[str, str] | None = None
+    _DOC_SUBS: Optional[Dict[str, str]] = None
 
     def __init__(self, chart) -> None:
         super().__init__()
@@ -1742,7 +1742,7 @@ class _MultiCompPlot(_Plot):
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
-    _DOC_SUBS: dict[str, str] | None = None
+    _DOC_SUBS: Optional[Dict[str, str]] = None
 
     def __init__(self, chart) -> None:
         super().__init__(chart)
@@ -2499,7 +2499,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     def __init__(self, chart, x, y, color=None, orientation="V", label=None) -> None:
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
-        if not isinstance(y[0], Sequence | np.ndarray):
+        if not isinstance(y[0], (Sequence, np.ndarray)):
             y = (y,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(y))}
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
@@ -2581,7 +2581,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
         """
         if len(x) > 0:
-            if not isinstance(y[0], Sequence | np.ndarray):
+            if not isinstance(y[0], (Sequence, np.ndarray)):
                 y = (y,)
             y_data = {f"y{i}": np.array(y[i], copy=False) for i in range(len(y))}
             self._table.update({"x": np.array(x, copy=False), **y_data})
@@ -2684,7 +2684,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
     def __init__(self, chart, x, ys, colors=None, labels=None) -> None:
         """Initialize a new 2D stack plot instance."""
         super().__init__(chart)
-        if not isinstance(ys[0], Sequence | np.ndarray):
+        if not isinstance(ys[0], (Sequence, np.ndarray)):
             ys = (ys,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(ys))}
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
@@ -2765,7 +2765,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
         """
         if len(x) > 0:
-            if not isinstance(ys[0], Sequence | np.ndarray):
+            if not isinstance(ys[0], (Sequence, np.ndarray)):
                 ys = (ys,)
             y_data = {f"y{i}": np.array(ys[i], copy=False) for i in range(len(ys))}
             self._table.update({"x": np.array(x, copy=False), **y_data})

@@ -38,7 +38,7 @@ class Table(_vtk.vtkTable, DataObject):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], np.ndarray | list):
+            elif isinstance(args[0], (np.ndarray, list)):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
@@ -164,7 +164,7 @@ class Table(_vtk.vtkTable, DataObject):
             Other dataset attributes to update from.
 
         """
-        if isinstance(data, np.ndarray | list):
+        if isinstance(data, (np.ndarray, list)):
             # Allow table updates using array data
             data = self._prepare_arrays(data)
             data = {f'Array {i}': array for i, array in enumerate(data)}

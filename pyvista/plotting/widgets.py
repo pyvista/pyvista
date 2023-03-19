@@ -167,6 +167,8 @@ class WidgetHelper:
         For a full example see :ref:`box_widget_example`.
 
         """
+        interaction_event = _parse_interaction_event(interaction_event)
+
         if bounds is None:
             bounds = self.bounds
 
@@ -795,7 +797,7 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
-        if isinstance(volume, pyvista.UniformGrid | pyvista.RectilinearGrid):
+        if isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
         elif not isinstance(volume, pyvista.plotting.Volume):
             raise TypeError(
@@ -2112,7 +2114,7 @@ class WidgetHelper:
         if center.ndim > 1:
             num = len(center)
 
-        if isinstance(color, list | tuple | np.ndarray):
+        if isinstance(color, (list, tuple, np.ndarray)):
             if len(color) == num and not isinstance(color[0], float):
                 colors = color
             else:

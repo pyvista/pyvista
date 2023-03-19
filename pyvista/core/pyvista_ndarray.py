@@ -1,5 +1,6 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 from collections.abc import Iterable
+from typing import Union
 
 import numpy as np
 
@@ -43,7 +44,7 @@ class pyvista_ndarray(np.ndarray):
 
     def __new__(
         cls,
-        array: Iterable | _vtk.vtkAbstractArray,
+        array: Union[Iterable, _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):
@@ -86,7 +87,7 @@ class pyvista_ndarray(np.ndarray):
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: int | np.ndarray, value):
+    def __setitem__(self, key: Union[int, np.ndarray], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

@@ -1,7 +1,6 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-from collections.abc import Iterator, Sequence
-from typing import Any, Union
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -171,7 +170,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         info.append(f'Contains arrays :{array_info}')
         return '\n'.join(info)
 
-    def get(self, key: str, value: Any | None = None) -> pyvista_ndarray | None:
+    def get(self, key: str, value: Optional[Any] = None) -> Optional[pyvista_ndarray]:
         """Return the value of the item with the specified key.
 
         Parameters
@@ -261,7 +260,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return self.VTKObject.GetNumberOfArrays()
 
     @property
-    def active_scalars(self) -> pyvista_ndarray | None:
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars.
 
         .. versionchanged:: 0.32.0
@@ -295,7 +294,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def active_vectors(self) -> np.ndarray | None:
+    def active_vectors(self) -> Optional[np.ndarray]:
         """Return the active vectors as a pyvista_ndarray.
 
         .. versionchanged:: 0.32.0
@@ -327,7 +326,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def valid_array_len(self) -> int | None:
+    def valid_array_len(self) -> Optional[int]:
         """Return the length data should be when added to the dataset.
 
         If there are no restrictions, returns ``None``.
@@ -357,7 +356,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def active_t_coords(self) -> pyvista_ndarray | None:
+    def active_t_coords(self) -> Optional[pyvista_ndarray]:
         """Return or set the active texture coordinates array.
 
         Returns
@@ -407,7 +406,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.Modified()
 
     @property
-    def active_t_coords_name(self) -> str | None:
+    def active_t_coords_name(self) -> Optional[str]:
         """Name of the active texture coordinates array.
 
         Examples
@@ -435,7 +434,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if np.issubdtype(dtype, np.number) or dtype == bool:
             self.SetActiveTCoords(name)
 
-    def get_array(self, key: str | int) -> pyvista_ndarray:
+    def get_array(self, key: Union[str, int]) -> pyvista_ndarray:
         """Get an array in this object.
 
         Parameters
@@ -508,7 +507,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def set_array(
         self,
-        data: Sequence[Number] | Number | np.ndarray,
+        data: Union[Sequence[Number], Number, np.ndarray],
         name: str,
         deep_copy=False,
     ) -> None:
@@ -577,7 +576,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def set_scalars(
         self,
-        scalars: Sequence[Number] | Number | np.ndarray,
+        scalars: Union[Sequence[Number], Number, np.ndarray],
         name='scalars',
         deep_copy=False,
     ):
@@ -635,7 +634,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def set_vectors(
         self,
-        vectors: Sequence[Number] | Number | np.ndarray,
+        vectors: Union[Sequence[Number], Number, np.ndarray],
         name: str,
         deep_copy=False,
     ):
@@ -716,7 +715,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def _prepare_array(
         self,
-        data: Sequence[Number] | Number | np.ndarray,
+        data: Union[Sequence[Number], Number, np.ndarray],
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkDataSet:
@@ -917,7 +916,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.remove(key)
         return narray
 
-    def items(self) -> list[tuple[str, pyvista_ndarray]]:
+    def items(self) -> List[Tuple[str, pyvista_ndarray]]:
         """Return a list of (array name, array value) tuples.
 
         Returns
@@ -938,7 +937,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         return list(zip(self.keys(), self.values()))
 
-    def keys(self) -> list[str]:
+    def keys(self) -> List[str]:
         """Return the names of the arrays as a list.
 
         Returns
@@ -970,7 +969,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 keys.append(name)
         return keys
 
-    def values(self) -> list[pyvista_ndarray]:
+    def values(self) -> List[pyvista_ndarray]:
         """Return the arrays as a list.
 
         Returns
@@ -1013,7 +1012,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for array_name in self:
             self.remove(key=array_name)
 
-    def update(self, array_dict: Union[dict[str, np.ndarray], 'DataSetAttributes']):
+    def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace
@@ -1066,7 +1065,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('FieldData does not have active scalars or vectors.')
 
     @property
-    def active_scalars_name(self) -> str | None:
+    def active_scalars_name(self) -> Optional[str]:
         """Name of the active scalars.
 
         Examples
@@ -1105,7 +1104,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.SetActiveScalars(name)
 
     @property
-    def active_vectors_name(self) -> str | None:
+    def active_vectors_name(self) -> Optional[str]:
         """Name of the active vectors.
 
         Examples
@@ -1163,7 +1162,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return True
 
     @property
-    def active_normals(self) -> pyvista_ndarray | None:
+    def active_normals(self) -> Optional[pyvista_ndarray]:
         """Return or set the normals.
 
         Returns
@@ -1222,7 +1221,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals.setter
-    def active_normals(self, normals: Sequence[Number] | np.ndarray):
+    def active_normals(self, normals: Union[Sequence[Number], np.ndarray]):
         self._raise_no_normals()
         normals = np.asarray(normals)
         if normals.ndim != 2:
@@ -1240,7 +1239,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.Modified()
 
     @property
-    def active_normals_name(self) -> str | None:
+    def active_normals_name(self) -> Optional[str]:
         """Return or set the name of the normals array.
 
         Returns

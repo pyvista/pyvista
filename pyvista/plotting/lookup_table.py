@@ -1,5 +1,5 @@
 """Wrap vtkLookupTable."""
-from typing import Any
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
@@ -193,7 +193,7 @@ class LookupTable(_vtk.vtkLookupTable):
     _nan_color_set = False
     _cmap = None
     _values_manual = False
-    _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
+    _opacity_parm: Tuple[Any, bool, str] = (None, False, 'quadratic')
 
     def __init__(
         self,
@@ -245,7 +245,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.annotations = annotations
 
     @property
-    def value_range(self) -> tuple | None:
+    def value_range(self) -> Optional[tuple]:
         """Return or set the brightness of the mapped lookup table.
 
         This range is only used when creating custom color maps and will return
@@ -282,7 +282,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def hue_range(self) -> tuple | None:
+    def hue_range(self) -> Optional[tuple]:
         """Return or set the hue range.
 
         This range is only used when creating custom color maps and will return
@@ -319,7 +319,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def cmap(self) -> str | None:
+    def cmap(self) -> Optional[str]:
         """Return or set the color map used by this lookup table.
 
         Examples
@@ -490,7 +490,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.ForceBuild()
 
     @property
-    def nan_color(self) -> Color | None:
+    def nan_color(self) -> Optional[Color]:
         """Return or set the not a number (NAN) color.
 
         Any values that are NANs will be rendered with this color.
@@ -601,7 +601,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def above_range_color(self) -> Color | None:
+    def above_range_color(self) -> Optional[Color]:
         """Return or set the above range color.
 
         Any values above :attr:`LookupTable.scalar_range` will be rendered with this
@@ -629,7 +629,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: bool | ColorLike):
+    def above_range_color(self, value: Union[bool, ColorLike]):
         if value in (None, False):
             self.SetUseAboveRangeColor(False)
         elif value is True:
@@ -665,7 +665,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.above_range_color = Color(color, opacity=value)
 
     @property
-    def below_range_color(self) -> Color | None:
+    def below_range_color(self) -> Optional[Color]:
         """Return or set the below range color.
 
         Any values below :attr:`LookupTable.scalar_range` will be rendered with this
@@ -693,7 +693,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: bool | ColorLike):
+    def below_range_color(self, value: Union[bool, ColorLike]):
         if value in (None, False):
             self.SetUseBelowRangeColor(False)
         elif value is True:
@@ -824,7 +824,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> pl.show()
 
         """
-        if isinstance(opacity, float | int):
+        if isinstance(opacity, (float, int)):
             if not 0 <= opacity <= 1:
                 raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
             self.values[:, -1] = opacity * 255
@@ -941,7 +941,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return dict(zip(keys, values))
 
     @annotations.setter
-    def annotations(self, values: dict | None):
+    def annotations(self, values: Optional[dict]):
         self.ResetAnnotations()
         if values is not None:
             for val, anno in values.items():
@@ -1100,7 +1100,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     def __call__(self, value):
         """Implement a Matplotlib colormap-like call."""
-        if isinstance(value, int | float):
+        if isinstance(value, (int, float)):
             return self.map_value(value)
         else:
             try:

@@ -532,7 +532,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 f'Opacity transfer function ({mapping}) unknown. '
                 f'Valid options: {list(transfer_func.keys())}',
             ) from None
-    elif isinstance(mapping, np.ndarray | list | tuple):
+    elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
             # User could pass transfer function ready for lookup table

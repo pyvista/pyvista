@@ -417,7 +417,7 @@ class UniformGridFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
-        if isinstance(threshold, np.ndarray | collections.abc.Sequence):
+        if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
             if len(threshold) != 2:
                 raise ValueError(
                     f'Threshold must be length one for a float value or two for min/max; not ({threshold}).',

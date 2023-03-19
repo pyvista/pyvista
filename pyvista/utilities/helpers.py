@@ -10,6 +10,7 @@ import threading
 import traceback
 import warnings
 from threading import Thread
+from typing import Optional
 
 import numpy as np
 
@@ -160,7 +161,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     """
     if arr is None:
         return None
-    if isinstance(arr, list | tuple):
+    if isinstance(arr, (list, tuple)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
         if arr.dtype == np.dtype('O'):
@@ -177,7 +178,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
             vtk_data.SetName(name)
         return vtk_data
     # Otherwise input must be a vtkDataArray
-    if not isinstance(arr, _vtk.vtkDataArray | _vtk.vtkBitArray | _vtk.vtkStringArray):
+    if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
         raise TypeError(f'Invalid input array type ({type(arr)}).')
     # Handle booleans
     if isinstance(arr, _vtk.vtkBitArray):
@@ -203,7 +204,7 @@ def is_pyvista_dataset(obj):
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, pyvista.DataSet | pyvista.MultiBlock)
+    return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
 def _assoc_array(obj, name, association='point'):
@@ -342,7 +343,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', err=False) -> np.ndarray | None:
+def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -981,7 +982,7 @@ def wrap(dataset):
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
-    if isinstance(dataset, np.ndarray | pyvista.pyvista_ndarray):
+    if isinstance(dataset, (np.ndarray, pyvista.pyvista_ndarray)):
         if dataset.ndim == 1 and dataset.shape[0] == 3:
             return pyvista.PolyData(dataset)
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
@@ -1101,9 +1102,9 @@ def is_inside_bounds(point, bounds):
         ``True`` when ``point`` is inside ``bounds``.
 
     """
-    if isinstance(point, int | float):
+    if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, np.ndarray | collections.abc.Sequence) and not isinstance(
+    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
         point,
         collections.deque,
     ):

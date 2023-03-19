@@ -3,7 +3,7 @@
 import collections.abc
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, DefaultDict
+from typing import Any, DefaultDict, Dict, Type, Union
 
 import numpy as np
 
@@ -21,7 +21,7 @@ DEFAULT_VECTOR_KEY = '_vectors'
 class DataObject:
     """Methods common to all wrapped data objects."""
 
-    _WRITERS: dict[str, type[_vtk.vtkXMLWriter] | type[_vtk.vtkDataWriter]] = {}
+    _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
@@ -59,7 +59,7 @@ class DataObject:
         """
         self.DeepCopy(to_copy)
 
-    def _from_file(self, filename: str | Path, **kwargs):
+    def _from_file(self, filename: Union[str, Path], **kwargs):
         data = pyvista.read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(

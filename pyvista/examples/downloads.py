@@ -20,6 +20,7 @@ import os
 import shutil
 import warnings
 from pathlib import PureWindowsPath
+from typing import Union
 
 import numpy as np
 import pooch
@@ -4165,7 +4166,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     return reader.read()
 
 
-def download_dicom_stack(load: bool = True) -> pyvista.UniformGrid | str:  # pragma: no cover
+def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)

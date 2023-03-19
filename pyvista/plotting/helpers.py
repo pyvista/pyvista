@@ -1,5 +1,6 @@
 """This module contains some convenience helper functions."""
 
+from typing import Tuple
 
 import numpy as np
 
@@ -408,7 +409,7 @@ def plot_compare_four(
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def view_vectors(view: str, negative: bool = False) -> tuple[np.ndarray, np.ndarray]:
+def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

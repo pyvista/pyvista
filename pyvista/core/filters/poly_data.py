@@ -421,7 +421,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # check if dataset or datasets are not polydata
-        if isinstance(dataset, list | tuple | pyvista.MultiBlock):
+        if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
             not_pd = any(not isinstance(data, pyvista.PolyData) for data in dataset)
         else:
             not_pd = not isinstance(dataset, pyvista.PolyData)
@@ -1862,7 +1862,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetConvertLinesToPoints(lines_to_points)
         alg.SetConvertPolysToLines(polys_to_lines)
         alg.SetConvertStripsToPolys(strips_to_polys)
-        if isinstance(tolerance, int | float):
+        if isinstance(tolerance, (int, float)):
             if absolute:
                 alg.ToleranceIsAbsoluteOn()
                 alg.SetAbsoluteTolerance(tolerance)
@@ -2429,7 +2429,7 @@ class PolyDataFilters(DataSetFilters):
         remove = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs
-        if not issubclass(remove.dtype.type, np.bool_ | np.integer):
+        if not issubclass(remove.dtype.type, (np.bool_, np.integer)):
             raise TypeError('Remove must be either a mask or an integer array-like')
 
         if remove.dtype == np.bool_:
@@ -2684,7 +2684,7 @@ class PolyDataFilters(DataSetFilters):
         >>> projected.plot(show_edges=True, line_width=3)
 
         """
-        if not isinstance(normal, np.ndarray | collections.abc.Sequence) or len(normal) != 3:
+        if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
             origin = np.array(self.center) - np.array(normal) * self.length / 2.0
@@ -3035,7 +3035,7 @@ class PolyDataFilters(DataSetFilters):
             )
 
         if (
-            not isinstance(rotation_axis, np.ndarray | collections.abc.Sequence)
+            not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
             or len(rotation_axis) != 3
         ):
             raise ValueError('Vector must be a length three vector')
@@ -3136,7 +3136,7 @@ class PolyDataFilters(DataSetFilters):
         >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
 
         """
-        if not isinstance(direction, np.ndarray | collections.abc.Sequence) or len(direction) != 3:
+        if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
             raise TypeError('Vector must be a length three vector')
 
         extrusions = {"boundary_edges": 0, "all_edges": 1}

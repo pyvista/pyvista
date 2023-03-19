@@ -1,7 +1,7 @@
 """Common functions."""
 import os
 import sys
-from collections.abc import Sequence
+from typing import Sequence
 
 import numpy as np
 

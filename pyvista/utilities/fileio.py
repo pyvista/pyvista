@@ -34,7 +34,7 @@ def get_ext(filename):
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
     """Set any vtk writer to write as binary or ascii."""
-    if isinstance(vtk_writer, _vtk.vtkDataWriter | _vtk.vtkPLYWriter | _vtk.vtkSTLWriter):
+    if isinstance(vtk_writer, (_vtk.vtkDataWriter, _vtk.vtkPLYWriter, _vtk.vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
@@ -154,10 +154,10 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
-    if isinstance(filename, list | tuple):
+    if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:
-            if isinstance(each, str | pathlib.Path):
+            if isinstance(each, (str, pathlib.Path)):
                 name = os.path.basename(str(each))
             else:
                 name = None
@@ -223,7 +223,7 @@ def _apply_attrs_to_reader(reader, attrs):
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)
         if args is not None:
-            if not isinstance(args, list | tuple):
+            if not isinstance(args, (list, tuple)):
                 args = [args]
             attr(*args)
         else:

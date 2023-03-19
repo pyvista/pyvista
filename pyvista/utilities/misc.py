@@ -121,7 +121,7 @@ def copy_vtk_array(array, deep=True):
     1.0
 
     """
-    if not isinstance(array, _vtk.vtkDataArray | _vtk.vtkAbstractArray):
+    if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
         raise TypeError(f"Invalid type {type(array)}.")
 
     new_array = type(array)()

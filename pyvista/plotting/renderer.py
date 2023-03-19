@@ -2,9 +2,8 @@
 
 import collections.abc
 import warnings
-from collections.abc import Sequence
 from functools import partial, wraps
-from typing import cast
+from typing import Sequence, cast
 
 import numpy as np
 
@@ -353,7 +352,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
-        elif isinstance(camera_location[0], int | float):
+        elif isinstance(camera_location[0], (int, float)):
             if len(camera_location) != 3:
                 raise pyvista.core.errors.InvalidCameraError
             self.view_vector(camera_location)
@@ -417,7 +416,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             return
 
         for actor in self._actors.values():
-            if isinstance(actor, _vtk.vtkCubeAxesActor | _vtk.vtkLightActor):
+            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
             if (
                 hasattr(actor, 'GetBounds')
@@ -1446,7 +1445,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif location is not None:
             raise TypeError('location must be a string')
 
-        if isinstance(padding, int | float) and 0.0 <= padding < 1.0:
+        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
                 cushion = (
                     np.array(
@@ -1466,7 +1465,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set axes ranges if input
         if axes_ranges is not None:
-            if isinstance(axes_ranges, collections.abc.Sequence | np.ndarray):
+            if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
                 axes_ranges = np.asanyarray(axes_ranges)
             else:
                 raise TypeError('Input axes_ranges must be a numeric sequence.')

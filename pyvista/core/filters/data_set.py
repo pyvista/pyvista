@@ -1,7 +1,7 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
 import warnings
-from collections.abc import Sequence
+from typing import Optional, Sequence, Union
 
 import numpy as np
 
@@ -242,7 +242,7 @@ class DataSetFilters:
             ymin = _get_quarter(ymin, ymax)
             zmin = _get_quarter(zmin, zmax)
             bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
-        if isinstance(bounds, float | int):
+        if isinstance(bounds, (float, int)):
             bounds = [bounds, bounds, bounds]
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
@@ -255,7 +255,7 @@ class DataSetFilters:
                 normal = cell["Normals"][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
-        if not isinstance(bounds, np.ndarray | collections.abc.Sequence):
+        if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)):
             raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
         if len(bounds) not in [3, 6, 12]:
             raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
@@ -1145,7 +1145,7 @@ class DataSetFilters:
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
-            if not isinstance(component, int | np.integer):
+            if not isinstance(component, (int, np.integer)):
                 raise TypeError("component must be int")
             if component > (dim - 1) or component < 0:
                 raise ValueError(
@@ -1278,7 +1278,7 @@ class DataSetFilters:
             return dmin + float(percent) * (dmax - dmin)
 
         # Compute the values
-        if isinstance(percent, np.ndarray | collections.abc.Sequence):
+        if isinstance(percent, (np.ndarray, collections.abc.Sequence)):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
         elif isinstance(percent, collections.abc.Iterable):
@@ -1367,7 +1367,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Sequence[float] | None = None, progress_bar=False):
+    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1564,7 +1564,7 @@ class DataSetFilters:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
             scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)
-        elif isinstance(scalar_range, np.ndarray | collections.abc.Sequence):
+        elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
@@ -1710,7 +1710,7 @@ class DataSetFilters:
             raise ValueError(f"Method '{method}' is not supported")
 
         if rng is not None:
-            if not isinstance(rng, np.ndarray | collections.abc.Sequence):
+            if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
                 raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
             rng_shape = np.shape(rng)
             if rng_shape != (2,):
@@ -1720,7 +1720,7 @@ class DataSetFilters:
 
         if isinstance(scalars, str):
             scalars_name = scalars
-        elif isinstance(scalars, collections.abc.Sequence | np.ndarray):
+        elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
         elif scalars is not None:
@@ -1759,7 +1759,7 @@ class DataSetFilters:
             if rng is None:
                 rng = self.get_data_range(scalars_name)
             alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, np.ndarray | collections.abc.Sequence):
+        elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
@@ -1832,7 +1832,7 @@ class DataSetFilters:
 
         """
         if use_bounds:
-            if isinstance(use_bounds, int | bool):
+            if isinstance(use_bounds, (int, bool)):
                 b = self.GetBounds()
             origin = [b[0], b[2], b[4]]  # BOTTOM LEFT CORNER
             point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
@@ -2136,11 +2136,11 @@ class DataSetFilters:
             _update_alg(arrow, progress_bar, 'Making Arrow')
             geom = arrow.GetOutput()
         # Check if a table of geometries was passed
-        if isinstance(geom, np.ndarray | collections.abc.Sequence):
+        if isinstance(geom, (np.ndarray, collections.abc.Sequence)):
             if indices is None:
                 # use default "categorical" indices
                 indices = np.arange(len(geom))
-            if not isinstance(indices, np.ndarray | collections.abc.Sequence):
+            if not isinstance(indices, (np.ndarray, collections.abc.Sequence)):
                 raise TypeError(
                     'If "geom" is a sequence then "indices" must '
                     'also be a sequence of the same length.',
@@ -2487,7 +2487,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Warping by Scalar')
         output = _get_output(alg)
         if inplace:
-            if isinstance(self, _vtk.vtkImageData | _vtk.vtkRectilinearGrid):
+            if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
             self.copy_from(output, deep=False)
             return self
@@ -3200,7 +3200,7 @@ class DataSetFilters:
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, pyvista.UniformGrid | pyvista.RectilinearGrid):
+        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
             target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
@@ -4788,7 +4788,7 @@ class DataSetFilters:
 
         if isinstance(grid, pyvista.DataSet):
             append_filter.AddInputData(grid)
-        elif isinstance(grid, list | tuple | pyvista.MultiBlock):
+        elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
             for grid in grids:
                 append_filter.AddInputData(grid)
@@ -5198,7 +5198,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: _vtk.vtkMatrix4x4 | _vtk.vtkTransform | np.ndarray,
+        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -5651,7 +5651,7 @@ def _set_threshold_limit(alg, value, method, invert):
 
     """
     # Check value
-    if isinstance(value, np.ndarray | collections.abc.Sequence):
+    if isinstance(value, (np.ndarray, collections.abc.Sequence)):
         if len(value) != 2:
             raise ValueError(
                 f'Value range must be length one for a float value or two for min/max; not ({value}).',
@@ -5666,7 +5666,7 @@ def _set_threshold_limit(alg, value, method, invert):
     alg.SetInvert(invert)
     # Set values and function
     if pyvista.vtk_version_info >= (9, 1):
-        if isinstance(value, np.ndarray | collections.abc.Sequence):
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])
             alg.SetUpperThreshold(value[1])
@@ -5682,7 +5682,7 @@ def _set_threshold_limit(alg, value, method, invert):
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
     else:  # pragma: no cover
         # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-        if isinstance(value, np.ndarray | collections.abc.Sequence):
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             alg.ThresholdBetween(value[0], value[1])
         else:
             # Single value

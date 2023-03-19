@@ -1,4 +1,5 @@
 """This module contains the Property class."""
+from typing import Union
 
 import pyvista as pv
 from pyvista import _vtk
@@ -751,7 +752,7 @@ class Property(_vtk.vtkProperty):
         return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation.setter
-    def interpolation(self, value: str | int | InterpolationType):
+    def interpolation(self, value: Union[str, int, InterpolationType]):
         value = InterpolationType.from_any(value).value
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()

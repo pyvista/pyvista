@@ -2,12 +2,17 @@
 
 import collections.abc
 import warnings
-from collections.abc import Iterable, Iterator
 from copy import deepcopy
 from typing import (
     Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
     Literal,
     Optional,
+    Tuple,
+    Union,
     cast,
 )
 
@@ -111,11 +116,11 @@ class DataSet(DataSetFilters, DataObject):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__()
-        self._last_active_scalars_name: str | None = None
+        self._last_active_scalars_name: Optional[str] = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures: dict[str, _vtk.vtkTexture] = {}
+        self._textures: Dict[str, _vtk.vtkTexture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -241,7 +246,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_tensors_info
 
     @property
-    def active_vectors(self) -> pyvista_ndarray | None:
+    def active_vectors(self) -> Optional[pyvista_ndarray]:
         """Return the active vectors array.
 
         Examples
@@ -275,7 +280,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self) -> np.ndarray | None:
+    def active_tensors(self) -> Optional[np.ndarray]:
         """Return the active tensors array."""
         field, name = self.active_tensors_info
         if name is not None:
@@ -403,7 +408,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: VectorArray | NumericArray | _vtk.vtkPoints):
+    def points(self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -468,7 +473,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
-    def active_t_coords(self) -> pyvista_ndarray | None:
+    def active_t_coords(self) -> Optional[pyvista_ndarray]:
         """Return or set the active texture coordinates on the points.
 
         Examples
@@ -494,7 +499,7 @@ class DataSet(DataSetFilters, DataObject):
         self.point_data.active_t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self) -> dict[str, _vtk.vtkTexture]:
+    def textures(self) -> Dict[str, _vtk.vtkTexture]:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset,
@@ -573,7 +578,7 @@ class DataSet(DataSetFilters, DataObject):
                 mesh.Modified()
         return texture
 
-    def set_active_scalars(self, name: str | None, preference='cell'):
+    def set_active_scalars(self, name: Optional[str], preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -631,7 +636,7 @@ class DataSet(DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
-    def set_active_vectors(self, name: str | None, preference='point'):
+    def set_active_vectors(self, name: Optional[str], preference='point'):
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -668,7 +673,7 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
-    def set_active_tensors(self, name: str | None, preference='point'):
+    def set_active_tensors(self, name: Optional[str], preference='point'):
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
@@ -753,7 +758,7 @@ class DataSet(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
     @property
-    def active_scalars(self) -> pyvista_ndarray | None:
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars as an array."""
         field, name = self.active_scalars_info
         if name is not None:
@@ -767,7 +772,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_normals(self) -> pyvista_ndarray | None:
+    def active_normals(self) -> Optional[pyvista_ndarray]:
         """Return the active normals as an array.
 
         Returns
@@ -801,9 +806,9 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_data_range(
         self,
-        arr_var: str | np.ndarray | None = None,
+        arr_var: Optional[Union[str, np.ndarray]] = None,
         preference='cell',
-    ) -> tuple[float | np.ndarray, float | np.ndarray]:
+    ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """Get the non-NaN min and max of a named array.
 
         Parameters
@@ -1089,7 +1094,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def translate(
         self,
-        xyz: list | tuple | np.ndarray,
+        xyz: Union[list, tuple, np.ndarray],
         transform_all_input_vectors=False,
         inplace=False,
     ):
@@ -1141,7 +1146,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def scale(
         self,
-        xyz: Number | list | tuple | np.ndarray,
+        xyz: Union[Number, list, tuple, np.ndarray],
         transform_all_input_vectors=False,
         inplace=False,
     ):
@@ -1190,7 +1195,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
 
         """
-        if isinstance(xyz, float | int | np.number):
+        if isinstance(xyz, (float, int, np.number)):
             xyz = [xyz] * 3
 
         transform = _vtk.vtkTransform()
@@ -1362,7 +1367,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_normal(
         self,
-        normal: list[float],
+        normal: List[float],
         point=None,
         transform_all_input_vectors=False,
         inplace=False,
@@ -1868,7 +1873,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         return get_array_association(self, name, preference=preference, err=True)
 
-    def __getitem__(self, index: Iterable | str) -> np.ndarray:
+    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
@@ -1882,7 +1887,7 @@ class DataSet(DataSetFilters, DataObject):
             )
         return self.get_array(name, preference=preference)
 
-    def _ipython_key_completions_(self) -> list[str]:
+    def _ipython_key_completions_(self) -> List[str]:
         return self.array_names
 
     def __setitem__(self, name: str, scalars: np.ndarray):
@@ -1918,7 +1923,7 @@ class DataSet(DataSetFilters, DataObject):
         return n
 
     @property
-    def array_names(self) -> list[str]:
+    def array_names(self) -> List[str]:
         """Return a list of array names for the dataset.
 
         This makes sure to put the active scalars' name first in the list.
@@ -2235,7 +2240,7 @@ class DataSet(DataSetFilters, DataObject):
         pyvista_ndarray([-0.05218758,  0.49653167,  0.02706946], dtype=float32)
 
         """
-        if not isinstance(point, np.ndarray | collections.abc.Sequence) or len(point) != 3:
+        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
             raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
@@ -2253,9 +2258,9 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_closest_cell(
         self,
-        point: VectorArray | NumericArray,
+        point: Union[VectorArray, NumericArray],
         return_closest_point: bool = False,
-    ) -> int | np.ndarray | tuple[int | np.ndarray, np.ndarray]:
+    ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
@@ -2362,8 +2367,8 @@ class DataSet(DataSetFilters, DataObject):
 
         cell = _vtk.vtkGenericCell()
 
-        closest_cells: list[int] = []
-        closest_points: list[list[float]] = []
+        closest_cells: List[int] = []
+        closest_points: List[List[float]] = []
 
         for node in point:
             closest_point = [0.0, 0.0, 0.0]
@@ -2375,7 +2380,9 @@ class DataSet(DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
-        out_cells: int | np.ndarray = closest_cells[0] if singular else np.array(closest_cells)
+        out_cells: Union[int, np.ndarray] = (
+            closest_cells[0] if singular else np.array(closest_cells)
+        )
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
 
         if return_closest_point:
@@ -2384,8 +2391,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_containing_cell(
         self,
-        point: VectorArray | NumericArray,
-    ) -> int | np.ndarray:
+        point: Union[VectorArray, NumericArray],
+    ) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
@@ -2736,7 +2743,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return self.get_cell(ind).type
 
-    def cell_point_ids(self, ind: int) -> list[int]:
+    def cell_point_ids(self, ind: int) -> List[int]:
         """Return the point ids in a cell.
 
         .. deprecated:: 0.38.0
@@ -2763,8 +2770,8 @@ class DataSet(DataSetFilters, DataObject):
     def point_is_inside_cell(
         self,
         ind: int,
-        point: VectorArray | NumericArray,
-    ) -> int | np.ndarray:
+        point: Union[VectorArray, NumericArray],
+    ) -> Union[int, np.ndarray]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0
@@ -2794,7 +2801,7 @@ class DataSet(DataSetFilters, DataObject):
         True
 
         """
-        if not isinstance(ind, int | np.integer):
+        if not isinstance(ind, (int, np.integer)):
             raise TypeError(f"ind must be an int, got {type(ind)}")
 
         if not 0 <= ind < self.n_cells:

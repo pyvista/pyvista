@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps
 from threading import Thread
+from typing import Dict, Optional
 
 import numpy as np
 import scooby
@@ -1770,7 +1771,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_scale = value
 
     @contextmanager
-    def image_scale_context(self, scale: int | None = None):
+    def image_scale_context(self, scale: Optional[int] = None):
         """Set the image scale in an isolated context.
 
         Parameters
@@ -3400,13 +3401,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         actor = Actor(mapper=self.mapper)
 
-        if texture is True or isinstance(texture, str | int):
+        if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
 
         if texture:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
-            if not isinstance(texture, _vtk.vtkTexture | _vtk.vtkOpenGLTexture):
+            if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
                 raise TypeError(f'Invalid texture type ({type(texture)})')
             if mesh.GetPointData().GetTCoords() is None:
                 raise ValueError(
@@ -3488,7 +3489,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             "culling": culling,
         }
 
-        if isinstance(opacity, float | int):
+        if isinstance(opacity, (float, int)):
             prop_kwargs['opacity'] = opacity
         prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
@@ -3980,7 +3981,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         elif not isinstance(
             volume,
-            pyvista.UniformGrid | pyvista.RectilinearGrid | pyvista.UnstructuredGrid,
+            (pyvista.UniformGrid, pyvista.RectilinearGrid, pyvista.UnstructuredGrid),
         ):
             volume = volume.cast_to_unstructured_grid()
 
@@ -4064,7 +4065,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
                 clim = [min_, max_]
-        elif isinstance(clim, float | int):
+        elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
         # data must be between [0, 255], but not necessarily UINT8
@@ -4282,7 +4283,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The title of the scalar bar to update.
 
         """
-        if isinstance(clim, float | int):
+        if isinstance(clim, (float, int)):
             clim = [-clim, clim]
         if len(clim) != 2:
             raise TypeError('clim argument must be a length 2 iterable of values: (min, max).')
@@ -4389,7 +4390,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        if isinstance(views, int | np.integer):
+        if isinstance(views, (int, np.integer)):
             camera = self.renderers[views].camera
             camera_status = self.renderers[views].camera.is_set
             for renderer in self.renderers:
@@ -4484,7 +4485,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh is None:
             mesh = self.mesh
 
-        if isinstance(mesh, collections.abc.Iterable | pyvista.MultiBlock):
+        if isinstance(mesh, (collections.abc.Iterable, pyvista.MultiBlock)):
             # Recursive if need to update scalars on many meshes
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
@@ -4749,7 +4750,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         corner_mappings['left'] = corner_mappings['left_edge']
         corner_mappings['l'] = corner_mappings['left_edge']
 
-        if isinstance(position, int | str | bool):
+        if isinstance(position, (int, str, bool)):
             if isinstance(position, str):
                 position = corner_mappings[position]
             elif position is True:
@@ -5211,7 +5212,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font_size = self._theme.font.size
         point_color = Color(point_color, default_color=self._theme.color)
 
-        if isinstance(points, list | tuple):
+        if isinstance(points, (list, tuple)):
             points = np.array(points)
 
         if isinstance(points, np.ndarray):
@@ -5347,7 +5348,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if not is_pyvista_dataset(points):
             points, _ = _coerce_pointslike_arg(points, copy=False)
-        if not isinstance(labels, str | list):
+        if not isinstance(labels, (str, list)):
             raise TypeError(
                 'labels must be a string name of the scalars array to use or list of scalars',
             )
@@ -5486,10 +5487,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file if requested
-        if isinstance(filename, str | pathlib.Path | io.BytesIO):
+        if isinstance(filename, (str, pathlib.Path, io.BytesIO)):
             from PIL import Image
 
-            if isinstance(filename, str | pathlib.Path):
+            if isinstance(filename, (str, pathlib.Path)):
                 filename = pathlib.Path(filename)
                 if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
                     filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
@@ -6772,7 +6773,7 @@ class Plotter(BasePlotter):
 #
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
-_ALL_PLOTTERS: dict[str, BasePlotter] = {}
+_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 
 def _kill_display(disp_id):  # pragma: no cover

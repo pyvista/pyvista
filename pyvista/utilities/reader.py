@@ -3,10 +3,9 @@ import enum
 import os
 import pathlib
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any
+from typing import Any, Callable, List, Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -177,7 +176,7 @@ class BaseVTKReader(ABC):
 
     def __init__(self) -> None:
         self._data_object = None
-        self._observers: list[int | Callable] = []
+        self._observers: List[Union[int, Callable]] = []
 
     def SetFileName(self, filename):
         """Set file name."""
@@ -1399,7 +1398,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         """
         # files may be a list or a single filename
-        if files and isinstance(files, str | pathlib.Path):
+        if files and isinstance(files, (str, pathlib.Path)):
             files = [files]
         files = [_process_filename(f) for f in files]
 
@@ -1416,7 +1415,7 @@ class MultiBlockPlot3DReader(BaseReader):
     def auto_detect_format(self, value):
         self.reader.SetAutoDetectFormat(value)
 
-    def add_function(self, value: int | Plot3DFunctionEnum):
+    def add_function(self, value: Union[int, Plot3DFunctionEnum]):
         """Specify additional functions to compute.
 
         The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
@@ -1445,7 +1444,7 @@ class MultiBlockPlot3DReader(BaseReader):
             value = value.value
         self.reader.AddFunction(value)
 
-    def remove_function(self, value: int | Plot3DFunctionEnum):
+    def remove_function(self, value: Union[int, Plot3DFunctionEnum]):
         """Remove one function from list of functions to compute.
 
         For details on the types of accepted values, see :meth:``add_function``.
@@ -1663,7 +1662,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self) -> list[str]:
+    def family_array_names(self) -> List[str]:
         """Return the list of all family array names.
 
         Returns

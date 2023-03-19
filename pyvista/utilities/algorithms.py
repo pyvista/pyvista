@@ -37,7 +37,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
         If an algorithm is passed, it will be returned. Otherwise returns ``None``.
 
     """
-    if isinstance(mesh_or_algo, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput):
+    if isinstance(mesh_or_algo, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
         if isinstance(mesh_or_algo, _vtk.vtkAlgorithmOutput):
             algo = mesh_or_algo.GetProducer()
             # If vtkAlgorithmOutput, override port argument

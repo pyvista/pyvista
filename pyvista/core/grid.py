@@ -1,8 +1,8 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
 import pathlib
 import warnings
-from collections.abc import Sequence
 from functools import wraps
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
@@ -23,7 +23,7 @@ class Grid(DataSet):
         super().__init__()
 
     @property
-    def dimensions(self) -> tuple[int, int, int]:
+    def dimensions(self) -> Tuple[int, int, int]:
         """Return the grid's dimensions.
 
         These are effectively the number of points along each of the
@@ -132,7 +132,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], str | pathlib.Path):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0], None, None, check_duplicates)
@@ -539,7 +539,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                     self.deep_copy(uinput)
                 else:
                     self.shallow_copy(uinput)
-            elif isinstance(uinput, str | pathlib.Path):
+            elif isinstance(uinput, (str, pathlib.Path)):
                 self._from_file(uinput)
             else:
                 raise TypeError(
@@ -684,7 +684,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.points[:, 2]
 
     @property
-    def origin(self) -> tuple[float]:
+    def origin(self) -> Tuple[float]:
         """Return the origin of the grid (bottom southwest corner).
 
         Examples
@@ -717,13 +717,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, origin: Sequence[float | int]):
+    def origin(self, origin: Sequence[Union[float, int]]):
         """Set the origin."""
         self.SetOrigin(origin[0], origin[1], origin[2])
         self.Modified()
 
     @property
-    def spacing(self) -> tuple[float, float, float]:
+    def spacing(self) -> Tuple[float, float, float]:
         """Return or set the spacing for each axial direction.
 
         Notes
@@ -751,7 +751,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetSpacing()
 
     @spacing.setter
-    def spacing(self, spacing: Sequence[float | int]):
+    def spacing(self, spacing: Sequence[Union[float, int]]):
         """Set spacing."""
         if min(spacing) < 0:
             raise ValueError(f"Spacing must be non-negative, got {spacing}")

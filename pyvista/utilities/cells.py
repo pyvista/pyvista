@@ -26,7 +26,7 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
     ind = np.asarray(ind)
 
     # np.asarray will eat anything, so we have to weed out bogus inputs
-    if not issubclass(ind.dtype.type, np.bool_ | np.integer):
+    if not issubclass(ind.dtype.type, (np.bool_, np.integer)):
         raise TypeError('Indices must be either a mask or an integer array-like')
 
     if ind.dtype == np.bool_:

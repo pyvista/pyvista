@@ -76,7 +76,7 @@ class Renderers:
             self._render_idxs = np.arange(n + m)
 
         else:
-            if not isinstance(shape, np.ndarray | collections.abc.Sequence):
+            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
                 raise TypeError('"shape" should be a list, tuple or string descriptor')
             if len(shape) != 2:
                 raise ValueError('"shape" must have length 2.')
@@ -217,9 +217,9 @@ class Renderers:
             Index of the render window.
 
         """
-        if isinstance(loc, int | np.integer):
+        if isinstance(loc, (int, np.integer)):
             return loc
-        elif isinstance(loc, np.ndarray | collections.abc.Sequence):
+        elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
             if not len(loc) == 2:
                 raise ValueError('"loc" must contain two items')
             index_row = loc[0]
@@ -251,7 +251,7 @@ class Renderers:
 
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid."""
-        if not isinstance(index, int | np.integer):
+        if not isinstance(index, (int, np.integer)):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
             return index

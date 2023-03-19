@@ -296,7 +296,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: str | FieldAssociation):
+    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
         scalar_mode = scalar_mode.lower()  # type: ignore
@@ -647,7 +647,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 scalars.shape[0] == self.dataset.n_points
                 or scalars.shape[0] == self.dataset.n_cells
             ):
-                if not isinstance(component, int | type(None)):
+                if not isinstance(component, (int, type(None))):
                     raise TypeError('component must be either None or an integer')
                 if component is None:
                     scalars = np.linalg.norm(scalars.copy(), axis=1)
@@ -669,7 +669,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         # Set scalars range
         if clim is None:
             clim = [np.nanmin(scalars), np.nanmax(scalars)]
-        elif isinstance(clim, int | float):
+        elif isinstance(clim, (int, float)):
             clim = [-clim, clim]
 
         if log_scale and clim[0] <= 0:
@@ -997,7 +997,7 @@ class _BaseVolumeMapper(_BaseMapper):
         )  # pragma: no cover
 
     @blend_mode.setter
-    def blend_mode(self, value: str | int):
+    def blend_mode(self, value: Union[str, int]):
         if isinstance(value, int):
             self.SetBlendMode(value)
         elif isinstance(value, str):

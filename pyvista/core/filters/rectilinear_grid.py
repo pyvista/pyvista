@@ -1,7 +1,7 @@
 """Filters module with the class to manage filters/algorithms for rectilinear grid datasets."""
 
 import collections
-from collections.abc import Sequence
+from typing import Sequence, Union
 
 import numpy as np
 
@@ -16,7 +16,7 @@ class RectilinearGridFilters:
     def to_tetrahedra(
         self,
         tetra_per_cell: int = 5,
-        mixed: Sequence[int] | bool = False,
+        mixed: Union[Sequence[int], bool] = False,
         pass_cell_ids: bool = False,
         progress_bar: bool = False,
     ):
@@ -84,7 +84,7 @@ class RectilinearGridFilters:
         if mixed is not False:
             if isinstance(mixed, str):
                 self.cell_data.active_scalars_name = mixed
-            elif isinstance(mixed, np.ndarray | collections.abc.Sequence):
+            elif isinstance(mixed, (np.ndarray, collections.abc.Sequence)):
                 self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore
             elif not isinstance(mixed, bool):
                 raise TypeError('`mixed` must be either a sequence of ints or bool')

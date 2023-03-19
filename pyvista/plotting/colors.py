@@ -739,7 +739,7 @@ class Color:
             elif isinstance(color, dict):
                 # From dictionary
                 self._from_dict(color)
-            elif isinstance(color, list | tuple | np.ndarray):
+            elif isinstance(color, (list, tuple, np.ndarray)):
                 # From RGB(A) sequence
                 self._from_rgba(color)
             elif isinstance(color, _vtk.vtkColor3ub):
@@ -1151,7 +1151,7 @@ class Color:
 
     def __getitem__(self, item):
         """Support indexing the float RGBA representation for backward compatibility."""
-        if not isinstance(item, str | slice | int | np.integer):
+        if not isinstance(item, (str, slice, int, np.integer)):
             raise TypeError("Invalid index specified, only strings and integers are supported.")
         if isinstance(item, str):
             for i, cnames in enumerate(self.CHANNEL_NAMES):
@@ -1322,7 +1322,7 @@ def get_cycler(color_cycler):
             return color_scheme_to_cycler(color_cycler)
         else:
             raise ValueError(f'color cycler of name `{color_cycler}` not found.')
-    elif isinstance(color_cycler, tuple | list):
+    elif isinstance(color_cycler, (tuple, list)):
         return cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
         return color_cycler

@@ -1,5 +1,6 @@
 """Internal array utilities."""
 import collections.abc
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -7,9 +8,9 @@ from pyvista._typing import NumericArray, VectorArray
 
 
 def _coerce_pointslike_arg(
-    points: NumericArray | VectorArray,
+    points: Union[NumericArray, VectorArray],
     copy: bool = False,
-) -> tuple[np.ndarray, bool]:
+) -> Tuple[np.ndarray, bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters

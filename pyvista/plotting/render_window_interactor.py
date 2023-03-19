@@ -27,11 +27,7 @@ class RenderWindowInteractor:
     """
 
     def __init__(
-        self,
-        plotter,
-        desired_update_rate=30,
-        light_follow_camera=True,
-        interactor=None,
+        self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None,
     ) -> None:
         """Initialize."""
         if interactor is None:
@@ -972,8 +968,7 @@ def _style_factory(klass):
                 )
                 self._observers.append(
                     self.AddObserver(
-                        "LeftButtonReleaseEvent",
-                        partial(try_callback, self._release),
+                        "LeftButtonReleaseEvent", partial(try_callback, self._release),
                     ),
                 )
 

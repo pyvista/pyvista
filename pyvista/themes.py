@@ -33,8 +33,8 @@ pyvista.
 import json
 import os
 import warnings
-from collections.abc import Callable
 from enum import Enum
+from typing import Callable, List, Optional, Union
 
 from ._typing import ColorLike, Number
 from .plotting.colors import Color, get_cmap_safe, get_cycler
@@ -154,7 +154,7 @@ def set_plot_theme(theme):
 class _ThemeConfig:
     """Provide common methods for theme configuration classes."""
 
-    __slots__: list[str] = []
+    __slots__: List[str] = []
 
     @classmethod
     def from_dict(cls, dict_):
@@ -195,7 +195,7 @@ class _ThemeConfig:
         for attr_name in other.__slots__:
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
-            if isinstance(attr, tuple | list):
+            if isinstance(attr, (tuple, list)):
                 if tuple(attr) != tuple(other_attr):
                     return False
             else:
@@ -281,7 +281,7 @@ class _LightingConfig(_ThemeConfig):
         return InterpolationType.from_any(self._interpolation)
 
     @interpolation.setter
-    def interpolation(self, interpolation: str | int | InterpolationType):
+    def interpolation(self, interpolation: Union[str, int, InterpolationType]):
         self._interpolation = InterpolationType.from_any(interpolation).value
 
     @property
@@ -528,7 +528,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
-    def feature_angle(self) -> float | None:
+    def feature_angle(self) -> Union[float, None]:
         """Return or set the silhouette feature angle.
 
         Examples
@@ -540,7 +540,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._feature_angle
 
     @feature_angle.setter
-    def feature_angle(self, feature_angle: float | None):
+    def feature_angle(self, feature_angle: Union[float, None]):
         self._feature_angle = feature_angle
 
     @property
@@ -1284,7 +1284,12 @@ class _TrameConfig(_ThemeConfig):
         self._jupyter_server_port = 0
         self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
         # default for ``jupyter-server-proxy``
-        self._server_proxy_prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
+        prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        if service:  # pragma: no cover
+            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
+        else:
+            self._server_proxy_prefix = prefix
         self._default_mode = 'trame'
         self._enable_vtk_warnings = (
             os.environ.get('VTK_ENABLE_SERIALIZER_WARNINGS', 'false').lower() == 'true'
@@ -1910,7 +1915,7 @@ class DefaultTheme(_ThemeConfig):
         self._camera = camera
 
     @property
-    def notebook(self) -> bool | None:
+    def notebook(self) -> Union[bool, None]:
         """Return or set the state of notebook plotting.
 
         Setting this to ``True`` always enables notebook plotting,
@@ -1928,11 +1933,11 @@ class DefaultTheme(_ThemeConfig):
         return self._notebook
 
     @notebook.setter
-    def notebook(self, value: bool | None):
+    def notebook(self, value: Union[bool, None]):
         self._notebook = value
 
     @property
-    def window_size(self) -> list[int]:
+    def window_size(self) -> List[int]:
         """Return or set the default render window size.
 
         Examples
@@ -1946,7 +1951,7 @@ class DefaultTheme(_ThemeConfig):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size: list[int]):
+    def window_size(self, window_size: List[int]):
         if len(window_size) != 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``.')
 
@@ -2440,7 +2445,7 @@ class DefaultTheme(_ThemeConfig):
         self._title = title
 
     @property
-    def anti_aliasing(self) -> str | None:
+    def anti_aliasing(self) -> Optional[str]:
         """Enable or disable anti-aliasing.
 
         Should be either ``"ssaa"``, ``"msaa"``, ``"fxaa"``, or ``None``.
@@ -2466,7 +2471,7 @@ class DefaultTheme(_ThemeConfig):
         return self._anti_aliasing
 
     @anti_aliasing.setter
-    def anti_aliasing(self, anti_aliasing: str | None):
+    def anti_aliasing(self, anti_aliasing: Union[str, None]):
         if isinstance(anti_aliasing, bool):
             # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
