@@ -67,6 +67,7 @@ Reader Classes
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
+    XdmfReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~

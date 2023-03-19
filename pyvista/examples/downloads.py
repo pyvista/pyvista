@@ -5099,3 +5099,30 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     """
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
+
+
+def download_meshio_xdmf(load=True):  # pragma: no cover
+    """Download xdmf file created by meshio.
+
+    The dataset was created by ``test_time_series`` test function in meshio.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_meshio_xdmf()
+    >>> dataset.plot()
+
+    """
+    _ = download_file("meshio/out.h5")
+    return _download_and_read("meshio/out.xdmf", load=load)
