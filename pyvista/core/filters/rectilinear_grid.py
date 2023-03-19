@@ -44,7 +44,7 @@ class RectilinearGridFilters:
             which cell they came from in the original
             :class:`pyvista.RectilinearGrid`.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns

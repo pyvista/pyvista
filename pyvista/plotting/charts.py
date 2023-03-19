@@ -421,7 +421,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     label : str, default: ""
         Axis label.
 
-    range : list or tuple of float, optional
+    range : sequence[float], optional
         Axis range, denoting the minimum and maximum values
         displayed on this axis. Setting this to any valid value
         other than ``None`` will change this axis behavior to
@@ -1466,7 +1466,7 @@ class _Chart(DocSubs):
             Opens window in full screen.  When enabled, ignores
             ``window_size``. Defaults to active theme setting.
 
-        screenshot : str or bool, default: False
+        screenshot : str | bool, default: False
             Saves screenshot to file when enabled.  See:
             :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
 
@@ -2634,16 +2634,16 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
     x : array_like
         X coordinates of the points outlining the stacks (areas) to draw.
 
-    ys : list or tuple of array_like
+    ys : sequence[array_like]
         Size of the stacks (areas) to draw at the corresponding X
         coordinates. Each sequence defines the sizes of one stack
         (area), which are stacked on top of each other.
 
-    colors : list or tuple of ColorLike, optional
+    colors : sequence[ColorLike], optional
         Color of the stacks (areas) drawn in this plot. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
-    labels : list or tuple of str, default: []
+    labels : sequence[str], default: []
         Label for each stack (area) drawn in this plot, as shown in
         the chart's legend.
 
@@ -2745,7 +2745,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         x : array_like
             The new x coordinates of the stacks (areas) to draw.
 
-        ys : list or tuple of array_like
+        ys : sequence[array_like]
             The new sizes of the stacks (areas) to draw.
 
         Examples
@@ -2778,12 +2778,12 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     Parameters
     ----------
-    size : list or tuple, default: (1, 1)
+    size : sequence[float], default: (1, 1)
         Size of the chart in normalized coordinates. A size of ``(0,
         0)`` is invisible, a size of ``(1, 1)`` occupies the whole
         renderer's width and height.
 
-    loc : list or tuple, default: (0, 0)
+    loc : sequence[float], default: (0, 0)
         Location of the chart (its bottom left corner) in normalized
         coordinates. A location of ``(0, 0)`` corresponds to the
         renderer's bottom left corner, a location of ``(1, 1)``
@@ -3199,16 +3199,16 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         x : array_like
             X coordinates of the points outlining the stacks (areas) to draw.
 
-        ys : list or tuple of array_like
+        ys : sequence[array_like]
             Size of the stacks (areas) to draw at the corresponding X
             coordinates. Each sequence defines the sizes of one stack
             (area), which are stacked on top of each other.
 
-        colors : list or tuple of ColorLike, optional
+        colors : sequence[ColorLike], optional
             Color of the stacks (areas) drawn in this plot. Any color
             parsable by :class:`pyvista.Color` is allowed.
 
-        labels : list or tuple of str, default: []
+        labels : sequence[str], default: []
             Label for each stack (area) drawn in this plot, as shown
             in the chart's legend.
 
@@ -3243,7 +3243,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Yields
         ------
-        plot : plotting.charts.ScatterPlot2D, plotting.charts.LinePlot2D, plotting.charts.AreaPlot, plotting.charts.BarPlot or plotting.charts.StackPlot
+        plot : plotting.charts.ScatterPlot2D | plotting.charts.LinePlot2D | plotting.charts.AreaPlot | plotting.charts.BarPlot | plotting.charts.StackPlot
             One of the plots (of the specified type) in this chart.
 
         Examples
@@ -3277,7 +3277,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        plot : plotting.charts.ScatterPlot2D, plotting.charts.LinePlot2D, plotting.charts.AreaPlot, plotting.charts.BarPlot or plotting.charts.StackPlot
+        plot : plotting.charts.ScatterPlot2D | plotting.charts.LinePlot2D | plotting.charts.AreaPlot | plotting.charts.BarPlot | plotting.charts.StackPlot
             The plot to remove.
 
         Examples
@@ -3525,16 +3525,16 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
     chart : ChartBox
         The chart containing this plot.
 
-    data : list or tuple of array_like
+    data : sequence[array_like]
         Dataset(s) from which the relevant statistics will be
         calculated used to draw the box plot.
 
-    colors : list or tuple of ColorLike, optional
+    colors : sequence[ColorLike], optional
         Color of the boxes drawn in this plot. Any color parsable by
         :class:`pyvista.Color` is allowed. If omitted (``None``), the
         default color scheme is used.
 
-    labels : list or tuple of str, default: []
+    labels : sequence[str], default: []
         Label for each box drawn in this plot, as shown in the chart's
         legend.
 
@@ -3613,7 +3613,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
         Parameters
         ----------
-        data : list or tuple of array_like
+        data : sequence[array_like]
             The new dataset(s) used in this box plot.
 
         Examples
@@ -3641,24 +3641,24 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     Parameters
     ----------
-    data : list or tuple of array_like
+    data : sequence[array_like]
         Dataset(s) from which the relevant statistics will be
         calculated used to draw the box plot.
 
-    colors : list or tuple of ColorLike, optional
+    colors : sequence[ColorLike], optional
         Color used for each drawn boxplot. If omitted (``None``), the
         default color scheme is used.
 
-    labels : list or tuple of str, default: []
+    labels : sequence[str], default: []
         Label for each drawn boxplot, as shown in the chart's
         legend.
 
-    size : list or tuple, optional
+    size : sequence[float], optional
         Size of the chart in normalized coordinates. A size of ``(0,
         0)`` is invisible, a size of ``(1, 1)`` occupies the whole
         renderer's width and height.
 
-    loc : list or tuple, optional
+    loc : sequence[float], optional
         Location of the chart (its bottom left corner) in normalized
         coordinates. A location of ``(0, 0)`` corresponds to the
         renderer's bottom left corner, a location of ``(1, 1)``
@@ -3835,12 +3835,12 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     data : array_like
         Relative size of each pie segment.
 
-    colors : list or tuple of ColorLike, optional
+    colors : sequence[ColorLike], optional
         Color of the segments drawn in this plot. Any color parsable
         by :class:`pyvista.Color` is allowed. If omitted (``None``),
         the default color scheme is used.
 
-    labels : list or tuple of str, default: []
+    labels : sequence[str], default: []
         Label for each pie segment drawn in this plot, as shown in the
         chart's legend.
 
@@ -3932,20 +3932,20 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     data : array_like
         Relative size of each pie segment.
 
-    colors : list or tuple of ColorLike, optional
+    colors : sequence[ColorLike], optional
         Color used for each pie segment drawn in this plot. If
         omitted (``None``), the default color scheme is used.
 
-    labels : list or tuple of str, default: []
+    labels : sequence[str], default: []
         Label for each pie segment drawn in this plot, as shown in the
         chart's legend.
 
-    size : list or tuple, optional
+    size : sequence[float], optional
         Size of the chart in normalized coordinates. A size of ``(0,
         0)`` is invisible, a size of ``(1, 1)`` occupies the whole
         renderer's width and height.
 
-    loc : list or tuple, optional
+    loc : sequence[float], optional
         Location of the chart (its bottom left corner) in normalized
         coordinates. A location of ``(0, 0)`` corresponds to the
         renderer's bottom left corner, a location of ``(1, 1)``
@@ -4127,12 +4127,12 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         The matplotlib figure to draw. If no figure is
         provided ( ``None`` ), a new figure is created.
 
-    size : list or tuple, default: (1, 1)
+    size : sequence[float], default: (1, 1)
         Size of the chart in normalized coordinates. A size of ``(0,
         0)`` is invisible, a size of ``(1, 1)`` occupies the whole
         renderer's width and height.
 
-    loc : list or tuple, default: (0, 0)
+    loc : sequence[float], default: (0, 0)
         Location of the chart (its bottom left corner) in normalized
         coordinates. A location of ``(0, 0)`` corresponds to the
         renderer's bottom left corner, a location of ``(1, 1)``
@@ -4455,14 +4455,14 @@ class Charts:
 
         Parameters
         ----------
-        interactive : bool, Chart, int, list of Chart or list of int
+        interactive : bool | Chart | int | list[Chart] | list[int]
             Following parameter values are accepted:
 
-                * A boolean to enable (``True``) or disable (``False``) interaction
-                  with all charts.
-                * The chart or its index to enable interaction with. Interaction
-                  with multiple charts can be enabled by passing a list of charts
-                  or indices.
+            * A boolean to enable (``True``) or disable (``False``) interaction
+              with all charts.
+            * The chart or its index to enable interaction with. Interaction
+              with multiple charts can be enabled by passing a list of charts
+              or indices.
 
         toggle : bool, default: False
             Instead of enabling interaction with the provided chart(s), interaction
@@ -4517,7 +4517,7 @@ class Charts:
 
         Parameters
         ----------
-        pos : tuple of float
+        pos : sequence[float]
             Tuple containing the mouse position.
 
         Returns

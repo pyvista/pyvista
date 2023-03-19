@@ -848,7 +848,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : array_like[float], default: (0.0, 0.0, 0.0)
+        point : sequence[float], default: (0.0, 0.0, 0.0)
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -902,7 +902,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : array_like[float], default: (0.0, 0.0, 0.0)
+        point : sequence[float], default: (0.0, 0.0, 0.0)
             Point to rotate about.
 
         transform_all_input_vectors : bool, default: False
@@ -955,7 +955,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : array_like[float], default: (0.0, 0.0, 0.0)
+        point : sequence[float], default: (0.0, 0.0, 0.0)
             Point to rotate about.  Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1011,7 +1011,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        vector : array_like[float]
+        vector : sequence[float]
             Axes to rotate about.
 
         angle : float
@@ -1069,7 +1069,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : array_like[float]
+        xyz : sequence[float]
             Length 3 sequence of floats.
 
         transform_all_input_vectors : bool, default: False
@@ -1119,7 +1119,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : float | array_like[float]
+        xyz : float | sequence[float]
             A scalar or length 3 sequence defining the scale factors along x,
             y, and z. If a scalar, the same uniform scale is used along all
             three axes.
@@ -1173,7 +1173,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : array_like[float], optional
+        point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1224,7 +1224,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : array_like[float], optional
+        point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1331,7 +1331,7 @@ class DataSet(DataSetFilters, DataObject):
         normal : tuple
            Normal vector to flip about.
 
-        point : array_like[float]
+        point : sequence[float]
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -2148,7 +2148,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : array_like[float]
+        point : sequence[float]
             Length 3 coordinate of the point to query.
 
         n : int, optional
@@ -2208,7 +2208,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : array_like[float]
+        point : sequence[float]
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2339,7 +2339,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : array_like[float]
+        point : sequence[float]
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2409,10 +2409,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : array_like[float]
+        pointa : sequence[float]
             Length 3 coordinate of the start of the line.
 
-        pointb : array_like[float]
+        pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
         tolerance : float, default: False
@@ -2720,7 +2720,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : array_like[float]
+        point : sequence[float]
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 

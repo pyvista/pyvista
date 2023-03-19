@@ -43,7 +43,7 @@ def plot(
 
     Parameters
     ----------
-    var_item : pyvista.DataSet, vtk, or numpy object
+    var_item : pyvista.DataSet | vtk | numpy object
         PyVista, VTK, or ``numpy`` object to be plotted.
 
     off_screen : bool, optional
@@ -76,8 +76,8 @@ def plot(
         Window size in pixels.  Defaults to global theme
         :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
 
-    show_bounds : bool, optional
-        Shows mesh bounds when ``True``.  Default ``False``.
+    show_bounds : bool, default: False
+        Shows mesh bounds when ``True``.
 
     show_axes : bool, optional
         Shows a vtk axes widget.  If ``None``, enabled according to
@@ -93,17 +93,17 @@ def plot(
     text : str, optional
         Adds text at the bottom of the plot.
 
-    return_img : bool, optional
+    return_img : bool, default: False
         Returns numpy array of the last image rendered.
 
     eye_dome_lighting : bool, optional
         Enables eye dome lighting.
 
-    volume : bool, optional
+    volume : bool, default: False
         Use the :func:`Plotter.add_volume()
         <pyvista.Plotter.add_volume>` method for volume rendering.
 
-    parallel_projection : bool, optional
+    parallel_projection : bool, default: False
         Enable parallel projection.
 
     jupyter_backend : str, optional
@@ -118,11 +118,11 @@ def plot(
         This can also be set globally with
         :func:`pyvista.set_jupyter_backend`.
 
-    return_viewer : bool, optional
+    return_viewer : bool, default: False
         Return the jupyterlab viewer, scene, or display object
         when plotting with jupyter notebook.
 
-    return_cpos : bool, optional
+    return_cpos : bool, default: False
         Return the last camera position from the render window
         when enabled.  Defaults to value in theme settings.
 
@@ -150,9 +150,9 @@ def plot(
         a zoom-in, a value less than 1 is a zoom-out.  Must be greater than 0.
 
     border : bool, optional
-        Draw a border around each render window.  Default ``False``.
+        Draw a border around each render window.
 
-    border_color : ColorLike, optional
+    border_color : ColorLike, default: "k"
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -160,7 +160,7 @@ def plot(
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-    border_width : float, optional
+    border_width : float, default: 2.0
         Width of the border in pixels when enabled.
 
     ssao : bool, optional
@@ -314,10 +314,10 @@ def plot_arrows(cent, direction, **kwargs):
 
     Parameters
     ----------
-    cent : numpy.ndarray
+    cent : array_like[float]
         Accepts a single 3d point or array of 3d points.
 
-    direction : numpy.ndarray
+    direction : array_like[float]
         Accepts a single 3d point or array of 3d vectors.
         Must contain the same number of items as ``cent``.
 
@@ -417,8 +417,8 @@ def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndar
     view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
         Plane to return vectors for.
 
-    negative : bool
-        Whether to view from opposite direction.  Default ``False``.
+    negative : bool, default: False
+        Whether to view from opposite direction.
 
     Returns
     -------
