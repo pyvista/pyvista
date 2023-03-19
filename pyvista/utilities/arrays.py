@@ -33,7 +33,7 @@ def _coerce_pointslike_arg(
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
-        raise TypeError("Given points must be a sequence.")
+        raise TypeError("Given points must be convertible to a numerical array.")
 
     if points.ndim > 2:
         raise ValueError("Array of points must be 1D or 2D")
