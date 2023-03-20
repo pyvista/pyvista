@@ -351,7 +351,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         try:
-            merged = self = self.merge(dataset)
+            self = self.merge(dataset)
+            merged = self
         except TypeError:
             raise TypeError(
                 'In-place merge only possible if the other mesh '
