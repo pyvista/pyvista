@@ -1,4 +1,5 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
+
 from functools import wraps
 import inspect
 import itertools
