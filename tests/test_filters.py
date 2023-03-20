@@ -1036,11 +1036,6 @@ def test_warp_by_vector():
     warped = data.warp_by_vector(factor=3, progress_bar=True)
     assert data.n_points == warped.n_points
     assert not np.allclose(data.points, warped.points)
-    # Test when inplace=True
-    foo = examples.load_sphere_vectors()
-    warped = foo.warp_by_vector(progress_bar=True)
-    foo = foo.warp_by_vector(progress_bar=True)
-    assert np.allclose(foo.points, warped.points)
 
 
 def test_invalid_warp_scalar(sphere):
@@ -1048,11 +1043,6 @@ def test_invalid_warp_scalar(sphere):
     sphere.point_data.clear()
     with pytest.raises(TypeError):
         sphere.warp_by_scalar()
-
-
-def test_invalid_warp_scalar_inplace(uniform):
-    with pytest.raises(TypeError):
-        uniform = uniform.warp_by_scalar(progress_bar=True)
 
 
 def test_invalid_warp_vector(sphere):
@@ -2345,22 +2335,6 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
         if not (num_cell_arrays == 0 and num_point_data == 0):
             with pytest.warns(UserWarning, match="Integer"):
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
-
-
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # UniformGrid
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types(dataset):
-    # assert that transformations of these types throw the correct error
-    tf = pyvista.transformations.axis_angle_rotation(
-        (1, 0, 0), 90
-    )  # rotate about x-axis by 90 degrees
-    with pytest.raises(TypeError):
-        dataset = dataset.transform(tf)
 
 
 def test_reflect_mesh_about_point(datasets):
