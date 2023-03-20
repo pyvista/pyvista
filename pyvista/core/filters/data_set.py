@@ -1824,7 +1824,7 @@ class DataSetFilters:
         t_coords = output.GetPointData().GetTCoords()
         t_coords.SetName(name)
         otc = self.GetPointData().GetTCoords()
-        if not inplace:
+        if inplace:
             self.GetPointData().SetTCoords(t_coords)
             self.GetPointData().AddArray(t_coords)
             # CRITICAL:
