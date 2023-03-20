@@ -292,7 +292,8 @@ def test_rectangle():
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
     rotated = pyvista.transformations.apply_transformation_to_points(
-        trans, np.array([pointa, pointb, pointc, pointd])
+        trans,
+        np.array([pointa, pointb, pointc, pointd]),
     )
 
     # Test all possible orders of the points
@@ -311,7 +312,8 @@ def test_rectangle_not_orthognal_entries():
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
     rotated = pyvista.transformations.apply_transformation_to_points(
-        trans, np.array([pointa, pointb, pointc])
+        trans,
+        np.array([pointa, pointb, pointc]),
     )
 
     with pytest.raises(ValueError, match="The three points should defined orthogonal vectors"):
@@ -326,11 +328,13 @@ def test_rectangle_two_identical_points():
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
     rotated = pyvista.transformations.apply_transformation_to_points(
-        trans, np.array([pointa, pointb, pointc])
+        trans,
+        np.array([pointa, pointb, pointc]),
     )
 
     with pytest.raises(
-        ValueError, match="Unable to build a rectangle with less than three different points"
+        ValueError,
+        match="Unable to build a rectangle with less than three different points",
     ):
         pyvista.Rectangle(rotated)
 
