@@ -4336,13 +4336,16 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, progress_bar=False):
+    def extract_cells(self, ind, invert=False, progress_bar=False):
         """Return a subset of the grid.
 
         Parameters
         ----------
         ind : numpy.ndarray
             Numpy array of cell indices to be extracted.
+
+        invert : bool, default: False
+            Invert the selection.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4368,6 +4371,10 @@ class DataSetFilters:
         >>> pl.show()
 
         """
+        if invert:
+            _, ind = numpy_to_idarr(ind, return_ind=True)
+            ind = [i for i in range(self.n_cells) if i not in ind]
+
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.CELL)
