@@ -416,23 +416,17 @@ suites.
 Using Gitpod Workspace
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A prebuilt gitpod workspace is available for a quick start development
+A gitpod workspace is available for a quick start development
 environment. To start a workspace from the main branch of pyvista, go
 to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
 `Gitpod Getting Started
 <https://www.gitpod.io/docs/getting-started>`_ for more details.
 
 The workspace has vnc capability through the browser for
-interactive plotting. The workspace also has prebuilt
+interactive plotting. The workspace also has the ability to view the
 documentation with a live-viewer. Hit the ``Go Live`` button
-and browse to ``doc/_build/html``. The workspace is also prebuilt to
-support pre-commit checks.
-
-Workspaces started from the ``pyvista/pyvista`` repository will often
-have prebuilt environments with dependencies installed. Workspaces
-started from forks may not have prebuilt images and will start
-building when starting a new workspace. It is safe to stop, for example
-``Ctrl-C``, the documentation part of the build if unneeded.
+and browse to ``doc/_build/html``. The workspace also preloads
+ pre-commit environments.
 
 Unit Testing
 ~~~~~~~~~~~~
