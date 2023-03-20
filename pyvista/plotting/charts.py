@@ -8,7 +8,6 @@ from typing import Dict, Optional, Sequence
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-import matplotlib.figure  # noqa
 import matplotlib.pyplot as plt
 import numpy as np
 
