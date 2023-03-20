@@ -144,7 +144,7 @@ pl.show()
 
 
 ###############################################################################
-# Woah, that's a big volume! We probably don't want to volume render the
+# Woah, that's a big volume. We probably don't want to volume render the
 # whole thing. So let's extract a region of interest under the volcano.
 #
 # The region we will extract will be between nodes 175 and 200 on the x-axis,
@@ -159,7 +159,7 @@ pl.add_mesh(voi, cmap="magma")
 pl.show()
 
 ###############################################################################
-# Ah, much better. Let's now volume render that region of interest!
+# Ah, much better. Let's now volume render that region of interest.
 
 pl = pv.Plotter()
 pl.add_volume(voi, cmap="magma", clim=clim, opacity=opacity, opacity_unit_distance=2000)

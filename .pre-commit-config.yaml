@@ -4,6 +4,13 @@ repos:
   hooks:
   - id: black
 
+- repo: https://github.com/keewis/blackdoc
+  rev: v0.3.8
+  hooks:
+  - id: blackdoc
+    files: '\.py$'
+    exclude: pyvista/plotting/charts.py
+
 - repo: https://github.com/codespell-project/codespell
   rev: v2.2.4
   hooks:

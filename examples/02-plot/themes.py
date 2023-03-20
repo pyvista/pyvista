@@ -67,7 +67,7 @@ plot_example()
 
 ###############################################################################
 # Note that you can also use color gradients for the background of the plotting
-# window!
+# window.
 plotter = pv.Plotter()
 plotter.add_mesh(mesh)
 plotter.show_grid()

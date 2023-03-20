@@ -718,7 +718,7 @@ def vector_poly_data(orig, vec):
     pyvista.PolyData
         Mesh containing the ``orig`` points along with the
         ``'vectors'`` and ``'mag'`` point arrays representing the
-        vectors and magnitude of the the vectors at each point.
+        vectors and magnitude of the vectors at each point.
 
     Examples
     --------

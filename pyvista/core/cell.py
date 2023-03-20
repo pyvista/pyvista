@@ -34,7 +34,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     will be much slower than accessing bulk data from the
     :attr:`pyvista.PolyData.faces` or :attr:`pyvista.UnstructuredGrid.cells` attributes.
 
-    Also note that the the cell object is a deep copy of the original cell and
+    Also note that the cell object is a deep copy of the original cell and
     is unassociated with the original cell. Changing any data of
     that cell (for example, :attr:`pyvista.Cell.points`) will not change the original dataset.
 

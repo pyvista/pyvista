@@ -1153,7 +1153,7 @@ class Light(vtkLight):
             )
 
         light = cls()
-        light.light_type = vtk_light.GetLightType()  # resets transformation matrix!
+        light.light_type = vtk_light.GetLightType()  # resets transformation matrix
         light.position = vtk_light.GetPosition()
         light.focal_point = vtk_light.GetFocalPoint()
         light.ambient_color = vtk_light.GetAmbientColor()

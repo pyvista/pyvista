@@ -147,7 +147,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     annotations : dict, optional
         A dictionary of annotations. Keys are the float values in the scalars
-        range to annotate on the scalar bar and the values are the the string
+        range to annotate on the scalar bar and the values are the string
         annotations.
 
     Examples
@@ -917,7 +917,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """Return or set annotations.
 
         Pass a dictionary of annotations. Keys are the float values in the
-        scalars range to annotate on the scalar bar and the values are the the
+        scalars range to annotate on the scalar bar and the values are the
         string annotations.
 
         Examples

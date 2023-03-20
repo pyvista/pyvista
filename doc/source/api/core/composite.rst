@@ -82,7 +82,7 @@ Dictionary-like Features
 ------------------------
 
 
-``MultiBlock`` also has some dictionary features.  We can set the name
+``MultiBlock`` also has some dictionary features. We can set the name
 of the blocks, and then access them 
 
 .. jupyter-execute::
@@ -93,7 +93,7 @@ of the blocks, and then access them
    blocks["sphere"]  # Sphere
 
 It is important to note that ``MultiBlock`` is not a dictionary and does
-not enforce unique keys.  Keys can also be ``None``.  Extra care must be
+not enforce unique keys. Keys can also be ``None``. Extra care must be
 taken to avoid problems using the dictionary-like features.
 
 PyVista tries to keep the keys ordered correctly when doing list operations.
@@ -103,11 +103,11 @@ PyVista tries to keep the keys ordered correctly when doing list operations.
    blocks.reverse()
    blocks.keys()
 
-The dictionary like features are useful when reading in data from a file.  The
+The dictionary like features are useful when reading in data from a file. The
 keys are often more understandable to access the data than the index.
 :func:`pyvista.examples.download_cavity()
 <pyvista.examples.downloads.download_cavity>` is an OpenFoam dataset with a nested
-``MultiBlock`` structure.  There are two entries in the top-level object
+``MultiBlock`` structure. There are two entries in the top-level object
 
 .. jupyter-execute::
 
@@ -127,8 +127,8 @@ keys are often more understandable to access the data than the index.
    data["boundary"]
 
 Using the dictionary like features of :class:`pyvista.MultiBlock` allow for easier
-inspection and use of the data coming from an outside source.  The names of each key
-correspond to human understable portions of the dataset.
+inspection and use of the data coming from an outside source. The names of each key
+correspond to human understandable portions of the dataset.
 
 .. jupyter-execute::
 
@@ -144,7 +144,7 @@ Examples using this class:
 MultiBlock API Reference
 ------------------------
 The :class:`pyvista.MultiBlock` class holds attributes that
-are *common* to all spatially referenced datasets in PyVista.  This
+are *common* to all spatially referenced datasets in PyVista. This
 base class is analogous to VTK's `vtk.vtkMultiBlockDataSet`_ class.
 
 .. autosummary::

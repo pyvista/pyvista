@@ -180,8 +180,13 @@ articles = {
         link="https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html#pyvista-streamlines",
         image="coil_field_lines.png",
     ),
+    pyfbs: Example(
+        title="pyFBS: Frequency Based Substructuring in Python",
+        description="pyFBS is a Python package for Frequency Based Substructuring, Transfer Path Analysis, and multi-reference modal identification.",
+        link="https://pyfbs.readthedocs.io/en/latest/examples/examples.html",
+        image="pyfbs.webp",
+    ),
 }
-
 
 ###############################################################################
 
@@ -197,19 +202,19 @@ def make_example_gallery():
 External Examples
 =================
 
-Here are a list of longer, more technical examples of what PyVista can do!
+Here are a list of longer, more technical examples of what PyVista can do.
 
 .. caution::
 
-    Please note that these examples link to external websites.  If any of these
+    Please note that these examples link to external websites. If any of these
     links are broken, please raise an `issue
     <https://github.com/pyvista/pyvista/issues>`_.
 
 
 Do you have a technical processing workflow or visualization routine you would
-like to share?  If so, please consider sharing your work here submitting a PR
+like to share? If so, please consider sharing your work here submitting a PR
 at `pyvista/pyvista <https://github.com/pyvista/pyvista/>`_ and we would be
-glad to add it!
+glad to add it.
 
 
 .. grid:: 3

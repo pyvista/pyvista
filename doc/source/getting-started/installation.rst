@@ -70,7 +70,7 @@ To install this package with ``conda`` run::
 Installing the Current Development Branch from GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There may be features or bug-fixes that have been implemented in PyVista but
-have not made their way into a release.  To install ``pyvista`` from the latest
+have not made their way into a release. To install ``pyvista`` from the latest
 up-to-date development branch from github, use one of the following
 
 .. code::
@@ -85,7 +85,7 @@ Alternatively, you can clone the repository with git and install it with pip.
    cd pyvista
    pip install -e .
 
-Note the development flag ``-e``.  This allows you to change pyvista
+Note the development flag ``-e``. This allows you to change pyvista
 in-place without having to reinstall it for each change.
 
 
@@ -215,10 +215,11 @@ time your Docker container is launched:
     exec "$@"
 
 
-And that's it! Include PyVista in your Python requirements and get to
-visualizing your data! If you need more help than this on setting up PyVista
-for these types of services, hop on Slack and chat with the developers or take
-a look at `this repository`_ that is currently using PyVista on MyBinder.
+All you have to do next is include PyVista in your Python requirements and you
+can get to visualizing your data. If you need more help than this on setting up
+PyVista for these types of services, hop on Slack and chat with the developers
+or take a look at `this repository`_ that is currently using PyVista on
+MyBinder.
 
 .. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
 

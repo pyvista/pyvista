@@ -556,7 +556,7 @@ class Camera(_vtk.vtkCamera):
     def clipping_range(self):
         """Return or set the location of the clipping planes.
 
-        Clipping planes are the the near and far clipping planes along
+        Clipping planes are the near and far clipping planes along
         the direction of projection.
 
         Examples
@@ -850,7 +850,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.show()
 
         """
-        # inspired by vedo resetCamera. Thanks @marcomusy!
+        # Inspired by vedo resetCamera. Thanks @marcomusy.
         x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
 
         self.enable_parallel_projection()

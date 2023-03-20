@@ -549,7 +549,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less

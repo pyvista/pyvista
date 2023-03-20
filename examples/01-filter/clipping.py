@@ -3,7 +3,7 @@
 Clipping with Planes & Boxes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Clip/cut any dataset using using planes or boxes.
+Clip/cut any dataset using planes or boxes.
 """
 import pyvista as pv
 from pyvista import examples

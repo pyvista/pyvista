@@ -32,7 +32,7 @@ mesh = mesh.compute_normals()  # this activates the normals as well
 # Now use those normals to warp the surface
 warp = mesh.warp_by_scalar(factor=0.5e-5)
 
-# And let's see it!
+# And let's see it
 warp.plot(cmap="gist_earth", show_scalar_bar=False)
 
 

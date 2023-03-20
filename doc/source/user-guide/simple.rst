@@ -231,10 +231,10 @@ please refer to the docs for that method on each mesh type.
 
 Also note that we can export any PyVista mesh to any file format supported by
 `meshio <https://github.com/nschloe/meshio>`_. Meshio supports many formats
-including: Abaqus, ANSYS msh, AVS-UCD, CGNS, DOLFIN XML, Exodus, FLAC3D, H5M,
+including: Abaqus, Ansys msh, AVS-UCD, CGNS, DOLFIN XML, Exodus, FLAC3D, H5M,
 Kratos/MDPA, Medit, MED/Salome, Gmsh (versions 2 and 4), OBJ, OFF, PERMAS,
 PLY, STL, TetGen .node/.ele, SVG (2D only, output only), UGRID, WKT (TIN),
-XDMF, and more!
+XDMF, and more.
 
 To save a PyVista mesh using ``meshio``, use :func:`pyvista.save_meshio`:
 

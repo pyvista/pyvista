@@ -8,7 +8,7 @@ The plane widget can be enabled and disabled by the
 :func:`pyvista.Plotter.clear_plane_widgets` methods respectively.
 As with all widgets, you must provide a custom callback method to utilize that
 plane. Considering that planes are most commonly used for clipping and slicing
-meshes, we have included two helper methods for doing those tasks!
+meshes, we have included two helper methods for doing those tasks.
 
 Let's use a plane to clip a mesh:
 """

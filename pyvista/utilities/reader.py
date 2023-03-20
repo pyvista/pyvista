@@ -131,6 +131,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.vtu``       | :class:`pyvista.XMLUnstructuredGridReader`  |
     +----------------+---------------------------------------------+
+    | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -2331,6 +2333,49 @@ class GIFReader(BaseReader):
     _class_reader = _GIFReader
 
 
+class XdmfReader(BaseReader, PointCellDataSelection):
+    """XdmfReader for .xdmf files.
+
+    Notes
+    -----
+    We currently can't inspect the time values for this reader.
+
+    Parameters
+    ----------
+    path : str
+        Path of the XDMF file to read.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_meshio_xdmf(load=False)
+    >>> reader = pyvista.get_reader(filename)
+    >>> filename.split("/")[-1]  # omit the path
+    'out.xdmf'
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkXdmfReader)
+
+    @property
+    def number_grids(self):
+        """Return the number of grids that can be read by the reader.
+
+        Returns
+        -------
+        int
+            The number of grids to be read.
+
+        """
+        return self.reader.GetNumberOfGrids()
+
+    def set_active_time_value(self, time_value):  # noqa: D102
+        self.reader.UpdateTimeStep(time_value)
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2385,4 +2430,5 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
+    '.xdmf': XdmfReader,
 }
