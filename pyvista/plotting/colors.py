@@ -175,7 +175,7 @@ from cycler import Cycler, cycler
 
 try:
     from matplotlib import colormaps, colors
-except:  # pragma: no cover
+except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
 from matplotlib.colors import ListedColormap
