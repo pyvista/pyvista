@@ -91,7 +91,7 @@ boundaries = mesh["boundary"]
 def slice_z_center(mesh):
     """Slice mesh through center in z normal direction, move to z=0."""
     slice_mesh = mesh.slice(normal='z')
-    slice_mesh.translate((0, 0, -slice_mesh.center[-1]), inplace=True)
+    slice_mesh = slice_mesh.translate((0, 0, -slice_mesh.center[-1]))
     return slice_mesh
 
 

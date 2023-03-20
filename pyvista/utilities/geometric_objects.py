@@ -115,7 +115,7 @@ def Cylinder(
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
     surf = pyvista.wrap(cylinderSource.GetOutput())
-    surf.rotate_z(-90, inplace=True)
+    surf = surf.rotate_z(-90)
     translate(surf, center, direction)
     return surf
 
@@ -371,7 +371,7 @@ def Sphere(
     sphere.SetEndPhi(end_phi)
     sphere.Update()
     surf = pyvista.wrap(sphere.GetOutput())
-    surf.rotate_y(-90, inplace=True)
+    surf = surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
 
@@ -424,7 +424,7 @@ def Plane(
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
-    surf.rotate_y(-90, inplace=True)
+    surf = surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
 
@@ -643,7 +643,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     # clean duplicate points
     if clean:
-        cube.clean(inplace=True)
+        cube = cube.clean()
 
     return cube
 
@@ -854,7 +854,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
     normal = np.array(normal)
     center = np.array(center)
     surf = pyvista.wrap(src.GetOutput())
-    surf.rotate_y(90, inplace=True)
+    surf = surf.rotate_y(90)
     translate(surf, center, normal)
     return surf
 
@@ -1588,7 +1588,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     solid.clear_data()
     solid.cell_data['FaceIndex'] = cell_data
     # scale and translate
-    solid.scale(radius, inplace=True)
+    solid = solid.scale(radius)
     solid.points += np.asanyarray(center) - solid.center
     return solid
 

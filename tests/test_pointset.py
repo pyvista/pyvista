@@ -135,21 +135,21 @@ def test_translate():
     np_points = np.array([1, 2, 3], np.int64)
     with pytest.warns(UserWarning, match='Points is not a float type'):
         pset = pyvista.PointSet(np_points)
-    pset.translate((4, 3, 2), inplace=True)
+    pset = pset.translate((4, 3, 2))
     assert np.allclose(pset.center, [5, 5, 5])
 
 
 def test_scale():
     np_points = np.array([1, 2, 3], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.scale(2, inplace=True)
+    pset = pset.scale(2)
     assert np.allclose(pset.points, [2.0, 4.0, 6.0])
 
 
 def test_flip_x():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.flip_x(inplace=True)
+    pset = pset.flip_x()
     assert np.allclose(
         pset.points,
         np.array(
@@ -165,7 +165,7 @@ def test_flip_x():
 def test_flip_y():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.flip_y(inplace=True)
+    pset = pset.flip_y()
     assert np.allclose(
         pset.points,
         np.array(
@@ -181,7 +181,7 @@ def test_flip_y():
 def test_flip_z():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.flip_z(inplace=True)
+    pset = pset.flip_z()
     assert np.allclose(
         pset.points,
         np.array(
@@ -197,7 +197,7 @@ def test_flip_z():
 def test_flip_normal():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.flip_normal([1.0, 1.0, 1.0], inplace=True)
+    pset = pset.flip_normal([1.0, 1.0, 1.0])
     assert np.allclose(
         pset.points,
         np.array(
@@ -213,26 +213,26 @@ def test_flip_normal():
 def test_rotate_x():
     np_points = np.array([1, 1, 1], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.rotate_x(45, inplace=True)
+    pset = pset.rotate_x(45)
     assert np.allclose(pset.points, [1.0, 0.0, 1.4142135])
 
 
 def test_rotate_y():
     np_points = np.array([1, 1, 1], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.rotate_y(45, inplace=True)
+    pset = pset.rotate_y(45)
     assert np.allclose(pset.points, [1.4142135, 1.0, 0.0])
 
 
 def test_rotate_z():
     np_points = np.array([1, 1, 1], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.rotate_z(45, inplace=True)
+    pset = pset.rotate_z(45)
     assert np.allclose(pset.points, [0.0, 1.4142135, 1.0])
 
 
 def test_rotate_vector():
     np_points = np.array([1, 1, 1], dtype=float)
     pset = pyvista.PointSet(np_points)
-    pset.rotate_vector([1, 2, 1], 45, inplace=True)
+    pset = pset.rotate_vector([1, 2, 1], 45)
     assert np.allclose(pset.points, [1.1910441, 1.0976311, 0.6136938])

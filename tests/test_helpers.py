@@ -111,7 +111,7 @@ def test_wrappers():
 
         assert isinstance(surface, Foo)
 
-        surface.delaunay_2d(inplace=True)
+        surface = surface.delaunay_2d()
         assert isinstance(surface, Foo)
 
         sphere = pyvista.Sphere()
@@ -143,7 +143,7 @@ def test_inheritance_no_wrappers():
 
     # inplace operations do not change type
     mesh = Foo(pyvista.Sphere())
-    mesh.decimate(0.5, inplace=True)
+    mesh = mesh.decimate(0.5)
     assert isinstance(mesh, Foo)
 
     # without using _wrappers, we need to explicitly handle inheritance

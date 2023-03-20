@@ -252,7 +252,7 @@ class DataSetFilters:
             if poly.n_cells != 6:
                 raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
-            poly.compute_normals(inplace=True)
+            poly = poly.compute_normals()
             for cid in range(6):
                 cell = poly.extract_cells(cid)
                 normal = cell["Normals"][0]
@@ -4736,7 +4736,7 @@ class DataSetFilters:
 
         """
         try:
-            merged = DataSetFilters.merge(self, dataset, inplace=True)
+            merged = DataSetFilters = DataSetFilters.merge(self, dataset)
         except TypeError:
             raise TypeError(
                 'In-place merge only possible if the target mesh '

@@ -196,7 +196,7 @@ def test_clip_box(datasets):
     box = pyvista.Cube(
         center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500
     )
-    box.rotate_z(33, inplace=True)
+    box = box.rotate_z(33)
     result = mesh.clip_box(box, invert=False, progress_bar=True)
     assert result.n_cells
     result = mesh.clip_box(box, invert=True, progress_bar=True)
@@ -261,7 +261,7 @@ def test_implicit_distance():
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     res = dataset.compute_implicit_distance(surface)
     assert "implicit_distance" in res.point_data
-    dataset.compute_implicit_distance(surface, inplace=True)
+    dataset = dataset.compute_implicit_distance(surface)
     assert "implicit_distance" in dataset.point_data
 
 
@@ -718,7 +718,7 @@ def test_texture_map_to_plane():
     assert isinstance(out, type(dataset))
     assert 'Texture Coordinates' in out.array_names
     # FINAL: Test in place modifiacation
-    dataset.texture_map_to_plane(inplace=True)
+    dataset = dataset.texture_map_to_plane()
     assert 'Texture Coordinates' in dataset.array_names
 
 
@@ -734,7 +734,7 @@ def test_texture_map_to_sphere():
     assert isinstance(out, type(dataset))
     assert 'Texture Coordinates' in out.array_names
     # FINAL: Test in place modifiacation
-    dataset.texture_map_to_sphere(inplace=True, progress_bar=True)
+    dataset = dataset.texture_map_to_sphere(progress_bar=True)
     assert 'Texture Coordinates' in dataset.array_names
 
 
@@ -778,7 +778,7 @@ def test_glyph(datasets, sphere):
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
     sphere_sans_arrays = sphere.copy()
-    sphere.compute_normals(inplace=True)
+    sphere = sphere.compute_normals()
     sphere["vectors"] = np.ones([sphere.n_points, 3])
     sphere.set_active_vectors("vectors")
     sphere.point_data['arr'] = np.ones(sphere.n_points)
@@ -1023,7 +1023,7 @@ def test_warp_by_scalar():
     foo = examples.load_hexbeam()
     foo.point_data.active_scalars_name = 'sample_point_scalars'
     warped = foo.warp_by_scalar(progress_bar=True)
-    foo.warp_by_scalar(inplace=True, progress_bar=True)
+    foo = foo.warp_by_scalar(progress_bar=True)
     assert np.allclose(foo.points, warped.points)
 
 
@@ -1039,7 +1039,7 @@ def test_warp_by_vector():
     # Test when inplace=True
     foo = examples.load_sphere_vectors()
     warped = foo.warp_by_vector(progress_bar=True)
-    foo.warp_by_vector(inplace=True, progress_bar=True)
+    foo = foo.warp_by_vector(progress_bar=True)
     assert np.allclose(foo.points, warped.points)
 
 
@@ -1052,7 +1052,7 @@ def test_invalid_warp_scalar(sphere):
 
 def test_invalid_warp_scalar_inplace(uniform):
     with pytest.raises(TypeError):
-        uniform.warp_by_scalar(inplace=True, progress_bar=True)
+        uniform = uniform.warp_by_scalar(progress_bar=True)
 
 
 def test_invalid_warp_vector(sphere):
@@ -1121,7 +1121,7 @@ def test_smooth(uniform):
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
     assert smoothed.triangulate().curvature().mean() > surf.triangulate().curvature().mean()
 
-    smooth_inplace = surf.smooth(inplace=True)
+    smooth_inplace = surf = surf.smooth()
     assert np.allclose(surf.points, smoothed.points)
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
@@ -1136,7 +1136,7 @@ def test_smooth_taubin(uniform):
     # while volume is maintained
     assert np.isclose(smoothed.volume, surf.volume, rtol=0.01)
 
-    smooth_inplace = surf.smooth_taubin(inplace=True)
+    smooth_inplace = surf = surf.smooth_taubin()
     assert np.allclose(surf.points, smoothed.points)
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
@@ -1323,7 +1323,7 @@ def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
     mesh = mesh_2D_velocity()
-    mesh.translate((0, 0, 1), inplace=True)  # move to z=1, xy plane
+    mesh = mesh.translate((0, 0, 1))  # move to z=1, xy plane
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
@@ -2360,7 +2360,7 @@ def test_transform_inplace_bad_types(dataset):
         (1, 0, 0), 90
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
-        dataset.transform(tf, inplace=True)
+        dataset = dataset.transform(tf)
 
 
 def test_reflect_mesh_about_point(datasets):
@@ -2376,7 +2376,7 @@ def test_reflect_mesh_about_point(datasets):
 def test_reflect_mesh_with_vectors(datasets):
     for dataset in datasets:
         if hasattr(dataset, 'compute_normals'):
-            dataset.compute_normals(inplace=True, progress_bar=True)
+            dataset = dataset.compute_normals(progress_bar=True)
 
         # add vector data to cell and point arrays
         dataset.cell_data['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * np.array(
@@ -2428,7 +2428,7 @@ def test_reflect_mesh_with_vectors(datasets):
 )
 def test_reflect_inplace(dataset):
     orig = dataset.copy()
-    dataset.reflect((1, 0, 0), inplace=True, progress_bar=True)
+    dataset = dataset.reflect((1, 0, 0), progress_bar=True)
     assert dataset.n_cells == orig.n_cells
     assert dataset.n_points == orig.n_points
     assert np.allclose(dataset.points[:, 0], -orig.points[:, 0])
@@ -2445,7 +2445,7 @@ def test_reflect_inplace(dataset):
 def test_transform_inplace_bad_types_2(dataset):
     # assert that transformations of these types throw the correct error
     with pytest.raises(TypeError):
-        dataset.reflect((1, 0, 0), inplace=True)
+        dataset = dataset.reflect((1, 0, 0))
 
 
 def test_extrude_rotate():
@@ -2503,7 +2503,7 @@ def test_extrude_rotate_inplace():
     resolution = 4
     poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
     old_line = poly.copy()
-    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True, capping=True)
+    poly = poly.extrude_rotate(resolution=resolution, progress_bar=True, capping=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
 
@@ -2564,7 +2564,7 @@ def test_extrude_trim_inplace():
     trim_surface = pyvista.Plane(
         center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
     )
-    mesh.extrude_trim(direction, trim_surface, inplace=True, progress_bar=True)
+    mesh = mesh.extrude_trim(direction, trim_surface, progress_bar=True)
     assert np.isclose(mesh.volume, 1.0)
 
 
@@ -2591,7 +2591,7 @@ def test_collision(sphere):
     assert 'ContactCells' in output.field_data
 
     # test no collision
-    moved_sphere.translate((1000, 0, 0), inplace=True)
+    moved_sphere = moved_sphere.translate((1000, 0, 0))
     _, n_collision = sphere.collision(moved_sphere)
     assert not n_collision
 

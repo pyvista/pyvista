@@ -306,7 +306,7 @@ def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
 def test_translate_should_translate_grid(grid, axis_amounts):
     grid_copy = grid.copy()
-    grid_copy.translate(axis_amounts, inplace=True)
+    grid_copy = grid_copy.translate(axis_amounts)
 
     grid_points = grid.points.copy() + np.array(axis_amounts)
     assert np.allclose(grid_copy.points, grid_points)
@@ -495,8 +495,8 @@ def test_texture():
 
 def test_multiple_texture_coordinates():
     mesh = examples.load_airplane()
-    mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
-    mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
+    mesh = mesh.texture_map_to_plane(name="tex_a", use_bounds=False)
+    mesh = mesh.texture_map_to_plane(name="tex_b", use_bounds=True)
     assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
     texture = Texture(examples.mapfile)
     mesh.textures["tex_a"] = texture.copy()
@@ -516,8 +516,8 @@ def test_multiple_texture_coordinates():
 def test_inplace_no_overwrite_texture_coordinates():
     mesh = pyvista.Box()
     truth = mesh.texture_map_to_plane(inplace=False)
-    mesh.texture_map_to_sphere(inplace=True)
-    test = mesh.texture_map_to_plane(inplace=True)
+    mesh = mesh.texture_map_to_sphere()
+    test = mesh = mesh.texture_map_to_plane()
     assert np.allclose(truth.active_t_coords, test.active_t_coords)
 
 
@@ -1214,29 +1214,29 @@ def test_rotations_should_match_by_a_360_degree_difference():
     # Rotate about x axis.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_x(angle=angle, point=point, inplace=True)
-    rot2.rotate_x(angle=angle - 360.0, point=point, inplace=True)
+    rot1 = rot1.rotate_x(angle=angle, point=point)
+    rot2 = rot2.rotate_x(angle=angle - 360.0, point=point)
     assert np.allclose(rot1.points, rot2.points)
 
     # Rotate about y axis.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_y(angle=angle, point=point, inplace=True)
-    rot2.rotate_y(angle=angle - 360.0, point=point, inplace=True)
+    rot1 = rot1.rotate_y(angle=angle, point=point)
+    rot2 = rot2.rotate_y(angle=angle - 360.0, point=point)
     assert np.allclose(rot1.points, rot2.points)
 
     # Rotate about z axis.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_z(angle=angle, point=point, inplace=True)
-    rot2.rotate_z(angle=angle - 360.0, point=point, inplace=True)
+    rot1 = rot1.rotate_z(angle=angle, point=point)
+    rot2 = rot2.rotate_z(angle=angle - 360.0, point=point)
     assert np.allclose(rot1.points, rot2.points)
 
     # Rotate about custom vector.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_vector(vector=vector, angle=angle, point=point, inplace=True)
-    rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point, inplace=True)
+    rot1 = rot1.rotate_vector(vector=vector, angle=angle, point=point)
+    rot2 = rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point)
     assert np.allclose(rot1.points, rot2.points)
 
 
@@ -1309,7 +1309,7 @@ def test_transform_integers():
         assert poly.cell_data[key].dtype == np.int_
 
     with pytest.warns(UserWarning):
-        poly.rotate_x(angle=10, inplace=True)
+        poly = poly.rotate_x(angle=10)
 
     # check that points were converted and transformed correctly
     assert poly.points.dtype == np.float32
@@ -1358,7 +1358,7 @@ def test_scale():
     xyz = np.random.random(3)
     scale1 = mesh.copy()
     scale2 = mesh.copy()
-    scale1.scale(xyz, inplace=True)
+    scale1 = scale1.scale(xyz)
     scale2.points *= xyz
     scale3 = mesh.scale(xyz, inplace=False)
     assert np.allclose(scale1.points, scale2.points)
@@ -1367,8 +1367,8 @@ def test_scale():
     scale1 = mesh.copy()
     scale2 = mesh.copy()
     xyz = 4.0
-    scale1.scale(xyz, inplace=True)
-    scale2.scale([xyz] * 3, inplace=True)
+    scale1 = scale1.scale(xyz)
+    scale2 = scale2.scale([xyz] * 3)
     assert np.allclose(scale1.points, scale2.points)
     # test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
@@ -1380,7 +1380,7 @@ def test_flip_x():
     mesh = examples.load_airplane()
     flip_x1 = mesh.copy()
     flip_x2 = mesh.copy()
-    flip_x1.flip_x(point=(0, 0, 0), inplace=True)
+    flip_x1 = flip_x1.flip_x(point=(0, 0, 0))
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
     # Test non-point-based mesh doesn't fail
@@ -1393,7 +1393,7 @@ def test_flip_y():
     mesh = examples.load_airplane()
     flip_y1 = mesh.copy()
     flip_y2 = mesh.copy()
-    flip_y1.flip_y(point=(0, 0, 0), inplace=True)
+    flip_y1 = flip_y1.flip_y(point=(0, 0, 0))
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
     # Test non-point-based mesh doesn't fail
@@ -1406,7 +1406,7 @@ def test_flip_z():
     mesh = examples.load_airplane()
     flip_z1 = mesh.copy()
     flip_z2 = mesh.copy()
-    flip_z1.flip_z(point=(0, 0, 0), inplace=True)
+    flip_z1 = flip_z1.flip_z(point=(0, 0, 0))
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
     # Test non-point-based mesh doesn't fail
@@ -1419,20 +1419,20 @@ def test_flip_normal():
     mesh = examples.load_airplane()
     flip_normal1 = mesh.copy()
     flip_normal2 = mesh.copy()
-    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0], inplace=True)
-    flip_normal2.flip_x(inplace=True)
+    flip_normal1 = flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0])
+    flip_normal2 = flip_normal2.flip_x()
     assert np.allclose(flip_normal1.points, flip_normal2.points)
 
     flip_normal3 = mesh.copy()
     flip_normal4 = mesh.copy()
-    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0], inplace=True)
-    flip_normal4.flip_y(inplace=True)
+    flip_normal3 = flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0])
+    flip_normal4 = flip_normal4.flip_y()
     assert np.allclose(flip_normal3.points, flip_normal4.points)
 
     flip_normal5 = mesh.copy()
     flip_normal6 = mesh.copy()
-    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0], inplace=True)
-    flip_normal6.flip_z(inplace=True)
+    flip_normal5 = flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
+    flip_normal6 = flip_normal6.flip_z()
     assert np.allclose(flip_normal5.points, flip_normal6.points)
 
     # Test non-point-based mesh doesn't fail

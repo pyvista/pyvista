@@ -42,7 +42,7 @@ z = np.sin(r)
 curvsurf = pv.StructuredGrid(x, y, z)
 
 # Map the curved surface to a plane - use best fitting plane
-curvsurf.texture_map_to_plane(inplace=True)
+curvsurf = curvsurf.texture_map_to_plane()
 
 curvsurf.plot(texture=tex)
 
@@ -208,7 +208,7 @@ curvsurf.plot(texture=tex, cpos="xy")
 mesh = pv.Sphere()
 tex = examples.download_masonry_texture()
 
-mesh.texture_map_to_sphere(inplace=True)
+mesh = mesh.texture_map_to_sphere()
 mesh.plot(texture=tex)
 
 

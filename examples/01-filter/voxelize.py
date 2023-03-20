@@ -55,7 +55,7 @@ voxels.plot(scalars="density", cpos=cpos)
 ###############################################################################
 # A constant scalar field is kind of boring, so let's get a little fancier by
 # added a scalar field that varies by the distance from the bounding surface.
-voxels.compute_implicit_distance(surface, inplace=True)
+voxels = voxels.compute_implicit_distance(surface)
 voxels
 
 ###############################################################################

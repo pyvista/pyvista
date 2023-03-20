@@ -62,7 +62,7 @@ def voxelize(mesh, density=None, check_surface=True):
         raise ValueError('Input mesh must have faces for voxelization.')
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
-        surface.triangulate(inplace=True)
+        surface = surface.triangulate()
 
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x = np.arange(x_min, x_max, density_x)

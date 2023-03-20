@@ -52,7 +52,7 @@ print(f'Actual dataset bounds: {gears.bounds}')
 # separate and shift the central gear
 split_gears = gears.split_bodies()
 central_gear = split_gears.pop(1)
-central_gear.translate([0, 60, 60], inplace=True)
+central_gear = central_gear.translate([0, 60, 60])
 
 # also, grab the size of the central gear
 x_size = central_gear.bounds[1] - central_gear.bounds[0]

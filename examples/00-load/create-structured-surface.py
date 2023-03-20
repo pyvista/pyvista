@@ -75,7 +75,7 @@ def make_point_set():
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
     foo = pv.PolyData(points)
-    foo.rotate_z(36.6, inplace=True)
+    foo = foo.rotate_z(36.6)
     return foo.points
 
 

@@ -965,7 +965,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['.stl', '.ply'] and recompute_normals:
-            self.compute_normals(inplace=True)
+            self = self.compute_normals()
 
         # validate texture
         if ftype == '.ply' and texture is not None:
@@ -2404,7 +2404,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return self
 
         grid = self.copy()
-        grid.hide_cells(ind, inplace=True)
+        grid = grid.hide_cells(ind)
         return grid
 
     def show_cells(self, inplace=False) -> 'ExplicitStructuredGrid':
@@ -2446,7 +2446,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return self
         else:
             grid = self.copy()
-            grid.show_cells(inplace=True)
+            grid = grid.show_cells()
             return grid
 
     def _dimensions(self):
@@ -2778,7 +2778,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return self
         else:
             grid = self.copy()
-            grid.compute_connectivity(inplace=True)
+            grid = grid.compute_connectivity()
             return grid
 
     def compute_connections(self, inplace=False):

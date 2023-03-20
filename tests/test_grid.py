@@ -326,7 +326,7 @@ def test_extract_feature_edges(hexbeam):
 
 
 def test_triangulate_inplace(hexbeam):
-    hexbeam.triangulate(inplace=True)
+    hexbeam = hexbeam.triangulate()
     assert (hexbeam.celltypes == vtk.VTK_TETRA).all()
 
 
@@ -440,7 +440,7 @@ def test_merge(hexbeam):
     grid.points[:, 0] += 1
     unmerged = grid.merge(hexbeam, inplace=False, merge_points=False)
 
-    grid.merge(hexbeam, inplace=True, merge_points=True)
+    grid = grid.merge(hexbeam, merge_points=True)
     assert grid.n_points > hexbeam.n_points
     assert grid.n_points < unmerged.n_points
 
@@ -450,7 +450,7 @@ def test_merge_not_main(hexbeam):
     grid.points[:, 0] += 1
     unmerged = grid.merge(hexbeam, inplace=False, merge_points=False, main_has_priority=False)
 
-    grid.merge(hexbeam, inplace=True, merge_points=True)
+    grid = grid.merge(hexbeam, merge_points=True)
     assert grid.n_points > hexbeam.n_points
     assert grid.n_points < unmerged.n_points
 
@@ -462,13 +462,13 @@ def test_merge_list(hexbeam):
     grid_b = hexbeam.copy()
     grid_b.points[:, 1] += 1
 
-    grid_a.merge([hexbeam, grid_b], inplace=True, merge_points=True)
+    grid_a = grid_a.merge([hexbeam, grid_b], merge_points=True)
     assert grid_a.n_points > hexbeam.n_points
 
 
 def test_merge_invalid(hexbeam, sphere):
     with pytest.raises(TypeError):
-        sphere.merge([hexbeam], inplace=True)
+        sphere = sphere.merge([hexbeam])
 
 
 def test_init_structured_raise():
@@ -1134,12 +1134,12 @@ def test_remove_cells_not_inplace(ind, hexbeam):
 def test_remove_cells_invalid(hexbeam):
     grid_copy = hexbeam.copy()
     with pytest.raises(ValueError):
-        grid_copy.remove_cells(np.ones(10, dtype=bool), inplace=True)
+        grid_copy = grid_copy.remove_cells(np.ones(10, dtype=bool))
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_CELLS_BOOL])
 def test_hide_cells(ind, struct_grid):
-    struct_grid.hide_cells(ind, inplace=True)
+    struct_grid = struct_grid.hide_cells(ind)
     assert struct_grid.HasAnyBlankCells()
 
     out = struct_grid.hide_cells(ind, inplace=False)
@@ -1147,7 +1147,7 @@ def test_hide_cells(ind, struct_grid):
     assert out.HasAnyBlankCells()
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
-        struct_grid.hide_cells(np.ones(10, dtype=bool), inplace=True)
+        struct_grid = struct_grid.hide_cells(np.ones(10, dtype=bool))
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_POINTS_BOOL])
@@ -1273,7 +1273,7 @@ def test_ExplicitStructuredGrid_hide_cells():
     assert 'vtkGhostType' not in grid.cell_data
     assert np.array_equal(copy.cell_data['vtkGhostType'], ghost)
 
-    out = grid.hide_cells(range(80, 120), inplace=True)
+    out = grid = grid.hide_cells(range(80, 120))
     assert out is grid
     assert 'vtkGhostType' in grid.cell_data
     assert np.array_equal(grid.cell_data['vtkGhostType'], ghost)
@@ -1281,7 +1281,7 @@ def test_ExplicitStructuredGrid_hide_cells():
 
 def test_ExplicitStructuredGrid_show_cells():
     grid = examples.load_explicit_structured()
-    grid.hide_cells(range(80, 120), inplace=True)
+    grid = grid.hide_cells(range(80, 120))
 
     copy = grid.show_cells()
     assert isinstance(copy, pyvista.ExplicitStructuredGrid)
@@ -1289,7 +1289,7 @@ def test_ExplicitStructuredGrid_show_cells():
     assert np.count_nonzero(copy.cell_data['vtkGhostType']) == 0
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
-    out = grid.show_cells(inplace=True)
+    out = grid = grid.show_cells()
     assert out is grid
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 0
 
@@ -1378,7 +1378,7 @@ def test_ExplicitStructuredGrid_compute_connectivity():
     assert 'ConnectivityFlags' not in grid.cell_data
     assert np.array_equal(copy.cell_data['ConnectivityFlags'], connectivity)
 
-    out = grid.compute_connectivity(inplace=True)
+    out = grid = grid.compute_connectivity()
     assert out is grid
     assert 'ConnectivityFlags' in grid.cell_data
     assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
@@ -1404,7 +1404,7 @@ def test_ExplicitStructuredGrid_compute_connections():
     assert 'number_of_connections' not in grid.cell_data
     assert np.array_equal(copy.cell_data['number_of_connections'], connections)
 
-    grid.compute_connections(inplace=True)
+    grid = grid.compute_connections()
     assert 'number_of_connections' in grid.cell_data
     assert np.array_equal(grid.cell_data['number_of_connections'], connections)
 

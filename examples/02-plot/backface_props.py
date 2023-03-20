@@ -22,7 +22,7 @@ mesh = pv.ParametricEllipsoid(min_v=np.pi / 2 - 0.2, max_v=np.pi / 2 + 0.2)
 
 # create a shifted copy with flipped normals
 mesh_inside_out = mesh.translate((0, 0, 1), inplace=False)
-mesh_inside_out.compute_normals(flip_normals=True, inplace=True)
+mesh_inside_out = mesh_inside_out.compute_normals(flip_normals=True)
 meshes = mesh + mesh_inside_out
 
 backface_params = dict(color='orangered')

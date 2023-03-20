@@ -805,7 +805,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         # Swap bytes from big to little endian.
         if data.dtype.byteorder == '>':
-            data = data.byteswap(inplace=True)
+            data = data = data.byteswap()
 
         # this handles the case when an input array is directly added to the
         # output. We want to make sure that the array added to the output is not

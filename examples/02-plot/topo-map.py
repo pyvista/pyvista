@@ -41,7 +41,7 @@ bounds = (1818000, 1824500, 5645000, 5652500, 0, 3000)
 # Clip the elevation dataset to the map's extent
 local = elevation.clip_box(bounds, invert=False)
 # Apply texturing coordinates to associate the image to the surface
-local.texture_map_to_plane(use_bounds=True, inplace=True)
+local = local.texture_map_to_plane(use_bounds=True)
 
 ###############################################################################
 # Now display it. Note that the imagery is aligned as we expect.

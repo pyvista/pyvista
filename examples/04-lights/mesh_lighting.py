@@ -18,7 +18,7 @@ import pyvista as pv
 from pyvista import examples
 
 horse = examples.download_horse().decimate(0.9)
-horse.rotate_z(-120, inplace=True)
+horse = horse.rotate_z(-120)
 horse.points = (horse.points - horse.center) * 100
 shifted = horse.translate((0, 10, 0), inplace=False)
 

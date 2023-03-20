@@ -41,7 +41,7 @@ p.show()
 # The clipping operation field is performed where the ``implicit_distance``
 # field is zero and the ``invert`` flag controls which sides of zero to
 # preserve.
-dataset.compute_implicit_distance(surface, inplace=True)
+dataset = dataset.compute_implicit_distance(surface)
 
 inner = dataset.threshold(0.0, scalars="implicit_distance", invert=True)
 outer = dataset.threshold(0.0, scalars="implicit_distance", invert=False)

@@ -536,7 +536,7 @@ def test_apply_transformation_to_points():
     # scale in-place
     tf = np.eye(4) * 2
     tf[3, 3] = 1
-    r = transformations.apply_transformation_to_points(tf, points, inplace=True)
+    r = transformations = transformations.apply_transformation_to_points(tf, points)
     assert r is None
     assert mesh.points == pytest.approx(2 * points_orig)
 
