@@ -338,11 +338,6 @@ class Renderers:
         self._plotter.iren._set_context_style(interactive_scene if interactive_charts else None)
         return interactive_charts
 
-    def on_plotter_render(self):
-        """Notify all renderers of explicit plotter render call."""
-        for renderer in self:
-            renderer.on_plotter_render()
-
     def deep_clean(self):
         """Clean all renderers."""
         # Do not remove the renderers on the clean
