@@ -1,10 +1,10 @@
 Optional Features
 =================
-Due to its usage of `numpy`, the `pyvista` module plays well with
-other modules, including `matplotlib`, `trimesh`, `rtree`, and
-`pyembree`.  The following examples show some optional features
-included within `pyvista` that use or combine several modules to
-perform advanced analyses not normally included within `VTK`.
+Due to its usage of ``numpy``, the PyVista library plays well with
+other modules, including ``matplotlib``, ``trimesh``, ``rtree``, and
+``pyembree``.  The following examples show some optional features
+included within PyVista that use or combine several modules to
+perform advanced analyses not normally included within ``VTK``.
 
 Vectorised Ray Tracing
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -50,7 +50,9 @@ Perform many ray traces simultaneously with a PolyData Object
 Project to Finite Plane
 ~~~~~~~~~~~~~~~~~~~~~~~
 The following example expands on the vectorized ray tracing example by
-projecting the random_hills example data to a triangular plane.
+projecting the :func:`load_random_hills()
+<pyvista.examples.examples.load_random_hills>` example data to a triangular
+plane.
 
 .. code-block:: python
 

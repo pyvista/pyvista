@@ -27,6 +27,6 @@ dolfin
 
 
 ###############################################################################
-# Now we can do stuff with that Dolfin mesh!
+# Now we can work on and plot that Dolfin mesh.
 qual = dolfin.compute_cell_quality()
 qual.plot(show_edges=True, cpos="xy")

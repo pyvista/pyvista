@@ -4,7 +4,7 @@ Point Sets
 ==========
 
 PyVista point sets are datasets with explicit geometry where the point
-and cell topology are specified and not inferred.  PyVista point sets
+and cell topology are specified and not inferred. PyVista point sets
 are modeled after the same data model as VTK's point sets while being
 designed to make creation, array access, and plotting more
 straightforward than their VTK counterparts.
@@ -32,7 +32,7 @@ combinations of all possible cell types:
 
 
 The :class:`pyvista.PolyData` is used for datasets consisting of surface
-geometry (e.g. vertices, lines, and polygons):
+geometry (for example vertices, lines, and polygons):
 
 .. jupyter-execute::
    :hide-code:
@@ -67,7 +67,7 @@ storing a set of points.
 
 **Class Descriptions**
 
-The following table describes PyVista's point set classes.  These
+The following table describes PyVista's point set classes. These
 classes inherit all methods from their corresponding VTK `vtkPointSet`_,
 `vtkPolyData`_, `vtkUnstructuredGrid`_, `vtkStructuredGrid`_, and
 `vtkExplicitStructuredGrid`_ superclasses.
@@ -108,18 +108,18 @@ This creates an mesh, which you can then add
 * Faces with :attr:`faces <pyvista.PolyData.faces>`
 
 Note that unlike :class:`pyvista.UnstructuredGrid`, you do not specify
-cell types.  All faces are assumed to be polygons, hence the name
+cell types. All faces are assumed to be polygons, hence the name
 "Poly" data.
 
 Click on the attributes above to see examples of how to add geometric
-features to an empty.  See :ref:`ref_create_poly` for an example on
+features to an empty. See :ref:`ref_create_poly` for an example on
 creating a :class:`pyvista.PolyData` object from NumPy arrays.
 
 
 Initialize from a File
 ~~~~~~~~~~~~~~~~~~~~~~
 Both binary and ASCII .ply, .stl, and .vtk files can be read using
-PyVista.  For example, the PyVista package contains example meshes and
+PyVista. For example, the PyVista package contains example meshes and
 these can be loaded with:
 
 .. jupyter-execute::
@@ -150,11 +150,11 @@ These meshes are identical.
 Mesh Manipulation and Plotting
 ------------------------------
 Meshes can be directly manipulated using NumPy or with the built-in
-translation and rotation routines.  This example loads two meshes and
+translation and rotation routines. This example loads two meshes and
 moves, scales, copies them, and finally plots them.
 
 To plot more than one mesh a :class:`pyvista.Plotter` instance must be
-created to manage the plotting.  The following code creates a plotter
+created to manage the plotting. The following code creates a plotter
 and plots the meshes with various colors.
 
 
@@ -181,7 +181,7 @@ and plots the meshes with various colors.
     plotter.add_mesh(ant, 'r')
     plotter.add_mesh(ant_copy, 'b')
 
-    # Add airplane mesh and make the color equal to the Y position.  Add a
+    # Add airplane mesh and make the color equal to the Y position. Add a
     # scalar bar associated with this mesh
     plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(airplane, scalars=plane_scalars,
@@ -276,9 +276,9 @@ A structured grid can be initialized with:
     grid = pv.StructuredGrid()
 
 
-Creating from Numpy Arrays
+Creating from NumPy Arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-A structured grid can be created directly from numpy arrays.  This is useful
+A structured grid can be created directly from numpy arrays. This is useful
 when creating a grid from scratch or copying it from another format.
 
 Also see :ref:`ref_create_structured` for an example on creating a structured
@@ -312,7 +312,7 @@ Structured grids can be loaded from a ``vtk`` file.
 Plotting Grids
 --------------
 This example shows how you can load an unstructured grid from a ``vtk`` file and
-create a plot and gif movie by updating the plotting object.
+create a plot and GIF movie by updating the plotting object.
 
 .. pyvista-plot::
     :context:
@@ -361,7 +361,7 @@ A more complex plot can be created using:
 
 
 You can animate the motion of the beam by updating the positions and
-scalars of the grid copied to the plotting object.  Here is a full example:
+scalars of the grid copied to the plotting object. Here is a full example:
 
 .. pyvista-plot::
     :context:
@@ -391,7 +391,7 @@ scalars of the grid copied to the plotting object.  Here is a full example:
     plotter.add_axes()
     plotter.camera_position = cpos
 
-    # open movie file.  A mp4 file can be written instead.  Requires ``moviepy``
+    # open movie file. A mp4 file can be written instead. Requires ``moviepy``
     plotter.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
@@ -405,7 +405,7 @@ scalars of the grid copied to the plotting object.  Here is a full example:
     plotter.close()
 
 
-You can also render the beam as as a wire-frame object:
+You can also render the beam as a wire-frame object:
 
 .. pyvista-plot::
    :context:
@@ -437,10 +437,10 @@ Labels can be added to a plot using :func:`add_point_labels()
 <pyvista.Plotter.add_point_labels>` within the :class:`Plotter <pyvista.Plotter>`.
 The following example loads the included example beam, generates a
 plotting class, and sub-selects points along the y-z plane and labels
-their coordinates.  :func:`add_point_labels()
+their coordinates. :func:`add_point_labels()
 <pyvista.Plotter.add_point_labels>` requires that the number of
 labels matches the number of points, and that labels is a list
-containing one entry per point.  The code automatically converts each
+containing one entry per point. The code automatically converts each
 item in the list to a string.
 
 ..

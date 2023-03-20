@@ -1940,7 +1940,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def _prep_for_close(self):
         """Make sure a screenshot is acquired before closing.
 
-        This doesn't actually close anything! It just preps the plotter for
+        This doesn't actually close anything. It just preps the plotter for
         closing.
         """
         # Grab screenshot right before renderer closes
@@ -2427,7 +2427,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         pickable : bool, default: True
             Set whether this actor is pickable.
@@ -3009,7 +3009,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         pickable : bool, optional
             Set whether this actor is pickable.
@@ -3749,7 +3749,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         pickable : bool, optional
             Set whether this mesh is pickable.

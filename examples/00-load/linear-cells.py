@@ -196,5 +196,4 @@ add_cell_helper(
 )
 
 pl.background_color = 'w'
-pl.enable_anti_aliasing()
 pl.show()

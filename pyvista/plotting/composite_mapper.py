@@ -716,7 +716,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         annotations : dict
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         rgb : bool
             If the ``scalars_name`` corresponds to a 2 dimensional array, plot

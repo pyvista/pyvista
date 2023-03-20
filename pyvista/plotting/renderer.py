@@ -1797,7 +1797,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``False``.
 
         edge_color : ColorLike, optional
-            Color of of the edges of the mesh.
+            Color of the edges of the mesh.
 
         reset_camera : bool, optional
             Resets the camera when ``True`` after adding the floor.

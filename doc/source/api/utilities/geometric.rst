@@ -1,7 +1,7 @@
 Geometric Objects
 -----------------
 PyVista includes several functions to generate simple geometric
-objects.  The API reference for these functions is on this page.  For
+objects. The API reference for these functions is on this page. For
 additional details see :ref:`ref_geometric_example` example.
 
 .. currentmodule:: pyvista

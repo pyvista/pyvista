@@ -3,7 +3,7 @@
 Flask Application
 =================
 You can use ``pyvista`` in to make a flask application to display both static
-and dynamic plots.  See the following examples as well as the source at `Flask
+and dynamic plots. See the following examples as well as the source at `Flask
 Example <https://github.com/pyvista/pyvista/tree/main/examples_flask>`__.
 
 
