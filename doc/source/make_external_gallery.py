@@ -180,7 +180,7 @@ articles = {
         link="https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html#pyvista-streamlines",
         image="coil_field_lines.png",
     ),
-    pyfbs: Example(
+    "pyfbs": Example(
         title="pyFBS: Frequency Based Substructuring in Python",
         description="pyFBS is a Python package for Frequency Based Substructuring, Transfer Path Analysis, and multi-reference modal identification.",
         link="https://pyfbs.readthedocs.io/en/latest/examples/examples.html",
