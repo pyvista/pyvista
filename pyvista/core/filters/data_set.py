@@ -4736,7 +4736,8 @@ class DataSetFilters:
 
         """
         try:
-            merged = DataSetFilters = DataSetFilters.merge(self, dataset)
+            merged = DataSetFilters.merge(self, dataset)
+            self.deep_copy(merged)
         except TypeError:
             raise TypeError(
                 'In-place merge only possible if the target mesh '

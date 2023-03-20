@@ -533,12 +533,11 @@ def test_apply_transformation_to_points():
     points_new = transformations.apply_transformation_to_points(tf, points, inplace=False)
     assert points_new == pytest.approx(points)
 
-    # scale in-place
+    # scale
     tf = np.eye(4) * 2
     tf[3, 3] = 1
-    r = transformations = transformations.apply_transformation_to_points(tf, points)
-    assert r is None
-    assert mesh.points == pytest.approx(2 * points_orig)
+    r = transformations.apply_transformation_to_points(tf, points)
+    assert r == pytest.approx(2 * points_orig)
 
 
 def _generate_vtk_err():
