@@ -172,7 +172,12 @@ from __future__ import annotations
 from typing import Optional, Tuple, Union
 
 from cycler import Cycler, cycler
-from matplotlib import colormaps, colors
+
+try:
+    from matplotlib import colormaps, colors
+except:
+    from matplotlib import cm as colormaps
+    from matplotlib import colors
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1209,7 +1214,11 @@ def get_cmap_safe(cmap):
                 pass
 
         if not isinstance(cmap, colors.Colormap):
-            cmap = colormaps[cmap]
+            if hasattr(colormaps, cmap):
+                # Backwards compatibility with matplotlib<3.5.0
+                cmap = getattr(colormaps, cmap)  # pragma: no cover
+            else:
+                cmap = colormaps[cmap]
 
     elif isinstance(cmap, list):
         for item in cmap:
