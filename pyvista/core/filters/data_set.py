@@ -1785,8 +1785,7 @@ class DataSetFilters:
             with the texture coordinates.
 
         name : str, optional
-            The string name to give the new texture coordinates if applying
-            the filter inplace.
+            The string name to give the new texture coordinates.
 
         use_bounds : bool, optional
             Use the bounds to set the mapping plane by default (bottom plane
@@ -1822,18 +1821,25 @@ class DataSetFilters:
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Texturing Map to Plane')
         output = _get_output(alg)
-        if not inplace:
-            return output
         t_coords = output.GetPointData().GetTCoords()
         t_coords.SetName(name)
         otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(t_coords)
-        self.GetPointData().AddArray(t_coords)
-        # CRITICAL:
-        if otc and otc.GetName() != name:
-            # Add old ones back at the end if different name
-            self.GetPointData().AddArray(otc)
-        return self
+        if not inplace:
+            self.GetPointData().SetTCoords(t_coords)
+            self.GetPointData().AddArray(t_coords)
+            # CRITICAL:
+            if otc and otc.GetName() != name:
+                # Add old ones back at the end if different name
+                self.GetPointData().AddArray(otc)
+            return self
+        else:
+            output.GetPointData().SetTCoords(t_coords)
+            output.GetPointData().AddArray(t_coords)
+            # CRITICAL:
+            if otc and otc.GetName() != name:
+                # Add old ones back at the end if different name
+                output.GetPointData().AddArray(otc)
+            return output
 
     def texture_map_to_sphere(
         self,
