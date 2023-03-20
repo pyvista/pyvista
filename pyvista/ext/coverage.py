@@ -1,4 +1,5 @@
 """.. _ref_sphinx_ext_coverage:
+
 sphinx.ext.coverage
 ~~~~~~~~~~~~~~~~~~~
 
