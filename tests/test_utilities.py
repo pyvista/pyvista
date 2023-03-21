@@ -26,11 +26,7 @@ from pyvista.utilities import (
     transformations,
 )
 from pyvista.utilities.docs import linkcode_resolve
-from pyvista.utilities.misc import (
-    PyVistaDeprecationWarning,
-    has_duplicates,
-    raise_has_duplicates,
-)
+from pyvista.utilities.misc import PyVistaDeprecationWarning, has_duplicates, raise_has_duplicates
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"

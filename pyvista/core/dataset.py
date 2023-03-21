@@ -1,9 +1,8 @@
 """Attributes common to PolyData and Grid Objects."""
 from __future__ import annotations
 
-import collections.abc
-import warnings
 from collections import namedtuple
+import collections.abc
 from copy import deepcopy
 from functools import partial
 from typing import (
@@ -20,6 +19,7 @@ from typing import (
     Union,
     cast,
 )
+import warnings
 
 import numpy as np
 

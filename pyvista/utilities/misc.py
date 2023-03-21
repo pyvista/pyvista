@@ -1,9 +1,9 @@
 """Miscellaneous pyvista functions."""
+from collections import namedtuple
+from functools import lru_cache
 import importlib
 import os
 import warnings
-from collections import namedtuple
-from functools import lru_cache
 
 import numpy as np
 

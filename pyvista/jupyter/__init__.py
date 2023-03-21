@@ -1,7 +1,7 @@
 """Jupyter notebook plotting module."""
 import asyncio
-import warnings
 from typing import Awaitable
+import warnings
 
 import pyvista
 from pyvista.utilities.misc import PyVistaDeprecationWarning

@@ -8,9 +8,9 @@ Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
 values.
 """
 
+from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import ListedColormap
 
 import pyvista as pv
 from pyvista import examples

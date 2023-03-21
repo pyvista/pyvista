@@ -1,10 +1,10 @@
 import os
 
+from PIL import Image
 import numpy as np
 import pytest
 import trimesh
 import vtk
-from PIL import Image
 from vtk.util import numpy_support
 
 import pyvista

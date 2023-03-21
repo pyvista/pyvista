@@ -9,8 +9,6 @@ import pyvista
 from pyvista import Cell, CellType
 from pyvista.examples import (
     cells as example_cells,
-)
-from pyvista.examples import (
     load_airplane,
     load_explicit_structured,
     load_hexbeam,

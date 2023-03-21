@@ -1,9 +1,9 @@
 """Tests for tinypages build using sphinx extensions."""
 
 import os
-import sys
 from pathlib import Path
 from subprocess import PIPE, Popen
+import sys
 
 import pytest
 

@@ -42,10 +42,10 @@ If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
 environmental variable to ``True`` before running the script.
 """
 
-import re
-import sys
 from argparse import ArgumentParser
 from doctest import DocTestFinder
+import re
+import sys
 from textwrap import indent
 from types import ModuleType
 

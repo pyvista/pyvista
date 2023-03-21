@@ -1,20 +1,20 @@
 """PyVista plotting module."""
 import collections.abc
+from contextlib import contextmanager
+from copy import deepcopy
 import ctypes
+from functools import wraps
 import io
 import logging
 import os
 import pathlib
 import platform
 import textwrap
+from threading import Thread
 import time
+from typing import Dict, Optional
 import warnings
 import weakref
-from contextlib import contextmanager
-from copy import deepcopy
-from functools import wraps
-from threading import Thread
-from typing import Dict, Optional
 
 import numpy as np
 import scooby
@@ -75,12 +75,7 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .tools import (  # noqa
-    FONTS,
-    normalize,
-    opacity_transfer_function,
-    parse_font_family,
-)
+from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 

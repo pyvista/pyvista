@@ -1,25 +1,25 @@
 """Core routines."""
 
-from .cell import Cell
-from .celltype import CellType
+from .dataset import DataSet, DataObject
 from .composite import MultiBlock
-from .dataset import DataObject, DataSet
 from .datasetattributes import DataSetAttributes
 from .filters import (
     CompositeFilters,
     DataSetFilters,
     PolyDataFilters,
-    UniformGridFilters,
     UnstructuredGridFilters,
+    UniformGridFilters,
 )
 from .grid import Grid, RectilinearGrid, UniformGrid
 from .objects import Table, Texture
 from .pointset import (
-    ExplicitStructuredGrid,
     PointGrid,
     PointSet,
     PolyData,
     StructuredGrid,
     UnstructuredGrid,
+    ExplicitStructuredGrid,
 )
 from .pyvista_ndarray import pyvista_ndarray
+from .celltype import CellType
+from .cell import Cell

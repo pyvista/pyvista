@@ -3,12 +3,12 @@
 import multiprocessing
 import pickle
 
-import numpy as np
-import pytest
-import vtk
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import array_shapes, arrays
 from hypothesis.strategies import composite, floats, integers, one_of
+import numpy as np
+import pytest
+import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista

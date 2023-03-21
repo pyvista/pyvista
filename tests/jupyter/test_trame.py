@@ -1,6 +1,6 @@
+from IPython.display import IFrame
 import numpy as np
 import pytest
-from IPython.display import IFrame
 
 import pyvista as pv
 from pyvista.plotting import system_supports_plotting
@@ -11,11 +11,7 @@ try:
 
     from pyvista.trame.jupyter import Widget
     from pyvista.trame.ui import get_or_create_viewer
-    from pyvista.trame.views import (
-        PyVistaLocalView,
-        PyVistaRemoteLocalView,
-        PyVistaRemoteView,
-    )
+    from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
 except:  # noqa: E722
     has_trame = False
 

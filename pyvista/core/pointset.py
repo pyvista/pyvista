@@ -1,12 +1,12 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
 import collections.abc
+from functools import wraps
 import numbers
 import os
 import pathlib
-import warnings
-from functools import wraps
 from textwrap import dedent
 from typing import Sequence, Tuple, Union
+import warnings
 
 import numpy as np
 
@@ -20,12 +20,7 @@ from ..utilities.fileio import get_ext
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
-from .filters import (
-    PolyDataFilters,
-    StructuredGridFilters,
-    UnstructuredGridFilters,
-    _get_output,
-)
+from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '

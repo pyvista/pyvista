@@ -2,27 +2,28 @@
 
 MAX_N_COLOR_BARS = 10
 
-import os
-import warnings
 from typing import Optional
+import warnings
+import os
 
-from pyvista import _vtk
 from pyvista._version import __version__
-from pyvista.core import *
-from pyvista.jupyter import set_jupyter_backend
 from pyvista.plotting import *
-from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
-from pyvista.themes import _rcParams, load_theme, set_plot_theme
 from pyvista.utilities import *
+from pyvista.core import *
 from pyvista.utilities.misc import (
     _get_vtk_id_type,
+    vtk_version_info,
     _set_plot_theme_from_env,
     set_pickle_format,
-    vtk_version_info,
 )
+from pyvista import _vtk
+from pyvista.jupyter import set_jupyter_backend
+from pyvista.themes import set_plot_theme, load_theme, _rcParams
+from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
+
 from pyvista.utilities.wrappers import _wrappers
 
 global_theme = _GlobalTheme()

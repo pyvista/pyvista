@@ -1,10 +1,10 @@
 """Fine-grained control of reading data files."""
-import enum
-import os
-import pathlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import enum
 from functools import wraps
+import os
+import pathlib
 from typing import Any, Callable, List, Union
 from xml.etree import ElementTree
 

@@ -1,6 +1,6 @@
 """A helper script to generate the external examples gallery."""
-import os
 from io import StringIO
+import os
 
 
 def format_icon(title, description, link, image):

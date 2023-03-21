@@ -13,11 +13,11 @@
 """
 
 import glob
+from importlib import import_module
 import inspect
+from os import path
 import pickle
 import re
-from importlib import import_module
-from os import path
 from typing import IO, Any, Dict, List, Pattern, Set, Tuple
 
 import sphinx

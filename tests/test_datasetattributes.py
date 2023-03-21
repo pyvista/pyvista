@@ -1,12 +1,12 @@
 import os
 import platform
-import sys
 from string import ascii_letters, digits, whitespace
+import sys
 
-import numpy as np
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import integers, lists, text
+import numpy as np
 from pytest import fixture, mark, raises
 
 import pyvista

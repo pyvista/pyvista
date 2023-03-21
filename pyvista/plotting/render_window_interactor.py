@@ -1,10 +1,10 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
 import collections.abc
+from functools import partial
 import logging
 import time
 import warnings
 import weakref
-from functools import partial
 
 from pyvista import _vtk
 from pyvista.utilities import try_callback
