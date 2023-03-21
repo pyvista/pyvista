@@ -830,7 +830,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 self.lookup_table.below_range_color = below_color
                 scalar_bar_args.setdefault('below_label', 'below')
 
-            if cmap is None:  # Set default map if matplotlib is available
+            if cmap is None:
                 if self._theme is None:
                     cmap = pv.global_theme.cmap
                 else:
