@@ -169,6 +169,7 @@ tab:cyan
 # of methods defined in this module.
 from __future__ import annotations
 
+import inspect
 from typing import Optional, Tuple, Union
 
 from cycler import Cycler, cycler
@@ -178,6 +179,7 @@ try:
 except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
+
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1214,11 +1216,16 @@ def get_cmap_safe(cmap):
                 pass
 
         if not isinstance(cmap, colors.Colormap):
-            if hasattr(colormaps, cmap):
+            if inspect.ismodule(colormaps):  # pragma: no cover
                 # Backwards compatibility with matplotlib<3.5.0
-                cmap = getattr(colormaps, cmap)  # pragma: no cover
+                if not hasattr(colormaps, cmap):
+                    raise ValueError(f'Invalid colormap "{cmap}"')
+                cmap = getattr(colormaps, cmap)
             else:
-                cmap = colormaps[cmap]
+                try:
+                    cmap = colormaps[cmap]
+                except KeyError:
+                    raise ValueError(f'Invalid colormap "{cmap}"') from None
 
     elif isinstance(cmap, list):
         for item in cmap:

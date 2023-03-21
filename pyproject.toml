@@ -27,7 +27,7 @@ classifiers = [
 ]
 dependencies = [
     'imageio',
-    'matplotlib',
+    'matplotlib>=3.0.1',
     'numpy',
     'pillow',
     'pooch',
@@ -48,7 +48,6 @@ all = [
 colormaps = [
     'cmocean',
     'colorcet',
-    'matplotlib',
 ]
 io = ['meshio>=5.2']
 jupyter = [
