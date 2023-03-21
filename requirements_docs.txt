@@ -1,5 +1,5 @@
 -r requirements.txt
-cmocean==2.0
+cmocean==3.0.3
 colorcet==3.0.1
 enum-tools==0.9.0.post1
 imageio-ffmpeg==0.4.8
