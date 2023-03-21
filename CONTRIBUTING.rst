@@ -426,7 +426,7 @@ The workspace has vnc capability through the browser for
 interactive plotting. The workspace also has the ability to view the
 documentation with a live-viewer. Hit the ``Go Live`` button
 and browse to ``doc/_build/html``. The workspace also preloads
- pre-commit environments and installs requirements.
+pre-commit environments and installs requirements.
 
 Unit Testing
 ~~~~~~~~~~~~
