@@ -13,7 +13,17 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import Texture, examples
+from pyvista.core.dataset import DataSet
 from pyvista.core.errors import VTKVersionError
+from pyvista.examples import (
+    load_airplane,
+    load_explicit_structured,
+    load_hexbeam,
+    load_rectilinear,
+    load_structured,
+    load_tetbeam,
+    load_uniform,
+)
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
@@ -1574,3 +1584,219 @@ def test_volume_area():
     grid = pyvista.UniformGrid(dimensions=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
+
+
+# ------------------
+# Connectivity tests
+# ------------------
+
+i0s = [0, 1]
+grids = [
+    load_airplane(),
+    load_structured(),
+    load_hexbeam(),
+    load_rectilinear(),
+    load_tetbeam(),
+    load_uniform(),
+    load_explicit_structured(),
+]
+grids_cells = grids[:-1]
+
+ids = list(map(type, grids))
+ids_cells = list(map(type, grids_cells))
+
+
+def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
+    for dataset in datasets_vtk9:
+        with pytest.raises(TypeError):
+            _ = dataset.cell_neighbors(0)
+
+
+def test_raises_point_neighbors_ind_overflow(grid):
+    with pytest.raises(IndexError):
+        _ = grid.point_neighbors(grid.n_points)
+
+
+def test_raises_cell_neighbors_connections(grid):
+    with pytest.raises(ValueError, match='got "topological"'):
+        _ = grid.cell_neighbors(0, "topological")
+
+
+@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize("i0", i0s)
+def test_point_cell_ids(grid: DataSet, i0):
+    cell_ids = grid.point_cell_ids(i0)
+
+    assert isinstance(cell_ids, list)
+    assert all([isinstance(id, int) for id in cell_ids])
+    assert all([0 <= id < grid.n_cells for id in cell_ids])
+    assert len(cell_ids) > 0
+
+    # Check that the output cells contain the i0-th point but also that the
+    # remaining cells does not contain this point id
+    for c in cell_ids:
+        assert i0 in grid.get_cell(c).point_ids
+
+    others = [i for i in range(grid.n_cells) if i not in cell_ids]
+    for c in others:
+        assert i0 not in grid.get_cell(c).point_ids
+
+
+@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
+@pytest.mark.parametrize("i0", i0s)
+def test_cell_point_neighbors_ids(grid: DataSet, i0):
+    cell_ids = grid.cell_neighbors(i0, "points")
+    cell = grid.get_cell(i0)
+
+    assert isinstance(cell_ids, list)
+    assert all([isinstance(id, int) for id in cell_ids])
+    assert all([0 <= id < grid.n_cells for id in cell_ids])
+    assert len(cell_ids) > 0
+
+    # Check that all the neighbors cells share at least one point with the
+    # current cell
+    current_points = set(cell.point_ids)
+    for i in cell_ids:
+        neighbor_points = set(grid.get_cell(i).point_ids)
+        assert not neighbor_points.isdisjoint(current_points)
+
+    # Check that other cells do not share a point with the current cell
+    other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
+    for i in other_ids:
+        neighbor_points = set(grid.get_cell(i).point_ids)
+        assert neighbor_points.isdisjoint(current_points)
+
+
+@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
+@pytest.mark.parametrize("i0", i0s)
+def test_cell_edge_neighbors_ids(grid: DataSet, i0):
+    cell_ids = grid.cell_neighbors(i0, "edges")
+    cell = grid.get_cell(i0)
+
+    assert isinstance(cell_ids, list)
+    assert all([isinstance(id, int) for id in cell_ids])
+    assert all([0 <= id < grid.n_cells for id in cell_ids])
+    assert len(cell_ids) > 0
+
+    # Check that all the neighbors cells share at least one edge with the
+    # current cell
+    current_points = set()
+    for e in cell.edges:
+        current_points.add(frozenset(e.point_ids))
+
+    for i in cell_ids:
+        neighbor_points = set()
+        neighbor_cell = grid.get_cell(i)
+
+        for ie in range(neighbor_cell.n_edges):
+            e = neighbor_cell.get_edge(ie)
+            neighbor_points.add(frozenset(e.point_ids))
+
+        assert not neighbor_points.isdisjoint(current_points)
+
+    # Check that other cells do not share an edge with the current cell
+    other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
+    for i in other_ids:
+        neighbor_points = set()
+        neighbor_cell = grid.get_cell(i)
+
+        for ie in range(neighbor_cell.n_edges):
+            e = neighbor_cell.get_edge(ie)
+            neighbor_points.add(frozenset(e.point_ids))
+
+        assert neighbor_points.isdisjoint(current_points)
+
+
+# Slice grids since some do not contain faces
+@pytest.mark.parametrize("grid", grids_cells[2:], ids=ids_cells[2:])
+@pytest.mark.parametrize("i0", i0s)
+def test_cell_face_neighbors_ids(grid: DataSet, i0):
+    cell_ids = grid.cell_neighbors(i0, "faces")
+    cell = grid.get_cell(i0)
+
+    assert isinstance(cell_ids, list)
+    assert all([isinstance(id, int) for id in cell_ids])
+    assert all([0 <= id < grid.n_cells for id in cell_ids])
+    assert len(cell_ids) > 0
+
+    # Check that all the neighbors cells share at least one face with the
+    # current cell
+    current_points = set()
+    for f in cell.faces:
+        current_points.add(frozenset(f.point_ids))
+
+    for i in cell_ids:
+        neighbor_points = set()
+        neighbor_cell = grid.get_cell(i)
+
+        for ifa in range(neighbor_cell.n_faces):
+            f = neighbor_cell.get_face(ifa)
+            neighbor_points.add(frozenset(f.point_ids))
+
+        assert not neighbor_points.isdisjoint(current_points)
+
+    # Check that other cells do not share a face with the current cell
+    other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
+    for i in other_ids:
+        neighbor_points = set()
+        neighbor_cell = grid.get_cell(i)
+
+        for ifa in range(neighbor_cell.n_faces):
+            f = neighbor_cell.get_face(ifa)
+            neighbor_points.add(frozenset(f.point_ids))
+
+        assert neighbor_points.isdisjoint(current_points)
+
+
+@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
+@pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
+@pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
+@pytest.mark.parametrize(
+    "connections", ["points", "edges", "faces"], ids=lambda x: f"connections={x}"
+)
+def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
+    cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)
+
+    if connections == "faces" and grid.get_cell(i0).dimension != 3:
+        pytest.skip("Grid's cells does not contain faces")
+
+    if n_levels == 1:
+        # Consume generator and check length and consistency
+        # with underlying method
+        cell_ids = list(cell_ids)
+        assert len(cell_ids) == 1
+        cell_ids = cell_ids[0]
+        assert len(cell_ids) > 0
+        assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
+
+    else:
+        for i, ids in enumerate(cell_ids):
+            assert isinstance(ids, list)
+            assert all([isinstance(id, int) for id in ids])
+            assert all([0 <= id < grid.n_cells for id in ids])
+            assert len(ids) > 0
+        assert i == n_levels - 1
+
+
+@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize("i0", i0s)
+@pytest.mark.parametrize("n_levels", [1, 3])
+def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
+    point_ids = grid.point_neighbors_levels(i0, n_levels=n_levels)
+
+    if n_levels == 1:
+        # Consume generator and check length and consistency
+        # with underlying method
+        point_ids = list(point_ids)
+        assert len(point_ids) == 1
+        point_ids = point_ids[0]
+        assert len(point_ids) > 0
+        assert set(point_ids) == set(grid.point_neighbors(i0))
+
+    else:
+        for i, ids in enumerate(point_ids):
+            assert isinstance(ids, list)
+            assert all([isinstance(id, int) for id in ids])
+            assert all([0 <= id < grid.n_points for id in ids])
+            assert len(ids) > 0
+        assert i == n_levels - 1
