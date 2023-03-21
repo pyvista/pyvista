@@ -1,3 +1,5 @@
+# see https://github.com/jupyter-widgets/ipywidgets/issues/3729
+import ipykernel.ipkernel  # noqa: F401
 import numpy as np
 from numpy.random import default_rng
 from pytest import fixture, mark, skip
