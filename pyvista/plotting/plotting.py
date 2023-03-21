@@ -2300,8 +2300,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
-            Only applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            Only applicable for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
             colormaps can be specified by name.
 
@@ -2865,8 +2865,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
-            Only applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            Only applicable for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
             colormaps can be specified by name.
 
@@ -3663,8 +3663,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
-            Only applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            Only applicable for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
             colormaps can be specified by name.
 

@@ -752,8 +752,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
-            for when displaying ``scalars``. Requires Matplotlib to be
-            installed.  ``colormap`` is also an accepted alias for this. If
+            for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 

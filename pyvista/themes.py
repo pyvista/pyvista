@@ -2016,7 +2016,7 @@ class DefaultTheme(_ThemeConfig):
         """Return or set the default colormap of pyvista.
 
         See available Matplotlib colormaps.  Only applicable for when
-        displaying ``scalars``. Requires Matplotlib to be installed.
+        displaying ``scalars``.
         If ``colorcet`` or ``cmocean`` are installed, their colormaps
         can be specified by name.
 

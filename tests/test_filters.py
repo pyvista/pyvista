@@ -1346,7 +1346,6 @@ def test_sample_over_line():
 
 
 def test_plot_over_line(tmpdir):
-    """This test requires matplotlib."""
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
@@ -1469,7 +1468,6 @@ def test_sample_over_circular_arc_normal():
 
 
 def test_plot_over_circular_arc(tmpdir):
-    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1512,7 +1510,6 @@ def test_plot_over_circular_arc(tmpdir):
 
 
 def test_plot_over_circular_arc_normal(tmpdir):
-    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
