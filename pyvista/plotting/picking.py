@@ -1,8 +1,8 @@
 """Module managing picking events."""
 
-from functools import partial
 import warnings
 import weakref
+from functools import partial
 
 import numpy as np
 

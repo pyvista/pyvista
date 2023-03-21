@@ -1,8 +1,8 @@
 """Module containing useful plotting tools."""
 
-from enum import Enum
 import os
 import platform
+from enum import Enum
 from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np

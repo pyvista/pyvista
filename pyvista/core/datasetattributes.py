@@ -4,8 +4,8 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
+from pyvista import _vtk
 from pyvista.utilities.helpers import FieldAssociation
 from pyvista.utilities.misc import copy_vtk_array
 

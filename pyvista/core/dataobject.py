@@ -1,7 +1,7 @@
 """Attributes common to PolyData and Grid Objects."""
 
-from abc import abstractmethod
 import collections.abc
+from abc import abstractmethod
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, Type, Union
 
@@ -220,7 +220,8 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import HTML, display as _display
+                from IPython.display import HTML
+                from IPython.display import display as _display
 
                 _display(HTML(fmt))
                 return

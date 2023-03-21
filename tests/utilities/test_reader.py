@@ -1,9 +1,9 @@
 import os
 import platform
 
-from PIL import Image, ImageSequence
 import numpy as np
 import pytest
+from PIL import Image, ImageSequence
 
 import pyvista
 from pyvista import examples

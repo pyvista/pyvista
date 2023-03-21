@@ -17,10 +17,10 @@ Examples
 """
 import logging
 import os
-from pathlib import PureWindowsPath
 import shutil
-from typing import Union
 import warnings
+from pathlib import PureWindowsPath
+from typing import Union
 
 import numpy as np
 import pooch

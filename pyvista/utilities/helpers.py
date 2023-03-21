@@ -7,10 +7,10 @@ import os
 import signal
 import sys
 import threading
-from threading import Thread
 import traceback
-from typing import Optional
 import warnings
+from threading import Thread
+from typing import Optional
 
 import numpy as np
 

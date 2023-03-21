@@ -1,10 +1,10 @@
 """Module containing pyvista implementation of vtkCamera."""
 from __future__ import annotations
 
+import xml.dom.minidom as md
 from pathlib import Path
 from typing import Union
 from weakref import proxy
-import xml.dom.minidom as md
 from xml.etree import ElementTree
 
 import numpy as np

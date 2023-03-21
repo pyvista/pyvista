@@ -101,16 +101,16 @@ These options can be set by defining global variables of the same name in
 
 import doctest
 import os
-from os.path import relpath
-from pathlib import Path
 import re
 import shutil
 import textwrap
 import traceback
+from os.path import relpath
+from pathlib import Path
 
+import jinja2  # Sphinx dependency.
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
-import jinja2  # Sphinx dependency.
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.

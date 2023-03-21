@@ -13,6 +13,8 @@ from pyvista import (
     RectilinearGrid,
     StructuredGrid,
     UniformGrid,
+)
+from pyvista import (
     examples as ex,
 )
 

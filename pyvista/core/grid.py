@@ -1,17 +1,17 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-from functools import wraps
 import pathlib
-from typing import Sequence, Tuple, Union
 import warnings
+from functools import wraps
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
 import pyvista
+import pyvista.utilities.helpers as helpers
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class, assert_empty_kwargs
-import pyvista.utilities.helpers as helpers
 from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
 
 

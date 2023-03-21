@@ -24,7 +24,7 @@ Example
 """
 
 import pyvista
-from pyvista.utilities import wrap, ProgressMonitor
+from pyvista.utilities import ProgressMonitor, wrap
 
 
 def _update_alg(alg, progress_bar=False, message=''):
@@ -55,14 +55,13 @@ def _get_output(
 
 
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
-from .data_set import DataSetFilters
 from .composite import CompositeFilters
+from .data_set import DataSetFilters
 from .poly_data import PolyDataFilters
-from .unstructured_grid import UnstructuredGridFilters
 from .rectilinear_grid import RectilinearGridFilters
 from .structured_grid import StructuredGridFilters
 from .uniform_grid import UniformGridFilters
-
+from .unstructured_grid import UnstructuredGridFilters
 
 __all__ = [
     '_update_alg',

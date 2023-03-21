@@ -101,15 +101,6 @@ pyvista = [
     'uniform.vtk',
 ]
 
-[tool.isort]
-profile = 'black'
-line_length = 100
-# Sort by name, don't cluster "from" vs "import"
-force_sort_within_sections = true
-# Combines "as" imports on the same line
-combine_as_imports = true
-skip_glob = 'pyvista/**/__init__.py,pyvista/__init__.py'
-
 [tool.black]
 line-length = 100
 skip-string-normalization = true
@@ -172,3 +163,12 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py38"
+select = [
+    "I",   # isort
+]
+fixable = [
+    "I",   # isort
+]

@@ -9,8 +9,8 @@ dynamic_ex/
 """
 import os
 
-from flask import Flask, render_template, request
 import numpy as np
+from flask import Flask, render_template, request
 
 import pyvista
 from pyvista import examples

@@ -18,7 +18,8 @@ see :ref:`point_sets_api`.
 import numpy as np
 
 import pyvista as pv
-from pyvista.examples import cells as example_cells, plot_cell
+from pyvista.examples import cells as example_cells
+from pyvista.examples import plot_cell
 
 # random generator for examples
 rng = np.random.default_rng(2)

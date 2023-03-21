@@ -6,7 +6,9 @@ import warnings
 
 from trame.app import get_server
 from trame.ui.vuetify import VAppLayout
-from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
+from trame.widgets import html as html_widgets
+from trame.widgets import vtk as vtk_widgets
+from trame.widgets import vuetify as vuetify_widgets
 
 try:
     from ipywidgets.widgets import HTML

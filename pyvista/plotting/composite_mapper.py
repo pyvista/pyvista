@@ -1,9 +1,9 @@
 """Module containing composite data mapper."""
-from itertools import cycle
 import sys
-from typing import Optional
 import warnings
 import weakref
+from itertools import cycle
+from typing import Optional
 
 import numpy as np
 

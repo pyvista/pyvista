@@ -1,9 +1,9 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
+import warnings
 from functools import partial, wraps
 from typing import Sequence, cast
-import warnings
 
 import numpy as np
 

@@ -1,13 +1,13 @@
 """Module managing errors."""
 
 import collections
-from collections.abc import Iterable
 import logging
 import os
 import re
 import subprocess
 import sys
 import traceback
+from collections.abc import Iterable
 
 import scooby
 

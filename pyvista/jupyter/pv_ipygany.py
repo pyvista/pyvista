@@ -1,7 +1,7 @@
 """Support for the ipygany plotter."""
 
-from array import array
 import warnings
+from array import array
 
 import numpy as np
 

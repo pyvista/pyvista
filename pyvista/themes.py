@@ -30,11 +30,11 @@ pyvista.
 
 """
 
-from enum import Enum
 import json
 import os
-from typing import Callable, List, Optional, Union
 import warnings
+from enum import Enum
+from typing import Callable, List, Optional, Union
 
 from ._typing import ColorLike, Number
 from .plotting.colors import Color, get_cmap_safe, get_cycler
