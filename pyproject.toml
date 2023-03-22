@@ -180,3 +180,7 @@ fixable = [
     # isort
     "I",
 ]
+
+[tool.ruff.per-file-ignores]
+'pyvista/__init__.py' = ["I001"]
+'pyvista/**/__init__.py' = ["I001"]
