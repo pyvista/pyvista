@@ -21,7 +21,7 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
-from pyvista.errors import MissingDataError
+from pyvista.errors import MissingDataError, RenderWindowUnavailable
 from pyvista.plotting.volume import Volume
 from pyvista.utilities import (
     FieldAssociation,
@@ -1700,8 +1700,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
-        if self.render_window is None or not self.render_window.IsCurrent():
-            raise AttributeError('Render window is not available.')
+        if self.render_window is None:
+            raise RenderWindowUnavailable('Render window is not available.')
+        if not self.render_window.IsCurrent():
+            raise RenderWindowUnavailable('Render window is not current.')
+
+    def _make_render_window_current(self):
+        if self.render_window is None:
+            raise RenderWindowUnavailable('Render window is not available.')
+        self.render_window.MakeCurrent()
 
     @property
     def image(self):
@@ -5605,6 +5612,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.render()
 
             with self.image_scale_context(scale):
+                self._make_render_window_current()
                 return self._save_image(self.image, filename, return_img)
 
     @wraps(Renderers.set_background)
