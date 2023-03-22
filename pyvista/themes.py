@@ -2016,9 +2016,8 @@ class DefaultTheme(_ThemeConfig):
         """Return or set the default colormap of pyvista.
 
         See available Matplotlib colormaps.  Only applicable for when
-        displaying ``scalars``.
-        If ``colorcet`` or ``cmocean`` are installed, their colormaps
-        can be specified by name.
+        displaying ``scalars``.  If ``colorcet`` or ``cmocean`` are
+        installed, their colormaps can be specified by name.
 
         You can also specify a list of colors to override an existing
         colormap with a custom one.  For example, to create a three
@@ -2036,7 +2035,9 @@ class DefaultTheme(_ThemeConfig):
 
     @cmap.setter
     def cmap(self, cmap):
-        get_cmap_safe(cmap)  # for validation
+        out = get_cmap_safe(cmap)  # for validation
+        if out is None:
+            raise ValueError(f'Invalid color map {cmap}')
         self._cmap = cmap
 
     @property
