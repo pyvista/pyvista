@@ -33,6 +33,6 @@ sympy==1.11.1
 trame==2.3.2
 trame-client==2.7.4
 trame-server==2.9.1
-trame-vtk==2.2.3
+trame-vtk==2.3.5
 trimesh==3.20.2
 typed-ast==1.5.4
