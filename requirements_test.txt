@@ -10,7 +10,6 @@ ipygany<0.6.0
 ipython<9.0.0
 ipyvtklink<0.4.0
 ipywidgets<9.0.0
-matplotlib<3.8.0
 meshio<5.4.0
 nest_asyncio<1.5.7
 numpydoc==1.5.0
