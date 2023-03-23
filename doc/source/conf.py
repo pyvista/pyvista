@@ -477,7 +477,6 @@ html_copy_source = False
 html_show_sphinx = False
 
 
-
 def get_version_match(semver):
     """Evaluate the version match for the multi-documentation."""
     if semver.endswith("dev0"):
