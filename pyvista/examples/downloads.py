@@ -2789,8 +2789,8 @@ def download_crater_imagery(load=True):  # pragma: no cover
     ...     [66.0, 73.0, 0.0],
     ...     [-0.0, -1.0, 0.0],
     ... ]
-    >>> dataset = examples.download_crater_imagery()
-    >>> dataset.plot(cpos=cpos)
+    >>> texture = examples.download_crater_imagery()
+    >>> texture.plot(cpos=cpos)
 
     See :ref:`ref_topo_map_example` for an example using this dataset.
 
