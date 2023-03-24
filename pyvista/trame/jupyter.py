@@ -130,8 +130,6 @@ def launch_server(server=None, port=None, host=None):
     if not pyvista.global_theme.trame.enable_vtk_warnings:
         vtk_logger = logging.getLogger("vtkmodules.web.render_window_serializer")
         vtk_logger.disabled = True
-        trame_vtk_logger = logging.getLogger("trame_vtk.modules.vtk.serializers")
-        trame_vtk_logger.disabled = True
 
     # Must enable all used modules
     html_widgets.initialize(server)
