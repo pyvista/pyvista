@@ -22,7 +22,7 @@ concurrency:
 
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
-  DOCUMENTATION_CNAME: 'https://pyvista.github.io/multiversion-docs-testing/'
+  DOCUMENTATION_CNAME: 'docs.pyvista.org'
 
 jobs:
   doc-check:
@@ -100,7 +100,10 @@ jobs:
 
       - name: Build Documentation
         run: make -C doc html
-
+      - name: Copy meta data
+        run: |
+          cp doc/README.md doc/_build/html/
+          cp doc/source/ads.txt doc/_build/html/
       - name: Dump Sphinx Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
@@ -113,24 +116,12 @@ jobs:
         if: always()
         run: tar -zcvf docs-build.tar.gz doc/_build/html/
 
-      - name: Tar build multiversion
-        if: always()
-        working-directory: ./doc/_build/html/
-        run: tar -zcvf ../../docs-build-multi.tar.gz .
-
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: docs-build
           path: docs-build.tar.gz
-
-      - name: Upload HTML multiversion documentation 
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: docs-build-multi
-          path: docs-build-multi.tar.gz
 
       - uses: actions/upload-artifact@v3
         with:
@@ -159,53 +150,15 @@ jobs:
           name: docs-build
           path: .
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: docs-build-multi
-          path: .
-      - name: Untar build
-        run: tar -xzvf docs-build.tar.gz
-      - name: Copy meta data
-        run: |
-          cp doc/README.md doc/_build/html/
-          cp doc/source/ads.txt doc/_build/html/
-
-      - name: Deploy on main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          external_repository: pyvista/pyvista-docs-dev
-          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          publish_dir: doc/_build/html/
-          cname: dev.pyvista.org
-
-      - name: Deploy on release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          external_repository: pyvista/pyvista-docs
-          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          publish_dir: doc/_build/html/
-          cname: docs.pyvista.org
-
-      - name: Remove non-multi version folder
-        run: rm -rf doc
-
       - name: Deploy on main multiversion
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
             cname: ${{ env.DOCUMENTATION_CNAME }}
             token: ${{ secrets.GITHUB_TOKEN }}
             decompress_artifact: true
-     
-      - name: Deploy on release multiversion
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-        uses: pyansys/actions/doc-deploy-stable@v4
-        with:
-            cname: ${{ env.DOCUMENTATION_CNAME }}
-            token: ${{ secrets.GITHUB_TOKEN }}
-            decompress_artifact: true
+            repository: 'pyvista/multiversion-docs-testing'
+            doc-artifact-name: docs-build
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
