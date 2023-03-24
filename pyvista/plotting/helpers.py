@@ -33,7 +33,7 @@ def plot(
     hidden_line_removal=None,
     anti_aliasing=None,
     zoom=None,
-    border=None,
+    border=False,
     border_color='k',
     border_width=2.0,
     ssao=False,
@@ -43,19 +43,18 @@ def plot(
 
     Parameters
     ----------
-    var_item : pyvista.DataSet | vtk | numpy object
-        PyVista, VTK, or ``numpy`` object to be plotted.
+    var_item : pyvista.DataSet
+        See :func:`Plotter.add_mesh <pyvista.Plotter.add_mesh>` for all
+        supported types.
 
     off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving
         screenshots without a window popping up.  Defaults to the
         global setting ``pyvista.OFF_SCREEN``.
 
-    full_screen : bool, optional
+    full_screen : bool, default: :attr:`pyvista.themes.DefaultTheme.full_screen`
         Opens window in full screen.  When enabled, ignores
-        ``window_size``.  Defaults to active theme setting in
-        :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen>`.
+        ``window_size``.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
@@ -65,29 +64,26 @@ def plot(
         When ``True``, takes screenshot and returns ``numpy`` array of
         image.
 
-    interactive : bool, optional
-        Allows user to pan and move figure.  Defaults to
-        :attr:`pyvista.global_theme.interactive <pyvista.themes.DefaultTheme.interactive>`.
+    interactive : bool, default: :attr:`pyvista.themes.DefaultTheme.interactive`
+        Allows user to pan and move figure.
 
     cpos : list, optional
         List of camera position, focal point, and view up.
 
-    window_size : list, optional
-        Window size in pixels.  Defaults to global theme
-        :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
+    window_size : sequence, default: :attr:`pyvista.themes.DefaultTheme.window_size`
+        Window size in pixels.
 
     show_bounds : bool, default: False
         Shows mesh bounds when ``True``.
 
-    show_axes : bool, optional
-        Shows a vtk axes widget.  If ``None``, enabled according to
-        :attr:`pyvista.global_theme.axes.show <pyvista.themes._AxesConfig.show>`.
+    show_axes : bool, default: :attr:`pyvista.themes._AxesConfig.show`
+        Shows a vtk axes widget.
 
-    notebook : bool, optional
+    notebook : bool, default: :attr:`pyvista.themes.DefaultTheme.notebook`
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : ColorLike, optional
+    background : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.background`
         Color of the background.
 
     text : str, optional
@@ -106,7 +102,7 @@ def plot(
     parallel_projection : bool, default: False
         Enable parallel projection.
 
-    jupyter_backend : str, optional
+    jupyter_backend : str, default: :attr:`pyvista.themes.DefaultTheme.jupyter_backend`
         Jupyter notebook plotting backend to use.  One of the
         following:
 
@@ -114,6 +110,7 @@ def plot(
         * ``'static'`` : Display a static figure.
         * ``'ipygany'`` : Show a ``ipygany`` widget
         * ``'panel'`` : Show a ``panel`` widget.
+        * ``'trame'`` : Display using ``trame``.
 
         This can also be set globally with
         :func:`pyvista.set_jupyter_backend`.
@@ -132,24 +129,21 @@ def plot(
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
-    hidden_line_removal : bool, optional
+    hidden_line_removal : bool, default: :attr:`pyvista.themes.DefaultTheme.hidden_line_removal`
         Wireframe geometry will be drawn using hidden line removal if
         the rendering engine supports it.  See
         :func:`Plotter.enable_hidden_line_removal
-        <Plotter.enable_hidden_line_removal>`.  Defaults to the
-        theme setting :attr:`pyvista.global_theme.hidden_line_removal
-        <pyvista.themes.DefaultTheme.hidden_line_removal>`.
+        <Plotter.enable_hidden_line_removal>`.
 
-    anti_aliasing : bool, optional
-        Enable or disable anti-aliasing.  Defaults to the theme
-        setting :attr:`pyvista.global_theme.anti_aliasing
-        <pyvista.themes.DefaultTheme.anti_aliasing>`.
+    anti_aliasing : bool, default: :attr:`pyvista.themes.DefaultTheme.anti_aliasing`
+        Enable or disable anti-aliasing.
 
     zoom : float, str, optional
-        Camera zoom.  Either ``'tight'`` or a float. A value greater than 1 is
-        a zoom-in, a value less than 1 is a zoom-out.  Must be greater than 0.
+        Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
+        is a zoom-in, a value less than 1 is a zoom-out.  Must be greater
+        than 0.
 
-    border : bool, optional
+    border : bool, default: False
         Draw a border around each render window.
 
     border_color : ColorLike, default: "k"

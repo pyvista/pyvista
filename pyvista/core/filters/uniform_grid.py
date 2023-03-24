@@ -244,11 +244,11 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        dilate_value : float, optional
-            Dilate value in the dataset. Default: ``1.0``.
+        dilate_value : float, default: 1.0
+            Dilate value in the dataset.
 
-        erode_value : float, optional
-            Erode value in the dataset. Default: ``0.0``.
+        erode_value : float, default: 0.0
+            Erode value in the dataset.
 
         kernel_size : sequence[int], default: (3, 3, 3)
             Determines the size (and center) of the kernel, for example

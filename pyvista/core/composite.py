@@ -495,7 +495,8 @@ class MultiBlock(
             Index or the dataset within the multiblock.
 
         name : str, optional
-            Name to assign to the block at ``index``.
+            Name to assign to the block at ``index``. If ``None``, no name is
+            assigned to the block.
 
         Examples
         --------
@@ -511,9 +512,9 @@ class MultiBlock(
         ['cube', 'sphere', 'cone']
 
         """
-        index = range(self.n_blocks)[index]
         if name is None:
             return
+        index = range(self.n_blocks)[index]
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 

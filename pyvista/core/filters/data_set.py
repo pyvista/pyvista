@@ -4892,22 +4892,22 @@ class DataSetFilters:
             derivative quantities.  Defaults to the active scalars in
             the dataset.
 
-        gradient : bool, str, default: True
+        gradient : bool | str, default: True
             Calculate gradient. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
             ``'gradient'``. Default ``True``.
 
-        divergence : bool, str, optional
+        divergence : bool | str, optional
             Calculate divergence. If a string is passed, the string will be
             used for the resulting array name. Otherwise, default array name
             will be ``'divergence'``.
 
-        vorticity : bool, str, optional
+        vorticity : bool | str, optional
             Calculate vorticity. If a string is passed, the string will be used
             for the resulting array name. Otherwise, default array name will be
             ``'vorticity'``.
 
-        qcriterion : bool, str, optional
+        qcriterion : bool | str, optional
             Calculate qcriterion. If a string is passed, the string will be
             used for the resulting array name. Otherwise, default array name
             will be ``'qcriterion'``.

@@ -1374,11 +1374,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             When ``True``, makes a copy of the points array.  Default
             ``False``.  Cells and cell types are always copied.
 
-        force_float : bool, default: False
+        force_float : bool, default: True
             Casts the datatype to ``float32`` if points datatype is
-            non-float.  Default ``True``. Set this to ``False`` to allow
-            non-float types, though this may lead to truncation of
-            intermediate floats when transforming datasets.
+            non-float.  Set this to ``False`` to allow non-float types,
+            though this may lead to truncation of intermediate floats when
+            transforming datasets.
 
         Examples
         --------
