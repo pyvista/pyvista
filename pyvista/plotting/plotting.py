@@ -1708,7 +1708,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def _make_render_window_current(self):
         if self.render_window is None:
             raise RenderWindowUnavailable('Render window is not available.')
-        self.render_window.MakeCurrent()
+        self.render_window.MakeCurrent()  # pragma: no cover
 
     @property
     def image(self):
