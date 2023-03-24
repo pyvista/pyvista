@@ -3,7 +3,7 @@
 from enum import Enum
 import os
 import platform
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np
 
@@ -56,7 +56,10 @@ def _system_supports_plotting():
     if platform.system() == 'Darwin':
         # check if finder available
         proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE, encoding="utf8")
-        proc.communicate()
+        try:
+            proc.communicate(timeout=10)
+        except TimeoutExpired:
+            return False
         if proc.returncode == 0:
             return True
 
@@ -66,9 +69,9 @@ def _system_supports_plotting():
     # Linux case
     try:
         proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
-        proc.communicate()
+        proc.communicate(timeout=10)
         return proc.returncode == 0
-    except OSError:
+    except (OSError, TimeoutExpired):
         return False
 
 
@@ -328,12 +331,19 @@ def create_axes_orientation_box(
 
     >>> import pyvista
     >>> actor = pyvista.create_axes_orientation_box(
-    ...    line_width=1, text_scale=0.53,
-    ...    edge_color='black', x_color='k',
-    ...    y_color=None, z_color=None,
-    ...    xlabel='X', ylabel='Y', zlabel='Z',
-    ...    color_box=False,
-    ...    labels_off=False, opacity=1.0)
+    ...     line_width=1,
+    ...     text_scale=0.53,
+    ...     edge_color='black',
+    ...     x_color='k',
+    ...     y_color=None,
+    ...     z_color=None,
+    ...     xlabel='X',
+    ...     ylabel='Y',
+    ...     zlabel='Z',
+    ...     color_box=False,
+    ...     labels_off=False,
+    ...     opacity=1.0,
+    ... )
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_actor(actor)
     >>> pl.show()
@@ -487,7 +497,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
-    >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
+    >>> tf = (
+    ...     pv.opacity_transfer_function("geom_r", 256).astype(float)
+    ...     / 255.0
+    ... )
     >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)

@@ -12,7 +12,7 @@ docker run -p 8888:8888 ghcr.io/pyvista/pyvista:latest
 ```
 
 Finally, open the link that shows up and start playing around with
-PyVista in Jupyter Lab!
+PyVista in Jupyter Lab.
 
 
 ### Build PyVista Docker Image Locally

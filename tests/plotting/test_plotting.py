@@ -20,7 +20,6 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista._vtk import VTK9
 from pyvista.core.errors import DeprecationError
 from pyvista.errors import RenderWindowUnavailable
 from pyvista.plotting import system_supports_plotting
@@ -28,7 +27,7 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities import algorithms
-from pyvista.utilities.misc import PyVistaDeprecationWarning, can_create_mpl_figure
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -67,12 +66,9 @@ skip_windows_mesa = pytest.mark.skipif(
     using_mesa() and os.name == 'nt', reason='Does not display correctly within OSMesa on Windows'
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.skipif((8, 2) < pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
+skip_9_0_X = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
 skip_lesser_9_0_X = pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
-)
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
@@ -111,7 +107,6 @@ def multicomp_poly():
     return data
 
 
-@pytest.mark.needs_vtk9
 def test_import_gltf(verify_image_cache):
     # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
@@ -126,7 +121,6 @@ def test_import_gltf(verify_image_cache):
     pl.show()
 
 
-@pytest.mark.needs_vtk9
 def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
     # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
@@ -173,7 +167,6 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_vrml(filename)
 
 
-@pytest.mark.needs_vtk9
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere, verify_image_cache):
@@ -200,7 +193,6 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.needs_vtk9
 @skip_windows
 @skip_mac
 def test_set_environment_texture_cubemap(sphere, verify_image_cache):
@@ -218,7 +210,6 @@ def test_set_environment_texture_cubemap(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.needs_vtk9
 @skip_windows
 @skip_mac
 def test_remove_environment_texture_cubemap(sphere):
@@ -251,7 +242,6 @@ def test_plot_increment_point_size():
     pl.show()
 
 
-@pytest.mark.needs_vtk9
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -994,10 +984,7 @@ def test_enable_picking_gc():
 
 def test_left_button_down():
     plotter = pyvista.Plotter()
-    if VTK9:
-        with pytest.raises(ValueError):
-            plotter.left_button_down(None, None)
-    else:
+    with pytest.raises(ValueError):
         plotter.left_button_down(None, None)
     plotter.close()
 
@@ -2300,7 +2287,6 @@ def test_scalar_cell_priorities():
     plotter.show()
 
 
-@pytest.mark.needs_vtk9
 def test_collision_plot(verify_image_cache):
     """Verify rgba arrays automatically plot"""
     verify_image_cache.windows_skip_image_cache = True
@@ -2383,7 +2369,6 @@ def test_chart_plot():
 
 
 @skip_9_1_0
-@skip_no_mpl_figure
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -2687,11 +2672,6 @@ def test_ssao_pass():
     pl = pyvista.Plotter()
     pl.add_mesh(ugrid)
 
-    if pyvista.vtk_version_info < (9,):
-        with pytest.raises(pyvista.core.errors.VTKVersionError):
-            pl.enable_ssao()
-        return
-
     pl.enable_ssao()
     pl.show(auto_close=False)
 
@@ -2704,11 +2684,6 @@ def test_ssao_pass():
 @skip_mesa
 def test_ssao_pass_from_helper():
     ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
-
-    if pyvista.vtk_version_info < (9,):
-        with pytest.raises(pyvista.core.errors.VTKVersionError):
-            ugrid.plot(ssao=True)
-        return
 
     ugrid.plot(ssao=True)
 
@@ -2753,13 +2728,15 @@ def test_plot_composite_raise(sphere, multiblock_poly):
         pl.add_composite(sphere)
     with pytest.raises(TypeError, match='must be a string for'):
         pl.add_composite(multiblock_poly, scalars=range(10))
-    with pytest.raises(TypeError, match='must be an int'):
-        pl.add_composite(multiblock_poly, categories='abc')
+    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
+        with pytest.raises(TypeError, match='must be an int'):
+            pl.add_composite(multiblock_poly, categories='abc')
 
 
 def test_plot_composite_categories(multiblock_poly):
     pl = pyvista.Plotter()
-    pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
+    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
+        pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
     pl.show()
 
 
@@ -2931,11 +2908,6 @@ def test_export_obj(tmpdir, sphere):
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
-
-    if pyvista.vtk_version_info <= (8, 1, 2):
-        with pytest.raises(pyvista.core.errors.VTKVersionError):
-            pl.export_obj(filename)
-        return
 
     with pytest.raises(ValueError, match='end with ".obj"'):
         pl.export_obj('badfilename')
@@ -3345,7 +3317,7 @@ def test_add_point_scalar_labels_fmt():
 
 
 def test_plot_individual_cell(hexbeam):
-    hexbeam.cell[0].plot(color='b')
+    hexbeam.get_cell(0).plot(color='b')
 
 
 def test_add_point_scalar_labels_list():

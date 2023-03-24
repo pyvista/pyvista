@@ -9,7 +9,38 @@ from pyvista.utilities.helpers import FieldAssociation, convert_array
 
 
 class pyvista_ndarray(np.ndarray):
-    """An ndarray which references the owning dataset and the underlying vtkArray."""
+    """A ndarray which references the owning dataset and the underlying vtkArray.
+
+    This array can be acted upon just like a :class:`numpy.ndarray`.
+
+    Parameters
+    ----------
+    array : Iterable or vtk.vtkAbstractArray
+        Array like.
+
+    dataset : pyvista.DataSet
+        Input dataset.
+
+    association : pyvista.utilities.helpers.FieldAssociation
+        Field association.
+
+    Examples
+    --------
+    Return the points of a Sphere as a :class:`pyvista.pyvista_ndarray`.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
+    >>> mesh.points  # doctest:+SKIP
+    pyvista_ndarray([[-5.5511151e-17,  0.0000000e+00, -5.0000000e-01],
+                     [ 5.5511151e-17,  0.0000000e+00,  5.0000000e-01],
+                     [-5.4059509e-02,  0.0000000e+00, -4.9706897e-01],
+                     ...,
+                     [-1.5616201e-01, -3.3193260e-02,  4.7382659e-01],
+                     [-1.0513641e-01, -2.2347433e-02,  4.8831028e-01],
+                     [-5.2878179e-02, -1.1239604e-02,  4.9706897e-01]],
+                    dtype=float32)
+
+    """
 
     def __new__(
         cls,

@@ -120,7 +120,9 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc") # doctest:+SKIP
+        >>> pl.camera = pv.Camera.from_paraview_pvcc(
+        ...     "camera.pvcc"
+        ... )  # doctest:+SKIP
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
         """
@@ -308,10 +310,14 @@ class Camera(_vtk.vtkCamera):
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
-        >>> pl.camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                              [0., 1., 0., 0.],
-        ...                                              [0., 0., 1., 0.],
-        ...                                              [0., 0., 0., 0.5]])
+        >>> pl.camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 0.5],
+        ...     ]
+        ... )
         >>>
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
@@ -548,7 +554,7 @@ class Camera(_vtk.vtkCamera):
     def clipping_range(self):
         """Return or set the location of the clipping planes.
 
-        Clipping planes are the the near and far clipping planes along
+        Clipping planes are the near and far clipping planes along
         the direction of projection.
 
         Examples
@@ -745,17 +751,25 @@ class Camera(_vtk.vtkCamera):
         >>> import pyvista as pv
         >>> import numpy as np
         >>> camera = pv.Camera()
-        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                           [0., 1., 0., 0.],
-        ...                                           [0., 0., 1., 0.],
-        ...                                           [0., 0., 0., 1.]])
+        >>> camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
+        ...     ]
+        ... )
         >>> copied_camera = camera.copy()
         >>> copied_camera == camera
         True
-        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                           [0., 1., 0., 0.],
-        ...                                           [0., 0., 1., 0.],
-        ...                                           [0., 0., 0., 0.5]])
+        >>> camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 0.5],
+        ...     ]
+        ... )
         >>> copied_camera == camera
         False
         """
@@ -834,7 +848,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.show()
 
         """
-        # inspired by vedo resetCamera. Thanks @marcomusy!
+        # Inspired by vedo resetCamera. Thanks @marcomusy.
         x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
 
         self.enable_parallel_projection()

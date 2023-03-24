@@ -49,7 +49,7 @@ terrain.plot()
 
 
 ###############################################################################
-# And now we have a 3D structured surface of the terrain! We can now extend
+# And now we have a 3D structured surface of the terrain. We can now extend
 # that structured surface into a 3D mesh to form a terrain following grid.
 # To do this, we first our cell spacings in the z-direction (these start
 # from the terrain surface). Then we repeat the XYZ structured coordinates

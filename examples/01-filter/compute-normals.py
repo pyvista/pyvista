@@ -3,9 +3,8 @@
 
 Computing Surface Normals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 Compute normals on a surface.
+
 """
 
 import numpy as np
@@ -24,7 +23,7 @@ mesh.plot(cmap="gist_earth", show_scalar_bar=False)
 ###############################################################################
 # Now we have a surface dataset of the globe loaded - unfortunately, the
 # dataset shows the globe with a uniform radius which hides topographic relief.
-# Using :func:`pyvista.PolyData.compute_normals`, we can compute the normal
+# Using :func:`pyvista.PolyDataFilters.compute_normals`, we can compute the normal
 # vectors on the globe at all points in the dataset, then use the values given
 # in the dataset to warp the surface in the normals direction to create some
 # exaggerated topographic relief.
@@ -35,7 +34,7 @@ mesh.compute_normals(inplace=True)  # this activates the normals as well
 # Now use those normals to warp the surface
 warp = mesh.warp_by_scalar(factor=0.5e-5)
 
-# And let's see it!
+# And let's see it
 warp.plot(cmap="gist_earth", show_scalar_bar=False)
 
 

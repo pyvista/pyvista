@@ -113,7 +113,9 @@ class RenderWindowInteractor:
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> obs_enter = pl.iren.add_observer(
+        ...     "EnterEvent", lambda *_: print('Enter!')
+        ... )
 
         """
         call = partial(try_callback, call)
@@ -136,7 +138,9 @@ class RenderWindowInteractor:
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> obs_enter = pl.iren.add_observer(
+        ...     "EnterEvent", lambda *_: print('Enter!')
+        ... )
         >>> pl.iren.remove_observer(obs_enter)
 
         """
@@ -159,8 +163,12 @@ class RenderWindowInteractor:
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
-        >>> obs_leave = pl.iren.add_observer("LeaveEvent", lambda *_: print('Leave!'))
+        >>> obs_enter = pl.iren.add_observer(
+        ...     "EnterEvent", lambda *_: print('Enter!')
+        ... )
+        >>> obs_leave = pl.iren.add_observer(
+        ...     "LeaveEvent", lambda *_: print('Leave!')
+        ... )
         >>> pl.iren.remove_observers()
 
         """
@@ -632,8 +640,9 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True,
-        ...                              shift_pans=True)
+        >>> plotter.enable_terrain_style(
+        ...     mouse_wheel_zooms=True, shift_pans=True
+        ... )
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -871,14 +880,8 @@ class RenderWindowInteractor:
         """Set the render window."""
         self.interactor.SetRenderWindow(render_window)
 
-    @property
-    def can_process_events(self):
-        """Return whether the interactor can process events (only available in VTK 9+)."""
-        return hasattr(self.interactor, 'ProcessEvents')
-
     def process_events(self):
         """Process events."""
-        # Note: This is only available in VTK 9+
         if not self.initialized:
             raise RuntimeError(
                 'Render window interactor must be initialized before processing events.'

@@ -308,8 +308,11 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(KeyError, match='not a color map'):
+    with pytest.raises(ValueError, match='not a color map'):
         default_theme.cmap = 'not a color map'
+
+    with pytest.raises(ValueError, match='Invalid color map'):
+        default_theme.cmap = None
 
 
 def test_volume_mapper(default_theme):
@@ -559,11 +562,10 @@ def test_user_theme():
         pactor = pl.add_mesh(points)
         assert pactor.prop.point_size == theme.point_size
 
-        if pyvista._vtk.VTK9:
-            pl = pyvista.Plotter()
-            sactor = pl.add_mesh(sphere, pbr=True)
-            assert sactor.prop.roughness == theme.lighting_params.roughness
-            assert sactor.prop.metallic == theme.lighting_params.metallic
+        pl = pyvista.Plotter()
+        sactor = pl.add_mesh(sphere, pbr=True)
+        assert sactor.prop.roughness == theme.lighting_params.roughness
+        assert sactor.prop.metallic == theme.lighting_params.metallic
 
     finally:
         # always return to testing theme

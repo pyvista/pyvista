@@ -624,7 +624,7 @@ def download_head(load=True):  # pragma: no cover
     >>> pl.camera_position = [
     ...     (-228.0, -418.0, -158.0),
     ...     (94.0, 122.0, 82.0),
-    ...     (-0.2, -0.3, 0.9)
+    ...     (-0.2, -0.3, 0.9),
     ... ]
     >>> pl.show()
 
@@ -685,12 +685,15 @@ def download_bolt_nut(load=True):  # pragma: no cover
     >>> dataset = examples.download_bolt_nut()
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_volume(
-    ...         dataset, cmap="coolwarm", opacity="sigmoid_5", show_scalar_bar=False,
+    ...     dataset,
+    ...     cmap="coolwarm",
+    ...     opacity="sigmoid_5",
+    ...     show_scalar_bar=False,
     ... )
     >>> pl.camera_position = [
     ...     (194.6, -141.8, 182.0),
     ...     (34.5, 61.0, 32.5),
-    ...     (-0.229, 0.45, 0.86)
+    ...     (-0.229, 0.45, 0.86),
     ... ]
     >>> pl.show()
 
@@ -777,7 +780,9 @@ def download_topo_land(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_topo_land()
-    >>> dataset.plot(clim=[-2000, 3000], cmap="gist_earth", show_scalar_bar=False)
+    >>> dataset.plot(
+    ...     clim=[-2000, 3000], cmap="gist_earth", show_scalar_bar=False
+    ... )
 
     This dataset is used in the following examples:
 
@@ -863,9 +868,11 @@ def download_knee_full(load=True):  # pragma: no cover
     >>> cpos = [
     ...     (-381.74, -46.02, 216.54),
     ...     (74.8305, 89.2905, 100.0),
-    ...     (0.23, 0.072, 0.97)
+    ...     (0.23, 0.072, 0.97),
     ... ]
-    >>> dataset.plot(volume=True, cmap="bone", cpos=cpos, show_scalar_bar=False)
+    >>> dataset.plot(
+    ...     volume=True, cmap="bone", cpos=cpos, show_scalar_bar=False
+    ... )
 
     This dataset is used in the following examples:
 
@@ -1102,7 +1109,9 @@ def download_sparse_points(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_sparse_points()
-    >>> dataset.plot(scalars="val", render_points_as_spheres=True, point_size=50)
+    >>> dataset.plot(
+    ...     scalars="val", render_points_as_spheres=True, point_size=50
+    ... )
 
     See :ref:`interpolate_example` for an example using this
     dataset.
@@ -1632,9 +1641,9 @@ def download_frog(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [ 8.4287e+02, -5.7418e+02, -4.4085e+02],
-    ...     [ 2.4950e+02,  2.3450e+02,  1.0125e+02],
-    ...     [-3.2000e-01,  3.5000e-01, -8.8000e-01]
+    ...     [8.4287e02, -5.7418e02, -4.4085e02],
+    ...     [2.4950e02, 2.3450e02, 1.0125e02],
+    ...     [-3.2000e-01, 3.5000e-01, -8.8000e-01],
     ... ]
     >>> dataset = examples.download_frog()
     >>> dataset.plot(volume=True, cpos=cpos)
@@ -2281,8 +2290,8 @@ def download_carotid(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> cpos = [
     ...     [220.96, -24.38, -69.96],
-    ...     [135.86, 106.55,  17.72],
-    ...     [ -0.25,   0.42,  -0.87]
+    ...     [135.86, 106.55, 17.72],
+    ...     [-0.25, 0.42, -0.87],
     ... ]
     >>> dataset = examples.download_carotid()
     >>> dataset.plot(volume=True, cpos=cpos)
@@ -2321,9 +2330,9 @@ def download_blow(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [71.96, 86.1 , 28.45],
-    ...     [ 3.5 , 12.  ,  1.  ],
-    ...     [-0.18, -0.19,  0.96]
+    ...     [71.96, 86.1, 28.45],
+    ...     [3.5, 12.0, 1.0],
+    ...     [-0.18, -0.19, 0.96],
     ... ]
     >>> dataset = examples.download_blow()
     >>> dataset.plot(
@@ -2356,9 +2365,9 @@ def download_shark(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [-2.3195e+02, -3.3930e+01,  1.2981e+02],
-    ...     [-8.7100e+00,  1.9000e-01, -1.1740e+01],
-    ...     [-1.4000e-01,  9.9000e-01,  2.0000e-02]
+    ...     [-2.3195e02, -3.3930e01, 1.2981e02],
+    ...     [-8.7100e00, 1.9000e-01, -1.1740e01],
+    ...     [-1.4000e-01, 9.9000e-01, 2.0000e-02],
     ... ]
     >>> dataset = examples.download_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
@@ -2420,7 +2429,7 @@ def download_armadillo(load=True):  # pragma: no cover
     >>> cpos = [
     ...     (161.5, 82.1, -330.2),
     ...     (-4.3, 24.5, -1.6),
-    ...     (-0.1, 1, 0.12)
+    ...     (-0.1, 1, 0.12),
     ... ]
     >>> dataset = examples.download_armadillo()
     >>> dataset.plot(cpos=cpos)
@@ -2455,6 +2464,7 @@ def download_gears(load=True):  # pragma: no cover
     ...     bid = np.empty(body.n_points)
     ...     bid[:] = i
     ...     body.point_data["Body ID"] = bid
+    ...
     >>> bodies.plot(cmap='jet')
     """
     return _download_and_read('gears.stl', load=load)
@@ -2623,7 +2633,9 @@ def download_thermal_probes(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_thermal_probes()
-    >>> dataset.plot(render_points_as_spheres=True, point_size=5, cpos="xy")
+    >>> dataset.plot(
+    ...     render_points_as_spheres=True, point_size=5, cpos="xy"
+    ... )
 
     See :ref:`interpolate_example` for an example using this dataset.
 
@@ -2773,9 +2785,9 @@ def download_crater_imagery(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [  66.,  73. , -382.6],
-    ...     [  66.,  73. ,    0. ],
-    ...     [  -0.,  -1. ,    0. ]
+    ...     [66.0, 73.0, -382.6],
+    ...     [66.0, 73.0, 0.0],
+    ...     [-0.0, -1.0, 0.0],
     ... ]
     >>> dataset = examples.download_crater_imagery()
     >>> dataset.plot(cpos=cpos)
@@ -2828,12 +2840,14 @@ def download_damavand_volcano(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [ 4.66316700e+04,  4.32796241e+06, -3.82467050e+05],
-    ...     [ 5.52532740e+05,  3.98017300e+06, -2.47450000e+04],
-    ...     [ 4.10000000e-01, -2.90000000e-01, -8.60000000e-01]
+    ...     [4.66316700e04, 4.32796241e06, -3.82467050e05],
+    ...     [5.52532740e05, 3.98017300e06, -2.47450000e04],
+    ...     [4.10000000e-01, -2.90000000e-01, -8.60000000e-01],
     ... ]
     >>> dataset = examples.download_damavand_volcano()
-    >>> dataset.plot(cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True)
+    >>> dataset.plot(
+    ...     cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True
+    ... )
 
     See :ref:`volume_rendering_example` for an example using this dataset.
 
@@ -2925,7 +2939,9 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_antarctica_velocity()
-    >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+    >>> dataset.plot(
+    ...     cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True
+    ... )
 
     See :ref:`antarctica_example` for an example using this dataset.
 
@@ -3110,8 +3126,8 @@ def download_cubemap_space_4k():  # pragma: no cover
     https://jaxry.github.io/panorama-to-cubemap/
 
     See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/cubemap_space>`_ for
-    more details.
+    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_
+    for more details.
 
     Returns
     -------
@@ -3129,7 +3145,9 @@ def download_cubemap_space_4k():  # pragma: no cover
     >>> _ = pl.add_actor(cubemap.to_skybox())
     >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
+    >>> _ = pl.add_mesh(
+    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
+    ... )
     >>> pl.show()
 
     """
@@ -3145,7 +3163,7 @@ def download_cubemap_space_16k():  # pragma: no cover
     https://jaxry.github.io/panorama-to-cubemap/
 
     See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/cubemap_space>`_ for
+    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_ for
     more details.
 
     Returns
@@ -3170,7 +3188,9 @@ def download_cubemap_space_16k():  # pragma: no cover
     >>> _ = pl.add_actor(cubemap.to_skybox())
     >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
+    >>> _ = pl.add_mesh(
+    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
+    ... )
     >>> pl.show()
 
     """
@@ -3294,7 +3314,7 @@ def download_woman(load=True):  # pragma: no cover
     >>> cpos = [
     ...     (-2600.0, 1970.6, 1836.9),
     ...     (48.5, -20.3, 843.9),
-    ...     (0.23, -0.168, 0.958)
+    ...     (0.23, -0.168, 0.958),
     ... ]
     >>> dataset.plot(cpos=cpos)
 
@@ -3374,9 +3394,9 @@ def download_urn(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> cpos = [
-    ...     [-7.123e+02,  5.715e+02,  8.601e+02],
-    ...     [ 4.700e+00,  2.705e+02, -1.010e+01],
-    ...     [ 2.000e-01,  1.000e+00, -2.000e-01]
+    ...     [-7.123e02, 5.715e02, 8.601e02],
+    ...     [4.700e00, 2.705e02, -1.010e01],
+    ...     [2.000e-01, 1.000e00, -2.000e-01],
     ... ]
     >>> dataset = examples.download_urn()
     >>> dataset.plot(cpos=cpos)
@@ -3465,12 +3485,18 @@ def download_action_figure(load=True):  # pragma: no cover
     >>> _ = dataset.clean(inplace=True)
     >>> pl = pyvista.Plotter(lighting=None)
     >>> pl.add_light(pyvista.Light((30, 10, 10)))
-    >>> _ = pl.add_mesh(dataset, color='w', smooth_shading=True,
-    ...                 pbr=True, metallic=0.3, roughness=0.5)
+    >>> _ = pl.add_mesh(
+    ...     dataset,
+    ...     color='w',
+    ...     smooth_shading=True,
+    ...     pbr=True,
+    ...     metallic=0.3,
+    ...     roughness=0.5,
+    ... )
     >>> pl.camera_position = [
     ...     (32.3, 116.3, 220.6),
     ...     (-0.05, 3.8, 33.8),
-    ...     (-0.017, 0.86, -0.51)
+    ...     (-0.017, 0.86, -0.51),
     ... ]
     >>> pl.show()
 
@@ -3488,7 +3514,8 @@ def download_mars_jpg():
     """
     # Deprecated on v0.37.0, estimated removal on v0.40.0
     warnings.warn(
-        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with load=False",
+        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with"
+        " load=False",
         PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_mars_surface(load=False)
@@ -3504,7 +3531,8 @@ def download_stars_jpg():
     """
     # Deprecated on v0.37.0, estimated removal on v0.40.0
     warnings.warn(
-        "examples.download_stars_jpg is deprecated.  Use examples.planets.download_stars_sky_background with load=False",
+        "examples.download_stars_jpg is deprecated.  Use"
+        " examples.planets.download_stars_sky_background with load=False",
         PyVistaDeprecationWarning,
     )
     return pyvista.examples.planets.download_stars_sky_background(load=False)
@@ -3523,10 +3551,6 @@ def download_notch_stress(load=True):  # pragma: no cover
     -------
     pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    This file may have issues being read in on VTK 8.1.2
 
     Examples
     --------
@@ -3593,9 +3617,9 @@ def download_louis_louvre(load=True):  # pragma: no cover
     >>> _ = pl.add_mesh(dataset, smooth_shading=True)
     >>> pl.add_light(pyvista.Light((10, -10, 10)))
     >>> pl.camera_position = [
-    ...     [ -6.71, -14.55,  15.17],
-    ...     [  1.44,   2.54,   9.84],
-    ...     [  0.16,   0.22,   0.96]
+    ...     [-6.71, -14.55, 15.17],
+    ...     [1.44, 2.54, 9.84],
+    ...     [0.16, 0.22, 0.96],
     ... ]
     >>> pl.show()
 
@@ -3658,11 +3682,7 @@ def download_naca(load=True):  # pragma: no cover
     ``"jet"`` color map.
 
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [-0.22,  0.  ,  2.52],
-    ...     [ 0.43,  0.  ,  0.  ],
-    ...     [ 0.  ,  1.  ,  0.  ]
-    ... ]
+    >>> cpos = [[-0.22, 0.0, 2.52], [0.43, 0.0, 0.0], [0.0, 1.0, 0.0]]
     >>> dataset = examples.download_naca()
     >>> dataset.plot(cpos=cpos, cmap="jet")
 
@@ -3747,6 +3767,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     ...     plotter.write_frame()
     ...     plotter.clear()
     ...     plotter.enable_lightkit()
+    ...
     >>> plotter.close()
 
     """
@@ -3798,6 +3819,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     ...     plotter.write_frame()
     ...     plotter.clear()
     ...     plotter.enable_lightkit()
+    ...
     >>> plotter.close()
 
     """
@@ -3820,8 +3842,12 @@ def download_osmnx_graph():  # pragma: no cover
 
         >>> import osmnx as ox  # doctest:+SKIP
         >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
-        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')  # doctest:+SKIP
-        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest:+SKIP
+        >>> graph = ox.graph_from_address(
+        ...     address, dist=500, network_type='drive'
+        ... )  # doctest:+SKIP
+        >>> pickle.dump(
+        ...     graph, open('osmnx_graph.p', 'wb')
+        ... )  # doctest:+SKIP
 
     Returns
     -------
@@ -3908,11 +3934,11 @@ def download_lucy(load=True):  # pragma: no cover
 
     >>> flame_light = pyvista.Light(
     ...     color=[0.886, 0.345, 0.133],
-    ...     position=[550,  140, 950],
+    ...     position=[550, 140, 950],
     ...     intensity=1.5,
     ...     positional=True,
     ...     cone_angle=90,
-    ...     attenuation_values=(0.001, 0.005, 0)
+    ...     attenuation_values=(0.001, 0.005, 0),
     ... )
 
     Create a scene light
@@ -4118,7 +4144,11 @@ def download_cgns_multi(load=True):  # pragma: no cover
     >>> ugrid = dataset.combine()
     >>> ugrid = ugrid = ugrid.cell_data_to_point_data()
     >>> ugrid.plot(
-    ...     cmap='bwr', scalars='ViscosityEddy', zoom=4, cpos='xz', show_scalar_bar=False,
+    ...     cmap='bwr',
+    ...     scalars='ViscosityEddy',
+    ...     zoom=4,
+    ...     cpos='xz',
+    ...     show_scalar_bar=False,
     ... )
 
     """
@@ -4263,7 +4293,12 @@ def download_moonlanding_image(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_moonlanding_image()
-    >>> dataset.plot(cpos='xy', cmap='gray', background='w', show_scalar_bar=False)
+    >>> dataset.plot(
+    ...     cpos='xy',
+    ...     cmap='gray',
+    ...     background='w',
+    ...     show_scalar_bar=False,
+    ... )
 
     See :ref:`image_fft_example` for a full example using this dataset.
 
@@ -4359,7 +4394,7 @@ def download_particles_lethe(load=True):  # pragma: no cover
     ...     scalars='Velocity',
     ...     background='w',
     ...     scalar_bar_args={'color': 'k'},
-    ...     cmap='bwr'
+    ...     cmap='bwr',
     ... )
 
     """
@@ -4391,7 +4426,7 @@ def download_gif_simple(load=True):  # pragma: no cover
     ...     rgb=True,
     ...     background='w',
     ...     show_scalar_bar=False,
-    ...     cpos='xy'
+    ...     cpos='xy',
     ... )
 
     Plot the second frame.
@@ -4401,7 +4436,7 @@ def download_gif_simple(load=True):  # pragma: no cover
     ...     rgb=True,
     ...     background='w',
     ...     show_scalar_bar=False,
-    ...     cpos='xy'
+    ...     cpos='xy',
     ... )
 
     """
@@ -4614,6 +4649,64 @@ def download_fea_bracket(load=True):  # pragma: no cover
     return _download_and_read('fea/kiefer/dataset.vtu', load=load)
 
 
+def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
+    """Download a hertzian contact finite element solution.
+
+    Hertzian contact is referred to the frictionless contact between two
+    bodies. Spherical contact is a special case of the Hertz contact, which is
+    between two spheres, or as in the case of this dataset, between a sphere
+    and the surface of a half space (flat plane).
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Plot by part ID.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> grid = examples.download_fea_hertzian_contact_cylinder()
+    >>> grid.plot(
+    ...     scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False
+    ... )
+
+    Plot the absolute value of the component stress in the Z direction.
+
+    >>> pl = pv.Plotter()
+    >>> z_stress = np.abs(grid['Stress'][:, 2])
+    >>> _ = pl.add_mesh(
+    ...     grid,
+    ...     scalars=z_stress,
+    ...     clim=[0, 1.2e9],
+    ...     cmap='jet',
+    ...     lighting=True,
+    ...     show_edges=False,
+    ...     ambient=0.2,
+    ... )
+    >>> pl.camera_position = 'xz'
+    >>> pl.camera.zoom(1.4)
+    >>> pl.show()
+
+    """
+    filename = _download_archive(
+        'fea/hertzian_contact_cylinder/Hertzian_cylinder_on_plate.zip',
+        target_file='bfac9fd1-e982-4825-9a95-9e5d8c5b4d3e_result_1.pvtu',
+    )
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
 def download_black_vase(load=True):  # pragma: no cover
     """Download a black vase scan created by Ivan Nikolov.
 
@@ -4695,9 +4788,11 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_ivan_angel()
-    >>> cpos = [(-476.14, -393.73, 282.14),
-    ...         (-15.00, 11.25, 44.08),
-    ...         (0.26, 0.24, 0.93)]
+    >>> cpos = [
+    ...     (-476.14, -393.73, 282.14),
+    ...     (-15.00, 11.25, 44.08),
+    ...     (0.26, 0.24, 0.93),
+    ... ]
     >>> mesh.plot(cpos=cpos)
 
     Return the statistics of the dataset.
@@ -4802,9 +4897,11 @@ def download_owl(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> mesh = examples.download_owl()
-    >>> cpos = [(-315.18, -402.21, 230.71),
-    ...         (6.06, -1.74, 101.48),
-    ...         (0.108, 0.226, 0.968)]
+    >>> cpos = [
+    ...     (-315.18, -402.21, 230.71),
+    ...     (6.06, -1.74, 101.48),
+    ...     (0.108, 0.226, 0.968),
+    ... ]
     >>> mesh.plot(cpos=cpos)
 
     Return the statistics of the dataset.
@@ -4939,7 +5036,7 @@ def download_dikhololo_night():  # pragma: no cover
 
     Returns
     -------
-    pyvista.texture
+    pyvista.Texture
         HDR Texture.
 
     Examples
@@ -5002,3 +5099,30 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     """
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
+
+
+def download_meshio_xdmf(load=True):  # pragma: no cover
+    """Download xdmf file created by meshio.
+
+    The dataset was created by ``test_time_series`` test function in meshio.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_meshio_xdmf()
+    >>> dataset.plot()
+
+    """
+    _ = download_file("meshio/out.h5")
+    return _download_and_read("meshio/out.xdmf", load=load)

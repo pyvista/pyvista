@@ -1,5 +1,4 @@
 """This module contains the Property class."""
-from functools import lru_cache
 from typing import Union
 
 import pyvista as pv
@@ -8,15 +7,6 @@ from pyvista.plotting.opts import InterpolationType
 from pyvista.utilities.misc import no_new_attr
 
 from .colors import Color
-
-
-@lru_cache(maxsize=None)
-def _check_supports_pbr():
-    """Check if VTK supports physically based rendering."""
-    if not _vtk.VTK9:  # pragma: no cover
-        from pyvista.core.errors import VTKVersionError
-
-        raise VTKVersionError('Physically based rendering requires VTK 9 or newer.')
 
 
 @no_new_attr
@@ -131,7 +121,7 @@ class Property(_vtk.vtkProperty):
     ...     show_edges=True,
     ...     interpolation='Physically based rendering',
     ...     metallic=0.5,
-    ...     roughness=0.1
+    ...     roughness=0.1,
     ... )
 
     Visualize how the property would look when applied to a mesh.
@@ -644,7 +634,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.1
         >>> prop.metallic
         0.1
@@ -665,12 +656,10 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        _check_supports_pbr()
         return self.GetMetallic()
 
     @metallic.setter
     def metallic(self, value: float):
-        _check_supports_pbr()
         self.SetMetallic(value)
 
     @property
@@ -686,7 +675,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.5  # helps to visualize metallic
         >>> prop.roughness = 0.1
         >>> prop.roughness
@@ -708,12 +698,10 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        _check_supports_pbr()
         return self.GetRoughness()
 
     @roughness.setter
     def roughness(self, value: bool):
-        _check_supports_pbr()
         self.SetRoughness(value)
 
     @property
@@ -767,7 +755,6 @@ class Property(_vtk.vtkProperty):
     def interpolation(self, value: Union[str, int, InterpolationType]):
         value = InterpolationType.from_any(value).value
         if value == InterpolationType.PBR:
-            _check_supports_pbr()
             self.SetInterpolationToPBR()
         else:
             self.SetInterpolation(value)
@@ -1093,7 +1080,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.anisotropy
         0.1
 
@@ -1131,7 +1119,7 @@ class Property(_vtk.vtkProperty):
         ...     color='brown',
         ...     edge_color='blue',
         ...     line_width=4,
-        ...     specular=1.0
+        ...     specular=1.0,
         ... )
         >>> prop.plot()
 

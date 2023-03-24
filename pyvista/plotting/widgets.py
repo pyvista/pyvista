@@ -167,6 +167,8 @@ class WidgetHelper:
         For a full example see :ref:`box_widget_example`.
 
         """
+        interaction_event = _parse_interaction_event(interaction_event)
+
         if bounds is None:
             bounds = self.bounds
 
@@ -270,7 +272,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -644,7 +646,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -737,10 +739,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
+        volume : pyvista.plotting.volume.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.UniformGrid` or
             :class:`pyvista.RectilinearGrid`, or the return value from
-            :class:`pyvista.plotting.Volume` from :func:`BasePlotter.add_volume`.
+            :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -791,9 +793,9 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_volume` to control how the volume is
+            :func:`Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
-            :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`.
+            :class:`pyvista.UniformGrid` and :class:`pyvista.RectilinearGrid`.
 
         Returns
         -------
@@ -806,7 +808,7 @@ class WidgetHelper:
         elif not isinstance(volume, pyvista.plotting.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.UniformGrid, '
-                'pyvista.RectangularGrid, or a pyvista.plotting.volume.Volume '
+                'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
             )
         else:
@@ -915,7 +917,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1010,7 +1012,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1076,14 +1078,14 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the line created.
 
-        color : ColorLike, optional, defaults to white
+        color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
 
         use_vertices : bool, optional
             Changes the arguments of the callback method to take the end
             points of the line instead of a PolyData object.
 
-        pass_widget : boollist
+        pass_widget : bool, default: False
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
@@ -1363,8 +1365,11 @@ class WidgetHelper:
         >>> pl = pv.Plotter()
         >>> def create_mesh(value):
         ...     res = int(value)
-        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     sphere = pv.Sphere(
+        ...         phi_resolution=res, theta_resolution=res
+        ...     )
         ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
+        ...
         >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
@@ -1498,9 +1503,6 @@ class WidgetHelper:
             Invert the threshold results. That is, cells that would have been
             in the output with this option off are excluded, while cells that
             would have been excluded from the output are included.
-
-            .. warning::
-                This option is only supported for VTK version 9+
 
         widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
@@ -1699,7 +1701,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1969,7 +1971,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -2233,6 +2235,7 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
+        ...
         >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
@@ -2310,7 +2313,9 @@ class WidgetHelper:
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
+        >>> _ = plotter.add_mesh(
+        ...     mesh, scalars=range(6), show_scalar_bar=False
+        ... )
         >>> _ = plotter.add_camera_orientation_widget()
         >>> plotter.show()
 

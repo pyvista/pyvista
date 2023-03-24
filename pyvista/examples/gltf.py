@@ -31,8 +31,10 @@ def download_damaged_helmet():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+    >>> from pyvista import examples  # doctest:+SKIP
+    >>> gltf_file = (
+    ...     examples.gltf.download_damaged_helmet()
+    ... )  # doctest:+SKIP
     >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
@@ -56,7 +58,7 @@ def download_sheen_chair():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
+    >>> from pyvista import examples  # doctest:+SKIP
     >>> gltf_file = examples.gltf.download_sheen_chair()  # doctest:+SKIP
     >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
@@ -81,7 +83,7 @@ def download_gearbox():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
+    >>> from pyvista import examples  # doctest:+SKIP
     >>> gltf_file = examples.gltf.download_gearbox()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
@@ -104,7 +106,7 @@ def download_avocado():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
+    >>> from pyvista import examples  # doctest:+SKIP
     >>> gltf_file = examples.gltf.download_avocado()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
@@ -127,7 +129,7 @@ def download_milk_truck():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
+    >>> from pyvista import examples  # doctest:+SKIP
     >>> gltf_file = examples.gltf.download_milk_truck()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
