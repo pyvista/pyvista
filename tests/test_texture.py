@@ -138,3 +138,13 @@ def test_wrap(texture):
     assert isinstance(texture.wrap, texture.WrapType)
     texture.wrap = texture.WrapType.CLAMP_TO_EDGE
     assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
+
+
+def test_grayscale(texture):
+    grayscale = texture.to_grayscale()
+    assert grayscale.n_components == 1
+    assert grayscale.dimensions == texture.dimensions
+
+    gray_again = grayscale.to_grayscale()
+    assert gray_again == grayscale
+    assert gray_again is not grayscale  # equal and copy

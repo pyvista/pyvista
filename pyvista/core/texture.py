@@ -278,7 +278,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         )
 
         if not 0 <= axis <= 1:
-            raise ValueError(f"Axis {axis} out of bounds")
+            raise ValueError(f"Axis {axis} out of bounds")  # pragma: no cover
         array = self.to_array()
         array = np.flip(array, axis=1 - axis)
         self._from_array(array)
@@ -635,7 +635,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         if self.n_components == 1:
-            return self
+            return self.copy()
 
         data = self.to_array()
         r, g, b = data[..., 0], data[..., 1], data[..., 2]

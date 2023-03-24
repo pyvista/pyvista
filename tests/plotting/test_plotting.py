@@ -3527,7 +3527,7 @@ def test_plot_texture_flip_y(texture):
     texture.flip_y().plot()
 
 
-@skip_lesser_9_0_X
+@skip_9_1_0
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_plot_cubemap_alone(cubemap):
     """Test plotting directly from the Texture class."""
