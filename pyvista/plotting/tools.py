@@ -601,3 +601,11 @@ def check_matplotlib_vtk_compatibility():
     if pyvista.vtk_version_info > (9, 2, 2) and mpl_vers >= (3, 6):
         return True
     raise RuntimeError('Uncheckable versions.')
+
+
+def check_math_text_support():
+    """Check if MathText and LaTeX symbols are supported."""
+    return (
+        _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+        and check_matplotlib_vtk_compatibility()
+    )

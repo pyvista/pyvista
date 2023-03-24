@@ -18,6 +18,7 @@ from ._property import Property
 from .renderer import CameraPosition, Renderer, scale_point
 from .tools import (
     check_matplotlib_vtk_compatibility,
+    check_math_text_support,
     create_axes_marker,
     create_axes_orientation_box,
     opacity_transfer_function,

@@ -12,7 +12,7 @@ import traceback
 import scooby
 
 from pyvista import _vtk
-from pyvista.plotting.tools import check_matplotlib_vtk_compatibility
+from pyvista.plotting.tools import check_math_text_support
 
 
 def set_error_output_file(filename):
@@ -377,13 +377,7 @@ class Report(scooby.Report):
                 ("GPU Details", "None"),
             ]
 
-        extra_meta.append(
-            (
-                'MathText Support',
-                _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-                and check_matplotlib_vtk_compatibility(),
-            )
-        )
+        extra_meta.append(('MathText Support', check_math_text_support()))
 
         scooby.Report.__init__(
             self,
