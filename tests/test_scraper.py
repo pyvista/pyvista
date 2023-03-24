@@ -28,7 +28,7 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
     block = None
     block_vars = dict(
-        image_path_iterator=(img for img in img_fnames),
+        image_path_iterator=iter(img_fnames),
         example_globals=dict(a=1),
         target_file=target_file,
     )
