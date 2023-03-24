@@ -8,15 +8,70 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def test_texture():
+    with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
+        texture = pv.Texture(range(10))
+
     texture = pv.Texture(examples.mapfile)
     assert texture is not None
+
     image = texture.to_image()
     assert isinstance(image, pv.UniformGrid)
+
     arr = texture.to_array()
     assert isinstance(arr, np.ndarray)
     assert arr.shape[0] * arr.shape[1] == image.n_points
+
+    # test texture from array
+
     texture = pv.Texture(examples.load_globe_texture())
     assert texture is not None
+
+
+def test_texture_empty_init():
+    texture = pv.Texture()
+    assert texture.dimensions == (0, 0)
+    assert texture.n_components == 0
+
+
+def test_texture_grayscale_init():
+    # verify a grayscale image can be created on init
+    texture = pv.Texture(np.zeros((10, 10, 1), dtype=np.uint8))
+    assert texture.dimensions == (10, 10)
+    assert texture.n_components == 1
+
+
+def test_from_array():
+    texture = pv.Texture()
+    with pytest.raises(ValueError, match='Third dimension'):
+        texture._from_array(np.zeros((10, 10, 2)))
+
+    with pytest.raises(ValueError, match='must be nn by nm'):
+        texture._from_array(np.zeros(10))
+
+
+def test_texture_rotate_cw(texture):
+    orig_dim = texture.dimensions
+    orig_data = texture.to_array()
+
+    texture_rot = texture.rotate_cw()
+    assert texture_rot.dimensions == orig_dim[::-1]
+    assert np.allclose(np.rot90(orig_data), texture_rot.to_array())
+
+
+def test_texture_rotate_ccw(texture):
+    orig_dim = texture.dimensions
+    orig_data = texture.to_array()
+
+    texture_rot = texture.rotate_ccw()
+    assert texture_rot.dimensions == orig_dim[::-1]
+    assert np.allclose(np.rot90(orig_data, k=3), texture_rot.to_array())
+
+
+def test_texture_from_images(image):
+    texture = pv.Texture([image] * 6)
+    assert texture.cube_map
+    with pytest.raises(TypeError, match='pyvista.UniformGrid'):
+        pv.Texture(['foo'] * 6)
 
 
 def test_skybox():
@@ -34,12 +89,6 @@ def test_skybox():
 def test_flip_deprecated(texture):
     with pytest.warns(PyVistaDeprecationWarning, match='flip_x'):
         _ = texture.flip(0)
-
-
-def test_texture_empty_init():
-    texture = pv.Texture()
-    assert texture.dimensions == (0, 0)
-    assert texture.n_components == 0
 
 
 def test_flip_x(texture):

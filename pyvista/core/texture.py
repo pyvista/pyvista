@@ -1,5 +1,6 @@
 """This module provides a wrapper for vtk.vtkTexture."""
 
+from collections.abc import Sequence
 from typing import Union
 import warnings
 
@@ -25,10 +26,10 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, numpy.ndarray, list, optional
-        Filename, ``vtkImagedata``, ``vtkTexture``, :class:`numpy.ndarray` or a
-        list of images to create a cubemap. If a list of images, must be of the
-        same size and in the following order:
+    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.UniformGrid], optional
+        Filename, ``vtkImageData``, ``vtkTexture``, :class:`numpy.ndarray` or a
+        sequence of images to create a cubemap. If a sequence of images, must
+        be of the same size and in the following order:
 
         * +X
         * -X
@@ -42,7 +43,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Examples
     --------
-    Load a texture from file. Files should be "image" or "image-like" files.
+    Load a texture from file. File should be a "image" or "image-like" file.
 
     >>> import os
     >>> import pyvista as pv
@@ -52,10 +53,42 @@ class Texture(_vtk.vtkTexture, DataObject):
     'masonry.bmp'
     >>> texture = pv.Texture(path)
     >>> texture  # doctest:+SKIP
-    Texture (0x7f3131807fa0)
-      Components:      3
-      Cube Map:        False
-      Dimensions:      256, 256
+    Texture (...)
+      Components:   3
+      Cube Map:     False
+      Dimensions:   256, 256
+
+    Create a texture from an RGB array. Note how this is colored per "point"
+    rather than per "pixel".
+
+    >>> import numpy as np
+    >>> arr = np.array(
+    ...     [
+    ...         [255, 255, 255],
+    ...         [255, 0, 0],
+    ...         [0, 255, 0],
+    ...         [0, 0, 255],
+    ...     ],
+    ...     dtype=np.uint8,
+    ... )
+    >>> arr = arr.reshape((2, 2, 3))
+    >>> texture = pv.Texture(arr)
+    >>> texture.plot()
+
+    Create a cubemap from 6 images.
+
+    >>> px = examples.download_sky(direction='posx')  # doctest:+SKIP
+    >>> nx = examples.download_sky(direction='negx')  # doctest:+SKIP
+    >>> py = examples.download_sky(direction='posy')  # doctest:+SKIP
+    >>> ny = examples.download_sky(direction='negy')  # doctest:+SKIP
+    >>> pz = examples.download_sky(direction='posz')  # doctest:+SKIP
+    >>> nz = examples.download_sky(direction='negz')  # doctest:+SKIP
+    >>> texture = pyvista.Texture(
+    ...     [px, nx, py, ny, pz, nz]
+    ... )  # doctest:+SKIP
+    >>> texture.cube_map  # doctest:+SKIP
+    True
+
     """
 
     class WrapType(AnnotatedIntEnum):
@@ -77,42 +110,43 @@ class Texture(_vtk.vtkTexture, DataObject):
         MIRRORED_REPEAT = (2, 'Mirrored repeat')
         CLAMP_TO_BORDER = (3, 'Clamp to border')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
-        super().__init__(*args, **kwargs)
+        super().__init__(uinput, **kwargs)
 
-        if len(args) == 1:
-            if isinstance(args[0], _vtk.vtkTexture):
-                self._from_texture(args[0])
-            elif isinstance(args[0], np.ndarray):
-                self._from_array(args[0])
-            elif isinstance(args[0], _vtk.vtkImageData):
-                self._from_image_data(args[0])
-            elif isinstance(args[0], str):
-                self._from_file(filename=args[0], **kwargs)
-            elif len(args[0]) == 6:
-                # Create a cubemap
-                self.mipmap = True
-                self.interpolate = True
-                self.cube_map = True  # Must be set prior to setting images
+        if isinstance(uinput, _vtk.vtkTexture):
+            self._from_texture(uinput)
+        elif isinstance(uinput, np.ndarray):
+            self._from_array(uinput)
+        elif isinstance(uinput, _vtk.vtkImageData):
+            self._from_image_data(uinput)
+        elif isinstance(uinput, str):
+            self._from_file(filename=uinput, **kwargs)
+        elif isinstance(uinput, Sequence) and len(uinput) == 6:
+            # Create a cubemap
+            self.mipmap = True
+            self.interpolate = True
+            self.cube_map = True  # Must be set prior to setting images
 
-                # add each image to the cubemap
-                for i, image in enumerate(args[0]):
-                    if not isinstance(image, pv.UniformGrid):
-                        raise ValueError(
-                            'If a sequence, the each item in the first argument must be a '
-                            'pyvista.UniformGrid'
-                        )
-                    # must flip y for cubemap to display properly
-                    self.SetInputDataObject(i, image._flip_uniform(1))
-            else:
-                raise TypeError(f'Texture unable to be made from ({type(args[0])})')
+            # add each image to the cubemap
+            for i, image in enumerate(uinput):
+                if not isinstance(image, pv.UniformGrid):
+                    raise TypeError(
+                        'If a sequence, the each item in the first argument must be a '
+                        'pyvista.UniformGrid'
+                    )
+                # must flip y for cubemap to display properly
+                self.SetInputDataObject(i, image._flip_uniform(1))
+        elif uinput is None:
+            pass
+        else:
+            raise TypeError(f'Cannot create a pyvista.Texture from ({type(uinput)})')
 
     def _from_file(self, filename, **kwargs):
         try:
             image = pv.read(filename, **kwargs)
-            if image.GetNumberOfPoints() < 2:
-                raise ValueError("Problem reading the image with VTK.")
+            if image.n_points < 2:
+                raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
             self._from_image_data(image)
         except (KeyError, ValueError):
             from imageio import imread
@@ -166,12 +200,12 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def _from_array(self, image):
         """Create a texture from a np.ndarray."""
-        if not 2 <= image.ndim <= 3:
+        if image.ndim not in [2, 3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
-            if not 3 <= image.shape[2] <= 4:
+            if image.shape[2] not in [1, 3, 4]:
                 raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
             n_components = image.shape[2]
         elif image.ndim == 2:
@@ -296,37 +330,81 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         return self.GetInput()
 
-    def to_array(self):
+    def to_array(self) -> np.ndarray:
         """Return the texture as an array.
+
+        Notes
+        -----
+        The shape of this the array's first two dimensions will be swapped. For
+        example, a ``(300, 200)`` image will return an array of ``(200, 300)``.
 
         Returns
         -------
         numpy.ndarray
             Texture as a numpy array.
 
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> texture  # doctest:+SKIP
+        Texture (...)
+          Components:   3
+          Cube Map:     False
+          Dimensions:   1600, 1200
+        >>> texture.to_array().shape
+        (1200, 1600, 3)
+        >>> texture.to_array().dtype
+        dtype('uint8')
+
         """
-        image = self.to_image()
+        return self.to_image().active_scalars.reshape(
+            list(self.dimensions)[::-1] + [self.n_components]
+        )[::-1]
 
-        if image.active_scalars.ndim > 1:
-            shape = (image.dimensions[1], image.dimensions[0], self.n_components)
-        else:
-            shape = (image.dimensions[1], image.dimensions[0])
+    def rotate_cw(self) -> 'Texture':
+        """Rotate this texture 90 degrees clockwise.
 
-        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
+        Returns
+        -------
+        pyvista.Texture
+            Rotated texture.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> rotated = texture.rotate_cw()
+        >>> rotated.plot()
+
+        """
+        return Texture(np.rot90(self.to_array()))
+
+    def rotate_ccw(self) -> 'Texture':
+        """Rotate this texture 90 degrees counter-clockwise.
+
+        Returns
+        -------
+        pyvista.Texture
+            Rotated texture.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_puppy_texture()
+        >>> rotated = texture.rotate_ccw()
+        >>> rotated.plot()
+
+        """
+        return Texture(np.rot90(self.to_array(), k=3))
 
     @property
-    def cube_map(self):
-        """Return ``True`` if cube mapping is enabled and ``False`` otherwise.
-
-        Is this texture a cube map? If so it needs 6 inputs, one for
-        each side of the cube. You must set this before connecting the
-        inputs.  The inputs must all have the same size, data type,
-        and depth.
-        """
+    def cube_map(self) -> bool:
+        """Return ``True`` if cube mapping is enabled and ``False`` otherwise."""
         return self.GetCubeMap()
 
     @cube_map.setter
-    def cube_map(self, flag):
+    def cube_map(self, flag: bool):
         self.SetCubeMap(flag)
 
     def copy(self):
@@ -526,3 +604,40 @@ class Texture(_vtk.vtkTexture, DataObject):
     @wrap.setter
     def wrap(self, value: Union['Texture.WrapType', int]):
         self.SetWrap(value)
+
+    def to_grayscale(self) -> 'Texture':
+        """Convert this texture as a single component (grayscale) texture.
+
+        Returns
+        -------
+        pyvista.Texture
+            Texture converted to grayscale. If already grayscale, the original
+            texture itself is returned.
+
+        Notes
+        -----
+        The transparency channel (if available) will be dropped.
+
+        Follows the `CCIR 601 <https://en.wikipedia.org/wiki/Rec._601>`_ luma
+        calculation equation of ``Y = 0.299*R + 0.587*G + 0.114*B``.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> bw_texture = texture.to_grayscale()
+        >>> bw_texture  # doctest:+SKIP
+        Texture (0x7f711fc6a740)
+          Components:   1
+          Cube Map:     False
+          Dimensions:   256, 256
+        >>> bw_texture.plot()
+
+        """
+        if self.n_components == 1:
+            return self
+
+        data = self.to_array()
+        r, g, b = data[..., 0], data[..., 1], data[..., 2]
+        data = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
+        return Texture(data)

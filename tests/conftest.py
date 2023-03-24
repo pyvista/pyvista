@@ -198,6 +198,11 @@ def texture():
     return pyvista.Texture(pl.screenshot())
 
 
+@fixture()
+def image(texture):
+    return texture.to_image()
+
+
 def pytest_addoption(parser):
     parser.addoption("--test_downloads", action='store_true', default=False)
 

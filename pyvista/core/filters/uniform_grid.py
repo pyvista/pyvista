@@ -766,7 +766,7 @@ class UniformGridFilters(DataSetFilters):
     def _flip_uniform(self, axis) -> 'pyvista.UniformGrid':
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
-        This varies from :func:`DataSet._flip` because it returns a UniformGrid.
+        This varies from :func:`DataSet.flip_x` because it returns a UniformGrid.
 
         """
         alg = _vtk.vtkImageFlip()
