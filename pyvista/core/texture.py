@@ -1,9 +1,14 @@
 """This module provides a wrapper for vtk.vtkTexture."""
 
+from typing import Union
+import warnings
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.plotting.opts import AnnotatedIntEnum
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .dataset import DataObject
 
@@ -53,6 +58,25 @@ class Texture(_vtk.vtkTexture, DataObject):
       Dimensions:      256, 256
     """
 
+    class WrapType(AnnotatedIntEnum):
+        """Types of wrapping a texture can support.
+
+        Wrap mode for the texture coordinates valid values are:
+
+        * CLAMP_TO_EDGE
+        * REPEAT (Default in :class:`pyvista.Texture`)
+        * MIRRORED_REPEAT
+        * CLAMP_TO_BORDER
+
+        See :attr:`Texture.wrap` for usage.
+
+        """
+
+        CLAMP_TO_EDGE = (0, 'Clamp to edge')
+        REPEAT = (1, 'Repeat')
+        MIRRORED_REPEAT = (2, 'Mirrored repeat')
+        CLAMP_TO_BORDER = (3, 'Clamp to border')
+
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
         super().__init__(*args, **kwargs)
@@ -68,7 +92,7 @@ class Texture(_vtk.vtkTexture, DataObject):
                 self._from_file(filename=args[0], **kwargs)
             elif len(args[0]) == 6:
                 # Create a cubemap
-                self.minimap = True
+                self.mipmap = True
                 self.interpolate = True
                 self.cube_map = True  # Must be set prior to setting images
 
@@ -126,12 +150,12 @@ class Texture(_vtk.vtkTexture, DataObject):
         self.SetInterpolate(value)
 
     @property
-    def minimap(self) -> bool:
-        """Return if minimap is enabled or disabled."""
+    def mipmap(self) -> bool:
+        """Return if mipmap is enabled or disabled."""
         return bool(self.GetMipmap())
 
-    @minimap.setter
-    def minimap(self, value: bool):
+    @mipmap.setter
+    def mipmap(self, value: bool):
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
@@ -161,12 +185,47 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(grid)
 
     @property
-    def repeat(self):
-        """Repeat the texture."""
-        return self.GetRepeat()
+    def repeat(self) -> bool:
+        """Repeat the texture.
+
+        This is provided for convenience and backwards compatibility.
+
+        For new code, use :func:`Texture.wrap`.
+
+        Examples
+        --------
+        Load the masonry texture and create a simple :class:`pyvista.PolyData`
+        with texture coordinates using :func:`pyvista.Plane`. By default the
+        texture coordinates are between 0 and 1. Let's raise these values over
+        1 by multiplying them in place. This will allow us to wrap the texture.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> plane = pv.Plane()
+        >>> plane.active_t_coords *= 2
+
+        This is the texture plotted with repeat set to ``False``.
+
+        >>> texture.repeat = False
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(plane, texture=texture)
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
+
+        This is the texture plotted with repeat set to ``True``.
+
+        >>> texture.repeat = True
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(plane, texture=texture)
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
+
+        """
+        return bool(self.GetRepeat())
 
     @repeat.setter
-    def repeat(self, flag):
+    def repeat(self, flag: bool):
         self.SetRepeat(flag)
 
     def flip(self, axis):
@@ -179,6 +238,10 @@ class Texture(_vtk.vtkTexture, DataObject):
            :func:`Texture.flip_x` instead.
 
         """
+        warnings.warn(
+            PyVistaDeprecationWarning, '`flip` is deprecated. Use `flip_x` or `flip_y` instead'
+        )
+
         if not 0 <= axis <= 1:
             raise ValueError(f"Axis {axis} out of bounds")
         array = self.to_array()
@@ -394,3 +457,71 @@ class Texture(_vtk.vtkTexture, DataObject):
         if show_axes:
             pl.show_axes()
         pl.show(**kwargs)
+
+    @property
+    def wrap(self) -> 'Texture.WrapType':
+        """Return or set the Wrap mode for the texture coordinates.
+
+        Wrap mode for the texture coordinates valid values are:
+
+        * ``0`` - CLAMP_TO_EDGE
+        * ``1`` - REPEAT
+        * ``2`` - MIRRORED_REPEAT
+        * ``3`` - CLAMP_TO_BORDER
+
+        Notes
+        -----
+        CLAMP_TO_BORDER is not supported with OpenGL ES <= 3.2. Wrap will
+        default to CLAMP_TO_EDGE if it is set to CLAMP_TO_BORDER in this case.
+
+        Examples
+        --------
+        Load the masonry texture and create a simple :class:`pyvista.PolyData`
+        with texture coordinates using :func:`pyvista.Plane`. By default the
+        texture coordinates are between 0 and 1. Let's raise these values over
+        1 by multiplying them in place. This will allow us to wrap the texture.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> plane = pv.Plane()
+        >>> plane.active_t_coords *= 2
+
+        Let's now set the texture wrap to clamp to edge and visualize it.
+
+        >>> texture.wrap = pv.Texture.WrapType.CLAMP_TO_EDGE
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(plane, texture=texture)
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
+
+        Here is the default repeat:
+
+        >>> texture.wrap = pv.Texture.WrapType.REPEAT
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(plane, texture=texture)
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
+
+        And here is mirrored repeat:
+
+        >>> texture.wrap = pv.Texture.WrapType.MIRRORED_REPEAT
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(plane, texture=texture)
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
+
+        Finally, this is clamp to border:
+
+        >>> texture.wrap = pv.Texture.WrapType.CLAMP_TO_BORDER
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(plane, texture=texture)
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
+
+        """
+        return Texture.WrapType(self.GetWrap())  # type: ignore
+
+    @wrap.setter
+    def wrap(self, value: Union['Texture.WrapType', int]):
+        self.SetWrap(value)

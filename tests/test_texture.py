@@ -13,8 +13,6 @@ def test_texture():
     arr = texture.to_array()
     assert isinstance(arr, np.ndarray)
     assert arr.shape[0] * arr.shape[1] == image.n_points
-    texture.flip(0)
-    texture.flip(1)
     texture = pv.Texture(examples.load_globe_texture())
     assert texture is not None
 
@@ -54,3 +52,31 @@ def test_texture_repr(texture):
     assert 'Components:   3' in tex_repr
     assert 'Cube Map:     False' in tex_repr
     assert 'Dimensions:   300, 200\n' in tex_repr
+
+
+def test_interpolate(texture):
+    assert isinstance(texture.interpolate, bool)
+    for value in [True, False]:
+        texture.interpolate = value
+        assert texture.interpolate is value
+        assert bool(texture.GetInterpolate()) is value
+
+
+def test_mipmap(texture):
+    assert isinstance(texture.mipmap, bool)
+    for value in [True, False]:
+        texture.mipmap = value
+        assert texture.mipmap is value
+        assert bool(texture.GetMipmap()) is value
+
+
+def test_repeat(texture):
+    assert isinstance(texture.repeat, bool)
+    for value in [True, False]:
+        texture.repeat = value
+        assert texture.repeat is value
+        assert bool(texture.GetRepeat()) is value
+
+
+def test_wrap(texture):
+    assert isinstance(texture.wrap, texture.WrapType)
