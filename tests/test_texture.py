@@ -1,8 +1,10 @@
 import numpy as np
+import pytest
 import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def test_texture():
@@ -27,6 +29,11 @@ def test_skybox():
 
     skybox = texture.to_skybox()
     assert isinstance(skybox, vtk.vtkOpenGLSkybox)
+
+
+def test_flip_deprecated(texture):
+    with pytest.warns(PyVistaDeprecationWarning, match='flip_x'):
+        _ = texture.flip(0)
 
 
 def test_texture_empty_init():
@@ -80,3 +87,5 @@ def test_repeat(texture):
 
 def test_wrap(texture):
     assert isinstance(texture.wrap, texture.WrapType)
+    texture.wrap = texture.WrapType.CLAMP_TO_EDGE
+    assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE

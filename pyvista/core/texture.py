@@ -239,7 +239,8 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         warnings.warn(
-            PyVistaDeprecationWarning, '`flip` is deprecated. Use `flip_x` or `flip_y` instead'
+            '`flip` is deprecated. Use `flip_x` or `flip_y` instead',
+            PyVistaDeprecationWarning,
         )
 
         if not 0 <= axis <= 1:
