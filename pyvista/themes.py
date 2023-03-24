@@ -1271,7 +1271,6 @@ class _TrameConfig(_ThemeConfig):
         '_server_proxy_enabled',
         '_server_proxy_prefix',
         '_default_mode',
-        '_enable_vtk_warnings',
     ]
 
     def __init__(self):
@@ -1288,9 +1287,6 @@ class _TrameConfig(_ThemeConfig):
         else:
             self._server_proxy_prefix = prefix
         self._default_mode = 'trame'
-        self._enable_vtk_warnings = (
-            os.environ.get('VTK_ENABLE_SERIALIZER_WARNINGS', 'false').lower() == 'true'
-        )
 
     @property
     def interactive_ratio(self) -> Number:
@@ -1385,15 +1381,6 @@ class _TrameConfig(_ThemeConfig):
     @default_mode.setter
     def default_mode(self, mode: str):
         self._default_mode = mode
-
-    @property
-    def enable_vtk_warnings(self) -> bool:
-        """Return or set if VTK web serializer warnings are enabled."""
-        return self._enable_vtk_warnings
-
-    @enable_vtk_warnings.setter
-    def enable_vtk_warnings(self, enabled: bool):
-        self._enable_vtk_warnings = bool(enabled)
 
 
 class DefaultTheme(_ThemeConfig):
