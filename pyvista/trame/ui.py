@@ -332,6 +332,11 @@ class Viewer:
                 icons=('mdi-ruler-square', 'mdi-ruler-square'),
                 tooltip=f"Toggle ruler ({{{{ {self.GRID} ? 'on' : 'off' }}}})",
             )
+            checkbox(
+                model=(self.AXIS, False),
+                icons=('mdi-axis-arrow-info', 'mdi-axis-arrow-info'),
+                tooltip=f"Toggle axis ({{{{ {self.AXIS} ? 'on' : 'off' }}}})",
+            )
             # Server rendering options
             if mode == 'trame':
                 vuetify.VDivider(vertical=True, classes='mx-1')
@@ -344,11 +349,6 @@ class Viewer:
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
                 classes='pa-0 ma-0 align-center',
             ):
-                checkbox(
-                    model=(self.AXIS, False),
-                    icons=('mdi-axis-arrow-info', 'mdi-axis-arrow-info'),
-                    tooltip=f"Toggle axis ({{{{ {self.AXIS} ? 'on' : 'off' }}}})",
-                )
 
                 def attach_screenshot():
                     return server.protocol.addAttachment(self.screenshot())
