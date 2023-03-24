@@ -80,7 +80,6 @@ jobs:
         run: pip install -r requirements_test.txt
       - name: Install PyVista
         run: pip install -ve .
-        working-directory: pyvistaqt
       - name: Run pyvistaqt tests
         uses: GabrielBB/xvfb-action@v1
         with:
