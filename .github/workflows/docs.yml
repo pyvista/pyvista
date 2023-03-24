@@ -151,7 +151,6 @@ jobs:
           path: .
 
       - name: Deploy on main multiversion
-        if: github.event_name == 'push'
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
             cname: ${{ env.DOCUMENTATION_CNAME }}
