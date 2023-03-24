@@ -17,6 +17,7 @@ from .plotting import BasePlotter, Plotter, close_all
 from ._property import Property
 from .renderer import CameraPosition, Renderer, scale_point
 from .tools import (
+    check_matplotlib_vtk_compatibility,
     create_axes_marker,
     create_axes_orientation_box,
     opacity_transfer_function,

@@ -12,6 +12,7 @@ import traceback
 import scooby
 
 from pyvista import _vtk
+from pyvista.plotting.tools import check_matplotlib_vtk_compatibility
 
 
 def set_error_output_file(filename):
@@ -249,11 +250,11 @@ class GPUInfo:
 
     def get_info(self):
         """All GPU information as tuple pairs."""
-        return (
+        return [
             ("GPU Vendor", self.vendor),
             ("GPU Renderer", self.renderer),
             ("GPU Version", self.version),
-        )
+        ]
 
     def _repr_html_(self):
         """HTML table representation."""
@@ -368,9 +369,21 @@ class Report(scooby.Report):
             try:
                 extra_meta = GPUInfo().get_info()
             except:
-                extra_meta = ("GPU Details", "error")
+                extra_meta = [
+                    ("GPU Details", "error"),
+                ]
         else:
-            extra_meta = ("GPU Details", "None")
+            extra_meta = [
+                ("GPU Details", "None"),
+            ]
+
+        extra_meta.append(
+            (
+                'MathText Support',
+                _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+                and check_matplotlib_vtk_compatibility(),
+            )
+        )
 
         scooby.Report.__init__(
             self,
