@@ -1214,17 +1214,6 @@ def test_plot_texture():
     plotter.show()
 
 
-def test_plot_texture_alone(tmpdir):
-    """Test adding a texture to a plot"""
-    path = str(tmpdir.mkdir("tmpdir"))
-    image = Image.new('RGB', (10, 10), color='blue')
-    filename = os.path.join(path, 'tmp.jpg')
-    image.save(filename)
-
-    texture = pyvista.read_texture(filename)
-    texture.plot(rgba=True)
-
-
 def test_plot_texture_associated():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -3521,6 +3510,26 @@ def test_plotter_render_callback():
     assert n_ren[0] == 1  # if two, render_event not respected
     pl.clear_on_render_callbacks()
     assert len(pl._on_render_callbacks) == 0
+
+
+def test_plot_texture_alone(texture):
+    """Test plotting directly from the Texture class."""
+    texture.plot()
+
+
+def test_plot_texture_flip_x(texture):
+    """Test Texture.flip_x."""
+    texture.flip_x().plot()
+
+
+def test_plot_texture_flip_y(texture):
+    """Test Texture.flip_y."""
+    texture.flip_y().plot()
+
+
+def test_plot_cubemap_alone(cubemap):
+    """Test plotting directly from the Texture class."""
+    cubemap.plot()
 
 
 @pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])

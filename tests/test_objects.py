@@ -216,29 +216,3 @@ def test_get_data_range():
     nanmin, nanmax = table.get_data_range()
     assert nanmin == np.nanmin(arrays[:, 0])
     assert nanmax == np.nanmax(arrays[:, 0])
-
-
-def test_texture():
-    texture = pyvista.Texture(examples.mapfile)
-    assert texture is not None
-    image = texture.to_image()
-    assert isinstance(image, pyvista.UniformGrid)
-    arr = texture.to_array()
-    assert isinstance(arr, np.ndarray)
-    assert arr.shape[0] * arr.shape[1] == image.n_points
-    texture.flip(0)
-    texture.flip(1)
-    texture = pyvista.Texture(examples.load_globe_texture())
-    assert texture is not None
-
-
-def test_skybox():
-    texture = examples.load_globe_texture()
-    texture.cube_map = False
-    assert texture.cube_map is False
-
-    texture.cube_map = True
-    assert texture.cube_map is True
-
-    skybox = texture.to_skybox()
-    assert isinstance(skybox, vtk.vtkOpenGLSkybox)
