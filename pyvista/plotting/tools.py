@@ -583,7 +583,8 @@ def parse_font_family(font_family):
 def check_matplotlib_vtk_compatibility():
     """Check if VTK and Matplotlib versions are compatible.
 
-    This is primarily geared towards checking if MathText rendering is supported. These are the version constraints for VTK and Matplotlib:
+    This is primarily geared towards checking if MathText rendering is
+    supported. These are the version constraints for VTK and Matplotlib:
 
     * VTK <= 9.2.2 requires Matplotlib < 3.6
     * VTK > 9.2.2 requires Matplotlib >= 3.6
