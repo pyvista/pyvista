@@ -69,7 +69,7 @@ class Texture(_vtk.vtkTexture, DataObject):
             elif len(args[0]) == 6:
                 # Create a cubemap
                 self.minimap = True
-                self.SetInterpolate(True)
+                self.interpolate = True
                 self.cube_map = True  # Must be set prior to setting images
 
                 # add each image to the cubemap
@@ -98,6 +98,32 @@ class Texture(_vtk.vtkTexture, DataObject):
     def _from_texture(self, texture):
         image = texture.GetInput()
         self._from_image_data(image)
+
+    @property
+    def interpolate(self) -> bool:
+        """Return if interpolate is enabled or disabled.
+
+        Examples
+        --------
+        Show the masonry texture without interpolation. Here, we zoom to show
+        the individual pixels.
+
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.interpolation = False
+        >>> texture.plot(cpos='xy', zoom=3)
+
+        Plot the same texture with interpolation.
+
+        >>> texture.interpolation = True
+        >>> texture.plot(cpos='xy', zoom=3)
+
+        """
+        return bool(self.GetInterpolate())
+
+    @interpolate.setter
+    def interpolate(self, value: bool):
+        self.SetInterpolate(value)
 
     @property
     def minimap(self) -> bool:
@@ -348,10 +374,10 @@ class Texture(_vtk.vtkTexture, DataObject):
             return self._plot_skybox(**kwargs)
         kwargs.setdefault('zoom', 'tight')
         kwargs.setdefault('lighting', False)
-        kwargs.setdefault('rgba', self.n_components > 1)
         kwargs.setdefault('show_axes', False)
         kwargs.setdefault('show_scalar_bar', False)
-        return self.to_image().plot(**kwargs)
+        mesh = pv.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
+        return mesh.plot(texture=self, **kwargs)
 
     def _plot_skybox(self, **kwargs):
         """Plot this texture as a skybox."""
