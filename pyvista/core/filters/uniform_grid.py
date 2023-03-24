@@ -106,7 +106,7 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        kernel_size : sequence[int], optional
+        kernel_size : sequence[int], default: (3, 3, 3)
             Size of the kernel in each dimension (units of voxels), for example
             ``(x_size, y_size, z_size)``. Default is a 3D median filter. If you
             want to do a 2D median filter, set the size to 1 in the dimension
@@ -190,7 +190,7 @@ class UniformGridFilters(DataSetFilters):
         rate : sequence[int], default: (1, 1, 1)
             Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
 
-        boundary : bool, optional
+        boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
             is output in the subsampling process. This only has effect
             when the rate in any direction is not equal to 1. When
@@ -251,8 +251,7 @@ class UniformGridFilters(DataSetFilters):
             Erode value in the dataset. Default: ``0.0``.
 
         kernel_size : sequence[int], default: (3, 3, 3)
-            Determines the size (and center) of the kernel, for example
-            ``(xsize, ysize, zsize)``.
+            Determines the size of the kernel along the three axes.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.

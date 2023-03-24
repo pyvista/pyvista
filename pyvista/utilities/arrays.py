@@ -14,7 +14,7 @@ def _coerce_pointslike_arg(
 
     Parameters
     ----------
-    points : sequence[float]
+    points : array_like[float]
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False

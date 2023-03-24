@@ -1012,7 +1012,7 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         vector : sequence[float]
-            Axes to rotate about.
+            Axis to rotate about.
 
         angle : float
             Angle in degrees to rotate about the vector.
@@ -1381,7 +1381,7 @@ class DataSet(DataSetFilters, DataObject):
         ido : pyvista.DataSet
             Dataset to copy the metadata from.
 
-        deep : bool, default: False
+        deep : bool, default: True
             Deep or shallow copy.
 
         """
@@ -2649,7 +2649,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        tuple[float]
+        tuple[float, float, float]
             The limits of the cell in the X, Y and Z directions respectively.
 
         """

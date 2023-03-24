@@ -280,7 +280,7 @@ class PickingHelper:
             following: ``style='surface'``, ``style='wireframe'``, or
             ``style='points'``.
 
-        line_width : float, default: 5
+        line_width : float, default: 5.0
             Thickness of selected mesh edges.
 
         color : ColorLike, default: "pink"
@@ -679,7 +679,7 @@ class PickingHelper:
             Size of picked points if ``show_point`` is ``True``.
 
         use_mesh : bool, default: False
-            If ``True``, the callback will be passed a pointer to the picked
+            If ``True``, the callback will be passed the picked
             mesh and the point ID of the selected mesh.
 
         show_point : bool, default: True

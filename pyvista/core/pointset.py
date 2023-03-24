@@ -2241,7 +2241,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             A sequence of integers with shape (3,) containing the
             topological dimensions of the grid.
 
-        corners : sequence[floats]
+        corners : array_like[floats]
             A sequence of floats with shape (number of corners, 3)
             containing the coordinates of the corner points.
 
@@ -2466,7 +2466,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        tuple[int]
+        tuple[int, int, int]
             Number of sampling points in the I, J and Z directions respectively.
 
         Examples
@@ -2490,7 +2490,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        tuple[float]
+        tuple[float, float, float]
             The limits of the visible grid in the X, Y and Z
             directions respectively.
 

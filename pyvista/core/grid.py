@@ -416,11 +416,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
-    dimensions : sequence[float], optional
+    dimensions : sequence[int], optional
         Dimensions of the uniform grid.
 
     spacing : sequence[float], default: (1.0, 1.0, 1.0)
-        Spacing of the uniform in each dimension. Must be positive.
+        Spacing of the uniform grid in each dimension. Must be positive.
 
     origin : sequence[float], default: (0.0, 0.0, 0.0)
         Origin of the uniform grid.
@@ -572,11 +572,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         dims : tuple(int)
             Length 3 tuple of ints specifying how many points along each axis.
 
-        spacing : sequence[float]
+        spacing : sequence[float], default: (1.0, 1.0, 1.0)
             Length 3 tuple of floats/ints specifying the point spacings
             for each axis. Must be positive.
 
-        origin : sequence[float]
+        origin : sequence[float], default: (0.0, 0.0, 0.0)
             Length 3 tuple of floats/ints specifying minimum value for each axis.
 
         """

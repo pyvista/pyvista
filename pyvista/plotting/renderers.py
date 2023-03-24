@@ -211,7 +211,7 @@ class Renderers:
 
         Parameters
         ----------
-        loc : int | sequence[int, int]
+        loc : int | sequence[int]
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
