@@ -1091,7 +1091,7 @@ def is_inside_bounds(point, bounds):
 
     Parameters
     ----------
-    point : sequence[float, float, float]
+    point : sequence[float]
         Three item cartesian point (i.e. ``[x, y, z]``).
 
     bounds : sequence[float]
@@ -1216,10 +1216,10 @@ def generate_plane(normal, origin):
 
     Parameters
     ----------
-    normal : sequence[float, float, float]
+    normal : sequence[float]
         Three item sequence representing the normal of the plane.
 
-    origin : sequence[float, float, float]
+    origin : sequence[float]
         Three item sequence representing the origin of the plane.
 
     Returns

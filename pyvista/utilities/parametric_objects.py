@@ -71,13 +71,13 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 
-    tension : sequence[float, float, float], default: [0.0, 0.0, 0.0]
+    tension : sequence[float], default: [0.0, 0.0, 0.0]
         Changes the length of the tangent vector.
 
-    bias : sequence[float, float, float], default: [0.0, 0.0, 0.0]
+    bias : sequence[float], default: [0.0, 0.0, 0.0]
         Primarily changes the direction of the tangent vector.
 
-    continuity : sequence[float, float, float], default: [0.0, 0.0, 0.0]
+    continuity : sequence[float], default: [0.0, 0.0, 0.0]
         Changes the sharpness in change between tangents.
 
     n_points : int, default: points.shape[0]
@@ -691,7 +691,7 @@ def ParametricKuen(deltav0=None, **kwargs):
     """Generate Kuens' surface.
 
     ParametricKuen generates Kuens' surface. This surface has a constant
-    negative gaussian curvature.
+    negative Gaussian curvature.
 
     Parameters
     ----------

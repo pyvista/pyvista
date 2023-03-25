@@ -32,13 +32,13 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
         ``|Amplitude|``. Therefore the range of values is
         ``2*|Amplitude|`` large. The initial amplitude is 1.
 
-    freq : sequence[float, float, float]
+    freq : sequence[float]
         The frequency, or physical scale, of the noise function
         (higher is finer scale).
 
         The frequency can be adjusted per axis, or the same for all axes.
 
-    phase : sequence[float, float, float]
+    phase : sequence[float]
         Set/get the phase of the noise function.
 
         This parameter can be used to shift the noise function within

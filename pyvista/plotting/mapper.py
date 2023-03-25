@@ -898,7 +898,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         self.scale_factor /= 1.5
 
     def __repr__(self):
-        """Representation of the gaussian mapper."""
+        """Representation of the Gaussian mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
             f'  Scalar visibility:           {self.scalar_visibility}',

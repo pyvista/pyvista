@@ -426,7 +426,7 @@ class _LightingConfig(_ThemeConfig):
 
         Examples
         --------
-        Globally enable emissive lighting when using the point gaussian style.
+        Globally enable emissive lighting when using the point Gaussian style.
 
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.emissive = True

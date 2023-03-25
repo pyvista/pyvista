@@ -2054,7 +2054,7 @@ class WidgetHelper:
             multiple centers are passed in the ``center`` parameter, the
             callback must also accept an index of that widget.
 
-        center : sequence[float, float, float], optional
+        center : sequence[float], optional
             The cartesian coordinate of the sphere's center when placing it in
             the scene. If more than one location is passed, then that many
             widgets will be added and the callback will also be passed the

@@ -2252,10 +2252,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Accepts only a string name of an array that is present on the
             composite dataset.
 
-        clim : Sequence[float, float], optional
-            Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
-            is also an accepted alias for this.
+        clim : sequence[float], optional
+            Two item color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
+            also an accepted alias for this.
 
         show_edges : bool, default: :attr:`pyvista.global_theme.show_edges <pyvista.themes.DefaultTheme.show_edges>`
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -2808,10 +2808,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
 
-        clim : Sequence[float, float], optional
-            Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
-            is also an accepted alias for this.
+        clim : sequence[float], optional
+            Two item color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
+            also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -3167,7 +3167,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     show_edges=True,
         ... )
 
-        Plot the points of a sphere with gaussian smoothing while coloring by z
+        Plot the points of a sphere with Gaussian smoothing while coloring by z
         position.
 
         >>> mesh = pv.Sphere()
@@ -3630,7 +3630,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             shaped ``(N, 4)`` where ``N`` is the number of points, and of
             datatype ``np.uint8``.
 
-        clim : sequence[float, float], optional
+        clim : sequence[float], optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
             ``np.uint8``. ``rng`` is also an accepted alias for this parameter.

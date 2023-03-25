@@ -124,13 +124,13 @@ class CameraPosition:
 
     Parameters
     ----------
-    position : sequence[float, float, float]
+    position : sequence[float]
         Position of the camera.
 
-    focal_point : sequence[float, float, float]
+    focal_point : sequence[float]
         The focal point of the camera.
 
-    viewup : sequence[float, float, float]
+    viewup : sequence[float]
         View up of the camera.
 
     """
@@ -2039,7 +2039,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        point : sequence[float, float, float]
+        point : sequence[float]
             Cartesian point to focus on in the form of ``[x, y, z]``.
 
         Examples
@@ -2099,7 +2099,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        vector : sequence[float, float, float]
+        vector : sequence[float]
             New camera viewup vector.
 
         reset : bool, default: True
@@ -2502,10 +2502,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        vector : sequence[float, float, float]
+        vector : sequence[float]
             Direction to point the camera in.
 
-        viewup : sequence[float, float, float], optional
+        viewup : sequence[float], optional
             Sequence describing the view up of the camera.
 
         """
@@ -3349,10 +3349,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        pointa : sequence[float, float, float]
+        pointa : sequence[float]
             Starting point for ruler.
 
-        pointb : sequence[float, float, float]
+        pointb : sequence[float]
             Ending point for ruler.
 
         flip_range : bool, default: False
