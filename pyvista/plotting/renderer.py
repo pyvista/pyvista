@@ -94,7 +94,7 @@ def scale_point(camera, point, invert=False):
     camera : Camera
         The camera who's matrix to use.
 
-    point : sequence[float, float, float]
+    point : sequence[float]
         Scale point coordinates.
 
     invert : bool, default: False
@@ -736,7 +736,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor | vtk.vtkMapper, pyvista.Actor
+        actor : vtk.vtkActor | vtk.vtkMapper | pyvista.Actor
             The actor to be added. Can be either ``vtkActor`` or ``vtkMapper``.
 
         reset_camera : bool, default: False
@@ -3168,7 +3168,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Controls if there will be a border around the legend.
             Default False.
 
-        size : sequence[float, float], default: (0.2, 0.2)
+        size : sequence[float], default: (0.2, 0.2)
             Two float sequence, each float between 0 and 1.  For example
             ``(0.1, 0.1)`` would make the legend 10% the size of the
             entire figure window.
@@ -3191,7 +3191,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str | pyvista.PolyData, default: "triangle"
+        face : str | pyvista.PolyData | NoneType, default: "triangle"
             Face shape of legend face.  One of the following:
 
             * None: ``None``

@@ -3044,7 +3044,7 @@ class PolyDataFilters(DataSetFilters):
         trim_surface : pyvista.PolyData
             Surface which trims the surface.
 
-        extrusion : str | int, default: "boundary_edges"
+        extrusion : str, default: "boundary_edges"
             Control the strategy of extrusion. One of the following:
 
             * ``"boundary_edges"``
@@ -3054,7 +3054,7 @@ class PolyDataFilters(DataSetFilters):
             input surface. When using ``"all_edges"``, faces are created along
             interior points as well.
 
-        capping : str | int, default: "intersection"
+        capping : str, default: "intersection"
             Control the strategy of capping. One of the following:
 
             * ``"intersection"``
