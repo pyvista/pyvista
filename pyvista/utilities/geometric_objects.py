@@ -902,7 +902,7 @@ def Text3D(string, depth=0.5):
 
 
 def Wavelet(
-    extent=(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0),
+    extent=(-10, 10, -10, 10, -10, 10),
     center=(0.0, 0.0, 0.0),
     maximum=255.0,
     x_freq=60.0,
@@ -923,7 +923,7 @@ def Wavelet(
 
     Parameters
     ----------
-    extent : sequence[float], default: (-10.0, 10.0, -10.0, 10.0, -10.0, 10.0)
+    extent : sequence[int], default: (-10, 10, -10, 10, -10, 10)
         Set/Get the extent of the whole output image.
 
     center : sequence[float, float, float], default: (0.0, 0.0, 0.0)
