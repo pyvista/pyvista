@@ -77,7 +77,7 @@ class ScalarBars:
             Title of the scalar bar to remove.  Required if there is
             more than one scalar bar.
 
-        render : bool, optional
+        render : bool, default: True
             Render upon scalar bar removal.  Set this to ``False`` to
             stop the render window from rendering when a scalar bar
             is removed.
@@ -260,14 +260,14 @@ class ScalarBars:
             ``printf`` format for labels.
             Default set by :attr:`pyvista.themes.DefaultTheme.font`.
 
-        use_opacity : bool, optional
+        use_opacity : bool, default: True
             Optionally display the opacity mapping on the scalar bar.
 
         outline : bool, default: False
             Optionally outline the scalar bar to make opacity mappings more
             obvious.
 
-        nan_annotation : bool, optional
+        nan_annotation : bool, default: False
             Annotate the NaN color.
 
         below_label : str, optional

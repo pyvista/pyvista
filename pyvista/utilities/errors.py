@@ -278,7 +278,7 @@ class Report(scooby.Report):
 
     Parameters
     ----------
-    additional : list(types.ModuleType), list(str)
+    additional : sequence[types.ModuleType], sequence[str]
         List of packages or package names to add to output information.
 
     ncol : int, default: 3

@@ -1794,8 +1794,8 @@ class WidgetHelper:
             :class:`pyvista.PolyData` object to the callback function of the
             generated spline.
 
-        bounds : tuple(float), optional
-            Length 6 tuple of the bounding box where the widget is placed.
+        bounds : sequence[float], optional
+            Length 6 sequence of the bounding box where the widget is placed.
 
         factor : float, optional
             An inflation factor to expand on the bounds when placing.
@@ -2054,12 +2054,11 @@ class WidgetHelper:
             multiple centers are passed in the ``center`` parameter, the
             callback must also accept an index of that widget.
 
-        center : tuple(float), optional
-            Length 3 array for the XYZ coordinate of the sphere's
-            center when placing it in the scene. If more than one
-            location is passed, then that many widgets will be added
-            and the callback will also be passed the integer index of
-            that widget.
+        center : sequence[float, float, float], optional
+            The cartesian coordinate of the sphere's center when placing it in
+            the scene. If more than one location is passed, then that many
+            widgets will be added and the callback will also be passed the
+            integer index of that widget.
 
         radius : float, optional
             The radius of the sphere.
@@ -2087,7 +2086,7 @@ class WidgetHelper:
         selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
 
-        indices : sequence, optional
+        indices : sequence[int], optional
             Indices to assign the sphere widgets.
 
         pass_widget : bool, optional

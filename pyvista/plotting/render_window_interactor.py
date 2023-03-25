@@ -95,7 +95,7 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        event : str or int
+        event : str | int
             The event to observe. Either the name of this event (string) or
             a VTK event identifier (int).
 
@@ -153,7 +153,7 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        event : str or int, optional
+        event : str | int, optional
             If provided, only removes observers of the given event. Otherwise,
             if it is ``None``, removes all observers.
 
@@ -250,15 +250,15 @@ class RenderWindowInteractor:
             A callable method that will use the click position. Passes
             the click position as a length two tuple.
 
-        side : str, optional
+        side : str, default: "right"
             The mouse button to track (either ``'left'`` or ``'right'``).
-            Default is ``'right'``. Also accepts ``'r'`` or ``'l'``.
+            Also accepts ``'r'`` or ``'l'``.
 
-        double : bool, optional
+        double : bool, default: False
             Track single clicks if ``False``, double clicks if ``True``.
-            Defaults to single clicks ``False``.
+            Defaults to single clicks.
 
-        viewport : bool, optional
+        viewport : bool, default: False
             If ``True``, uses the normalized viewport coordinate
             system (values between 0.0 and 1.0 and support for HiDPI)
             when passing the click position to the callback.
@@ -611,11 +611,11 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        mouse_wheel_zooms : bool, optional
+        mouse_wheel_zooms : bool, default: False
             Whether to use the mouse wheel for zooming. By default
             zooming can be performed with right click and drag.
 
-        shift_pans : bool, optional
+        shift_pans : bool, default: False
             Whether shift + left mouse button pans the scene. By default
             shift + left mouse button rotates the view restricted to
             only horizontal or vertical movements, and panning is done
@@ -847,7 +847,7 @@ class RenderWindowInteractor:
         duration : int
             Time (in milliseconds) before the timer emits a TimerEvent.
 
-        repeating : bool
+        repeating : bool, default: True
             When ``False`` a one-shot timer is created, which only fires
             once. When ``True`` a repeating timer is created, which
             continuously fires (every ``duration`` milliseconds) until

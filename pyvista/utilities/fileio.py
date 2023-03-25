@@ -318,7 +318,7 @@ def read_exodus(
     read_cell_data : bool, default: True
         Read in data associated with cells.
 
-    enabled_sidesets : str or int, optional
+    enabled_sidesets : str | int, optional
         The name of the array that store the mapping from side set
         cells back to the global id of the elements they bound.
 
@@ -381,7 +381,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
     filename : str
         The string filename to the data file to read.
 
-    q_filenames : str or tuple(str), default: ()
+    q_filenames : str or sequence[str], default: ()
         The string filename of the q-file, or iterable of such
         filenames.
 
@@ -396,7 +396,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
-    progress_bar : bool, default: True
+    progress_bar : bool, default: False
         Optionally show a progress bar.
 
     Returns

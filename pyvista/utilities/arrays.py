@@ -24,9 +24,9 @@ def _coerce_pointslike_arg(
     Returns
     -------
     numpy.ndarray
-        Size (n, 3) array.
+        Size ``(n, 3)`` array.
     bool
-        Whether the input was a single point in an array-like with shape (3,).
+        Whether the input was a single point in an array-like with shape ``(3,)``.
 
     """
     if isinstance(points, collections.abc.Sequence):

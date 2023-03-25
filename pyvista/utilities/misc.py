@@ -101,7 +101,7 @@ def copy_vtk_array(array, deep=True):
 
     Parameters
     ----------
-    array : vtk.vtkDataArray or vtk.vtkAbstractArray
+    array : vtk.vtkDataArray | vtk.vtkAbstractArray
         VTK array.
 
     deep : bool, optional
