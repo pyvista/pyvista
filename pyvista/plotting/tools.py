@@ -165,7 +165,7 @@ def create_axes_marker(
     ambient : float, default: 0.5
         The ambient of the axes arrows. Value should be between 0 and 1.
 
-    label_size : sequence[float, float], default: (0.25, 0.1)
+    label_size : sequence[float], default: (0.25, 0.1)
         The width and height of the axes label actors. Values should be between
         0 and 1. For example ``(0.2, 0.1)``.
 

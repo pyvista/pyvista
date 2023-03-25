@@ -875,7 +875,7 @@ class DataSetFilters:
             When ``True``, the output will be triangles. Otherwise the output
             will be the intersection polygons.
 
-        contour : bool, default: false
+        contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
 
         progress_bar : bool, default: False
@@ -1482,7 +1482,7 @@ class DataSetFilters:
             that will be mapped to the dataset. If None given, the values will
             be computed from the elevation (Z component) range between the
             high and low points. Min and max of a range can be given as a length
-            2 sequence. If ``str`` name of scalar array present in the
+            2 sequence. If ``str``, name of scalar array present in the
             dataset given, the valid range of that array will be used.
 
         preference : str, default: "point"
@@ -1579,7 +1579,7 @@ class DataSetFilters:
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : sequence[float], optional
+        scalars : str | array_like[float], optional
             Name or array of scalars to threshold on. If this is an array, the
             output of this filter will save them as ``"Contour Data"``.
             Defaults to currently active scalars.
@@ -3866,7 +3866,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        points : sequence[float]
+        points : array_like[float]
             List of points defining multiple lines.
 
         tolerance : float, optional
