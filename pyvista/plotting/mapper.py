@@ -15,7 +15,7 @@ from pyvista.utilities import (
     set_algorithm_input,
     wrap,
 )
-from pyvista.utilities.misc import has_module, no_new_attr
+from pyvista.utilities.misc import no_new_attr
 
 from .._typing import BoundsLike
 from .colors import Color, get_cmap_safe
@@ -571,8 +571,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
-            for when displaying ``scalars``. Requires Matplotlib to be
-            installed.  ``colormap`` is also an accepted alias for this. If
+            for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
@@ -682,13 +682,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.scalar_range = self.lookup_table.scalar_range
         else:
             self.lookup_table.scalar_range = self.scalar_range
-            # Set default map if matplotlib is available
+            # Set default map
             if cmap is None:
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -709,16 +708,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     elif isinstance(categories, int):
                         n_colors = categories
 
-                if cmap is not None:
-                    self.lookup_table.apply_cmap(cmap, n_colors)
-                else:  # pragma: no cover
-                    # should be impossible to get to this point as VTK package
-                    # no requires matplotlib
-                    self.lookup_table.n_values = n_colors
-                    if flip_scalars:
-                        self.lookup_table.hue_range = (0.0, 0.66667)
-                    else:
-                        self.lookup_table.hue_range = (0.66667, 0.0)
+                self.lookup_table.apply_cmap(cmap, n_colors)
 
                 # Set opactities
                 if isinstance(opacity, np.ndarray) and not custom_opac:
@@ -727,7 +717,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 if flip_scalars:
                     self.lookup_table.values[:] = self.lookup_table.values[::-1]
 
-                if custom_opac and cmap is not None:
+                if custom_opac:
                     # need to round the colors here since we're
                     # directly displaying the colors
                     hue = normalize(scalars, minimum=clim[0], maximum=clim[1])

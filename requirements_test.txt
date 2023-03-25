@@ -10,7 +10,6 @@ ipygany<0.6.0
 ipython<9.0.0
 ipyvtklink<0.4.0
 ipywidgets<9.0.0
-matplotlib<3.8.0
 meshio<5.4.0
 nest_asyncio<1.5.7
 numpydoc==1.5.0
@@ -30,4 +29,4 @@ trame>=2.2.6,<2.4
 trame-client>=2.5.1,<2.8
 trame-server>=2.8.0,<2.10
 trame-vtk>=2.0.17,<2.4
-trimesh<3.21.0
+trimesh<3.22.0

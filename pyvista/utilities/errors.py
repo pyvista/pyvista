@@ -337,11 +337,10 @@ class Report(scooby.Report):
     def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'scooby', 'pooch']
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'imageio', 'scooby', 'pooch']
 
         # Optional packages.
         optional = [
-            'matplotlib',
             'pyvistaqt',
             'PyQt5',
             'IPython',

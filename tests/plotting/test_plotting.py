@@ -21,12 +21,13 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
+from pyvista.errors import RenderWindowUnavailable
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.utilities import algorithms
-from pyvista.utilities.misc import PyVistaDeprecationWarning, can_create_mpl_figure
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -68,9 +69,6 @@ skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
 skip_lesser_9_0_X = pytest.mark.skipif(
     pyvista.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
-)
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
@@ -2360,7 +2358,6 @@ def test_chart_plot():
 
 
 @skip_9_1_0
-@skip_no_mpl_figure
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -3532,6 +3529,19 @@ def test_plot_texture_flip_y(texture):
 def test_plot_cubemap_alone(cubemap):
     """Test plotting directly from the Texture class."""
     cubemap.plot()
+
+
+def test_not_current(verify_image_cache):
+    verify_image_cache.skip = True
+
+    pl = pyvista.Plotter()
+    assert not pl.render_window.IsCurrent()
+    with pytest.raises(RenderWindowUnavailable, match='current'):
+        pl._check_has_ren_win()
+    pl.show(auto_close=False)
+    pl._make_render_window_current()
+    pl._check_has_ren_win()
+    pl.close()
 
 
 @pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])

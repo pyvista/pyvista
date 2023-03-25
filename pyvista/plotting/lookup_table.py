@@ -6,7 +6,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities.helpers import convert_array
-from pyvista.utilities.misc import has_module, no_new_attr
+from pyvista.utilities.misc import no_new_attr
 
 from .._typing import ColorLike
 from .colors import Color, get_cmap_safe
@@ -756,9 +756,6 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> lut.plot()
 
         """
-        if not has_module('matplotlib'):  # pragma: no cover
-            raise ModuleNotFoundError('Install Matplotlib to use color maps.')
-
         if isinstance(cmap, list):
             n_values = len(cmap)
 

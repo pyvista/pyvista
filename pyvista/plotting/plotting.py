@@ -21,7 +21,7 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
-from pyvista.errors import MissingDataError
+from pyvista.errors import MissingDataError, RenderWindowUnavailable
 from pyvista.plotting.volume import Volume
 from pyvista.utilities import (
     FieldAssociation,
@@ -48,7 +48,7 @@ from pyvista.utilities.arrays import _coerce_pointslike_arg
 from pyvista.utilities.regression import run_image_filter
 
 from .._typing import BoundsLike
-from ..utilities.misc import PyVistaDeprecationWarning, has_module, uses_egl
+from ..utilities.misc import PyVistaDeprecationWarning, uses_egl
 from ..utilities.regression import image_from_window
 from ._plotting import (
     USE_SCALAR_BAR_ARGS,
@@ -1707,8 +1707,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
-        if self.render_window is None or not self.render_window.IsCurrent():
-            raise AttributeError('Render window is not available.')
+        if self.render_window is None:
+            raise RenderWindowUnavailable('Render window is not available.')
+        if not self.render_window.IsCurrent():
+            raise RenderWindowUnavailable('Render window is not current.')
+
+    def _make_render_window_current(self):
+        if self.render_window is None:
+            raise RenderWindowUnavailable('Render window is not available.')
+        self.render_window.MakeCurrent()  # pragma: no cover
 
     @property
     def image(self):
@@ -2300,8 +2307,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
-            Only applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            Only applicable for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
             colormaps can be specified by name.
 
@@ -2865,8 +2872,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
-            Only applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            Only applicable for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
             colormaps can be specified by name.
 
@@ -3663,8 +3670,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
-            Only applicable for when displaying ``scalars``. Requires
-            Matplotlib to be installed.  ``colormap`` is also an accepted alias
+            Only applicable for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
             colormaps can be specified by name.
 
@@ -4087,9 +4094,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.lookup_table = cmap
         else:
             if cmap is None:
-                if not has_module('matplotlib'):
-                    raise ImportError('Please install matplotlib for color maps.')
-
                 cmap = self._theme.cmap
 
             cmap = get_cmap_safe(cmap)
@@ -5659,6 +5663,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.render()
 
             with self.image_scale_context(scale):
+                self._make_render_window_current()
                 return self._save_image(self.image, filename, return_img)
 
     @wraps(Renderers.set_background)
