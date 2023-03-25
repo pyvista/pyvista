@@ -2208,7 +2208,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : sequence[float]
+        point : array_like[float]
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2339,7 +2339,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : sequence[float]
+        point : array_like[float]
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2720,7 +2720,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : sequence[float]
+        point : array_like[float]
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
