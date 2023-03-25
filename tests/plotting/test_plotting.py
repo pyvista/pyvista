@@ -21,6 +21,7 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
+from pyvista.errors import RenderWindowUnavailable
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType
@@ -3517,6 +3518,19 @@ def test_plotter_render_callback():
     assert n_ren[0] == 1  # if two, render_event not respected
     pl.clear_on_render_callbacks()
     assert len(pl._on_render_callbacks) == 0
+
+
+def test_not_current(verify_image_cache):
+    verify_image_cache.skip = True
+
+    pl = pyvista.Plotter()
+    assert not pl.render_window.IsCurrent()
+    with pytest.raises(RenderWindowUnavailable, match='current'):
+        pl._check_has_ren_win()
+    pl.show(auto_close=False)
+    pl._make_render_window_current()
+    pl._check_has_ren_win()
+    pl.close()
 
 
 @pytest.mark.parametrize('name', ['default', 'all', 'matplotlib', 'warm'])
