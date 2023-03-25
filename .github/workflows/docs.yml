@@ -87,7 +87,7 @@ jobs:
         uses: actions/cache@v3
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
-          path: doc/examples/
+          path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
@@ -122,7 +122,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: examples
-          path: doc/examples/
+          path: doc/source/examples/
 
       - name: Get Notebooks
         run: |
