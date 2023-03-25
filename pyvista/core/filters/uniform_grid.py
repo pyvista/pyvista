@@ -38,9 +38,10 @@ class UniformGridFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell
-        data to point data using the :func:`DataSet.cell_data_to_point_data`
-        filter to convert any cell data to point data.
+        This filter only supports point data. Consider converting any cell data
+        to point data using the :func:`cell_data_to_point_data()
+        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert any
+        cell data to point data.
 
         Examples
         --------
@@ -51,7 +52,9 @@ class UniformGridFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -140,7 +143,9 @@ class UniformGridFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -264,9 +269,10 @@ class UniformGridFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell
-        data to point data using the :func:`DataSet.cell_data_to_point_data`
-        filter to convert ny cell data to point data.
+        This filter only supports point data. Consider converting any cell data
+        to point data using the :func:`cell_data_to_point_data()
+        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert ny
+        cell data to point data.
 
         Examples
         --------
@@ -451,9 +457,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        rfft: The reverse transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        rfft : The reverse transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -530,9 +536,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: The direct transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        fft : The direct transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -595,13 +601,13 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        x_cutoff : double
+        x_cutoff : float
             The cutoff frequency for the x axis.
 
-        y_cutoff : double
+        y_cutoff : float
             The cutoff frequency for the y axis.
 
-        z_cutoff : double
+        z_cutoff : float
             The cutoff frequency for the z axis.
 
         order : int, optional
@@ -622,9 +628,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        high_pass: High-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -673,13 +679,13 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        x_cutoff : double
+        x_cutoff : float
             The cutoff frequency for the x axis.
 
-        y_cutoff : double
+        y_cutoff : float
             The cutoff frequency for the y axis.
 
-        z_cutoff : double
+        z_cutoff : float
             The cutoff frequency for the z axis.
 
         order : int, optional
@@ -700,9 +706,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        low_pass: Low-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        low_pass : Low-pass filtering of FFT output.
 
         Examples
         --------
@@ -756,3 +762,15 @@ class UniformGridFilters(DataSetFilters):
                 'as an array with a datatype of `numpy.complex64` or '
                 '`numpy.complex128`.'
             )
+
+    def _flip_uniform(self, axis) -> 'pyvista.UniformGrid':
+        """Flip the uniform grid along a specified axis and return a uniform grid.
+
+        This varies from :func:`DataSet.flip_x` because it returns a UniformGrid.
+
+        """
+        alg = _vtk.vtkImageFlip()
+        alg.SetInputData(self)
+        alg.SetFilteredAxes(axis)
+        alg.Update()
+        return pyvista.wrap(alg.GetOutput())

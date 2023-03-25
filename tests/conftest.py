@@ -1,3 +1,5 @@
+# see https://github.com/jupyter-widgets/ipywidgets/issues/3729
+import ipykernel.ipkernel  # noqa: F401
 import numpy as np
 from numpy.random import default_rng
 from pytest import fixture, mark, skip
@@ -16,6 +18,7 @@ def set_mpl():
     except ImportError:
         pass
     else:
+        matplotlib.rcdefaults()
         matplotlib.use('agg', force=True)
 
 
@@ -154,6 +157,52 @@ def noise_2d():
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
 
 
+def make_two_char_img(text):
+    """Turn text into an image.
+
+    This is really only here to make a two character black and white image.
+
+    """
+    # create a basic texture by plotting a sphere and converting the image
+    # buffer to a texture
+    pl = pyvista.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
+    pl.add_text(text, color='w', font_size=100, position=(0.1, 0.1), viewport=True, font='courier')
+    pl.background_color = 'k'
+    pl.camera.zoom = 'tight'
+    return pyvista.Texture(pl.screenshot()).to_image()
+
+
+@fixture()
+def cubemap(texture):
+    """Sample texture as a cubemap."""
+    return pyvista.Texture(
+        [
+            make_two_char_img('X+'),
+            make_two_char_img('X-'),
+            make_two_char_img('Y+'),
+            make_two_char_img('Y-'),
+            make_two_char_img('Z+'),
+            make_two_char_img('Z-'),
+        ]
+    )
+
+
+@fixture()
+def texture():
+    # create a basic texture by plotting a sphere and converting the image
+    # buffer to a texture
+    pl = pyvista.Plotter(window_size=(300, 200), lighting=None)
+    mesh = pyvista.Sphere()
+    pl.add_mesh(mesh, scalars=range(mesh.n_points), show_scalar_bar=False)
+    pl.background_color = 'w'
+    return pyvista.Texture(pl.screenshot())
+
+
+@fixture()
+def image(texture):
+    return texture.to_image()
+
+
 def pytest_addoption(parser):
     parser.addoption("--test_downloads", action='store_true', default=False)
 
@@ -176,14 +225,9 @@ def pytest_collection_modifyitems(config, items):
 def pytest_runtest_setup(item):
     """Custom setup to handle skips based on VTK version.
 
-    See pytest.mark.needs_vtk9 and pytest.mark.needs_vtk_version
-    in pytest.ini.
+    See pytest.mark.needs_vtk_version in pyproject.toml.
 
     """
-    for item_mark in item.iter_markers('needs_vtk9'):
-        # this test needs VTK 9 or newer
-        if not pyvista._vtk.VTK9:
-            skip('Test needs VTK 9 or newer.')
     for item_mark in item.iter_markers('needs_vtk_version'):
         # this test needs the given VTK version
         # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))

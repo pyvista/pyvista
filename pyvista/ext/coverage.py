@@ -61,9 +61,7 @@ def method_from_obj(obj_name):
 
 
 class CoverageBuilder(Builder):
-    """
-    Evaluates coverage of code in the documentation.
-    """
+    """Evaluates coverage of code in the documentation."""
 
     name = 'coverage'
     epilog = __(

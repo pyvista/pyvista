@@ -79,7 +79,7 @@ plotter.show()
 # :ref:`ref_attenuation_example` example.
 #
 # Switching to a spotlight (i.e. a positional light with a cone angle less
-# than 90 degrees) will enable beam shaping using the :py:attr:`exponent`
+# than 90 degrees) will enable beam shaping using the :py:attr:`pyvista.Light.exponent`
 # property. Let's put our hemispheres side by side for this, and put a light in
 # the center of each: one spotlight, one merely positional.
 
@@ -116,8 +116,9 @@ plotter.show()
 # the beam shaping effect enabled for spotlights causes a marked difference in
 # the result.
 #
-# Once we have a spotlight we can change its :py:attr:`exponent` to make the beam
-# shape sharper or broader. Three spotlights with varying sharpness:
+# Once we have a spotlight we can change its :py:attr:`pyvista.Light.exponent`
+# to make the beam shape sharper or broader. Three spotlights with varying
+# sharpness:
 
 plotter = pv.Plotter(lighting='none')
 hemi_template = pv.Sphere().clip()

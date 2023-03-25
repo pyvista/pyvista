@@ -108,7 +108,7 @@ def show_ipyvtk(plotter):
 
 
 def show_panel(plotter):
-    """Take the active renderer(s) from a plotter and show them using ``panel``."""
+    """Take the active renderer or renderers from a plotter and show them using ``panel``."""
     try:
         import panel as pn
     except ImportError:  # pragma: no cover

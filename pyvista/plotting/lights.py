@@ -114,8 +114,13 @@ class Light(vtkLight):
     Create a positional light at (0, 0, 3) with a cone angle of
     30, exponent of 20, and a visible actor.
 
-    >>> light = pv.Light(position=(0, 0, 3), show_actor=True,
-    ...                  positional=True, cone_angle=30, exponent=20)
+    >>> light = pv.Light(
+    ...     position=(0, 0, 3),
+    ...     show_actor=True,
+    ...     positional=True,
+    ...     cone_angle=30,
+    ...     exponent=20,
+    ... )
 
     """
 
@@ -495,8 +500,12 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
-        >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
-        >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
+        >>> light_bright = pv.Light(
+        ...     position=(3, 0, 0), light_type='scene light'
+        ... )
+        >>> light_dim = pv.Light(
+        ...     position=(0, 3, 0), light_type='scene light'
+        ... )
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
@@ -627,8 +636,13 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
-        ...     light = pv.Light(position=(offset, 0, 0.1), focal_point=(offset, 0, 0))
+        ...     _ = plotter.add_mesh(
+        ...         pv.Plane((offset, 0, 0)), color='white'
+        ...     )
+        ...     light = pv.Light(
+        ...         position=(offset, 0, 0.1),
+        ...         focal_point=(offset, 0, 0),
+        ...     )
         ...     light.exponent = exponent
         ...     light.positional = True
         ...     light.cone_angle = 80
@@ -671,8 +685,12 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
-        ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
+        ...     _ = plotter.add_mesh(
+        ...         pv.Plane((offset, 0, 0)), color='white'
+        ...     )
+        ...     light = pv.Light(
+        ...         position=(offset, 0, 1), focal_point=(offset, 0, 0)
+        ...     )
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
@@ -717,19 +735,22 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset in 1, 2.5, 4:
-        ...     _ = plotter.add_mesh(pv.Cube(center=(offset, offset, 0)), color='white')
+        ...     _ = plotter.add_mesh(
+        ...         pv.Cube(center=(offset, offset, 0)), color='white'
+        ...     )
         ...
         >>> colors = ['b', 'g']
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
-        >>> for color, attenuation_constants, center in zip(colors, all_attenuations, centers):
+        >>> for color, attenuation_constants, center in zip(
+        ...     colors, all_attenuations, centers
+        ... ):
         ...     light = pv.Light(position=center, color=color)
         ...     light.focal_point = (1 + center[0], 1 + center[1], 0)
         ...     light.cone_angle = 90
         ...     light.positional = True
         ...     light.attenuation_values = attenuation_constants
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_vector((-1, -1, 1))
         >>> plotter.show()
 
@@ -1012,8 +1033,12 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0],
-        ...                           [0, 0, 0, 1]]
+        >>> light.transform_matrix = [
+        ...     [1, 0, 0, 0],
+        ...     [0, 1, 0, 0],
+        ...     [0, 0, 1, 0],
+        ...     [0, 0, 0, 1],
+        ... ]
         >>> shallow_copied = light.copy(deep=False)
         >>> shallow_copied == light
         True
@@ -1127,7 +1152,7 @@ class Light(vtkLight):
             )
 
         light = cls()
-        light.light_type = vtk_light.GetLightType()  # resets transformation matrix!
+        light.light_type = vtk_light.GetLightType()  # resets transformation matrix
         light.position = vtk_light.GetPosition()
         light.focal_point = vtk_light.GetFocalPoint()
         light.ambient_color = vtk_light.GetAmbientColor()

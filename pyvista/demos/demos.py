@@ -338,8 +338,11 @@ def plot_ants_plane(notebook=None):
        Add airplane mesh and make the color equal to the Y position.
 
        >>> plane_scalars = airplane.points[:, 1]
-       >>> _ = plotter.add_mesh(airplane, scalars=plane_scalars,
-       ...                      scalar_bar_args={'title': 'Plane Y Location'})
+       >>> _ = plotter.add_mesh(
+       ...     airplane,
+       ...     scalars=plane_scalars,
+       ...     scalar_bar_args={'title': 'Plane Y Location'},
+       ... )
        >>> _ = plotter.add_text('Ants and Plane Example')
        >>> plotter.show()
 
@@ -409,12 +412,7 @@ def plot_beam(notebook=None):
         (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
     ]
 
-    try:
-        import matplotlib  # noqa
-
-        cmap = 'bwr'
-    except ImportError:  # pragma: no cover
-        cmap = None
+    cmap = 'bwr'
 
     # plot this displaced beam
     plotter = pv.Plotter(notebook=notebook)

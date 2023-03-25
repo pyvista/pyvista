@@ -5,9 +5,10 @@ import inspect
 import itertools
 import re
 from typing import Dict, Optional, Sequence
-import warnings
 import weakref
 
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -273,9 +274,9 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         Fill color of the shapes drawn using this brush. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
-    texture : Texture, optional
+    texture : pyvista.Texture, optional
         Texture used to fill shapes drawn using this brush. Any object
-        convertible to a :class:`Texture` is allowed. Defaults to
+        convertible to a :class:`pyvista.Texture` is allowed. Defaults to
         ``None``.
 
     Other Parameters
@@ -1041,7 +1042,7 @@ class _Chart(DocSubs):
 
     def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
-        self._background = _ChartBackground(self) if vtk_version_info.major >= 9 else None
+        self._background = _ChartBackground(self)
         self._x_axis = Axis()
         self._y_axis = Axis()
         if size is not None:
@@ -1195,20 +1196,11 @@ class _Chart(DocSubs):
         >>> chart.show(interactive=False)
 
         """
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Chart borders require VTK v9 or newer.")
-            return None
-        else:
-            return self._background.BorderPen.color
+        return self._background.BorderPen.color
 
     @border_color.setter
     def border_color(self, val):
-        if self._background is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError("Chart borders require VTK v9 or newer.")
-        else:
-            self._background.BorderPen.color = val
+        self._background.BorderPen.color = val
 
     @property  # type: ignore
     @doc_subs
@@ -1227,21 +1219,12 @@ class _Chart(DocSubs):
         >>> chart.show(interactive=False)
 
         """
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Chart borders require VTK v9 or newer.")
-            return None
-        else:
-            return self._background.BorderPen.width
+        return self._background.BorderPen.width
 
     @border_width.setter
     def border_width(self, val):
-        if self._background is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError("Chart borders require VTK v9 or newer.")
-        else:
-            self._background.BorderPen.width = val
-            self._background.ActiveBorderPen.width = val
+        self._background.BorderPen.width = val
+        self._background.ActiveBorderPen.width = val
 
     @property  # type: ignore
     @doc_subs
@@ -1260,21 +1243,12 @@ class _Chart(DocSubs):
         >>> chart.show(interactive=False)
 
         """
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Chart borders require VTK v9 or newer.")
-            return None
-        else:
-            return self._background.BorderPen.style
+        return self._background.BorderPen.style
 
     @border_style.setter
     def border_style(self, val):
-        if self._background is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError("Chart borders require VTK v9 or newer.")
-        else:
-            self._background.BorderPen.style = val
-            self._background.ActiveBorderPen.style = val
+        self._background.BorderPen.style = val
+        self._background.ActiveBorderPen.style = val
 
     @property  # type: ignore
     @doc_subs
@@ -1298,20 +1272,11 @@ class _Chart(DocSubs):
         >>> chart.show(interactive=True)
 
         """
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Chart borders require VTK v9 or newer.")
-            return None
-        else:
-            return self._background.ActiveBorderPen.color
+        return self._background.ActiveBorderPen.color
 
     @active_border_color.setter
     def active_border_color(self, val):
-        if self._background is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError("Chart borders require VTK v9 or newer.")
-        else:
-            self._background.ActiveBorderPen.color = val
+        self._background.ActiveBorderPen.color = val
 
     @property  # type: ignore
     @doc_subs
@@ -1328,20 +1293,11 @@ class _Chart(DocSubs):
         >>> chart.show(interactive=False)
 
         """
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
-            return self.GetBackgroundBrush().GetColor()
-        else:
-            return self._background.BackgroundBrush.color
+        return self._background.BackgroundBrush.color
 
     @background_color.setter
     def background_color(self, val):
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
-            # Fallback to VTK's BackgroundBrush (misplaced background until 9.2.0)
-            self.GetBackgroundBrush().SetColor(*Color(val).int_rgba)
-        else:
-            self._background.BackgroundBrush.color = val
+        self._background.BackgroundBrush.color = val
 
     @property  # type: ignore
     @doc_subs
@@ -1359,21 +1315,12 @@ class _Chart(DocSubs):
         >>> chart.show(interactive=False)
 
         """
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
-            return pyvista.Texture(self.GetBackgroundBrush().GetTexture())
-        else:
-            return self._background.BackgroundBrush.texture
+        return self._background.BackgroundBrush.texture
 
     @background_texture.setter
     def background_texture(self, val):
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Fully functioning chart backgrounds require VTK v9 or newer.")
-            # Fallback to VTK's BackgroundBrush (misplaced background until 9.2.0)
-            self.GetBackgroundBrush().SetTexture(val)
-        else:
-            self._background.BackgroundBrush.texture = val
-            self._background.ActiveBackgroundBrush.texture = val
+        self._background.BackgroundBrush.texture = val
+        self._background.ActiveBackgroundBrush.texture = val
 
     @property  # type: ignore
     @doc_subs
@@ -1395,19 +1342,11 @@ class _Chart(DocSubs):
         >>> chart.show(interactive=True)
 
         """
-        if self._background is None:  # pragma: no cover
-            warnings.warn("Chart backgrounds require VTK v9 or newer.")
-        else:
-            return self._background.ActiveBackgroundBrush.color
+        return self._background.ActiveBackgroundBrush.color
 
     @active_background_color.setter
     def active_background_color(self, val):
-        if self._background is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError("Chart backgrounds require VTK v9 or newer.")
-        else:
-            self._background.ActiveBackgroundBrush.color = val
+        self._background.ActiveBackgroundBrush.color = val
 
     @property  # type: ignore
     @doc_subs
@@ -2343,8 +2282,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     y1 : array_like
         Y coordinates of the points on the first outline of the area to draw.
 
-    y2 : array_like, default: np.zeros_like(x)
-        Y coordinates of the points on the second outline of the area to draw.
+    y2 : array_like, optional
+        Y coordinates of the points on the second outline of the area to
+        draw. Defaults to ``numpy.zeros_like(x)``.
 
     color : ColorLike, default: "b"
         Color of the area drawn in this plot. Any color parsable by :class:`pyvista.Color` is allowed.
@@ -2462,8 +2402,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         y1 : array_like
             The new y coordinates of the points on the first outline of the area.
 
-        y2 : array_like, default: np.zeros_like(x)
-            The new y coordinates of the points on the second outline of the area.
+        y2 : array_like, optional
+            The new y coordinates of the points on the second outline of the
+            area. Default ``numpy.zeros_like(x)``.
 
         Examples
         --------
@@ -3181,9 +3122,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         y1 : array_like
             Y coordinates of the points on the first outline of the area to draw.
 
-        y2 : array_like, default: np.zeros_like(x)
+        y2 : array_like, optional
             Y coordinates of the points on the second outline of the
-            area to draw.
+            area to draw. Defaults to ``np.zeros_like(x)``.
 
         color : ColorLike, default: "b"
             Color of the area drawn in this plot. Any color parsable
@@ -4241,13 +4182,6 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
         """Initialize chart."""
-        try:
-            from matplotlib.backends.backend_agg import FigureCanvasAgg
-            import matplotlib.figure  # noqa
-            import matplotlib.pyplot as plt
-        except ModuleNotFoundError:
-            raise ImportError("ChartMPL requires matplotlib")
-
         super().__init__(size, loc)
         if figure is None:
             figure, _ = plt.subplots()
