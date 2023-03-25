@@ -161,8 +161,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     Parameters
     ----------
-    shape : sequence[int, int], optional
-        Number of sub-render windows inside of the main window.
+    shape : sequence[int] | str, optional
+        Two item sequence of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one renderer.
         Can also accept a string descriptor as shape. For example:
@@ -1079,7 +1079,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that using this setting automatically enables this for all
             renderers. Defaults to the theme multi_samples.
 
-        all_renderers : bool, default: False
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
 
@@ -1648,7 +1648,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        window_size : sequence[int, int], optional
+        window_size : sequence[int], optional
             Window size in pixels.  Defaults to :attr:`pyvista.Plotter.window_size`.
 
         Examples
@@ -4267,7 +4267,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        clim : sequence[float, float]
+        clim : sequence[float]
             The new range of scalar bar. For example ``[-1, 2]``.
 
         name : str, optional
@@ -4323,7 +4323,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        views : int | tuple | list
+        views : int | tuple | list, default: 0
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
@@ -4646,7 +4646,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         text : str
             The text to add the rendering.
 
-        position : str, sequence[float], default: "upper_left"
+        position : str | sequence[float], default: "upper_left"
             Position to place the bottom left corner of the text box.
             If tuple is used, the position of the text uses the pixel
             coordinate system (default). In this case,
@@ -5523,7 +5523,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to fsave the graphic file to.
 
-        title : str, default:"PyVista Export"
+        title : str, default: "PyVista Export"
             Title to use within the file properties.
 
         raster : bool, default: True
@@ -5586,7 +5586,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | pathlib.Path | io.BytesIO | optional
+        filename : str | pathlib.Path | io.BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
@@ -6166,7 +6166,7 @@ class Plotter(BasePlotter):
     lighting : str, default: 'light kit"
         Lighting to set up for the plotter. Accepted options:
 
-        * ``'light_kit'``: a vtk Light Kit composed of 5 lights.
+        * ``'light kit'``: a vtk Light Kit composed of 5 lights.
         * ``'three lights'``: illumination using 3 lights.
         * ``'none'``: no light sources at instantiation.
 
@@ -6382,6 +6382,8 @@ class Plotter(BasePlotter):
             screenshots it's recommended to first call ``show()`` with
             ``auto_close=False`` to set the scene, then save the screenshot in
             a separate call to ``show()`` or :func:`Plotter.screenshot`.
+            See also the ``before_close_callback`` parameter for an
+            alternative.
 
         return_img : bool, default: False
             Returns a numpy array representing the last image along
@@ -6721,7 +6723,7 @@ class Plotter(BasePlotter):
 
             - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
 
-        focal_point : list | tuple, default: (0.0, 0.0, 0.0)
+        focal_point : sequence[float], default: (0.0, 0.0, 0.0)
             The focal point of the cursor.
 
         color : ColorLike, optional

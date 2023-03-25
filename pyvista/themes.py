@@ -422,7 +422,7 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def emissive(self) -> bool:
-        """Return or set if emissive is used with point gaussian style.
+        """Return or set if emissive is used with point Gaussian style.
 
         Examples
         --------

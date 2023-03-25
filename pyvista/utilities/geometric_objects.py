@@ -76,7 +76,7 @@ def Cylinder(
 
     Parameters
     ----------
-    center : sequence[float, float, float], default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
     direction : sequence[float, float, float], default: (1.0, 0.0, 0.0)

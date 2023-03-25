@@ -135,7 +135,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         When ``mesh.n_points == mesh.n_cells`` and setting
         scalars, this parameter sets how the scalars will be
         mapped to the mesh.  The default, ``'point'``, causes the
-        scalars will be associated with the mesh points.  Can be
+        scalars to be associated with the mesh points.  Can be
         either ``'point'`` or ``'cell'``.
 
     """
