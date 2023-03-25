@@ -1436,11 +1436,18 @@ def abstract_class(cls_):
     Preventing a class from being instantiated similar to abc.ABCMeta
     but does not require an abstract method.
     """
+    orig_new = cls_.__new__
 
     def __new__(cls, *args, **kwargs):
         if cls is cls_:
             raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
-        return object.__new__(cls)
+        try:
+            instance = orig_new(cls, *args, **kwargs)
+        except TypeError:
+            # pay for the sins of the parents
+            # (someone probably hard-coded object.__new__() upstream)
+            instance = orig_new(cls)
+        return instance
 
     cls_.__new__ = __new__
     return cls_
