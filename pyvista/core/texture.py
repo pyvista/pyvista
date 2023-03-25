@@ -553,6 +553,8 @@ class Texture(_vtk.vtkTexture, DataObject):
         CLAMP_TO_BORDER is not supported with OpenGL ES <= 3.2. Wrap will
         default to CLAMP_TO_EDGE if it is set to CLAMP_TO_BORDER in this case.
 
+        Requires ``vtk`` v9.1.0 or newer.
+
         Examples
         --------
         Load the masonry texture and create a simple :class:`pyvista.PolyData`
@@ -599,10 +601,20 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> pl.show()
 
         """
+        if not hasattr(self, 'GetWrap'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
+
         return Texture.WrapType(self.GetWrap())  # type: ignore
 
     @wrap.setter
     def wrap(self, value: Union['Texture.WrapType', int]):
+        if not hasattr(self, 'SetWrap'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
+
         self.SetWrap(value)
 
     def to_grayscale(self) -> 'Texture':

@@ -4,6 +4,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import VTKVersionError
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
@@ -135,9 +136,15 @@ def test_repeat(texture):
 
 
 def test_wrap(texture):
-    assert isinstance(texture.wrap, texture.WrapType)
-    texture.wrap = texture.WrapType.CLAMP_TO_EDGE
-    assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
+    if pv.vtk_version_info < (9, 1):
+        with pytest.raises(VTKVersionError):
+            assert isinstance(texture.wrap, texture.WrapType)
+        with pytest.raises(VTKVersionError):
+            texture.wrap = texture.WrapType.CLAMP_TO_EDGE
+    else:
+        assert isinstance(texture.wrap, texture.WrapType)
+        texture.wrap = texture.WrapType.CLAMP_TO_EDGE
+        assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
 
 
 def test_grayscale(texture):
