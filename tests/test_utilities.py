@@ -25,6 +25,7 @@ from pyvista.utilities import (
     helpers,
     transformations,
 )
+from pyvista.utilities.docs import linkcode_resolve
 from pyvista.utilities.misc import PyVistaDeprecationWarning, has_duplicates, raise_has_duplicates
 
 skip_no_plotting = pytest.mark.skipif(
@@ -509,49 +510,12 @@ def test_check_valid_vector():
 
 
 def test_cells_dict_utils():
-
     # No pyvista object
     with pytest.raises(ValueError):
         cells.get_mixed_cells(None)
 
     with pytest.raises(ValueError):
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
-
-    cells_arr = np.array([3, 0, 1, 2, 3, 3, 4, 5])
-    cells_types = np.array([vtk.VTK_TRIANGLE] * 2)
-
-    assert np.array_equal(
-        cells.generate_cell_offsets(cells_arr, cells_types),
-        cells.generate_cell_offsets_loop(cells_arr, cells_types),
-    )
-
-    # Non-integer type
-    with pytest.raises(ValueError):
-        cells.generate_cell_offsets(cells_arr, cells_types.astype(np.float32))
-
-    with pytest.raises(ValueError):
-        cells.generate_cell_offsets_loop(cells_arr, cells_types.astype(np.float32))
-
-    # Inconsistency of cell array lengths
-    with pytest.raises(ValueError):
-        cells.generate_cell_offsets(np.array(cells_arr.tolist() + [6]), cells_types)
-
-    with pytest.raises(ValueError):
-        cells.generate_cell_offsets_loop(np.array(cells_arr.tolist() + [6]), cells_types)
-
-    with pytest.raises(ValueError):
-        cells.generate_cell_offsets(cells_arr, np.array(cells_types.tolist() + [vtk.VTK_TRIANGLE]))
-
-    with pytest.raises(ValueError):
-        cells.generate_cell_offsets_loop(
-            cells_arr, np.array(cells_types.tolist() + [vtk.VTK_TRIANGLE])
-        )
-
-    # Unknown cell type
-    np.all(
-        cells.generate_cell_offsets(cells_arr, cells_types)
-        == cells.generate_cell_offsets(cells_arr, np.array([255, 255]))
-    )
 
 
 def test_apply_transformation_to_points():
@@ -877,6 +841,18 @@ def test_copy_vtk_array():
     assert new_value == arr_copy_shallow.GetValue(1)
 
 
+def test_cartesian_to_spherical():
+    def polar2cart(r, theta, phi):
+        return np.vstack(
+            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
+        ).T
+
+    points = np.random.random((1000, 3))
+    x, y, z = points.T
+    r, theta, phi = pyvista.cartesian_to_spherical(x, y, z)
+    assert np.allclose(polar2cart(r, theta, phi), points)
+
+
 def test_set_pickle_format():
     pyvista.set_pickle_format('legacy')
     assert pyvista.PICKLE_FORMAT == 'legacy'
@@ -886,3 +862,24 @@ def test_set_pickle_format():
 
     with pytest.raises(ValueError):
         pyvista.set_pickle_format('invalid_format')
+
+
+def test_linkcode_resolve():
+    assert linkcode_resolve('not-py', {}) is None
+    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})
+    assert 'dataobject.py' in link
+    assert '#L' in link
+
+    # badmodule name
+    assert linkcode_resolve('py', {'module': 'doesnotexist', 'fullname': 'foo.bar'}) is None
+
+    assert (
+        linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.not.an.object'}) is None
+    )
+
+    # test property
+    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
+    assert 'dataset.py' in link
+
+    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
+    assert link.endswith('__init__.py')

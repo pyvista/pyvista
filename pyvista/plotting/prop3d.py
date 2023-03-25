@@ -84,7 +84,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
         ... )
         >>> actor.rotate_x(45)
         >>> pl.show_axes()
@@ -111,7 +115,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
         ... )
         >>> actor.rotate_y(45)
         >>> pl.show_axes()
@@ -138,7 +146,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
         ... )
         >>> actor.rotate_z(45)
         >>> pl.show_axes()
@@ -180,7 +192,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
         ... )
         >>> actor.position = (0, 0, 1)
         >>> actor.orientation = (45, 0, 0)

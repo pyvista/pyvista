@@ -8,6 +8,7 @@ from pyvista.utilities import assert_empty_kwargs, get_array
 
 from ..utilities.misc import PyVistaDeprecationWarning
 from .colors import Color
+from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
 USE_SCALAR_BAR_ARGS = """
@@ -266,13 +267,12 @@ def _common_arg_parser(
     # allow directly specifying interpolation (potential future feature)
     if 'interpolation' in kwargs:
         interpolation = kwargs.pop('interpolation')  # pragma: no cover:
+    elif pbr:
+        interpolation = InterpolationType.PBR
+    elif smooth_shading:
+        interpolation = InterpolationType.PHONG
     else:
-        if pbr:
-            interpolation = 'Physically based rendering'
-        elif smooth_shading:
-            interpolation = 'Phong'
-        else:
-            interpolation = 'Flat'
+        interpolation = theme.lighting_params.interpolation
 
     # account for legacy behavior
     if 'stitle' in kwargs:  # pragma: no cover

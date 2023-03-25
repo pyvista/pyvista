@@ -1,3 +1,5 @@
+from types import GeneratorType
+
 import numpy as np
 import pytest
 import vtk
@@ -17,12 +19,12 @@ from pyvista.examples import (
 )
 
 cells = [
-    example_cells.Hexahedron().cell[0],
-    example_cells.Triangle().cell[0],
-    example_cells.Voxel().cell[0],
-    example_cells.Quadrilateral().cell[0],
-    example_cells.Tetrahedron().cell[0],
-    example_cells.Voxel().cell[0],
+    example_cells.Hexahedron().get_cell(0),
+    example_cells.Triangle().get_cell(0),
+    example_cells.Voxel().get_cell(0),
+    example_cells.Quadrilateral().get_cell(0),
+    example_cells.Tetrahedron().get_cell(0),
+    example_cells.Voxel().get_cell(0),
 ]
 grids = [
     load_hexbeam(),
@@ -31,6 +33,7 @@ grids = [
     load_structured(),
     load_tetbeam(),
     load_uniform(),
+    load_explicit_structured(),
 ]
 types = [
     CellType.HEXAHEDRON,
@@ -39,6 +42,7 @@ types = [
     CellType.QUAD,
     CellType.TETRA,
     CellType.VOXEL,
+    CellType.HEXAHEDRON,
 ]
 faces_types = [
     CellType.QUAD,
@@ -47,20 +51,13 @@ faces_types = [
     None,
     CellType.TRIANGLE,
     CellType.PIXEL,
+    CellType.QUAD,
 ]
-dims = [3, 2, 3, 2, 3, 3]
-npoints = [8, 3, 8, 4, 4, 8]
-nfaces = [6, 0, 6, 0, 4, 6]
-nedges = [12, 3, 12, 4, 6, 12, 12]
+dims = [3, 2, 3, 2, 3, 3, 3]
+npoints = [8, 3, 8, 4, 4, 8, 8]
+nfaces = [6, 0, 6, 0, 4, 6, 6]
+nedges = [12, 3, 12, 4, 6, 12, 12, 12]
 
-if pyvista._vtk.VTK9:
-    grids.append(load_explicit_structured())
-    types.append(CellType.HEXAHEDRON)
-    faces_types.append(CellType.QUAD)
-    dims.append(3)
-    npoints.append(8)
-    nfaces.append(6)
-    nedges.append(12)
 ids = [str(type(grid)) for grid in grids]
 cell_ids = list(map(repr, types))
 
@@ -72,8 +69,7 @@ def test_bad_init():
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
 def test_cell_attribute(grid):
-    assert isinstance(grid.cell, list)
-    assert len(grid.cell) == grid.n_cells
+    assert isinstance(grid.cell, GeneratorType)
     assert all([issubclass(type(cell), Cell) for cell in grid.cell])
 
 
@@ -201,9 +197,9 @@ def test_cell_faces(cell):
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
 def test_cell_bounds(grid):
-    assert isinstance(grid.cell[0].bounds, tuple)
-    assert all(bc >= bg for bc, bg in zip(grid.cell[0].bounds[::2], grid.bounds[::2]))
-    assert all(bc <= bg for bc, bg in zip(grid.cell[0].bounds[1::2], grid.bounds[1::2]))
+    assert isinstance(grid.get_cell(0).bounds, tuple)
+    assert all(bc >= bg for bc, bg in zip(grid.get_cell(0).bounds[::2], grid.bounds[::2]))
+    assert all(bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2]))
 
 
 @pytest.mark.parametrize("cell,type_", zip(cells[:5], types[:5]))

@@ -1,8 +1,22 @@
 """Jupyter notebook plotting module."""
+import asyncio
+from typing import Awaitable
+import warnings
 
 import pyvista
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
-ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'pythreejs', 'none']
+ALLOWED_BACKENDS = [
+    'ipyvtklink',
+    'panel',
+    'ipygany',
+    'static',
+    'pythreejs',
+    'client',
+    'server',
+    'trame',
+    'none',
+]
 
 
 def _validate_jupyter_backend(backend):
@@ -42,8 +56,20 @@ def _validate_jupyter_backend(backend):
             import pythreejs
         except ImportError:  # pragma: no cover
             raise ImportError('Please install `pythreejs` to use this feature.')
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`pythreejs` backend is deprecated and is planned for future removal.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
 
     if backend == 'ipyvtklink':
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`ipyvtklink` backend is deprecated and has been replaced by the `trame` backend.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
         try:
             import ipyvtklink
         except ImportError:  # pragma: no cover
@@ -55,10 +81,29 @@ def _validate_jupyter_backend(backend):
         except ImportError:  # pragma: no cover
             raise ImportError('Please install `panel` to use this feature.')
         panel.extension('vtk')
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`panel` backend is deprecated and is planned for future removal.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
 
     if backend == 'ipygany':
         # raises an import error when fail
         from pyvista.jupyter import pv_ipygany
+
+        if not pyvista.BUILDING_GALLERY:
+            warnings.warn(
+                '`ipygany` backend is deprecated and is planned for future removal.',
+                PyVistaDeprecationWarning,
+                stacklevel=3,
+            )
+
+    if backend in ['server', 'client', 'trame']:
+        try:
+            from pyvista.trame.jupyter import show_trame
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install `trame` and `ipywidgets` to use this feature.')
 
     if backend == 'none':
         backend = None
@@ -102,6 +147,23 @@ def set_jupyter_backend(backend):
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
+        * ``'client'`` : Export/serialize the scene graph to be rendered
+          with VTK.js client-side through ``trame``. Requires ``trame``
+          and ``jupyter-server-proxy`` to be installed.
+
+        * ``'server'``: Render remotely and stream the resulting VTK
+          images back to the client using ``trame``. This replaces the
+          ``'ipyvtklink'`` backend with better performance.
+          Supports the most VTK features, but suffers from minor lag due
+          to remote rendering. Requires that a virtual framebuffer be set
+          up when displaying on a headless server. Must have at least ``trame``
+          and ``jupyter-server-proxy`` installed for cloud/remote Jupyter
+          instances. This mode is also aliased by ``'trame'``.
+
+        * ``'trame'``: The full Trame-based backend that combines both
+          ``'server'`` and ``'client'`` into one backend. This requires a
+          virtual frame buffer.
+
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
           will generate nothing on headless servers even with a
@@ -127,6 +189,10 @@ def set_jupyter_backend(backend):
 
     >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
+    Enable the trame Trame backend.
+
+    >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
+
     Just show static images.
 
     >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
@@ -134,7 +200,12 @@ def set_jupyter_backend(backend):
     Disable all plotting within JupyterLab and display using a
     standard desktop VTK render window.
 
-    >>> pv.set_jupyter_backend(None)  # or 'none'
+    >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
     """
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
+    if backend in ['server', 'client', 'trame']:
+        # Launch the trame server
+        from pyvista.trame.jupyter import elegantly_launch
+
+        elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)

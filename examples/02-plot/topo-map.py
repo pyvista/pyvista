@@ -44,11 +44,11 @@ local = elevation.clip_box(bounds, invert=False)
 local.texture_map_to_plane(use_bounds=True, inplace=True)
 
 ###############################################################################
-# Now display it! Note that the imagery is aligned as we expect.
+# Now display it. Note that the imagery is aligned as we expect.
 local.plot(texture=topo_map, cpos="xy")
 
 ###############################################################################
-# And here is a 3D perspective!
+# And here is a 3D perspective.
 local.plot(texture=topo_map)
 
 ###############################################################################

@@ -112,11 +112,11 @@ def grid_from_sph_coords(theta, phi, r):
 
     Parameters
     ----------
-    theta: array-like
+    theta : array-like
         Azimuthal angle in degrees ``[0, 360]``.
-    phi: array-like
+    phi : array-like
         Polar (zenith) angle in degrees ``[0, 180]``.
-    r: array-like
+    r : array-like
         Distance (radius) from the point of origin.
 
     Returns
@@ -170,6 +170,44 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
     w_t = np.cos(ph) * w - np.sin(ph) * v
 
     return u_t, v_t, w_t
+
+
+def cartesian_to_spherical(x, y, z):
+    """Convert 3D Cartesian coordinates to spherical coordinates.
+
+    Parameters
+    ----------
+    x, y, z : numpy.ndarray
+        Cartesian coordinates.
+
+    Returns
+    -------
+    r : numpy.ndarray
+        Radial distance.
+
+    theta : numpy.ndarray
+        Angle (radians) with respect to the polar axis. Also known
+        as polar angle.
+
+    phi : numpy.ndarray
+        Angle (radians) of rotation from the initial meridian plane.
+        Also known as azimuthal angle.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> grid = pv.UniformGrid(dimensions=(3, 3, 3))
+    >>> x, y, z = grid.points.T
+    >>> r, theta, phi = pv.cartesian_to_spherical(x, y, z)
+
+    """
+    xy2 = x**2 + y**2
+    r = np.sqrt(xy2 + z**2)
+    theta = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
+    phi = np.arctan2(y, x)  # the azimuth angle in radian angles
+
+    return r, theta, phi
 
 
 def merge(

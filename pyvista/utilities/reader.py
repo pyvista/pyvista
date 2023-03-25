@@ -131,6 +131,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.vtu``       | :class:`pyvista.XMLUnstructuredGridReader`  |
     +----------------+---------------------------------------------+
+    | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -153,10 +155,10 @@ def get_reader(filename, force_ext=None):
     >>> filename.split("/")[-1]  # omit the path
     'Human.vtp'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader  # doctest: +ELLIPSIS
+    >>> reader
     XMLPolyDataReader('.../Human.vtp')
     >>> mesh = reader.read()
-    >>> mesh # doctest: +ELLIPSIS
+    >>> mesh
     PolyData ...
     >>> mesh.plot(color='tan')
 
@@ -169,6 +171,51 @@ def get_reader(filename, force_ext=None):
         raise ValueError(f"`pyvista.get_reader` does not support a file with the {ext} extension")
 
     return Reader(filename)
+
+
+class BaseVTKReader(ABC):
+    """Simulate a VTK reader."""
+
+    def __init__(self):
+        self._data_object = None
+        self._observers: List[Union[int, Callable]] = []
+
+    def SetFileName(self, filename):
+        """Set file name."""
+        self._filename = filename
+
+    def UpdateInformation(self):
+        """Update Information from file."""
+        pass
+
+    def AddObserver(self, event_type, callback):
+        """Add Observer that can be triggered during Update."""
+        self._observers.append([event_type, callback])
+
+    def RemoveObservers(self, *args):
+        """Remove Observer."""
+        self._observers = []
+
+    def GetProgress(self):
+        """GetProgress."""
+        return 0.0 if self._data_object is None else 1.0
+
+    def UpdateObservers(self, event_type):
+        """Call matching observer."""
+        for event_type_allowed, observer in self._observers:
+            if event_type_allowed == event_type:
+                observer(self, event_type)
+
+    @abstractmethod
+    def Update(self):
+        """Update Reader from file and store data internally.
+
+        Set self._data_object.
+        """
+
+    def GetOutputDataObject(self, *args):
+        """Return stored data."""
+        return self._data_object
 
 
 @abstract_class
@@ -339,7 +386,7 @@ class PointCellDataSelection:
     >>> filename.split("/")[-1]  # omit the path
     'foam_case_0_0_0_0.case'
     >>> reader = pyvista.get_reader(filename)
-    >>> reader  # doctest: +ELLIPSIS
+    >>> reader
     EnSightReader('.../foam_case_0_0_0_0.case')
     >>> reader.cell_array_names
     ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
@@ -539,7 +586,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time point index.
 
         Returns
@@ -576,7 +623,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_value: float
+        time_value : float
             Time or iteration value to set as active.
 
         """
@@ -587,7 +634,7 @@ class TimeReader(ABC):
 
         Parameters
         ----------
-        time_point: int
+        time_point : int
             Time or iteration point index for setting active time.
 
         """
@@ -618,8 +665,11 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz',
-    ...                  show_scalar_bar=False)
+    >>> sliced_mesh.plot(
+    ...     scalars='Void Volume Fraction',
+    ...     cpos='xz',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -644,8 +694,12 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     'notch_disp.vtu'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="Nodal Displacement", component=0,
-    ...           cpos='xy', show_scalar_bar=False)
+    >>> mesh.plot(
+    ...     scalars="Nodal Displacement",
+    ...     component=0,
+    ...     cpos='xy',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -671,8 +725,9 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(
-    ...    cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
-    ...    clim=[0, 100], show_scalar_bar=False
+    ...     cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
+    ...     clim=[0, 100],
+    ...     show_scalar_bar=False,
     ... )
 
     """
@@ -720,8 +775,14 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     'cylinder_Re35.case'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="velocity", component=1, clim=[-20, 20],
-    ...           cpos='xy', cmap='RdBu', show_scalar_bar=False)
+    >>> mesh.plot(
+    ...     scalars="velocity",
+    ...     component=1,
+    ...     clim=[-20, 20],
+    ...     cpos='xy',
+    ...     cmap='RdBu',
+    ...     show_scalar_bar=False,
+    ... )
 
     """
 
@@ -1038,7 +1099,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
         >>> reader = pyvista.OpenFOAMReader(filename)
-        >>> reader.all_patch_arrays_status  #doctest: +NORMALIZE_WHITESPACE
+        >>> reader.all_patch_arrays_status  # doctest: +NORMALIZE_WHITESPACE
         {'internalMesh': True, 'patch/movingWall': True, 'patch/fixedWalls': True,
          'patch/frontAndBack': True}
 
@@ -1347,20 +1408,9 @@ class MultiBlockPlot3DReader(BaseReader):
                 files = [files]
         files = [_process_filename(f) for f in files]
 
-        if hasattr(self.reader, 'AddFileName'):
-            # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
-            # VTK 8.2. This method supports reading multiple q files.
-            for q_filename in files:
-                self.reader.AddFileName(q_filename)
-        else:
-            # SetQFileName is used to add a single q file to be read, and is still
-            # supported in VTK9.
-            if len(files) > 0:
-                if len(files) > 1:
-                    raise RuntimeError(
-                        'Reading of multiple q files is not supported with this version of VTK.'
-                    )
-                self.reader.SetQFileName(files[0])
+        # AddFileName supports reading multiple q files
+        for q_filename in files:
+            self.reader.AddFileName(q_filename)
 
     @property
     def auto_detect_format(self):
@@ -1388,10 +1438,12 @@ class MultiBlockPlot3DReader(BaseReader):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> filename  = examples.download_file('multi-bin.xyz')
+        >>> filename = examples.download_file('multi-bin.xyz')
         >>> reader = pyvista.reader.MultiBlockPlot3DReader(filename)
         >>> reader.add_function(112)  # add a function by its integer value
-        >>> reader.add_function(reader.PRESSURE_COEFFICIENT)  # add a function by enumeration via class variable alias
+        >>> reader.add_function(
+        ...     reader.PRESSURE_COEFFICIENT
+        ... )  # add a function by enumeration via class variable alias
 
         """
         if isinstance(value, enum.Enum):
@@ -1777,112 +1829,26 @@ class PVDDataSet:
     group: str
 
 
-# skip pydocstyle D102 check since docstring is taken from TimeReader
-class PVDReader(BaseReader, TimeReader):
-    """PVD Reader for .pvd files.
+class _PVDReader(BaseVTKReader):
+    """Simulate a VTK reader for PVD files."""
 
-    Examples
-    --------
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> filename = examples.download_wavy(load=False)
-    >>> filename.split("/")[-1]  # omit the path
-    'wavy.pvd'
-    >>> reader = pyvista.get_reader(filename)
-    >>> reader.time_values  # doctest: +ELLIPSIS
-    [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
-    >>> reader.set_active_time_point(5)
-    >>> reader.active_time_value
-    5.0
-    >>> mesh = reader.read()[0]  # MultiBlock mesh with only 1 block
-    >>> mesh.plot(scalars='z')
-
-    """
-
-    def __init__(self, filename):
-        """Initialize PVD file reader."""
-        self._reader = None
-        self.__directory = None
-        self._datasets = []
-        self._active_datasets = []
-        self._active_readers = []
-        self._time_values = []
-
-        self._set_filename(filename)
-
-    @property
-    def reader(self):
-        """Return the PVDReader.
-
-        .. note::
-            This Reader does not have an underlying vtk Reader.
-
-        """
-        return self
-
-    @property
-    def active_readers(self):
-        """Return the active readers.
-
-        Returns
-        -------
-        list[pyvista.BaseReader]
-
-        """
-        return self._active_readers
-
-    @property
-    def datasets(self):
-        """Return all datasets.
-
-        Returns
-        -------
-        list[pyvista.PVDDataSet]
-
-        """
-        return self._datasets
-
-    @property
-    def active_datasets(self):
-        """Return all active datasets.
-
-        Returns
-        -------
-        list[pyvista.PVDDataSet]
-
-        """
-        return self._active_datasets
-
-    def _set_filename(self, filename):
-        """Set filename and update reader."""
-        self._filename = filename
-        self.__directory = os.path.join(os.path.dirname(filename))
+    def __init__(self):
+        super().__init__()
+        self._directory = None
         self._datasets = None
         self._active_datasets = None
-        self._update_information()
+        self._time_values = None
 
-    def read(self):
-        """Read data from PVD timepoint.
+    def SetFileName(self, filename):
+        """Set filename and update reader."""
+        self._filename = filename
+        self._directory = os.path.join(os.path.dirname(filename))
 
-        Overrides :func:`pyvista.BaseReader.read`.
-
-        Returns
-        -------
-        pyvista.MultiBlock
-
-        """
-        return pyvista.MultiBlock([reader.read() for reader in self.active_readers])
-
-    def _update_information(self):
-        """If dataset information is unavailable, parse file."""
-        if self.datasets is None:
-            self._parse_file()
-
-    def _parse_file(self):
+    def UpdateInformation(self):
         """Parse PVD file."""
-        if self.path is None:
+        if self._filename is None:
             raise ValueError("Filename must be set")
-        tree = ElementTree.parse(self.path)
+        tree = ElementTree.parse(self._filename)
         root = tree.getroot()
         dataset_elements = root[0].findall("DataSet")
         datasets = []
@@ -1897,32 +1863,100 @@ class PVDReader(BaseReader, TimeReader):
                 )
             )
         self._datasets = sorted(datasets)
-        self._time_values = sorted({dataset.time for dataset in self.datasets})
+        self._time_values = sorted({dataset.time for dataset in self._datasets})
+        self._time_mapping = {time: [] for time in self._time_values}
+        for dataset in self._datasets:
+            self._time_mapping[dataset.time].append(dataset)
+        self._SetActiveTime(self._time_values[0])
 
-        self.set_active_time_value(self.time_values[0])
+    def Update(self):
+        """Read data and store it."""
+        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
+
+    def _SetActiveTime(self, time_value):
+        """Set active time."""
+        self._active_datasets = self._time_mapping[time_value]
+        self._active_readers = [
+            get_reader(os.path.join(self._directory, dataset.path))
+            for dataset in self._active_datasets
+        ]
+
+
+# skip pydocstyle D102 check since docstring is taken from TimeReader
+class PVDReader(BaseReader, TimeReader):
+    """PVD Reader for .pvd files.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_wavy(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'wavy.pvd'
+    >>> reader = pyvista.get_reader(filename)
+    >>> reader.time_values
+    [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
+    >>> reader.set_active_time_point(5)
+    >>> reader.active_time_value
+    5.0
+    >>> mesh = reader.read()[0]  # MultiBlock mesh with only 1 block
+    >>> mesh.plot(scalars='z')
+
+    """
+
+    _class_reader = _PVDReader
+
+    @property
+    def active_readers(self):
+        """Return the active readers.
+
+        Returns
+        -------
+        list[pyvista.BaseReader]
+
+        """
+        return self.reader._active_readers
+
+    @property
+    def datasets(self):
+        """Return all datasets.
+
+        Returns
+        -------
+        list[pyvista.PVDDataSet]
+
+        """
+        return self.reader._datasets
+
+    @property
+    def active_datasets(self):
+        """Return all active datasets.
+
+        Returns
+        -------
+        list[pyvista.PVDDataSet]
+
+        """
+        return self.reader._active_datasets
 
     @property
     def time_values(self):  # noqa: D102
-        return self._time_values
+        return self.reader._time_values
 
     @property
     def number_time_points(self):  # noqa: D102
-        return len(self.time_values)
+        return len(self.reader._time_values)
 
     def time_point_value(self, time_point):  # noqa: D102
-        return self.time_values[time_point]
+        return self.reader._time_values[time_point]
 
     @property
     def active_time_value(self):  # noqa: D102
         # all active datasets have the same time
-        return self.active_datasets[0].time
+        return self.reader._active_datasets[0].time
 
     def set_active_time_value(self, time_value):  # noqa: D102
-        self._active_datasets = [dataset for dataset in self.datasets if dataset.time == time_value]
-        self._active_readers = [
-            get_reader(os.path.join(self.__directory, dataset.path))
-            for dataset in self.active_datasets
-        ]
+        self.reader._SetActiveTime(time_value)
 
     def set_active_time_point(self, time_point):  # noqa: D102
         self.set_active_time_value(self.time_values[time_point])
@@ -2249,37 +2283,16 @@ class SegYReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
 
 
-class _GIFReader:
+class _GIFReader(BaseVTKReader):
     """Simulate a VTK reader for GIF files."""
 
-    _data_object = None
-    _observers: List[Union[int, Callable]] = []
-    _n_frames = 0
-    _current_frame = 0
-
-    def SetFileName(self, filename):
-        """Needed for VTK-like compatibility with BaseReader."""
-        self._filename = filename
-
-    def UpdateInformation(self):
-        """Needed for VTK-like compatibility with BaseReader."""
-        pass
-
-    def AddObserver(self, event_type, callback):
-        """Needed for VTK-like compatibility with BaseReader."""
-        self._observers.append([event_type, callback])
-
-    def RemoveObservers(self, *args):
-        """Needed for VTK-like compatibility with BaseReader."""
-        self._observers = []
+    def __init__(self):
+        super().__init__()
+        self._n_frames = 0
+        self._current_frame = 0
 
     def GetProgress(self):
         return self._current_frame / self._n_frames
-
-    def UpdateObservers(self, event_type):
-        for event_type_allowed, observer in self._observers:
-            if event_type_allowed == event_type:
-                observer(self, event_type)
 
     def Update(self):
         """Read the GIF and store internally to `_data_object`."""
@@ -2298,10 +2311,6 @@ class _GIFReader:
 
         if 'frame0' in self._data_object.point_data:
             self._data_object.point_data.active_scalars_name = 'frame0'
-
-    def GetOutputDataObject(self, *args):
-        """Needed for VTK-like compatibility with BaseReader."""
-        return self._data_object
 
 
 class GIFReader(BaseReader):
@@ -2326,6 +2335,49 @@ class GIFReader(BaseReader):
     """
 
     _class_reader = _GIFReader
+
+
+class XdmfReader(BaseReader, PointCellDataSelection):
+    """XdmfReader for .xdmf files.
+
+    Notes
+    -----
+    We currently can't inspect the time values for this reader.
+
+    Parameters
+    ----------
+    path : str
+        Path of the XDMF file to read.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_meshio_xdmf(load=False)
+    >>> reader = pyvista.get_reader(filename)
+    >>> filename.split("/")[-1]  # omit the path
+    'out.xdmf'
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = staticmethod(_vtk.lazy_vtkXdmfReader)
+
+    @property
+    def number_grids(self):
+        """Return the number of grids that can be read by the reader.
+
+        Returns
+        -------
+        int
+            The number of grids to be read.
+
+        """
+        return self.reader.GetNumberOfGrids()
+
+    def set_active_time_value(self, time_value):  # noqa: D102
+        self.reader.UpdateTimeStep(time_value)
 
 
 CLASS_READERS = {
@@ -2382,4 +2434,5 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
+    '.xdmf': XdmfReader,
 }

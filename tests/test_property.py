@@ -71,20 +71,12 @@ def test_property_specular_power(prop):
 
 def test_property_metallic(prop):
     value = 0.1
-    if pv.vtk_version_info < (9,):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.metallic = value
-        return
     prop.metallic = value
     assert prop.metallic == value
 
 
 def test_property_roughness(prop):
     value = 0.1
-    if pv.vtk_version_info < (9,):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.roughness = value
-        return
     prop.roughness = value
     assert prop.roughness == value
 
@@ -92,11 +84,9 @@ def test_property_roughness(prop):
 def test_property_interpolation(prop):
     value = 'Gouraud'
     prop.interpolation = value
-    assert prop.interpolation == value
+    assert prop.interpolation == pv.opts.InterpolationType.from_any(value)
 
-    with pytest.raises(TypeError, match='`interpolation`'):
-        prop.interpolation = 1
-    with pytest.raises(ValueError, match='Should be one of'):
+    with pytest.raises(ValueError, match='InterpolationType has no value matching'):
         prop.interpolation = 'foo'
 
 

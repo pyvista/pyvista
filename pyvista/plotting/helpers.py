@@ -25,7 +25,6 @@ def plot(
     eye_dome_lighting=False,
     volume=False,
     parallel_projection=False,
-    use_ipyvtk=None,
     jupyter_backend=None,
     return_viewer=False,
     return_cpos=False,
@@ -107,11 +106,6 @@ def plot(
     parallel_projection : bool, optional
         Enable parallel projection.
 
-    use_ipyvtk : bool, optional
-        Deprecated.  Instead, set the backend either globally with
-        ``pyvista.set_jupyter_backend('ipyvtklink')`` or with
-        ``backend='ipyvtklink'``.
-
     jupyter_backend : str, optional
         Jupyter notebook plotting backend to use.  One of the
         following:
@@ -173,7 +167,7 @@ def plot(
         Enable surface space ambient occlusion (SSAO). See
         :func:`Plotter.enable_ssao` for more details.
 
-    **kwargs : optional keyword arguments
+    **kwargs : dict, optional
         See :func:`pyvista.Plotter.add_mesh` for additional options.
 
     Returns
@@ -195,7 +189,7 @@ def plot(
         * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
 
-    widget
+    widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.
 
     Examples
@@ -210,9 +204,11 @@ def plot(
     UniformGrid. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
+    >>> grid = pv.UniformGrid(
+    ...     dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5)
+    ... )
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
-    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max())**3
+    >>> grid['data'] = np.abs(grid['data'] - grid['data'].max()) ** 3
     >>> grid.plot(volume=True)
 
     """
@@ -305,7 +301,6 @@ def plot(
         full_screen=full_screen,
         screenshot=screenshot,
         return_img=return_img,
-        use_ipyvtk=use_ipyvtk,
         jupyter_backend=jupyter_backend,
         before_close_callback=before_close_callback,
         jupyter_kwargs=jupyter_kwargs,
@@ -336,7 +331,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     See Also
     --------
-    :func:`pyvista.plot`
+    pyvista.plot
 
     Examples
     --------

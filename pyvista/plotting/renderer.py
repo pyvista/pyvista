@@ -1,10 +1,9 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-from functools import partial
+from functools import partial, wraps
 from typing import Sequence, cast
 import warnings
-from weakref import proxy
 
 import numpy as np
 
@@ -98,7 +97,7 @@ def scale_point(camera, point, invert=False):
     point : tuple(float)
         Length 3 tuple of the point coordinates.
 
-    invert : bool
+    invert : bool, default: False
         If ``True``, invert the matrix to transform the point out of
         the camera's transformed space. Default is ``False`` to
         transform a point from world coordinates to the camera's
@@ -121,7 +120,20 @@ def scale_point(camera, point, invert=False):
 
 
 class CameraPosition:
-    """Container to hold camera location attributes."""
+    """Container to hold camera location attributes.
+
+    Parameters
+    ----------
+    position : Sequence
+        Position of the camera.
+
+    focal_point : Sequence
+        The focal point of the camera.
+
+    viewup : Sequence
+        View up of the camera.
+
+    """
 
     def __init__(self, position, focal_point, viewup):
         """Initialize a new camera position descriptor."""
@@ -209,7 +221,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._actors = {}
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
-        self.camera_set = False
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
@@ -237,6 +248,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.add_border(border_color, border_width)
 
         self.set_color_cycler(self._theme.color_cycler)
+
+    @property
+    def camera_set(self) -> bool:
+        """Get or set whether this camera has been configured."""
+        if self.camera is None:  # pragma: no cover
+            return False
+        return self.camera.is_set
+
+    @camera_set.setter
+    def camera_set(self, is_set: bool):
+        self.camera.is_set = is_set
 
     def set_color_cycler(self, color_cycler):
         """Set or reset this renderer's color cycler.
@@ -267,9 +289,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.renderer.set_color_cycler(['red', 'green', 'blue'])
-        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
-        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
-        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
         >>> pl.show()
 
@@ -294,7 +316,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:
             self.__charts = Charts(self)
-            self.AddObserver("StartEvent", partial(try_callback, self._render_event))
+            self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
         return self.__charts
 
     @property
@@ -447,7 +469,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.set_background(color)
         self.Modified()
 
-    def _render_event(self, *args, **kwargs):
+    def _before_render_event(self, *args, **kwargs):
         """Notify all charts about render event."""
         for chart in self._charts:
             chart._render_event(*args, **kwargs)
@@ -608,10 +630,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        chart : Chart2D, ChartBox, ChartPie or ChartMPL
+        chart : Chart
             Chart to add to renderer.
 
-        *charts : Chart2D, ChartBox, ChartPie or ChartMPL
+        *charts : Chart
             Charts to add to renderer.
 
         Examples
@@ -632,12 +654,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             )
         self._charts.add_chart(chart, *charts)
 
+    @property
+    def has_charts(self):
+        """Return whether this renderer has charts."""
+        return self.__charts is not None
+
+    @wraps(Charts.set_interaction)
+    def set_chart_interaction(self, interactive, toggle=False):
+        """Wrap ``Charts.set_interaction``."""
+        # Make sure we don't create the __charts object if this renderer has no charts yet.
+        return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
+
+    @wraps(Charts.get_charts_by_pos)
+    def _get_charts_by_pos(self, pos):
+        """Wrap ``Charts.get_charts_by_pos``."""
+        # Make sure we don't create the __charts object if this renderer has no charts yet.
+        return self._charts.get_charts_by_pos(pos) if self.has_charts else []
+
     def remove_chart(self, chart_or_index):
         """Remove a chart from this renderer.
 
         Parameters
         ----------
-        chart_or_index : Chart2D, ChartBox, ChartPie, ChartMPL or int
+        chart_or_index : Chart or int
             Either the chart to remove from this renderer or its index in the collection of charts.
 
         Examples
@@ -672,7 +711,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self._charts.remove_chart(chart_or_index)
+        # Make sure we don't create the __charts object if this renderer has no charts yet.
+        if self.has_charts:
+            self._charts.remove_chart(chart_or_index)
 
     @property
     def actors(self):
@@ -681,7 +722,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def add_actor(
         self,
-        uinput,
+        actor,
         reset_camera=False,
         name=None,
         culling=False,
@@ -695,8 +736,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        uinput : vtk.vtkMapper or vtk.vtkActor
-            Vtk mapper or vtk actor to be added.
+        actor : vtk.vtkActor or vtk.vtkMapper
+            The actor to be added. Can be either ``vtkActor`` or ``vtkMapper``.
 
         reset_camera : bool, optional
             Resets the camera when ``True``.
@@ -732,21 +773,30 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Actor properties.
         """
         # Remove actor by that name if present
+        rv = None
         if name and remove_existing_actor:
             rv = self.remove_actor(name, reset_camera=False, render=False)
 
-        if isinstance(uinput, _vtk.vtkMapper):
-            actor = Actor()
-            actor.SetMapper(uinput)
-        else:
-            actor = uinput
+        if isinstance(actor, _vtk.vtkMapper):
+            actor = Actor(mapper=actor, name=name)
 
-        self.AddActor(actor)
-        actor.renderer = proxy(self)
+        if isinstance(actor, Actor) and name:
+            # WARNING: this will override the name if already set on Actor
+            actor.name = name
 
         if name is None:
-            name = actor.GetAddressAsString("")
+            if isinstance(actor, Actor):
+                name = actor.name
+            else:
+                # Fallback for non-wrapped actors
+                # e.g., vtkScalarBarActor
+                name = actor.GetAddressAsString("")
 
+        actor.SetPickable(pickable)
+        # Apply this renderer's scale to the actor (which can be further scaled)
+        if hasattr(actor, 'SetScale'):
+            actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
+        self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
         if reset_camera:
@@ -775,7 +825,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             else:
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
-        actor.SetPickable(pickable)
         self.Modified()
 
         prop = None
@@ -855,7 +904,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return self._marker_actor
 
-    def add_orientation_widget(self, actor, interactive=None, color=None, opacity=1.0):
+    def add_orientation_widget(
+        self, actor, interactive=None, color=None, opacity=1.0, viewport=None
+    ):
         """Use the given actor in an orientation marker widget.
 
         Color and opacity are only valid arguments if a mesh is passed.
@@ -877,6 +928,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         opacity : int or float, optional
             Opacity of the marker.
+
+        viewport : tuple, optional
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         Returns
         -------
@@ -917,6 +971,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         self.axes_widget.SetCurrentRenderer(self)
+        if viewport is not None:
+            self.axes_widget.SetViewport(viewport)
         self.Modified()
         return self.axes_widget
 
@@ -1029,7 +1085,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...     shaft_length=0.7,
         ...     tip_length=0.3,
         ...     ambient=0.5,
-        ...     label_size=(0.4, 0.16)
+        ...     label_size=(0.4, 0.16),
         ... )
         >>> pl.show()
 
@@ -1159,6 +1215,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         fmt=None,
         minor_ticks=False,
         padding=0.0,
+        use_3d_text=True,
         render=None,
     ):
         """Add bounds axes.
@@ -1239,10 +1296,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         use_2d : bool, optional
             This can be enabled for smoother plotting.
 
-            .. warning::
-               A bug with vtk 6.3 in Windows seems to cause this
-               function to crash.
-
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
             ``'backface'``) or to the frontface (``'front'``,
@@ -1279,6 +1332,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             An optional percent padding along each axial direction to
             cushion the datasets in the scene from the axes
             annotations. Defaults to 0 (no padding).
+
+        use_3d_text : bool, default: True
+            Use ``vtkTextActor3D`` for titles and labels.
 
         render : bool, optional
             If the render window is being shown, trigger a render
@@ -1469,6 +1525,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set font
         font_family = parse_font_family(font_family)
+
+        if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            use_3d_text = False
+            cube_axes_actor.SetUseTextActor3D(False)
+        else:
+            cube_axes_actor.SetUseTextActor3D(True)
+
         props = [
             cube_axes_actor.GetTitleTextProperty(0),
             cube_axes_actor.GetTitleTextProperty(1),
@@ -1482,6 +1545,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             prop.SetColor(color.float_rgb)
             prop.SetFontFamily(font_family)
             prop.SetBold(bold)
+
+            # this merely makes the font sharper
+            if use_3d_text:
+                prop.SetFontSize(50)
 
         # Note: font_size does nothing as a property, use SetScreenSize instead
         # Here, we normalize relative to 12 to give the user an illusion of
@@ -1730,7 +1797,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``False``.
 
         edge_color : ColorLike, optional
-            Color of of the edges of the mesh.
+            Color of the edges of the mesh.
 
         reset_camera : bool, optional
             Resets the camera when ``True`` after adding the floor.
@@ -1933,7 +2000,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.renderer.lights   # doctest:+SKIP
+        >>> pl.renderer.lights  # doctest:+SKIP
         [<Light (Headlight) at 0x7f1dd8155820>,
          <Light (Camera Light) at 0x7f1dd8155760>,
          <Light (Camera Light) at 0x7f1dd8155340>,
@@ -2242,10 +2309,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return True
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
-        """Scale all the datasets in the scene.
+        """Scale all the actors in the scene.
 
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
+
+        .. warning::
+            Setting the scale on the renderer is a convenience method to
+            individually scale each of the actors in the scene. If a scale
+            was set on an actor previously, it will be reset to the scale
+            of this Renderer.
 
         Parameters
         ----------
@@ -2266,12 +2339,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        Set the scale in the z direction to be 5 times that of
+        Set the scale in the z direction to be 2 times that of
         nominal.  Leave the other axes unscaled.
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.set_scale(zscale=5)
+        >>> pl.set_scale(zscale=2)
         >>> _ = pl.add_mesh(pyvista.Sphere())  # perfect sphere
         >>> pl.show()
 
@@ -2284,9 +2357,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
 
-        # Update the camera's coordinate system
-        transform = np.diag([xscale, yscale, zscale, 1.0])
-        self.camera.model_transform_matrix = transform
+        # Reset all actors to match this scale
+        for actor in self.actors.values():
+            if hasattr(actor, 'SetScale'):
+                actor.SetScale(self.scale)
+
         self.parent.render()
         if reset_camera:
             self.update_bounds_axes()
@@ -2647,14 +2722,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.background_color = "w"
         >>> for i in range(5):
         ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
-        ...     color = [0, 255 - i*20, 30 + i*50]
+        ...     color = [0, 255 - i * 20, 30 + i * 50]
         ...     _ = pl.add_mesh(
         ...         mesh,
         ...         show_edges=False,
         ...         pbr=True,
         ...         metallic=1.0,
-        ...         color=color
+        ...         color=color,
         ...     )
+        ...
         >>> pl.camera.zoom(1.8)
         >>> pl.camera_position = [
         ...     (4.74, 0.959, 0.525),
@@ -2772,7 +2848,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         radius : float, default: 0.5
             Neighbor pixels considered when computing the occlusion.
 
-        bias : float, default 0.005
+        bias : float, default: 0.005
             Tolerance factor used when comparing pixel depth.
 
         kernel_size : int, default: 256
@@ -2895,7 +2971,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
+        >>> _ = pl.add_mesh(
+        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
+        ... )
         >>> pl.set_environment_texture(cubemap)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
@@ -2921,7 +2999,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
+        >>> _ = pl.add_mesh(
+        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
+        ... )
         >>> pl.set_environment_texture(cubemap)
         >>> pl.remove_environment_texture()
         >>> pl.camera_position = 'xy'
@@ -2948,7 +3028,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Notify renderer components of explicit plotter render call."""
         if self.__charts is not None:
             for chart in self.__charts:
-                # Notify ChartMPLs to redraw themselves when plotter.render() is called
+                # Notify Charts that plotter.render() is called
                 chart._render_event(plotter_render=True)
 
     def deep_clean(self, render=False):
@@ -2967,11 +3047,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
-        if self._shadow_pass is not None:
+        if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
             self.disable_shadows()
-        if self.__charts is not None:
-            self.__charts.deep_clean()
-            self.__charts = None
+        try:
+            if self.__charts is not None:
+                self.__charts.deep_clean()
+                self.__charts = None
+        except AttributeError:  # pragma: no cover
+            pass
 
         self._render_passes.deep_clean()
         self.remove_floors(render=render)
@@ -3068,9 +3151,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels : list, optional
             When set to ``None``, uses existing labels as specified by
 
-            - :func:`add_mesh <BasePlotter.add_mesh>`
-            - :func:`add_lines <BasePlotter.add_lines>`
-            - :func:`add_points <BasePlotter.add_points>`
+            - :func:`add_mesh <Plotter.add_mesh>`
+            - :func:`add_lines <Plotter.add_lines>`
+            - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
             legend.  Each entry must contain two strings, [label,
@@ -3139,7 +3222,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> sphere = pyvista.Sphere(center=(0, 0, 1))
         >>> cube = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
+        >>> _ = plotter.add_mesh(
+        ...     sphere, 'grey', smooth_shading=True, label='Sphere'
+        ... )
         >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
         >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()
@@ -3172,7 +3257,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-
                 if face is None:
                     # dummy vtk object
                     vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
@@ -3232,6 +3316,346 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def legend(self):
         """Legend actor."""
         return self._legend
+
+    def add_ruler(
+        self,
+        pointa,
+        pointb,
+        flip_range=False,
+        number_labels=5,
+        show_labels=True,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        title="Distance",
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+        label_color=None,
+        tick_color=None,
+    ):
+        """Add ruler.
+
+        The ruler is a 2D object that is not occluded by 3D objects.
+        To avoid issues with perspective, it is recommended to use
+        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        and place the ruler orthogonal to the viewing direction.
+
+        The title and labels are placed to the right of ruler moving from
+        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
+        if needed.
+
+        Since the ruler is placed in an overlay on the viewing scene, the camera
+        does not automatically reset to include the ruler in the view.
+
+        Parameters
+        ----------
+        pointa : Sequence
+            Starting point for ruler.
+
+        pointb : Sequence
+            Ending point for ruler.
+
+        flip_range : bool, default: False
+            If ``True``, the distance range goes from ``pointb`` to ``pointa``.
+
+        number_labels : int, default: 5
+            Number of labels to place on ruler.
+
+        show_labels : bool, default: True
+            Whether to show labels.
+
+        font_size_factor : float, default: 0.6
+            Factor to scale font size overall.
+
+        label_size_factor : float, default: 1.0
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        title : str, default: "Distance"
+            The title to display.
+
+        number_minor_ticks : int, default: 0
+            Number of minor ticks between major ticks.
+
+        tick_length : int, default: 5
+            Length of ticks in pixels.
+
+        minor_tick_length : int, default: 3
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, default: True
+            Whether to show the ticks.
+
+        tick_label_offset : int, default: 2
+            Offset between tick and label in pixels.
+
+        label_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            label and title colors.
+
+            .. warning::
+                This is either white or black.
+
+        tick_color : ColorLike, optional
+            Either a string, rgb list, or hex color string for
+            tick line colors.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the ruler.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cone = pv.Cone(height=2.0, radius=0.5)
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(cone)
+
+        Measure x direction of cone and place ruler slightly below.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
+        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     title="X Distance",
+        ... )
+
+        Measure y direction of cone and place ruler slightly to left.
+        The title and labels are placed to the right of the ruler when
+        traveling from ``pointa`` to ``pointb``.
+
+        >>> _ = plotter.add_ruler(
+        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
+        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     flip_range=True,
+        ...     title="Y Distance",
+        ... )
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        """
+        label_color = Color(label_color, default_color=self._theme.font.color)
+        tick_color = Color(tick_color, default_color=self._theme.font.color)
+
+        ruler = _vtk.vtkAxisActor2D()
+
+        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
+        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+
+        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        if flip_range:
+            ruler.SetRange(distance, 0)
+        else:
+            ruler.SetRange(0, distance)
+
+        ruler.SetTitle(title)
+        ruler.SetFontFactor(font_size_factor)
+        ruler.SetLabelFactor(label_size_factor)
+        ruler.SetNumberOfLabels(number_labels)
+        ruler.SetLabelVisibility(show_labels)
+        if label_format:
+            ruler.SetLabelFormat(label_format)
+        ruler.GetProperty().SetColor(*tick_color.int_rgb)
+        if label_color != Color('white'):
+            # This property turns black if set
+            ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
+            ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
+        ruler.SetNumberOfMinorTicks(number_minor_ticks)
+        ruler.SetTickVisibility(show_ticks)
+        ruler.SetTickLength(tick_length)
+        ruler.SetMinorTickLength(minor_tick_length)
+        ruler.SetTickOffset(tick_label_offset)
+
+        self.add_actor(ruler, reset_camera=True, pickable=False)
+        return ruler
+
+    def add_legend_scale(
+        self,
+        corner_offset_factor=2.0,
+        bottom_border_offset=30,
+        top_border_offset=30,
+        left_border_offset=30,
+        right_border_offset=30,
+        bottom_axis_visibility=True,
+        top_axis_visibility=True,
+        left_axis_visibility=True,
+        right_axis_visibility=True,
+        legend_visibility=True,
+        xy_label_mode=False,
+        render=True,
+        color=None,
+        font_size_factor=0.6,
+        label_size_factor=1.0,
+        label_format=None,
+        number_minor_ticks=0,
+        tick_length=5,
+        minor_tick_length=3,
+        show_ticks=True,
+        tick_label_offset=2,
+    ):
+        """Annotate the render window with scale and distance information.
+
+        Its basic goal is to provide an indication of the scale of the scene.
+        Four axes surrounding the render window indicate (in a variety of ways)
+        the scale of what the camera is viewing. An option also exists for
+        displaying a scale legend.
+
+        Parameters
+        ----------
+        corner_offset_factor : float, default: 2.0
+            The corner offset value.
+
+        bottom_border_offset : int, default: 30
+            Bottom border offset. Recommended value ``50``.
+
+        top_border_offset : int, default: 30
+            Top border offset. Recommended value ``50``.
+
+        left_border_offset : int, default: 30
+            Left border offset. Recommended value ``100``.
+
+        right_border_offset : int, default: 30
+            Right border offset. Recommended value ``100``.
+
+        bottom_axis_visibility : bool, default: True
+            Whether the bottom axis is visible.
+
+        top_axis_visibility : bool, default: True
+            Whether the top axis is visible.
+
+        left_axis_visibility : bool, default: True
+            Whether the left axis is visible.
+
+        right_axis_visibility : bool, default: True
+            Whether the right axis is visible.
+
+        legend_visibility : bool, default: True
+            Whether the legend scale is visible.
+
+        xy_label_mode : bool, default: False
+            The axes can be programmed either to display distance scales
+            or x-y coordinate values. By default,
+            the scales display a distance. However, if you know that the
+            view is down the z-axis, the scales can be programmed to display
+            x-y coordinate values.
+
+        render : bool, default: True
+            Whether to render when the actor is added.
+
+        color : ColorLike, optional
+            Either a string, rgb list, or hex color string for tick text
+            and tick line colors.
+
+            .. warning::
+                The axis labels tend to be either white or black.
+
+        font_size_factor : float, default: 0.6
+            Factor to scale font size overall.
+
+        label_size_factor : float, default: 1.0
+            Factor to scale label size relative to title size.
+
+        label_format : str, optional
+            A printf style format for labels, e.g. '%E'.
+
+        number_minor_ticks : int, default: 0
+            Number of minor ticks between major ticks.
+
+        tick_length : int, default: 5
+            Length of ticks in pixels.
+
+        minor_tick_length : int, default: 3
+            Length of minor ticks in pixels.
+
+        show_ticks : bool, default: True
+            Whether to show the ticks.
+
+        tick_label_offset : int, default: 2
+            Offset between tick and label in pixels.
+
+        Returns
+        -------
+        vtk.vtkActor
+            The actor for the added ``vtkLegendScaleActor``.
+
+        Warnings
+        --------
+        Please be aware that the axes and scale values are subject to perspective
+        effects. The distances are computed in the focal plane of the camera. When
+        there are large view angles (i.e., perspective projection), the computed
+        distances may provide users the wrong sense of scale. These effects are not
+        present when parallel projection is enabled.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cone = pv.Cone(height=2.0, radius=0.5)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(cone)
+        >>> _ = pl.add_legend_scale()
+        >>> pl.show()
+
+        """
+        color = Color(color, default_color=self._theme.font.color)
+
+        legend_scale = _vtk.vtkLegendScaleActor()
+        legend_scale.SetCornerOffsetFactor(corner_offset_factor)
+        legend_scale.SetLegendVisibility(legend_visibility)
+        if xy_label_mode:
+            legend_scale.SetLabelModeToXYCoordinates()
+        else:
+            legend_scale.SetLabelModeToDistance()
+        legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
+        legend_scale.SetBottomBorderOffset(bottom_border_offset)
+        legend_scale.SetLeftAxisVisibility(left_axis_visibility)
+        legend_scale.SetLeftBorderOffset(left_border_offset)
+        legend_scale.SetRightAxisVisibility(right_axis_visibility)
+        legend_scale.SetRightBorderOffset(right_border_offset)
+        legend_scale.SetTopAxisVisibility(top_axis_visibility)
+        legend_scale.SetTopBorderOffset(top_border_offset)
+
+        for text in ['Label', 'Title']:
+            prop = getattr(legend_scale, f'GetLegend{text}Property')()
+            if color != Color('white'):
+                # This property turns black if set
+                prop.SetColor(*color.int_rgb)
+            prop.SetFontSize(
+                int(font_size_factor * 20)
+            )  # hack to avoid multiple font size arguments
+
+        for ax in ['Bottom', 'Left', 'Right', 'Top']:
+            axis = getattr(legend_scale, f'Get{ax}Axis')()
+            axis.GetProperty().SetColor(*color.int_rgb)
+            if color != Color('white'):
+                # This label property turns black if set
+                axis.GetLabelTextProperty().SetColor(*color.int_rgb)
+            axis.SetFontFactor(font_size_factor)
+            axis.SetLabelFactor(label_size_factor)
+            if label_format:
+                axis.SetLabelFormat(label_format)
+            axis.SetNumberOfMinorTicks(number_minor_ticks)
+            axis.SetTickLength(tick_length)
+            axis.SetMinorTickLength(minor_tick_length)
+            axis.SetTickVisibility(show_ticks)
+            axis.SetTickOffset(tick_label_offset)
+
+        return self.add_actor(
+            legend_scale,
+            reset_camera=False,
+            name='_vtkLegendScaleActor',
+            culling=False,
+            pickable=False,
+            render=render,
+        )
 
 
 def _line_for_legend():

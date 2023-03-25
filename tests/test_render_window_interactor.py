@@ -108,6 +108,33 @@ def test_track_click_position_multi_render():
     assert len(points) == 1
 
 
+@skip_no_plotting
+def test_track_click_position():
+    events = []
+
+    def single_click_callback(mouse_position):
+        events.append("single")
+
+    def double_click_callback(mouse_position):
+        events.append("double")
+
+    pl = pyvista.Plotter()
+    pl.track_click_position(callback=single_click_callback, side='left', double=False)
+    pl.track_click_position(callback=double_click_callback, side='left', double=True)
+    pl.show(auto_close=False)
+
+    # Test single and double clicks:
+    pl.iren._mouse_left_button_click(10, 10)
+    assert len(events) == 1 and events.pop(0) == "single"
+    pl.iren._mouse_left_button_click(50, 50, count=2)
+    assert len(events) == 2 and events.pop(1) == "double" and events.pop(0) == "single"
+
+    # Test triple click behaviour:
+    pl.iren._mouse_left_button_click(10, 10, count=3)
+    assert len(events) == 3
+    assert events.pop(2) == "single" and events.pop(1) == "double" and events.pop(0) == "single"
+
+
 @pytest.mark.skipif(
     platform.system() == 'Darwin',
     reason='vtkCocoaRenderWindowInteractor (MacOS) does not invoke TimerEvents during ProcessEvents. ',
@@ -121,7 +148,7 @@ def test_timer():
     # which is the default for offscreen rendering)
     pl = pyvista.Plotter()
     iren = pyvista.plotting.RenderWindowInteractor(pl)
-    iren.set_render_window(pl.ren_win)
+    iren.set_render_window(pl.render_window)
 
     duration = 50  # Duration of created timers
     delay = 5 * duration  # Extra time we wait for the timers to fire at least once

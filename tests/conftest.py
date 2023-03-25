@@ -1,3 +1,5 @@
+# see https://github.com/jupyter-widgets/ipywidgets/issues/3729
+import ipykernel.ipkernel  # noqa: F401
 import numpy as np
 from numpy.random import default_rng
 from pytest import fixture, mark, skip
@@ -16,6 +18,7 @@ def set_mpl():
     except ImportError:
         pass
     else:
+        matplotlib.rcdefaults()
         matplotlib.use('agg', force=True)
 
 
@@ -176,14 +179,9 @@ def pytest_collection_modifyitems(config, items):
 def pytest_runtest_setup(item):
     """Custom setup to handle skips based on VTK version.
 
-    See pytest.mark.needs_vtk9 and pytest.mark.needs_vtk_version
-    in pytest.ini.
+    See pytest.mark.needs_vtk_version in pyproject.toml.
 
     """
-    for item_mark in item.iter_markers('needs_vtk9'):
-        # this test needs VTK 9 or newer
-        if not pyvista._vtk.VTK9:
-            skip('Test needs VTK 9 or newer.')
     for item_mark in item.iter_markers('needs_vtk_version'):
         # this test needs the given VTK version
         # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))

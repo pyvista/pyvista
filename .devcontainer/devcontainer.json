@@ -1,0 +1,7 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": { "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
+  "forwardPorts": [6080],
+  "postCreateCommand": "./.devcontainer/postcreatecommand.sh"
+}

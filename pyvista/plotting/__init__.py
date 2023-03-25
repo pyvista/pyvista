@@ -1,7 +1,7 @@
 """Plotting routines."""
 
 from pyvista import MAX_N_COLOR_BARS
-from .charts import Chart2D, ChartMPL, ChartBox, ChartPie
+from .charts import Chart, Chart2D, ChartMPL, ChartBox, ChartPie
 from .colors import (
     Color,
     ColorLike,
@@ -28,8 +28,10 @@ from .widgets import WidgetHelper
 from .lights import Light
 from .camera import Camera
 from .axes import Axes
+from .axes_actor import AxesActor
 from .actor import Actor
-from .mapper import DataSetMapper
+from .actor_properties import ActorProperties
+from .mapper import DataSetMapper, _BaseMapper
 from .lookup_table import LookupTable
 
 

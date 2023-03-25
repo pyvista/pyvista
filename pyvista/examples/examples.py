@@ -412,3 +412,98 @@ def load_nut():
 
     """
     return pyvista.read(os.path.join(dir_path, 'nut.ply'))
+
+
+def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
+    """Load the hydrogen wave function for a :class:`pyvista.UniformGrid`.
+
+    This is the solution to the Schrödinger equation for hydrogen
+    evaluated in three-dimensional Cartesian space.
+
+    Inspired by `Hydrogen Wave Function
+    <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_.
+
+    Parameters
+    ----------
+    n : int, default: 1
+        Principal quantum number. Must be a positive integer. This is often
+        referred to as the "energy level" or "shell".
+
+    l : int, default: 0
+        Azimuthal quantum number. Must be a non-negative integer strictly
+        smaller than ``n``. By convention this value is represented by the
+        letters s, p, d, f, etc.
+
+    m : int, default: 0
+        Magnetic quantum number. Must be an integer ranging from ``-l`` to
+        ``l`` (inclusive). This is the orientation of the angular momentum in
+        space.
+
+    zoom_fac : float, default: 1.0
+        Zoom factor for the electron cloud. Increase this value to focus on the
+        center of the electron cloud.
+
+    Returns
+    -------
+    pyvista.UniformGrid
+        UniformGrid containing two ``point_data`` arrays:
+
+        * ``'real_wf'`` - Real part of the wave function.
+        * ``'wf'`` - Complex wave function.
+
+    Notes
+    -----
+    This example requires `sympy <https://www.sympy.org/>`_.
+
+    Examples
+    --------
+    Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
+    numbers ``n=3``, ``l=2``, and ``m=-2``.
+
+    >>> from pyvista import examples
+    >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
+    >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
+
+    See :ref:`plot_atomic_orbitals_example` for additional examples using
+    this function.
+
+    """
+    try:
+        from sympy import lambdify
+        from sympy.abc import phi, r, theta
+        from sympy.physics.hydrogen import Psi_nlm
+    except ImportError:  # pragma: no cover
+        raise ImportError(
+            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
+        ) from None
+
+    if n < 1:
+        raise ValueError('`n` must be at least 1')
+    if l not in range(n):
+        raise ValueError(f'`l` must be one of: {list(range(n))}')
+    if m not in range(-l, l + 1):
+        raise ValueError(f'`m` must be one of: {list(range(-l, l + 1))}')
+
+    psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
+
+    if n == 1:
+        org = 1.5 * n**2 + 1.0
+    else:
+        org = 1.5 * n**2 + 10.0
+
+    org /= zoom_fac
+
+    dim = 100
+    sp = (org * 2) / (dim - 1)
+    grid = pyvista.UniformGrid(
+        dimensions=(dim, dim, dim),
+        spacing=(sp, sp, sp),
+        origin=(-org, -org, -org),
+    )
+
+    r, theta, phi = pyvista.cartesian_to_spherical(grid.x, grid.y, grid.z)
+    wfc = psi(r, phi, theta).reshape(grid.dimensions)
+
+    grid['real_wf'] = np.real(wfc.ravel())
+    grid['wf'] = wfc.ravel()
+    return grid

@@ -191,7 +191,7 @@ class ScalarBars:
         italic : bool, optional
             Italicises title and bar labels.  Default ``False``.
 
-        bold  : bool, optional
+        bold : bool, optional
             Bolds title and bar labels.  Default ``True``.
 
         title_font_size : float, optional
@@ -315,10 +315,15 @@ class ScalarBars:
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
-        >>> _ = plotter.add_scalar_bar('Data', interactive=True, vertical=False,
-        ...                            title_font_size=35,
-        ...                            label_font_size=30,
-        ...                            outline=True, fmt='%10.5f')
+        >>> _ = plotter.add_scalar_bar(
+        ...     'Data',
+        ...     interactive=True,
+        ...     vertical=False,
+        ...     title_font_size=35,
+        ...     label_font_size=30,
+        ...     outline=True,
+        ...     fmt='%10.5f',
+        ... )
         >>> plotter.show()
 
         """
@@ -438,13 +443,13 @@ class ScalarBars:
         if nan_annotation:
             scalar_bar.DrawNanAnnotationOn()
 
-        if above_label:
+        if above_label is not None:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
         elif lut.above_range_color:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation('above')
-        if below_label:
+        if below_label is not None:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
         elif lut.below_range_color:

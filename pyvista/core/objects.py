@@ -185,24 +185,6 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self.row_arrays.pop(name)
 
-    def _add_row_array(self, scalars, name, deep=True):
-        """Add scalars to the vtk object.
-
-        Parameters
-        ----------
-        scalars : numpy.ndarray
-            Numpy array of scalars.  Must match number of points.
-
-        name : str
-            Name of point scalars to add.
-
-        deep : bool, optional
-            Does not copy scalars when False.  A reference to the scalars
-            must be kept to avoid a segfault.
-
-        """
-        self.row_arrays[name] = scalars
-
     def __getitem__(self, index):
         """Search row data for an array."""
         return self._row_array(name=index)
@@ -346,7 +328,7 @@ class Table(_vtk.vtkTable, DataObject):
         """
         if arr is None:
             # use the first array in the row data
-            self.GetRowData().GetArrayName(0)
+            arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
@@ -427,12 +409,24 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     @property
     def n_components(self):
-        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
+        """Components in the image (e.g. 3 [or 4] for RGB[A]).
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> texture = examples.download_masonry_texture()
+        >>> texture.n_components
+        3
+
+        """
         image = self.to_image()
         return image.active_scalars.shape[1]
 
     def flip(self, axis):
-        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
+        """Flip this texture inplace along the specified axis.
+
+        0 for X and 1 for Y.
+        """
         if not 0 <= axis <= 1:
             raise ValueError(f"Axis {axis} out of bounds")
         array = self.to_array()
@@ -456,7 +450,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         Returns
         -------
         numpy.ndarray
-            Texture as a numpy array
+            Texture as a numpy array.
 
         """
         image = self.to_image()
@@ -468,10 +462,17 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
 
-    def plot(self, *args, **kwargs):
-        """Plot the texture as image data by itself."""
+    def plot(self, **kwargs):
+        """Plot the texture as image data by itself.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Optional keyworld arguments. See :func:`pyvista.plot`.
+
+        """
         kwargs.setdefault("rgba", True)
-        return self.to_image().plot(*args, **kwargs)
+        return self.to_image().plot(**kwargs)
 
     @property
     def cube_map(self):
@@ -486,7 +487,6 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     @cube_map.setter
     def cube_map(self, flag):
-        """Enable cube mapping if ``flag`` is True, disable it otherwise."""
         self.SetCubeMap(flag)
 
     def copy(self):

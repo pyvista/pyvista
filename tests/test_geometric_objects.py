@@ -1,3 +1,5 @@
+from itertools import permutations
+
 import numpy as np
 import pytest
 
@@ -254,17 +256,94 @@ def test_triangle():
     assert np.allclose(mesh.points, points)
 
 
-def test_rectangle():
+def test_quadrilateral():
     pointa = [1.0, 1.0, 1.0]
     pointb = [-1.0, 1.0, 1.0]
     pointc = [-1.0, -1.0, 1.0]
     pointd = [1.0, -1.0, 1.0]
     points = np.array([pointa, pointb, pointc, pointd])
 
-    mesh = pyvista.Rectangle(points)
+    mesh = pyvista.Quadrilateral(points)
     assert mesh.n_points
     assert mesh.n_cells
     assert np.allclose(mesh.points, points)
+
+
+def test_rectangle_4points_deprecation():
+    pointa = [1.0, 1.0, 1.0]
+    pointb = [-1.0, 1.0, 1.0]
+    pointc = [-1.0, -1.0, 1.0]
+    pointd = [1.0, -1.0, 1.0]
+    points = np.array([pointa, pointb, pointc, pointd])
+
+    with pytest.warns(
+        pyvista.utilities.misc.PyVistaDeprecationWarning,
+        match='Please use ``pyvista.Quadrilateral``.',
+    ):
+        mesh = pyvista.Rectangle(points)
+        assert mesh.n_points
+        assert mesh.n_cells
+        assert np.allclose(mesh.points, points)
+
+
+def test_rectangle():
+    pointa = [3.0, 1.0, 1.0]
+    pointb = [3.0, 2.0, 1.0]
+    pointc = [1.0, 2.0, 1.0]
+    pointd = [1.0, 1.0, 1.0]
+
+    # Do a rotation to be in full 3D space with floating point coordinates
+    trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
+    rotated = pyvista.transformations.apply_transformation_to_points(
+        trans, np.array([pointa, pointb, pointc, pointd])
+    )
+
+    # Test all possible orders of the points
+    for pt_tuples in permutations(rotated, 4):
+        mesh = pyvista.Rectangle(list(pt_tuples[0:3]))
+        assert mesh.n_points
+        assert mesh.n_cells
+        assert np.allclose(mesh.points, pt_tuples)
+
+
+def test_rectangle_not_orthognal_entries():
+    pointa = [3.0, 1.0, 1.0]
+    pointb = [4.0, 3.0, 1.0]
+    pointc = [1.0, 1.0, 1.0]
+
+    # Do a rotation to be in full 3D space with floating point coordinates
+    trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
+    rotated = pyvista.transformations.apply_transformation_to_points(
+        trans, np.array([pointa, pointb, pointc])
+    )
+
+    with pytest.raises(ValueError, match="The three points should defined orthogonal vectors"):
+        pyvista.Rectangle(rotated)
+
+
+def test_rectangle_two_identical_points():
+    pointa = [3.0, 1.0, 1.0]
+    pointb = [4.0, 3.0, 1.0]
+    pointc = [3.0, 1.0, 1.0]
+
+    # Do a rotation to be in full 3D space with floating point coordinates
+    trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
+    rotated = pyvista.transformations.apply_transformation_to_points(
+        trans, np.array([pointa, pointb, pointc])
+    )
+
+    with pytest.raises(
+        ValueError, match="Unable to build a rectangle with less than three different points"
+    ):
+        pyvista.Rectangle(rotated)
+
+
+def test_rectangle_not_enough_points():
+    pointa = [3.0, 1.0, 1.0]
+    pointb = [4.0, 3.0, 1.0]
+
+    with pytest.raises(TypeError, match='Points must be given as length 3 np.ndarray or list'):
+        pyvista.Rectangle([pointa, pointb])
 
 
 def test_circle():

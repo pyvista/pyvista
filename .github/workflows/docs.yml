@@ -24,6 +24,26 @@ env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
 
 jobs:
+  doc-check:
+    name: Check Documentation (Vale)
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    # this is equivalent to
+    # vale --config doc/.vale.ini doc pyvista examples
+    - name: "Run Vale"
+      uses: errata-ai/vale-action@reviewdog
+      with:
+        files: '["doc", "pyvista", "examples"]'
+        vale_flags: "--config=doc/.vale.ini"
+        reporter: github-pr-check
+        level: error
+        filter_mode: nofilter
+        fail_on_error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   doc:
     name: Build Documentation
     runs-on: ubuntu-20.04
@@ -36,7 +56,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
             requirements.txt
@@ -47,43 +67,35 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Install custom OSMesa VTK variant
-        run: pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl
-
       - name: Install PyVista and dependencies
         run: |
           pip install -e . --no-deps
           pip install -r requirements_docs.txt
 
+      - name: Install custom OSMesa VTK variant
+        run: |
+          pip uninstall vtk -y
+          pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp311-cp311-linux_x86_64.whl
+
       - name: PyVista Report
         run: |
           python -c "import pyvista;print(pyvista.Report())"
           echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
+          pip list
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v3
-        if: env.USE_CACHE == 'true'
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
-          path: doc/examples/
+          path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
         uses: actions/cache@v3
-        if: env.USE_CACHE == 'true'
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
-
-      # configure building documentation with methods on individual pages on
-      # main, release, or tags with v*
-      - name: Set building full docs
-        if: >-
-          ${{
-          ( github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full-doc') ) ||
-          github.ref == 'refs/heads/main' ||  contains(github.ref, 'release') || startsWith(github.ref, 'refs/tags/v')
-          }}
-        run: |
-           echo "FULL_DOC_BUILD=TRUE" >> $GITHUB_ENV
 
       - name: Build Documentation
         run: make -C doc html
@@ -110,12 +122,12 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: examples
-          path: doc/examples/
+          path: doc/source/examples/
 
       - name: Get Notebooks
         run: |
           mkdir _notebooks
-          find doc/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
+          find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
 
       - uses: actions/upload-artifact@v3
         with:
@@ -138,7 +150,7 @@ jobs:
       - name: Copy meta data
         run: |
           cp doc/README.md doc/_build/html/
-          cp doc/ads.txt doc/_build/html/
+          cp doc/source/ads.txt doc/_build/html/
 
       - name: Deploy on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -167,7 +179,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
       - name: Install Dependencies
         run: |
           pip install cookiecutter
@@ -178,20 +190,10 @@ jobs:
 
       - name: Make Cookiecutter
         run: |
-          cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
-          cp -r doc/examples/ ./pyvista-examples/
+          cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
-
-      - name: Publish notebooks on main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          external_repository: pyvista/pyvista-examples
-          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          publish_dir: pyvista-examples
-          publish_branch: develop
-          exclude_assets: ''
 
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
