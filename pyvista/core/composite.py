@@ -147,7 +147,7 @@ class MultiBlock(
 
         Returns
         -------
-        tuple(float)
+        tuple[float, float, float, float, float, float]
             length 6 tuple of floats containing min/max along each axis
 
         Examples

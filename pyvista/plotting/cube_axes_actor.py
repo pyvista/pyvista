@@ -45,6 +45,10 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     minor_ticks : bool, default: False
         If ``True``, also plot minor ticks on all axes.
 
+    tick_location : str, optional
+        Set how the ticks are drawn on the axes grid. Options include:
+        ``'inside', 'outside', 'both'``.
+
     x_title : str, default: "X Axis"
         Title of the X axis.
 
@@ -103,10 +107,10 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     >>> import pyvista as pv
     >>> mesh = pv.Cube()
     >>> pl = pv.Plotter()
-    >>> pl.add_mesh(mesh)
+    >>> actor = pl.add_mesh(mesh)
     >>> cube_axes_actor = pv.CubeAxesActor(pl.camera)
     >>> cube_axes_actor.bounds = mesh.bounds
-    >>> pl.add_actor(cube_axes_actor)
+    >>> actor, property = pl.add_actor(cube_axes_actor)
     >>> pl.show()
 
     """
@@ -536,6 +540,11 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
         Unlike the :attr:`CubeAxesActor.bounds` attribute, updating the bounds
         also updates the axis labels.
+
+        Parameters
+        ----------
+        bounds : sequence[float]
+            Bounds in the form of ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         """
         self.bounds = bounds
