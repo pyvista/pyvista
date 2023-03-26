@@ -57,6 +57,7 @@ def test_trame():
     pl = pv.Plotter(notebook=True)
     actor = pl.add_mesh(pv.Cone())
     widget = pl.show(return_viewer=True)
+
     assert isinstance(widget, Widget)
     assert 'http://' in widget.src
 
@@ -67,6 +68,8 @@ def test_trame():
         cpos = list(pl.camera_position)
         pl.camera_position = cp[:3]
         assert cpos == pl.camera_position
+
+    # import pdb;pdb.set_trace()
 
     orig_value = actor.prop.show_edges
     server.state[viewer.EDGES] = not orig_value
