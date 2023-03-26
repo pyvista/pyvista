@@ -138,34 +138,34 @@ def create_axes_marker(
     z_color : ColorLike, optional
         Color of the z axis text.
 
-    xlabel : str, optional
+    xlabel : str, default: "X"
         Text used for the x axis.
 
-    ylabel : str, optional
+    ylabel : str, default: "Y"
         Text used for the y axis.
 
-    zlabel : str, optional
+    zlabel : str, default: "Z"
         Text used for the z axis.
 
-    labels_off : bool, optional
+    labels_off : bool, default: False
         Enable or disable the text labels for the axes.
 
-    line_width : float, optional
+    line_width : float, default: 2
         The width of the marker lines.
 
-    cone_radius : float, optional
+    cone_radius : float, default: 0.4
         The radius of the axes arrow tips.
 
-    shaft_length : float, optional
+    shaft_length : float, default: 0.8
         The length of the axes arrow shafts.
 
-    tip_length : float, optional
+    tip_length : float, default: 0.2
         Length of the tip.
 
-    ambient : float, optional
+    ambient : float, default: 0.5
         The ambient of the axes arrows. Value should be between 0 and 1.
 
-    label_size : sequence, optional
+    label_size : sequence[float], default: (0.25, 0.1)
         The width and height of the axes label actors. Values should be between
         0 and 1. For example ``(0.2, 0.1)``.
 

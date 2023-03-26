@@ -12,12 +12,12 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
-    density : float, np.ndarray or collections.abc.Sequence
+    density : float | array_like[float]
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
         Defaults to 1/100th of the mesh length.
 
-    check_surface : bool
+    check_surface : bool, default: True
         Specify whether to check the surface for closure. If on, then the
         algorithm first checks to see if the surface is closed and
         manifold. If the surface is not closed and manifold, a runtime
@@ -112,11 +112,11 @@ def grid_from_sph_coords(theta, phi, r):
 
     Parameters
     ----------
-    theta : array-like
+    theta : array_like[float]
         Azimuthal angle in degrees ``[0, 360]``.
-    phi : array-like
+    phi : array_like[float]
         Polar (zenith) angle in degrees ``[0, 180]``.
-    r : array-like
+    r : array_like[float]
         Distance (radius) from the point of origin.
 
     Returns
@@ -141,17 +141,17 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
 
     Parameters
     ----------
-    theta : sequence
+    theta : array_like[float]
         Azimuthal angle in degrees ``[0, 360]`` of shape (M,)
-    phi : sequence
+    phi : array_like[float]
         Polar (zenith) angle in degrees ``[0, 180]`` of shape (N,)
-    r : sequence
+    r : array_like[float]
         Distance (radius) from the point of origin of shape (P,)
-    u : sequence
+    u : array_like[float]
         X-component of the vector of shape (P, N, M)
-    v : sequence
+    v : array_like[float]
         Y-component of the vector of shape (P, N, M)
-    w : sequence
+    w : array_like[float]
         Z-component of the vector of shape (P, N, M)
 
     Returns
@@ -224,18 +224,18 @@ def merge(
        does not attempt to create a manifold mesh and will include
        internal surfaces when two meshes overlap.
 
-    datasets : sequence of :class:`pyvista.Dataset`
+    datasets : sequence[:class:`pyvista.Dataset`]
         Sequence of datasets. Can be of any :class:`pyvista.Dataset`
 
-    merge_points : bool, optional
-        Merge equivalent points when ``True``. Defaults to ``True``.
+    merge_points : bool, default: True
+        Merge equivalent points when ``True``.
 
-    main_has_priority : bool, optional
+    main_has_priority : bool, default: True
         When this parameter is ``True`` and ``merge_points=True``,
         the arrays of the merging grids will be overwritten
         by the original main mesh.
 
-    progress_bar : bool, optional
+    progress_bar : bool, default: False
         Display a progress bar to indicate progress.
 
     Returns
