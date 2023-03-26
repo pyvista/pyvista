@@ -528,9 +528,9 @@ def test_plot_show_grid(sphere):
         plotter.show_grid(location='foo')
     with pytest.raises(TypeError, match='location must be a string'):
         plotter.show_grid(location=10)
-    with pytest.raises(ValueError, match='Value of ticks'):
+    with pytest.raises(ValueError, match='Value of tick'):
         plotter.show_grid(ticks='foo')
-    with pytest.raises(TypeError, match='ticks must be a string'):
+    with pytest.raises(TypeError, match='must be a string'):
         plotter.show_grid(ticks=10)
 
     plotter.show_grid()  # Add mesh after to make sure bounds update

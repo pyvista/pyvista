@@ -1461,19 +1461,42 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             bounds = np.asanyarray(bounds, dtype=float)
 
         # create actor
-        cube_axes_actor = _vtk.vtkCubeAxesActor()
-        if use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-            cube_axes_actor.SetUse2DMode(True)
-        else:
-            cube_axes_actor.SetUse2DMode(False)
+        cube_axes_actor = pyvista.CubeAxesActor(
+            self.camera,
+            minor_ticks=minor_ticks,
+            tick_location=ticks,
+            x_title=xtitle,
+            y_title=ytitle,
+            z_title=ztitle,
+            x_axis_visibility=show_xaxis,
+            y_axis_visibility=show_yaxis,
+            z_axis_visibility=show_zaxis,
+            x_label_format=fmt,
+            y_label_format=fmt,
+            z_label_format=fmt,
+            x_label_visibility=show_xlabels,
+            y_label_visibility=show_ylabels,
+            z_label_visibility=show_zlabels,
+            n_xlabels=n_xlabels,
+            n_ylabels=n_ylabels,
+            n_zlabels=n_zlabels,
+        )
+
+        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
 
         if grid:
-            if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
+            grid = 'back' if grid is True else grid
+            if not isinstance(grid, str):
+                raise TypeError(f'`grid` must be a str, not {type(grid)}')
+            grid = grid.lower()
+            if grid in ('front', 'frontface'):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            if isinstance(grid, str) and grid.lower() in ('both', 'all'):
+            elif grid in ('both', 'all'):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
-            else:
+            elif grid in ('back', True):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
+            else:
+                raise ValueError(f'`grid` must be either "front", "back, or, "all", not {grid}')
             # Only show user desired grid lines
             cube_axes_actor.SetDrawXGridlines(show_xaxis)
             cube_axes_actor.SetDrawYGridlines(show_yaxis)
@@ -1482,22 +1505,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
             cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
             cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
-
-        if isinstance(ticks, str):
-            ticks = ticks.lower()
-            if ticks in ('inside'):
-                cube_axes_actor.SetTickLocationToInside()
-            elif ticks in ('outside'):
-                cube_axes_actor.SetTickLocationToOutside()
-            elif ticks in ('both'):
-                cube_axes_actor.SetTickLocationToBoth()
-            else:
-                raise ValueError(
-                    f'Value of ticks ("{ticks}") should be either "inside", "outside", '
-                    'or "both".'
-                )
-        elif ticks is not None:
-            raise TypeError('ticks must be a string')
 
         if isinstance(location, str):
             location = location.lower()
@@ -1535,6 +1542,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 bounds[1::2] += cushion
         else:
             raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
+        cube_axes_actor.bounds = bounds
 
         # set axes ranges if input
         if axes_ranges is not None:
@@ -1552,80 +1560,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
                 )
 
-            cube_axes_actor.SetXAxisRange(axes_ranges[0], axes_ranges[1])
-            cube_axes_actor.SetYAxisRange(axes_ranges[2], axes_ranges[3])
-            cube_axes_actor.SetZAxisRange(axes_ranges[4], axes_ranges[5])
-
-        # show or hide axes
-        cube_axes_actor.SetXAxisVisibility(show_xaxis)
-        cube_axes_actor.SetYAxisVisibility(show_yaxis)
-        cube_axes_actor.SetZAxisVisibility(show_zaxis)
-
-        # disable minor ticks
-        if not minor_ticks:
-            cube_axes_actor.XAxisMinorTickVisibilityOff()
-            cube_axes_actor.YAxisMinorTickVisibilityOff()
-            cube_axes_actor.ZAxisMinorTickVisibilityOff()
-
-        cube_axes_actor.SetCamera(self.camera)
+            cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
+            cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
+            cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
 
         # set color
         cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
         cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
         cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
-
-        # empty string used for clearing axis labels
-        self._empty_str = _vtk.vtkStringArray()
-        self._empty_str.InsertNextValue('')
-
-        def make_axis_labels(vmin, vmax, n):
-            """Create a axis labels as a vtkStringArray."""
-            labels = _vtk.vtkStringArray()
-            for v in np.linspace(vmin, vmax, n):
-                if fmt:
-                    if fmt.startswith('%'):
-                        label = fmt % v
-                    else:
-                        label = fmt.format(v)
-                else:
-                    label = f'{v}'
-                labels.InsertNextValue(label)
-            return labels
-
-        def update_bounds(bounds):
-            cube_axes_actor.SetBounds(bounds)
-
-            if show_xaxis:
-                cube_axes_actor.SetXTitle(xtitle)
-                if not show_xlabels:
-                    cube_axes_actor.SetAxisLabels(0, self._empty_str)
-                else:
-                    cube_axes_actor.SetAxisLabels(0, make_axis_labels(*bounds[0:2], n_xlabels))
-            else:
-                cube_axes_actor.SetXTitle('')
-                cube_axes_actor.SetAxisLabels(0, self._empty_str)
-
-            if show_yaxis:
-                cube_axes_actor.SetYTitle(ytitle)
-                if not show_ylabels:
-                    cube_axes_actor.SetAxisLabels(1, self._empty_str)
-                else:
-                    cube_axes_actor.SetAxisLabels(1, make_axis_labels(*bounds[2:4], n_ylabels))
-            else:
-                cube_axes_actor.SetYTitle('')
-                cube_axes_actor.SetAxisLabels(1, self._empty_str)
-
-            if show_zaxis:
-                cube_axes_actor.SetZTitle(ztitle)
-                if not show_zlabels:
-                    cube_axes_actor.SetAxisLabels(2, self._empty_str)
-                else:
-                    cube_axes_actor.SetAxisLabels(2, make_axis_labels(*bounds[4:6], n_zlabels))
-            else:
-                cube_axes_actor.SetZTitle('')
-                cube_axes_actor.SetAxisLabels(2, self._empty_str)
-
-        update_bounds(bounds)
 
         # set font
         font_family = parse_font_family(font_family)
@@ -1662,16 +1604,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
-        # Monkey patch bounds update method to auto update labels
-        self.cube_axes_actor.update_bounds = update_bounds
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
-
-        if fmt is not None:
-            cube_axes_actor.SetXLabelFormat(fmt)
-            cube_axes_actor.SetYLabelFormat(fmt)
-            cube_axes_actor.SetZLabelFormat(fmt)
 
         self.Modified()
         return cube_axes_actor
@@ -2069,7 +2004,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if self.cube_axes_actor is not None:
             self.remove_actor(self.cube_axes_actor)
-            del self.cube_axes_actor.update_bounds
             self.cube_axes_actor = None
             self.Modified()
 
@@ -3151,7 +3085,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if self.cube_axes_actor is not None:
-            del self.cube_axes_actor.update_bounds
             self.cube_axes_actor = None
 
         if hasattr(self, 'edl_pass'):
