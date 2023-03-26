@@ -77,9 +77,9 @@ pl.show()
 # Plot the Magnet Field Strength
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, let's bring this all together by plotting the magnetic field
-# strength while also plotting the steamlines and the coil.
+# strength while also plotting the streamlines and the coil.
 
-# Take the norm of the magetic field
+# Take the norm of the magnetic field
 scalars = np.linalg.norm(grid['B'], axis=1)
 
 # Customize the opacity to make it easier to visualize the strength of the

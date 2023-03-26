@@ -932,6 +932,7 @@ def test_coil_magnetic_field():
 
     dataset = examples.download_coil_magnetic_field(load=True)
     assert isinstance(dataset, pv.UniformGrid)
+    assert dataset.n_points == 531441
 
 
 def test_load_sun():
