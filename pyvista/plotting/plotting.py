@@ -161,8 +161,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     Parameters
     ----------
-    shape : list or tuple, optional
-        Number of sub-render windows inside of the main window.
+    shape : sequence[int] | str, optional
+        Two item sequence of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one renderer.
         Can also accept a string descriptor as shape. For example:
@@ -170,8 +170,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
-    border : bool, optional
-        Draw a border around each render window.  Default ``False``.
+    border : bool, default: False
+        Draw a border around each render window.
 
     border_color : ColorLike, default: 'k'
         Either a string, rgb list, or hex color string.  For example:
@@ -351,7 +351,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def render_window(self):
         """Access the vtkRenderWindow.
 
-        If the plotter is closed, this will return None.
+        If the plotter is closed, this will return ``None``.
 
         Notes
         -----
@@ -399,7 +399,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to the glTF file.
 
-        set_camera : bool, optional
+        set_camera : bool, default: True
             Set the camera viewing angle to one compatible with the
             default three.js perspective (``'xy'``).
 
@@ -488,7 +488,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to export the html file to.
 
-        backend : str, optional
+        backend : str, default: "pythreejs"
             One of the following:
 
             - ``'pythreejs'``
@@ -591,14 +591,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to export the gltf file to.
 
-        inline_data : bool, optional
+        inline_data : bool, default: True
             Sets if the binary data be included in the json file as a
             base64 string.  When ``True``, only one file is exported.
 
-        rotate_scene : bool, optional
+        rotate_scene : bool, default: True
             Rotate scene to be compatible with the glTF specifications.
 
-        save_normals : bool, optional
+        save_normals : bool, default: True
             Saves the point array ``'Normals'`` as ``'NORMAL'`` in
             the outputted scene.
 
@@ -743,7 +743,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        all_renderers : bool
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If
             ``False``, then only applies to the active renderer.
 
@@ -780,7 +780,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        all_renderers : bool
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If
             ``False``, then only applies to the active renderer.
 
@@ -904,7 +904,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         index_row : int
             Index of the subplot to activate along the rows.
 
-        index_column : int
+        index_column : int, optional
             Index of the subplot to activate along the columns.
 
         Examples
@@ -971,7 +971,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        only_active : bool
+        only_active : bool, default: False
             If ``True``, only change the active renderer. The default
             is that every renderer is affected.
 
@@ -1027,7 +1027,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        only_active : bool
+        only_active : bool, default: False
             If ``True``, only change the active renderer. The default is that
             every renderer is affected.
 
@@ -1067,7 +1067,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        aa_type : str, optional
+        aa_type : str, default: "fxaa"
             Anti-aliasing type. See the notes below. One of the following:
 
             * ``"ssaa"`` - Super-Sample Anti-Aliasing
@@ -1079,9 +1079,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that using this setting automatically enables this for all
             renderers. Defaults to the theme multi_samples.
 
-        all_renderers : bool
-            If ``True``, applies to all renderers in subplots. If
-            ``False``, then only applies to the active renderer.
+        all_renderers : bool, default: True
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
 
         Notes
         -----
@@ -1148,7 +1148,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        all_renderers : bool
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
 
@@ -1490,7 +1490,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list
+        tuple
             Bounds of the active renderer.
 
         Examples
@@ -1648,7 +1648,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        window_size : Sequence, optional
+        window_size : sequence[int], optional
             Window size in pixels.  Defaults to :attr:`pyvista.Plotter.window_size`.
 
         Examples
@@ -1814,10 +1814,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The callback method to run post-render. This takes a single
             argument which is the plotter object.
 
-        render_event : bool
-            If True, associate with all VTK RenderEvents. Otherwise, the
-            callback is only handled on a successful ``render()`` from
-            the PyVista plotter directly.
+        render_event : bool, default: False
+            If ``True``, associate with all VTK RenderEvents. Otherwise, the
+            callback is only handled on a successful ``render()`` from the
+            PyVista plotter directly.
 
         """
         if render_event:
@@ -1891,7 +1891,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list of vtk.vtkActors
+        list[pyvista.Actor]
 
         Examples
         --------
@@ -2151,11 +2151,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        stime : int, optional
+        stime : int, default: 1
             Duration of timer that interrupt vtkRenderWindowInteractor
             in milliseconds.
 
-        force_redraw : bool, optional
+        force_redraw : bool, default: True
             Call ``render`` immediately.
 
         """
@@ -2259,10 +2259,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Accepts only a string name of an array that is present on the
             composite dataset.
 
-        clim : Sequence[float, float], optional
-            Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
-            is also an accepted alias for this.
+        clim : sequence[float], optional
+            Two item color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
+            also an accepted alias for this.
 
         show_edges : bool, default: :attr:`pyvista.global_theme.show_edges <pyvista.themes.DefaultTheme.show_edges>`
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -2304,7 +2304,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+        cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``.
@@ -2480,14 +2480,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             when not all blocks of the composite dataset have the specified
             ``scalars``.
 
-        copy_mesh : bool, optional
+        copy_mesh : bool, default: False
             If ``True``, a copy of the mesh will be made before adding it to
             the plotter.  This is useful if e.g. you would like to add the same
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
             have these updates rendered, e.g. by changing the active scalars or
-            through an interactive widget.  Defaults to ``False``.
+            through an interactive widget.
 
         show_vertices : bool, optional
             When ``style`` is not ``'points'``, render the external surface
@@ -2807,7 +2807,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``'points_gaussian'`` can be modified with the ``emissive``,
             ``render_points_as_spheres`` options.
 
-        scalars : str or numpy.ndarray, optional
+        scalars : str | numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name
             of an array that is present on the mesh or an array equal
             to the number of cells or the number of points in the
@@ -2815,10 +2815,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
 
-        clim : Sequence[float, float], optional
-            Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
-            is also an accepted alias for this.
+        clim : sequence[float], optional
+            Two item color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
+            also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -2839,7 +2839,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default ``None``.
 
-        opacity : float, str, array-like
+        opacity : float | str| array_like
             Opacity of the mesh. If a single float value is given, it
             will be the global opacity of the mesh and uniformly
             applied everywhere - should be between 0 and 1. A string
@@ -2852,7 +2852,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             made transfer function that is an array either
             ``n_colors`` in length or shorter.
 
-        flip_scalars : bool, optional
+        flip_scalars : bool, default: False
             Flip direction of cmap. Most colormaps allow ``*_r``
             suffix to do this as well.
 
@@ -2869,7 +2869,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``.
@@ -2901,11 +2901,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar bar to the scene. For options, see
             :func:`pyvista.Plotter.add_scalar_bar`.
 
-        show_scalar_bar : bool
+        show_scalar_bar : bool, optional
             If ``False``, a scalar bar will not be added to the
-            scene. Defaults to ``True``.
+            scene.
 
-        multi_colors : bool, optional
+        multi_colors : bool, default: False
             If a :class:`pyvista.MultiBlock` dataset is given this will color
             each block by a solid color using matplotlib's color cycler.
 
@@ -3021,17 +3021,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable : bool, optional
             Set whether this actor is pickable.
 
-        preference : str, optional
+        preference : str, default: "point"
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
             mapped to the mesh.  Default ``'point'``, causes the
             scalars will be associated with the mesh points.  Can be
             either ``'point'`` or ``'cell'``.
 
-        log_scale : bool, optional
+        log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
-            positive float. Default ``False``.
+            positive float.
 
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
@@ -3041,16 +3041,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         metallic : float, optional
             Usually this value is either 0 or 1 for a real material
             but any value in between is valid. This parameter is only
-            used by PBR interpolation. Default value is 0.0.
+            used by PBR interpolation.
 
         roughness : float, optional
             This value has to be between 0 (glossy) and 1 (rough). A
             glossy material has reflections and a high specular
             part. This parameter is only used by PBR
-            interpolation. Default value is 0.5.
+            interpolation.
 
-        render : bool, optional
-            Force a render when ``True``.  Default ``True``.
+        render : bool, default: True
+            Force a render when ``True``.
 
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
@@ -3061,7 +3061,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Treat the points/splats as emissive light sources. Only valid for
             ``style='points_gaussian'`` representation.
 
-        copy_mesh : bool, optional
+        copy_mesh : bool, default: False
             If ``True``, a copy of the mesh will be made before adding it to
             the plotter.  This is useful if you would like to add the same
             mesh to a plotter multiple times and display different
@@ -3072,7 +3072,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             with caution. Defaults to ``False``. This is ignored if the input
             is a ``vtkAlgorithm`` subclass.
 
-        backface_params : dict or pyvista.Property, optional
+        backface_params : dict | pyvista.Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
             backface rendering. This is useful for instance when the inside of
             oriented surfaces has a different color than the outside. When a
@@ -3174,7 +3174,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     show_edges=True,
         ... )
 
-        Plot the points of a sphere with gaussian smoothing while coloring by z
+        Plot the points of a sphere with Gaussian smoothing while coloring by z
         position.
 
         >>> mesh = pv.Sphere()
@@ -3611,7 +3611,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.DataSet
+        volume : 3D numpy.ndarray | pyvista.DataSet
             The input volume to visualize. 3D numpy arrays are accepted.
 
             .. warning::
@@ -3619,7 +3619,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 :class:`pyvista.UniformGrid`, or :class:`pyvista.RectilinearGrid`,
                 volume rendering will often have poor performance.
 
-        scalars : str or numpy.ndarray, optional
+        scalars : str | numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
             array that is present on the mesh or an array with length equal
             to the number of cells or the number of points in the
@@ -3637,7 +3637,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             shaped ``(N, 4)`` where ``N`` is the number of points, and of
             datatype ``np.uint8``.
 
-        clim : Sequence[float, float], optional
+        clim : sequence[float], optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
             ``np.uint8``. ``rng`` is also an accepted alias for this parameter.
@@ -3651,7 +3651,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             unexpected behavior. See:
             `pyvista #1967 <https://github.com/pyvista/pyvista/issues/1967>`_.
 
-        opacity : str or numpy.ndarray, optional
+        opacity : str | numpy.ndarray, optional
             Opacity mapping for the scalars array.
             A string can also be specified to map the scalars range to a
             predefined opacity transfer function (options include: 'linear',
@@ -3667,7 +3667,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
 
-        cmap : str, list, or pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
+        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.themes.DefaultTheme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``.
@@ -3768,7 +3768,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars will be associated with the mesh points.  Can be
             either ``'point'`` or ``'cell'``.
 
-        opacity_unit_distance : float
+        opacity_unit_distance : float, optional
             Set/Get the unit distance on which the scalar opacity
             transfer function is defined. Meaning that over that
             distance, a given opacity (from the transfer function) is
@@ -3777,24 +3777,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
             of the diagonal of the bounding box of the volume divided
             by the dimensions.
 
-        shade : bool
+        shade : bool, default: False
             Default off. If shading is turned on, the mapper may
             perform shading calculations - in some cases shading does
             not apply (for example, in a maximum intensity projection)
             and therefore shading will not be performed even if this
             flag is on.
 
-        diffuse : float, optional
-            The diffuse lighting coefficient. Default ``1.0``.
+        diffuse : float, default: 0.7
+            The diffuse lighting coefficient.
 
-        specular : float, optional
-            The specular lighting coefficient. Default ``0.0``.
+        specular : float, default: 0.2
+            The specular lighting coefficient.
 
-        specular_power : float, optional
+        specular_power : float, default: 10.0
             The specular power. Between ``0.0`` and ``128.0``.
 
-        render : bool, optional
-            Force a render when True.  Default ``True``.
+        render : bool, default: True
+            Force a render when True.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -4168,7 +4168,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet | vtk.vtkAlgorithm
             Mesh or mesh-producing algorithm for generating silhouette
             to plot.
 
@@ -4271,14 +4271,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        clim : Sequence[float, float]
+        clim : sequence[float]
             The new range of scalar bar. For example ``[-1, 2]``.
 
         name : str, optional
             The title of the scalar bar to update.
 
         """
-        if isinstance(clim, float) or isinstance(clim, int):
+        if isinstance(clim, (float, int)):
             clim = [-clim, clim]
         if len(clim) != 2:
             raise TypeError('clim argument must be a length 2 iterable of values: (min, max).')
@@ -4288,17 +4288,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.scalar_range = clim
             return
 
-        # Use the name to find the desired actor
-        def update_mapper(mapper_helper):
-            mapper_helper.scalar_range = clim
-            return
-
         try:
+            # use the name to find the desired actor
             for mh in self.scalar_bars._scalar_bar_mappers[name]:
-                update_mapper(mh)
+                mh.scalar_range = clim
         except KeyError:
-            raise KeyError('Name ({}) not valid/not found in this plotter.')
-        return
+            raise ValueError(f'Name ({name!r}) not valid/not found in this plotter.') from None
 
     def clear_actors(self):
         """Clear actors from all renderers."""
@@ -4327,7 +4322,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        views : int | tuple or list
+        views : int | tuple | list, default: 0
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
@@ -4407,7 +4402,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        views : None, int, tuple or list
+        views : int | tuple | list, optional
             If ``views`` is None unlink all the views, if ``views``
             is int unlink the selected view's camera or if ``views``
             is a tuple or a list, unlink the given views cameras.
@@ -4470,15 +4465,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        scalars : np.ndarray
+        scalars : sequence
             Scalars to replace existing scalars.
 
-        mesh : vtk.PolyData or vtk.UnstructuredGrid, optional
+        mesh : vtk.PolyData | vtk.UnstructuredGrid, optional
             Object that has already been added to the Plotter.  If
             None, uses last added mesh.
 
-        render : bool, optional
-            Force a render when True.  Default ``True``.
+        render : bool, default: True
+            Force a render when True.
         """
         if mesh is None:
             mesh = self.mesh
@@ -4531,12 +4526,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points : np.ndarray
             Points to replace existing points.
 
-        mesh : vtk.PolyData or vtk.UnstructuredGrid, optional
-            Object that has already been added to the Plotter.  If
-            None, uses last added mesh.
+        mesh : vtk.PolyData | vtk.UnstructuredGrid, optional
+            Object that has already been added to the Plotter.  If ``None``, uses
+            last added mesh.
 
-        render : bool, optional
-            Force a render when True.  Default ``True``.
+        render : bool, default: True
+            Force a render when True.
         """
         if mesh is None:
             mesh = self.mesh
@@ -4650,7 +4645,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         text : str
             The text to add the rendering.
 
-        position : str, tuple(float), optional
+        position : str | sequence[float], default: "upper_left"
             Position to place the bottom left corner of the text box.
             If tuple is used, the position of the text uses the pixel
             coordinate system (default). In this case,
@@ -4663,8 +4658,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``'lower_edge'``, ``'upper_edge'``, ``'right_edge'``, and
             ``'left_edge'``.
 
-        font_size : float, optional
-            Sets the size of the title font.  Defaults to 18.
+        font_size : float, default: 18
+            Sets the size of the title font.
 
         color : ColorLike, optional
             Either a string, RGB list, or hex color string.  For example:
@@ -4679,23 +4674,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font : str, optional
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
 
-        shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to ``False``.
+        shadow : bool, default: False
+            Adds a black shadow to the text.
 
         name : str, optional
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        viewport : bool, optional
+        viewport : bool, default: False
             If ``True`` and position is a tuple of float, uses the
             normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
 
-        orientation : float, optional
+        orientation : float, default: 0.0
             Angle orientation of text counterclockwise in degrees.  The text
             is rotated around an anchor point that may be on the edge or
-            corner of the text.  The default is 0 degrees, which is horizontal.
+            corner of the text.  The default is horizontal (0.0 degrees).
 
         render : bool, optional
             Force a render when ``True`` (default).
@@ -4788,10 +4783,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             but other filetypes may be supported.  See :func:`imageio.get_writer()
             <imageio.v2.get_writer>`.
 
-        framerate : int, optional
+        framerate : int, default: 24
             Frames per second.
 
-        quality : int, optional
+        quality : int, default: 5
             Quality 10 is the top possible quality for any codec. The
             range is ``0 - 10``.  Higher quality leads to a larger file.
 
@@ -4826,21 +4821,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Filename of the gif to open.  Filename must end in ``"gif"``.
 
-        loop : int, optional
-            The number of iterations. Default 0 (meaning loop indefinitely).
+        loop : int, default: 0
+            The number of iterations. Default value of 0 loops indefinitely.
 
-        fps : float, optional
+        fps : float, default: 10
             The number of frames per second. If duration is not given, the
-            duration for each frame is set to 1/fps. Default 10.
+            duration for each frame is set to 1/fps.
 
-        palettesize : int, optional
+        palettesize : int, default: 256
             The number of colors to quantize the image to. Is rounded to the
-            nearest power of two. Must be between 2 and 256. Default 256.
+            nearest power of two. Must be between 2 and 256.
 
-        subrectangles : bool, optional
+        subrectangles : bool, default: False
             If ``True``, will try and optimize the GIF by storing only the rectangular
-            parts of each frame that change with respect to the previous. Default
-            ``False``.
+            parts of each frame that change with respect to the previous.
 
             .. note::
                Setting this to ``True`` may help reduce jitter in colorbars.
@@ -4917,11 +4911,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        fill_value : float, optional
+        fill_value : float, default: numpy.nan
             Fill value for points in image that do not include objects
             in scene.  To not use a fill value, pass ``None``.
 
-        reset_camera_clipping_range : bool, optional
+        reset_camera_clipping_range : bool, default: True
             Reset the camera clipping range to include data in view.
 
         Returns
@@ -5087,23 +5081,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : sequence or pyvista.DataSet or vtk.vtkAlgorithm
-            An ``n x 3`` sequence points or pyvista dataset with points or
-            mesh-producing algorithm.
+        points : sequence | pyvista.DataSet | vtk.vtkAlgorithm
+            An ``n x 3`` sequence points or :class:`pyvista.DataSet` with
+            points or mesh-producing algorithm.
 
-        labels : list or str
+        labels : list | str
             List of labels.  Must be the same length as points. If a
             string name is given with a :class:`pyvista.DataSet` input for
             points, then these are fetched.
 
-        italic : bool, optional
-            Italicises title and bar labels.  Default ``False``.
+        italic : bool, default: False
+            Italicises title and bar labels.
 
-        bold : bool, optional
-            Bolds title and bar labels.  Default ``True``.
+        bold : bool, default: True
+            Bolds title and bar labels.
 
         font_size : float, optional
-            Sets the size of the title font.  Defaults to 16.
+            Sets the size of the title font.
 
         text_color : ColorLike, optional
             Color of text. Either a string, RGB sequence, or hex color string.
@@ -5117,11 +5111,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Font family.  Must be either ``'courier'``, ``'times'``,
             or ``'arial``.
 
-        shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to ``False``.
+        shadow : bool, default: False
+            Adds a black shadow to the text.
 
-        show_points : bool, optional
-            Controls if points are visible.  Default ``True``.
+        show_points : bool, default: True
+            Controls if points are visible.
 
         point_color : ColorLike, optional
             Either a string, rgb list, or hex color string.  One of
@@ -5140,30 +5134,30 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        shape_color : ColorLike, optional
+        shape_color : ColorLike, default: "grey"
             Color of shape (if visible).  Either a string, rgb
             sequence, or hex color string.
 
-        shape : str, optional
+        shape : str, default: "rounded_rect"
             The string name of the shape to use. Options are ``'rect'`` or
             ``'rounded_rect'``. If you want no shape, pass ``None``.
 
-        fill_shape : bool, optional
+        fill_shape : bool, default: True
             Fill the shape with the ``shape_color``. Outlines if ``False``.
 
-        margin : int, optional
-            The size of the margin on the label background shape. Default is 3.
+        margin : int, default: 3
+            The size of the margin on the label background shape.
 
-        shape_opacity : float, optional
+        shape_opacity : float, default: 1.0
             The opacity of the shape in the range of ``[0, 1]``.
 
-        pickable : bool, optional
+        pickable : bool, default: False
             Set whether this actor is pickable.
 
-        render_points_as_spheres : bool, optional
+        render_points_as_spheres : bool, default: False
             Render points as spheres rather than dots.
 
-        tolerance : float, optional
+        tolerance : float, default: 0.001
             A tolerance to use to determine whether a point label is
             visible.  A tolerance is usually required because the
             conversion from world space to display space during
@@ -5172,11 +5166,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera : bool, optional
             Reset the camera after adding the points to the scene.
 
-        always_visible : bool, optional
-            Skip adding the visibility filter. Default False.
+        always_visible : bool, default: False
+            Skip adding the visibility filter.
 
-        render : bool, optional
-            Force a render when ``True`` (default).
+        render : bool, default: True
+            Force a render when ``True``.
 
         Returns
         -------
@@ -5323,10 +5317,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : Sequence(float) or np.ndarray or pyvista.DataSet
+        points : sequence[float] | np.ndarray | pyvista.DataSet
             An ``n x 3`` numpy.ndarray or pyvista dataset with points.
 
-        labels : list or str
+        labels : list | str
             List of scalars of labels.  Must be the same length as points. If a
             string name is given with a :class:`pyvista.DataSet` input for
             points, then these are fetched.
@@ -5334,7 +5328,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         fmt : str, optional
             String formatter used to format numerical data.
 
-        preamble : str, optional
+        preamble : str, default: ""
             Text before the start of each label.
 
         **kwargs : dict, optional
@@ -5528,13 +5522,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to fsave the graphic file to.
 
-        title : str, optional
+        title : str, default: "PyVista Export"
             Title to use within the file properties.
 
-        raster : bool, optional
+        raster : bool, default: True
             Attempt to write 3D properties as a raster image.
 
-        painter : bool, optional
+        painter : bool, default: True
             Configure the exporter to expect a painter-ordered 2D
             rendering, that is, a rendering at a fixed depth where
             primitives are drawn from the bottom up.
@@ -5591,18 +5585,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str, pathlib.Path, io.BytesIO, optional
+        filename : str | pathlib.Path | io.BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
             Whether to make the background transparent.  The default is
             looked up on the plotter's theme.
 
-        return_img : bool, optional
-            If ``True`` (the default), a NumPy array of the image will
-            be returned.
+        return_img : bool, default: True
+            If ``True``, a :class:`numpy.ndarray` of the image will be
+            returned.
 
-        window_size : 2-length tuple, optional
+        window_size : sequence[int], optional
             Set the plotter's size to this ``(width, height)`` before
             taking the screenshot.
 
@@ -5681,16 +5675,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        factor : float, optional
+        factor : float, default: 3.0
             A scaling factor when building the orbital extent.
 
-        n_points : int, optional
+        n_points : int, default: 20
             Number of points on the orbital path.
 
-        viewup : list(float), optional
+        viewup : sequence[float], optional
             The normal to the orbital plane.
 
-        shift : float, optional
+        shift : float, default: 0.0
             Shift the plane up/down from the center of the scene by
             this amount.
 
@@ -5733,7 +5727,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        point : sequence
+        point : sequence[float]
             Point to fly to in the form of ``(x, y, z)``.
 
         """
@@ -5757,25 +5751,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Path of orbital points. The order in the points is the order of
             travel.
 
-        focus : list(float) of length 3, optional
-            The point of focus the camera.
+        focus : sequence[float], optional
+            The point of focus the camera. For example ``(0.0, 0.0, 0.0)``.
 
-        step : float, optional
+        step : float, default: 0.5
             The timestep between flying to each camera position. Ignored when
-            the plotter run "off screen".
+            ``plotter.off_screen = True``.
 
-        viewup : list(float), optional
+        viewup : sequence[float], optional
             The normal to the orbital plane.
 
-        write_frames : bool, optional
+        write_frames : bool, default: False
             Assume a file is open and write a frame on each camera
             view during the orbit.
 
-        threaded : bool, optional
+        threaded : bool, default: False
             Run this as a background thread.  Generally used within a
             GUI (i.e. PyQt).
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Show the progress bar when proceeding through the path.
             This can be helpful to show progress when generating
             movies with ``off_screen=True``.
@@ -5864,7 +5858,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Filename to export the scene to.  A filename extension of
             ``'.vtkjs'`` will be added.
 
-        compress_arrays : bool, optional
+        compress_arrays : bool, default: False
             Enable array compression.
 
         Examples
@@ -5943,7 +5937,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._initialized:
             del self.renderers
 
-    def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
+    def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True):
         """Add a background image to a plot.
 
         Parameters
@@ -5951,16 +5945,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         image_path : str
             Path to an image file.
 
-        scale : float, optional
+        scale : float, default: 1.0
             Scale the image larger or smaller relative to the size of
             the window.  For example, a scale size of 2 will make the
             largest dimension of the image twice as large as the
-            largest dimension of the render window.  Defaults to 1.
+            largest dimension of the render window.
 
-        auto_resize : bool, optional
+        auto_resize : bool, default: True
             Resize the background when the render window changes size.
 
-        as_global : bool, optional
+        as_global : bool, default: True
             When multiple render windows are present, setting
             ``as_global=False`` will cause the background to only
             appear in one window.
@@ -6027,7 +6021,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         light : Light or vtkLight
             The light to be added.
 
-        only_active : bool, optional
+        only_active : bool, default: False
             If ``True``, only add the light to the active
             renderer. The default is that every renderer adds the
             light. To add the light to an arbitrary renderer, see
@@ -6055,7 +6049,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        only_active : bool
+        only_active : bool, default: False
             If ``True``, only remove lights from the active
             renderer. The default is that lights are stripped from
             every renderer.
@@ -6133,7 +6127,7 @@ class Plotter(BasePlotter):
         notebook.  Assumes a jupyter console is active.  Automatically
         enables ``off_screen``.
 
-    shape : list or tuple, optional
+    shape : sequence[int], optional
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one render
@@ -6143,9 +6137,9 @@ class Plotter(BasePlotter):
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
-        Draw a border around each render window.  Default ``False``.
+        Draw a border around each render window.
 
-    border_color : ColorLike, optional
+    border_color : ColorLike, default: "k"
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -6153,7 +6147,7 @@ class Plotter(BasePlotter):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-    window_size : list, optional
+    window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
         set differently in the relevant theme's ``window_size``
         property.
@@ -6163,21 +6157,20 @@ class Plotter(BasePlotter):
         good default but 8 will have better results with a potential
         impact on performance.
 
-    line_smoothing : bool, optional
+    line_smoothing : bool, default: False
         If ``True``, enable line smoothing.
 
-    polygon_smoothing : bool, optional
+    polygon_smoothing : bool, default: False
         If ``True``, enable polygon smoothing.
 
-    lighting : str, optional
-        What lighting to set up for the plotter.
-        Accepted options:
+    lighting : str, default: 'light kit"
+        Lighting to set up for the plotter. Accepted options:
 
-            * ``'light_kit'``: a vtk Light Kit composed of 5 lights.
-            * ``'three lights'``: illumination using 3 lights.
-            * ``'none'``: no light sources at instantiation.
+        * ``'light kit'``: a vtk Light Kit composed of 5 lights.
+        * ``'three lights'``: illumination using 3 lights.
+        * ``'none'``: no light sources at instantiation.
 
-        The default is a ``'light_kit'`` (to be precise, 5 separate
+        The default is a ``'light kit'`` (to be precise, 5 separate
         lights that act like a Light Kit).
 
     theme : pyvista.themes.DefaultTheme, optional
@@ -6373,30 +6366,30 @@ class Plotter(BasePlotter):
             interactive is ``True``.  Defaults to
             :attr:`pyvista.global_theme.auto_close <pyvista.themes.DefaultTheme.auto_close>`.
 
-        interactive_update : bool, optional
-            Disabled by default.  Allows user to non-blocking draw,
-            user should call :func:`Plotter.update` in each iteration.
+        interactive_update : bool, default: False
+            Allows user to non-blocking draw, user should call
+            :func:`Plotter.update` in each iteration.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
-        screenshot : str, pathlib.Path, io.BytesIO or bool, optional
-            Take a screenshot of the initial state of the plot.
-            If a string, it specifies the path to which the screenshot
-            is saved. If ``True``, the screenshot is returned as an
-            array. Defaults to ``False``. For interactive screenshots
-            it's recommended to first call ``show()`` with
-            ``auto_close=False`` to set the scene, then save the
-            screenshot in a separate call to ``show()`` or
-            :func:`Plotter.screenshot`.
+        screenshot : str | pathlib.Path | io.BytesIO | bool, default: False
+            Take a screenshot of the initial state of the plot.  If a string,
+            it specifies the path to which the screenshot is saved. If
+            ``True``, the screenshot is returned as an array. For interactive
+            screenshots it's recommended to first call ``show()`` with
+            ``auto_close=False`` to set the scene, then save the screenshot in
+            a separate call to ``show()`` or :func:`Plotter.screenshot`.
+            See also the ``before_close_callback`` parameter for an
+            alternative.
 
         return_img : bool, default: False
             Returns a numpy array representing the last image along
             with the camera position.
 
-        cpos : list(tuple(float)), optional
+        cpos : sequence[sequence[float]], optional
             The camera position.  You can also set this with
             :attr:`Plotter.camera_position`.
 
@@ -6667,11 +6660,10 @@ class Plotter(BasePlotter):
         title : str
             The text to add the rendering.
 
-        font_size : float, optional
-            Sets the size of the title font.  Defaults to 16 or the
-            value of the global theme if set.
+        font_size : float, default: 18
+            Sets the size of the title font.
 
-        color : ColorLike, optional,
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -6684,8 +6676,8 @@ class Plotter(BasePlotter):
         font : str, optional
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
 
-        shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to ``False``.
+        shadow : bool, default: False
+            Adds a black shadow to the text.
 
         Returns
         -------
@@ -6726,17 +6718,13 @@ class Plotter(BasePlotter):
 
         Parameters
         ----------
-        bounds : length 6 sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
             Specify the bounds in the format of:
 
             - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
 
-            Defaults to ``(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)``.
-
-        focal_point : list or tuple, optional
+        focal_point : sequence[float], default: (0.0, 0.0, 0.0)
             The focal point of the cursor.
-
-            Defaults to ``(0.0, 0.0, 0.0)``.
 
         color : ColorLike, optional
             Either a string, RGB sequence, or hex color string.  For one

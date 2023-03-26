@@ -32,13 +32,13 @@ class Light(vtkLight):
 
     Parameters
     ----------
-    position : list or tuple, optional
+    position : sequence[float], optional
         The position of the light. The interpretation of the position
         depends on the type of the light and whether the light has a
         transformation matrix.  See also the :py:attr:`position`
         property.
 
-    focal_point : list or tuple, optional
+    focal_point : sequence[float], optional
         The focal point of the light. The interpretation of the focal
         point depends on the type of the light and whether the light
         has a transformation matrix.  See also the
@@ -48,7 +48,7 @@ class Light(vtkLight):
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
-    light_type : str or int, optional
+    light_type : str | int, default: 'scene light'
         The type of the light. If a string, one of ``'headlight'``,
         ``'camera light'`` or ``'scene light'``. If an int, one of 1,
         2 or 3, respectively. The class constants ``Light.HEADLIGHT``,
@@ -79,7 +79,7 @@ class Light(vtkLight):
     cone_angle : float, optional
         Cone angle of a positional light in degrees.
 
-    show_actor : bool, optional
+    show_actor : bool, default: False
         Show an actor for a spotlight that depicts the geometry of the
         beam.
 
@@ -1017,9 +1017,9 @@ class Light(vtkLight):
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default: True
             Whether to return a deep copy rather than a shallow
-            one. Default ``True``.
+            one.
 
         Returns
         -------

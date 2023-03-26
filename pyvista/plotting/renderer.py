@@ -94,8 +94,8 @@ def scale_point(camera, point, invert=False):
     camera : Camera
         The camera who's matrix to use.
 
-    point : tuple(float)
-        Length 3 tuple of the point coordinates.
+    point : sequence[float]
+        Scale point coordinates.
 
     invert : bool, default: False
         If ``True``, invert the matrix to transform the point out of
@@ -124,13 +124,13 @@ class CameraPosition:
 
     Parameters
     ----------
-    position : Sequence
+    position : sequence[float]
         Position of the camera.
 
-    focal_point : Sequence
+    focal_point : sequence[float]
         The focal point of the camera.
 
-    viewup : Sequence
+    viewup : sequence[float]
         View up of the camera.
 
     """
@@ -280,7 +280,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        color_cycler : str, cycler.Cycler, list(ColorLike)
+        color_cycler : str | cycler.Cycler | sequence[ColorLike]
             The colors to cycle through.
 
         Examples
@@ -569,10 +569,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        color : ColorLike, optional
+        color : ColorLike, default: "white"
             Color of the border.
 
-        width : float, optional
+        width : float, default: 2.0
             Width of the border.
 
         Returns
@@ -737,31 +737,30 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor or vtk.vtkMapper
+        actor : vtk.vtkActor | vtk.vtkMapper | pyvista.Actor
             The actor to be added. Can be either ``vtkActor`` or ``vtkMapper``.
 
-        reset_camera : bool, optional
+        reset_camera : bool, default: False
             Resets the camera when ``True``.
 
         name : str, optional
             Name to assign to the actor.  Defaults to the memory address.
 
-        culling : str, optional
+        culling : str, default: False
             Does not render faces that are culled. Options are
             ``'front'`` or ``'back'``. This can be helpful for dense
             surface meshes, especially when edges are visible, but can
-            cause flat meshes to be partially displayed.  Default
-            ``False``.
+            cause flat meshes to be partially displayed.
 
-        pickable : bool, optional
+        pickable : bool, default: True
             Whether to allow this actor to be pickable within the
             render window.
 
-        render : bool, optional
+        render : bool, default: True
             If the render window is being shown, trigger a render
             after adding the actor.
 
-        remove_existing_actor : bool, optional
+        remove_existing_actor : bool, default: True
             Removes any existing actor if the named actor ``name`` is already
             present.
 
@@ -858,19 +857,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         z_color : ColorLike, optional
             The color of the z axes arrow.
 
-        xlabel : str, optional
+        xlabel : str, default: "X"
             The label of the x axes arrow.
 
-        ylabel : str, optional
+        ylabel : str, default: "Y"
             The label of the y axes arrow.
 
-        zlabel : str, optional
+        zlabel : str, default: "Z"
             The label of the z axes arrow.
 
-        line_width : int, optional
+        line_width : int, default: 2
             Width of the arrows.
 
-        labels_off : bool, optional
+        labels_off : bool, default: False
             Disables the label text when ``True``.
 
         Returns
@@ -914,7 +913,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor or pyvista.DataSet
+        actor : vtk.vtkActor | pyvista.DataSet
             The mesh or actor to use as the marker.
 
         interactive : bool, optional
@@ -927,10 +926,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             The color of the actor.  This only applies if ``actor`` is
             a :class:`pyvista.DataSet`.
 
-        opacity : int or float, optional
+        opacity : int | float, default: 1.0
             Opacity of the marker.
 
-        viewport : tuple, optional
+        viewport : sequence[float], optional
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         Returns
@@ -1002,7 +1001,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         interactive : bool, optional
             Enable this orientation widget to be moved by the user.
 
-        line_width : int, optional
+        line_width : int, default: 2
             The width of the marker lines.
 
         color : ColorLike, optional
@@ -1017,16 +1016,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         z_color : ColorLike, optional
             Color used for the z axis arrow.  Defaults to theme axes parameters.
 
-        xlabel : str, optional
+        xlabel : str, default: "X"
             Text used for the x axis.
 
-        ylabel : str, optional
+        ylabel : str, default: "Y"
             Text used for the y axis.
 
-        zlabel : str, optional
+        zlabel : str, default: "Z"
             Text used for the z axis.
 
-        labels_off : bool, optional
+        labels_off : bool, default: false
             Enable or disable the text labels for the axes.
 
         box : bool, optional
@@ -1038,7 +1037,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``box=True``. See the parameters of
             :func:`pyvista.create_axes_orientation_box`.
 
-        viewport : tuple, optional
+        viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         marker_args : dict, optional
@@ -1230,14 +1229,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or pyvista.MultiBlock, optional
+        mesh : pyvista.DataSet | pyvista.MultiBlock, optional
             Input mesh to draw bounds axes around.
 
-        bounds : list or tuple, optional
+        bounds : sequence[float], optional
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
 
-        axes_ranges : list, tuple, or numpy.ndarray, optional
+        axes_ranges : sequence[float], optional
             When set, these values override the values that are shown on the
             axes. This can be useful when plotting scaled datasets or if you wish
             to manually display different values. These values must be in the
@@ -1245,26 +1244,26 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
-        show_xaxis : bool, optional
-            Makes X axis visible.  Default ``True``.
+        show_xaxis : bool, default: True
+            Makes X axis visible.
 
-        show_yaxis : bool, optional
-            Makes Y axis visible.  Default ``True``.
+        show_yaxis : bool, default: True
+            Makes Y axis visible.
 
-        show_zaxis : bool, optional
-            Makes Z axis visible.  Default ``True``.
+        show_zaxis : bool, default: True
+            Makes Z axis visible.
 
-        show_xlabels : bool, optional
-            Shows X labels.  Default ``True``.
+        show_xlabels : bool, default: True
+            Shows X labels.
 
-        show_ylabels : bool, optional
-            Shows Y labels.  Default ``True``.
+        show_ylabels : bool, default: True
+            Shows Y labels.
 
-        show_zlabels : bool, optional
-            Shows Z labels.  Default ``True``.
+        show_zlabels : bool, default: True
+            Shows Z labels.
 
-        bold : bool, optional
-            Bolds axis labels and numbers.  Default ``True``.
+        bold : bool, default: True
+            Bolds axis labels and numbers.
 
         font_size : float, optional
             Sets the size of the label font. Defaults to
@@ -1289,13 +1288,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        xtitle : str, optional
+        xtitle : str, default: "X Axis"
             Title of the X axis.  Default ``"X Axis"``.
 
-        ytitle : str, optional
+        ytitle : str, default: "Y Axis"
             Title of the Y axis.  Default ``"Y Axis"``.
 
-        ztitle : str, optional
+        ztitle : str, default: "Z Axis"
             Title of the Z axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
@@ -1307,7 +1306,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         n_zlabels : int, default: 5
             Number of labels for the Z axis.
 
-        use_2d : bool, optional
+        use_2d : bool, default: False
             This can be enabled for smoother plotting.
 
         grid : bool or str, optional
@@ -1315,7 +1314,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``'backface'``) or to the frontface (``'front'``,
             ``'frontface'``) of the axes actor.
 
-        location : str, optional
+        location : str, default: "closest"
             Set how the axes are drawn: either static (``'all'``), closest
             triad (``'front'``, ``'closest'``, ``'default'``), furthest triad
             (``'back'``, ``'furthest'``), static closest to the origin
@@ -1326,26 +1325,26 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Set how the ticks are drawn on the axes grid. Options include:
             ``'inside', 'outside', 'both'``.
 
-        all_edges : bool, optional
+        all_edges : bool, default: False
             Adds an unlabeled and unticked box at the boundaries of
             plot. Useful for when wanting to plot outer grids while
             still retaining all edges of the boundary.
 
-        corner_factor : float, optional
+        corner_factor : float, default: 0.5
             If ``all_edges``, this is the factor along each axis to
-            draw the default box. Default is 0.5 to show the full box.
+            draw the default box. Default shows the full box.
 
         fmt : str, optional
             A format string defining how tick labels are generated from
             tick positions. A default is looked up on the active theme.
 
-        minor_ticks : bool, optional
+        minor_ticks : bool, default: False
             If ``True``, also plot minor ticks on all axes.
 
-        padding : float, optional
+        padding : float, default: 0.0
             An optional percent padding along each axial direction to
             cushion the datasets in the scene from the axes
-            annotations. Defaults to 0 (no padding).
+            annotations. Defaults no padding.
 
         use_3d_text : bool, default: True
             Use ``vtkTextActor3D`` for titles and labels.
@@ -1651,7 +1650,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        render : bool, optional
+        render : bool, default: True
             Trigger a render once the bounding box is removed.
 
         Examples
@@ -1688,7 +1687,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        color : ColorLike, optional
+        color : ColorLike, default: "grey"
             Color of all labels and axis titles.  Default white.
             Either a string, rgb sequence, or hex color string.  For
             example:
@@ -1698,17 +1697,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        corner_factor : float, optional
+        corner_factor : float, default: 0.5
             This is the factor along each axis to draw the default
             box. Default is 0.5 to show the full box.
 
         line_width : float, optional
             Thickness of lines.
 
-        opacity : float, optional
-            Opacity of mesh.  Default 1.0 and should be between 0 and 1.
+        opacity : float, default: 1.0
+            Opacity of mesh. Should be between 0 and 1.
 
-        render_lines_as_tubes : bool, optional
+        render_lines_as_tubes : bool, default: False
             Show lines as thick tubes rather than flat lines.  Control
             the width with ``line_width``.
 
@@ -1722,10 +1721,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
-        culling : str, optional
-            Does not render faces that are culled. Options are
-            ``'front'`` or ``'back'``. Default is ``'front'`` for
-            bounding box.
+        culling : str, default: "front"
+            Does not render faces on the bounding box that are culled. Options
+            are ``'front'`` or ``'back'``.
 
         Returns
         -------
@@ -1802,7 +1800,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        face : str, optional
+        face : str, default: "-z"
             The face at which to place the plane. Options are
             (``'-z'``, ``'-y'``, ``'-x'``, ``'+z'``, ``'+y'``, and
             ``'+z'``). Where the ``-/+`` sign indicates on which side of
@@ -1810,10 +1808,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             generate a floor on the XY-plane and the bottom of the
             scene (minimum z).
 
-        i_resolution : int, optional
+        i_resolution : int, default: 10
             Number of points on the plane in the i direction.
 
-        j_resolution : int, optional
+        j_resolution : int, default: 10
             Number of points on the plane in the j direction.
 
         color : ColorLike, optional
@@ -1824,19 +1822,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Thickness of the edges. Only if ``show_edges`` is
             ``True``.
 
-        opacity : float, optional
+        opacity : float, default: 1.0
             The opacity of the generated surface.
 
-        show_edges : bool, optional
+        show_edges : bool, default: False
             Flag on whether to show the mesh edges for tiling.
 
-        line_width : float, optional
+        line_width : float, default: False
             Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default ``None``.
+            representations.
 
-        lighting : bool, optional
-            Enable or disable view direction lighting.  Default
-            ``False``.
+        lighting : bool, default: False
+            Enable or disable view direction lighting.
 
         edge_color : ColorLike, optional
             Color of the edges of the mesh.
@@ -1844,16 +1841,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset_camera : bool, optional
             Resets the camera when ``True`` after adding the floor.
 
-        pad : float, optional
+        pad : float, default: 0.0
             Percentage padding between 0 and 1.
 
-        offset : float, optional
+        offset : float, default: 0.0
             Percentage offset along plane normal.
 
-        pickable : bool, optional
+        pickable : bool, default: false
             Make this floor actor pickable in the renderer.
 
-        store_floor_kwargs : bool, optional
+        store_floor_kwargs : bool, default: True
             Stores the keyword arguments used when adding this floor.
             Useful when updating the bounds and regenerating the
             floor.
@@ -1958,11 +1955,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        clear_kwargs : bool, optional
-            Clear default floor arguments.  Default ``True``.
+        clear_kwargs : bool, default: True
+            Clear default floor arguments.
 
-        render : bool, optional
-            Render upon removing the floor.  Default ``True``.
+        render : bool, default: True
+            Render upon removing the floor.
 
         Examples
         --------
@@ -2085,7 +2082,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        point : sequence
+        point : sequence[float]
             Cartesian point to focus on in the form of ``[x, y, z]``.
 
         Examples
@@ -2115,7 +2112,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         point : sequence
             Cartesian point to focus on in the form of ``[x, y, z]``.
 
-        reset : bool, optional
+        reset : bool, default: False
             Whether to reset the camera after setting the camera
             position.
 
@@ -2145,10 +2142,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        vector : sequence
-            New 3 value camera viewup vector.
+        vector : sequence[float]
+            New camera viewup vector.
 
-        reset : bool, optional
+        reset : bool, default: True
             Whether to reset the camera after setting the camera
             position.
 
@@ -2377,8 +2374,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Scaling in the z direction.  Default is ``None``, which
             does not change existing scaling.
 
-        reset_camera : bool, optional
-            Resets camera so all actors can be seen.  Default ``True``.
+        reset_camera : bool, default: True
+            Resets camera so all actors can be seen.
 
         Examples
         --------
@@ -2474,6 +2471,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ----------
         render : bool, default: True
             Trigger a render after resetting the camera.
+
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
@@ -2517,7 +2515,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, optional
+        negative : bool, default: False
             View from the other isometric direction.
 
         Examples
@@ -2547,11 +2545,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        vector : sequence
-            Three item sequence to point the camera in.
+        vector : sequence[float]
+            Direction to point the camera in.
 
-        viewup : sequence, optional
-            Three item sequence describing the view up of the camera.
+        viewup : sequence[float], optional
+            Sequence describing the view up of the camera.
 
         """
         focal_pt = self.center
@@ -2566,7 +2564,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, optional
+        negative : bool, default: False
             View from the opposite direction.
 
         Examples
@@ -2589,7 +2587,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, optional
+        negative : bool, default: False
             View from the opposite direction.
 
         Examples
@@ -2612,7 +2610,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, optional
+        negative : bool, default: False
             View from the opposite direction.
 
         Examples
@@ -2635,7 +2633,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, optional
+        negative : bool, default: False
             View from the opposite direction.
 
         Examples
@@ -2658,7 +2656,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, optional
+        negative : bool, default: False
             View from the opposite direction.
 
         Examples
@@ -2681,7 +2679,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        negative : bool, optional
+        negative : bool, default: False
             View from the opposite direction.
 
         Examples
@@ -2750,10 +2748,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        automatic_focal_distance : bool, optional
+        automatic_focal_distance : bool, default: True
             Use automatic focal distance calculation. When enabled, the center
             of the viewport will always be in focus regardless of where the
-            focal point is. Default ``True``.
+            focal point is.
 
         Examples
         --------
@@ -2786,7 +2784,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         See :ref:`depth_of_field_example` for a full example using this method.
 
         """
-        self._render_passes.enable_depth_of_field_pass()
+        self._render_passes.enable_depth_of_field_pass(automatic_focal_distance)
 
     def disable_depth_of_field(self):
         """Disable depth of field plotting.
@@ -2998,7 +2996,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         texture : vtk.vtkTexture
             Texture.
 
-        is_srgb : bool, optional
+        is_srgb : bool, default: False
             If the texture is in sRGB color space, set the color flag on the
             texture or set this parameter to ``True``. Textures are assumed
             to be in linear color space by default.
@@ -3204,17 +3202,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             color], where label is the name of the item to add, and
             color is the color of the label to add.
 
-        bcolor : ColorLike, optional
+        bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
             list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
             disabled.
 
-        border : bool, optional
+        border : bool, default: False
             Controls if there will be a border around the legend.
             Default False.
 
-        size : sequence, optional
+        size : sequence[float], default: (0.2, 0.2)
             Two float sequence, each float between 0 and 1.  For example
             ``(0.1, 0.1)`` would make the legend 10% the size of the
             entire figure window.
@@ -3224,7 +3222,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        loc : str, optional
+        loc : str, default: "upper right"
             Location string.  One of the following:
 
             * ``'upper right'``
@@ -3237,7 +3235,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str or pyvista.PolyData, optional
+        face : str | pyvista.PolyData | NoneType, default: "triangle"
             Face shape of legend face.  One of the following:
 
             * None: ``None``
@@ -3247,10 +3245,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * Rectangle: ``"r"`` or ``'rectangle'``
             * Custom: :class:`pyvista.PolyData`
 
-            Default is ``'triangle'``.  Passing ``None`` removes the
-            legend face.  A custom face can be created using
-            :class:`pyvista.PolyData`.  This will be rendered from the
-            XY plane.
+            Passing ``None`` removes the legend face.  A custom face can be
+            created using :class:`pyvista.PolyData`.  This will be rendered
+            from the XY plane.
 
         Returns
         -------
@@ -3338,7 +3335,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        render : bool, optional
+        render : bool, default: True
             Render upon actor removal.  Set this to ``False`` to stop
             the render window from rendering when a the legend is removed.
 
@@ -3396,10 +3393,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        pointa : Sequence
+        pointa : sequence[float]
             Starting point for ruler.
 
-        pointb : Sequence
+        pointb : sequence[float]
             Ending point for ruler.
 
         flip_range : bool, default: False
@@ -3609,7 +3606,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. '%E'.
+            A printf style format for labels, e.g. ``'%E'``.
+            See :ref:`old-string-formatting`.
 
         number_minor_ticks : int, default: 0
             Number of minor ticks between major ticks.

@@ -2166,17 +2166,6 @@ def test_set_viewup(verify_image_cache):
     p.show()
 
 
-def test_plot_remove_scalar_bar(sphere):
-    sphere['z'] = sphere.points[:, 2]
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere, show_scalar_bar=False)
-    plotter.add_scalar_bar(interactive=True)
-    assert len(plotter.scalar_bars) == 1
-    plotter.remove_scalar_bar()
-    assert len(plotter.scalar_bars) == 0
-    plotter.show()
-
-
 def test_plot_shadows():
     plotter = pyvista.Plotter(lighting=None)
 
@@ -3558,6 +3547,49 @@ def test_color_cycler_names(name):
     assert a1.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a2.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+
+
+def test_scalar_bar_actor_removal(sphere):
+    # verify that when removing an actor we also remove the
+    # corresponding scalar bar
+
+    sphere['scalars'] = sphere.points[:, 2]
+
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(sphere, show_scalar_bar=True)
+    assert list(pl.scalar_bars.keys()) == ['scalars']
+    pl.remove_actor(actor)
+    assert len(pl.scalar_bars) == 0
+    pl.show()
+
+
+def test_update_scalar_bar_range(sphere):
+    sphere['z'] = sphere.points[:, 2]
+    minmax = sphere.bounds[2:4]  # ymin, ymax
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='z')
+
+    # automatic mapper lookup works
+    pl.update_scalar_bar_range(minmax)
+    # named mapper lookup works
+    pl.update_scalar_bar_range(minmax, name='z')
+    # missing name raises
+    with pytest.raises(ValueError, match='not valid/not found in this plotter'):
+        pl.update_scalar_bar_range(minmax, name='invalid')
+    pl.show()
+
+
+def test_add_remove_scalar_bar(sphere):
+    """Verify a scalar bar can be added and removed."""
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=sphere.points[:, 2], show_scalar_bar=False)
+
+    # verify that the number of slots is restored
+    init_slots = len(pl._scalar_bar_slots)
+    pl.add_scalar_bar(interactive=True)
+    pl.remove_scalar_bar()
+    assert len(pl._scalar_bar_slots) == init_slots
+    pl.show()
 
 
 @skip_lesser_9_0_X

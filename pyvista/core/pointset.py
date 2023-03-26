@@ -43,8 +43,8 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        scalars_weight : bool, optional
-            Flag for using the mesh scalars as weights. Defaults to ``False``.
+        scalars_weight : bool, default: False
+            Flag for using the mesh scalars as weights.
 
         Returns
         -------
@@ -90,7 +90,7 @@ class _PointSet(DataSet):
             Cell indices to be removed.  The array can also be a
             boolean array of the same size as the number of cells.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Whether to update the mesh in-place.
 
         Returns
@@ -164,10 +164,10 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        xyz : list or tuple or numpy.ndarray
-            Cartesian values to displace with. Length 3 list, tuple or array.
+        xyz : array_like[float]
+            Cartesian values to displace with. Length 3 array-like.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
             the points, normals and active vectors are transformed. This is
             only valid when not updating in place.
@@ -222,17 +222,16 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         List, numpy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
 
-    deep : bool, optional
+    deep : bool, default: False
         Whether to copy the input ``points``, or to create a PointSet from them
         without copying them.  Setting ``deep=True`` ensures that the original
         arrays can be modified outside the mesh without affecting the
-        mesh. Default is ``False``.
+        mesh.
 
-    force_float : bool, optional
-        Casts the datatype to ``float32`` if points datatype is non-float.
-        Default ``True``. Set this to ``False`` to allow non-float types,
-        though this may lead to truncation of intermediate floats when
-        transforming datasets.
+    force_float : bool, default: True
+        Casts the datatype to ``float32`` if points datatype is non-float.  Set
+        this to ``False`` to allow non-float types, though this may lead to
+        truncation of intermediate floats when transforming datasets.
 
     Notes
     -----
@@ -297,11 +296,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, deep: True
             Whether to copy the pointset points, or to create a PolyData
             without copying them.  Setting ``deep=True`` ensures that the
             original arrays can be modified outside the PolyData without
-            affecting the PolyData. Default is ``True``.
+            affecting the PolyData.
 
         Returns
         -------
@@ -891,7 +890,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             ftype.  Can be one of many of the supported  the following
             types (``'.ply'``, ``'.stl'``, ``'.vtk``).
 
-        binary : bool, optional
+        binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
 
         texture : str, numpy.ndarray, optional
@@ -1189,7 +1188,7 @@ class PointGrid(_PointSet):
 
         Parameters
         ----------
-        curv_type : str, optional
+        curv_type : str, default: "mean"
             One of the following strings indicating curvature types.
             - ``'mean'``
             - ``'gaussian'``
@@ -1359,26 +1358,27 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         offset : any, default None
             Ignored (this is a pre-VTK9 legacy).
 
-        cells : sequence or numpy.ndarray dtype=np.int64
+        cells : sequence[int]
             Array of cells.  Each cell contains the number of points in the
             cell and the node numbers of the cell.
 
-        cell_type : sequence or numpy.ndarray np.uint8
+        cell_type : sequence[int]
             Cell types of each cell.  Each cell type numbers can be found from
-            vtk documentation.  See example below.
+            vtk documentation.  More efficient if using ``np.uint8``. See
+            example below.
 
-        points : sequence or numpy.ndarray
+        points : sequence[float]
             Numpy array containing point locations.
 
-        deep : bool, optional
+        deep : bool, default: True
             When ``True``, makes a copy of the points array.  Default
             ``False``.  Cells and cell types are always copied.
 
-        force_float : bool, optional
+        force_float : bool, default: True
             Casts the datatype to ``float32`` if points datatype is
-            non-float.  Default ``True``. Set this to ``False`` to allow
-            non-float types, though this may lead to truncation of
-            intermediate floats when transforming datasets.
+            non-float.  Set this to ``False`` to allow non-float types,
+            though this may lead to truncation of intermediate floats when
+            transforming datasets.
 
         Examples
         --------
@@ -2040,12 +2040,12 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Parameters
         ----------
-        ind : sequence
+        ind : sequence[int]
             List or array of cell indices to be hidden.  The array can
             also be a boolean array of the same size as the number of
             cells.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -2094,8 +2094,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Parameters
         ----------
-        ind : sequence
-            List or array of point indices to be hidden.  The array
+        ind : sequence[int]
+            Sequence of point indices to be hidden.  The array
             can also be a boolean array of the same size as the number
             of points.
 
@@ -2237,11 +2237,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        dims : Sequence
+        dims : sequence[int]
             A sequence of integers with shape (3,) containing the
             topological dimensions of the grid.
 
-        corners : Sequence
+        corners : array_like[floats]
             A sequence of floats with shape (number of corners, 3)
             containing the coordinates of the corner points.
 
@@ -2333,8 +2333,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         ----------
         filename : str
             Output file name. VTU and VTK extensions are supported.
-        binary : bool, optional
-            If ``True`` (default), write as binary, else ASCII.
+
+        binary : bool, default: True
+            If ``True``, write as binary, else ASCII.
 
         Notes
         -----
@@ -2371,12 +2372,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        ind : sequence(int)
+        ind : sequence[int]
             Cell indices to be hidden. A boolean array of the same
             size as the number of cells also is acceptable.
 
-        inplace : bool, optional
-            This method is applied to this grid if ``True`` (default)
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
             or to a copy otherwise.
 
         Returns
@@ -2415,8 +2416,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        inplace : bool, optional
-            This method is applied to this grid if ``True`` (default)
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
             or to a copy otherwise.
 
         Returns
@@ -2465,7 +2466,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        tuple(int)
+        tuple[int, int, int]
             Number of sampling points in the I, J and Z directions respectively.
 
         Examples
@@ -2489,7 +2490,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        tuple(float)
+        tuple[float, float, float]
             The limits of the visible grid in the X, Y and Z
             directions respectively.
 
@@ -2518,7 +2519,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        coords : tuple(int), list(tuple(int)) or numpy.ndarray
+        coords : array_like[int]
             Cell structured coordinates.
 
         Returns
@@ -2564,7 +2565,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        ind : int or iterable(int)
+        ind : int | sequence[int]
             Cell IDs.
 
         Returns
@@ -2606,10 +2607,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        ind : int or iterable(int)
+        ind : int | sequence[int]
             Cell IDs.
 
-        rel : str, optional
+        rel : str, default: "connectivity"
             Defines the neighborhood relationship. If
             ``'topological'``, returns the ``(i-1, j, k)``, ``(i+1, j,
             k)``, ``(i, j-1, k)``, ``(i, j+1, k)``, ``(i, j, k-1)``
@@ -2750,8 +2751,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        inplace : bool, optional
-            This method is applied to this grid if ``True`` (default)
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
             or to a copy otherwise.
 
         Returns
@@ -2790,7 +2791,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        inplace : bool, optional
+        inplace : bool, default: False
             This method is applied to this grid if ``True`` or to a copy
             otherwise.
 
