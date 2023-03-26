@@ -17,6 +17,7 @@ from typing import Dict, Optional
 import warnings
 import weakref
 
+import matplotlib
 import numpy as np
 import scooby
 
@@ -3815,10 +3816,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
 
-        log_scale : bool, optional
+        log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
-            positive float. Default ``False``.
+            positive float.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -4102,8 +4103,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             clim = np.asarray(clim, dtype=scalars.dtype)
             scalars.clip(clim[0], clim[1], out=scalars)
             if log_scale:
-                import matplotlib
-
                 out = matplotlib.colors.LogNorm(clim[0], clim[1])(scalars)
                 scalars = out.data * 255
             else:

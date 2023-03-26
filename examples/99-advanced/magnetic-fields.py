@@ -8,7 +8,9 @@ The following example demonstrates how PyVista can be used to plot a magnetic
 field.
 
 This example relies on :func:`streamlines_from_source()
-<pyvista.PolyDataFilters.streamlines_from_source>` to generate streamlines and :func:`add_volume() <pyvista.Plotter.add_volume>` to plot the strength of the magnetic field.
+<pyvista.PolyDataFilters.streamlines_from_source>` to generate streamlines and
+:func:`add_volume() <pyvista.Plotter.add_volume>` to plot the strength of the
+magnetic field.
 
 This dataset was created from the `Coil Field Lines
 <https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html>`_
@@ -28,7 +30,8 @@ from pyvista import examples
 # ~~~~~~~~~~~~~~~~~~~~
 # Let's first download the example dataset and show that it's a
 # :class:`pyvista.UniformGrid` with the magnetic field stored as the ``'B'``
-# array in ``point_data``
+# array in ``point_data``.
+
 grid = examples.download_coil_magnetic_field()
 grid.point_data
 
@@ -75,7 +78,7 @@ pl.show()
 
 ###############################################################################
 # Plot the Magnet Field Strength
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, let's bring this all together by plotting the magnetic field
 # strength while also plotting the streamlines and the coil.
 
