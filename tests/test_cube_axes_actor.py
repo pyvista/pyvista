@@ -12,8 +12,20 @@ def cube_axes_actor():
     return pl.show_bounds()
 
 
-def test_cube_axes_actor(cube_axes_actor):
-    assert isinstance(cube_axes_actor.camera, pv.Camera)
+def test_cube_axes_actor():
+    pl = pv.Plotter()
+    actor = pv.CubeAxesActor(
+        pl.camera,
+        x_label_format=None,
+        y_label_format=None,
+        z_label_format=None,
+    )
+    assert isinstance(actor.camera, pv.Camera)
+
+    # ensure label format is set to default
+    assert actor.x_label_format == '%.1f'
+    assert actor.y_label_format == '%.1f'
+    assert actor.z_label_format == '%.1f'
 
 
 def test_labels(cube_axes_actor):

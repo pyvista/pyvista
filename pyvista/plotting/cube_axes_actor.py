@@ -65,15 +65,18 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
     x_label_format : str, optional
         A format string defining how tick labels are generated from tick
-        positions for the X axis. Defaults to the theme format.
+        positions for the X axis. Defaults to the theme format if set,
+        otherwise ``'%.1f'``.
 
     y_label_format : str, optional
         A format string defining how tick labels are generated from tick
-        positions for the Y axis. Defaults to the theme format.
+        positions for the Y axis. Defaults to the theme format if set,
+        otherwise ``'%.1f'``.
 
     z_label_format : str, optional
         A format string defining how tick labels are generated from tick
-        positions for the Z axis. Defaults to the theme format.
+        positions for the Z axis. Defaults to the theme format if set,
+        otherwise ``'%.1f'``.
 
     x_label_visibility : bool, default: True
         The visibility of the X axis labels.
@@ -157,12 +160,18 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._y_label_visibility = y_label_visibility
         self._z_label_visibility = z_label_visibility
 
-        if x_label_format is not None:
+        if x_label_format is None:
             x_label_format = pv.global_theme.font.fmt
-        if y_label_format is not None:
+            if x_label_format is None:
+                x_label_format = '%.1f'
+        if y_label_format is None:
             y_label_format = pv.global_theme.font.fmt
-        if z_label_format is not None:
+            if y_label_format is None:
+                y_label_format = '%.1f'
+        if z_label_format is None:
             z_label_format = pv.global_theme.font.fmt
+            if z_label_format is None:
+                z_label_format = '%.1f'
 
         self.x_label_format = x_label_format
         self.y_label_format = y_label_format
