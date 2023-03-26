@@ -32,7 +32,7 @@ def set_up_overrides(root=DataSet):
             instance = other_cls.__new__(other_cls, *args, **kwargs)
             return instance
 
-        new_new.__signature__ = inspect.signature(old_new)
+        new_new.__signature__ = inspect.signature(cls.__init__)
 
         cls.__new__ = new_new
 
