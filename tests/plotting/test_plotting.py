@@ -3165,6 +3165,18 @@ def test_plotter_volume_add_scalars(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_add_scalars_log_scale(uniform):
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+
+    # for below zero to trigger the edge case
+    scalars = uniform.z - 0.01
+    assert any(scalars < 0), 'need negative values to test log_scale entrirely'
+    pl.add_volume(uniform, scalars=scalars, show_scalar_bar=True, log_scale=True)
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pyvista.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
