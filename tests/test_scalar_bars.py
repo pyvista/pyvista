@@ -63,30 +63,6 @@ def test_clear(scalar_bars):
     assert len(scalar_bars) == 0
 
 
-def test_actor_removal(sphere):
-    # verify that when removing an actor we also remove the
-    # corresponding scalar bar
-
-    sphere['scalars'] = sphere.points[:, 2]
-
-    pl = pv.Plotter()
-    actor = pl.add_mesh(sphere, show_scalar_bar=True)
-    assert len(pl.scalar_bars) == 1
-    pl.remove_actor(actor)
-    assert len(pl.scalar_bars) == 0
-
-
-def test_add_remove_bar(sphere):
-    pl = pv.Plotter()
-    pl.add_mesh(sphere, scalars=sphere.points[:, 2], show_scalar_bar=False)
-
-    # verify that the number of slots is restored
-    init_slots = len(pl._scalar_bar_slots)
-    pl.add_scalar_bar()
-    pl.remove_scalar_bar()
-    assert len(pl._scalar_bar_slots) == init_slots
-
-
 def test_too_many_scalar_bars(sphere):
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):

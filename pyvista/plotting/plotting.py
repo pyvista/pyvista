@@ -4278,7 +4278,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The title of the scalar bar to update.
 
         """
-        if isinstance(clim, float) or isinstance(clim, int):
+        if isinstance(clim, (float, int)):
             clim = [-clim, clim]
         if len(clim) != 2:
             raise TypeError('clim argument must be a length 2 iterable of values: (min, max).')
@@ -4288,17 +4288,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.scalar_range = clim
             return
 
-        # Use the name to find the desired actor
-        def update_mapper(mapper_helper):
-            mapper_helper.scalar_range = clim
-            return
-
         try:
+            # use the name to find the desired actor
             for mh in self.scalar_bars._scalar_bar_mappers[name]:
-                update_mapper(mh)
+                mh.scalar_range = clim
         except KeyError:
-            raise KeyError('Name ({}) not valid/not found in this plotter.')
-        return
+            raise ValueError(f'Name ({name!r}) not valid/not found in this plotter.') from None
 
     def clear_actors(self):
         """Clear actors from all renderers."""
