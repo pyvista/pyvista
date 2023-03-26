@@ -29,10 +29,10 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         viewer.
 
     diffuse : float, optional
-        The diffuse lighting coefficient. Default 1.0.
+        The diffuse lighting coefficient.
 
     specular : float, optional
-        The specular lighting coefficient. Default 0.0.
+        The specular lighting coefficient.
 
     specular_power : float, optional
         The specular power. Between 0.0 and 128.0.
@@ -62,9 +62,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
     >>> import pyvista as pv
     >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
-    >>> grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40))
+    >>> grid = pv.sample_function(
+    ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+    ... )
     >>> grid['scalars'] -= grid['scalars'].min()
-    >>> grid['scalars']*= 255/grid['scalars'].max()
+    >>> grid['scalars'] *= 255 / grid['scalars'].max()
     >>> pl = pv.Plotter()
     >>> actor = pl.add_volume(grid, show_scalar_bar=False)
     >>> lut = pv.LookupTable(cmap='bwr')
@@ -122,9 +124,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
-        >>> grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40))
+        >>> grid = pv.sample_function(
+        ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+        ... )
         >>> grid['scalars'] -= grid['scalars'].min()
-        >>> grid['scalars']*= 255/grid['scalars'].max()
+        >>> grid['scalars'] *= 255 / grid['scalars'].max()
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(grid, show_scalar_bar=False)
         >>> lut = pv.LookupTable(cmap='bwr')
@@ -152,10 +156,10 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> n = 21
-        >>> c = -(n-1)/2
+        >>> c = -(n - 1) / 2
         >>> vol = pv.UniformGrid(dimensions=(n, n, n), origin=(c, c, c))
         >>> scalars = np.linalg.norm(vol.points, axis=1)
-        >>> scalars *= 255/scalars.max()
+        >>> scalars *= 255 / scalars.max()
         >>> vol['scalars'] = scalars
 
         Demonstrate nearest (default) interpolation.
@@ -165,7 +169,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         ...     vol,
         ...     show_scalar_bar=False,
         ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap='plasma'
+        ...     cmap='plasma',
         ... )
         >>> actor.prop.interpolation_type = 'nearest'
         >>> pl.show()
@@ -177,7 +181,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         ...     vol,
         ...     show_scalar_bar=False,
         ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap='plasma'
+        ...     cmap='plasma',
         ... )
         >>> actor.prop.interpolation_type = 'linear'
         >>> pl.show()
@@ -232,6 +236,32 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         self.SetShade(value)
 
     @property
+    def independent_components(self) -> bool:
+        """Return or set independent components.
+
+        If ``False``, then you must have either 2 or 4 component data.
+        For 2 component data, the first is passed through the
+        first color transfer function and the second component is passed
+        through the first scalar opacity (and gradient opacity) transfer
+        function. Normals will be generated off of the second component. When
+        using gradient based opacity modulation, the gradients are computed off
+        of the second component.
+
+        For 4 component data, the first three will directly represent RGB (no
+        lookup table). The fourth component will be passed through the first
+        scalar opacity transfer function for opacity and first gradient opacity
+        transfer function for gradient based opacity modulation. Normals will
+        be generated from the fourth component. When using gradient based
+        opacity modulation, the gradients are computed off of the fourth
+        component.
+        """
+        return bool(self.GetIndependentComponents())
+
+    @independent_components.setter
+    def independent_components(self, value: bool):
+        self.SetIndependentComponents(value)
+
+    @property
     def ambient(self) -> float:
         """Return or set ambient lighting coefficient.
 
@@ -252,8 +282,6 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     @property
     def diffuse(self) -> float:
         """Return or set the diffuse lighting coefficient.
-
-        Default 1.0.
 
         This is the scattering of light by reflection or transmission. Diffuse
         reflection results when light strikes an irregular surface such as a
@@ -306,7 +334,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         Returns
         -------
-        pyvista.VolumeProperty
+        pyvista.plotting.volume_property.VolumeProperty
             Deep copy of this property.
 
         """

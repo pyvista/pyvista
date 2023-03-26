@@ -1,7 +1,6 @@
 import itertools
 import os
 import platform
-import sys
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -10,21 +9,13 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_TRIANGLE
 
 import pyvista
 from pyvista import examples
-from pyvista._vtk import VTK9, vtkStaticCellLocator
+from pyvista._vtk import vtkStaticCellLocator
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
-from pyvista.utilities.misc import can_create_mpl_figure
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
-skip_py2_nobind = pytest.mark.skipif(
-    int(sys.version[0]) < 3, reason="Python 2 doesn't support binding methods"
-)
-
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
-)
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -171,7 +162,6 @@ def test_clip_filter_scalar_multiple():
     assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
-@skip_py2_nobind
 def test_clip_filter_composite(composite):
     # Now test composite data structures
     output = composite.clip(normal=normals[0], invert=False)
@@ -219,7 +209,6 @@ def test_clip_box(datasets):
     assert clp is not None
 
 
-@skip_py2_nobind
 def test_clip_box_composite(composite):
     # Now test composite data structures
     output = composite.clip_box(invert=False, progress_bar=True)
@@ -286,7 +275,6 @@ def test_slice_filter(datasets):
     assert result.n_points < 1
 
 
-@skip_py2_nobind
 def test_slice_filter_composite(composite):
     # Now test composite data structures
     output = composite.slice(normal=normals[0], progress_bar=True)
@@ -305,7 +293,6 @@ def test_slice_orthogonal_filter(datasets):
             assert isinstance(slc, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_slice_orthogonal_filter_composite(composite):
     # Now test composite data structures
     output = composite.slice_orthogonal(progress_bar=True)
@@ -328,7 +315,6 @@ def test_slice_along_axis(datasets):
         dataset.slice_along_axis(axis='u')
 
 
-@skip_py2_nobind
 def test_slice_along_axis_composite(composite):
     # Now test composite data structures
     output = composite.slice_along_axis(progress_bar=True)
@@ -348,10 +334,9 @@ def test_threshold(datasets):
     thresh = dataset.threshold([100, 500], invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
-    if pyvista.vtk_version_info >= (9,):
-        thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
-        assert thresh is not None
-        assert isinstance(thresh, pyvista.UnstructuredGrid)
+    thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
+    assert thresh is not None
+    assert isinstance(thresh, pyvista.UnstructuredGrid)
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold({100, 500}, progress_bar=True)
@@ -364,10 +349,6 @@ def test_threshold(datasets):
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
-
-    if pyvista.vtk_version_info < (9,):
-        with pytest.raises(ValueError):
-            dataset.threshold([100, 500], invert=True)
 
     with pytest.raises(ValueError):
         dataset.threshold(100, method='between')
@@ -445,8 +426,6 @@ def test_threshold_percent(datasets):
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
     for i, dataset in enumerate(datasets[0:3]):
-        if inverts[i] and pyvista.vtk_version_info < (9,):
-            continue
         thresh = dataset.threshold_percent(
             percent=percents[i], invert=inverts[i], progress_bar=True
         )
@@ -463,10 +442,6 @@ def test_threshold_percent(datasets):
         dataset.threshold_percent({18.0, 85.0})
 
 
-@pytest.mark.skipif(
-    pyvista.vtk_version_info < (9,),
-    reason='The invert parameter is not supported for VTK<9. The general logic for the API differences is tested for VTK<9.1 though.',
-)
 def test_threshold_paraview_consistency():
     """Validate expected results that match ParaView."""
     x = np.arange(5, dtype=float)
@@ -570,7 +545,6 @@ def test_outline(datasets):
         assert isinstance(outline, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_outline_composite(composite):
     # Now test composite data structures
     output = composite.outline(progress_bar=True)
@@ -590,7 +564,6 @@ def test_outline_corners(datasets):
         assert isinstance(outline, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_outline_corners_composite(composite):
     # Now test composite data structures
     output = composite.outline_corners(progress_bar=True)
@@ -629,7 +602,6 @@ def test_extract_all_edges(datasets):
         assert edges.n_lines
 
 
-@skip_py2_nobind
 def test_wireframe_composite(composite):
     # Now test composite data structures
     output = composite.extract_all_edges(progress_bar=True)
@@ -720,7 +692,6 @@ def test_elevation():
         elev = dataset.elevation(scalar_range={1, 2}, progress_bar=True)
 
 
-@skip_py2_nobind
 def test_elevation_composite(composite):
     # Now test composite data structures
     output = composite.elevation(progress_bar=True)
@@ -776,7 +747,6 @@ def test_compute_cell_sizes(datasets):
     assert np.allclose(grid.volume, volume)
 
 
-@skip_py2_nobind
 def test_compute_cell_sizes_composite(composite):
     # Now test composite data structures
     output = composite.compute_cell_sizes(progress_bar=True)
@@ -790,7 +760,6 @@ def test_cell_centers(datasets):
         assert isinstance(result, pyvista.PolyData)
 
 
-@skip_py2_nobind
 def test_cell_centers_composite(composite):
     # Now test composite data structures
     output = composite.cell_centers(progress_bar=True)
@@ -1024,10 +993,6 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
-@pytest.mark.skipif(
-    pyvista.vtk_version_info < (9,),
-    reason='The invert parameter is not supported for VTK<9.',
-)
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
@@ -1106,7 +1071,6 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
-@skip_py2_nobind
 def test_cell_data_to_point_data_composite(composite):
     # Now test composite data structures
     output = composite.cell_data_to_point_data(progress_bar=True)
@@ -1121,7 +1085,6 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
-@skip_py2_nobind
 def test_point_data_to_cell_data_composite(composite):
     # Now test composite data structures
     output = composite.point_data_to_cell_data(progress_bar=True)
@@ -1135,7 +1098,6 @@ def test_triangulate():
     assert np.any(tri.cells)
 
 
-@skip_py2_nobind
 def test_triangulate_composite(composite):
     # Now test composite data structures
     output = composite.triangulate(progress_bar=True)
@@ -1188,14 +1150,9 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
-locators = [None]
-if pyvista.vtk_version_info >= (9,):
-    locators.append(vtkStaticCellLocator())
-
-
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', locators)
+@pytest.mark.parametrize('locator', [None, vtkStaticCellLocator()])
 def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
@@ -1298,7 +1255,6 @@ def test_streamlines_from_source_structured_grids():
     assert all([stream.n_points, stream.n_cells])
 
 
-@pytest.mark.needs_vtk9
 def mesh_2D_velocity():
     mesh = pyvista.Plane(i_resolution=100, j_resolution=100)
     velocity = np.zeros([mesh.n_points, 3])
@@ -1308,28 +1264,24 @@ def mesh_2D_velocity():
     return mesh
 
 
-@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_start_position():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_vectors():
     mesh = mesh_2D_velocity()
     mesh.set_active_vectors(None)
@@ -1337,14 +1289,12 @@ def test_streamlines_evenly_spaced_2D_vectors():
     assert all([streams.n_points, streams.n_cells])
 
 
-@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_integrator_type():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@pytest.mark.needs_vtk9
 def test_streamlines_evenly_spaced_2D_interpolator_type():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=True)
@@ -1395,9 +1345,7 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@skip_no_mpl_figure
 def test_plot_over_line(tmpdir):
-    """This test requires matplotlib."""
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
@@ -1519,9 +1467,7 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@skip_no_mpl_figure
 def test_plot_over_circular_arc(tmpdir):
-    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1563,9 +1509,7 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
-@skip_no_mpl_figure
 def test_plot_over_circular_arc_normal(tmpdir):
-    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1700,7 +1644,6 @@ def test_extract_points():
     assert sub_surf_nocells.cells[0] == 1
 
 
-@skip_py2_nobind
 def test_slice_along_line_composite(composite):
     # Now test composite data structures
     a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
@@ -1786,10 +1729,7 @@ def test_extract_surface():
 
     cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
     celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
-    if VTK9:
-        grid = pyvista.UnstructuredGrid(cells, celltypes, pts)
-    else:
-        grid = pyvista.UnstructuredGrid(np.array([0]), cells, celltypes, pts)
+    grid = pyvista.UnstructuredGrid(cells, celltypes, pts)
 
     # expect each face to be divided 6 times since it has a midside node
     surf = grid.extract_surface(progress_bar=True)
@@ -2321,10 +2261,10 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
             assert transformed.cell_data[name] == pytest.approx(array)
 
         # verify that the cell connectivity is a deep copy
-        if VTK9 and hasattr(dataset, '_connectivity_array'):
+        if hasattr(dataset, '_connectivity_array'):
             transformed._connectivity_array[0] += 1
             assert not np.array_equal(dataset._connectivity_array, transformed._connectivity_array)
-        if VTK9 and hasattr(dataset, 'cell_connectivity'):
+        if hasattr(dataset, 'cell_connectivity'):
             transformed.cell_connectivity[0] += 1
             assert not np.array_equal(dataset.cell_connectivity, transformed.cell_connectivity)
 
@@ -2343,13 +2283,6 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
         # track original untransformed dataset
         orig_dataset = dataset.copy(deep=True)
-
-        # handle
-        f = pyvista._vtk.vtkTransformFilter()
-        if not hasattr(f, 'SetTransformAllInputVectors'):
-            with pytest.raises(VTKVersionError):
-                transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
-            return
 
         transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
@@ -2386,7 +2319,6 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
             )
 
 
-@pytest.mark.needs_vtk9
 @pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
@@ -2431,7 +2363,6 @@ def test_reflect_mesh_about_point(datasets):
         assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
 
-@pytest.mark.needs_vtk9
 def test_reflect_mesh_with_vectors(datasets):
     for dataset in datasets:
         if hasattr(dataset, 'compute_normals'):
@@ -2567,7 +2498,6 @@ def test_extrude_rotate_inplace():
     assert poly.n_points == (resolution + 1) * old_line.n_points
 
 
-@pytest.mark.needs_vtk9
 def test_extrude_trim():
     direction = (0, 0, 1)
     mesh = pyvista.Plane(
@@ -2580,7 +2510,6 @@ def test_extrude_trim():
     assert np.isclose(poly.volume, 1.0)
 
 
-@pytest.mark.needs_vtk9
 @pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
 @pytest.mark.parametrize(
     'capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"]
@@ -2617,7 +2546,6 @@ def test_extrude_trim_catch():
         _ = mesh.extrude_trim([1, 2], trim_surface)
 
 
-@pytest.mark.needs_vtk9
 def test_extrude_trim_inplace():
     direction = (0, 0, 1)
     mesh = pyvista.Plane(
@@ -2645,7 +2573,6 @@ def test_invalid_subdivide_adaptive(cube):
         cube.subdivide_adaptive()
 
 
-@pytest.mark.needs_vtk9
 def test_collision(sphere):
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
@@ -2659,7 +2586,6 @@ def test_collision(sphere):
     assert not n_collision
 
 
-@pytest.mark.needs_vtk9
 def test_collision_solid_non_triangle(hexbeam):
     # test non-triangular mesh with a unstructured grid
     cube = pyvista.Cube()
@@ -2687,7 +2613,6 @@ def test_reconstruct_surface_unstructured():
     assert mesh.n_points
 
 
-@pytest.mark.needs_vtk9
 def test_integrate_data_datasets(datasets):
     """Test multiple dataset types."""
     for dataset in datasets:
@@ -2700,7 +2625,6 @@ def test_integrate_data_datasets(datasets):
             raise ValueError("Unexpected integration")
 
 
-@pytest.mark.needs_vtk9
 def test_integrate_data():
     """Test specific case."""
     # sphere with radius = 0.5, area = pi
@@ -2718,3 +2642,16 @@ def test_integrate_data():
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
+
+
+def test_merge_points():
+    cells = [2, 0, 1]
+    celltypes = [pyvista.CellType.LINE]
+    points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    pdata = pyvista.UnstructuredGrid(cells, celltypes, points)
+    assert (
+        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=1.0).n_points == 1
+    )
+    assert (
+        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
+    )

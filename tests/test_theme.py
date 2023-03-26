@@ -3,6 +3,7 @@ import vtk
 
 import pyvista
 from pyvista import colors
+from pyvista.themes import DefaultTheme
 from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
@@ -240,7 +241,7 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize('theme', pyvista.themes._ALLOWED_THEMES)
+@pytest.mark.parametrize('theme', pyvista.themes._NATIVE_THEMES)
 def test_themes(theme):
     try:
         pyvista.set_plot_theme(theme.name)
@@ -251,7 +252,7 @@ def test_themes(theme):
 
 
 def test_invalid_theme():
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         pyvista.set_plot_theme('this is not a valid theme')
 
 
@@ -307,8 +308,11 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(KeyError, match='not a color map'):
+    with pytest.raises(ValueError, match='not a color map'):
         default_theme.cmap = 'not a color map'
+
+    with pytest.raises(ValueError, match='Invalid color map'):
+        default_theme.cmap = None
 
 
 def test_volume_mapper(default_theme):
@@ -475,7 +479,6 @@ def test_anti_aliasing_fxaa(default_theme):
 
 
 def test_anti_aliasing_ssaa(default_theme):
-
     # default should is not enabled
     if default_theme.anti_aliasing != 'ssaa':
         pl = pyvista.Plotter(theme=default_theme)
@@ -490,13 +493,13 @@ def test_anti_aliasing_ssaa(default_theme):
 def test_anti_aliasing_msaa(default_theme):
     if default_theme.anti_aliasing != 'msaa':
         pl = pyvista.Plotter(theme=default_theme)
-        assert pl.ren_win.GetMultiSamples() == 0
+        assert pl.render_window.GetMultiSamples() == 0
 
     default_theme.anti_aliasing = 'msaa'
     default_theme.multi_samples = 4
     assert default_theme.anti_aliasing == 'msaa'
     pl = pyvista.Plotter(theme=default_theme)
-    assert pl.ren_win.GetMultiSamples() == default_theme.multi_samples
+    assert pl.render_window.GetMultiSamples() == default_theme.multi_samples
 
 
 def test_antialiasing_deprecation(default_theme):
@@ -514,3 +517,56 @@ def test_above_range_color(default_theme):
 def test_below_range_color(default_theme):
     default_theme.below_range_color = 'b'
     assert isinstance(default_theme.below_range_color, pyvista.Color)
+
+
+def test_user_theme():
+    class MyTheme(DefaultTheme):
+        def __init__(self):
+            """Initialize the theme."""
+            super().__init__()
+            self.background = 'lightgrey'
+            self.color = '#1f77b4'
+
+            self.lighting_params.interpolation = 'Phong'
+            self.lighting_params.ambient = 0.15
+            self.lighting_params.diffuse = 0.45
+            self.lighting_params.specular = 0.85
+            self.lighting_params.roughness = 0.25  # PBR
+            self.lighting_params.metallic = 0.35  # PBR
+
+            self.smooth_shading = True
+            self.render_lines_as_tubes = True
+            self.line_width = 8
+            self.point_size = 9
+
+    theme = MyTheme()
+    sphere = pyvista.Sphere()
+    lines = sphere.extract_all_edges()
+    points = pyvista.PolyData(sphere.points)
+    try:
+        pyvista.set_plot_theme(theme)
+
+        pl = pyvista.Plotter()
+        assert pl.background_color == theme.background
+        sactor = pl.add_mesh(sphere)
+        assert sactor.prop.color == theme.color
+        assert sactor.prop.interpolation.value == theme.lighting_params.interpolation
+        assert sactor.prop.ambient == theme.lighting_params.ambient
+        assert sactor.prop.diffuse == theme.lighting_params.diffuse
+        assert sactor.prop.specular == theme.lighting_params.specular
+
+        lactor = pl.add_mesh(lines)
+        assert lactor.prop.render_lines_as_tubes == theme.render_lines_as_tubes
+        assert lactor.prop.line_width == theme.line_width
+
+        pactor = pl.add_mesh(points)
+        assert pactor.prop.point_size == theme.point_size
+
+        pl = pyvista.Plotter()
+        sactor = pl.add_mesh(sphere, pbr=True)
+        assert sactor.prop.roughness == theme.lighting_params.roughness
+        assert sactor.prop.metallic == theme.lighting_params.metallic
+
+    finally:
+        # always return to testing theme
+        pyvista.set_plot_theme('testing')

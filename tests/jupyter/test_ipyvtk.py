@@ -4,6 +4,7 @@ import pytest
 
 import pyvista as pv
 from pyvista.plotting import system_supports_plotting
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 has_ipyvtklink = True
 try:
@@ -21,9 +22,12 @@ skip_no_ipyvtk = pytest.mark.skipif(not has_ipyvtklink, reason="Requires IPython
 
 @skip_no_ipyvtk
 def test_set_jupyter_backend_ipyvtklink():
-    pv.global_theme.jupyter_backend = 'ipyvtklink'
-    assert pv.global_theme.jupyter_backend == 'ipyvtklink'
-    pv.global_theme.jupyter_backend = None
+    try:
+        with pytest.warns(PyVistaDeprecationWarning):
+            pv.global_theme.jupyter_backend = 'ipyvtklink'
+        assert pv.global_theme.jupyter_backend == 'ipyvtklink'
+    finally:
+        pv.global_theme.jupyter_backend = None
 
 
 @skip_no_ipyvtk
@@ -31,7 +35,8 @@ def test_set_jupyter_backend_ipyvtklink():
 def test_ipyvtk(sphere):
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(sphere)
-    viewer = pl.show(jupyter_backend='ipyvtklink', return_viewer=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        viewer = pl.show(jupyter_backend='ipyvtklink', return_viewer=True)
     assert isinstance(viewer, ViewInteractiveWidget)
 
 

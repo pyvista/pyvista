@@ -17,11 +17,11 @@ from pyvista import examples
 # and specify the different kinds of solids to generate, or we can use the thin
 # wrappers:
 #
-#     * :func:`pyvista.Tetrahedron`
-#     * :func:`pyvista.Octahedron`
-#     * :func:`pyvista.Dodecahedron`
-#     * :func:`pyvista.Icosahedron`
-#     * :func:`pyvista.Cube` (implemented via a different filter)
+# * :func:`pyvista.Tetrahedron`
+# * :func:`pyvista.Octahedron`
+# * :func:`pyvista.Dodecahedron`
+# * :func:`pyvista.Icosahedron`
+# * :func:`pyvista.Cube` (implemented via a different filter)
 #
 # Let's generate all the Platonic solids, along with the :func:`teapotahedron
 # <pyvista.examples.downloads.download_teapot>`.

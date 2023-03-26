@@ -11,7 +11,7 @@ convolving the image data set with a Gaussian for one- to three-dimensional
 inputs. This is commonly referred to as Gaussian blurring and typically used
 to reduce noise or decrease the detail of an image dataset.
 
-See also :func:`pyvista.UniformGrid.gaussian_smooth`.
+See also :func:`pyvista.UniformGridFilters.gaussian_smooth`.
 
 """
 # sphinx_gallery_thumbnail_number = 2
@@ -25,7 +25,7 @@ data = examples.download_gourds()
 cp = [(319.5, 239.5, 1053.7372980874645), (319.5, 239.5, 0.0), (0.0, 1.0, 0.0)]
 
 ###############################################################################
-# Let's apply the gaussian smoothing with different values of standard
+# Let's apply the Gaussian smoothing with different values of standard
 # deviation.
 p = pv.Plotter(shape=(2, 2))
 

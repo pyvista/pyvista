@@ -124,15 +124,13 @@ plotter.subplot(0, 0)
 plotter.add_text("Group 1")
 plotter.add_mesh(pv.Cylinder(direction=[0, 1, 0], height=20))
 plotter.view_yz()
-plotter.camera.Zoom(10)
-plotter.camera_set = True
+plotter.camera.zoom(10)
 
 plotter.subplot(2, 0)
 plotter.add_text("Group 2")
 plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color="tan")
 plotter.view_isometric()
-plotter.camera.Zoom(2)
-plotter.camera_set = True
+plotter.camera.zoom(2)
 
 plotter.subplot(2, 1)
 plotter.add_text("Group 3")

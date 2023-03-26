@@ -77,7 +77,7 @@ class ScalarBars:
             Title of the scalar bar to remove.  Required if there is
             more than one scalar bar.
 
-        render : bool, optional
+        render : bool, default: True
             Render upon scalar bar removal.  Set this to ``False`` to
             stop the render window from rendering when a scalar bar
             is removed.
@@ -177,22 +177,21 @@ class ScalarBars:
 
         Parameters
         ----------
-        title : str, optional
-            Title of the scalar bar.  Default ``''`` which is
-            rendered as an empty title.
+        title : str, default: ""
+            Title of the scalar bar.  Default is rendered as an empty title.
 
         mapper : vtkMapper, optional
             Mapper used for the scalar bar.  Defaults to the last
             mapper created by the plotter.
 
-        n_labels : int, optional
+        n_labels : int, default: 5
             Number of labels to use for the scalar bar.
 
-        italic : bool, optional
-            Italicises title and bar labels.  Default ``False``.
+        italic : bool, default: False
+            Italicises title and bar labels.
 
-        bold  : bool, optional
-            Bolds title and bar labels.  Default ``True``.
+        bold : bool, default: False
+            Bolds title and bar labels.
 
         title_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
@@ -216,8 +215,8 @@ class ScalarBars:
             Font family.  Default is set by
             :attr:`pyvista.themes.DefaultTheme.font`.
 
-        shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to ``False``.
+        shadow : bool, default: False
+            Adds a black shadow to the text.
 
         width : float, optional
             The percentage (0 to 1) width of the window for the colorbar.
@@ -261,14 +260,14 @@ class ScalarBars:
             ``printf`` format for labels.
             Default set by :attr:`pyvista.themes.DefaultTheme.font`.
 
-        use_opacity : bool, optional
+        use_opacity : bool, default: True
             Optionally display the opacity mapping on the scalar bar.
 
-        outline : bool, optional
+        outline : bool, default: False
             Optionally outline the scalar bar to make opacity mappings more
             obvious.
 
-        nan_annotation : bool, optional
+        nan_annotation : bool, default: False
             Annotate the NaN color.
 
         below_label : str, optional
@@ -283,12 +282,12 @@ class ScalarBars:
         n_colors : int, optional
             The maximum number of color displayed in the scalar bar.
 
-        fill : bool, optional
+        fill : bool, default: False
             Draw a filled box behind the scalar bar with the
             ``background_color``.
 
-        render : bool, optional
-            Force a render when True.  Default ``True``.
+        render : bool, default: False
+            Force a render when True.
 
         theme : pyvista.themes.DefaultTheme, optional
             Plot-specific theme.  By default, calling from the
@@ -315,10 +314,15 @@ class ScalarBars:
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
-        >>> _ = plotter.add_scalar_bar('Data', interactive=True, vertical=False,
-        ...                            title_font_size=35,
-        ...                            label_font_size=30,
-        ...                            outline=True, fmt='%10.5f')
+        >>> _ = plotter.add_scalar_bar(
+        ...     'Data',
+        ...     interactive=True,
+        ...     vertical=False,
+        ...     title_font_size=35,
+        ...     label_font_size=30,
+        ...     outline=True,
+        ...     fmt='%10.5f',
+        ... )
         >>> plotter.show()
 
         """
@@ -438,13 +442,13 @@ class ScalarBars:
         if nan_annotation:
             scalar_bar.DrawNanAnnotationOn()
 
-        if above_label:
+        if above_label is not None:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
         elif lut.above_range_color:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation('above')
-        if below_label:
+        if below_label is not None:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
         elif lut.below_range_color:

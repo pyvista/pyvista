@@ -60,14 +60,20 @@ class MultiBlock(
 
     Instantiate from a list of objects.
 
-    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)),
-    ...         pv.Cone()]
+    >>> data = [
+    ...     pv.Sphere(center=(2, 0, 0)),
+    ...     pv.Cube(center=(0, 2, 0)),
+    ...     pv.Cone(),
+    ... ]
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
     Instantiate from a dictionary.
 
-    >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+    >>> data = {
+    ...     "cube": pv.Cube(),
+    ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+    ... }
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
@@ -75,9 +81,12 @@ class MultiBlock(
 
     >>> for name in blocks.keys():
     ...     block = blocks[name]
+    ...
 
     >>> for block in blocks:
-    ...     surf = block.extract_surface()  # Do something with each dataset
+    ...     # Do something with each dataset
+    ...     surf = block.extract_surface()
+    ...
 
     """
 
@@ -146,7 +155,11 @@ class MultiBlock(
         Return the bounds across blocks.
 
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
         (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
@@ -175,7 +188,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.center  # doctest:+SKIP
         array([1., 1., 0.])
@@ -191,7 +208,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.length
         4.3584
@@ -206,7 +227,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.n_blocks
         3
@@ -232,7 +257,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.volume
         1.7348
@@ -248,7 +277,7 @@ class MultiBlock(
         name : str
             Name of the array.
 
-        allow_missing : bool, optional
+        allow_missing : bool, default: False
             Allow a block to be missing the named array.
 
         Returns
@@ -292,7 +321,10 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.get_index_by_name('sphere')
         1
@@ -347,13 +379,16 @@ class MultiBlock(
 
         name : str, optional
             Block name to give to dataset.  A default name is given
-            depending on the block index as 'Block-{i:02}'.
+            depending on the block index as ``'Block-{i:02}'``.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.append(pv.Cone())
         >>> len(blocks)
@@ -391,9 +426,14 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
-        >>> blocks_uniform = pv.MultiBlock({"uniform": examples.load_uniform()})
+        >>> blocks_uniform = pv.MultiBlock(
+        ...     {"uniform": examples.load_uniform()}
+        ... )
         >>> blocks.extend(blocks_uniform)
         >>> len(blocks)
         3
@@ -454,13 +494,17 @@ class MultiBlock(
         index : int
             Index or the dataset within the multiblock.
 
-        name : str
-            Name to assign to the block at ``index``.
+        name : str, optional
+            Name to assign to the block at ``index``. If ``None``, no name is
+            assigned to the block.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.append(pv.Cone())
         >>> blocks.set_block_name(2, 'cone')
@@ -468,9 +512,9 @@ class MultiBlock(
         ['cube', 'sphere', 'cone']
 
         """
-        index = range(self.n_blocks)[index]
         if name is None:
             return
+        index = range(self.n_blocks)[index]
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
@@ -490,7 +534,10 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.get_block_name(0)
         'cube'
@@ -513,7 +560,10 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -538,12 +588,15 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.replace(1, pv.Sphere(center=(10, 10, 10)))
         >>> blocks.keys()
         ['cube', 'sphere']
-        >>> np.allclose(blocks[1].center, [10., 10., 10.])
+        >>> np.allclose(blocks[1].center, [10.0, 10.0, 10.0])
         True
 
         """
@@ -703,7 +756,10 @@ class MultiBlock(
         Insert a new :class:`pyvista.PolyData` at the start of the multiblock.
 
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -727,7 +783,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        index : int or str, optional
+        index : int or str, default: -1
             Index or name of the dataset within the multiblock.  Defaults to
             last dataset.
 
@@ -741,7 +797,10 @@ class MultiBlock(
         Pop the ``"cube"`` multiblock.
 
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -764,7 +823,10 @@ class MultiBlock(
         Reverse a multiblock.
 
         >>> import pyvista as pv
-        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> data = {
+        ...     "cube": pv.Cube(),
+        ...     "sphere": pv.Sphere(center=(2, 2, 0)),
+        ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.keys()
         ['cube', 'sphere']
@@ -895,7 +957,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default: True
             When ``True``, make a full copy of the object.
 
         Returns
@@ -906,7 +968,11 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> new_blocks = blocks.copy()
         >>> len(new_blocks)
@@ -937,18 +1003,18 @@ class MultiBlock(
             ``None``, deactivates active scalars for both point and
             cell data.
 
-        preference : str, optional
+        preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
             type.  Can be either ``'cell'`` or ``'point'``.
 
-        allow_missing : bool, optional
+        allow_missing : bool, default: False
             Allow missing scalars in part of the composite dataset. If all
             blocks are missing the array, it will raise a ``KeyError``.
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray
@@ -1019,7 +1085,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        copy : bool, optional
+        copy : bool, default: False
             Option to create a shallow copy of any datasets that are already a
             :class:`pyvista.PolyData`. When ``False``, any datasets that are
             already PolyData will not be copied.

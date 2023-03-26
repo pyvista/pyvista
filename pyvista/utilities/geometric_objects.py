@@ -18,12 +18,16 @@ vtkSuperquadricSource
 as well as some pure-python helpers.
 
 """
+import warnings
+
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import check_valid_vector
 from pyvista.utilities.arrays import _coerce_pointslike_arg
+
+from .misc import PyVistaDeprecationWarning
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -72,10 +76,10 @@ def Cylinder(
 
     Parameters
     ----------
-    center : sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence, default: (1.0, 0.0, 0.0)
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction cylinder points to  in ``[x, y, z]``.
 
     radius : float, default: 0.5
@@ -99,8 +103,9 @@ def Cylinder(
     --------
     >>> import pyvista
     >>> import numpy as np
-    >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1],
-    ...                             radius=1, height=2)
+    >>> cylinder = pyvista.Cylinder(
+    ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
     cylinderSource = _vtk.vtkCylinderSource()
@@ -131,7 +136,7 @@ def CylinderStructured(
 
     Parameters
     ----------
-    radius : float, sequence, default: 0.5
+    radius : float | sequence[float], default: 0.5
         Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
         specified by the ``radius``.
@@ -139,10 +144,10 @@ def CylinderStructured(
     height : float, default: 1.0
         Height of the cylinder along its Z-axis.
 
-    center : sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence, default: (1.0, 0.0, 0.0)
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction cylinder Z-axis in ``[x, y, z]``.
 
     theta_resolution : int, default: 32
@@ -233,10 +238,10 @@ def Arrow(
 
     Parameters
     ----------
-    start : iterable, default: (0.0, 0.0, 0.0)
+    start : sequence[float], default: (0.0, 0.0, 0.0)
         Start location in ``[x, y, z]``.
 
-    direction : iterable, default: (1.0, 0.0, 0.0)
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction the arrow points to in ``[x, y, z]``.
 
     tip_length : float, default: 0.25
@@ -254,7 +259,7 @@ def Arrow(
     shaft_resolution : int, default: 20
         Number of faces around the shaft.
 
-    scale : float or str, optional
+    scale : float | str, optional
         Scale factor of the entire object, defaults to a scale of 1.
         ``'auto'`` scales to length of direction array.
 
@@ -284,7 +289,7 @@ def Arrow(
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
-    if isinstance(scale, float) or isinstance(scale, int):
+    if isinstance(scale, (float, int)):
         surf.points *= scale
     elif scale is not None:
         raise TypeError("Scale must be either float, int or 'auto'.")
@@ -295,14 +300,14 @@ def Arrow(
 
 def Sphere(
     radius=0.5,
-    center=(0, 0, 0),
-    direction=(0, 0, 1),
+    center=(0.0, 0.0, 0.0),
+    direction=(0.0, 0.0, 1.0),
     theta_resolution=30,
     phi_resolution=30,
-    start_theta=0,
-    end_theta=360,
-    start_phi=0,
-    end_phi=180,
+    start_theta=0.0,
+    end_theta=360.0,
+    start_phi=0.0,
+    end_phi=180.0,
 ):
     """Create a vtk Sphere.
 
@@ -311,10 +316,10 @@ def Sphere(
     radius : float, default: 0.5
         Sphere radius.
 
-    center : Sequence, default: (0, 0, 0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
 
-    direction : Sequence, default: (0, 0, 1)
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction the top of the sphere points to in ``[x, y, z]``.
 
     theta_resolution : int, default: 30
@@ -325,16 +330,16 @@ def Sphere(
         Set the number of points in the latitude direction (ranging from
         ``start_phi`` to ``end_phi``).
 
-    start_theta : float, default: 0
+    start_theta : float, default: 0.0
         Starting longitude angle.
 
-    end_theta : float, default: 360
+    end_theta : float, default: 360.0
         Ending longitude angle.
 
-    start_phi : float, default: 0
+    start_phi : float, default: 0.0
         Starting latitude angle.
 
-    end_phi : float, default: 180
+    end_phi : float, default: 180.0
         Ending latitude angle.
 
     Returns
@@ -372,16 +377,21 @@ def Sphere(
 
 
 def Plane(
-    center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=10, j_resolution=10
+    center=(0.0, 0.0, 0.0),
+    direction=(0.0, 0.0, 1.0),
+    i_size=1,
+    j_size=1,
+    i_resolution=10,
+    j_resolution=10,
 ):
     """Create a plane.
 
     Parameters
     ----------
-    center : list or tuple or np.ndarray, default: (0, 0, 0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray, default: (0, 0, 1)
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
@@ -429,10 +439,10 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
 
     Parameters
     ----------
-    pointa : np.ndarray or list, default: (-0.5, 0.0, 0.0)
+    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : np.ndarray or list, default: (0.5, 0.0, 0.0)
+    pointb : sequence[float], default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
     resolution : int, default: 1
@@ -476,7 +486,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
 
     Parameters
     ----------
-    points : np.ndarray or list, default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
 
     Returns
@@ -489,7 +499,9 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     Create a multiple lines between ``(0, 0, 0)``, ``(1, 1, 1)`` and ``(0, 0, 1)``.
 
     >>> import pyvista
-    >>> mesh = pyvista.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
+    >>> mesh = pyvista.MultipleLines(
+    ...     points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]]
+    ... )
     >>> mesh.plot(color='k', line_width=10)
     """
     points, _ = _coerce_pointslike_arg(points)
@@ -507,10 +519,10 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
 
     Parameters
     ----------
-    pointa : Sequence, default: (-0.5, 0.0, 0.0)
+    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : sequence: default: (0.5, 0.0, 0.0)
+    pointb : sequence[float], default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
     resolution : int, default: 1
@@ -577,7 +589,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     Parameters
     ----------
-    center : sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
 
     x_length : float, default: 1.0
@@ -589,7 +601,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
     z_length : float, default: 1.0
         Length of the cube in the z-direction.
 
-    bounds : sequence, optional
+    bounds : sequence[float], optional
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
@@ -646,7 +658,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
 
     Parameters
     ----------
-    bounds : Sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounding box of the cube.
         ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
@@ -696,11 +708,11 @@ def Cone(
 
     Parameters
     ----------
-    center : Sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Axis of the cone passes through this
         point.
 
-    direction : Sequence, default: (1.0, 0.0, 0.0)
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the
         cone.
 
@@ -752,19 +764,19 @@ def Cone(
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0, 0, 1), n_sides=6, fill=True):
+def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True):
     """Create a polygon.
 
     Parameters
     ----------
-    center : Sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Central axis of the polygon passes
         through this point.
 
     radius : float, default: 1.0
         The radius of the polygon.
 
-    normal : Sequence, default: (0, 0, 1)
+    normal : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
 
     n_sides : int, default: 6
@@ -797,7 +809,7 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0, 0, 1), n_sides=6, fil
     return pyvista.wrap(src.GetOutput())
 
 
-def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1, c_res=6):
+def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), r_res=1, c_res=6):
     """Create a polygonal disk with a hole in the center.
 
     The disk has zero height. The user can specify the inner and outer
@@ -806,7 +818,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
 
     Parameters
     ----------
-    center : iterable, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Middle of the axis of the disc.
 
     inner : float, default: 0.25
@@ -815,7 +827,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=
     outer : float, default: 0.5
         The outer radius.
 
-    normal : iterable, default: (0, 0, 1)
+    normal : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
     r_res : int, default: 1
@@ -891,14 +903,14 @@ def Text3D(string, depth=0.5):
 
 def Wavelet(
     extent=(-10, 10, -10, 10, -10, 10),
-    center=(0, 0, 0),
-    maximum=255,
-    x_freq=60,
-    y_freq=30,
-    z_freq=40,
-    x_mag=10,
-    y_mag=18,
-    z_mag=5,
+    center=(0.0, 0.0, 0.0),
+    maximum=255.0,
+    x_freq=60.0,
+    y_freq=30.0,
+    z_freq=40.0,
+    x_mag=10.0,
+    y_mag=18.0,
+    z_mag=5.0,
     std=0.5,
     subsample_rate=1,
 ):
@@ -911,31 +923,31 @@ def Wavelet(
 
     Parameters
     ----------
-    extent : Sequence, default: (-10, 10, -10, 10, -10, 10)
+    extent : sequence[int], default: (-10, 10, -10, 10, -10, 10)
         Set/Get the extent of the whole output image.
 
-    center : list, default: (0, 0, 0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Center of the wavelet.
 
-    maximum : float, default: 255
+    maximum : float, default: 255.0
         Maximum of the wavelet function.
 
-    x_freq : float, default: 60
+    x_freq : float, default: 60.0
         Natural frequency in the x direction.
 
-    y_freq : float, default: 30
+    y_freq : float, default: 30.0
         Natural frequency in the y direction.
 
-    z_freq : float, default: 40
+    z_freq : float, default: 40.0
         Natural frequency in the z direction.
 
-    x_mag : float, default: 10
+    x_mag : float, default: 10.0
         Magnitude in the x direction.
 
-    y_mag : float, default: 18
+    y_mag : float, default: 18.0
         Magnitude in the y direction.
 
-    z_mag : float, default: 5
+    z_mag : float, default: 5.0
         Magnitude in the z direction.
 
     std : float, default: 0.5
@@ -952,9 +964,15 @@ def Wavelet(
     Examples
     --------
     >>> import pyvista
-    >>> wavelet = pyvista.Wavelet(extent=(0, 50, 0, 50, 0, 10), x_freq=20,
-    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100,
-    ...                           z_mag=1000)
+    >>> wavelet = pyvista.Wavelet(
+    ...     extent=(0, 50, 0, 50, 0, 10),
+    ...     x_freq=20,
+    ...     y_freq=10,
+    ...     z_freq=1,
+    ...     x_mag=100,
+    ...     y_mag=100,
+    ...     z_mag=1000,
+    ... )
     >>> wavelet.plot(show_scalar_bar=False)
 
     Extract lower valued cells of the wavelet and create a surface from it.
@@ -992,13 +1010,13 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
 
     Parameters
     ----------
-    pointa : Sequence
+    pointa : sequence[float]
         Position of the first end point.
 
-    pointb : Sequence
+    pointb : sequence[float]
         Position of the other end point.
 
-    center : Sequence
+    center : sequence[float]
         Center of the circle that defines the arc.
 
     resolution : int, default: 100
@@ -1071,18 +1089,18 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
 
     Parameters
     ----------
-    center : sequence
+    center : sequence[float]
         Center of the circle that defines the arc.
 
     resolution : int, default: 100
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    normal : sequence, optional
+    normal : sequence[float], optional
         The normal vector to the plane of the arc.  By default it
         points in the positive Z direction.
 
-    polar : sequence, optional
+    polar : sequence[float], optional
         Starting point of the arc in polar coordinates.  By default it
         is the unit vector in the positive x direction.
 
@@ -1102,7 +1120,9 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     >>> import pyvista
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pyvista.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
+    >>> arc = pyvista.CircularArcFromNormal(
+    ...     [0, 0, 0], normal=normal, polar=polar
+    ... )
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
@@ -1142,7 +1162,7 @@ def Pyramid(points=None):
 
     Parameters
     ----------
-    points : sequence, optional
+    points : array_like[float], optional
         Points of the pyramid.  Points are ordered such that the first
         four points are the four counterclockwise points on the
         quadrilateral face, and the last point is the apex.
@@ -1175,7 +1195,7 @@ def Pyramid(points=None):
         ]
 
     if len(points) != 5:
-        raise TypeError('Points must be given as length 5 np.ndarray or list')
+        raise TypeError('Points must be given as length 5 np.ndarray or list.')
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1202,7 +1222,7 @@ def Triangle(points=None):
 
     Parameters
     ----------
-    points : sequence, optional
+    points : array_like[float], optional
         Points of the triangle.  Defaults to a right isosceles
         triangle (see example).
 
@@ -1235,12 +1255,18 @@ def Triangle(points=None):
 
 
 def Rectangle(points=None):
-    """Create a rectangle defined by 4 points.
+    """Create a rectangle defined by 3 points.
+
+    .. deprecated:: 0.39.0
+       To deal with more than 3 points use :func:`pyvista.Quadrilateral()
+       <pyvista.examples.cells.Quadrilateral>` instead.
+
+    The 3 points must define an orthogonal set of vectors.
 
     Parameters
     ----------
-    points : sequence, optional
-        Points of the rectangle.  Defaults to a simple example.
+    points : array_like[float], optional
+        Points of the rectangle. Defaults to a unit square in xy-plane.
 
     Returns
     -------
@@ -1253,9 +1279,80 @@ def Rectangle(points=None):
     >>> pointa = [1.0, 0.0, 0.0]
     >>> pointb = [1.0, 1.0, 0.0]
     >>> pointc = [0.0, 1.0, 0.0]
-    >>> pointd = [0.0, 0.0, 0.0]
-    >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
+    >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc])
     >>> rectangle.plot(show_edges=True, line_width=5)
+    """
+    if points is None:
+        points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
+    if len(points) == 4:
+        warnings.warn(
+            'Rectangle defined by 4 points is deprecated. Please use ``pyvista.Quadrilateral``.',
+            PyVistaDeprecationWarning,
+        )
+        return Quadrilateral(points)
+    if len(points) != 3:
+        raise TypeError('Points must be given as length 3 np.ndarray or list')
+
+    points, _ = _coerce_pointslike_arg(points)
+
+    point_0 = points[0]
+    point_1 = points[1]
+    point_2 = points[2]
+
+    vec_01 = point_1 - point_0
+    vec_02 = point_2 - point_0
+    vec_12 = point_2 - point_1
+
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02)
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12)
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12)
+
+    null_scalar_products = [
+        val
+        for val in [scalar_pdct_01_02, scalar_pdct_01_12, scalar_pdct_02_12]
+        if np.isclose(val, 0)
+    ]
+    if len(null_scalar_products) == 0:
+        raise ValueError("The three points should defined orthogonal vectors")
+    if len(null_scalar_products) > 1:
+        raise ValueError("Unable to build a rectangle with less than three different points")
+
+    points = np.array([point_0, point_1, point_2, point_0])
+    if np.isclose(scalar_pdct_01_02, 0):
+        points[3] = point_0 + vec_01 + vec_02
+        cells = np.array([[4, 0, 1, 3, 2]])
+    elif np.isclose(scalar_pdct_01_12, 0):
+        points[3] = point_1 + vec_12 - vec_01
+        cells = np.array([[4, 0, 1, 2, 3]])
+    else:
+        points[3] = point_2 - vec_02 - vec_12
+        cells = np.array([[4, 0, 2, 1, 3]])
+
+    return pyvista.PolyData(points, cells)
+
+
+def Quadrilateral(points=None):
+    """Create a quadrilateral defined by 4 points.
+
+    Parameters
+    ----------
+    points : array_like[float], optional
+        Points of the quadrilateral.  Defaults to a unit square in xy-plane.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Quadrilateral mesh.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> pointa = [1.0, 0.0, 0.0]
+    >>> pointb = [1.0, 1.0, 0.0]
+    >>> pointc = [0.0, 1.0, 0.0]
+    >>> pointd = [0.0, 0.0, 0.0]
+    >>> quadrilateral = pv.Quadrilateral([pointa, pointb, pointc, pointd])
+    >>> quadrilateral.plot(show_edges=True, line_width=5)
 
     """
     if points is None:
@@ -1263,10 +1360,7 @@ def Rectangle(points=None):
     if len(points) != 4:
         raise TypeError('Points must be given as length 4 np.ndarray or list')
 
-    check_valid_vector(points[0], 'points[0]')
-    check_valid_vector(points[1], 'points[1]')
-    check_valid_vector(points[2], 'points[2]')
-    check_valid_vector(points[3], 'points[3]')
+    points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
     return pyvista.wrap(pyvista.PolyData(points, cells))
@@ -1364,10 +1458,10 @@ def Superquadric(
 
     Parameters
     ----------
-    center : Sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Center of the superquadric in ``[x, y, z]``.
 
-    scale :  Sequence, default: (1.0, 1.0, 1.0)
+    scale : sequence[float], default: (1.0, 1.0, 1.0)
         Scale factors of the superquadric in ``[x, y, z]``.
 
     size : float, default: 0.5
@@ -1412,9 +1506,11 @@ def Superquadric(
     Examples
     --------
     >>> import pyvista
-    >>> superquadric = pyvista.Superquadric(scale=(3., 1., 0.5),
-    ...                                     phi_roundness=0.1,
-    ...                                     theta_roundness=0.5)
+    >>> superquadric = pyvista.Superquadric(
+    ...     scale=(3.0, 1.0, 0.5),
+    ...     phi_roundness=0.1,
+    ...     theta_roundness=0.5,
+    ... )
     >>> superquadric.plot(show_edges=True)
 
     """
@@ -1437,7 +1533,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    kind : str or int, default: 'tetrahedron'
+    kind : str | int, default: 'tetrahedron'
         The kind of Platonic solid to create. Either the name of the
         polyhedron or an integer index:
 
@@ -1450,8 +1546,8 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the solid to create.
 
-    center : Sequence, default: (0.0, 0.0, 0.0)
-        Three-length sequence defining the center of the solid to create.
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Sequence defining the center of the solid to create.
 
     Returns
     -------
@@ -1512,7 +1608,7 @@ def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the tetrahedron.
 
-    center : Sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the tetrahedron.
 
     Returns
@@ -1546,7 +1642,7 @@ def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the octahedron.
 
-    center : Sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the octahedron.
 
     Returns
@@ -1579,7 +1675,7 @@ def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the dodecahedron.
 
-    center : Sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the dodecahedron.
 
     Returns
@@ -1613,7 +1709,7 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the icosahedron.
 
-    center : Sequence, default: (0.0, 0.0, 0.0)
+    center : sequence[float], default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the icosahedron.
 
     Returns

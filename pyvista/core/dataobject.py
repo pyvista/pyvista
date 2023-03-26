@@ -82,7 +82,7 @@ class DataObject:
             Filename of output file. Writer type is inferred from
             the extension of the filename.
 
-        binary : bool, optional
+        binary : bool, default: True
             If ``True``, write as binary.  Otherwise, write as ASCII.
 
         texture : str, np.ndarray, optional
@@ -189,7 +189,7 @@ class DataObject:
 
         Parameters
         ----------
-        display : bool, optional
+        display : bool, default: True
             Display this header in iPython.
 
         html : bool, optional
@@ -252,7 +252,9 @@ class DataObject:
         raise NotImplementedError('Called only by the inherited class')
 
     def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
-        """Copy pyvista meta data onto this object from another object. Intended to be overridden by subclasses.
+        """Copy pyvista meta data onto this object from another object.
+
+        Intended to be overridden by subclasses.
 
         Parameters
         ----------
@@ -270,7 +272,7 @@ class DataObject:
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default: True
             When ``True`` makes a full copy of the object.  When
             ``False``, performs a shallow copy where the points, cell,
             and data arrays are references to the original object.
@@ -348,9 +350,9 @@ class DataObject:
         name : str
             Name to assign the field array.
 
-        deep : bool, optional
+        deep : bool, default: True
             Perform a deep copy of the data when adding it to the
-            dataset.  Default ``True``.
+            dataset.
 
         Examples
         --------
@@ -366,8 +368,9 @@ class DataObject:
         Add field data to a UniformGrid dataset.
 
         >>> mesh = pyvista.UniformGrid(dimensions=(2, 2, 1))
-        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
-        ...                      'my-field-data')
+        >>> mesh.add_field_data(
+        ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
+        ... )
         >>> mesh['my-field-data']
         pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
 

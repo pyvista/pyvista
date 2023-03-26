@@ -36,7 +36,7 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
 
     Parameters
     ----------
-    axis : 3-length sequence
+    axis : sequence[float]
         The direction vector of the rotation axis. It need not be a
         unit vector, but it must not be a zero vector.
 
@@ -46,7 +46,7 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
         rotation axis. Passed either in degrees or radians depending on
         the value of ``deg``.
 
-    point : 3-length sequence, optional
+    point : sequence[float], optional
         The origin of the rotation (a reference point through which the
         rotation axis passes). By default the rotation axis contains the
         origin.
@@ -66,12 +66,16 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
 
     Check that the transformation cycles the cube's three corners.
 
-    >>> corners = np.array([
-    ...     [1, 0, 0],
-    ...     [0, 1, 0],
-    ...     [0, 0, 1],
-    ... ])
-    >>> rotated = transformations.apply_transformation_to_points(trans, corners)
+    >>> corners = np.array(
+    ...     [
+    ...         [1, 0, 0],
+    ...         [0, 1, 0],
+    ...         [0, 0, 1],
+    ...     ]
+    ... )
+    >>> rotated = transformations.apply_transformation_to_points(
+    ...     trans, corners
+    ... )
     >>> np.allclose(rotated, corners[[1, 2, 0], :])
     True
 
@@ -146,11 +150,11 @@ def reflection(normal, point=None):
 
     Parameters
     ----------
-    normal : 3-length sequence
+    normal : sequence[float]
         The normal vector of the reflection plane. It need not be a unit
         vector, but it must not be a zero vector.
 
-    point : 3-length sequence, optional
+    point : sequence[float], optional
         The origin of the reflection (a reference point through which
         the reflection plane passes). By default the reflection plane
         contains the origin.
@@ -166,17 +170,21 @@ def reflection(normal, point=None):
     Check that the reflection transforms corners of a cube among one
     another.
 
-    >>> verts = np.array([
-    ...     [ 1, -1,  1],
-    ...     [-1, -1,  1],
-    ...     [-1, -1, -1],
-    ...     [-1, -1,  1],
-    ...     [ 1,  1,  1],
-    ...     [-1,  1,  1],
-    ...     [-1,  1, -1],
-    ...     [-1,  1,  1],
-    ... ])
-    >>> mirrored = transformations.apply_transformation_to_points(trans, verts)
+    >>> verts = np.array(
+    ...     [
+    ...         [1, -1, 1],
+    ...         [-1, -1, 1],
+    ...         [-1, -1, -1],
+    ...         [-1, -1, 1],
+    ...         [1, 1, 1],
+    ...         [-1, 1, 1],
+    ...         [-1, 1, -1],
+    ...         [-1, 1, 1],
+    ...     ]
+    ... )
+    >>> mirrored = transformations.apply_transformation_to_points(
+    ...     trans, verts
+    ... )
     >>> np.allclose(mirrored, verts[[np.r_[4:8, 0:4]], :])
     True
 
@@ -240,8 +248,10 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     >>> points_orig = points.copy()
     >>> scale_factor = 2
     >>> tf = scale_factor * np.eye(4)
-    >>> tf[3, 3,] = 1
-    >>> pyvista.transformations.apply_transformation_to_points(tf, points, inplace=True)
+    >>> tf[3, 3] = 1
+    >>> pyvista.transformations.apply_transformation_to_points(
+    ...     tf, points, inplace=True
+    ... )
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))
 
     """

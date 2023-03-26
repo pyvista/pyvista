@@ -44,6 +44,7 @@ class Camera(_vtk.vtkCamera):
         self._parallel_projection = False
         self._elevation = 0.0
         self._azimuth = 0.0
+        self._is_set = False
 
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
@@ -94,6 +95,15 @@ class Camera(_vtk.vtkCamera):
         self.RemoveAllObservers()
         self.parent = None
 
+    @property
+    def is_set(self) -> bool:
+        """Get or set whether this camera has been configured."""
+        return self._is_set
+
+    @is_set.setter
+    def is_set(self, value: bool):
+        self._is_set = bool(value)
+
     @classmethod
     def from_paraview_pvcc(cls, filename: Union[str, Path]) -> Camera:
         """Load a Paraview camera file (.pvcc extension).
@@ -110,7 +120,9 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera = pv.Camera.from_paraview_pvcc("camera.pvcc") # doctest:+SKIP
+        >>> pl.camera = pv.Camera.from_paraview_pvcc(
+        ...     "camera.pvcc"
+        ... )  # doctest:+SKIP
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
         """
@@ -139,7 +151,6 @@ class Camera(_vtk.vtkCamera):
                     values = [typ(e.attrib["value"]) for e in element]
                     setattr(camera, name, values)
                 elif nelems == 1:
-
                     # Special case for bool since bool("0") returns True.
                     # So first convert to int from `to_find` and then apply bool
                     if "name" in element[-1].attrib and element[-1].attrib["name"] == "bool":
@@ -148,6 +159,7 @@ class Camera(_vtk.vtkCamera):
                         val = typ(element[0].attrib["value"])
                     setattr(camera, name, val)
 
+        camera.is_set = True
         return camera
 
     def to_paraview_pvcc(self, filename: Union[str, Path]):
@@ -241,6 +253,7 @@ class Camera(_vtk.vtkCamera):
         self._azimuth = 0.0
         if self._renderer:
             self.reset_clipping_range()
+        self.is_set = True
 
     def reset_clipping_range(self):
         """Reset the camera clipping range based on the bounds of the visible actors.
@@ -281,6 +294,7 @@ class Camera(_vtk.vtkCamera):
     def focal_point(self, point):
         """Set the location of the camera's focus in world coordinates."""
         self.SetFocalPoint(point)
+        self.is_set = True
 
     @property
     def model_transform_matrix(self):
@@ -296,10 +310,14 @@ class Camera(_vtk.vtkCamera):
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
-        >>> pl.camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                              [0., 1., 0., 0.],
-        ...                                              [0., 0., 1., 0.],
-        ...                                              [0., 0., 0., 0.5]])
+        >>> pl.camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 0.5],
+        ...     ]
+        ... )
         >>>
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
@@ -344,6 +362,7 @@ class Camera(_vtk.vtkCamera):
     def distance(self, distance):
         """Set the distance from the camera position to the focal point."""
         self.SetDistance(distance)
+        self.is_set = True
 
     @property
     def thickness(self):
@@ -438,6 +457,7 @@ class Camera(_vtk.vtkCamera):
             return
 
         self.Zoom(value)
+        self.is_set = True
 
     @property
     def up(self):
@@ -460,6 +480,7 @@ class Camera(_vtk.vtkCamera):
     def up(self, vector):
         """Set the "up" of the camera."""
         self.SetViewUp(vector)
+        self.is_set = True
 
     def enable_parallel_projection(self):
         """Enable parallel projection.
@@ -533,7 +554,7 @@ class Camera(_vtk.vtkCamera):
     def clipping_range(self):
         """Return or set the location of the clipping planes.
 
-        Clipping planes are the the near and far clipping planes along
+        Clipping planes are the near and far clipping planes along
         the direction of projection.
 
         Examples
@@ -651,6 +672,7 @@ class Camera(_vtk.vtkCamera):
     def roll(self, angle):
         """Set the rotate of the camera about the direction of projection."""
         self.SetRoll(angle)
+        self.is_set = True
 
     @property
     def elevation(self):
@@ -680,6 +702,7 @@ class Camera(_vtk.vtkCamera):
             self.Elevation(-self._elevation)
         self._elevation = angle
         self.Elevation(angle)
+        self.is_set = True
 
     @property
     def azimuth(self):
@@ -710,6 +733,7 @@ class Camera(_vtk.vtkCamera):
             self.Azimuth(-self._azimuth)
         self._azimuth = angle
         self.Azimuth(angle)
+        self.is_set = True
 
     def copy(self):
         """Return a deep copy of the camera.
@@ -727,17 +751,25 @@ class Camera(_vtk.vtkCamera):
         >>> import pyvista as pv
         >>> import numpy as np
         >>> camera = pv.Camera()
-        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                           [0., 1., 0., 0.],
-        ...                                           [0., 0., 1., 0.],
-        ...                                           [0., 0., 0., 1.]])
+        >>> camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
+        ...     ]
+        ... )
         >>> copied_camera = camera.copy()
         >>> copied_camera == camera
         True
-        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-        ...                                           [0., 1., 0., 0.],
-        ...                                           [0., 0., 1., 0.],
-        ...                                           [0., 0., 0., 0.5]])
+        >>> camera.model_transform_matrix = np.array(
+        ...     [
+        ...         [1.0, 0.0, 0.0, 0.0],
+        ...         [0.0, 1.0, 0.0, 0.0],
+        ...         [0.0, 0.0, 1.0, 0.0],
+        ...         [0.0, 0.0, 0.0, 0.5],
+        ...     ]
+        ... )
         >>> copied_camera == camera
         False
         """
@@ -753,6 +785,7 @@ class Camera(_vtk.vtkCamera):
             'view_angle',
             'roll',
             'parallel_projection',
+            'is_set',
         ]
         new_camera = Camera()
 
@@ -815,7 +848,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.show()
 
         """
-        # inspired by vedo resetCamera. Thanks @marcomusy!
+        # Inspired by vedo resetCamera. Thanks @marcomusy.
         x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
 
         self.enable_parallel_projection()
@@ -864,3 +897,5 @@ class Camera(_vtk.vtkCamera):
             # simply call tight again to reset the parallel scale due to the
             # resized window
             self.tight(padding=padding, adjust_render_window=False, view=view, negative=negative)
+
+        self.is_set = True

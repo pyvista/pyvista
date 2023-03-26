@@ -223,11 +223,10 @@ def test_geodesic_distance(sphere):
     assert isinstance(distance, float)
 
     # Use scalar weights
-    if pyvista.vtk_version_info >= (9,):
-        distance_use_scalar_weights = sphere.geodesic_distance(
-            0, sphere.n_points - 1, use_scalar_weights=True
-        )
-        assert isinstance(distance_use_scalar_weights, float)
+    distance_use_scalar_weights = sphere.geodesic_distance(
+        0, sphere.n_points - 1, use_scalar_weights=True
+    )
+    assert isinstance(distance_use_scalar_weights, float)
 
 
 def test_ray_trace(sphere):
@@ -546,6 +545,25 @@ def test_compute_normals(sphere):
     cell_normals = sphere_normals.cell_data['Normals']
     assert point_normals.shape[0] == sphere.n_points
     assert cell_normals.shape[0] == sphere.n_cells
+
+
+def test_compute_normals_inplace(sphere):
+    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere2 = sphere.copy(deep=False)
+
+    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+
+    sphere.compute_normals(inplace=True)
+
+    sphere[
+        'numbers'
+    ] *= -1  # sphere2 'numbers' are also modified after adding to Plotter.  (See  issue #2461)
+
+    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
+    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
 
 def test_compute_normals_split_vertices(cube):
@@ -890,7 +908,6 @@ def test_n_lines():
     assert mesh.n_lines == 1
 
 
-@pytest.mark.needs_vtk9
 def test_geodesic_disconnected(sphere, sphere_shifted):
     # the sphere and sphere_shifted are disconnected - no path between them
     combined = sphere + sphere_shifted

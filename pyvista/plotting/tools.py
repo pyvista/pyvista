@@ -3,7 +3,7 @@
 from enum import Enum
 import os
 import platform
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np
 
@@ -56,7 +56,10 @@ def _system_supports_plotting():
     if platform.system() == 'Darwin':
         # check if finder available
         proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE, encoding="utf8")
-        proc.communicate()
+        try:
+            proc.communicate(timeout=10)
+        except TimeoutExpired:
+            return False
         if proc.returncode == 0:
             return True
 
@@ -66,9 +69,9 @@ def _system_supports_plotting():
     # Linux case
     try:
         proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
-        proc.communicate()
+        proc.communicate(timeout=10)
         return proc.returncode == 0
-    except OSError:
+    except (OSError, TimeoutExpired):
         return False
 
 
@@ -135,34 +138,34 @@ def create_axes_marker(
     z_color : ColorLike, optional
         Color of the z axis text.
 
-    xlabel : str, optional
+    xlabel : str, default: "X"
         Text used for the x axis.
 
-    ylabel : str, optional
+    ylabel : str, default: "Y"
         Text used for the y axis.
 
-    zlabel : str, optional
+    zlabel : str, default: "Z"
         Text used for the z axis.
 
-    labels_off : bool, optional
+    labels_off : bool, default: False
         Enable or disable the text labels for the axes.
 
-    line_width : float, optional
+    line_width : float, default: 2
         The width of the marker lines.
 
-    cone_radius : float, optional
+    cone_radius : float, default: 0.4
         The radius of the axes arrow tips.
 
-    shaft_length : float, optional
+    shaft_length : float, default: 0.8
         The length of the axes arrow shafts.
 
-    tip_length : float, optional
+    tip_length : float, default: 0.2
         Length of the tip.
 
-    ambient : float, optional
+    ambient : float, default: 0.5
         The ambient of the axes arrows. Value should be between 0 and 1.
 
-    label_size : sequence, optional
+    label_size : sequence[float], default: (0.25, 0.1)
         The width and height of the axes label actors. Values should be between
         0 and 1. For example ``(0.2, 0.1)``.
 
@@ -328,12 +331,19 @@ def create_axes_orientation_box(
 
     >>> import pyvista
     >>> actor = pyvista.create_axes_orientation_box(
-    ...    line_width=1, text_scale=0.53,
-    ...    edge_color='black', x_color='k',
-    ...    y_color=None, z_color=None,
-    ...    xlabel='X', ylabel='Y', zlabel='Z',
-    ...    color_box=False,
-    ...    labels_off=False, opacity=1.0)
+    ...     line_width=1,
+    ...     text_scale=0.53,
+    ...     edge_color='black',
+    ...     x_color='k',
+    ...     y_color=None,
+    ...     z_color=None,
+    ...     xlabel='X',
+    ...     ylabel='Y',
+    ...     zlabel='Z',
+    ...     color_box=False,
+    ...     labels_off=False,
+    ...     opacity=1.0,
+    ... )
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_actor(actor)
     >>> pl.show()
@@ -487,7 +497,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
-    >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
+    >>> tf = (
+    ...     pv.opacity_transfer_function("geom_r", 256).astype(float)
+    ...     / 255.0
+    ... )
     >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)

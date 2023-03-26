@@ -175,7 +175,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str
             Name of the array item you want to return the value from.
 
-        value : anything, optional
+        value : Any, optional
             A value to return if the key does not exist.  Default
             is ``None``.
 
@@ -264,7 +264,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Can no longer be used to set the active scalars.  Either use
             :func:`DataSetAttributes.set_scalars` or if the array
             already exists, assign to
-            :attr:`DataSetAttribute.active_scalars_name`.
+            :attr:`pyvista.DataSetAttributes.active_scalars_name`.
 
         Examples
         --------
@@ -296,7 +296,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Can no longer be used to set the active vectors.  Either use
             :func:`DataSetAttributes.set_vectors` or if the array
             already exists, assign to
-            :attr:`DataSetAttribute.active_vectors_name`.
+            :attr:`pyvista.DataSetAttributes.active_vectors_name`.
 
         Examples
         --------
@@ -434,7 +434,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        key : str, int
+        key : str | int
             The name or index of the array to return.  Arrays are
             ordered within VTK DataSetAttributes, and this feature is
             mirrored here.
@@ -516,9 +516,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        data : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
-            ``tuple`` or scalar value.
+        data : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
+            ``list``, ``tuple`` or scalar value.
 
         name : str
             Name to assign to the data.  If this name already exists,
@@ -581,14 +581,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        scalars : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
+        scalars : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`, ``list``,
             ``tuple`` or scalar value.
 
         name : str, default: 'scalars'
             Name to assign the scalars.
 
-        deep_copy : bool, optional
+        deep_copy : bool, default: False
             When ``True`` makes a full copy of the array.
 
         Notes
@@ -635,15 +635,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        vectors : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``, or
-            ``tuple``.  Must match the number of cells or points of
-            the dataset.
+        vectors : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
+            ``list``, or ``tuple``.  Must match the number of cells or points
+            of the dataset.
 
         name : str
             Name of the vectors.
 
-        deep_copy : bool, optional
+        deep_copy : bool, default: False
             When ``True`` makes a full copy of the array.  When
             ``False``, the data references the original array
             without copying it.
@@ -862,7 +862,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str
             The name of the array to remove and return.
 
-        default : anything, optional
+        default : Any, optional
             If default is not given and key is not in the dictionary,
             a KeyError is raised.
 
@@ -913,7 +913,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data0'] = [0] * mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.items()
         [('data0', pyvista_ndarray([0, 0, 0, 0, 0, 0])), ('data1', pyvista_ndarray([0, 1, 2, 3, 4, 5]))]
@@ -934,7 +934,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.clear_data()
-        >>> mesh.point_data['data0'] = [0]*mesh.n_points
+        >>> mesh.point_data['data0'] = [0] * mesh.n_points
         >>> mesh.point_data['data1'] = range(mesh.n_points)
         >>> mesh.point_data.keys()
         ['data0', 'data1']
@@ -966,7 +966,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data0'] = [0] * mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.values()
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
@@ -1096,8 +1096,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.point_data.set_vectors(np.random.random((mesh.n_points, 3)),
-        ...                             'my-vectors')
+        >>> mesh.point_data.set_vectors(
+        ...     np.random.random((mesh.n_points, 3)), 'my-vectors'
+        ... )
         >>> mesh.point_data.active_vectors_name
         'my-vectors'
 

@@ -21,7 +21,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
 
     Parameters
     ----------
-    mesh_or_algo : pyvista.DataSet or vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput
+    mesh_or_algo : pyvista.DataSet | vtk.vtkAlgorithm | vtk.vtkAlgorithmOutput
         The input to be used as a data set (mesh) or vtkAlgorithm object.
 
     port : int, default: 0
@@ -69,7 +69,7 @@ def set_algorithm_input(alg, inp, port=0):
     alg : vtk.vtkAlgorithm
         The algorithm whose input is being set.
 
-    inp : vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput or vtk.vtkDataObject
+    inp : vtk.vtkAlgorithm | vtk.vtkAlgorithmOutput | vtk.vtkDataObject
         The input to the algorithm.
 
     port : int, default: 0
@@ -131,11 +131,11 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         Accepts a string name of an array that is present on the mesh.
         Array should be sized as a single vector.
 
-    preference : str, optional
+    preference : str, default: 'point'
         When ``mesh.n_points == mesh.n_cells`` and setting
         scalars, this parameter sets how the scalars will be
-        mapped to the mesh.  Default ``'point'``, causes the
-        scalars will be associated with the mesh points.  Can be
+        mapped to the mesh.  The default, ``'point'``, causes the
+        scalars to be associated with the mesh points.  Can be
         either ``'point'`` or ``'cell'``.
 
     """
@@ -311,5 +311,22 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
     """Add a filter that converts point data to cell data."""
     alg = _vtk.vtkPointDataToCellData()
     alg.SetPassPointData(pass_point_data)
+    set_algorithm_input(alg, inp)
+    return alg
+
+
+def triangulate_algorithm(inp):
+    """Triangulate input."""
+    trifilter = _vtk.vtkTriangleFilter()
+    trifilter.PassVertsOff()
+    trifilter.PassLinesOff()
+    set_algorithm_input(trifilter, inp)
+    return trifilter
+
+
+def decimation_algorithm(inp, target_reduction):
+    """Decimate input to target reduction."""
+    alg = _vtk.vtkQuadricDecimation()
+    alg.SetTargetReduction(target_reduction)
     set_algorithm_input(alg, inp)
     return alg

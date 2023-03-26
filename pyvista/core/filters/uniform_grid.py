@@ -19,16 +19,16 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        radius_factor : float or iterable, optional
+        radius_factor : float | sequence[float], default: 1.5
             Unitless factor to limit the extent of the kernel.
 
-        std_dev : float or iterable, optional
+        std_dev : float | sequence[float], default: 2.0
             Standard deviation of the kernel in pixel units.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -38,9 +38,10 @@ class UniformGridFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell
-        data to point data using the :func:`DataSet.cell_data_to_point_data`
-        filter to convert any cell data to point data.
+        This filter only supports point data. Consider converting any cell data
+        to point data using the :func:`cell_data_to_point_data()
+        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert any
+        cell data to point data.
 
         Examples
         --------
@@ -51,7 +52,9 @@ class UniformGridFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -103,21 +106,21 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        kernel_size : list(int) or tuple(int), optional
-            Length 3 list or tuple of ints : ``(x_size, y_size, z_size)``
-            Size of the kernel in each dimension (units of voxels). Default is
-            a 3D median filter. If you want to do a 2D median filter, set the
-            size to 1 in the dimension you don't want to filter over.
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Size of the kernel in each dimension (units of voxels), for example
+            ``(x_size, y_size, z_size)``. Default is a 3D median filter. If you
+            want to do a 2D median filter, set the size to 1 in the dimension
+            you don't want to filter over.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        preference : str, optional
+        preference : str, default: "point"
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -140,7 +143,9 @@ class UniformGridFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista
         >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pyvista.sample_function(
+        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -177,16 +182,15 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        voi : tuple(int)
+        voi : sequence[int]
             Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
-        rate : tuple(int), optional
+        rate : sequence[int], default: (1, 1, 1)
             Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
-            Default: ``(1, 1, 1)``.
 
-        boundary : bool, optional
+        boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
             is output in the subsampling process. This only has effect
             when the rate in any direction is not equal to 1. When
@@ -195,7 +199,7 @@ class UniformGridFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -224,8 +228,8 @@ class UniformGridFilters(DataSetFilters):
 
     def image_dilate_erode(
         self,
-        dilate_value=1,
-        erode_value=0,
+        dilate_value=1.0,
+        erode_value=0.0,
         kernel_size=(3, 3, 3),
         scalars=None,
         progress_bar=False,
@@ -240,22 +244,20 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        dilate_value : int or float, optional
-            Dilate value in the dataset. Default: ``1``.
+        dilate_value : float, default: 1.0
+            Dilate value in the dataset.
 
-        erode_value : int or float, optional
-            Erode value in the dataset. Default: ``0``.
+        erode_value : float, default: 0.0
+            Erode value in the dataset.
 
-        kernel_size : list(int) or tuple(int), optional
-            Length 3 iterable of ints: ``(xsize, ysize, zsize)``.
-            Determines the size (and center) of the kernel.
-            Default: ``(3, 3, 3)``.
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress. Default ``False``.
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -264,9 +266,10 @@ class UniformGridFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell
-        data to point data using the :func:`DataSet.cell_data_to_point_data`
-        filter to convert ny cell data to point data.
+        This filter only supports point data. Consider converting any cell data
+        to point data using the :func:`cell_data_to_point_data()
+        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert ny
+        cell data to point data.
 
         Examples
         --------
@@ -313,8 +316,8 @@ class UniformGridFilters(DataSetFilters):
     def image_threshold(
         self,
         threshold,
-        in_value=1,
-        out_value=0,
+        in_value=1.0,
+        out_value=0.0,
         scalars=None,
         preference='point',
         progress_bar=False,
@@ -335,29 +338,27 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        threshold : float or sequence
+        threshold : float or sequence[float]
             Single value or (min, max) to be used for the data threshold.  If
             a sequence, then length must be 2. Threshold(s) for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
-        in_value : float or int or None, optional
+        in_value : float, default: 1.0
             Scalars that match the threshold criteria for ``'in'`` will be replaced with this.
-            Default is 1.
 
-        out_value : float or int or None, optional
+        out_value : float, default: 0.0
             Scalars that match the threshold criteria for ``'out'`` will be replaced with this.
-            Default is 0.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        preference : str, optional
+        preference : str, default: "point"
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress. Default ``False``.
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -441,7 +442,7 @@ class UniformGridFilters(DataSetFilters):
             The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -451,9 +452,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        rfft: The reverse transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        rfft : The reverse transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -520,7 +521,7 @@ class UniformGridFilters(DataSetFilters):
             The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -530,9 +531,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: The direct transform.
-        low_pass: Low-pass filtering of FFT output.
-        high_pass: High-pass filtering of FFT output.
+        fft : The direct transform.
+        low_pass : Low-pass filtering of FFT output.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -595,16 +596,16 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        x_cutoff : double
+        x_cutoff : float
             The cutoff frequency for the x axis.
 
-        y_cutoff : double
+        y_cutoff : float
             The cutoff frequency for the y axis.
 
-        z_cutoff : double
+        z_cutoff : float
             The cutoff frequency for the z axis.
 
-        order : int, optional
+        order : int, default: 1
             The order of the cutoff curve. Given from the equation
             ``1 + (cutoff/freq(i, j))**(2*order)``.
 
@@ -612,7 +613,7 @@ class UniformGridFilters(DataSetFilters):
             The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -622,9 +623,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        high_pass: High-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        high_pass : High-pass filtering of FFT output.
 
         Examples
         --------
@@ -673,16 +674,16 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        x_cutoff : double
+        x_cutoff : float
             The cutoff frequency for the x axis.
 
-        y_cutoff : double
+        y_cutoff : float
             The cutoff frequency for the y axis.
 
-        z_cutoff : double
+        z_cutoff : float
             The cutoff frequency for the z axis.
 
-        order : int, optional
+        order : int, default: 1
             The order of the cutoff curve. Given from the equation
             ``1/(1 + (cutoff/freq(i, j))**(2*order))``.
 
@@ -690,7 +691,7 @@ class UniformGridFilters(DataSetFilters):
             The name of the output scalars. By default, this is the same as the
             active scalars of the dataset.
 
-        progress_bar : bool, optional
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -700,9 +701,9 @@ class UniformGridFilters(DataSetFilters):
 
         See Also
         --------
-        fft: Direct fast Fourier transform.
-        rfft: Reverse fast Fourier transform.
-        low_pass: Low-pass filtering of FFT output.
+        fft : Direct fast Fourier transform.
+        rfft : Reverse fast Fourier transform.
+        low_pass : Low-pass filtering of FFT output.
 
         Examples
         --------
@@ -756,3 +757,15 @@ class UniformGridFilters(DataSetFilters):
                 'as an array with a datatype of `numpy.complex64` or '
                 '`numpy.complex128`.'
             )
+
+    def _flip_uniform(self, axis) -> 'pyvista.UniformGrid':
+        """Flip the uniform grid along a specified axis and return a uniform grid.
+
+        This varies from :func:`DataSet.flip_x` because it returns a UniformGrid.
+
+        """
+        alg = _vtk.vtkImageFlip()
+        alg.SetInputData(self)
+        alg.SetFilteredAxes(axis)
+        alg.Update()
+        return pyvista.wrap(alg.GetOutput())

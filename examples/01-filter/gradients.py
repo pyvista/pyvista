@@ -74,7 +74,7 @@ p.show()
 
 
 ###############################################################################
-# And there you have it, the gradients for a vector field! We could also do
+# And there you have it, the gradients for a vector field. We could also do
 # this for a scalar  field like for the ``scalars`` field in the given dataset.
 mesh_g = mesh.compute_derivative(scalars="scalars")
 

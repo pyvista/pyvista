@@ -7,8 +7,6 @@ Import a glTF file directly into a PyVista plotting scene.  For more
 details regarding the glTF format, see:
 https://www.khronos.org/gltf/
 
-Note this feature is only available for ``vtk>=9``.
-
 First, download the examples.  Note that here we're using a high
 dynamic range texture since glTF files generally contain physically
 based rendering and VTK v9 supports high dynamic range textures.
