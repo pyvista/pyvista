@@ -538,6 +538,7 @@ def test_plot_show_grid(sphere):
     plotter.show()
 
 
+@skip_mesa
 def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     """Show the grid bounds for a specific mesh."""
     verify_image_cache.macos_skip_image_cache = True

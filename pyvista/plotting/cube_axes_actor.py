@@ -1,5 +1,5 @@
 """Module containing the wrapping of CubeAxesActor."""
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 
@@ -24,12 +24,74 @@ def make_axis_labels(vmin, vmax, n, fmt):
     return labels
 
 
+def vtk_string_arr_to_list(strarr) -> List[str]:
+    """Convert a vtkStringArray to a list of strings."""
+    return [strarr.GetValue(ii) for ii in range(strarr.GetNumberOfValues())]
+
+
 class CubeAxesActor(_vtk.vtkCubeAxesActor):
     """Wrap vtkCubeAxesActor.
 
     This class is created to wrap vtkCubeAxesActor, which is used to draw axes
     and labels for the input data bounds. This wrapping aims to provide a
-    user-friendly interface to use vtkCubeAxesActor in Python.
+    user-friendly interface to use `vtkCubeAxesActor
+    <https://vtk.org/doc/nightly/html/classvtkCubeAxesActor.html>`_.
+
+    Parameters
+    ----------
+    camera : pyvista.Camera
+        Camera to link to the axes actor.
+
+    minor_ticks : bool, default: False
+        If ``True``, also plot minor ticks on all axes.
+
+    x_title : str, default: "X Axis"
+        Title of the X axis.
+
+    y_title : str, default: "Y Axis"
+        Title of the Y axis.
+
+    z_title : str, default: "Z Axis"
+        Title of the Z axis.
+
+    x_axis_visibility : bool, default: True
+        Visibility of the X axis.
+
+    y_axis_visibility : bool, default: True
+        Visibility of the Y axis.
+
+    z_axis_visibility : bool, default: True
+        Visibility of the Z axis.
+
+    x_label_format : str, optional
+        A format string defining how tick labels are generated from tick
+        positions for the X axis. Defaults to the theme format.
+
+    y_label_format : str, optional
+        A format string defining how tick labels are generated from tick
+        positions for the Y axis. Defaults to the theme format.
+
+    z_label_format : str, optional
+        A format string defining how tick labels are generated from tick
+        positions for the Z axis. Defaults to the theme format.
+
+    x_label_visibility : bool, default: True
+        The visibility of the X axis labels.
+
+    y_label_visibility : bool, default: True
+        The visibility of the Y axis labels.
+
+    z_label_visibility : bool, default: True
+        The visibility of the Z axis labels.
+
+    n_xlabels : int, default: 5
+        Number of labels along the X axis.
+
+    n_ylabels : int, default: 5
+        Number of labels along the Y axis.
+
+    n_zlabels : int, default: 5
+        Number of labels along the Z axis.
 
     Examples
     --------
@@ -37,12 +99,12 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
     >>> import pyvista as pv
     >>> mesh = pv.Cube()
-    >>> plotter = pv.Plotter()
-    >>> plotter.add_mesh(mesh)
-    >>> cube_axes_actor = pv.plotting.CubeAxesActor(pl.camera)
+    >>> pl = pv.Plotter()
+    >>> pl.add_mesh(mesh)
+    >>> cube_axes_actor = pv.CubeAxesActor(pl.camera)
     >>> cube_axes_actor.bounds = mesh.bounds
-    >>> plotter.add_actor(cube_axes_actor)
-    >>> plotter.show()
+    >>> pl.add_actor(cube_axes_actor)
+    >>> pl.show()
 
     """
 
@@ -87,20 +149,24 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
         if tick_location:
             self.tick_location = tick_location
-        self._x_title = x_title
-        self._y_title = y_title
-        self._z_title = z_title
+        self.x_title = x_title
+        self.y_title = y_title
+        self.z_title = z_title
 
         self._x_label_visibility = x_label_visibility
         self._y_label_visibility = y_label_visibility
         self._z_label_visibility = z_label_visibility
 
         if x_label_format is not None:
-            self.x_label_format = x_label_format
+            x_label_format = pv.global_theme.font.fmt
         if y_label_format is not None:
-            self.y_label_format = y_label_format
+            y_label_format = pv.global_theme.font.fmt
         if z_label_format is not None:
-            self.z_label_format = z_label_format
+            z_label_format = pv.global_theme.font.fmt
+
+        self.x_label_format = x_label_format
+        self.y_label_format = y_label_format
+        self.z_label_format = z_label_format
 
         self.n_xlabels = n_xlabels
         self.n_ylabels = n_ylabels
@@ -141,15 +207,6 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             )
 
     @property
-    def rebuild_axes(self) -> bool:
-        """Return or set the RebuildAxes flag."""
-        return bool(self.GetRebuildAxes())
-
-    @rebuild_axes.setter
-    def rebuild_axes(self, flag: bool):
-        self.SetRebuildAxes(flag)
-
-    @property
     def bounds(self) -> BoundsLike:
         """Return or set the bounding box."""
         return self.GetBounds()
@@ -158,11 +215,9 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     def bounds(self, bounds: BoundsLike):
         self.SetBounds(bounds)
         self._update_labels()
-
-    @property
-    def rendered_bounds(self) -> BoundsLike:
-        """Return the bounds of the cube axis itself with all its labels."""
-        return self.GetRenderedBounds()
+        self.x_axis_range = float(bounds[0]), float(bounds[1])
+        self.y_axis_range = float(bounds[2]), float(bounds[3])
+        self.z_axis_range = float(bounds[4]), float(bounds[5])
 
     @property
     def x_axis_range(self) -> Tuple[float, float]:
@@ -192,15 +247,6 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetZAxisRange(value)
 
     @property
-    def screen_size(self) -> float:
-        """Return or set the screen size of title and label text."""
-        return self.GetScreenSize()
-
-    @screen_size.setter
-    def screen_size(self, size: float):
-        self.SetScreenSize(size)
-
-    @property
     def label_offset(self) -> float:
         """Return or set the distance between labels and the axis."""
         return self.GetLabelOffset()
@@ -226,75 +272,6 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @camera.setter
     def camera(self, camera: 'pv.Camera'):
         self.SetCamera(camera)
-
-    @property
-    def fly_mode(self) -> int:
-        """Return or set the fly mode."""
-        return self.GetFlyMode()
-
-    @property
-    def inertia(self) -> int:
-        """Return or set the inertial factor for the axes.
-
-        The inertial factor controls how often the axes can switch position
-        (jump from one axes to another). It is an integer value equal to the number
-        of renders before the axes switch position.
-        """
-        return self.GetInertia()
-
-    @inertia.setter
-    def inertia(self, value: int):
-        self.SetInertia(value)
-
-    @property
-    def corner_offset(self) -> float:
-        """Return or set the corner offset.
-
-        The corner offset is the fraction of the axis length to pull back the axes
-        from the corner at which they are joined. This is useful to prevent
-        overlap of axes labels between the various axes.
-        """
-        return self.GetCornerOffset()
-
-    @corner_offset.setter
-    def corner_offset(self, value: float):
-        self.SetCornerOffset(value)
-
-    @property
-    def enable_distance_lod(self) -> int:
-        """Return or set the usage of distance based LOD for titles and labels."""
-        return self.GetEnableDistanceLOD()
-
-    @enable_distance_lod.setter
-    def enable_distance_lod(self, value: int):
-        self.SetEnableDistanceLOD(value)
-
-    @property
-    def distance_lod_threshold(self) -> float:
-        """Return or set the distance LOD threshold."""
-        return self.GetDistanceLODThreshold()
-
-    @distance_lod_threshold.setter
-    def distance_lod_threshold(self, value: float):
-        self.SetDistanceLODThreshold(value)
-
-    @property
-    def enable_view_angle_lod(self) -> int:
-        """Return or set the usage of view angle based LOD for titles and labels."""
-        return self.GetEnableViewAngleLOD()
-
-    @enable_view_angle_lod.setter
-    def enable_view_angle_lod(self, value: int):
-        self.SetEnableViewAngleLOD(value)
-
-    @property
-    def view_angle_lod_threshold(self) -> float:
-        """Return or set the view angle LOD threshold."""
-        return self.GetViewAngleLODThreshold()
-
-    @view_angle_lod_threshold.setter
-    def view_angle_lod_threshold(self, value: float):
-        self.SetViewAngleLODThreshold(value)
 
     @property
     def x_axis_minor_tick_visibility(self) -> bool:
@@ -388,6 +365,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @x_label_format.setter
     def x_label_format(self, value: str):
         self.SetXLabelFormat(value)
+        self._update_x_labels()
 
     @property
     def y_label_format(self) -> str:
@@ -397,6 +375,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @y_label_format.setter
     def y_label_format(self, value: str):
         self.SetYLabelFormat(value)
+        self._update_y_labels()
 
     @property
     def z_label_format(self) -> str:
@@ -406,6 +385,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @z_label_format.setter
     def z_label_format(self, value: str):
         self.SetZLabelFormat(value)
+        self._update_z_labels()
 
     @property
     def x_title(self) -> str:
@@ -505,7 +485,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetYTitle(self._y_title)
             if self._y_label_visibility:
                 self.SetAxisLabels(
-                    1, make_axis_labels(*self.bounds[2:4], self.n_ylabels, self.x_label_format)
+                    1, make_axis_labels(*self.bounds[2:4], self.n_ylabels, self.y_label_format)
                 )
             else:
                 self.SetAxisLabels(1, self._empty_str)
@@ -519,13 +499,28 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetZTitle(self._z_title)
             if self._z_label_visibility:
                 self.SetAxisLabels(
-                    2, make_axis_labels(*self.bounds[4:6], self.n_zlabels, self.x_label_format)
+                    2, make_axis_labels(*self.bounds[4:6], self.n_zlabels, self.z_label_format)
                 )
             else:
                 self.SetAxisLabels(2, self._empty_str)
         else:
             self.SetZTitle('')
             self.SetAxisLabels(2, self._empty_str)
+
+    @property
+    def x_labels(self) -> List[str]:
+        """Return the x axis labels."""
+        return vtk_string_arr_to_list(self.GetAxisLabels(0))
+
+    @property
+    def y_labels(self) -> List[str]:
+        """Return the y axis labels."""
+        return vtk_string_arr_to_list(self.GetAxisLabels(1))
+
+    @property
+    def z_labels(self) -> List[str]:
+        """Return the z axis labels."""
+        return vtk_string_arr_to_list(self.GetAxisLabels(2))
 
     def update_bounds(self, bounds):
         """Update the bounds of this actor.
@@ -535,4 +530,3 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
         """
         self.bounds = bounds
-        self._update_labels()
