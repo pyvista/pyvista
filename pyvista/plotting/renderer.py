@@ -3563,7 +3563,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         label_format : str, optional
             A printf style format for labels, e.g. ``'%E'``.
-            See `old-string-formatting <https://docs.python.org/3/library/stdtypes.html#old-string-formatting>`_.
+            See :ref:`old-string-formatting`.
 
         number_minor_ticks : int, default: 0
             Number of minor ticks between major ticks.
