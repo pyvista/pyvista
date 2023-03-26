@@ -1,5 +1,6 @@
 """Functionality to override PyVista object creation with other subclasses."""
 from functools import wraps
+import inspect
 
 from pyvista.core import DataSet
 
@@ -30,6 +31,8 @@ def set_up_overrides(root=DataSet):
             # non-trivial override is set: return other type
             instance = other_cls.__new__(other_cls, *args, **kwargs)
             return instance
+
+        new_new.__signature__ = inspect.signature(old_new)
 
         cls.__new__ = new_new
 
