@@ -1382,7 +1382,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> mesh = examples.load_random_hills()
 
         >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = plotter.add_mesh(
+        ...     mesh, cmap='terrain', show_scalar_bar=False
+        ... )
         >>> actor = plotter.show_bounds(
         ...     grid='back',
         ...     location='outer',
@@ -1396,10 +1398,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ... )
         >>> plotter.show()
 
-        Hide labels, but still show axis titles
+        Hide labels, but still show axis titles.
 
         >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = plotter.add_mesh(
+        ...     mesh, cmap='terrain', show_scalar_bar=False
+        ... )
         >>> actor = plotter.show_bounds(
         ...     grid='back',
         ...     location='outer',
@@ -1673,14 +1677,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return cube_axes_actor
 
     def show_grid(self, **kwargs):
-        """Show gridlines and bounds axes labels.
+        """Show grid lines and bounds axes labels.
 
-        A wrapped implementation of :func:`show_bounds() <pyvista.Renderer.show_bounds>`
-        to change default behaviour to use gridlines and showing
-        the axes labels on the outer edges.
+        A wrapped implementation of :func:`show_bounds()
+        <pyvista.Renderer.show_bounds>` to change default behavior to use
+        grid lines and showing the axes labels on the outer edges.
 
-        This is intended to be similar to ``matplotlib``'s ``grid``
-        function.
+        This is intended to be similar to :func:`matplotlib.pyplot.grid`.
 
         Parameters
         ----------
