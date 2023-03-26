@@ -1812,10 +1812,17 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
 
 def test_type_override(clean_up_type_overrides):
     class NotPolyData(pyvista.PolyData):
-        pass
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.additional_state = 42
 
     poly = pyvista.Sphere()
     assert type(poly) == pyvista.PolyData
+
     pyvista.PolyData.type_override = NotPolyData
     not_poly = pyvista.Sphere()
+    # check correct type
     assert type(not_poly) == NotPolyData
+    # check inherited and additional state
+    assert not_poly == poly
+    assert not_poly.additional_state == 42
