@@ -2609,7 +2609,7 @@ def test_add_text():
 
 
 @pytest.mark.skipif(
-    check_math_text_support(),
+    not check_math_text_support(),
     reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
 )
 def test_add_text_latex():
