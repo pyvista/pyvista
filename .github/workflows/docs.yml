@@ -7,7 +7,6 @@ on:
         description: 'Use build cache'
         required: false
         default: "true"
-        debug: "true"
   # No cache enabled for `schedule` and `push`
   schedule:
     - cron: '0 0 1 * *'  # once a month on main
@@ -67,6 +66,7 @@ jobs:
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
+          debug: "true"
 
       - name: Install PyVista and dependencies
         run: |
