@@ -178,6 +178,7 @@ jobs:
         with:
           packages: libgl1-mesa-glx xvfb
           version: 3.0
+          debug: "true"
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
