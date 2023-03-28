@@ -5,6 +5,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.utilities import convert_string_array
 
 from .._typing import BoundsLike
 
@@ -22,11 +23,6 @@ def make_axis_labels(vmin, vmax, n, fmt):
             label = f'{v}'
         labels.InsertNextValue(label)
     return labels
-
-
-def vtk_string_arr_to_list(strarr) -> List[str]:
-    """Convert a vtkStringArray to a list of strings."""
-    return [strarr.GetValue(ii) for ii in range(strarr.GetNumberOfValues())]
 
 
 class CubeAxesActor(_vtk.vtkCubeAxesActor):
@@ -523,17 +519,17 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @property
     def x_labels(self) -> List[str]:
         """Return the x axis labels."""
-        return vtk_string_arr_to_list(self.GetAxisLabels(0))
+        return convert_string_array(self.GetAxisLabels(0))
 
     @property
     def y_labels(self) -> List[str]:
         """Return the y axis labels."""
-        return vtk_string_arr_to_list(self.GetAxisLabels(1))
+        return convert_string_array(self.GetAxisLabels(1))
 
     @property
     def z_labels(self) -> List[str]:
         """Return the z axis labels."""
-        return vtk_string_arr_to_list(self.GetAxisLabels(2))
+        return convert_string_array(self.GetAxisLabels(2))
 
     def update_bounds(self, bounds):
         """Update the bounds of this actor.
