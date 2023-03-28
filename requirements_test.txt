@@ -27,6 +27,6 @@ sympy<1.12.0
 tqdm<4.66.0
 trame>=2.2.6,<2.4
 trame-client>=2.5.1,<2.8
-trame-server>=2.8.0,<2.10
+trame-server>=2.8.0,<2.11
 trame-vtk>=2.4.0,<2.5
 trimesh<3.22.0
