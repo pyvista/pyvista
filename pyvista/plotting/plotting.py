@@ -1492,7 +1492,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple
+        tuple[float, float, float, float, float, float]
             Bounds of the active renderer.
 
         Examples

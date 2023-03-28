@@ -29,6 +29,7 @@ all plotting functionality in PyVista.
 
    Actor
    CameraPosition
+   CubeAxesActor
    DataSetMapper
    LookupTable
    Plotter

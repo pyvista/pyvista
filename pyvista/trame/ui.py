@@ -414,7 +414,7 @@ class Viewer:
             server = container.server
             # Initialize state variables
             server.state[self.EDGES] = False
-            server.state[self.GRID] = hasattr(self.plotter.renderer, 'cube_axes_actor')
+            server.state[self.GRID] = self.plotter.renderer.cube_axes_actor is not None
             server.state[self.OUTLINE] = hasattr(self.plotter.renderer, '_box_object')
             server.state[self.AXIS] = (
                 hasattr(self.plotter.renderer, 'axes_widget')
