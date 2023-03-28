@@ -1,6 +1,6 @@
 """Color module supporting plotting module.
 
-Used code from matplotlib.colors.  Thanks for your work!
+Used code from matplotlib.colors.  Thanks for your work.
 
 
 SUPPORTED COLORS
@@ -169,8 +169,19 @@ tab:cyan
 # of methods defined in this module.
 from __future__ import annotations
 
+import inspect
 from typing import Optional, Tuple, Union
 
+from cycler import Cycler, cycler
+
+try:
+    from matplotlib import colormaps, colors
+except ImportError:  # pragma: no cover
+    from matplotlib import cm as colormaps
+    from matplotlib import colors
+
+from matplotlib.colors import ListedColormap
+import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -651,7 +662,7 @@ class Color:
         * ``[255, 255, 255, 255]``
         * ``'#FFFFFF'``
 
-    opacity : int, float or str, optional
+    opacity : int | float | str, optional
         Opacity of the represented color. Overrides any opacity associated
         with the provided ``color``. Allowed opacities are floats between 0
         and 1, ints between 0 and 255 or hexadecimal strings of length 2
@@ -667,7 +678,7 @@ class Color:
         ``None``, then defaults to the global theme color. Format is
         identical to ``color``.
 
-    default_opacity : int, float or str, optional
+    default_opacity : int | float | str, optional
         Default opacity of the represented color. Used when ``color``
         does not specify an opacity and ``opacity`` is ``None``. Format
         is identical to ``opacity``.
@@ -802,7 +813,7 @@ class Color:
 
         Parameters
         ----------
-        val : int, float or str
+        val : int | float | str
             Color channel value to convert. Supported input values are a
             hex string of length 2 (``'00'`` to ``'ff'``) with an optional
             prefix (``'#'`` or ``'0x'``), a float (``0.0`` to ``1.0``) or
@@ -1046,7 +1057,7 @@ class Color:
 
         Returns
         -------
-        str or None
+        str | None
             The color name, in case this color has a name; otherwise ``None``.
 
         Notes
@@ -1204,39 +1215,22 @@ def get_cmap_safe(cmap):
             except AttributeError:
                 pass
 
-        # Else use Matplotlib
-        if not has_module('matplotlib'):
-            raise ImportError(
-                'The use of custom colormaps requires the installation of matplotlib.'
-            )  # pragma: no cover
-
-        try:
-            from matplotlib import colormaps, colors
-        except ImportError:  # pragma: no cover
-            import matplotlib
-            import scooby
-
-            min_req = '3.5.0'
-            if not scooby.meets_version(matplotlib.__version__, min_req):
-                raise ImportError(
-                    'The use of custom colormaps requires the installation of '
-                    f'matplotlib>={min_req}.'
-                ) from None
-
         if not isinstance(cmap, colors.Colormap):
-            cmap = colormaps[cmap]
+            if inspect.ismodule(colormaps):  # pragma: no cover
+                # Backwards compatibility with matplotlib<3.5.0
+                if not hasattr(colormaps, cmap):
+                    raise ValueError(f'Invalid colormap "{cmap}"')
+                cmap = getattr(colormaps, cmap)
+            else:
+                try:
+                    cmap = colormaps[cmap]
+                except KeyError:
+                    raise ValueError(f'Invalid colormap "{cmap}"') from None
 
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
                 raise TypeError('When inputting a list as a cmap, each item should be a string.')
-
-        if not has_module('matplotlib'):
-            raise ImportError(
-                'The use of custom colormaps requires the installation of matplotlib.'
-            )  # pragma: no cover
-
-        from matplotlib.colors import ListedColormap
 
         cmap = ListedColormap(cmap)
 
@@ -1245,10 +1239,6 @@ def get_cmap_safe(cmap):
 
 def get_default_cycler():
     """Return the default color cycler (matches matplotlib's default)."""
-    try:
-        from cycler import cycler
-    except ImportError:  # pragma: no cover
-        raise ImportError('cycler not installed. Please install matplotlib.')
     return cycler('color', matplotlib_default_colors)
 
 
@@ -1257,28 +1247,16 @@ def get_hexcolors_cycler():
 
     See ``pyvista.plotting.colors.hexcolors``.
     """
-    try:
-        from cycler import cycler
-    except ImportError:  # pragma: no cover
-        raise ImportError('cycler not installed. Please install matplotlib.')
     return cycler('color', hexcolors.keys())
 
 
 def get_matplotlib_theme_cycler():
     """Return matplotlib's current theme's color cycler."""
-    try:
-        import matplotlib.pyplot as plt
-    except ImportError:  # pragma: no cover
-        raise ImportError('Please install matplotlib.')
     return plt.rcParams['axes.prop_cycle']
 
 
 def color_scheme_to_cycler(scheme):
     """Convert a color scheme to a Cycler."""
-    try:
-        from cycler import cycler
-    except ImportError:  # pragma: no cover
-        raise ImportError('cycler not installed. Please install matplotlib.')
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
@@ -1307,10 +1285,6 @@ def get_cycler(color_cycler):
     A named color scheme is also supported. See ``pyvista.plotting.colors.COLOR_SCHEMES``
 
     """
-    try:
-        from cycler import Cycler, cycler
-    except ImportError:  # pragma: no cover
-        raise ImportError('cycler not installed. Please install matplotlib.')
     if color_cycler is None:
         return None
     elif isinstance(color_cycler, str):

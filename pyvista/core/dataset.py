@@ -1,15 +1,25 @@
 """Attributes common to PolyData and Grid Objects."""
+from __future__ import annotations
 
+from collections import namedtuple
 import collections.abc
 from copy import deepcopy
-import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from functools import partial
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 import warnings
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:  # pragma: no cover
-    from typing_extensions import Literal
 
 import numpy as np
 
@@ -37,7 +47,7 @@ from .pyvista_ndarray import pyvista_ndarray
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
-ActiveArrayInfoTuple = collections.namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
+ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
 
 
 class ActiveArrayInfo:
@@ -49,7 +59,14 @@ class ActiveArrayInfo:
         self.name = name
 
     def copy(self):
-        """Return a copy of this object."""
+        """Return a copy of this object.
+
+        Returns
+        -------
+        ActiveArrayInfo
+            A copy of this object.
+
+        """
         return ActiveArrayInfo(self.association, self.name)
 
     def __getstate__(self):
@@ -372,7 +389,7 @@ class DataSet(DataSetFilters, DataObject):
 
         You can also update the points in-place:
 
-        >>> cube.points[...] = 2*points
+        >>> cube.points[...] = 2 * points
         >>> cube.points
         pyvista_ndarray([[-1., -1.,  1.],
                          [-1., -1.,  3.],
@@ -422,7 +439,7 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self) -> Optional['pyvista.PolyData']:
+    def arrows(self) -> Optional[pyvista.PolyData]:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -572,19 +589,19 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        name : str or None
+        name : str, optional
             Name of the scalars array to assign as active.  If
             ``None``, deactivates active scalars for both point and
             cell data.
 
-        preference : str, optional
+        preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
             type.  Can be either ``'cell'`` or ``'point'``.
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Association of the scalars matching ``name``.
 
         numpy.ndarray
@@ -630,10 +647,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        name : str
+        name : str, optional
             Name of the vectors array to assign as active.
 
-        preference : str, optional
+        preference : str, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
             matching this type.  Can be either ``'cell'``,
@@ -667,10 +684,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        name : str
+        name : str, optional
             Name of the tensors array to assign as active.
 
-        preference : str, optional
+        preference : str, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
             matching this type.  Can be either ``'cell'``,
@@ -708,7 +725,7 @@ class DataSet(DataSetFilters, DataObject):
         new_name : str
             Name to rename the array to.
 
-        preference : str, optional
+        preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
             matching this type.  Can be either ``'cell'``,
@@ -802,7 +819,7 @@ class DataSet(DataSetFilters, DataObject):
             The name of the array to get the range. If ``None``, the
             active scalars is used.
 
-        preference : str, optional
+        preference : str, default: "cell"
             When scalars is specified, this is the preferred array type
             to search for in the dataset.  Must be either ``'point'``,
             ``'cell'``, or ``'field'``.
@@ -847,15 +864,15 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : list, optional
-            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -901,15 +918,14 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : float, optional
+        point : sequence[float], default: (0.0, 0.0, 0.0)
             Point to rotate about.
 
-        transform_all_input_vectors : bool, optional
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -955,15 +971,15 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : list, optional
-            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about.  Defaults to origin.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1011,21 +1027,21 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        vector : Iterable
-            Axes to rotate about.
+        vector : sequence[float]
+            Axis to rotate about.
 
         angle : float
             Angle in degrees to rotate about the vector.
 
-        point : list, optional
-            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about.  Defaults to origin.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1069,15 +1085,15 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : list or tuple or np.ndarray
-            Length 3 list, tuple or array.
+        xyz : sequence[float]
+            Length 3 sequence of floats.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1119,17 +1135,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : float or list or tuple or np.ndarray
-            A scalar or length 3 list, tuple or array defining the scale
-            factors along x, y, and z. If a scalar, the same uniform scale is
-            used along all three axes.
+        xyz : float | sequence[float]
+            A scalar or length 3 sequence defining the scale factors along x,
+            y, and z. If a scalar, the same uniform scale is used along all
+            three axes.
 
-        transform_all_input_vectors : bool, optional
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1174,16 +1189,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : list, optional
+        point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1225,16 +1240,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : list, optional
+        point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1332,16 +1347,16 @@ class DataSet(DataSetFilters, DataObject):
         normal : tuple
            Normal vector to flip about.
 
-        point : list, optional
+        point : sequence[float]
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1374,7 +1389,7 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def copy_meta_from(self, ido: 'DataSet', deep: bool = True):
+    def copy_meta_from(self, ido: DataSet, deep: bool = True):
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1382,7 +1397,7 @@ class DataSet(DataSetFilters, DataObject):
         ido : pyvista.DataSet
             Dataset to copy the metadata from.
 
-        deep : bool, optional
+        deep : bool, default: True
             Deep or shallow copy.
 
         """
@@ -1708,7 +1723,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
-    ) -> 'pyvista.pyvista_ndarray':
+    ) -> pyvista.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -1716,7 +1731,7 @@ class DataSet(DataSetFilters, DataObject):
         name : str
             Name of the array.
 
-        preference : str, optional
+        preference : str, default: "cell"
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
@@ -1770,14 +1785,14 @@ class DataSet(DataSetFilters, DataObject):
         name : str
             Name of the array.
 
-        preference : str, optional
+        preference : str, default: "cell"
             When ``name`` is specified, this is the preferred array
             association to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
 
         Returns
         -------
-        pyvista.FieldAssociation
+        pyvista.utilities.helpers.FieldAssociation
             Field association of the array.
 
         Examples
@@ -2016,7 +2031,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         self.copy_from(mesh)
 
-    def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
+    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
         Returns
@@ -2043,14 +2058,15 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self, pass_cell_data: bool = False) -> 'pyvista.PointSet':
+    def cast_to_pointset(self, pass_cell_data: bool = False) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
         ----------
-        pass_cell_data : bool, optional
-            Run the ``cell_data_to_point_data`` filter and pass cell data
-            fields to the new pointset.
+        pass_cell_data : bool, default: False
+            Run the :func:`cell_data_to_point_data()
+            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            cell data fields to the new pointset.
 
         Returns
         -------
@@ -2079,14 +2095,15 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self, pass_cell_data: bool = False) -> 'pyvista.PolyData':
+    def cast_to_poly_points(self, pass_cell_data: bool = False) -> pyvista.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
         ----------
-        pass_cell_data : bool, optional
-            Run the ``cell_data_to_point_data`` filter and pass cell data
-            fields to the new pointset.
+        pass_cell_data : bool, default: False
+            Run the :func:`cell_data_to_point_data()
+            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            cell data fields to the new pointset.
 
         Returns
         -------
@@ -2147,7 +2164,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : iterable(float)
+        point : sequence[float]
             Length 3 coordinate of the point to query.
 
         n : int, optional
@@ -2207,11 +2224,11 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Sequence(float) or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : array_like[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
-        return_closest_point : bool, optional
+        return_closest_point : bool, default: False
             If ``True``, the closest point within a mesh cell to that point is
             returned.  This is not necessarily the closest nodal point on the
             mesh.  Default is ``False``.
@@ -2285,8 +2302,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> unit_square = pyvista.Rectangle()
         >>> index, closest_point = unit_square.find_closest_cell(
-        ...     [0.25, 0.25, 0.5],
-        ...     return_closest_point=True
+        ...     [0.25, 0.25, 0.5], return_closest_point=True
         ... )
         >>> closest_point
         array([0.25, 0.25, 0.  ])
@@ -2296,8 +2312,7 @@ class DataSet(DataSetFilters, DataObject):
         desired, see :func:`DataSet.find_closest_point`.
 
         >>> index, closest_point = unit_square.find_closest_cell(
-        ...     [1.0, 1.0, 0.5],
-        ...     return_closest_point=True
+        ...     [1.0, 1.0, 0.5], return_closest_point=True
         ... )
         >>> closest_point
         array([1., 1., 0.])
@@ -2340,9 +2355,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Sequence(float) or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : array_like[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
         Returns
         -------
@@ -2367,7 +2382,9 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista
-        >>> mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh = pyvista.UniformGrid(
+        ...     dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0]
+        ... )
         >>> mesh
         UniformGrid...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
@@ -2408,13 +2425,13 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : iterable(float)
+        pointa : sequence[float]
             Length 3 coordinate of the start of the line.
 
-        pointb : iterable(float)
+        pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, optional
+        tolerance : float, default: False
             The absolute tolerance to use to find cells along line.
 
         Returns
@@ -2453,7 +2470,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        bounds : iterable(float)
+        bounds : sequence[float]
             Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Returns
@@ -2473,7 +2490,9 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Cube()
-        >>> index = mesh.find_cells_within_bounds([-2.0, 2.0, -2.0, 2.0, -2.0, 2.0])
+        >>> index = mesh.find_cells_within_bounds(
+        ...     [-2.0, 2.0, -2.0, 2.0, -2.0, 2.0]
+        ... )
 
         """
         if np.array(bounds).size != 6:
@@ -2485,7 +2504,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self, index: int) -> 'pyvista.Cell':
+    def get_cell(self, index: int) -> pyvista.Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2510,17 +2529,34 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
-        >>> mesh.get_cell(0) # doctest:+SKIP
-        GenericCell (0x7f6304e0a730)
-          Type:	CellType.TRIANGLE
-          Linear:	True
-          Dimension:	2
-          N Points:	3
-          N Faces:	0
-          N Edges:	3
-          X Bounds:	8.970e+02, 9.075e+02
-          Y Bounds:	4.876e+01, 5.549e+01
-          Z Bounds:	8.075e+01, 8.366e+01
+        >>> cell = mesh.get_cell(0)
+        >>> cell
+        Cell ...
+
+        Get the point ids of the first cell
+
+        >>> cell.point_ids
+        [0, 1, 2]
+
+        Get the point coordinates of the first cell
+
+        >>> cell.points
+        array([[897.0,  48.8,  82.3],
+               [906.6,  48.8,  80.7],
+               [907.5,  55.5,  83.7]])
+
+        For the first cell, get the points associated with the first edge
+
+        >>> cell.edges[0].point_ids
+        [0, 1]
+
+        For a Tetrahedron, get the point ids of the last face
+
+        >>> mesh = examples.cells.Tetrahedron()
+        >>> cell = mesh.get_cell(0)
+        >>> cell.faces[-1].point_ids
+        [0, 2, 1]
+
         """
         # must check upper bounds, otherwise segfaults (on Linux, 9.2)
         if index + 1 > self.n_cells:
@@ -2535,85 +2571,36 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self) -> List['pyvista.Cell']:
-        """Return a list of cells.
+    def cell(self) -> Iterator[pyvista.Cell]:
+        """A generator that provides an easy way to loop over all cells.
 
-        Returns
-        -------
-        list[pyvista.Cell]
-            A list of :class:`pyvista.Cell` objects.
+        To access a single cell, use :func:`pyvista.DataSet.get_cell`.
 
-        Warnings
+        .. versionchanged:: 0.39.0
+            Now returns a generator instead of a list.
+            Use ``get_cell(i)`` instead of ``cell[i]``.
+
+        Yields
+        ------
+        pyvista.Cell
+
+        See Also
         --------
-        For large meshes, the list can take some time to compute and you might
-        prefer to use the :func:`DataSet.get_cell` method within a for-loop.
+        pyvista.DataSet.get_cell
 
         Examples
         --------
-        Get the last cell of a dataset.
+        Loop over the cells
 
-        >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> mesh.cell[-1] # doctest:+SKIP
-        Type: CellType.HEXAHEDRON
-        Linear: True
-        Dimension: 3
-        N Points: 8
-        N Faces: 6
-        N Edges: 12
-        X Bounds: 5.000e-01, 1.000e+00
-        Y Bounds: 5.000e-01, 1.000e+00
-        Z Bounds: 4.500e+00, 5.000e+00
-
-        Get the point ids of the last cell
-
-        >>> mesh.cell[-1].point_ids
-        [98, 62, 53, 80, 17, 13, 12, 15]
-
-        Get the points coordinates of the last cell
-
-        >>> mesh.cell[-1].points
-        array([[0.5, 0.5, 4.5],
-               [1. , 0.5, 4.5],
-               [1. , 1. , 4.5],
-               [0.5, 1. , 4.5],
-               [0.5, 0.5, 5. ],
-               [1. , 0.5, 5. ],
-               [1. , 1. , 5. ],
-               [0.5, 1. , 5. ]])
-
-        Get the point ids of the edges of the last cell.
-        Note that the `edges` attributes returns a generator of
-        `pyvista.Cell` objects.
-
-        >>> for e in mesh.cell[-1].edges:
-        ...     print(e.point_ids)
-        [98, 62]
-        [62, 53]
-        [80, 53]
-        [98, 80]
-        [17, 13]
-        [13, 12]
-        [15, 12]
-        [17, 15]
-        [98, 17]
-        [62, 13]
-        [80, 15]
-        [53, 12]
-
-        Get the point ids of the faces of the last cell.
-
-        >>> from pyvista.examples.cells import Tetrahedron
-        >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[-1]
-        >>> for face in cell.faces:
-        ...     print(face.point_ids)
-        [0, 1, 3]
-        [1, 2, 3]
-        [2, 0, 3]
-        [0, 2, 1]
+        >>> import pyvista as pv
+        >>> # Create a grid with 9 points and 4 cells
+        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))
+        >>> for cell in mesh.cell:  # doctest: +SKIP
+        ...     cell
+        ...
         """
-        return [self.get_cell(i) for i in range(self.n_cells)]
+        for i in range(self.n_cells):
+            yield self.get_cell(i)
 
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
@@ -2634,7 +2621,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_n_points` is deprecated. Use `cell[i].n_points` instead',
+            '`cell_n_points` is deprecated. Use `get_cell(i).n_points` instead',
             PyVistaDeprecationWarning,
         )
         return self.get_cell(ind).n_points
@@ -2659,7 +2646,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_points` is deprecated. Use `cell[i].points` instead', PyVistaDeprecationWarning
+            '`cell_points` is deprecated. Use `get_cell(i).points` instead',
+            PyVistaDeprecationWarning,
         )
         return self.get_cell(ind).points
 
@@ -2676,13 +2664,14 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        tuple(float)
+        tuple[float, float, float]
             The limits of the cell in the X, Y and Z directions respectively.
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_bounds` is deprecated. Use `cell[i].bounds` instead', PyVistaDeprecationWarning
+            '`cell_bounds` is deprecated. Use `get_cell(i).bounds` instead',
+            PyVistaDeprecationWarning,
         )
         return self.get_cell(ind).bounds
 
@@ -2700,12 +2689,13 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int
-            VTK cell type. See `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
+            VTK cell type. See `vtkCellType.h
+            <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
 
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_type` is deprecated. Use `cell[i].type` instead', PyVistaDeprecationWarning
+            '`cell_type` is deprecated. Use `get_cell(i).type` instead', PyVistaDeprecationWarning
         )
         return self.get_cell(ind).type
 
@@ -2728,10 +2718,478 @@ class DataSet(DataSetFilters, DataObject):
         """
         # deprecated 0.38.0, convert to error in 0.41.0, remove 0.42.0
         warnings.warn(
-            '`cell_point_ids` is deprecated. Use `cell[i].point_ids` instead',
+            '`cell_point_ids` is deprecated. Use `get_cell(i).point_ids` instead',
             PyVistaDeprecationWarning,
         )
-        return self.cell[ind].point_ids
+        return self.get_cell(ind).point_ids
+
+    def cell_neighbors(self, ind: int, connections: str = "points") -> List[int]:
+        """Get the cell neighbors of the ind-th cell.
+
+        Concrete implementation of vtkDataSet's `GetCellNeighbors
+        <https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4>`_.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        connections : str, default: "points"
+            Describe how the neighbor cell(s) must be connected to the current
+            cell to be considered as a neighbor.
+            Can be either ``'points'``, ``'edges'`` or ``'faces'``.
+
+        Returns
+        -------
+        List[int]
+            List of neighbor cells IDs for the ind-th cell.
+
+        Warnings
+        --------
+        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+
+        See Also
+        --------
+        pyvista.DataSet.cell_neighbors_levels
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+
+        Get the neighbor cell ids that have at least one point in common with
+        the 0-th cell.
+
+        >>> mesh.cell_neighbors(0, "points")
+        [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
+
+        Get the neighbor cell ids that have at least one edge in common with
+        the 0-th cell.
+
+        >>> mesh.cell_neighbors(0, "edges")
+        [1, 3, 12]
+
+        For unstructured grids with cells of dimension 3 (Tetrahedron for example),
+        cell neighbors can be defined using faces.
+
+        >>> mesh = examples.download_tetrahedron()
+        >>> mesh.cell_neighbors(0, "faces")
+        [1, 5, 7]
+
+        Show a visual example.
+
+        >>> from functools import partial
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere(theta_resolution=10)
+        >>>
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.link_views()
+        >>> add_point_labels = partial(
+        ...     pl.add_point_labels,
+        ...     text_color="white",
+        ...     font_size=20,
+        ...     shape=None,
+        ...     show_points=False,
+        ... )
+        >>>
+        >>> for i, connection in enumerate(["points", "edges"]):
+        ...     pl.subplot(0, i)
+        ...     pl.view_yx()
+        ...     _ = pl.add_title(
+        ...         f"{connection.capitalize()} neighbors",
+        ...         color="red",
+        ...         shadow=True,
+        ...         font_size=8,
+        ...     )
+        ...
+        ...     # Add current cell
+        ...     i_cell = 0
+        ...     current_cell = mesh.extract_cells(i_cell)
+        ...     _ = pl.add_mesh(
+        ...         current_cell, show_edges=True, color="blue"
+        ...     )
+        ...     _ = add_point_labels(
+        ...         current_cell.cell_centers().points,
+        ...         labels=[f"{i_cell}"],
+        ...     )
+        ...
+        ...     # Add neighbors
+        ...     ids = mesh.cell_neighbors(i_cell, connection)
+        ...     cells = mesh.extract_cells(ids)
+        ...     _ = pl.add_mesh(cells, color="red", show_edges=True)
+        ...     _ = add_point_labels(
+        ...         cells.cell_centers().points,
+        ...         labels=[f"{i}" for i in ids],
+        ...     )
+        ...
+        ...     # Add other cells
+        ...     ids.append(i_cell)
+        ...     others = mesh.extract_cells(ids, invert=True)
+        ...     _ = pl.add_mesh(others, show_edges=True)
+        ...
+        >>> pl.show()
+        """
+        if isinstance(self, _vtk.vtkExplicitStructuredGrid):
+            raise TypeError("For an ExplicitStructuredGrid, use the `neighbors` method")
+
+        # Build links as recommended:
+        # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+        if hasattr(self, "BuildLinks"):
+            self.BuildLinks()
+
+        needed = ["points", "edges", "faces"]
+        if connections not in needed:
+            raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
+
+        cell = self.get_cell(ind)
+
+        iterators = {
+            "points": cell.point_ids,
+            "edges": range(cell.n_edges),
+            "faces": range(cell.n_faces),
+        }
+
+        def generate_ids(i: int, connections: str):
+            if connections == "points":
+                ids = _vtk.vtkIdList()
+                ids.InsertNextId(i)
+                return ids
+            elif connections == "edges":
+                return cell.get_edge(i).GetPointIds()
+            elif connections == "faces":
+                return cell.get_face(i).GetPointIds()
+
+        neighbors = set()
+        for i in iterators[connections]:
+            point_ids = generate_ids(i, connections)
+            cell_ids = _vtk.vtkIdList()
+            self.GetCellNeighbors(ind, point_ids, cell_ids)
+
+            neighbors.update([cell_ids.GetId(i) for i in range(cell_ids.GetNumberOfIds())])
+
+        return list(neighbors)
+
+    def point_neighbors(self, ind: int) -> List[int]:
+        """Get the point neighbors of the ind-th point.
+
+        Parameters
+        ----------
+        ind : int
+            Point ID.
+
+        Returns
+        -------
+        List[int]
+            List of neighbor points IDs for the ind-th point.
+
+        See Also
+        --------
+        pyvista.DataSet.point_neighbors_levels
+
+        Examples
+        --------
+        Get the point neighbors of the 0-th point.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>> mesh.point_neighbors(0)
+        [2, 226, 198, 170, 142, 114, 86, 254, 58, 30]
+
+        Plot them.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>>
+        >>> # Label the 0-th point
+        >>> _ = pl.add_point_labels(
+        ...     mesh.points[0], ["0"], text_color="blue", font_size=40
+        ... )
+        >>>
+        >>> # Get the point neighbors and plot them
+        >>> neighbors = mesh.point_neighbors(0)
+        >>> _ = pl.add_point_labels(
+        ...     mesh.points[neighbors],
+        ...     labels=[f"{i}" for i in neighbors],
+        ...     text_color="red",
+        ...     font_size=40,
+        ... )
+        >>> pl.camera_position = "yx"
+        >>> pl.camera.zoom(7.0)
+        >>> pl.show()
+
+        """
+        if ind + 1 > self.n_points:
+            raise IndexError(f'Invalid index {ind} for a dataset with {self.n_points} points.')
+
+        out = []
+        for cell in self.point_cell_ids(ind):
+            out.extend([i for i in self.get_cell(cell).point_ids if i != ind])
+        return list(set(out))
+
+    def point_neighbors_levels(
+        self, ind: int, n_levels: int = 1
+    ) -> Generator[List[int], None, None]:
+        """Get consecutive levels of point neighbors.
+
+        Parameters
+        ----------
+        ind : int
+            Point ID.
+
+        n_levels : int, default: 1
+            Number of levels to search for point neighbors.
+            When equal to 1, it is equivalent to :func:`pyvista.DataSet.point_neighbors`.
+
+        Returns
+        -------
+        generator[list[[int]]
+            A generator of list of neighbor points IDs for the ind-th point.
+
+        See Also
+        --------
+        pyvista.DataSet.point_neighbors
+
+        Examples
+        --------
+        Get the point neighbors IDs starting from the 0-th point
+        up until the third level.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>> pt_nbr_levels = mesh.point_neighbors_levels(0, 3)
+        >>> pt_nbr_levels = list(pt_nbr_levels)
+        >>> pt_nbr_levels[0]
+        [2, 226, 198, 170, 142, 114, 86, 30, 58, 254]
+        >>> pt_nbr_levels[1]
+        [3, 227, 255, 199, 171, 143, 115, 87, 59, 31]
+        >>> pt_nbr_levels[2]
+        [256, 32, 4, 228, 200, 172, 144, 116, 88, 60]
+
+        Visualize these points IDs.
+
+        >>> from functools import partial
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>>
+        >>> # Define partial function to add point labels
+        >>> add_point_labels = partial(
+        ...     pl.add_point_labels,
+        ...     text_color="white",
+        ...     font_size=40,
+        ...     point_size=10,
+        ... )
+        >>>
+        >>> # Add the first point label
+        >>> _ = add_point_labels(
+        ...     mesh.points[0], labels=["0"], text_color="blue"
+        ... )
+        >>>
+        >>> # Add the neighbors to the plot
+        >>> neighbors = mesh.point_neighbors_levels(0, n_levels=3)
+        >>> for i, ids in enumerate(neighbors, start=1):
+        ...     _ = add_point_labels(
+        ...         mesh.points[ids],
+        ...         labels=[f"{i}"] * len(ids),
+        ...         text_color="red",
+        ...     )
+        ...
+        >>>
+        >>> pl.view_yx()
+        >>> pl.camera.zoom(4.0)
+        >>> pl.show()
+        """
+        method = self.point_neighbors
+        return self._get_levels_neihgbors(ind, n_levels, method)
+
+    def cell_neighbors_levels(
+        self, ind: int, connections: str = "points", n_levels: int = 1
+    ) -> Generator[List[int], None, None]:
+        """Get consecutive levels of cell neighbors.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        connections : str, default: "points"
+            Describe how the neighbor cell(s) must be connected to the current
+            cell to be considered as a neighbor.
+            Can be either ``'points'``, ``'edges'`` or ``'faces'``.
+
+        n_levels : int, default: 1
+            Number of levels to search for cell neighbors.
+            When equal to 1, it is equivalent to :func:`pyvista.DataSet.point_neighbors`.
+
+        Returns
+        -------
+        generator[list[int]]
+            A generator of list of cell IDs for each level.
+
+        Warnings
+        --------
+        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+
+        See Also
+        --------
+        pyvista.DataSet.cell_neighbors
+
+        Examples
+        --------
+        Get the cell neighbors IDs starting from the 0-th cell
+        up until the third level.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>> nbr_levels = mesh.cell_neighbors_levels(
+        ...     0, connections="edges", n_levels=3
+        ... )
+        >>> nbr_levels = list(nbr_levels)
+        >>> nbr_levels[0]
+        [1, 21, 9]
+        >>> nbr_levels[1]
+        [2, 8, 74, 75, 20, 507]
+        >>> nbr_levels[2]
+        [128, 129, 3, 453, 7, 77, 23, 506]
+
+        Visualize these cells IDs.
+
+        >>> from functools import partial
+        >>> pv.global_theme.color_cycler = [
+        ...     'red',
+        ...     'green',
+        ...     'blue',
+        ...     'purple',
+        ... ]
+        >>> pl = pv.Plotter()
+        >>>
+        >>> # Define partial function to add point labels
+        >>> add_point_labels = partial(
+        ...     pl.add_point_labels,
+        ...     text_color="white",
+        ...     font_size=40,
+        ...     shape=None,
+        ...     show_points=False,
+        ... )
+        >>>
+        >>> # Add the 0-th cell to the plotter
+        >>> cell = mesh.extract_cells(0)
+        >>> _ = pl.add_mesh(cell, show_edges=True)
+        >>> _ = add_point_labels(cell.cell_centers().points, labels=["0"])
+        >>> other_ids = [0]
+        >>>
+        >>> # Add the neighbors to the plot
+        >>> neighbors = mesh.cell_neighbors_levels(
+        ...     0, connections="edges", n_levels=3
+        ... )
+        >>> for i, ids in enumerate(neighbors, start=1):
+        ...     cells = mesh.extract_cells(ids)
+        ...     _ = pl.add_mesh(cells, show_edges=True)
+        ...     _ = add_point_labels(
+        ...         cells.cell_centers().points, labels=[f"{i}"] * len(ids)
+        ...     )
+        ...     other_ids.extend(ids)
+        ...
+        >>>
+        >>> # Add the cell IDs that are not neighbors (ie. the rest of the sphere)
+        >>> cells = mesh.extract_cells(other_ids, invert=True)
+        >>> _ = pl.add_mesh(cells, color="white", show_edges=True)
+        >>>
+        >>> pl.view_yx()
+        >>> pl.camera.zoom(6.0)
+        >>> pl.show()
+        """
+        method = partial(self.cell_neighbors, connections=connections)
+        return self._get_levels_neihgbors(ind, n_levels, method)
+
+    def _get_levels_neihgbors(
+        self, ind: int, n_levels: int, method: Callable
+    ) -> Generator[List[int], None, None]:
+        """Provide helper method that yields neighbors ids."""
+        neighbors = set(method(ind))
+        yield list(neighbors)
+
+        # Keep track of visited points or cells
+        all_visited = neighbors.copy()
+        all_visited.add(ind)
+
+        for _ in range(n_levels - 1):
+            # Get the neighbors for the next level.
+            new_visited = set()
+            for n in neighbors:
+                new_neighbors = method(n)
+                new_visited.update(new_neighbors)
+            neighbors = new_visited
+
+            # Only return the ones that have not been visited yet
+            yield list(neighbors.difference(all_visited))
+            all_visited.update(neighbors)
+
+    def point_cell_ids(self, ind: int) -> List[int]:
+        """Get the cell IDs that use the ind-th point.
+
+        Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
+
+        Parameters
+        ----------
+        ind : int
+            Point ID.
+
+        Returns
+        -------
+        List[int]
+            List of cell IDs using the ind-th point.
+
+        Examples
+        --------
+        Get the cell ids using the 0-th point.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
+        >>> mesh.point_cell_ids(0)
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        Plot them.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>>
+        >>> # Label the 0-th point
+        >>> _ = pl.add_point_labels(
+        ...     mesh.points[0], ["0"], text_color="blue", font_size=20
+        ... )
+        >>>
+        >>> # Get the cells ids using the 0-th point
+        >>> ids = mesh.point_cell_ids(0)
+        >>> cells = mesh.extract_cells(ids)
+        >>> _ = pl.add_mesh(cells, color="red", show_edges=True)
+        >>> centers = cells.cell_centers().points
+        >>> _ = pl.add_point_labels(
+        ...     centers,
+        ...     labels=[f"{i}" for i in ids],
+        ...     text_color="white",
+        ...     font_size=20,
+        ...     shape=None,
+        ...     show_points=False,
+        ... )
+        >>>
+        >>> # Plot the other cells
+        >>> others = mesh.extract_cells(
+        ...     [i for i in range(mesh.n_cells) if i not in ids]
+        ... )
+        >>> _ = pl.add_mesh(others, show_edges=True)
+        >>>
+        >>> pl.camera_position = "yx"
+        >>> pl.camera.zoom(7.0)
+        >>> pl.show()
+        """
+        # Build links as recommended:
+        # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
+        if hasattr(self, "BuildLinks"):
+            self.BuildLinks()
+
+        ids = _vtk.vtkIdList()
+        self.GetPointCells(ind, ids)
+        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
     def point_is_inside_cell(
         self, ind: int, point: Union[VectorArray, NumericArray]
@@ -2745,9 +3203,9 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Sequence[float] or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : array_like[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
         Returns
         -------
@@ -2759,7 +3217,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
-        >>> mesh.cell[0].bounds
+        >>> mesh.get_cell(0).bounds
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True

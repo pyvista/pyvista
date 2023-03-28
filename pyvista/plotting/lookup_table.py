@@ -6,7 +6,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities.helpers import convert_array
-from pyvista.utilities.misc import has_module, no_new_attr
+from pyvista.utilities.misc import no_new_attr
 
 from .._typing import ColorLike
 from .colors import Color, get_cmap_safe
@@ -95,7 +95,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     Parameters
     ----------
-    cmap : str, colors.Colormap, optional
+    cmap : str | colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
 
@@ -106,7 +106,7 @@ class LookupTable(_vtk.vtkLookupTable):
         Flip the direction of cmap. Most colormaps allow ``*_r`` suffix to do this
         as well.
 
-    values : numpy.ndarray, optional
+    values : array_like[float], optional
         Lookup table values. Either ``values`` or ``cmap`` can be set, but not
         both.
 
@@ -147,7 +147,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     annotations : dict, optional
         A dictionary of annotations. Keys are the float values in the scalars
-        range to annotate on the scalar bar and the values are the the string
+        range to annotate on the scalar bar and the values are the string
         annotations.
 
     Examples
@@ -557,7 +557,7 @@ class LookupTable(_vtk.vtkLookupTable):
         * The default is S-curve, which tails off gradually at either end.
         * The equation used for ``"s-curve"`` is ``y = (sin((x - 1/2)*pi) +
           1)/2``, For an S-curve greyscale ramp, you should set
-          :attr:`LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
+          :attr:`pyvista.LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
           room for the tails of the ramp.
 
         * The equation for the ``"linear"`` is simply ``y = x``.
@@ -756,9 +756,6 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> lut.plot()
 
         """
-        if not has_module('matplotlib'):  # pragma: no cover
-            raise ModuleNotFoundError('Install Matplotlib to use color maps.')
-
         if isinstance(cmap, list):
             n_values = len(cmap)
 
@@ -782,7 +779,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Parameters
         ----------
-        opacity : float, list(float), str
+        opacity : float | array_like[float] | str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
             ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
@@ -815,7 +812,10 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> mesh = examples.load_random_hills()
         >>> lut = pv.LookupTable(cmap='viridis')
         >>> lut.apply_opacity([1.0, 0.4, 0.0, 0.4, 0.9])
-        >>> lut.scalar_range = (mesh.active_scalars.min(), mesh.active_scalars.max())
+        >>> lut.scalar_range = (
+        ...     mesh.active_scalars.min(),
+        ...     mesh.active_scalars.max(),
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, cmap=lut)
         >>> pl.show()
@@ -911,7 +911,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """Return or set annotations.
 
         Pass a dictionary of annotations. Keys are the float values in the
-        scalars range to annotate on the scalar bar and the values are the the
+        scalars range to annotate on the scalar bar and the values are the
         string annotations.
 
         Examples

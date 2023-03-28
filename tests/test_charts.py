@@ -11,7 +11,6 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import charts, system_supports_plotting
 from pyvista.plotting.colors import COLOR_SCHEMES
-from pyvista.utilities.misc import can_create_mpl_figure
 
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
@@ -19,10 +18,6 @@ skip_mac = pytest.mark.skipif(
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Test requires system to support plotting"
-)
-
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
 
 # skip all tests if VTK<9.2.0
@@ -390,7 +385,6 @@ def test_axis_label_font_size(chart_2d):
 
 
 @skip_no_plotting
-@skip_no_mpl_figure
 @pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
@@ -450,6 +444,10 @@ def test_chart_common(pl, chart_f, request):
     assert chart.border_style == bs
     chart.background_color = c_blue
     assert chart.background_color == c_blue
+    chart.active_border_color = c_red
+    assert chart.active_border_color == c_red
+    chart.active_background_color = c_blue
+    assert chart.active_background_color == c_blue
 
     # Check remaining properties and methods
     chart.visible = False
@@ -977,7 +975,6 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 
 @skip_no_plotting
-@skip_no_mpl_figure
 def test_chart_mpl(pl, chart_mpl):
     import matplotlib.pyplot as plt
 
@@ -1011,7 +1008,6 @@ def test_chart_mpl(pl, chart_mpl):
 
 
 @skip_no_plotting
-@skip_no_mpl_figure
 def test_chart_mpl_update(pl):
     import matplotlib.pyplot as plt
 

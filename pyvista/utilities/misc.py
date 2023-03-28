@@ -101,7 +101,7 @@ def copy_vtk_array(array, deep=True):
 
     Parameters
     ----------
-    array : vtk.vtkDataArray or vtk.vtkAbstractArray
+    array : vtk.vtkDataArray | vtk.vtkAbstractArray
         VTK array.
 
     deep : bool, optional
@@ -137,18 +137,6 @@ def copy_vtk_array(array, deep=True):
         new_array.ShallowCopy(array)
 
     return new_array
-
-
-def can_create_mpl_figure():  # pragma: no cover
-    """Return if a figure can be created with matplotlib."""
-    try:
-        import matplotlib.pyplot as plt
-
-        figure = plt.figure()
-        plt.close(figure)
-        return True
-    except:
-        return False
 
 
 vtk_version_info = VTKVersionInfo()

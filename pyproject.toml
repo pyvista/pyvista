@@ -9,7 +9,7 @@ authors = [
     {name = 'PyVista Developers', email = 'info@pyvista.org'},
 ]
 readme = 'README.rst'
-requires-python = '>=3.7'
+requires-python = '>=3.8'
 keywords = ['vtk', 'numpy', 'plotting', 'mesh']
 license = {text = 'MIT'}
 classifiers = [
@@ -20,7 +20,6 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX',
     'Operating System :: MacOS',
-    'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
@@ -28,12 +27,12 @@ classifiers = [
 ]
 dependencies = [
     'imageio',
+    'matplotlib>=3.0.1',
     'numpy',
     'pillow',
     'pooch',
     'scooby>=0.5.1',
-    "typing-extensions; python_version < '3.8'",
-    'vtk',
+    'vtk',  # keep without version constraints
 ]
 dynamic = ['version']
 
@@ -42,7 +41,6 @@ all = [
     'cmocean',
     'colorcet',
     'ipyvtklink',
-    'matplotlib',
     'meshio>=5.2',
     'panel',
     'pythreejs',
@@ -50,7 +48,6 @@ all = [
 colormaps = [
     'cmocean',
     'colorcet',
-    'matplotlib',
 ]
 io = ['meshio>=5.2']
 jupyter = [
@@ -63,13 +60,13 @@ jupyter = [
     'trame>=2.2.6',
     'trame-client>=2.4.2',
     'trame-server>=2.8.0',
-    'trame-vtk>=2.0.17',
+    'trame-vtk>=2.4.0',
 ]
 trame = [
     'trame>=2.2.6',
     'trame-client>=2.4.2',
     'trame-server>=2.8.0',
-    'trame-vtk>=2.0.17',
+    'trame-vtk>=2.4.0',
 ]
 
 [project.urls]
@@ -118,6 +115,13 @@ skip-string-normalization = true
 target-version = ['py39']
 exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist|node_modules'
 
+[tool.blackdoc]
+# From https://numpydoc.readthedocs.io/en/latest/format.html
+# Extended discussion: https://github.com/pyvista/pyvista/pull/4129
+# The length of docstring lines should be kept to 75 characters to facilitate
+# reading the docstrings in text terminals.
+line-length = 75
+
 [tool.build_sphinx]
 source-dir = 'doc'
 build-dir  = './doc/_build'
@@ -133,7 +137,7 @@ add-ignore = ["D404"]
 
 [tool.codespell]
 skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
-ignore-words-list = 'lod,byteorder,flem,parm,doubleclick,revered,lamda'
+ignore-words = "doc/styles/Vocab/pyvista/accept.txt"
 quiet-level = 3
 
 [tool.coverage.run]
@@ -160,7 +164,6 @@ filterwarnings = [
 doctest_optionflags = 'NUMBER ELLIPSIS'
 testpaths = 'tests'
 markers = [
-    'needs_vtk9: skip test unless VTK is 9.0 or newer.',
     'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
     'needs_download: this test downloads data during execution',
 ]

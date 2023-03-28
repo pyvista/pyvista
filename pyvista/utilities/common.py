@@ -32,13 +32,13 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
         ``|Amplitude|``. Therefore the range of values is
         ``2*|Amplitude|`` large. The initial amplitude is 1.
 
-    freq : Sequence[float, float, float]
+    freq : sequence[float]
         The frequency, or physical scale, of the noise function
         (higher is finer scale).
 
         The frequency can be adjusted per axis, or the same for all axes.
 
-    phase : Sequence[float, float, float]
+    phase : sequence[float]
         Set/get the phase of the noise function.
 
         This parameter can be used to shift the noise function within
@@ -102,21 +102,21 @@ def sample_function(
     ----------
     function : vtk.vtkImplicitFunction
         Implicit function to evaluate.  For example, the function
-        generated from :func:`pyvista.perlin_noise`.
+        generated from :func:`perlin_noise() <pyvista.utilities.common.perlin_noise>`.
 
-    bounds : length 6 sequence, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:
 
         - ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
-    dim : length 3 sequence, default: (50, 50, 50)
+    dim : sequence[float], default: (50, 50, 50)
         Dimensions of the data on which to sample in the format of
         ``(xdim, ydim, zdim)``.
 
     compute_normals : bool, default: False
         Enable or disable the computation of normals.
 
-    output_type : np.dtype, default: numpy.double
+    output_type : numpy.dtype, default: numpy.double
         Set the output scalar type.  One of the following:
 
         - ``np.float64``
@@ -158,9 +158,12 @@ def sample_function(
 
     >>> import pyvista
     >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-    >>> grid = pyvista.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0],
-    ...                                dim=(60, 20, 20))
-    >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+    >>> grid = pyvista.sample_function(
+    ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
+    ... )
+    >>> grid.plot(
+    ...     cmap='gist_earth_r', show_scalar_bar=False, show_edges=True
+    ... )
 
     Sample Perlin noise in 2D and plot it.
 

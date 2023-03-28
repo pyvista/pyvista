@@ -43,7 +43,7 @@ cell_volumes = sized.cell_data["Volume"]
 volume = dataset.volume
 
 ###############################################################################
-# Okay awesome! But what if we have have a dataset that we threshold with two
+# But what if we have a dataset that we threshold with two
 # volumetric bodies left over in one dataset? Take this for example:
 
 
@@ -64,7 +64,7 @@ classifier = threshed.cell_data["Spatial Cell Data"] > cval
 sizes = threshed.compute_cell_sizes()
 volumes = sizes.cell_data["Volume"]
 
-# Split volumes based on classifier and get volumes!
+# Split volumes based on classifier and get the volumes
 idx = np.argwhere(classifier)
 hvol = np.sum(volumes[idx])
 idx = np.argwhere(~classifier)
@@ -86,7 +86,7 @@ largest = threshed.connectivity(largest=True)
 # Get volume as numeric value
 large_volume = largest.volume
 
-# Display it!
+# Display it
 largest.plot(show_grid=True, cpos=[-2, 5, 3])
 
 
@@ -129,7 +129,7 @@ bodies.plot(show_grid=True, multi_colors=True, cpos=[-2, 5, 3])
 #
 # Here is a realistic training dataset of fluvial channels in the subsurface.
 # This will threshold the channels from the dataset then separate each
-# significantly large body and compute the volumes for each!
+# significantly large body and compute the volumes for each.
 #
 # Load up the data and threshold the channels:
 

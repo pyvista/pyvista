@@ -16,12 +16,13 @@ def Spline(points, n_points=None):
 
     Parameters
     ----------
-    points : np.ndarray
+    points : numpy.ndarray
         Array of points to build a spline out of.  Array must be 3D
         and directionally ordered.
 
-    n_points : int, default: points.shape[0]
-        Number of points to interpolate along the points array.
+    n_points : int, optional
+        Number of points to interpolate along the points array. Defaults to
+        ``points.shape[0]``.
 
     Returns
     -------
@@ -41,7 +42,11 @@ def Spline(points, n_points=None):
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
     >>> spline = pv.Spline(points, 1000)
-    >>> spline.plot(render_lines_as_tubes=True, line_width=10, show_scalar_bar=False)
+    >>> spline.plot(
+    ...     render_lines_as_tubes=True,
+    ...     line_width=10,
+    ...     show_scalar_bar=False,
+    ... )
 
     """
     spline_function = _vtk.vtkParametricSpline()
@@ -62,17 +67,17 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
 
     Parameters
     ----------
-    points : sequence
+    points : array_like[float]
         Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 
-    tension : sequence, default: [0.0, 0.0, 0.0]
+    tension : sequence[float], default: [0.0, 0.0, 0.0]
         Changes the length of the tangent vector.
 
-    bias : sequence, default: [0.0, 0.0, 0.0]
+    bias : sequence[float], default: [0.0, 0.0, 0.0]
         Primarily changes the direction of the tangent vector.
 
-    continuity : sequence, default: [0.0, 0.0, 0.0]
+    continuity : sequence[float], default: [0.0, 0.0, 0.0]
         Changes the sharpness in change between tangents.
 
     n_points : int, default: points.shape[0]
@@ -91,7 +96,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     >>> import pyvista as pv
     >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     >>> z = np.linspace(-2, 2, 100)
-    >>> r = z ** 2 + 1
+    >>> r = z**2 + 1
     >>> x = r * np.sin(theta)
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
@@ -424,7 +429,7 @@ def ParametricDini(a=None, b=None, **kwargs):
 
     Parameters
     ----------
-    a : float, default: 1
+    a : float, default: 1.0
         The scale factor.  See the definition in Parametric surfaces
         referred to above.
 
@@ -476,13 +481,13 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
 
     Parameters
     ----------
-    xradius : float, default: 1
+    xradius : float, default: 1.0
         The scaling factor for the x-axis.
 
-    yradius : float, default: 1
+    yradius : float, default: 1.0
         The scaling factor for the y-axis.
 
-    zradius : float, default: 1
+    zradius : float, default: 1.0
         The scaling factor for the z-axis.
 
     **kwargs : dict, optional
@@ -580,8 +585,9 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 
     Parameters
     ----------
-    radius : float, default: 1
+    radius : float, default: 1.0
         The radius of the bottle.
+
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
 
@@ -685,7 +691,7 @@ def ParametricKuen(deltav0=None, **kwargs):
     """Generate Kuens' surface.
 
     ParametricKuen generates Kuens' surface. This surface has a constant
-    negative gaussian curvature.
+    negative Gaussian curvature.
 
     Parameters
     ----------
@@ -730,7 +736,7 @@ def ParametricMobius(radius=None, **kwargs):
 
     Parameters
     ----------
-    radius : float, default: 1
+    radius : float, default: 1.0
         The radius of the Mobius strip.
 
     **kwargs : dict, optional

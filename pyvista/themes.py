@@ -24,7 +24,6 @@ pyvista.
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
-...
 >>> pv.global_theme.load_theme(my_theme)
 >>> pv.global_theme.font.size
 20
@@ -82,6 +81,11 @@ def _check_between_zero_and_one(value: float, value_name: str = 'value'):
 
 def load_theme(filename):
     """Load a theme from a file.
+
+    Parameters
+    ----------
+    filename : str
+        Theme file. Must be json.
 
     Examples
     --------
@@ -254,20 +258,24 @@ class _LightingConfig(_ThemeConfig):
     def interpolation(self) -> InterpolationType:
         """Return or set the default interpolation type.
 
-        See :class:`pyvista.plotting.opts.InterpolationType`
+        See :class:`pyvista.plotting.opts.InterpolationType`.
 
         Options are:
-        * 'Phong'
-        * 'Flat'
-        * 'Physically based rendering'
 
-        This is stored as a integer value of the ``InterpolationType``
+        * ``'Phong'``
+        * ``'Flat'``
+        * ``'Physically based rendering'``
+
+        This is stored as an integer value of the ``InterpolationType``
         so that the theme can be JSON-serializable.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.interpolation = 'Phong'
+        >>> pv.global_theme.lighting_params.interpolation
+        <InterpolationType.PHONG: 2>
+
 
         """
         return InterpolationType.from_any(self._interpolation)
@@ -280,10 +288,19 @@ class _LightingConfig(_ThemeConfig):
     def metallic(self) -> float:
         """Return or set the metallic value.
 
+        Usually this value is either 0 or 1 for a real material but any
+        value in between is valid. This parameter is only used by PBR
+        interpolation.
+
         Examples
         --------
+        Set the global metallic value used in physically based rendering to
+        ``0.5``.
+
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.metallic = 0.5
+        >>> pv.global_theme.lighting_params.metallic
+        0.5
 
         """
         return self._metallic
@@ -296,10 +313,19 @@ class _LightingConfig(_ThemeConfig):
     def roughness(self) -> float:
         """Return or set the roughness value.
 
+        This value has to be between 0 (glossy) and 1 (rough). A glossy
+        material has reflections and a high specular part. This parameter is
+        only used by PBR interpolation.
+
         Examples
         --------
+        Set the global roughness value used in physically based rendering to
+        ``0.25``.
+
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.roughness = 0.25
+        >>> pv.global_theme.lighting_params.roughness
+        0.25
 
         """
         return self._roughness
@@ -310,7 +336,22 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def ambient(self) -> float:
-        """Return or set the ambient value."""
+        """Return or set the ambient value.
+
+        When lighting is enabled, this is the amount of light in the range of 0
+        to 1 that reaches the actor when not directed at the light source
+        emitted from the viewer.
+
+        Examples
+        --------
+        Set the global ambient lighting value to ``0.2``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.ambient = 0.2
+        >>> pv.global_theme.lighting_params.ambient
+        0.2
+
+        """
         return self._ambient
 
     @ambient.setter
@@ -319,7 +360,18 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def diffuse(self) -> float:
-        """Return or set the diffuse value."""
+        """Return or set the diffuse value.
+
+        Examples
+        --------
+        Set the global diffuse lighting value to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.diffuse = 0.5
+        >>> pv.global_theme.lighting_params.diffuse
+        0.5
+
+        """
         return self._diffuse
 
     @diffuse.setter
@@ -328,7 +380,20 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def specular(self) -> float:
-        """Return or set the specular value."""
+        """Return or set the specular value.
+
+        Should be between 0 and 1.
+
+        Examples
+        --------
+        Set the global specular value to ``0.1``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.specular = 0.1
+        >>> pv.global_theme.lighting_params.specular
+        0.1
+
+        """
         return self._specular
 
     @specular.setter
@@ -337,7 +402,18 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def specular_power(self) -> float:
-        """Return or set the specular power value."""
+        """Return or set the specular power value.
+
+        Examples
+        --------
+        Set the global specular power value to ``50``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.specular_power = 50
+        >>> pv.global_theme.lighting_params.specular_power
+        50
+
+        """
         return self._specular_power
 
     @specular_power.setter
@@ -346,7 +422,18 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def emissive(self) -> bool:
-        """Return or set if emissive is used with point gaussian style."""
+        """Return or set if emissive is used with point Gaussian style.
+
+        Examples
+        --------
+        Globally enable emissive lighting when using the point Gaussian style.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.emissive = True
+        >>> pv.global_theme.lighting_params.emissive
+        True
+
+        """
         return self._emissive
 
     @emissive.setter
@@ -1158,25 +1245,26 @@ class _SliderConfig(_ThemeConfig):
     Set the classic slider configuration.
 
     >>> import pyvista as pv
-    >>> pv.global_theme.slider_styles.classic.slider_length = 0.02
-    >>> pv.global_theme.slider_styles.classic.slider_width = 0.04
-    >>> pv.global_theme.slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
-    >>> pv.global_theme.slider_styles.classic.tube_width = 0.005
-    >>> pv.global_theme.slider_styles.classic.tube_color = (1.0, 1.0, 1.0)
-    >>> pv.global_theme.slider_styles.classic.cap_opacity = 1
-    >>> pv.global_theme.slider_styles.classic.cap_length = 0.01
-    >>> pv.global_theme.slider_styles.classic.cap_width = 0.02
+    >>> slider_styles = pv.global_theme.slider_styles
+    >>> slider_styles.classic.slider_length = 0.02
+    >>> slider_styles.classic.slider_width = 0.04
+    >>> slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
+    >>> slider_styles.classic.tube_width = 0.005
+    >>> slider_styles.classic.tube_color = (1.0, 1.0, 1.0)
+    >>> slider_styles.classic.cap_opacity = 1
+    >>> slider_styles.classic.cap_length = 0.01
+    >>> slider_styles.classic.cap_width = 0.02
 
     Set the modern slider configuration.
 
-    >>> pv.global_theme.slider_styles.modern.slider_length = 0.02
-    >>> pv.global_theme.slider_styles.modern.slider_width = 0.04
-    >>> pv.global_theme.slider_styles.modern.slider_color = (0.43, 0.44, 0.45)
-    >>> pv.global_theme.slider_styles.modern.tube_width = 0.04
-    >>> pv.global_theme.slider_styles.modern.tube_color = (0.69, 0.70, 0.709)
-    >>> pv.global_theme.slider_styles.modern.cap_opacity = 0
-    >>> pv.global_theme.slider_styles.modern.cap_length = 0.01
-    >>> pv.global_theme.slider_styles.modern.cap_width = 0.02
+    >>> slider_styles.modern.slider_length = 0.02
+    >>> slider_styles.modern.slider_width = 0.04
+    >>> slider_styles.modern.slider_color = (0.43, 0.44, 0.45)
+    >>> slider_styles.modern.tube_width = 0.04
+    >>> slider_styles.modern.tube_color = (0.69, 0.70, 0.709)
+    >>> slider_styles.modern.cap_opacity = 0
+    >>> slider_styles.modern.cap_length = 0.01
+    >>> slider_styles.modern.cap_width = 0.02
 
     """
 
@@ -1261,6 +1349,7 @@ class _TrameConfig(_ThemeConfig):
         '_interactive_ratio',
         '_still_ratio',
         '_jupyter_server_name',
+        '_jupyter_server_port',
         '_server_proxy_enabled',
         '_server_proxy_prefix',
         '_default_mode',
@@ -1270,9 +1359,15 @@ class _TrameConfig(_ThemeConfig):
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
+        self._jupyter_server_port = 0
         self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
         # default for ``jupyter-server-proxy``
-        self._server_proxy_prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
+        prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
+        if service:  # pragma: no cover
+            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
+        else:
+            self._server_proxy_prefix = prefix
         self._default_mode = 'trame'
 
     @property
@@ -1324,6 +1419,15 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_server_name.setter
     def jupyter_server_name(self, name: str):
         self._jupyter_server_name = name
+
+    @property
+    def jupyter_server_port(self) -> int:
+        """Return or set the port for the Trame Jupyter server."""
+        return self._jupyter_server_port
+
+    @jupyter_server_port.setter
+    def jupyter_server_port(self, port: int):
+        self._jupyter_server_port = port
 
     @property
     def server_proxy_enabled(self) -> bool:
@@ -1529,7 +1633,7 @@ class DefaultTheme(_ThemeConfig):
 
         See Also
         --------
-        pyvista.BasePlotter.enable_hidden_line_removal
+        pyvista.Plotter.enable_hidden_line_removal
 
         Examples
         --------
@@ -1558,9 +1662,7 @@ class DefaultTheme(_ThemeConfig):
         will be interpolated across the topology of the dataset which is
         more accurate.
 
-        See Also
-        --------
-        :ref:`interpolate_before_mapping_example`
+        See also :ref:`interpolate_before_mapping_example`.
 
         Examples
         --------
@@ -1569,10 +1671,14 @@ class DefaultTheme(_ThemeConfig):
         >>> import pyvista as pv
 
         Load a cylinder which has cells with a wide spread
+
         >>> cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
 
         Common display argument to make sure all else is constant
-        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
+
+        >>> dargs = dict(
+        ...     scalars='Elevation', cmap='rainbow', show_edges=True
+        ... )
 
         >>> p = pv.Plotter(shape=(1, 2))
         >>> _ = p.add_mesh(
@@ -1589,7 +1695,11 @@ class DefaultTheme(_ThemeConfig):
         ...     **dargs
         ... )
         >>> p.link_views()
-        >>> p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
+        >>> p.camera_position = [
+        ...     (-1.67, -5.10, 2.06),
+        ...     (0.0, 0.0, 0.0),
+        ...     (0.00, 0.37, 0.93),
+        ... ]
         >>> p.show()  # doctest: +SKIP
 
         """
@@ -1842,8 +1952,10 @@ class DefaultTheme(_ThemeConfig):
         Set both the position and view of the camera.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.camera = {'position': [1, 1, 1],
-        ...                                'viewup': [0, 0, 1]}
+        >>> pv.global_theme.camera = {
+        ...     'position': [1, 1, 1],
+        ...     'viewup': [0, 0, 1],
+        ... }
 
         Set the default position of the camera.
 
@@ -1973,9 +2085,8 @@ class DefaultTheme(_ThemeConfig):
         """Return or set the default colormap of pyvista.
 
         See available Matplotlib colormaps.  Only applicable for when
-        displaying ``scalars``. Requires Matplotlib to be installed.
-        If ``colorcet`` or ``cmocean`` are installed, their colormaps
-        can be specified by name.
+        displaying ``scalars``.  If ``colorcet`` or ``cmocean`` are
+        installed, their colormaps can be specified by name.
 
         You can also specify a list of colors to override an existing
         colormap with a custom one.  For example, to create a three
@@ -1993,15 +2104,10 @@ class DefaultTheme(_ThemeConfig):
 
     @cmap.setter
     def cmap(self, cmap):
-        try:
-            get_cmap_safe(cmap)  # for validation
-            self._cmap = cmap
-        except ImportError:  # pragma: no cover
-            warnings.warn(
-                'Unable to set a default theme colormap without matplotlib. '
-                'The builtin VTK "jet" colormap will be used.'
-            )
-            self._cmap = None
+        out = get_cmap_safe(cmap)  # for validation
+        if out is None:
+            raise ValueError(f'Invalid color map {cmap}')
+        self._cmap = cmap
 
     @property
     def color(self) -> Color:
@@ -2056,9 +2162,9 @@ class DefaultTheme(_ThemeConfig):
         >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))      # red
-        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))      # green
-        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))    # blue
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
         >>> pl.show()  # doctest: +SKIP
 
@@ -2728,7 +2834,7 @@ class DefaultTheme(_ThemeConfig):
 
         Parameters
         ----------
-        theme : pyvista.DefaultTheme
+        theme : pyvista.themes.DefaultTheme
             Theme to use to overwrite this theme.
 
         Examples
@@ -2742,7 +2848,6 @@ class DefaultTheme(_ThemeConfig):
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
         >>> my_theme.cmap = 'jet'
-        ...
         >>> pv.global_theme.load_theme(my_theme)
         >>> pv.global_theme.font.size
         20

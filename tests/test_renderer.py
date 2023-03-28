@@ -18,7 +18,7 @@ def test_show_bounds_axes_ranges():
     bounds = (0, 1, 0, 1, 0, 1)
     plotter.show_bounds(bounds=bounds)
     cube_axes_actor = plotter.renderer.cube_axes_actor
-    assert cube_axes_actor.GetBounds() == bounds
+    assert cube_axes_actor.bounds == bounds
 
     # send bounds and axes ranges
     axes_ranges = [0, 1, 0, 2, 0, 3]
@@ -31,6 +31,16 @@ def test_show_bounds_axes_ranges():
         *cube_axes_actor.GetZAxisRange(),
     ]
     assert test_ranges == axes_ranges
+
+
+def test_show_bounds_with_scaling(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    actor0 = plotter.show_bounds()
+    assert actor0.GetUseTextActor3D()
+    plotter.set_scale(0.5, 0.5, 2)
+    actor1 = plotter.show_bounds()
+    assert not actor1.GetUseTextActor3D()
 
 
 def test_show_bounds_invalid_axes_ranges():

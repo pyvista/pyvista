@@ -24,6 +24,27 @@ env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
 
 jobs:
+#  comment out until #4193 is fixed.
+#  doc-check:
+#    name: Check Documentation (Vale)
+#    runs-on: ubuntu-22.04
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    # this is equivalent to
+#    vale --config doc/.vale.ini doc pyvista examples
+#    - name: "Run Vale"
+#      uses: errata-ai/vale-action@reviewdog
+#      with:
+#        files: '["doc", "pyvista", "examples"]'
+#        vale_flags: "--config=doc/.vale.ini"
+#        reporter: github-pr-check
+#        level: error
+#        filter_mode: nofilter
+#        fail_on_error: true
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   doc:
     name: Build Documentation
     runs-on: ubuntu-20.04
@@ -67,7 +88,7 @@ jobs:
         uses: actions/cache@v3
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
-          path: doc/examples/
+          path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
@@ -102,12 +123,12 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: examples
-          path: doc/examples/
+          path: doc/source/examples/
 
       - name: Get Notebooks
         run: |
           mkdir _notebooks
-          find doc/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
+          find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
 
       - uses: actions/upload-artifact@v3
         with:
@@ -130,7 +151,7 @@ jobs:
       - name: Copy meta data
         run: |
           cp doc/README.md doc/_build/html/
-          cp doc/ads.txt doc/_build/html/
+          cp doc/source/ads.txt doc/_build/html/
 
       - name: Deploy on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -170,9 +191,9 @@ jobs:
 
       - name: Make Cookiecutter
         run: |
-          cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
-          cp -r doc/examples/ ./pyvista-examples/
+          cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
 
       - name: Publish notebooks on release

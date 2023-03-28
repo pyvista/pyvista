@@ -9,7 +9,7 @@ import pytest
 
 import pyvista
 from pyvista.core.errors import DeprecationError
-from pyvista.errors import MissingDataError
+from pyvista.errors import MissingDataError, RenderWindowUnavailable
 from pyvista.plotting import _plotting
 
 
@@ -17,6 +17,15 @@ def test_plotter_image_before_show():
     plotter = pyvista.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
         plotter.image
+
+
+def test_has_render_window_fail():
+    pl = pyvista.Plotter()
+    pl.close()
+    with pytest.raises(RenderWindowUnavailable, match='not available'):
+        pl._check_has_ren_win()
+    with pytest.raises(RenderWindowUnavailable, match='not available'):
+        pl._make_render_window_current()
 
 
 def test_screenshot_fail_suppressed_rendering():

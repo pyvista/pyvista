@@ -142,7 +142,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     Parameters
     ----------
-    arr : np.ndarray or vtkDataArray
+    arr : np.ndarray | vtkDataArray
         A numpy array or vtkDataArry to convert.
     name : str, optional
         The name of the data array for VTK.
@@ -153,7 +153,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     Returns
     -------
-    vtkDataArray, numpy.ndarray, or DataFrame
+    vtkDataArray or numpy.ndarray
         The converted array.  If input is a :class:`numpy.ndarray` then
         returns ``vtkDataArray`` or is input is ``vtkDataArray`` then
         returns NumPy ``ndarray``.
@@ -195,7 +195,7 @@ def is_pyvista_dataset(obj):
 
     Parameters
     ----------
-    obj : anything
+    obj : Any
         Any object to test.
 
     Returns
@@ -233,10 +233,10 @@ def point_array(obj, name):
 
     Parameters
     ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
+    obj : pyvista.DataSet | vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str or int
+    name : str | int
         Name or index of the array.
 
     Returns
@@ -256,7 +256,7 @@ def field_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str or int
+    name : str | int
         Name or index of the array.
 
     Returns
@@ -276,7 +276,7 @@ def cell_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str or int
+    name : str | int
         Name or index of the array.
 
     Returns
@@ -428,7 +428,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
 
     Returns
     -------
-    pyvista.FieldAssociation
+    pyvista.utilities.helpers.FieldAssociation
         Association of the array. If array is not present and ``err`` is
         ``False``, ``FieldAssociation.NONE`` is returned.
 
@@ -556,7 +556,7 @@ def line_segments_from_points(points):
 
     Parameters
     ----------
-    points : numpy.ndarray
+    points : array_like[float]
         Points representing line segments. An even number must be
         given as every two vertices represent a single line
         segment. For example, two line segments would be represented
@@ -601,7 +601,7 @@ def lines_from_points(points, close=False):
 
     Parameters
     ----------
-    points : np.ndarray
+    points : array_like[float]
         Points representing the vertices of the connected
         segments. For example, two line segments would be represented
         as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
@@ -664,11 +664,31 @@ def make_tri_mesh(points, faces):
 
     >>> import numpy as np
     >>> import pyvista
-    >>> points = np.array([[0, 0, 0], [0.5, 0, 0], [1, 0, 0], [0, 0.5, 0],
-    ...                    [0.5, 0.5, 0], [1, 0.5, 0], [0, 1, 0], [0.5, 1, 0],
-    ...                    [1, 1, 0]])
-    >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
-    ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
+    >>> points = np.array(
+    ...     [
+    ...         [0, 0, 0],
+    ...         [0.5, 0, 0],
+    ...         [1, 0, 0],
+    ...         [0, 0.5, 0],
+    ...         [0.5, 0.5, 0],
+    ...         [1, 0.5, 0],
+    ...         [0, 1, 0],
+    ...         [0.5, 1, 0],
+    ...         [1, 1, 0],
+    ...     ]
+    ... )
+    >>> faces = np.array(
+    ...     [
+    ...         [0, 1, 4],
+    ...         [4, 7, 6],
+    ...         [2, 5, 4],
+    ...         [4, 5, 8],
+    ...         [0, 4, 3],
+    ...         [3, 4, 6],
+    ...         [1, 2, 4],
+    ...         [4, 8, 7],
+    ...     ]
+    ... )
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
     >>> tri_mesh.plot(show_edges=True, line_width=5)
 
@@ -688,10 +708,10 @@ def vector_poly_data(orig, vec):
 
     Parameters
     ----------
-    orig : numpy.ndarray
+    orig : array_like[float]
         Array of vector origins.
 
-    vec : numpy.ndarray
+    vec : array_like[float]
         Array of vectors.
 
     Returns
@@ -699,7 +719,7 @@ def vector_poly_data(orig, vec):
     pyvista.PolyData
         Mesh containing the ``orig`` points along with the
         ``'vectors'`` and ``'mag'`` point arrays representing the
-        vectors and magnitude of the the vectors at each point.
+        vectors and magnitude of the vectors at each point.
 
     Examples
     --------
@@ -708,11 +728,13 @@ def vector_poly_data(orig, vec):
 
     >>> import pyvista
     >>> import numpy as np
-    >>> x, y = np.meshgrid(np.linspace(-5,5,10),np.linspace(-5,5,10))
+    >>> x, y = np.meshgrid(np.linspace(-5, 5, 10), np.linspace(-5, 5, 10))
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
-    >>> u = x/np.sqrt(x**2 + y**2)
-    >>> v = y/np.sqrt(x**2 + y**2)
-    >>> vectors = np.vstack((u.ravel()**3, v.ravel()**3, np.zeros(u.size))).T
+    >>> u = x / np.sqrt(x**2 + y**2)
+    >>> v = y / np.sqrt(x**2 + y**2)
+    >>> vectors = np.vstack(
+    ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
+    ... ).T
     >>> pdata = pyvista.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']
@@ -789,7 +811,7 @@ def array_from_vtkmatrix(matrix):
 
     Parameters
     ----------
-    matrix : vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
+    matrix : vtk.vtkMatrix3x3 | vtk.vtkMatrix4x4
         The vtk matrix to be converted to a ``numpy.ndarray``.
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
 
@@ -820,7 +842,7 @@ def vtkmatrix_from_array(array):
 
     Parameters
     ----------
-    array : numpy.ndarray or array-like
+    array : array_like[float]
         The array or array-like to be converted to a vtk matrix.
         Shape (3, 3) gets converted to a ``vtk.vtkMatrix3x3``, shape (4, 4)
         gets converted to a ``vtk.vtkMatrix4x4``. No other shapes are valid.
@@ -884,7 +906,7 @@ def wrap(dataset):
 
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray`, :class:`trimesh.Trimesh`, or VTK object
+    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
         Dataset to wrap.
 
     Returns
@@ -1001,7 +1023,11 @@ def wrap(dataset):
         faces = np.empty((n_face, 4), dataset.faces.dtype)
         faces[:, 1:] = dataset.faces
         faces[:, 0] = 3
-        return pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        polydata = pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        # If the Trimesh object has uv, pass them to the PolyData
+        if hasattr(dataset.visual, 'uv'):
+            polydata.active_t_coords = np.asarray(dataset.visual.uv)
+        return polydata
 
     # otherwise, flag tell the user we can't wrap this object
     raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
@@ -1012,7 +1038,7 @@ def image_to_texture(image):
 
     Parameters
     ----------
-    image : pyvista.UniformGrid or vtkImageData
+    image : pyvista.UniformGrid | vtkImageData
         Image to convert.
 
     Returns
@@ -1065,10 +1091,10 @@ def is_inside_bounds(point, bounds):
 
     Parameters
     ----------
-    point : sequence
+    point : sequence[float]
         Three item cartesian point (i.e. ``[x, y, z]``).
 
-    bounds : sequence
+    bounds : sequence[float]
         Six item bounds in the form of ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     Returns
@@ -1103,7 +1129,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     Parameters
     ----------
-    points : sequence
+    points : array_like[float]
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool, default: False
@@ -1129,14 +1155,22 @@ def fit_plane_to_points(points, return_meta=False):
     >>> import numpy as np
     >>> cloud = np.random.random((10, 3))
     >>> cloud[:, 2] *= 0.1
-    >>> plane, center, normal = pyvista.fit_plane_to_points(cloud, return_meta=True)
+    >>> plane, center, normal = pyvista.fit_plane_to_points(
+    ...     cloud, return_meta=True
+    ... )
 
     Plot the fitted plane.
 
     >>> pl = pyvista.Plotter()
-    >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
-    >>> _ = pl.add_points(cloud, render_points_as_spheres=True,
-    ...                   color='r', point_size=30)
+    >>> _ = pl.add_mesh(
+    ...     plane, color='tan', style='wireframe', line_width=4
+    ... )
+    >>> _ = pl.add_points(
+    ...     cloud,
+    ...     render_points_as_spheres=True,
+    ...     color='r',
+    ...     point_size=30,
+    ... )
     >>> pl.show()
 
     """
@@ -1182,10 +1216,10 @@ def generate_plane(normal, origin):
 
     Parameters
     ----------
-    normal : sequence
+    normal : sequence[float]
         Three item sequence representing the normal of the plane.
 
-    origin : sequence
+    origin : sequence[float]
         Three item sequence representing the origin of the plane.
 
     Returns
@@ -1512,7 +1546,9 @@ def cubemap(path='', prefix='', ext='.jpg'):
     Load a skybox given a directory, prefix, and file extension.
 
     >>> import pyvista
-    >>> skybox = pyvista.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+    >>> skybox = pyvista.cubemap(
+    ...     'my_directory', 'skybox', '.jpeg'
+    ... )  # doctest:+SKIP
 
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
@@ -1534,7 +1570,7 @@ def cubemap_from_filenames(image_paths):
 
     Parameters
     ----------
-    image_paths : list
+    image_paths : sequence[str]
         Paths of the individual cubemap images.
 
     Returns

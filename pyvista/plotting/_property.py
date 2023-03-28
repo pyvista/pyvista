@@ -1,5 +1,4 @@
 """This module contains the Property class."""
-from functools import lru_cache
 from typing import Union
 
 import pyvista as pv
@@ -8,15 +7,6 @@ from pyvista.plotting.opts import InterpolationType
 from pyvista.utilities.misc import no_new_attr
 
 from .colors import Color
-
-
-@lru_cache(maxsize=None)
-def _check_supports_pbr():
-    """Check if VTK supports physically based rendering."""
-    if not _vtk.VTK9:  # pragma: no cover
-        from pyvista.core.errors import VTKVersionError
-
-        raise VTKVersionError('Physically based rendering requires VTK 9 or newer.')
 
 
 @no_new_attr
@@ -30,7 +20,7 @@ class Property(_vtk.vtkProperty):
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
-    interpolation : str, optional
+    interpolation : str, default: :attr:`pyvista.themes._LightingConfig.interpolation`
         Set the method of shading. One of the following:
 
         * ``'Physically based rendering'`` - Physically based rendering.
@@ -41,76 +31,73 @@ class Property(_vtk.vtkProperty):
 
         This parameter is case insensitive.
 
-    color : ColorLike, optional
+    color : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.color`
         Used to make the entire mesh have a single solid color.
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 
-    style : str, optional
+    style : str, default: 'surface'
         Visualization style of the mesh.  One of the following:
         ``style='surface'``, ``style='wireframe'``, ``style='points'``.
-        Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
-        wireframe of the outer geometry.
+        Note that ``'wireframe'`` only shows a wireframe of the outer
+        geometry.
 
-    metallic : float, optional
-        Usually this value is either 0 or 1 for a real material
-        but any value in between is valid. This parameter is only
-        used by PBR interpolation.
-
-    roughness : float, optional
-        This value has to be between 0 (glossy) and 1 (rough). A
-        glossy material has reflections and a high specular
-        part. This parameter is only used by PBR
+    metallic : float, default: :attr:`pyvista.themes._LightingConfig.metallic`
+        Usually this value is either 0 or 1 for a real material but any
+        value in between is valid. This parameter is only used by PBR
         interpolation.
 
-    point_size : float, optional
+    roughness : float, default: :attr:`pyvista.themes._LightingConfig.roughness`
+        This value has to be between 0 (glossy) and 1 (rough). A glossy
+        material has reflections and a high specular part. This parameter
+        is only used by PBR interpolation.
+
+    point_size : float, default: :attr:`pyvista.themes.DefaultTheme.point_size`
         Size of the points represented by this property.
 
-    opacity : float, optional
+    opacity : float, default: :attr:`pyvista.themes.DefaultTheme.opacity`
         Opacity of the mesh. A single float value that will be applied globally
         opacity of the mesh and uniformly applied everywhere - should be
         between 0 and 1.
 
-    ambient : float, optional
-        When lighting is enabled, this is the amount of light in
-        the range of 0 to 1 (default 0.0) that reaches the actor
-        when not directed at the light source emitted from the
-        viewer.
+    ambient : float, default: :attr:`pyvista.themes._LightingConfig.ambient`
+        When lighting is enabled, this is the amount of light in the range
+        of 0 to 1 that reaches the actor when not directed at the light
+        source emitted from the viewer.
 
-    diffuse : float, optional
-        The diffuse lighting coefficient. Default 1.0.
+    diffuse : float, default: :attr:`pyvista.themes._LightingConfig.diffuse`
+        The diffuse lighting coefficient.
 
-    specular : float, optional
-        The specular lighting coefficient. Default 0.0.
+    specular : float, default: :attr:`pyvista.themes._LightingConfig.specular`
+        The specular lighting coefficient.
 
-    specular_power : float, optional
+    specular_power : float, default: :attr:`pyvista.themes._LightingConfig.specular_power`
         The specular power. Between 0.0 and 128.0.
 
-    show_edges : bool, optional
-        Shows the edges.  Does not apply to a wireframe
-        representation.
+    show_edges : bool, default: :attr:`pyvista.themes.DefaultTheme.show_edges`
+        Shows the edges.  Does not apply to a wireframe representation.
 
-    edge_color : ColorLike, optional
+    edge_color : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.edge_color`
         The solid color to give the edges when ``show_edges=True``.
         Either a string, RGB list, or hex color string.
 
-    render_points_as_spheres : bool, optional
+    render_points_as_spheres : bool, default: :attr:`pyvista.themes.DefaultTheme.render_points_as_spheres`
         Render points as spheres rather than dots.
 
-    render_lines_as_tubes : bool, optional
+    render_lines_as_tubes : bool, default: :attr:`pyvista.themes.DefaultTheme.render_lines_as_tubes`
         Show lines as thick tubes rather than flat lines.  Control
         the width with ``line_width``.
 
-    lighting : bool, optional
+    lighting : bool, default: :attr:`pyvista.themes.DefaultTheme.lighting`
         Enable or disable view direction lighting.
 
-    line_width : float, optional
+    line_width : float, default: :attr:`pyvista.themes.DefaultTheme.line_width`
         Thickness of lines.  Only valid for wireframe and surface
         representations.
 
-    culling : str, bool, optional
+    culling : str | bool, optional
         Does not render faces that are culled. This can be helpful for
         dense surface meshes, especially when edges are visible, but can
         cause flat meshes to be partially displayed. Defaults to
@@ -131,7 +118,7 @@ class Property(_vtk.vtkProperty):
     ...     show_edges=True,
     ...     interpolation='Physically based rendering',
     ...     metallic=0.5,
-    ...     roughness=0.1
+    ...     roughness=0.1,
     ... )
 
     Visualize how the property would look when applied to a mesh.
@@ -163,7 +150,7 @@ class Property(_vtk.vtkProperty):
         theme=None,
         interpolation=None,
         color=None,
-        style=None,
+        style='surface',
         metallic=None,
         roughness=None,
         point_size=None,
@@ -644,7 +631,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.1
         >>> prop.metallic
         0.1
@@ -665,12 +653,10 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        _check_supports_pbr()
         return self.GetMetallic()
 
     @metallic.setter
     def metallic(self, value: float):
-        _check_supports_pbr()
         self.SetMetallic(value)
 
     @property
@@ -686,7 +672,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.metallic = 0.5  # helps to visualize metallic
         >>> prop.roughness = 0.1
         >>> prop.roughness
@@ -708,12 +695,10 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        _check_supports_pbr()
         return self.GetRoughness()
 
     @roughness.setter
     def roughness(self, value: bool):
-        _check_supports_pbr()
         self.SetRoughness(value)
 
     @property
@@ -767,7 +752,6 @@ class Property(_vtk.vtkProperty):
     def interpolation(self, value: Union[str, int, InterpolationType]):
         value = InterpolationType.from_any(value).value
         if value == InterpolationType.PBR:
-            _check_supports_pbr()
             self.SetInterpolationToPBR()
         else:
             self.SetInterpolation(value)
@@ -1093,7 +1077,8 @@ class Property(_vtk.vtkProperty):
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # requires physically based rendering
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.anisotropy
         0.1
 
@@ -1131,7 +1116,7 @@ class Property(_vtk.vtkProperty):
         ...     color='brown',
         ...     edge_color='blue',
         ...     line_width=4,
-        ...     specular=1.0
+        ...     specular=1.0,
         ... )
         >>> prop.plot()
 

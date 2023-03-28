@@ -5,8 +5,6 @@ For example:
 
 version_info = 0, 27, 'dev0'
 
----
-
 When generating pre-release wheels, use '0rcN', for example:
 
 version_info = 0, 28, '0rc1'

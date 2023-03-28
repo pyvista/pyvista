@@ -95,7 +95,7 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        event : str or int
+        event : str | int
             The event to observe. Either the name of this event (string) or
             a VTK event identifier (int).
 
@@ -113,7 +113,9 @@ class RenderWindowInteractor:
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> obs_enter = pl.iren.add_observer(
+        ...     "EnterEvent", lambda *_: print('Enter!')
+        ... )
 
         """
         call = partial(try_callback, call)
@@ -136,7 +138,9 @@ class RenderWindowInteractor:
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> obs_enter = pl.iren.add_observer(
+        ...     "EnterEvent", lambda *_: print('Enter!')
+        ... )
         >>> pl.iren.remove_observer(obs_enter)
 
         """
@@ -149,7 +153,7 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        event : str or int, optional
+        event : str | int, optional
             If provided, only removes observers of the given event. Otherwise,
             if it is ``None``, removes all observers.
 
@@ -159,8 +163,12 @@ class RenderWindowInteractor:
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
-        >>> obs_leave = pl.iren.add_observer("LeaveEvent", lambda *_: print('Leave!'))
+        >>> obs_enter = pl.iren.add_observer(
+        ...     "EnterEvent", lambda *_: print('Enter!')
+        ... )
+        >>> obs_leave = pl.iren.add_observer(
+        ...     "LeaveEvent", lambda *_: print('Leave!')
+        ... )
         >>> pl.iren.remove_observers()
 
         """
@@ -242,15 +250,15 @@ class RenderWindowInteractor:
             A callable method that will use the click position. Passes
             the click position as a length two tuple.
 
-        side : str, optional
+        side : str, default: "right"
             The mouse button to track (either ``'left'`` or ``'right'``).
-            Default is ``'right'``. Also accepts ``'r'`` or ``'l'``.
+            Also accepts ``'r'`` or ``'l'``.
 
-        double : bool, optional
+        double : bool, default: False
             Track single clicks if ``False``, double clicks if ``True``.
-            Defaults to single clicks ``False``.
+            Defaults to single clicks.
 
-        viewport : bool, optional
+        viewport : bool, default: False
             If ``True``, uses the normalized viewport coordinate
             system (values between 0.0 and 1.0 and support for HiDPI)
             when passing the click position to the callback.
@@ -603,11 +611,11 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        mouse_wheel_zooms : bool, optional
+        mouse_wheel_zooms : bool, default: False
             Whether to use the mouse wheel for zooming. By default
             zooming can be performed with right click and drag.
 
-        shift_pans : bool, optional
+        shift_pans : bool, default: False
             Whether shift + left mouse button pans the scene. By default
             shift + left mouse button rotates the view restricted to
             only horizontal or vertical movements, and panning is done
@@ -632,8 +640,9 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True,
-        ...                              shift_pans=True)
+        >>> plotter.enable_terrain_style(
+        ...     mouse_wheel_zooms=True, shift_pans=True
+        ... )
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -838,7 +847,7 @@ class RenderWindowInteractor:
         duration : int
             Time (in milliseconds) before the timer emits a TimerEvent.
 
-        repeating : bool
+        repeating : bool, default: True
             When ``False`` a one-shot timer is created, which only fires
             once. When ``True`` a repeating timer is created, which
             continuously fires (every ``duration`` milliseconds) until
@@ -871,14 +880,8 @@ class RenderWindowInteractor:
         """Set the render window."""
         self.interactor.SetRenderWindow(render_window)
 
-    @property
-    def can_process_events(self):
-        """Return whether the interactor can process events (only available in VTK 9+)."""
-        return hasattr(self.interactor, 'ProcessEvents')
-
     def process_events(self):
         """Process events."""
-        # Note: This is only available in VTK 9+
         if not self.initialized:
             raise RuntimeError(
                 'Render window interactor must be initialized before processing events.'

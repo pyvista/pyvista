@@ -93,6 +93,14 @@ def test_download_exodus():
     assert data.n_blocks
 
 
+def test_download_fea_hertzian_contact_cylinder():
+    filename = examples.download_fea_hertzian_contact_cylinder(load=False)
+    assert os.path.isfile(filename)
+
+    data = examples.download_fea_hertzian_contact_cylinder()
+    assert data.n_cells
+
+
 def test_download_nefertiti():
     filename = examples.download_nefertiti(load=False)
     assert os.path.isfile(filename)
@@ -657,6 +665,11 @@ def test_download_dolfin():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
+def test_download_meshio_xdmf():
+    dataset = examples.download_meshio_xdmf()
+    assert isinstance(dataset, pv.UnstructuredGrid)
+
+
 def test_download_damavand_volcano():
     filename = examples.download_damavand_volcano(load=False)
     assert os.path.isfile(filename)
@@ -923,6 +936,16 @@ def test_cad_model_case():
     dataset = examples.download_cad_model_case(load=True)
     assert isinstance(dataset, pv.PolyData)
     assert dataset.n_points == 7677
+
+
+def test_coil_magnetic_field():
+    filename = examples.download_coil_magnetic_field(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vti')
+
+    dataset = examples.download_coil_magnetic_field(load=True)
+    assert isinstance(dataset, pv.UniformGrid)
+    assert dataset.n_points == 531441
 
 
 def test_load_sun():
