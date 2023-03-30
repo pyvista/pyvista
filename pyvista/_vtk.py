@@ -263,7 +263,12 @@ from vtkmodules.vtkFiltersCore import (
     vtkUnstructuredGridToExplicitStructuredGrid,
     vtkWindowedSincPolyDataFilter,
 )
-from vtkmodules.vtkFiltersExtraction import vtkExtractGeometry, vtkExtractGrid, vtkExtractSelection
+from vtkmodules.vtkFiltersExtraction import (
+    vtkExtractCellsByType,
+    vtkExtractGeometry,
+    vtkExtractGrid,
+    vtkExtractSelection,
+)
 from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
 from vtkmodules.vtkFiltersGeneral import (
     vtkAxes,

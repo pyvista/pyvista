@@ -5535,6 +5535,56 @@ class DataSetFilters:
         """
         return self.shrink(1.0)
 
+    def extract_cells_by_type(self, cell_types=True, progress_bar=False):
+        """Extract cells of a specified type.
+
+        Given an input vtkDataSet and a list of cell types, produce an output
+        dataset containing only cells of the specified type(s). Note that if the
+        input dataset is homogeneous (e.g., all cells are of the same type) and
+        the cell type is one of the cells specified, then the input dataset is
+        shallow copied to the output.
+
+        The type of output dataset is always the same as the input type. Since
+        structured types of data (i.e., vtkImageData, vtkStructuredGrid,
+        vtkRectilnearGrid, vtkUniformGrid) are all composed of a cell of the
+        same type, the output is either empty, or a shallow copy of the input.
+        Unstructured data (vtkUnstructuredGrid, vtkPolyData) input may produce a
+        subset of the input data (depending on the selected cell types).
+
+        Note this filter can be used in a pipeline with composite datasets to
+        extract blocks of (a) particular cell type(s).
+
+        .. warning::
+            Unlike the filter vtkExtractCells which always produces
+            vtkUnstructuredGrid output, this filter produces the same output
+            type as input type (i.e., it is a vtkDataSetAlgorithm). Also,
+            vtkExtractCells extracts cells based on their ids.
+
+        Parameters
+        ----------
+        cell_types : bool | int | list[int]
+            The cell types to extract. If string value is ``True``, all
+            cell types will be extracted. Otherwise, pass a single or
+            list of integer cell types.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        """
+        alg = _vtk.vtkExtractCellsByType()
+        alg.SetInputDataObject(self)
+        if cell_types is True:
+            alg.AddAllCellTypes()
+        elif isinstance(cell_types, int):
+            alg.AddCellType(cell_types)
+        elif isinstance(cell_types, collections.abc.Iterable):
+            for cell_type in cell_types:
+                alg.AddCellType(cell_type)
+        else:
+            raise ValueError('`cell_types` not understood.')
+        _update_alg(alg, progress_bar, 'Extracting cell types')
+        return _get_output(alg)
+
 
 def _set_threshold_limit(alg, value, method, invert):
     """Set vtkThreshold limits and function.
